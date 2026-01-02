@@ -15,9 +15,12 @@ import {
     ArchiveRestore,
     Trash2, 
     Copy,
-    Download
+    Download,
+    FolderPlus,
+    Folder
 } from 'lucide-react';
 import { Conversation, useConversationStore } from '../../store/useConversationStore';
+import { MoveToProjectModal } from './MoveToProjectModal';
 
 interface ConversationActionsProps {
     conversation: Conversation;
@@ -32,6 +35,7 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
     const [isOpen, setIsOpen] = useState(false);
     const [isRenaming, setIsRenaming] = useState(false);
     const [renameValue, setRenameValue] = useState(conversation.title);
+    const [showMoveToProject, setShowMoveToProject] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -200,6 +204,34 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
                         )}
                     </button>
 
+                    {/* Add to Project */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsOpen(false);
+                            onOpenChange?.(false);
+                            setShowMoveToProject(true);
+                        }}
+                        className="
+                            w-full flex items-center gap-2 px-3 py-2 text-sm
+                            text-slate-700 dark:text-slate-300
+                            hover:bg-slate-100 dark:hover:bg-navy-700
+                            transition-colors
+                        "
+                    >
+                        {conversation.chatProjectId ? (
+                            <>
+                                <Folder size={14} className="text-primary-500" />
+                                {t('aiChat.actions.moveProject', 'Zmień projekt')}
+                            </>
+                        ) : (
+                            <>
+                                <FolderPlus size={14} />
+                                {t('aiChat.actions.addToProject', 'Dodaj do projektu')}
+                            </>
+                        )}
+                    </button>
+
                     {/* Archive/Unarchive */}
                     <button
                         onClick={(e) => {
@@ -253,6 +285,13 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
                     </button>
                 </div>
             )}
+
+            {/* Move to Project Modal */}
+            <MoveToProjectModal
+                isOpen={showMoveToProject}
+                onClose={() => setShowMoveToProject(false)}
+                conversation={conversation}
+            />
         </div>
     );
 };

@@ -66,3 +66,4 @@ With navigation mastered, you're ready to dive into the real work. Head to your 
 - 4:15 - End card with "Ready to start? Head to Dashboard"
 
 
+

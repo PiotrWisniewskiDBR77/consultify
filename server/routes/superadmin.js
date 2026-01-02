@@ -69,4 +69,14 @@ router.get('/organizations/:id/attribution', superAdminController.getOrgAttribut
 router.get('/attribution/export', superAdminController.exportAttribution);
 router.get('/attribution/partner-summary', superAdminController.getPartnerSummary);
 
+// USAGE STATS BY ORGANIZATION
+router.get('/usage/by-organization', superAdminController.getUsageByOrganization);
+
+// INVOICES
+router.get('/invoices', superAdminController.getInvoices);
+router.get('/invoices/stats', superAdminController.getInvoiceStats);
+
+// SYSTEM HEALTH
+router.get('/system-health', superAdminController.getSystemHealth);
+
 module.exports = router;

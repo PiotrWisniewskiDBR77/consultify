@@ -161,6 +161,46 @@ router.get('/status', async (req, res) => {
     }
 });
 
+// PUT /api/llm/providers/:id/tier - Update provider tier (SuperAdmin)
+router.put('/providers/:id/tier', verifyToken, async (req, res) => {
+    const { id } = req.params;
+    const { tier } = req.body;
+
+    try {
+        // Verify SuperAdmin
+        if (!req.user || req.user.role !== 'SUPERADMIN') {
+            return res.status(403).json({ success: false, error: 'Unauthorized' });
+        }
+
+        const { llmConfigService } = require('../services/ai/llmConfigService');
+        await llmConfigService.initialize();
+
+        // Map ID (which might be 'openai', 'google') to provider ID
+        // The service uses 'provider' column as ID for updates in updateProviderTier
+        // We need to support both UUIDs or provider names if possible, but updateProviderTier takes providerId (e.g. 'openai') 
+        // Let's first check if 'id' matches a provider identifier
+        let providerId = id;
+
+        // If it looks like a uuid, we might need to look it up, but simpler is to expect provider name (e.g. 'openai')
+        // Frontend sends provider name usually. 
+
+        await llmConfigService.updateProviderTier(providerId, tier);
+
+        res.json({
+            success: true,
+            providerId,
+            tier,
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            error: err.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 // POST /api/llm/status/test/:provider - Test a specific provider's connectivity
 router.post('/status/test/:provider', async (req, res) => {
     const { provider } = req.params;

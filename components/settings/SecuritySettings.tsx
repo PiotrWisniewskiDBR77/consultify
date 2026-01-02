@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { User } from '../../types';
 import { useTranslation } from 'react-i18next';
-import { 
-    Shield, Key, Lock, Eye, EyeOff, CheckCircle, AlertCircle, 
+import {
+    Shield, Key, Lock, Eye, EyeOff, CheckCircle, AlertCircle,
     Loader2, Smartphone, LogOut, Monitor, MapPin, Clock,
     FileText, ShieldCheck, Users, ExternalLink
 } from 'lucide-react';
@@ -26,7 +26,7 @@ interface Session {
 
 export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser }) => {
     const { t } = useTranslation();
-    
+
     // Password change state
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -87,7 +87,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
             setNewPassword('');
             setConfirmPassword('');
             toast.success(t('settings.security.passwordChanged', 'Password changed successfully!'));
-            
+
             // Refresh sessions as old ones were invalidated
             fetchSessions();
         } catch (error: any) {
@@ -335,11 +335,11 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                             {t('settings.security.noSessions', 'No active sessions found')}
                         </div>
                     ) : (
-                        sessions.map((session) => (
+                        (sessions || []).map((session) => (
                             <div key={session.id} className="p-4 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
-                                        {getDeviceIcon(session.deviceInfo)}
+                                        {getDeviceIcon(session.deviceInfo || '')}
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
@@ -359,7 +359,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                                             </span>
                                             <span className="flex items-center gap-1">
                                                 <Clock className="w-3 h-3" />
-                                                {formatDate(session.createdAt)}
+                                                {session.createdAt ? formatDate(session.createdAt) : t('common.unknown', 'Unknown')}
                                             </span>
                                         </div>
                                     </div>

@@ -7,27 +7,49 @@
 
 **Consultify** serves as a digital executive consultant, guiding organizations through the complex journey of digital maturity—from initial assessment to full-scale rollout.
 
-## 📚 Documentation
+## 📚 Enterprise Documentation (Source of Truth)
 
-### Getting Started
-- **[Introduction](docs/00-introduction.md)**: Overview, value proposition, and key terms.
-- **[Getting Started](docs/01-getting-started.md)**: Installation, environment setup, and running locally.
-- **[Local Setup Guide](docs/LOCAL_SETUP.md)**: Detailed local development setup instructions.
-- **[API Key Setup](docs/GDZIE_USTAWIC_API_KEY.md)**: Guide for configuring API keys.
-- **[OAuth Setup Guide](docs/OAUTH_SETUP_GUIDE.md)**: OAuth authentication configuration.
+The documentation is organized into 8 Pillars following the **Consultinity Perfect Standard (CPS)**.
 
-### Technical Documentation
-- **[Architecture](docs/02-architecture.md)**: Tech stack, project structure, and data flow.
-- **[Features](docs/03-features.md)**: Detailed breakdown of the dashboard, assessment modules, and AI capabilities.
-- **[Development Guide](docs/04-development.md)**: Git workflow, coding standards, and testing strategies.
-- **[API Reference](docs/API_REFERENCE.md)**: Complete API endpoint documentation.
-- **[Deployment](docs/06-deployment.md)**: Building for production and Docker usage.
+### 1. [Strategy & Intent](consultinity/00_strategy/)
+- **[Business Model & Strategic Sense](consultinity/00_strategy/03_business_model.md)**: Commercial roadmap and value.
+- **[Enterprise Spec](consultinity/00_strategy/00_foundation/ENTERPRISE_SPEC.md)**: Master product blueprint (1670+ lines).
+- **[System Contract](consultinity/00_strategy/00_foundation/00_SYSTEM_CONTRACT.md)**: User journey and system integrity.
 
-### Enterprise Documentation
-- **[System Contract](docs/00_foundation/00_SYSTEM_CONTRACT.md)**: User journey, mental states, and system integrity.
-- **[Enterprise Specification](docs/00_foundation/ENTERPRISE_SPEC.md)**: Enterprise-grade specifications and design principles.
-- **[Product Flow](docs/10_product_flow/)**: Product flow documentation by phase.
-- **[Execution Rules](docs/20_execution/)**: UI, backend, and RBAC rules.
+### 2. [Architecture](consultinity/10_architecture/)
+- **[C4 Architecture Detailed](consultinity/10_architecture/core/architecture_detailed.md)**: Level 3 Component and Sequence diagrams.
+- **[AI Research](consultinity/10_architecture/ai_research/)**: AI system architecture and RAG patterns.
+- **[Core Architecture](consultinity/10_architecture/core/)**: Backend and frontend service layers.
+
+### 3. [API Specification](consultinity/20_api/)
+- **[Webhook Registry](consultinity/20_api/api/webhook_registry.md)**: Outbound event specification.
+- **[Streaming Protocol Spec](consultinity/20_api/api/streaming_protocol.md)**: AI SSE/Thought protocol.
+- **[DTO Registry](consultinity/20_api/api/dto_registry.md)**: Canonical interface objects.
+- **[API Reference](consultinity/20_api/API_REFERENCE.md)**: Authoritative endpoint guide.
+
+### 4. [Product & Functional Flow](consultinity/30_functional/)
+- **[Product Flow](consultinity/30_functional/10_product_flow/)**: 7-phase user journey (Phase A-G).
+- **[Features](consultinity/30_functional/03-features.md)**: Module breakdowns and capabilities.
+- **[World-Class Chat](consultinity/30_functional/WORLD_CLASS_CHAT_2025.md)**: AI interaction specifications.
+
+### 5. [Technical Standards](consultinity/40_technical/)
+- **[Visual Identity & UI/UX](consultinity/40_technical/20_execution/visual_identity.md)**: Premium AI Aesthetic tokens.
+- **[Resilience & Recovery Rules](consultinity/40_technical/20_execution/resilience_rules.md)**: Stability and growth patterns.
+- **[Error Handling & Resilience](consultinity/40_technical/20_execution/error_handling.md)**: Fallback logic and Error Dictionary.
+
+### 6. [Operations & Security](consultinity/50_operations/)
+- **[Deployment Guide](consultinity/50_operations/06-deployment.md)**: Building and running in production.
+- **[Local Setup](consultinity/50_operations/LOCAL_SETUP.md)**: Development environment instructions.
+- **[OAuth Guide](consultinity/50_operations/OAUTH_SETUP_GUIDE.md)**: Authentication configuration.
+
+### 7. [Enablement & Support](consultinity/60_enablement/)
+- **[User Guides](consultinity/60_enablement/user_guides/)**: Manuals for AI, Studio, and MyWork.
+- **[Tutorial Videos](consultinity/60_enablement/videos/)**: Walkthroughs and onboarding scripts.
+
+### 8. [Governance & Audit](consultinity/70_governance/)
+- **[Governance & Ownership Policy](consultinity/70_governance/governance_policy.md)**: Decision rights and data sovereignty.
+- **[Legal](consultinity/70_governance/Legal/)**: Privacy, ToS, and compliance documents.
+- **[AI Audit Report](consultinity/70_governance/AI_ENTERPRISE_AUDIT_REPORT.md)**: ISO/PMBOK compliant AI audit.
 
 ## 🚀 Quick Start (Development)
 
@@ -45,14 +67,14 @@ chmod +x start.sh
     npm install
     ```
 2.  **Configure Environment**:
-    Create `.env.local` file (see [docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md) for detailed instructions).
+    Create `.env.local` file (see [consultinity/50_operations/LOCAL_SETUP.md](consultinity/50_operations/LOCAL_SETUP.md) for detailed instructions).
     Minimum required: `GEMINI_API_KEY` (or other LLM provider key).
 3.  **Run Application**:
     ```bash
     npm run dev
     ```
 
-**📖 For detailed local setup instructions, see [docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md)**
+**📖 For detailed local setup instructions, see [consultinity/50_operations/LOCAL_SETUP.md](consultinity/50_operations/LOCAL_SETUP.md)**
 
 ## 🧪 Running Tests
 ```bash
@@ -60,4 +82,4 @@ npm run test:all
 ```
 
 ---
-*For legacy documentation, see [docs/archive](docs/archive/).*
+*For legacy documentation, see [consultinity/legacy_archive](consultinity/legacy_archive/).*

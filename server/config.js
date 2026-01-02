@@ -28,6 +28,11 @@ module.exports = {
     LINKEDIN_CLIENT_SECRET: process.env.LINKEDIN_CLIENT_SECRET,
     LINKEDIN_CALLBACK_URL: process.env.LINKEDIN_CALLBACK_URL || 'http://localhost:3005/api/auth/linkedin/callback',
 
+    // OAuth: Microsoft (Azure AD)
+    MICROSOFT_CLIENT_ID: process.env.MICROSOFT_CLIENT_ID,
+    MICROSOFT_CLIENT_SECRET: process.env.MICROSOFT_CLIENT_SECRET,
+    MICROSOFT_CALLBACK_URL: process.env.MICROSOFT_CALLBACK_URL || 'http://localhost:3005/api/auth/microsoft/callback',
+
     // Frontend URL (for OAuth redirects)
     FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
 };

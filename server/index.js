@@ -245,10 +245,12 @@ const tokenBillingRoutes = require('./routes/tokenBilling');
 const documentRoutes = require('./routes/documents');
 const megatrendRoutes = require('./routes/megatrend');
 const organizationRoutes = require('./routes/organizations'); // NEW
+const adminDataRoutes = require('./routes/admin-data'); // Admin panel data routes
 
 
 
 app.use('/api/auth', authRoutes);
+app.use('/api/admin-data', adminDataRoutes);
 
 // Apply Demo Guard to all authenticated API routes
 // It relies on req.user, so strictly speaking it should be applied within routes that use auth check, 
@@ -268,6 +270,8 @@ app.use('/api/sessions', sessionRoutes);
 app.use('/api/ai', aiRoutes);
 const conversationsRoutes = require('./routes/conversations');
 app.use('/api/conversations', conversationsRoutes);
+const chatProjectsRoutes = require('./routes/chat-projects');
+app.use('/api/chat-projects', chatProjectsRoutes);
 const dailyBriefRoutes = require('./routes/daily-brief');
 app.use('/api/daily-brief', dailyBriefRoutes);
 const pinnedPromptsRoutes = require('./routes/pinned-prompts');
@@ -307,6 +311,15 @@ const voiceRoutes = require('./routes/voice');
 app.use('/api/voice', voiceRoutes);
 app.use('/api/documents', documentRoutes); // New Document Route
 app.use('/api/settings', settingsRoutes);
+// User-Level Integrations (OAuth connections per user)
+const userIntegrationsRoutes = require('./routes/userIntegrations');
+app.use('/api/settings/integrations', userIntegrationsRoutes);
+// Calendar Integrations (Google Calendar, Outlook, Apple Calendar)
+const calendarIntegrationsRoutes = require('./routes/calendarIntegrations');
+app.use('/api/integrations/calendar', calendarIntegrationsRoutes);
+// MCP Server (Model Context Protocol for AI integrations)
+const mcpRoutes = require('./routes/mcp');
+app.use('/api/mcp', mcpRoutes);
 app.use('/api/superadmin', superAdminRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
@@ -323,6 +336,9 @@ app.use('/api/initiatives', initiativeRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/access-control', accessControlRoutes);
+// Permission Requests (User requests for role/limit changes)
+const permissionRequestsRoutes = require('./routes/permissionRequests');
+app.use('/api/permission-requests', permissionRequestsRoutes);
 // Integration Hub & AI Training
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/ai-training', aiTrainingRoutes);
@@ -334,6 +350,22 @@ const pricingRoutes = require('./routes/pricing');
 app.use('/api/pricing', pricingRoutes);
 app.use('/api/megatrends', megatrendRoutes);
 app.use('/api/organizations', organizationRoutes);
+
+// Invitations Management
+const invitationRoutes = require('./routes/invitations');
+app.use('/api/invitations', invitationRoutes);
+
+// Security Management (Sessions, 2FA, Password Policy)
+const securityRoutes = require('./routes/security');
+app.use('/api/security', securityRoutes);
+
+// GDPR Data Protection & Privacy Compliance
+const gdprRoutes = require('./routes/gdpr');
+app.use('/api/gdpr', gdprRoutes);
+
+// API Keys Management (External Integrations)
+const apiKeysRoutes = require('./routes/api-keys');
+app.use('/api/api-keys', apiKeysRoutes);
 
 // Enterprise AI Consulting - Organization Profiles
 const organizationProfilesRoutes = require('./routes/organization-profiles');
@@ -381,6 +413,10 @@ app.use('/api/security-policies', securityPoliciesRoutes);
 // Branding Routes
 const brandingRoutes = require('./routes/branding');
 app.use('/api/branding', brandingRoutes);
+
+// Workspace Defaults Routes
+const workspaceDefaultsRoutes = require('./routes/workspace-defaults');
+app.use('/api/workspace-defaults', workspaceDefaultsRoutes);
 
 // OAuth Routes (Google, LinkedIn)
 const oauthRoutes = require('./routes/oauthRoutes');
@@ -577,6 +613,19 @@ app.use('/api/videos', videoRoutes);
 const statusRoutes = require('./routes/status');
 app.use('/api/status', statusRoutes);
 
+// User Settings Extended Routes (Phase 2024-12)
+// Login History (Security Monitoring)
+const loginHistoryRoutes = require('./routes/loginHistory');
+app.use('/api/auth/login-history', loginHistoryRoutes);
+
+// Data Export & Privacy (GDPR Compliance)
+const dataExportRoutes = require('./routes/dataExport');
+app.use('/api/user', dataExportRoutes);
+
+// Organization Data Management (GDPR Compliance)
+const organizationDataRoutes = require('./routes/organization-data');
+app.use('/api/organization-data', organizationDataRoutes);
+
 // Step 7: Metrics & Conversion Intelligence Routes
 const metricsRoutes = require('./routes/metrics');
 app.use('/api/metrics', metricsRoutes);
@@ -674,15 +723,16 @@ app.use('/api/features', featureFlagRoutes);
 const webhookSubRoutes = require('./routes/webhookSubscriptions');
 app.use('/api/webhooks/subscriptions', webhookSubRoutes);
 
-const gdprRoutes = require('./routes/gdpr');
-app.use('/api/gdpr', gdprRoutes);
-
 const systemHealthRoutes = require('./routes/systemHealth');
 app.use('/api/system/health', systemHealthRoutes);
 
 // Consultify Studio - Visual AI Workspace
 const studioRoutes = require('./routes/studio');
 app.use('/api/studio', studioRoutes);
+
+// Project Intelligence Hub - AI knowledge capture
+const intelligenceRoutes = require('./routes/intelligence');
+app.use('/api/intelligence', intelligenceRoutes);
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../dist')));

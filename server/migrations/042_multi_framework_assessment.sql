@@ -310,3 +310,4 @@ COMMENT ON TABLE framework_score_history IS 'Audit trail for assessment score ch
 COMMENT ON TABLE framework_import_logs IS 'Log of PDF imports and AI extraction results';
 
 
+

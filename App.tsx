@@ -33,6 +33,7 @@ const MyWorkView = React.lazy(() => import('./views/MyWorkView').then(m => ({ de
 const ActionProposalView = React.lazy(() => import('./views/ActionProposalView').then(m => ({ default: m.ActionProposalView })));
 const StudioView = React.lazy(() => import('./views/StudioView').then(m => ({ default: m.StudioView })));
 const InitiativeManagementView = React.lazy(() => import('./views/InitiativeManagementView').then(m => ({ default: m.InitiativeManagementView })));
+const ProjectIntelligenceView = React.lazy(() => import('./views/ProjectIntelligenceView').then(m => ({ default: m.ProjectIntelligenceView })));
 const BenefitsRealizationView = React.lazy(() => import('./views/BenefitsRealizationView').then(m => ({ default: m.BenefitsRealizationView })));
 const PortfolioView = React.lazy(() => import('./views/PortfolioView'));
 import { AppView, SessionMode, AuthStep, User, UserRole } from './types';
@@ -139,7 +140,8 @@ const AppContent: React.FC = () => {
         fullSessionData, setFullSessionData,
         logout,
         theme, toggleTheme,
-        isChatCollapsed, toggleChatCollapse
+        isChatCollapsed, toggleChatCollapse,
+        setCurrentOrganization
     } = useAppStore();
 
     // ... (rest of hook calls)
@@ -209,48 +211,42 @@ const AppContent: React.FC = () => {
                 return;
             }
 
-            // If we have a token but no user, try to restore session
-            if (!currentUser) {
-                // First try to restore from localStorage
+            // If we have a token, restore session and sync with server
+            if (token) {
+                // 1. Immediate restore from localStorage for UI responsiveness
                 const storedUser = localStorage.getItem('user');
                 if (storedUser) {
                     try {
                         const userData = JSON.parse(storedUser);
-                        const authenticatedUser: User = {
-                            ...userData,
-                            isAuthenticated: true
-                        };
-                        setCurrentUser(authenticatedUser);
-                        console.log('[Auth] User session restored from localStorage');
-                        return;
+                        setCurrentUser({ ...userData, isAuthenticated: true });
                     } catch (e) {
-                        console.warn('[Auth] Failed to parse stored user data');
+                        console.warn('[Auth] Stale user data in localStorage');
                     }
                 }
 
-                // If no stored user, try to fetch from API
+                // 2. Background sync with server to get latest profile (avatar, role changes, etc.)
                 try {
                     const user = await Api.getMe();
                     if (user) {
-                        const authenticatedUser: User = {
-                            ...user,
-                            isAuthenticated: true
-                        };
+                        const authenticatedUser: User = { ...user, isAuthenticated: true };
                         setCurrentUser(authenticatedUser);
-                        console.log('[Auth] User session restored from API');
+                        localStorage.setItem('user', JSON.stringify(user));
+                        console.log('[Auth] User profile synchronized with server');
+                        
+                        // Set organization context for Admin panels
+                        if (user.organizationId) {
+                            setCurrentOrganization({
+                                id: user.organizationId,
+                                name: user.organizationName || 'Organization'
+                            });
+                        }
                     } else {
-                        // Token invalid - clear it
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('refreshToken');
-                        localStorage.removeItem('tokenExpiry');
-                        localStorage.removeItem('user');
+                        throw new Error('Invalid response from /me');
                     }
                 } catch (error) {
-                    // Token invalid - clear it
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('refreshToken');
-                    localStorage.removeItem('tokenExpiry');
-                    localStorage.removeItem('user');
+                    console.error('[Auth] Profile sync failed:', error);
+                    // If API fails but we have a token, we keep the localStorage version 
+                    // unless it's a 401/403 (handled by API interceptors usually)
                 }
             }
         };
@@ -361,6 +357,14 @@ const AppContent: React.FC = () => {
             isAuthenticated: true
         };
         setCurrentUser(authenticatedUser);
+        
+        // Set organization context for Admin panels
+        if (validUser.organizationId) {
+            setCurrentOrganization({
+                id: validUser.organizationId,
+                name: validUser.organizationName || 'Organization'
+            });
+        }
 
         // Redirect logic - ALL users start with AI Chat as primary entry point
         // Admin panel is accessible via sidebar navigation
@@ -594,6 +598,15 @@ const AppContent: React.FC = () => {
             return (
                 <React.Suspense fallback={<LoadingScreen />}>
                     <MyWorkView currentUser={currentUser} onNavigate={setCurrentView} />
+                </React.Suspense>
+            );
+        }
+
+        // Project Intelligence Hub - AI knowledge capture
+        if (currentView === AppView.PROJECT_INTELLIGENCE) {
+            return (
+                <React.Suspense fallback={<LoadingScreen />}>
+                    <ProjectIntelligenceView />
                 </React.Suspense>
             );
         }

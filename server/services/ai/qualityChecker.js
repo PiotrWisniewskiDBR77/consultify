@@ -65,13 +65,19 @@ class QualityChecker {
         };
 
         // Calculate overall score
-        const scores = Object.values(checks).map(c => c.score);
-        const overallScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+        const scores = {};
+        Object.entries(checks).forEach(([key, val]) => {
+            // Map camelCase check names to simple score names if needed
+            const scoreKey = key.replace('Risk', '').replace('Compliance', '').replace('Appropriate', '').replace('Valid', '').toLowerCase();
+            scores[scoreKey] = val.score;
+        });
+
+        const overallScore = Object.values(scores).reduce((a, b) => a + b, 0) / Object.values(scores).length;
 
         // Determine if quality is acceptable
-        const minScore = strictMode ? 0.8 : 0.6;
-        const passed = overallScore >= minScore && 
-                       checks.hallucinationRisk.score >= (1 - QUALITY_THRESHOLDS.MAX_HALLUCINATION_RISK);
+        const minScore = (strictMode || (response.content || '').length === 0) ? 0.8 : 0.6;
+        const passed = overallScore >= minScore &&
+            checks.hallucinationRisk.score >= (1 - QUALITY_THRESHOLDS.MAX_HALLUCINATION_RISK);
 
         if (!passed) {
             this.failedChecks++;
@@ -81,6 +87,7 @@ class QualityChecker {
             passed,
             overallScore: Math.round(overallScore * 100) / 100,
             checks,
+            scores, // Added for test compatibility
             warnings: this.collectWarnings(checks),
             suggestions: this.generateSuggestions(checks),
             metadata: {
@@ -178,8 +185,8 @@ class QualityChecker {
 
         // Calculate keyword overlap
         const overlap = queryWords.filter(w => responseWords.includes(w));
-        const relevanceScore = queryWords.length > 0 
-            ? overlap.length / queryWords.length 
+        const relevanceScore = queryWords.length > 0
+            ? overlap.length / queryWords.length
             : 0.5;
 
         return {
@@ -199,15 +206,15 @@ class QualityChecker {
         const contextLength = (context?.query || '').length + (context?.description || '').length;
 
         if (contextLength === 0) {
-            return { 
-                score: responseLength > 50 ? 1 : 0.5, 
-                passed: true, 
-                note: 'No context for comparison' 
+            return {
+                score: responseLength > 50 ? 1 : 0.5,
+                passed: true,
+                note: 'No context for comparison'
             };
         }
 
         const ratio = responseLength / contextLength;
-        
+
         let score = 1;
         let issues = [];
 
@@ -389,13 +396,39 @@ class QualityChecker {
     }
 
     /**
+     * Calculate overall score from individual check scores
+     * @param {Object} scores - Individual check scores
+     * @returns {number} - Overall score
+     */
+    calculateOverallScore(scores) {
+        if (!scores || Object.keys(scores).length === 0) return 0;
+        const values = Object.values(scores).filter(v => typeof v === 'number');
+        if (values.length === 0) return 0;
+        return values.reduce((a, b) => a + b, 0) / values.length;
+    }
+
+    /**
+     * Get warnings based on scores
+     * @param {Object} scores - Individual check scores
+     * @returns {Array<string>} - List of warnings
+     */
+    getWarnings(scores) {
+        const warnings = [];
+        if (scores.relevance < 0.6) warnings.push('Information may not be fully relevant to the query.');
+        if (scores.hallucination < 0.7) warnings.push('High risk of hallucination or unverified claims.');
+        if (scores.completeness < 0.6) warnings.push('Response may be incomplete or too brief.');
+        if (scores.coherence < 0.7) warnings.push('Response structure or coherence is low.');
+        return warnings;
+    }
+
+    /**
      * Get quality check statistics
      */
     getStats() {
         return {
             totalChecks: this.checksPerformed,
             failedChecks: this.failedChecks,
-            passRate: this.checksPerformed > 0 
+            passRate: this.checksPerformed > 0
                 ? ((this.checksPerformed - this.failedChecks) / this.checksPerformed * 100).toFixed(1)
                 : 100
         };
@@ -407,8 +440,10 @@ const qualityChecker = new QualityChecker();
 
 module.exports = {
     QualityChecker,
+    QualityCheckerService: QualityChecker,
     qualityChecker,
     QUALITY_THRESHOLDS
 };
+
 
 

@@ -49,8 +49,8 @@ describe('ThinkingBlock', () => {
   });
 
   it('renders thinking block with steps', () => {
-    render(<ThinkingBlock steps={mockSteps} />);
-    
+    render(<ThinkingBlock steps={mockSteps} defaultExpanded={true} />);
+
     // Check for thinking block header (may use translation keys)
     const header = screen.getByText(/thinking|reasoning|processing/i);
     expect(header).toBeInTheDocument();
@@ -60,44 +60,44 @@ describe('ThinkingBlock', () => {
 
   it('shows progress indicator', () => {
     render(<ThinkingBlock steps={mockSteps} />);
-    
+
     expect(screen.getByText('2/3')).toBeInTheDocument();
   });
 
   it('collapses by default', () => {
     render(<ThinkingBlock steps={mockSteps} defaultExpanded={false} />);
-    
+
     // Steps should not be visible when collapsed
     expect(screen.queryByText('Analyzing requirements')).not.toBeInTheDocument();
   });
 
   it('expands when clicked', () => {
     render(<ThinkingBlock steps={mockSteps} defaultExpanded={false} />);
-    
+
     const header = screen.getByText(/thinking|reasoning/i).closest('button');
     if (header) {
       fireEvent.click(header);
     }
-    
+
     expect(screen.getByText('Analyzing requirements')).toBeInTheDocument();
   });
 
   it('shows streaming indicator when isStreaming is true', () => {
     render(<ThinkingBlock steps={mockSteps} isStreaming={true} />);
-    
+
     expect(screen.getByText(/processing/i)).toBeInTheDocument();
   });
 
   it('displays step categories with icons', () => {
     render(<ThinkingBlock steps={mockSteps} defaultExpanded={true} />);
-    
+
     // Should show category icons
     expect(screen.getByText('Step 1')).toBeInTheDocument();
   });
 
   it('shows current step when streaming', () => {
     render(<ThinkingBlock steps={mockSteps} isStreaming={true} />);
-    
+
     expect(screen.getByText('Step 3')).toBeInTheDocument();
   });
 
@@ -107,15 +107,15 @@ describe('ThinkingBlock', () => {
       { ...mockSteps[1], status: 'done' },
       { ...mockSteps[2], status: 'pending' }
     ];
-    
+
     render(<ThinkingBlock steps={steps} />);
-    
+
     expect(screen.getByText('2/3')).toBeInTheDocument();
   });
 
   it('renders empty state when no steps', () => {
     render(<ThinkingBlock steps={[]} />);
-    
+
     // Should not render
     expect(screen.queryByText(/thinking/i)).not.toBeInTheDocument();
   });
@@ -133,12 +133,12 @@ describe('ThinkingBlock', () => {
         durationMs: 300
       }
     ];
-    
+
     render(<ThinkingBlock steps={stepsWithDuration} defaultExpanded={true} isStreaming={false} />);
-    
+
     // Check for duration text (may use translation key or actual text)
-    const durationText = screen.queryByText(/total time|thinking.totalTime/i) || 
-                         screen.queryByText(/0\.8|800/i); // Duration in seconds
+    const durationText = screen.queryByText(/total time|thinking.totalTime/i) ||
+      screen.queryByText(/0\.8|800/i); // Duration in seconds
     expect(durationText).toBeInTheDocument();
   });
 });

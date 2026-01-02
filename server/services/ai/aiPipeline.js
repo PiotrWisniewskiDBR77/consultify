@@ -699,12 +699,21 @@ class AIPipeline {
                 responseModePrompt // Pass response mode instructions
             });
 
-            // 6. Route Model (with org overrides)
+            // 6. Route Model (with org overrides and user tier preference)
             reportProgress('routing', 'Routing to optimal model...');
+
+            // Apply User's Tier Preference
+            const routingOptions = { ...(request.options || {}) };
+            // Only apply if user has a preference AND caller didn't explicitly force a tier
+            if (effectiveSettings?.selectedTier && !routingOptions.tier) {
+                routingOptions.tier = effectiveSettings.selectedTier;
+                aiLogger.debug('Pipeline', `Applied user tier preference: ${effectiveSettings.selectedTier}`);
+            }
+
             modelConfig = await this.modelRouter.select({
                 capability: request.capability,
                 organizationId: request.organizationId,
-                options: request.options
+                options: routingOptions
             });
 
             // 7. Call LLM Service (with fallback support)

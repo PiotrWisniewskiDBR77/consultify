@@ -98,10 +98,10 @@ async function getProviderAsync(modelConfig) {
     const apiKey = await getApiKey(providerName, modelConfig.apiKey);
     const endpoint = await getEndpoint(providerName, modelConfig.endpoint);
 
-    return getProviderSync({ 
-        ...modelConfig, 
-        apiKey, 
-        endpoint 
+    return getProviderSync({
+        ...modelConfig,
+        apiKey,
+        endpoint
     });
 }
 
@@ -222,30 +222,65 @@ class LLMService {
         return REASONING_MODELS.some(rm => modelLower.includes(rm));
     }
 
+    async resolveModelConfig(modelConfig) {
+        // If it's already a full config with provider and API key, return it
+        // Note: Check both camelCase (apiKey) and snake_case (api_key) for compatibility
+        if (modelConfig.provider && (modelConfig.api_key || modelConfig.apiKey)) return modelConfig;
+
+        // Check if ID is a Tier
+        const tierMap = {
+            'budget': 'BUDGET',
+            'fast': 'STANDARD',
+            'standard': 'STANDARD',
+            'premium': 'PREMIUM',
+            'reasoning': 'REASONING'
+        };
+
+        const tier = tierMap[(modelConfig.id || '').toLowerCase()] || modelConfig.tier;
+
+        if (tier) {
+            const configService = getLLMConfigService();
+            if (configService) {
+                // Get best available provider for this tier
+                const bestProvider = await configService.getNextFallback([], tier);
+                if (bestProvider) {
+                    aiLogger.info('LLMService', `Resolved Tier ${tier} to ${bestProvider.provider}/${bestProvider.model_id}`);
+                    return bestProvider;
+                }
+                aiLogger.warn('LLMService', `No providers found for Tier ${tier}, falling back to default`);
+            }
+        }
+
+        return modelConfig;
+    }
+
     async call(params) {
-        const { type, modelConfig, systemPrompt, messages, stream, schema, tools, context } = params;
+        let { type, modelConfig, systemPrompt, messages, stream, schema, tools, context } = params;
+
+        // Resolve Tier to actual Model Config
+        modelConfig = await this.resolveModelConfig(modelConfig);
 
         // Check if this is a reasoning model (o1)
-        const isReasoning = this.isReasoningModel(modelConfig?.id);
+        const isReasoning = this.isReasoningModel(modelConfig?.id) || modelConfig?.tier === 'REASONING';
 
         // Reasoning models: no streaming, no tools, special handling
         if (isReasoning) {
             aiLogger.info('LLMService', `Using reasoning model: ${modelConfig.id}`);
-            return this.callReasoningModel(params);
+            return this.callReasoningModel({ ...params, modelConfig });
         }
 
         // Determine call type for standard models
         if (tools && tools.length > 0) {
             if (stream) {
-                return this.callWithToolsStream(params);
+                return this.callWithToolsStream({ ...params, modelConfig });
             }
-            return this.callWithTools(params);
+            return this.callWithTools({ ...params, modelConfig });
         } else if (type === 'structured' && schema) {
-            return this.callStructured(params);
+            return this.callStructured({ ...params, modelConfig });
         } else if (stream) {
-            return this.callStream(params);
+            return this.callStream({ ...params, modelConfig });
         } else {
-            return this.callText(params);
+            return this.callText({ ...params, modelConfig });
         }
     }
 
@@ -272,7 +307,7 @@ class LLMService {
                 // Skip system messages - will be injected into first user message
                 continue;
             }
-            
+
             if (msg.role === 'user' && !systemInjected && systemPrompt) {
                 // Inject system prompt into first user message
                 formattedMessages.push({
@@ -585,7 +620,7 @@ class LLMService {
      */
     async testConnection(modelConfig) {
         const providerId = modelConfig.provider || 'openai';
-        
+
         try {
             const provider = getProvider(modelConfig);
             const model = provider(modelConfig.id);
@@ -597,7 +632,7 @@ class LLMService {
             });
 
             circuitBreaker.recordSuccess(providerId);
-            
+
             return {
                 success: true,
                 response: result.text,
@@ -606,7 +641,7 @@ class LLMService {
             };
         } catch (error) {
             circuitBreaker.recordFailure(providerId, error);
-            
+
             return {
                 success: false,
                 error: error.message,

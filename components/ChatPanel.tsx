@@ -6,6 +6,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from 'react-i18next';
 import { useVoiceChat } from '../hooks/useVoiceChat';
 import { useArtifactsStore } from '../store/useArtifactsStore';
+import { useConversationStore } from '../store/useConversationStore';
 import { ThinkingBlock } from './AIChat/Messages/ThinkingBlock';
 import { CitationList } from './AIChat/CitationList';
 import { InlineResponseFeedback } from './AIChat/InlineResponseFeedback';
@@ -15,7 +16,7 @@ import remarkGfm from 'remark-gfm';
 // Tool Call Card Component for displaying MCP tool executions
 const ToolCallCard: React.FC<{ tool: ToolCallInfo }> = ({ tool }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
-  
+
   const statusIcon = () => {
     switch (tool.status) {
       case 'executed':
@@ -46,7 +47,7 @@ const ToolCallCard: React.FC<{ tool: ToolCallInfo }> = ({ tool }) => {
 
   return (
     <div className={`rounded-lg border ${statusColor()} p-3 text-xs`}>
-      <div 
+      <div
         className="flex items-center justify-between cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
@@ -59,7 +60,7 @@ const ToolCallCard: React.FC<{ tool: ToolCallInfo }> = ({ tool }) => {
         </div>
         {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </div>
-      
+
       {isExpanded && (
         <div className="mt-2 space-y-2">
           <div>
@@ -146,6 +147,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     toggleVoice,
     ttsSupported
   } = useVoiceChat();
+
+  const { activeConversationId: conversationId } = useConversationStore();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -315,12 +318,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           ...feedback
         })
       });
-      
+
       if (response.ok) {
         // Also update local message feedback state for quick visual indicator
-        const simpleFeedback: MessageFeedback = { 
+        const simpleFeedback: MessageFeedback = {
           rating: feedback.rating === 'positive' ? 'positive' : feedback.rating === 'negative' ? 'negative' : 'positive',
-          timestamp: new Date() 
+          timestamp: new Date()
         };
         if (onMessageFeedback) {
           onMessageFeedback(messageId, simpleFeedback);
@@ -373,8 +376,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           const isCopied = copiedMessageId === msg.id;
 
           return (
-            <div 
-              key={msg.id} 
+            <div
+              key={msg.id}
               className={`flex flex-col space-y-1.5 group ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
               onMouseEnter={() => setHoveredMessageId(msg.id)}
               onMouseLeave={() => setHoveredMessageId(null)}
@@ -382,8 +385,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               {/* Thinking Steps (for AI messages) */}
               {enableEnhancedMessages && msg.role === 'ai' && hasThinkingSteps && (
                 <div className="w-full max-w-[85%] ml-9">
-                  <ThinkingBlock 
-                    steps={msg.thinkingSteps!} 
+                  <ThinkingBlock
+                    steps={msg.thinkingSteps!}
                     isStreaming={msg.isStreaming || msg.isThinking}
                   />
                 </div>
@@ -404,7 +407,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   ? 'bg-primary-600 text-white rounded-tr-none'
                   : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
                   }`}>
-                  
+
                   {/* AI Message Header */}
                   {enableEnhancedMessages && msg.role === 'ai' && (
                     <div className="flex items-center gap-2 mb-2 text-xs text-slate-500 dark:text-slate-400">
@@ -428,7 +431,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   {/* Message Content - Enhanced for AI */}
                   {enableEnhancedMessages && msg.role === 'ai' ? (
                     <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <ReactMarkdown 
+                      <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
                           code: ({ inline, className: codeClassName, children }: any) => {
@@ -572,8 +575,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   className="ml-9 flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg text-xs font-medium transition-colors"
                 >
                   <FileCode size={14} />
-                  {msg.artifacts!.length} {msg.artifacts!.length === 1 
-                    ? t('chat.artifact', 'artifact') 
+                  {msg.artifacts!.length} {msg.artifacts!.length === 1
+                    ? t('chat.artifact', 'artifact')
                     : t('chat.artifacts', 'artifacts')
                   }
                 </button>
@@ -589,11 +592,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               {/* Feedback indicator if already given */}
               {enableEnhancedMessages && msg.feedback && (
                 <div className="ml-9 mt-1">
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
-                    msg.feedback.rating === 'positive' 
-                      ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' 
-                      : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                  }`}>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${msg.feedback.rating === 'positive'
+                    ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
+                    : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                    }`}>
                     {msg.feedback.rating === 'positive' ? <ThumbsUp size={12} /> : <ThumbsDown size={12} />}
                     {msg.feedback.rating === 'positive' ? t('chat.markedHelpful', 'Marked as helpful') : t('chat.markedNotHelpful', 'Marked as not helpful')}
                   </span>
@@ -605,8 +607,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 <div className="ml-9 mt-1">
                   <InlineResponseFeedback
                     messageId={msg.id}
-                    conversationId={conversationId}
-                    responseMode={msg.metadata?.responseMode}
+                    conversationId={conversationId || undefined}
+                    responseMode={msg.metadata?.responseMode as any}
                     responseLength={msg.content?.length}
                     onFeedback={(feedback) => handleResponseFeedback(msg.id, feedback)}
                   />

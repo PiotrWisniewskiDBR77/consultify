@@ -494,37 +494,61 @@ class EnterpriseSecurityService {
     }
 
     /**
+     * Build filter query conditions
+     * @private
+     */
+    _buildAuditFilterQuery(filters, params) {
+        const { organizationId, userId, action, riskLevel, flagged, search, startDate, endDate } = filters;
+        let whereClause = ' WHERE 1=1';
+
+        if (organizationId) {
+            whereClause += ` AND organization_id = ?`;
+            params.push(organizationId);
+        }
+        if (userId) {
+            whereClause += ` AND user_id = ?`;
+            params.push(userId);
+        }
+        if (action) {
+            whereClause += ` AND action = ?`;
+            params.push(action);
+        }
+        if (riskLevel) {
+            whereClause += ` AND risk_level = ?`;
+            params.push(riskLevel);
+        }
+        if (flagged !== undefined) {
+            whereClause += ` AND flagged = ?`;
+            params.push(flagged ? 1 : 0);
+        }
+        if (search) {
+            whereClause += ` AND (request_summary LIKE ? OR response_summary LIKE ? OR action LIKE ? OR user_id LIKE ?)`;
+            const searchTerm = `%${search}%`;
+            params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+        }
+        if (startDate) {
+            whereClause += ` AND timestamp >= ?`;
+            params.push(startDate);
+        }
+        if (endDate) {
+            whereClause += ` AND timestamp <= ?`;
+            params.push(endDate + ' 23:59:59');
+        }
+
+        return whereClause;
+    }
+
+    /**
      * Get audit log entries
      * Returns empty array on any failure
      */
     async getAuditLog(filters = {}) {
         try {
-            const { organizationId, userId, action, riskLevel, flagged, limit = 100, offset = 0 } = filters;
-
-            let query = `SELECT * FROM ai_audit_log WHERE 1=1`;
+            const { limit = 100, offset = 0 } = filters;
             const params = [];
 
-            if (organizationId) {
-                query += ` AND organization_id = ?`;
-                params.push(organizationId);
-            }
-            if (userId) {
-                query += ` AND user_id = ?`;
-                params.push(userId);
-            }
-            if (action) {
-                query += ` AND action = ?`;
-                params.push(action);
-            }
-            if (riskLevel) {
-                query += ` AND risk_level = ?`;
-                params.push(riskLevel);
-            }
-            if (flagged !== undefined) {
-                query += ` AND flagged = ?`;
-                params.push(flagged ? 1 : 0);
-            }
-
+            let query = `SELECT * FROM ai_audit_log`;
+            query += this._buildAuditFilterQuery(filters, params);
             query += ` ORDER BY timestamp DESC LIMIT ? OFFSET ?`;
             params.push(limit, offset);
 
@@ -533,6 +557,23 @@ class EnterpriseSecurityService {
         } catch (error) {
             aiLogger.debug('EnterpriseSecurity', `Audit log fetch failed: ${error.message}`);
             return [];
+        }
+    }
+
+    /**
+     * Get total count of audit log entries matching filters
+     */
+    async getAuditLogCount(filters = {}) {
+        try {
+            const params = [];
+            let query = `SELECT COUNT(*) as total FROM ai_audit_log`;
+            query += this._buildAuditFilterQuery(filters, params);
+
+            const result = await dbGet(query, params);
+            return result?.total || 0;
+        } catch (error) {
+            aiLogger.debug('EnterpriseSecurity', `Audit log count failed: ${error.message}`);
+            return 0;
         }
     }
 

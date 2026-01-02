@@ -56,6 +56,22 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     const [models, setModels] = useState<LLMProvider[]>(availableModels);
 
     useEffect(() => {
+        const fetchModels = async () => {
+            try {
+                const response = await fetch('/api/ai-settings/available-models', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setModels(data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch models:', error);
+            }
+        };
+
         if (availableModels.length > 0) {
             setModels(availableModels);
         } else {
@@ -63,22 +79,6 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             fetchModels();
         }
     }, [availableModels]);
-
-    const fetchModels = async () => {
-        try {
-            const response = await fetch('/api/ai-settings/available-models', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setModels(data);
-            }
-        } catch (error) {
-            console.error('Failed to fetch models:', error);
-        }
-    };
 
     const isModelVisible = (modelId: string) => {
         if (visibleModelIds.length === 0) return true;

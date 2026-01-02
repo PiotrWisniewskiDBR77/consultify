@@ -201,26 +201,26 @@ export function AIPerformanceDashboard() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
+            {/* Header - Clean minimal */}
             <div className="flex justify-between items-center flex-wrap gap-4">
                 <div>
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <Activity size={24} className="text-purple-400" />
+                    <h2 className="text-lg font-medium text-white flex items-center gap-2">
+                        <Activity size={16} className="text-slate-500" />
                         AI Performance Dashboard
                     </h2>
-                    <p className="text-slate-400 text-sm mt-1">Real-time performance metrics and analytics</p>
+                    <p className="text-sm text-slate-500 mt-0.5">Real-time performance metrics and analytics</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                     {/* Time Range */}
-                    <div className="flex bg-navy-800 rounded-lg p-1">
+                    <div className="flex bg-white/[0.03] rounded-lg p-0.5">
                         {(['1h', '24h', '7d', '30d'] as TimeRange[]).map((range) => (
                             <button
                                 key={range}
                                 onClick={() => setTimeRange(range)}
                                 className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                                     timeRange === range
-                                        ? 'bg-purple-600 text-white'
-                                        : 'text-slate-400 hover:text-white'
+                                        ? 'bg-white/10 text-white'
+                                        : 'text-slate-500 hover:text-white'
                                 }`}
                             >
                                 {range}
@@ -230,24 +230,19 @@ export function AIPerformanceDashboard() {
                     {/* Auto Refresh Toggle */}
                     <button
                         onClick={() => setAutoRefresh(!autoRefresh)}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                            autoRefresh ? 'bg-emerald-600 text-white' : 'bg-navy-800 text-slate-300 hover:bg-navy-700'
-                        }`}
+                        className={`admin-btn ${autoRefresh ? 'bg-emerald-500/20 text-emerald-400' : 'admin-btn-subtle'}`}
                     >
                         <Zap size={14} />
                         {autoRefresh ? 'Live' : 'Auto'}
                     </button>
-                    <button 
-                        onClick={handleExport}
-                        className="flex items-center gap-2 px-3 py-2 bg-navy-800 hover:bg-navy-700 text-slate-300 rounded-lg text-sm font-medium transition-colors"
-                    >
+                    <button onClick={handleExport} className="admin-btn admin-btn-subtle">
                         <Download size={14} />
                         Export
                     </button>
                     <button 
                         onClick={loadMetrics}
                         disabled={loading}
-                        className="flex items-center gap-2 px-3 py-2 bg-navy-800 hover:bg-navy-700 text-slate-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                        className="admin-btn admin-btn-subtle disabled:opacity-50"
                     >
                         <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                         Refresh
@@ -298,36 +293,36 @@ export function AIPerformanceDashboard() {
                 />
             </div>
 
-            {/* Response Time Distribution */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Response Time Distribution - Clean minimal */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Percentiles */}
-                <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                        <Gauge size={18} className="text-cyan-400" />
+                <div className="admin-card p-4">
+                    <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+                        <Gauge size={14} className="text-slate-500" />
                         Response Time Percentiles
                     </h3>
                     <div className="space-y-4">
-                        <PercentileBar label="p50" value={metrics.p50ResponseTime} max={5} color="bg-emerald-500" />
-                        <PercentileBar label="p95" value={metrics.p95ResponseTime} max={5} color="bg-amber-500" />
-                        <PercentileBar label="p99" value={metrics.p99ResponseTime} max={5} color="bg-red-500" />
+                        <PercentileBar label="p50" value={metrics.p50ResponseTime} max={5} color="bg-slate-400" />
+                        <PercentileBar label="p95" value={metrics.p95ResponseTime} max={5} color="bg-slate-500" />
+                        <PercentileBar label="p99" value={metrics.p99ResponseTime} max={5} color="bg-slate-600" />
                     </div>
                 </div>
 
                 {/* Response Time Trend */}
-                <div className="lg:col-span-2 bg-navy-900 border border-white/10 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                        <TrendingUp size={18} className="text-purple-400" />
+                <div className="lg:col-span-2 admin-card p-4">
+                    <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+                        <TrendingUp size={14} className="text-slate-500" />
                         Response Time Trend
                     </h3>
                     {loading ? (
-                        <div className="h-32 flex items-center justify-center text-slate-500">Loading chart...</div>
+                        <div className="h-32 flex items-center justify-center text-slate-600">Loading chart...</div>
                     ) : (
-                        <div className="h-32 flex items-end gap-1">
+                        <div className="h-32 flex items-end gap-0.5">
                             {responseTimeTrend.map((point, idx) => (
                                 <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
                                     <div 
-                                        className="w-full bg-gradient-to-t from-purple-600 to-cyan-400 rounded-t transition-all group-hover:from-purple-500 group-hover:to-cyan-300"
-                                        style={{ height: `${(point.value / maxTrendValue) * 100}%`, minHeight: '4px' }}
+                                        className="w-full bg-slate-500 hover:bg-slate-400 rounded-sm transition-all"
+                                        style={{ height: `${(point.value / maxTrendValue) * 100}%`, minHeight: '2px' }}
                                         title={`${new Date(point.timestamp).toLocaleTimeString()}: ${point.value.toFixed(2)}s`}
                                     />
                                 </div>
@@ -337,26 +332,26 @@ export function AIPerformanceDashboard() {
                 </div>
             </div>
 
-            {/* Capability & Model Metrics */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Capability & Model Metrics - Clean minimal */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* By Capability */}
-                <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                        <BarChart3 size={18} className="text-amber-400" />
+                <div className="admin-card p-4">
+                    <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+                        <BarChart3 size={14} className="text-slate-500" />
                         Performance by Capability
                     </h3>
-                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
                         {capabilityMetrics.map((cap, idx) => (
-                            <div key={idx} className="flex items-center gap-4 p-3 bg-navy-950/50 rounded-lg">
+                            <div key={idx} className="flex items-center gap-4 p-3 bg-white/[0.02] rounded-lg hover:bg-white/[0.04] transition-colors">
                                 <div className="flex-1 min-w-0">
-                                    <div className="text-sm text-white font-medium capitalize">{cap.capability}</div>
-                                    <div className="text-xs text-slate-500">{cap.requests.toLocaleString()} requests</div>
+                                    <div className="text-sm text-slate-300 capitalize">{cap.capability}</div>
+                                    <div className="text-xs text-slate-600">{cap.requests.toLocaleString()} requests</div>
                                 </div>
                                 <div className="text-right text-xs space-y-1">
-                                    <div className="text-cyan-400">{cap.avgResponseTime.toFixed(1)}s</div>
-                                    <div className="text-slate-500">{formatCurrency(cap.totalCost)}</div>
+                                    <div className="text-slate-400">{cap.avgResponseTime.toFixed(1)}s</div>
+                                    <div className="text-slate-600">{formatCurrency(cap.totalCost)}</div>
                                 </div>
-                                <div className={`text-xs font-medium ${cap.successRate > 95 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                <div className={`text-xs ${cap.successRate > 95 ? 'text-emerald-400' : 'text-amber-400'}`}>
                                     {cap.successRate.toFixed(1)}%
                                 </div>
                             </div>
@@ -365,14 +360,14 @@ export function AIPerformanceDashboard() {
                 </div>
 
                 {/* By Model */}
-                <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                        <PieChart size={18} className="text-pink-400" />
+                <div className="admin-card p-4">
+                    <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+                        <PieChart size={14} className="text-slate-500" />
                         Performance by Model
                     </h3>
-                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
                         {modelMetrics.map((model, idx) => (
-                            <div key={idx} className="flex items-center gap-4 p-3 bg-navy-950/50 rounded-lg">
+                            <div key={idx} className="flex items-center gap-4 p-3 bg-white/[0.02] rounded-lg hover:bg-white/[0.04] transition-colors">
                                 <div className="flex-1 min-w-0">
                                     <div className="text-sm text-white font-medium">{model.model}</div>
                                     <div className="text-xs text-slate-500">{model.requests.toLocaleString()} requests</div>
@@ -390,13 +385,13 @@ export function AIPerformanceDashboard() {
                 </div>
             </div>
 
-            {/* Health Status */}
-            <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <Activity size={18} className="text-emerald-400" />
+            {/* Health Status - Clean minimal */}
+            <div className="admin-card p-4">
+                <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+                    <Activity size={14} className="text-slate-500" />
                     System Health
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <HealthIndicator 
                         label="API Response" 
                         status={metrics.avgResponseTime < 2 ? 'healthy' : metrics.avgResponseTime < 4 ? 'warning' : 'critical'}
@@ -419,58 +414,57 @@ export function AIPerformanceDashboard() {
     );
 }
 
-// Helper Components
+// Helper Components - Clean minimal style
 const MetricCard: React.FC<{ 
     icon: any; 
     label: string; 
     value: string; 
     color: string;
     trend?: 'up' | 'down';
-}> = ({ icon: Icon, label, value, color, trend }) => (
-    <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
-        <div className="flex items-center justify-between mb-2">
+}> = ({ icon: Icon, label, value, trend }) => (
+    <div className="admin-metric">
+        <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-                <Icon size={16} className={color} />
-                <span className="text-xs text-slate-500 uppercase tracking-wider truncate">{label}</span>
+                <Icon size={14} className="text-slate-500" />
+                <span className="admin-metric-label">{label}</span>
             </div>
             {trend && (
                 trend === 'up' 
-                    ? <ArrowUpRight size={14} className="text-emerald-400" />
-                    : <ArrowDownRight size={14} className="text-red-400" />
+                    ? <ArrowUpRight size={12} className="text-emerald-400" />
+                    : <ArrowDownRight size={12} className="text-red-400" />
             )}
         </div>
-        <div className="text-xl font-bold text-white">{value}</div>
+        <div className="admin-metric-value">{value}</div>
     </div>
 );
 
 const PercentileBar: React.FC<{ label: string; value: number; max: number; color: string }> = ({ 
-    label, value, max, color 
+    label, value, max 
 }) => (
     <div className="flex items-center gap-3">
-        <span className="text-xs text-slate-400 w-8">{label}</span>
-        <div className="flex-1 h-3 bg-navy-950 rounded-full overflow-hidden">
+        <span className="text-xs text-slate-500 w-8">{label}</span>
+        <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
             <div 
-                className={`h-full ${color} rounded-full transition-all`}
+                className="h-full bg-slate-400 rounded-full transition-all"
                 style={{ width: `${Math.min((value / max) * 100, 100)}%` }}
             />
         </div>
-        <span className="text-xs text-white font-medium w-12 text-right">{value.toFixed(2)}s</span>
+        <span className="text-xs text-slate-300 font-medium w-12 text-right">{value.toFixed(2)}s</span>
     </div>
 );
 
 const HealthIndicator: React.FC<{ label: string; status: 'healthy' | 'warning' | 'critical' }> = ({ 
     label, status 
 }) => (
-    <div className="flex items-center gap-3 p-3 bg-navy-950/50 rounded-lg">
-        {status === 'healthy' ? (
-            <CheckCircle size={18} className="text-emerald-400" />
-        ) : status === 'warning' ? (
-            <AlertTriangle size={18} className="text-amber-400" />
-        ) : (
-            <AlertTriangle size={18} className="text-red-400" />
-        )}
+    <div className="flex items-center gap-3 p-3 bg-white/[0.02] rounded-lg">
+        <span className={`admin-status ${
+            status === 'healthy' ? 'admin-status-healthy' :
+            status === 'warning' ? 'admin-status-warning' : 'admin-status-error'
+        }`}>
+            <span className="admin-status-dot" />
+        </span>
         <div className="flex-1">
-            <div className="text-sm text-white">{label}</div>
+            <div className="text-sm text-slate-300">{label}</div>
             <div className={`text-xs capitalize ${
                 status === 'healthy' ? 'text-emerald-400' : 
                 status === 'warning' ? 'text-amber-400' : 'text-red-400'

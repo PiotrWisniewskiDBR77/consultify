@@ -43,6 +43,7 @@ router.get('/', verifyToken, async (req, res) => {
             archived = 'false',
             starred,
             projectId,
+            chatProjectId,
             search,
             limit = 50,
             offset = 0
@@ -50,7 +51,7 @@ router.get('/', verifyToken, async (req, res) => {
 
         let query = `
             SELECT 
-                id, title, title_source, project_id, starred, archived,
+                id, title, title_source, project_id, chat_project_id, starred, archived,
                 tags, pmo_context, message_count, last_message_preview,
                 last_message_at, created_at, updated_at
             FROM conversations
@@ -70,10 +71,20 @@ router.get('/', verifyToken, async (req, res) => {
             query += ` AND starred = 1`;
         }
 
-        // Filter by project
+        // Filter by project (PMO project)
         if (projectId) {
             query += ` AND project_id = ?`;
             params.push(projectId);
+        }
+
+        // Filter by chat project (chat organization folder)
+        if (chatProjectId) {
+            if (chatProjectId === 'none') {
+                query += ` AND chat_project_id IS NULL`;
+            } else {
+                query += ` AND chat_project_id = ?`;
+                params.push(chatProjectId);
+            }
         }
 
         // Full-text search on title (simplified for SQLite)
@@ -188,7 +199,7 @@ router.patch('/:id', verifyToken, async (req, res) => {
     try {
         const userId = req.userId;
         const { id } = req.params;
-        const { title, starred, archived, tags, pmoContext } = req.body;
+        const { title, starred, archived, tags, pmoContext, chatProjectId } = req.body;
 
         // Build dynamic update query
         const updates = [];
@@ -218,6 +229,12 @@ router.patch('/:id', verifyToken, async (req, res) => {
         if (pmoContext !== undefined) {
             updates.push(`pmo_context = ?`);
             params.push(JSON.stringify(pmoContext));
+        }
+
+        // Support moving conversation to/from a chat project
+        if (chatProjectId !== undefined) {
+            updates.push(`chat_project_id = ?`);
+            params.push(chatProjectId === null ? null : chatProjectId);
         }
 
         if (updates.length === 0) {

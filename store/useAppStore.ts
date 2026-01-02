@@ -28,6 +28,11 @@ interface AppState {
     chatPanelWidth: number;
     setChatPanelWidth: (width: number) => void;
 
+    // Chat Sliding Panel (Claude-style sidebar)
+    isChatSlidingPanelOpen: boolean;
+    toggleChatSlidingPanel: () => void;
+    setChatSlidingPanelOpen: (open: boolean) => void;
+
     // Side Panels (Mutually Exclusive)
     activeSidePanel: 'HELP' | 'DOCUMENTS' | 'FEEDBACK' | null;
     toggleSidePanel: (panel: 'HELP' | 'DOCUMENTS' | 'FEEDBACK') => void;
@@ -61,9 +66,10 @@ interface AppState {
     // LLM Model Selection
     aiConfig: {
         autoMode: boolean;
-        maxMode: boolean;
+        maxMode: boolean; // Acts as "REASONING" tier toggle often
         multiModel: boolean;
-        selectedModelId: string | null;
+        selectedModelId: string | null; // Keep for backward compatibility / admin override
+        selectedTier: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING' | null;
     };
     setAIConfig: (config: Partial<AppState['aiConfig']>) => void;
 
@@ -72,6 +78,10 @@ interface AppState {
     addNotification: (notification: Notification) => void;
     markNotificationAsRead: (id: string) => void;
     clearNotifications: () => void;
+
+    // Organization Context
+    currentOrganization: { id: string; name: string } | null;
+    setCurrentOrganization: (org: { id: string; name: string } | null) => void;
 
     // Actions
     setCurrentView: (view: AppView) => void;
@@ -165,7 +175,8 @@ export const useAppStore = create<AppState>()(
                 autoMode: true,
                 maxMode: false,
                 multiModel: false,
-                selectedModelId: null
+                selectedModelId: null,
+                selectedTier: 'BUDGET' // Default to BUDGET
             },
             setAIConfig: (newConfig) => set((state) => ({
                 aiConfig: { ...state.aiConfig, ...newConfig }
@@ -176,6 +187,9 @@ export const useAppStore = create<AppState>()(
                 notifications: state.notifications.map(n => n.id === id ? { ...n, read: true } : n)
             })),
             clearNotifications: () => set({ notifications: [] }),
+
+            currentOrganization: null,
+            setCurrentOrganization: (org) => set({ currentOrganization: org }),
 
             setCurrentView: (view) => set({ currentView: view }),
             setSessionMode: (mode) => set({ sessionMode: mode }),
@@ -188,6 +202,11 @@ export const useAppStore = create<AppState>()(
             // Chat Panel Visibility
             isChatCollapsed: false,
             toggleChatCollapse: () => set((state) => ({ isChatCollapsed: !state.isChatCollapsed })),
+
+            // Chat Sliding Panel (Claude-style sidebar)
+            isChatSlidingPanelOpen: false,
+            toggleChatSlidingPanel: () => set((state) => ({ isChatSlidingPanelOpen: !state.isChatSlidingPanelOpen })),
+            setChatSlidingPanelOpen: (open) => set({ isChatSlidingPanelOpen: open }),
 
             // Side Panels
             activeSidePanel: null,
@@ -281,9 +300,9 @@ export const useAppStore = create<AppState>()(
             // World-Class Chat 2025: Edit, delete, and feedback actions
             editChatMessage: (messageId, newContent) => set((state) => {
                 const projectKey = state.currentProjectId || 'global';
-                const messages = state.activeChatMessages.map(msg => 
-                    msg.id === messageId 
-                        ? { ...msg, content: newContent, canEdit: true } 
+                const messages = state.activeChatMessages.map(msg =>
+                    msg.id === messageId
+                        ? { ...msg, content: newContent, canEdit: true }
                         : msg
                 );
                 return {
@@ -309,16 +328,16 @@ export const useAppStore = create<AppState>()(
 
             setMessageFeedback: (messageId, feedback) => set((state) => {
                 const projectKey = state.currentProjectId || 'global';
-                const messages = state.activeChatMessages.map(msg => 
-                    msg.id === messageId 
-                        ? { 
-                            ...msg, 
-                            feedback: { 
-                                rating: feedback.rating, 
+                const messages = state.activeChatMessages.map(msg =>
+                    msg.id === messageId
+                        ? {
+                            ...msg,
+                            feedback: {
+                                rating: feedback.rating,
                                 reason: feedback.reason,
                                 timestamp: new Date()
-                            } 
-                        } 
+                            }
+                        }
                         : msg
                 );
                 return {
@@ -347,7 +366,7 @@ export const useAppStore = create<AppState>()(
                 fullSessionData: initialFullSession,
                 currentProjectId: null,
                 notifications: [],
-                aiConfig: { autoMode: true, maxMode: false, multiModel: false, selectedModelId: null }
+                aiConfig: { autoMode: true, maxMode: false, multiModel: false, selectedModelId: null, selectedTier: 'BUDGET' }
             }),
             theme: 'dark', // Default
             toggleTheme: (newTheme) => set((state) => {
@@ -392,8 +411,10 @@ export const useAppStore = create<AppState>()(
                 aiConfig: state.aiConfig,
                 theme: state.theme,
                 notifications: state.notifications,
+                currentOrganization: state.currentOrganization,
                 isChatCollapsed: state.isChatCollapsed,
-                chatPanelWidth: state.chatPanelWidth
+                chatPanelWidth: state.chatPanelWidth,
+                isChatSlidingPanelOpen: state.isChatSlidingPanelOpen
             }),
         }
     )

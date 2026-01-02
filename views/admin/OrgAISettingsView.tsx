@@ -34,7 +34,6 @@ import {
     SettingsToggle,
     SettingsSlider,
     ProactivitySelector,
-    ModelSelector,
     AuditLogViewer
 } from '../../components/AISettings';
 import { InfoButton } from '../../components/shared/InfoButton';
@@ -83,7 +82,7 @@ const AI_ROLES = [
     { id: 'EDUCATOR', title: 'Educator', description: 'Teaches and explains concepts' }
 ];
 
-type SettingsTab = 'policy' | 'models' | 'limits' | 'features' | 'audit';
+type SettingsTab = 'policy' | 'limits' | 'features' | 'audit';
 
 export const OrgAISettingsView: React.FC = () => {
     const { currentOrganization } = useAppStore();
@@ -91,7 +90,6 @@ export const OrgAISettingsView: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [settings, setSettings] = useState<OrgAISettings | null>(null);
-    const [availableModels, setAvailableModels] = useState<LLMProvider[]>([]);
     const [hasChanges, setHasChanges] = useState(false);
 
     useEffect(() => {
@@ -101,8 +99,11 @@ export const OrgAISettingsView: React.FC = () => {
     }, [currentOrganization?.id]);
 
     const loadSettings = async () => {
-        if (!currentOrganization?.id) return;
-        
+        if (!currentOrganization?.id) {
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         try {
             // Load org settings
@@ -114,24 +115,17 @@ export const OrgAISettingsView: React.FC = () => {
                 setSettings(data);
             }
 
-            // Load available models
-            const modelsRes = await fetch('/api/llm/providers', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
-            if (modelsRes.ok) {
-                const models = await modelsRes.json();
-                setAvailableModels(models.filter((m: LLMProvider) => m.is_active));
-            }
         } catch (error) {
             console.error('Failed to load settings:', error);
             toast.error('Failed to load organization AI settings');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const saveSettings = async () => {
         if (!settings || !currentOrganization?.id) return;
-        
+
         setSaving(true);
         try {
             const res = await fetch(`/api/ai-settings/org/${currentOrganization.id}`, {
@@ -171,18 +165,10 @@ export const OrgAISettingsView: React.FC = () => {
         updateSetting('activeRoles', newRoles);
     };
 
-    const toggleModel = (modelId: string) => {
-        if (!settings) return;
-        const current = settings.enabledModelIds;
-        const newModels = current.includes(modelId)
-            ? current.filter(id => id !== modelId)
-            : [...current, modelId];
-        updateSetting('enabledModelIds', newModels);
-    };
+
 
     const tabs = [
         { id: 'policy' as SettingsTab, label: 'Policy & Roles', icon: Shield },
-        { id: 'models' as SettingsTab, label: 'Models', icon: Cpu },
         { id: 'limits' as SettingsTab, label: 'Limits & Budget', icon: DollarSign },
         { id: 'features' as SettingsTab, label: 'Features', icon: Sparkles },
         { id: 'audit' as SettingsTab, label: 'Audit Log', icon: History }
@@ -196,10 +182,31 @@ export const OrgAISettingsView: React.FC = () => {
         );
     }
 
+    if (!settings && !loading) {
+        return (
+            <div className="h-full flex flex-col items-center justify-center bg-navy-950 p-8 text-center">
+                <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-4">
+                    <Brain className="text-slate-500" size={32} />
+                </div>
+                <h2 className="text-xl font-semibold text-white mb-2">No AI Settings Found</h2>
+                <p className="text-slate-400 max-w-md mb-6">
+                    This organization doesn't have AI settings configured yet. Please contact support or check your permissions.
+                </p>
+                <button
+                    onClick={loadSettings}
+                    className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors"
+                >
+                    <RefreshCw size={16} />
+                    Retry Loading
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="h-full flex flex-col bg-navy-950 overflow-hidden">
             <InfoButton cardId="admin-ai-settings" position="top-right" />
-            
+
             {/* Header */}
             <div className="shrink-0 px-8 py-6 border-b border-white/10">
                 <div className="flex items-center justify-between">
@@ -230,7 +237,7 @@ export const OrgAISettingsView: React.FC = () => {
                             disabled={saving || !hasChanges}
                             className={`
                                 flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all
-                                ${hasChanges 
+                                ${hasChanges
                                     ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20'
                                     : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                                 }
@@ -266,7 +273,7 @@ export const OrgAISettingsView: React.FC = () => {
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-8">
                 <div className="max-w-4xl mx-auto space-y-6">
-                    
+
                     {/* Policy & Roles Tab */}
                     {activeTab === 'policy' && settings && (
                         <>
@@ -394,67 +401,7 @@ export const OrgAISettingsView: React.FC = () => {
                     )}
 
                     {/* Models Tab */}
-                    {activeTab === 'models' && settings && (
-                        <SettingsCard
-                            title="Enabled AI Models"
-                            description="Select which models are available to users in your organization"
-                            icon={Cpu}
-                            iconColor="text-cyan-400"
-                        >
-                            <div className="space-y-4">
-                                <p className="text-sm text-slate-400">
-                                    {settings.enabledModelIds.length === 0 
-                                        ? 'All available models are enabled. Select specific models to restrict access.'
-                                        : `${settings.enabledModelIds.length} model(s) enabled`
-                                    }
-                                </p>
-                                
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                    {availableModels.map((model) => {
-                                        const isEnabled = settings.enabledModelIds.length === 0 || 
-                                                         settings.enabledModelIds.includes(model.id);
-                                        return (
-                                            <motion.button
-                                                key={model.id}
-                                                onClick={() => toggleModel(model.id)}
-                                                className={`
-                                                    p-4 rounded-xl text-left transition-all
-                                                    ${isEnabled
-                                                        ? 'bg-violet-500/10 border border-violet-500/30'
-                                                        : 'bg-slate-800/30 border border-slate-700/50 hover:border-slate-600 opacity-60'
-                                                    }
-                                                `}
-                                                whileHover={{ scale: 1.02 }}
-                                                whileTap={{ scale: 0.98 }}
-                                            >
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className="text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300">
-                                                        {model.provider}
-                                                    </span>
-                                                    {isEnabled && (
-                                                        <div className="w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center">
-                                                            <Eye className="w-3 h-3 text-white" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <h4 className="font-medium text-white truncate">{model.name}</h4>
-                                                <p className="text-xs text-slate-500 truncate">{model.model_id}</p>
-                                            </motion.button>
-                                        );
-                                    })}
-                                </div>
 
-                                {settings.enabledModelIds.length > 0 && (
-                                    <button
-                                        onClick={() => updateSetting('enabledModelIds', [])}
-                                        className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
-                                    >
-                                        Enable all models
-                                    </button>
-                                )}
-                            </div>
-                        </SettingsCard>
-                    )}
 
                     {/* Limits & Budget Tab */}
                     {activeTab === 'limits' && settings && (
@@ -590,7 +537,7 @@ export const OrgAISettingsView: React.FC = () => {
 
                                 <div className="pt-4 border-t border-slate-700/50">
                                     <h4 className="font-medium text-white mb-3">Audit Settings</h4>
-                                    
+
                                     <div className="space-y-3">
                                         <SettingsToggle
                                             label="Audit All AI Requests"

@@ -84,19 +84,51 @@ router.delete('/sessions/:id', authMiddleware, async (req, res) => {
 });
 
 
-// GET ME - Validate token and return user data
+// GET ME - Validate token and return user data (Phase 5: Real-time Profile Sync)
 router.get('/me', authMiddleware, (req, res) => {
-    // req.user is populated by authMiddleware
-    res.json({
-        user: {
-            id: req.user.id,
-            email: req.user.email,
-            role: req.user.role,
-            organizationId: req.user.organizationId,
-            impersonatorId: req.user.impersonator_id // Pass claim to frontend
-            // Add other fields if needed, but keep it consistent with login response
+    // Fetch latest user data from DB to ensure avatar and other fields are up-to-date
+    // req.user is populated by authMiddleware (from token)
+    db.get(
+        `SELECT u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name, u.avatar_url, u.impersonator_id,
+                o.name as organization_name
+         FROM users u
+         LEFT JOIN organizations o ON u.organization_id = o.id
+         WHERE u.id = ?`,
+        [req.user.id],
+        (err, user) => {
+            if (err) {
+                console.error('[Auth] /me DB error:', err);
+                // Fallback to token data if DB fails
+                return res.json({
+                    user: {
+                        id: req.user.id,
+                        email: req.user.email,
+                        role: req.user.role,
+                        organizationId: req.user.organizationId,
+                        impersonatorId: req.user.impersonator_id
+                    }
+                });
+            }
+
+            if (!user) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            res.json({
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    role: user.role,
+                    organizationId: user.organization_id,
+                    organizationName: user.organization_name,
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    avatarUrl: user.avatar_url,
+                    impersonatorId: user.impersonator_id
+                }
+            });
         }
-    });
+    );
 });
 
 // LOGOUT - Revokes the current token
@@ -205,7 +237,7 @@ router.post('/demo-login', async (req, res) => {
 
         if (!user) {
             console.error('[Auth] Demo user not found - please run seed script');
-            return res.status(404).json({ 
+            return res.status(404).json({
                 error: 'Demo user not found. Please contact support.',
                 code: 'DEMO_USER_NOT_FOUND'
             });
@@ -221,13 +253,13 @@ router.post('/demo-login', async (req, res) => {
 
         // Generate tokens using RefreshTokenService
         const RefreshTokenService = require('../services/refreshTokenService');
-        
+
         const tokenResult = await RefreshTokenService.generateTokenPair(user, {
             deviceInfo: 'Demo Session',
             ip: req.ip,
             userAgent: req.get('user-agent')
         });
-        
+
         const accessToken = tokenResult.accessToken;
         const refreshToken = tokenResult.refreshToken;
 
@@ -256,11 +288,11 @@ router.post('/demo-login', async (req, res) => {
         };
 
         console.log('[Auth] Demo login successful');
-        res.json({ 
-            user: safeUser, 
-            token: accessToken, 
+        res.json({
+            user: safeUser,
+            token: accessToken,
             refreshToken,
-            isDemo: true 
+            isDemo: true
         });
 
     } catch (error) {

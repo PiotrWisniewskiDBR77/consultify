@@ -16,7 +16,7 @@ const hasPermission = (user, action, resource) => {
         VIEWER: ['assessment:read']
     };
 
-    const userRole = user.role || 'VIEWER';
+    const userRole = (user.role === undefined || user.role === null) ? 'VIEWER' : user.role;
     const userPermissions = permissions[userRole] || [];
 
     // Super admin has all permissions
@@ -61,7 +61,7 @@ const multiFrameworkRBAC = (action) => {
 
         // Get framework from params, query, or body
         const framework = req.params.framework || req.query.framework || req.body.framework;
-        
+
         // If no framework specified, fall back to general assessment RBAC
         if (!framework) {
             if (!hasPermission(req.user, action, 'assessment')) {
@@ -216,8 +216,8 @@ const validateWorkflowTransition = async (req, res, next) => {
     }
 };
 
-module.exports = { 
-    assessmentRBAC, 
+module.exports = {
+    assessmentRBAC,
     hasPermission,
     multiFrameworkRBAC,
     requireFrameworkApprover,

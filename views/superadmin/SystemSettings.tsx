@@ -173,52 +173,52 @@ export const SystemSettings: React.FC = () => {
     };
 
     const renderTabs = () => (
-        <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 border-b border-white/10">
+        <div className="flex items-center gap-1 mb-8 overflow-x-auto pb-2 border-b border-white/[0.04]">
             <button
                 onClick={() => setActiveTab('GENERAL')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'GENERAL' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'GENERAL' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'}`}
             >
                 <Settings size={16} /> General
             </button>
             <button
                 onClick={() => setActiveTab('SECURITY')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'SECURITY' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'SECURITY' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'}`}
             >
                 <Shield size={16} /> Security
             </button>
             <button
                 onClick={() => setActiveTab('EMAIL')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'EMAIL' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'EMAIL' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'}`}
             >
-                <Mail size={16} /> Email / SMTP
+                <Mail size={16} /> Email
             </button>
             <button
                 onClick={() => setActiveTab('LEGAL')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'LEGAL' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'LEGAL' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'}`}
             >
                 <FileText size={16} /> Legal
             </button>
             <button
                 onClick={() => setActiveTab('ADMINS')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'ADMINS' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'ADMINS' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'}`}
             >
-                <Users size={16} /> Super Admins
+                <Users size={16} /> Admins
             </button>
             <button
                 onClick={() => setActiveTab('STORAGE')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'STORAGE' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'STORAGE' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'}`}
             >
                 <HardDrive size={16} /> Storage
             </button>
             <button
                 onClick={() => setActiveTab('AUDIT')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'AUDIT' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'AUDIT' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'}`}
             >
-                <Clock size={16} /> Audit Logs
+                <Clock size={16} /> Audit
             </button>
             <button
                 onClick={() => setActiveTab('ADVANCED')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'ADVANCED' ? 'bg-red-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'ADVANCED' ? 'bg-red-600/80 text-white' : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'}`}
             >
                 <Database size={16} /> Advanced
             </button>
@@ -227,34 +227,34 @@ export const SystemSettings: React.FC = () => {
 
     const renderGeneral = () => (
         <div className="space-y-6 max-w-2xl">
-            <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-                <h3 className="text-lg font-semibold mb-4 text-white">Application Identity</h3>
+            <div className="border border-white/[0.06] rounded-xl p-5">
+                <h3 className="text-base font-medium mb-4 text-slate-100">Application Identity</h3>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-2">Application Name</label>
+                        <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Application Name</label>
                         <div className="flex gap-2">
                             <input
                                 type="text"
                                 value={settings['app_name'] || ''}
                                 onChange={e => setSettings(prev => ({ ...prev, 'app_name': e.target.value }))}
-                                className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
+                                className="flex-1 px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:border-blue-500/50 focus:outline-none"
                                 placeholder="TechnoLex"
                             />
                             <button
                                 onClick={() => handleSaveSetting('app_name', settings['app_name'])}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
                             >
-                                <Save size={18} />
+                                <Save size={16} />
                             </button>
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-2">Default Language</label>
+                        <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Default Language</label>
                         <div className="flex gap-2">
                             <select
                                 value={settings['default_language'] || 'EN'}
                                 onChange={e => handleSaveSetting('default_language', e.target.value)}
-                                className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
+                                className="flex-1 px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:border-blue-500/50 focus:outline-none"
                             >
                                 <option value="EN">English</option>
                                 <option value="PL">Polish</option>
@@ -265,8 +265,8 @@ export const SystemSettings: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-                <h3 className="text-lg font-semibold mb-4 text-white">System Status</h3>
+            <div className="border border-white/[0.06] rounded-xl p-5">
+                <h3 className="text-base font-medium mb-4 text-slate-100">System Status</h3>
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-white font-medium">Maintenance Mode</p>

@@ -151,3 +151,4 @@ CREATE INDEX IF NOT EXISTS idx_initiatives_charter_completeness
     ON initiatives(charter_completeness);
 
 
+

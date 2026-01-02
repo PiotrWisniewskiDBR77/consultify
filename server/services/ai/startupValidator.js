@@ -104,7 +104,7 @@ async function testProviderConnection(providerConfig) {
     } catch (error) {
         result.latency = Date.now() - startTime;
         result.error = error.message || 'Connection failed';
-        
+
         // Determine if it's a configuration or connectivity issue
         if (error.message?.includes('401') || error.message?.includes('Unauthorized') || error.message?.includes('invalid_api_key')) {
             result.valid = false;
@@ -270,7 +270,7 @@ async function testZAI(apiKey, model) {
     // z.ai requires JWT signing
     const jwt = require('jsonwebtoken');
     const [id, secret] = apiKey.split('.');
-    
+
     if (!id || !secret) {
         throw new Error('Invalid z.ai key format (expected: id.secret)');
     }
@@ -290,7 +290,7 @@ async function testZAI(apiKey, model) {
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-                model: model || 'glm-4',
+                model: model || 'glm-4-plus',
                 messages: [{ role: 'user', content: 'Hi' }],
                 max_tokens: 1
             }),
@@ -392,7 +392,7 @@ async function validateOnStartup(options = {}) {
             return testProviderConnection(provider);
         });
 
-        const results = parallel 
+        const results = parallel
             ? await Promise.all(testPromises)
             : await sequentialTests(testPromises);
 
@@ -488,7 +488,7 @@ function logHealthReport(report) {
     console.log(`  Timestamp: ${report.timestamp}`);
     console.log(`  Duration:  ${report.duration}ms`);
     console.log('-'.repeat(60));
-    
+
     console.log('\n  PROVIDER STATUS:');
     for (const provider of report.providers) {
         const statusIcon = getStatusIcon(provider.status);
@@ -551,7 +551,7 @@ function getStatusIcon(status) {
  */
 async function generateQuickHealthReport() {
     await llmConfigService.initialize();
-    
+
     const keyValidation = await llmConfigService.validateAllKeys();
     const defaultProvider = await llmConfigService.getDefaultProvider();
     const fallbackChain = await llmConfigService.getFallbackChain();
@@ -573,7 +573,7 @@ async function generateQuickHealthReport() {
  */
 async function testSingleProvider(providerId) {
     const config = await llmConfigService.getProviderConfig(providerId);
-    
+
     if (!config) {
         return {
             provider: providerId,
@@ -594,5 +594,6 @@ module.exports = {
     generateQuickHealthReport,
     HEALTH_CHECK_TIMEOUT
 };
+
 
 

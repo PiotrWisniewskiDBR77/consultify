@@ -1,244 +1,238 @@
-/**
- * useInsightDetection Hook
- * 
- * Analyzes AI responses and detects potential insights
- * that can be captured into the Knowledge Base
- */
-
 import { useState, useCallback } from 'react';
-import { 
-    InsightCategory, 
-    DetectedInsight, 
-    InsightConfidence,
-    PMODomainId 
-} from '../types';
-import { Api } from '../services/api';
 
-// Category detection patterns
-const CATEGORY_PATTERNS: Record<InsightCategory, {
-    keywords: string[];
-    patterns: RegExp[];
-    pmoDomain: PMODomainId;
-}> = {
-    objective: {
-        keywords: ['goal', 'objective', 'target', 'aim', 'purpose', 'outcome', 'achieve', 'deliver'],
-        patterns: [
-            /(?:our|the|main|key|primary)\s+(?:goal|objective|target)(?:\s+is)?[:\s]+(.+)/i,
-            /we\s+(?:want|need|aim)\s+to\s+(.+)/i,
-            /the\s+(?:project|initiative)\s+(?:aims|intends|seeks)\s+to\s+(.+)/i
-        ],
-        pmoDomain: PMODomainId.BENEFITS_REALIZATION
-    },
-    stakeholder: {
-        keywords: ['stakeholder', 'sponsor', 'owner', 'responsible', 'team', 'manager', 'director', 'lead'],
-        patterns: [
-            /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:is|will be|as)\s+(?:the\s+)?(?:sponsor|owner|lead|manager|responsible)/i,
-            /(?:the\s+)?(?:sponsor|owner|lead|manager)\s+(?:is|will be)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i,
-            /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+from\s+(?:the\s+)?(\w+)\s+(?:department|team|division)/i
-        ],
-        pmoDomain: PMODomainId.RESOURCE_RESPONSIBILITY
-    },
-    risk: {
-        keywords: ['risk', 'threat', 'danger', 'concern', 'issue', 'problem', 'challenge', 'worry'],
-        patterns: [
-            /(?:a|the|main|key|potential)\s+risk(?:\s+is)?[:\s]+(.+)/i,
-            /we\s+(?:might|could|may)\s+(?:face|encounter|experience)\s+(.+)/i,
-            /(?:there is|there's)\s+(?:a\s+)?risk\s+(?:of|that)\s+(.+)/i
-        ],
-        pmoDomain: PMODomainId.RISK_ISSUE_MANAGEMENT
-    },
-    assumption: {
-        keywords: ['assume', 'assumption', 'assuming', 'suppose', 'expect', 'expected', 'believe'],
-        patterns: [
-            /(?:we|i)\s+assume(?:\s+that)?[:\s]+(.+)/i,
-            /(?:the|our)\s+assumption(?:\s+is)?[:\s]+(.+)/i,
-            /assuming\s+(?:that\s+)?(.+)/i
-        ],
-        pmoDomain: PMODomainId.SCOPE_CHANGE_CONTROL
-    },
-    constraint: {
-        keywords: ['constraint', 'limitation', 'limit', 'restriction', 'boundary', 'budget', 'deadline', 'cannot'],
-        patterns: [
-            /(?:a|the|main|key)\s+constraint(?:\s+is)?[:\s]+(.+)/i,
-            /(?:we|the project)\s+(?:cannot|can't|must not)\s+(.+)/i,
-            /(?:budget|time|resource)\s+(?:constraint|limitation)(?:\s+is)?[:\s]+(.+)/i
-        ],
-        pmoDomain: PMODomainId.SCOPE_CHANGE_CONTROL
-    },
-    decision: {
-        keywords: ['decided', 'decision', 'chose', 'selected', 'approved', 'agreed', 'determined'],
-        patterns: [
-            /(?:we|it was)\s+decided(?:\s+that)?[:\s]+(.+)/i,
-            /(?:the\s+)?decision(?:\s+is|\s+was)?[:\s]+(.+)/i,
-            /(?:we|they)\s+(?:chose|selected|agreed)\s+(?:to\s+)?(.+)/i
-        ],
-        pmoDomain: PMODomainId.GOVERNANCE_DECISION_MAKING
-    },
-    dependency: {
-        keywords: ['depend', 'dependency', 'relies', 'requires', 'needs', 'waiting', 'blocked by'],
-        patterns: [
-            /(?:we|the project)\s+depend(?:s)?\s+on\s+(.+)/i,
-            /(?:a|the)\s+dependency(?:\s+is)?[:\s]+(.+)/i,
-            /(?:waiting|blocked)\s+(?:on|by)\s+(.+)/i
-        ],
-        pmoDomain: PMODomainId.SCHEDULE_MILESTONES
-    },
-    success_criteria: {
-        keywords: ['success', 'criteria', 'kpi', 'metric', 'measure', 'benchmark', 'target'],
-        patterns: [
-            /(?:success|the project)\s+(?:will be|is)\s+measured\s+by\s+(.+)/i,
-            /(?:the\s+)?(?:success\s+)?(?:criteria|kpi)(?:\s+is|\s+are)?[:\s]+(.+)/i,
-            /(?:we'll|we will)\s+know\s+(?:it's|we're)\s+successful\s+(?:when|if)\s+(.+)/i
-        ],
-        pmoDomain: PMODomainId.PERFORMANCE_MONITORING
-    }
-};
-
-// Confidence scoring based on matches
-const calculateConfidence = (keywordMatches: number, patternMatches: number): InsightConfidence => {
-    const score = keywordMatches * 0.3 + patternMatches * 0.7;
-    if (score >= 1.5) return 'high';
-    if (score >= 0.7) return 'medium';
-    return 'low';
-};
-
-interface UseInsightDetectionResult {
-    detectedInsights: DetectedInsight[];
-    isAnalyzing: boolean;
-    analyzeText: (text: string) => Promise<DetectedInsight[]>;
-    clearDetected: () => void;
+export interface DetectedInsight {
+  id: string;
+  category: 'objective' | 'stakeholder' | 'risk' | 'assumption' | 'constraint' | 'decision' | 'dependency' | 'success_criteria';
+  title: string;
+  content: Record<string, unknown>;
+  confidence: 'high' | 'medium' | 'low';
+  sourceText: string;
 }
 
-export const useInsightDetection = (): UseInsightDetectionResult => {
-    const [detectedInsights, setDetectedInsights] = useState<DetectedInsight[]>([]);
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
+interface UseInsightDetectionResult {
+  detectedInsights: DetectedInsight[];
+  isDetecting: boolean;
+  detectInsights: (text: string) => Promise<DetectedInsight[]>;
+  clearInsights: () => void;
+  confirmInsight: (insightId: string) => void;
+  dismissInsight: (insightId: string) => void;
+}
 
-    /**
-     * Analyze text for potential insights
-     */
-    const analyzeText = useCallback(async (text: string): Promise<DetectedInsight[]> => {
-        setIsAnalyzing(true);
-        const detected: DetectedInsight[] = [];
-
-        try {
-            // First, try server-side AI detection (if available)
-            try {
-                const response = await Api.post('/intelligence/detect-insights', { text });
-                if (response.detectedInsights?.length > 0) {
-                    setDetectedInsights(response.detectedInsights);
-                    setIsAnalyzing(false);
-                    return response.detectedInsights;
-                }
-            } catch (err) {
-                // Server detection not available, fall back to client-side
-                console.log('[InsightDetection] Server detection unavailable, using client-side');
-            }
-
-            // Client-side pattern matching
-            const sentences = text.split(/[.!?]\s+/).filter(s => s.trim().length > 10);
-
-            for (const [category, config] of Object.entries(CATEGORY_PATTERNS)) {
-                const lowerText = text.toLowerCase();
-                
-                // Count keyword matches
-                const keywordMatches = config.keywords.filter(kw => 
-                    lowerText.includes(kw.toLowerCase())
-                ).length;
-
-                // Check pattern matches
-                for (const pattern of config.patterns) {
-                    const match = text.match(pattern);
-                    if (match && match[1]) {
-                        const extractedContent = match[1].trim();
-                        
-                        // Skip if too short or too long
-                        if (extractedContent.length < 10 || extractedContent.length > 500) continue;
-
-                        const confidence = calculateConfidence(keywordMatches, 1);
-
-                        // Create detected insight
-                        const insight: DetectedInsight = {
-                            category: category as InsightCategory,
-                            title: extractedContent.slice(0, 100) + (extractedContent.length > 100 ? '...' : ''),
-                            content: { description: extractedContent },
-                            confidence,
-                            sourceQuote: match[0].slice(0, 200)
-                        };
-
-                        // Avoid duplicates
-                        const isDuplicate = detected.some(d => 
-                            d.category === insight.category && 
-                            d.title.toLowerCase() === insight.title.toLowerCase()
-                        );
-
-                        if (!isDuplicate) {
-                            detected.push(insight);
-                        }
-                    }
-                }
-
-                // If high keyword density but no pattern match, suggest general insight
-                if (keywordMatches >= 3 && !detected.some(d => d.category === category)) {
-                    // Find sentence with most keywords
-                    let bestSentence = '';
-                    let maxKeywords = 0;
-                    
-                    for (const sentence of sentences) {
-                        const sentLower = sentence.toLowerCase();
-                        const sentKeywords = config.keywords.filter(kw => sentLower.includes(kw)).length;
-                        if (sentKeywords > maxKeywords) {
-                            maxKeywords = sentKeywords;
-                            bestSentence = sentence;
-                        }
-                    }
-
-                    if (bestSentence && maxKeywords >= 2) {
-                        detected.push({
-                            category: category as InsightCategory,
-                            title: bestSentence.slice(0, 100) + (bestSentence.length > 100 ? '...' : ''),
-                            content: { description: bestSentence },
-                            confidence: 'low',
-                            sourceQuote: bestSentence
-                        });
-                    }
-                }
-            }
-
-            // Sort by confidence
-            detected.sort((a, b) => {
-                const order = { high: 3, medium: 2, low: 1 };
-                return order[b.confidence] - order[a.confidence];
-            });
-
-            // Limit to top 5 insights
-            const topInsights = detected.slice(0, 5);
-            
-            setDetectedInsights(topInsights);
-            return topInsights;
-
-        } catch (err) {
-            console.error('[InsightDetection] Error:', err);
-            return [];
-        } finally {
-            setIsAnalyzing(false);
-        }
-    }, []);
-
-    /**
-     * Clear detected insights
-     */
-    const clearDetected = useCallback(() => {
-        setDetectedInsights([]);
-    }, []);
-
-    return {
-        detectedInsights,
-        isAnalyzing,
-        analyzeText,
-        clearDetected
-    };
+// Category detection patterns
+const CATEGORY_PATTERNS: Record<string, RegExp[]> = {
+  objective: [
+    /goal|objective|aim|target|achieve|accomplish|deliver/i,
+    /we want to|we need to|our mission|purpose is/i,
+    /increase|decrease|improve|reduce|optimize/i
+  ],
+  stakeholder: [
+    /stakeholder|sponsor|team|manager|director|ceo|cto|client|customer|user/i,
+    /responsible for|owner|lead|head of|department/i,
+    /interested party|key person|decision maker/i
+  ],
+  risk: [
+    /risk|threat|danger|concern|worry|issue|problem/i,
+    /might fail|could go wrong|potential issue|vulnerability/i,
+    /if.*then.*negative|uncertain|exposure/i
+  ],
+  assumption: [
+    /assume|assumption|expect|expectation|believe|presume/i,
+    /we think|we believe|it is assumed|taking for granted/i,
+    /should be|will be available|will have/i
+  ],
+  constraint: [
+    /constraint|limitation|restriction|boundary|must not|cannot/i,
+    /budget|deadline|regulation|compliance|legal|policy/i,
+    /fixed|non-negotiable|mandatory|required/i
+  ],
+  decision: [
+    /decided|decision|chose|selected|approved|agreed/i,
+    /we will use|we have chosen|resolution|determination/i,
+    /after consideration|based on analysis/i
+  ],
+  dependency: [
+    /depend|dependency|relies on|requires|prerequisite|blocked by/i,
+    /before we can|needs to be completed|waiting for/i,
+    /external|internal dependency|integration with/i
+  ],
+  success_criteria: [
+    /success|kpi|metric|measure|criterion|criteria|indicator/i,
+    /definition of done|acceptance criteria|target.*%/i,
+    /will be successful when|measured by|evaluated/i
+  ]
 };
 
-export default useInsightDetection;
+// Generate a simple UUID
+const generateId = (): string => {
+  return 'insight-' + Math.random().toString(36).substring(2, 11);
+};
 
+// Detect category from text
+const detectCategory = (text: string): string | null => {
+  let bestMatch: { category: string; score: number } | null = null;
+  
+  for (const [category, patterns] of Object.entries(CATEGORY_PATTERNS)) {
+    let score = 0;
+    for (const pattern of patterns) {
+      if (pattern.test(text)) {
+        score++;
+      }
+    }
+    if (score > 0 && (!bestMatch || score > bestMatch.score)) {
+      bestMatch = { category, score };
+    }
+  }
+  
+  return bestMatch?.category || null;
+};
 
+// Extract title from text
+const extractTitle = (text: string, category: string): string => {
+  // Take first sentence or first 50 characters
+  const firstSentence = text.split(/[.!?]/)[0].trim();
+  if (firstSentence.length <= 60) {
+    return firstSentence;
+  }
+  return firstSentence.substring(0, 57) + '...';
+};
+
+// Generate content structure based on category
+const generateContent = (text: string, category: string): Record<string, unknown> => {
+  const baseContent = { description: text };
+  
+  switch (category) {
+    case 'objective':
+      return {
+        ...baseContent,
+        measurable_outcomes: [],
+        timeframe: '',
+        priority: 'medium'
+      };
+    case 'stakeholder':
+      return {
+        ...baseContent,
+        role: '',
+        influence: 'medium',
+        interest: 'medium',
+        engagement_strategy: ''
+      };
+    case 'risk':
+      return {
+        ...baseContent,
+        probability: 'medium',
+        impact: 'medium',
+        mitigation_strategy: '',
+        owner: ''
+      };
+    case 'assumption':
+      return {
+        statement: text,
+        validation_method: '',
+        impact_if_false: '',
+        owner: ''
+      };
+    case 'constraint':
+      return {
+        ...baseContent,
+        type: 'other',
+        flexibility: 'low',
+        impact_on_scope: ''
+      };
+    case 'decision':
+      return {
+        decision: text,
+        rationale: '',
+        alternatives_considered: [],
+        decision_maker: '',
+        date: new Date().toISOString().split('T')[0]
+      };
+    case 'dependency':
+      return {
+        ...baseContent,
+        type: 'internal',
+        dependent_project: '',
+        expected_completion: '',
+        criticality: 'medium'
+      };
+    case 'success_criteria':
+      return {
+        criterion: text,
+        measurement_method: '',
+        target_value: '',
+        current_baseline: ''
+      };
+    default:
+      return baseContent;
+  }
+};
+
+export function useInsightDetection(): UseInsightDetectionResult {
+  const [detectedInsights, setDetectedInsights] = useState<DetectedInsight[]>([]);
+  const [isDetecting, setIsDetecting] = useState(false);
+
+  const detectInsights = useCallback(async (text: string): Promise<DetectedInsight[]> => {
+    setIsDetecting(true);
+    
+    try {
+      // Split text into sentences for analysis
+      const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
+      const insights: DetectedInsight[] = [];
+      
+      for (const sentence of sentences) {
+        const category = detectCategory(sentence);
+        if (category) {
+          const insight: DetectedInsight = {
+            id: generateId(),
+            category: category as DetectedInsight['category'],
+            title: extractTitle(sentence, category),
+            content: generateContent(sentence.trim(), category),
+            confidence: 'medium',
+            sourceText: sentence.trim()
+          };
+          insights.push(insight);
+        }
+      }
+      
+      // Also check the full text
+      if (insights.length === 0) {
+        const category = detectCategory(text);
+        if (category) {
+          insights.push({
+            id: generateId(),
+            category: category as DetectedInsight['category'],
+            title: extractTitle(text, category),
+            content: generateContent(text, category),
+            confidence: 'low',
+            sourceText: text
+          });
+        }
+      }
+      
+      setDetectedInsights(prev => [...prev, ...insights]);
+      return insights;
+    } finally {
+      setIsDetecting(false);
+    }
+  }, []);
+
+  const clearInsights = useCallback(() => {
+    setDetectedInsights([]);
+  }, []);
+
+  const confirmInsight = useCallback((insightId: string) => {
+    setDetectedInsights(prev => prev.filter(i => i.id !== insightId));
+  }, []);
+
+  const dismissInsight = useCallback((insightId: string) => {
+    setDetectedInsights(prev => prev.filter(i => i.id !== insightId));
+  }, []);
+
+  return {
+    detectedInsights,
+    isDetecting,
+    detectInsights,
+    clearInsights,
+    confirmInsight,
+    dismissInsight
+  };
+}

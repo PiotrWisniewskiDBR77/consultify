@@ -97,13 +97,14 @@ export const ResponseActions: React.FC<ResponseActionsProps> = ({
                 }
                 break;
 
-            case 'copy':
+            case 'copy': {
                 const textToCopy = action.payload.copyText || action.label;
                 await navigator.clipboard.writeText(textToCopy);
                 setCopiedAction(action.id);
                 setTimeout(() => setCopiedAction(null), 2000);
                 onActionComplete?.(action);
                 break;
+            }
 
             case 'expand':
                 // Handle expand/collapse - typically managed by parent

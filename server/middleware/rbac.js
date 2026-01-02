@@ -109,17 +109,25 @@ const requireOrgAccess = (options = {}) => {
 
 /**
  * requireRole - Check GLOBAL user role (legacy, for non-org routes)
+ * @param {string|string[]} roles - Single role or array of allowed roles
  */
 const requireRole = (roles) => {
+    // Normalize to array if single string provided
+    const allowedRoles = Array.isArray(roles) ? roles : [roles];
+    
     return (req, res, next) => {
         if (!req.user) {
             return res.status(401).json({ error: 'Authentication required' });
         }
 
-        if (!roles.includes(req.user.role)) {
+        // Case-insensitive role check
+        const userRole = (req.user.role || '').toUpperCase();
+        const matches = allowedRoles.some(r => r.toUpperCase() === userRole);
+        
+        if (!matches) {
             return res.status(403).json({
                 error: 'Forbidden',
-                message: `This action requires one of the following roles: ${roles.join(', ')}`,
+                message: `This action requires one of the following roles: ${allowedRoles.join(', ')}`,
                 yourRole: req.user.role
             });
         }

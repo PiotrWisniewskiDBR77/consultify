@@ -412,6 +412,401 @@ function getRevenueStats() {
     });
 }
 
+// ==========================================
+// PAYMENT METHODS MANAGEMENT
+// ==========================================
+
+/**
+ * Get all payment methods for an organization
+ */
+function getPaymentMethods(orgId) {
+    return new Promise((resolve, reject) => {
+        deps.db.all(
+            `SELECT * FROM payment_methods WHERE organization_id = ? ORDER BY is_default DESC, created_at DESC`,
+            [orgId],
+            (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows || []);
+            }
+        );
+    });
+}
+
+/**
+ * Get a single payment method
+ */
+function getPaymentMethod(paymentMethodId) {
+    return new Promise((resolve, reject) => {
+        deps.db.get(
+            'SELECT * FROM payment_methods WHERE id = ?',
+            [paymentMethodId],
+            (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            }
+        );
+    });
+}
+
+/**
+ * Add a new payment method
+ */
+async function addPaymentMethod(orgId, stripePaymentMethodId) {
+    const id = `pm-${deps.uuidv4()}`;
+    
+    // Get Stripe payment method details
+    let pmDetails = {
+        type: 'card',
+        brand: 'unknown',
+        last4: '****',
+        exp_month: null,
+        exp_year: null,
+        holder_name: null
+    };
+
+    if (stripe) {
+        try {
+            const pm = await stripe.paymentMethods.retrieve(stripePaymentMethodId);
+            pmDetails = {
+                type: pm.type,
+                brand: pm.card?.brand || 'unknown',
+                last4: pm.card?.last4 || '****',
+                exp_month: pm.card?.exp_month,
+                exp_year: pm.card?.exp_year,
+                holder_name: pm.billing_details?.name
+            };
+
+            // Attach to customer if we have one
+            const billing = await getOrganizationBilling(orgId);
+            if (billing?.stripe_customer_id) {
+                await stripe.paymentMethods.attach(stripePaymentMethodId, {
+                    customer: billing.stripe_customer_id
+                });
+            }
+        } catch (e) {
+            console.warn('Could not retrieve Stripe payment method details:', e.message);
+        }
+    }
+
+    // Check if this is the first payment method (make it default)
+    const existingMethods = await getPaymentMethods(orgId);
+    const isDefault = existingMethods.length === 0 ? 1 : 0;
+
+    return new Promise((resolve, reject) => {
+        deps.db.run(
+            `INSERT INTO payment_methods (id, organization_id, stripe_payment_method_id, type, brand, last4, exp_month, exp_year, holder_name, is_default)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [id, orgId, stripePaymentMethodId, pmDetails.type, pmDetails.brand, pmDetails.last4, 
+             pmDetails.exp_month, pmDetails.exp_year, pmDetails.holder_name, isDefault],
+            function (err) {
+                if (err) reject(err);
+                else resolve({ id, organization_id: orgId, stripe_payment_method_id: stripePaymentMethodId, ...pmDetails, is_default: isDefault });
+            }
+        );
+    });
+}
+
+/**
+ * Remove a payment method
+ */
+async function removePaymentMethod(paymentMethodId, orgId) {
+    const pm = await getPaymentMethod(paymentMethodId);
+    if (!pm || pm.organization_id !== orgId) {
+        throw new Error('Payment method not found');
+    }
+
+    // Detach from Stripe
+    if (stripe && pm.stripe_payment_method_id) {
+        try {
+            await stripe.paymentMethods.detach(pm.stripe_payment_method_id);
+        } catch (e) {
+            console.warn('Could not detach payment method from Stripe:', e.message);
+        }
+    }
+
+    return new Promise((resolve, reject) => {
+        deps.db.run(
+            'DELETE FROM payment_methods WHERE id = ? AND organization_id = ?',
+            [paymentMethodId, orgId],
+            function (err) {
+                if (err) reject(err);
+                else resolve({ deleted: this.changes > 0 });
+            }
+        );
+    });
+}
+
+/**
+ * Set a payment method as default
+ */
+async function setDefaultPaymentMethod(paymentMethodId, orgId) {
+    const pm = await getPaymentMethod(paymentMethodId);
+    if (!pm || pm.organization_id !== orgId) {
+        throw new Error('Payment method not found');
+    }
+
+    // Update Stripe customer default payment method
+    if (stripe && pm.stripe_payment_method_id) {
+        try {
+            const billing = await getOrganizationBilling(orgId);
+            if (billing?.stripe_customer_id) {
+                await stripe.customers.update(billing.stripe_customer_id, {
+                    invoice_settings: { default_payment_method: pm.stripe_payment_method_id }
+                });
+            }
+        } catch (e) {
+            console.warn('Could not update Stripe default payment method:', e.message);
+        }
+    }
+
+    return new Promise((resolve, reject) => {
+        // First, unset all defaults for this org
+        deps.db.run(
+            'UPDATE payment_methods SET is_default = 0 WHERE organization_id = ?',
+            [orgId],
+            (err) => {
+                if (err) return reject(err);
+                
+                // Then set the new default
+                deps.db.run(
+                    'UPDATE payment_methods SET is_default = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                    [paymentMethodId],
+                    function (err) {
+                        if (err) reject(err);
+                        else resolve({ id: paymentMethodId, is_default: true });
+                    }
+                );
+            }
+        );
+    });
+}
+
+/**
+ * Create a Stripe SetupIntent for adding a new payment method
+ */
+async function createSetupIntent(orgId, email, orgName) {
+    if (!stripe) {
+        // Return mock for development
+        return { 
+            clientSecret: 'mock_secret_' + deps.uuidv4(),
+            id: 'mock_seti_' + deps.uuidv4()
+        };
+    }
+
+    const customer = await getOrCreateStripeCustomer(orgId, email, orgName);
+
+    const setupIntent = await stripe.setupIntents.create({
+        customer: customer.id,
+        payment_method_types: ['card'],
+        metadata: { organization_id: orgId }
+    });
+
+    return {
+        clientSecret: setupIntent.client_secret,
+        id: setupIntent.id
+    };
+}
+
+// ==========================================
+// BILLING ALERTS & USAGE THRESHOLDS
+// ==========================================
+
+/**
+ * Get billing alert configuration for an organization
+ */
+function getBillingAlerts(orgId) {
+    return new Promise((resolve, reject) => {
+        deps.db.get(
+            'SELECT * FROM billing_alerts WHERE organization_id = ?',
+            [orgId],
+            (err, row) => {
+                if (err) reject(err);
+                else resolve(row || {
+                    token_threshold_80: 1,
+                    token_threshold_90: 1,
+                    token_threshold_100: 1,
+                    storage_threshold_80: 1,
+                    storage_threshold_90: 1,
+                    storage_threshold_100: 1,
+                    auto_upgrade_enabled: 0,
+                    cost_cap_monthly: null,
+                    email_notifications: 1
+                });
+            }
+        );
+    });
+}
+
+/**
+ * Update billing alert configuration
+ */
+function updateBillingAlerts(orgId, alertSettings) {
+    const id = `alert-${deps.uuidv4()}`;
+    return new Promise((resolve, reject) => {
+        deps.db.run(
+            `INSERT INTO billing_alerts (id, organization_id, token_threshold_80, token_threshold_90, token_threshold_100,
+             storage_threshold_80, storage_threshold_90, storage_threshold_100, auto_upgrade_enabled, auto_upgrade_plan_id,
+             cost_cap_monthly, email_notifications)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(organization_id) DO UPDATE SET
+             token_threshold_80 = excluded.token_threshold_80,
+             token_threshold_90 = excluded.token_threshold_90,
+             token_threshold_100 = excluded.token_threshold_100,
+             storage_threshold_80 = excluded.storage_threshold_80,
+             storage_threshold_90 = excluded.storage_threshold_90,
+             storage_threshold_100 = excluded.storage_threshold_100,
+             auto_upgrade_enabled = excluded.auto_upgrade_enabled,
+             auto_upgrade_plan_id = excluded.auto_upgrade_plan_id,
+             cost_cap_monthly = excluded.cost_cap_monthly,
+             email_notifications = excluded.email_notifications,
+             updated_at = CURRENT_TIMESTAMP`,
+            [id, orgId, 
+             alertSettings.token_threshold_80 ?? 1,
+             alertSettings.token_threshold_90 ?? 1,
+             alertSettings.token_threshold_100 ?? 1,
+             alertSettings.storage_threshold_80 ?? 1,
+             alertSettings.storage_threshold_90 ?? 1,
+             alertSettings.storage_threshold_100 ?? 1,
+             alertSettings.auto_upgrade_enabled ?? 0,
+             alertSettings.auto_upgrade_plan_id ?? null,
+             alertSettings.cost_cap_monthly ?? null,
+             alertSettings.email_notifications ?? 1],
+            function (err) {
+                if (err) reject(err);
+                else resolve({ organization_id: orgId, ...alertSettings });
+            }
+        );
+    });
+}
+
+// ==========================================
+// TAX SETTINGS
+// ==========================================
+
+/**
+ * Get tax settings for an organization
+ */
+function getTaxSettings(orgId) {
+    return new Promise((resolve, reject) => {
+        deps.db.get(
+            'SELECT * FROM billing_tax_settings WHERE organization_id = ?',
+            [orgId],
+            (err, row) => {
+                if (err) reject(err);
+                else resolve(row || {});
+            }
+        );
+    });
+}
+
+/**
+ * Update tax settings
+ */
+function updateTaxSettings(orgId, taxSettings) {
+    const id = `tax-${deps.uuidv4()}`;
+    return new Promise((resolve, reject) => {
+        deps.db.run(
+            `INSERT INTO billing_tax_settings (id, organization_id, tax_id, tax_id_type, tax_exempt,
+             billing_name, billing_email, billing_address_line1, billing_address_line2,
+             billing_city, billing_state, billing_postal_code, billing_country,
+             invoice_prefix, po_number)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(organization_id) DO UPDATE SET
+             tax_id = excluded.tax_id,
+             tax_id_type = excluded.tax_id_type,
+             tax_exempt = excluded.tax_exempt,
+             billing_name = excluded.billing_name,
+             billing_email = excluded.billing_email,
+             billing_address_line1 = excluded.billing_address_line1,
+             billing_address_line2 = excluded.billing_address_line2,
+             billing_city = excluded.billing_city,
+             billing_state = excluded.billing_state,
+             billing_postal_code = excluded.billing_postal_code,
+             billing_country = excluded.billing_country,
+             invoice_prefix = excluded.invoice_prefix,
+             po_number = excluded.po_number,
+             updated_at = CURRENT_TIMESTAMP`,
+            [id, orgId,
+             taxSettings.tax_id ?? null,
+             taxSettings.tax_id_type ?? null,
+             taxSettings.tax_exempt ?? 0,
+             taxSettings.billing_name ?? null,
+             taxSettings.billing_email ?? null,
+             taxSettings.billing_address_line1 ?? null,
+             taxSettings.billing_address_line2 ?? null,
+             taxSettings.billing_city ?? null,
+             taxSettings.billing_state ?? null,
+             taxSettings.billing_postal_code ?? null,
+             taxSettings.billing_country ?? null,
+             taxSettings.invoice_prefix ?? null,
+             taxSettings.po_number ?? null],
+            function (err) {
+                if (err) reject(err);
+                else resolve({ organization_id: orgId, ...taxSettings });
+            }
+        );
+    });
+}
+
+// ==========================================
+// DISCOUNT CODES
+// ==========================================
+
+/**
+ * Validate and apply a discount code
+ */
+async function validateDiscountCode(code, planId) {
+    return new Promise((resolve, reject) => {
+        deps.db.get(
+            `SELECT * FROM discount_codes 
+             WHERE code = ? AND is_active = 1 
+             AND (valid_from IS NULL OR valid_from <= datetime('now'))
+             AND (valid_until IS NULL OR valid_until >= datetime('now'))
+             AND (max_uses IS NULL OR current_uses < max_uses)`,
+            [code.toUpperCase()],
+            (err, row) => {
+                if (err) return reject(err);
+                if (!row) return resolve({ valid: false, error: 'Invalid or expired discount code' });
+                
+                // Check if applicable to this plan
+                if (row.applicable_plans) {
+                    const applicablePlans = JSON.parse(row.applicable_plans);
+                    if (!applicablePlans.includes(planId)) {
+                        return resolve({ valid: false, error: 'This code is not valid for the selected plan' });
+                    }
+                }
+
+                resolve({
+                    valid: true,
+                    discount: {
+                        id: row.id,
+                        code: row.code,
+                        type: row.discount_type,
+                        value: row.discount_value,
+                        currency: row.currency
+                    }
+                });
+            }
+        );
+    });
+}
+
+/**
+ * Increment discount code usage
+ */
+function incrementDiscountCodeUsage(codeId) {
+    return new Promise((resolve, reject) => {
+        deps.db.run(
+            'UPDATE discount_codes SET current_uses = current_uses + 1 WHERE id = ?',
+            [codeId],
+            function (err) {
+                if (err) reject(err);
+                else resolve({ updated: this.changes > 0 });
+            }
+        );
+    });
+}
+
 module.exports = {
     setDependencies,
     getPlans,
@@ -431,5 +826,21 @@ module.exports = {
     getUserPlans,
     createUserPlan,
     updateUserPlan,
-    deleteUserPlan
+    deleteUserPlan,
+    // Payment Methods
+    getPaymentMethods,
+    getPaymentMethod,
+    addPaymentMethod,
+    removePaymentMethod,
+    setDefaultPaymentMethod,
+    createSetupIntent,
+    // Billing Alerts
+    getBillingAlerts,
+    updateBillingAlerts,
+    // Tax Settings
+    getTaxSettings,
+    updateTaxSettings,
+    // Discount Codes
+    validateDiscountCode,
+    incrementDiscountCodeUsage
 };

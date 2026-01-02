@@ -382,17 +382,24 @@ class ModelRouter {
                     tier: tier,
                     provider: providerName,
                     apiKey: envApiKey,
-                    endpoint: this.getDefaultEndpoint(providerName)
+                    endpoint: this.getDefaultEndpoint(providerName),
+                    source: 'platform',
+                    markupMultiplier: 1.0,
+                    raw: null
                 };
             }
         }
 
         return {
-            id: modelId,
+            // Prefer database model_id over passed-in modelId (e.g., use 'gemini-2.0-flash' from DB instead of 'gemini-1.5-flash' from fallback chain)
+            id: provider?.model_id || modelId,
             tier: tier,
             provider: providerName,
             apiKey: provider?.api_key || null,
-            endpoint: provider?.endpoint || this.getDefaultEndpoint(providerName)
+            endpoint: provider?.endpoint || this.getDefaultEndpoint(providerName),
+            source: provider?.api_key ? 'organization' : 'platform',
+            markupMultiplier: provider?.markup_multiplier || 1.0,
+            raw: provider
         };
     }
 
@@ -553,6 +560,41 @@ class ModelRouter {
                 (err, rows) => resolve(rows || [])
             );
         });
+    }
+    /**
+     * Legacy alias for select method
+     * @deprecated Use select() instead
+     */
+    async route(capabilityOrUserId, intentOrCapability) {
+        // Handle different signature styles
+        let params = {};
+
+        if (typeof capabilityOrUserId === 'object') {
+            params = capabilityOrUserId;
+        } else {
+            // Assume (userId, intent) signature from legacy calls
+            params = {
+                capability: intentOrCapability || 'chat',
+                userId: capabilityOrUserId
+            };
+        }
+
+        // Ensure options exists
+        params.options = params.options || {};
+
+        const result = await this.select(params);
+
+        // Map to legacy format
+        return {
+            providerConfig: result.raw || {
+                model_id: result.id,
+                provider: result.provider,
+                markup_multiplier: result.markupMultiplier
+            },
+            orgId: params.organizationId,
+            sourceType: result.source || 'platform',
+            model: result.id
+        };
     }
 }
 

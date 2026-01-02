@@ -1,19 +1,34 @@
-/**
- * Unit Tests: DRD Axis Validation
- * Comprehensive tests for DRD axis configuration, score validation, and consistency rules
- */
-
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { aiAssessmentPartner, DRD_AXES, AI_PARTNER_CONFIG } from '../../../server/services/aiAssessmentPartnerService.js';
 
 // Mock Google AI
-// Mock Google AI - Rely on global mock in setup.ts
-// vi.mock('@google/generative-ai');
+vi.mock('@google/generative-ai', () => {
+    const generateContentMock = vi.fn().mockResolvedValue({
+        response: {
+            text: () => 'Mock AI Response for testing',
+            candidates: [{ content: { parts: [{ text: 'Mock AI Response' }] } }]
+        }
+    });
+
+    return {
+        GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
+            getGenerativeModel: vi.fn().mockReturnValue({
+                getGenerativeModel: vi.fn().mockReturnThis(),
+                generateContent: generateContentMock,
+                generateContentStream: vi.fn().mockImplementation(async function* () {
+                    yield { text: () => 'Mock' };
+                    yield { text: () => ' AI' };
+                    yield { text: () => ' Response' };
+                }),
+                countTokens: vi.fn().mockResolvedValue({ totalTokens: 100 })
+            })
+        })),
+        HarmCategory: { HARM_CATEGORY_HARASSMENT: 'HARM_CATEGORY_HARASSMENT' },
+        HarmBlockThreshold: { BLOCK_MEDIUM_AND_ABOVE: 'BLOCK_MEDIUM_AND_ABOVE' }
+    };
+});
 
 describe('DRD Axis Validation', () => {
-    let DRD_AXES;
-    let AI_PARTNER_CONFIG;
-    let aiAssessmentPartner;
-
     const ALL_DRD_AXES = [
         'processes',
         'digitalProducts',
@@ -24,20 +39,14 @@ describe('DRD Axis Validation', () => {
         'aiMaturity'
     ];
 
-    beforeEach(async () => {
-        vi.resetModules();
+    beforeEach(() => {
         vi.clearAllMocks();
-        process.env.GEMINI_API_KEY = 'test-key';
-
-        const module = await import('../../../server/services/aiAssessmentPartnerService.js');
-        DRD_AXES = module.DRD_AXES;
-        AI_PARTNER_CONFIG = module.AI_PARTNER_CONFIG;
-        aiAssessmentPartner = module.aiAssessmentPartner;
+        // Ensure AI is initialized with a mock key
+        aiAssessmentPartner.initializeAI();
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        delete process.env.GEMINI_API_KEY;
     });
 
     // =========================================================================

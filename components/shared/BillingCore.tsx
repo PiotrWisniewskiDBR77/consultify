@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
+import { User, Invoice } from '../../types';
 import { Api } from '../../services/api';
 import { CreditCard, Globe, Cpu, UserCircle, TrendingUp, Package, DollarSign } from 'lucide-react';
 
@@ -41,13 +41,6 @@ interface Plan {
     is_active: boolean;
 }
 
-interface Invoice {
-    id: string;
-    created_at: string;
-    amount_paid: number;
-    status: string;
-}
-
 // Reusable Usage Meter Component
 export const UsageMeter: React.FC<{
     title: string;
@@ -62,7 +55,7 @@ export const UsageMeter: React.FC<{
     const percentage = limit > 0 ? Math.round((used / limit) * 100) : 0;
     const usedStr = formatUsed ? formatUsed(used) : used.toLocaleString();
     const limitStr = formatLimit ? formatLimit(limit) : limit.toLocaleString();
-    
+
     return (
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-5">
             <div className="flex items-center gap-3 mb-4">
@@ -85,11 +78,10 @@ export const UsageMeter: React.FC<{
                 </div>
                 <div className="w-full bg-slate-100 dark:bg-navy-950 rounded-full h-2.5 overflow-hidden">
                     <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                            percentage >= 95 ? 'bg-red-500' :
+                        className={`h-full rounded-full transition-all duration-500 ${percentage >= 95 ? 'bg-red-500' :
                             percentage >= 80 ? 'bg-orange-500' :
-                            'bg-purple-600'
-                        }`}
+                                'bg-purple-600'
+                            }`}
                         style={{ width: `${Math.min(100, percentage)}%` }}
                     />
                 </div>
@@ -108,11 +100,10 @@ export const PlanCard: React.FC<{
 }> = ({ plan, isCurrentPlan, onSelect, isSelecting, canSelect = true }) => {
     return (
         <div
-            className={`rounded-xl p-5 border transition-all ${
-                isCurrentPlan
-                    ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-500/50'
-                    : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/30'
-            }`}
+            className={`rounded-xl p-5 border transition-all ${isCurrentPlan
+                ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-500/50'
+                : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/30'
+                }`}
         >
             <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-1">{plan.name}</h4>
             <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-3">
@@ -148,7 +139,7 @@ export const PlanCard: React.FC<{
                     );
                 } catch (e) { return null; }
             })()}
-            
+
             {isCurrentPlan ? (
                 <div className="w-full py-2 rounded-lg text-center text-sm font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20">
                     Current Plan
@@ -172,7 +163,7 @@ export const InvoiceTable: React.FC<{
     limit?: number;
 }> = ({ invoices, limit = 5 }) => {
     if (invoices.length === 0) return null;
-    
+
     return (
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
             <table className="w-full text-sm">
@@ -193,11 +184,10 @@ export const InvoiceTable: React.FC<{
                                 ${(inv.amount_paid / 100).toFixed(2)}
                             </td>
                             <td className="px-4 py-3">
-                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                    inv.status === 'paid' ? 'bg-emerald-500/20 text-emerald-400' :
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${inv.status === 'paid' ? 'bg-emerald-500/20 text-emerald-400' :
                                     inv.status === 'open' ? 'bg-yellow-500/20 text-yellow-400' :
-                                    'bg-red-500/20 text-red-400'
-                                }`}>
+                                        'bg-red-500/20 text-red-400'
+                                    }`}>
                                     {inv.status}
                                 </span>
                             </td>
@@ -248,7 +238,7 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
             }
         };
         fetchBillingData();
-        
+
         // Fetch user plans for license display
         if (showUserLicense) {
             Api.getUserPlans().then(setUserPlans).catch(err => console.error('Failed to fetch user plans', err));
@@ -322,11 +312,10 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
                                 </p>
                             </div>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                            userLicense 
-                                ? 'bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/20' 
-                                : 'bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/5'
-                        }`}>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${userLicense
+                            ? 'bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/20'
+                            : 'bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/5'
+                            }`}>
                             {userLicense ? 'Active' : 'Default'}
                         </span>
                     </div>
@@ -424,5 +413,6 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
 };
 
 export default BillingCore;
+
 
 

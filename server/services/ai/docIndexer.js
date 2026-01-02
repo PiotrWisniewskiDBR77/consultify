@@ -23,13 +23,13 @@ const DOC_SOURCES = [
     { path: 'docs/AI_MASTER_ARCHITECTURE.md', category: 'architecture', priority: 1 },
     { path: 'docs/00_foundation/PMO_STANDARDS_COMPLIANCE.md', category: 'standards', priority: 1 },
     { path: 'CURSOR_CONTEXT.md', category: 'context', priority: 1 },
-    
+
     // Cursor rules (MDC files)
     { path: '.cursor/rules/ai-assessment.mdc', category: 'rules', priority: 2 },
     { path: '.cursor/rules/assessment-module.mdc', category: 'rules', priority: 2 },
     { path: '.cursor/rules/my-work-module.mdc', category: 'rules', priority: 2 },
     { path: '.cursor/rules/pmo-standards.mdc', category: 'rules', priority: 2 },
-    
+
     // Process documentation
     { path: 'docs/AI_QUALITY_CHECKLIST.md', category: 'quality', priority: 2 },
     { path: 'docs/WALKTHROUGH.md', category: 'walkthrough', priority: 3 }
@@ -168,7 +168,7 @@ class DocIndexer {
      */
     async indexAll() {
         console.log('[DocIndexer] Starting documentation indexing...');
-        
+
         for (const source of DOC_SOURCES) {
             try {
                 await this.indexDocument(source);
@@ -196,7 +196,7 @@ class DocIndexer {
      */
     async indexDocument(source) {
         const fullPath = path.join(this.projectRoot, source.path);
-        
+
         if (!fs.existsSync(fullPath)) {
             console.warn(`[DocIndexer] Document not found: ${source.path}`);
             return;
@@ -235,7 +235,18 @@ class DocIndexer {
                 for (const para of paragraphs) {
                     if ((currentChunk + para).length > maxChunkSize) {
                         if (currentChunk) chunks.push(currentChunk.trim());
-                        currentChunk = para;
+
+                        // If paragraph itself is huge, force split it
+                        if (para.length > maxChunkSize) {
+                            let remaining = para;
+                            while (remaining.length > 0) {
+                                chunks.push(remaining.slice(0, maxChunkSize).trim());
+                                remaining = remaining.slice(maxChunkSize);
+                            }
+                            currentChunk = '';
+                        } else {
+                            currentChunk = para;
+                        }
                     } else {
                         currentChunk += (currentChunk ? '\n\n' : '') + para;
                     }

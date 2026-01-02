@@ -323,5 +323,201 @@ router.get('/audit/org/:orgId', authenticateToken, async (req, res) => {
     }
 });
 
+// ==========================================
+// USER COST TRACKING
+// ==========================================
+
+/**
+ * GET /api/ai-settings/user/costs
+ * Get personal cost history for current user
+ */
+router.get('/user/costs', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { period = '30d' } = req.query;
+
+        const costs = await AISettingsService.getUserCostHistory(userId, period);
+        res.json(costs);
+    } catch (error) {
+        console.error('[AI Settings] Error getting user costs:', error);
+        res.status(500).json({ error: 'Failed to get cost history', message: error.message });
+    }
+});
+
+// ==========================================
+// USER TIER MANAGEMENT
+// ==========================================
+
+/**
+ * GET /api/ai-settings/org/:orgId/users/tiers
+ * Get all user tier assignments for an organization
+ * Requires: Admin role for the organization
+ */
+router.get('/org/:orgId/users/tiers', authenticateToken, async (req, res) => {
+    try {
+        const { orgId } = req.params;
+
+        // Check if user is admin for this org
+        const isAdmin = req.user.role === 'superadmin' ||
+            (req.user.organizationId === orgId && req.user.role === 'admin');
+
+        if (!isAdmin) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const tiers = await AISettingsService.getOrgUserTiers(orgId);
+        res.json(tiers);
+    } catch (error) {
+        console.error('[AI Settings] Error getting user tiers:', error);
+        res.status(500).json({ error: 'Failed to get user tiers', message: error.message });
+    }
+});
+
+/**
+ * PUT /api/ai-settings/org/:orgId/users/:userId/tier
+ * Assign tier to a specific user
+ * Requires: Admin role for the organization
+ */
+router.put('/org/:orgId/users/:userId/tier', authenticateToken, async (req, res) => {
+    try {
+        const { orgId, userId } = req.params;
+        const { tier } = req.body;
+
+        // Validate tier
+        const validTiers = ['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING'];
+        if (!validTiers.includes(tier)) {
+            return res.status(400).json({ 
+                error: 'Invalid tier', 
+                message: `Tier must be one of: ${validTiers.join(', ')}` 
+            });
+        }
+
+        // Check if user is admin for this org
+        const isAdmin = req.user.role === 'superadmin' ||
+            (req.user.organizationId === orgId && req.user.role === 'admin');
+
+        if (!isAdmin) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const result = await AISettingsService.assignUserTier(orgId, userId, tier);
+        res.json(result);
+    } catch (error) {
+        console.error('[AI Settings] Error assigning user tier:', error);
+        res.status(500).json({ error: 'Failed to assign tier', message: error.message });
+    }
+});
+
+// ==========================================
+// COST ATTRIBUTION
+// ==========================================
+
+/**
+ * GET /api/ai-settings/org/:orgId/costs
+ * Get cost attribution for an organization
+ * Requires: Admin role for the organization
+ */
+router.get('/org/:orgId/costs', authenticateToken, async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const { period = '7d' } = req.query;
+
+        // Check if user is admin for this org
+        const isAdmin = req.user.role === 'superadmin' ||
+            (req.user.organizationId === orgId && req.user.role === 'admin');
+
+        if (!isAdmin) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const costs = await AISettingsService.getOrgCostAttribution(orgId, period);
+        res.json(costs);
+    } catch (error) {
+        console.error('[AI Settings] Error getting cost attribution:', error);
+        res.status(500).json({ error: 'Failed to get costs', message: error.message });
+    }
+});
+
+// ==========================================
+// COMPLIANCE REPORTS
+// ==========================================
+
+/**
+ * GET /api/ai-settings/compliance/export/:format
+ * Export compliance report in specified format
+ * Requires: Admin role
+ */
+router.get('/compliance/export/:format', authenticateToken, async (req, res) => {
+    try {
+        const { format } = req.params;
+        const { standard = 'ISO21500' } = req.query;
+        const orgId = req.user.organizationId;
+
+        // Validate format
+        const validFormats = ['pdf', 'csv', 'json'];
+        if (!validFormats.includes(format)) {
+            return res.status(400).json({ 
+                error: 'Invalid format', 
+                message: `Format must be one of: ${validFormats.join(', ')}` 
+            });
+        }
+
+        // Validate standard
+        const validStandards = ['ISO21500', 'PMBOK7', 'PRINCE2', 'GDPR', 'SOC2'];
+        if (!validStandards.includes(standard)) {
+            return res.status(400).json({ 
+                error: 'Invalid standard', 
+                message: `Standard must be one of: ${validStandards.join(', ')}` 
+            });
+        }
+
+        // Check admin access
+        if (req.user.role !== 'superadmin' && req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const report = await AISettingsService.generateComplianceReport(orgId, standard, format);
+        
+        // Set appropriate headers based on format
+        if (format === 'csv') {
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', `attachment; filename=compliance-${standard}-${Date.now()}.csv`);
+            return res.send(report.data);
+        } else if (format === 'pdf') {
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename=compliance-${standard}-${Date.now()}.pdf`);
+            return res.send(report.data);
+        } else {
+            res.json(report);
+        }
+    } catch (error) {
+        console.error('[AI Settings] Error generating compliance report:', error);
+        res.status(500).json({ error: 'Failed to generate report', message: error.message });
+    }
+});
+
+/**
+ * POST /api/ai-settings/compliance/generate
+ * Generate a new compliance report
+ * Requires: Admin role
+ */
+router.post('/compliance/generate', authenticateToken, async (req, res) => {
+    try {
+        const { standard = 'ISO21500' } = req.body;
+        const orgId = req.user.organizationId;
+
+        // Check admin access
+        if (req.user.role !== 'superadmin' && req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const report = await AISettingsService.generateComplianceReport(orgId, standard, 'json');
+        res.json(report);
+    } catch (error) {
+        console.error('[AI Settings] Error generating compliance report:', error);
+        res.status(500).json({ error: 'Failed to generate report', message: error.message });
+    }
+});
+
 module.exports = router;
 

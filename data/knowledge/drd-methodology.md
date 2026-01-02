@@ -227,3 +227,4 @@ DRD provides industry-specific benchmarks for comparison:
 - Technology: Advanced in all areas, emphasis on innovation velocity
 
 
+

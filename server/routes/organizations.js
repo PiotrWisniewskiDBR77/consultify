@@ -306,5 +306,229 @@ router.post('/:orgId/tokens/credit', async (req, res) => {
     }
 });
 
+// ==========================================
+// OWNERSHIP TRANSFER ROUTES
+// ==========================================
+
+const db = require('../database');
+const { v4: uuidv4 } = require('uuid');
+
+/**
+ * POST /api/organizations/transfer-ownership
+ * Transfer organization ownership to another admin
+ * 
+ * Body: { newOwnerId: string, reason?: string }
+ * Only current Owner can perform this action
+ */
+router.post('/transfer-ownership', async (req, res) => {
+    try {
+        const userId = req.user?.id;
+        const organizationId = req.user?.organizationId;
+        const { newOwnerId, reason } = req.body;
+
+        if (!userId || !organizationId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        if (!newOwnerId) {
+            return res.status(400).json({ error: 'New owner ID is required' });
+        }
+
+        if (newOwnerId === userId) {
+            return res.status(400).json({ error: 'You are already the owner' });
+        }
+
+        // Verify current user is the Owner
+        const currentUser = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT id, is_owner, role, first_name, last_name FROM users WHERE id = ? AND organization_id = ?',
+                [userId, organizationId],
+                (err, row) => err ? reject(err) : resolve(row)
+            );
+        });
+
+        if (!currentUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const isCurrentOwner = currentUser.is_owner === 1 || currentUser.is_owner === true || currentUser.role === 'OWNER';
+        if (!isCurrentOwner) {
+            return res.status(403).json({ 
+                error: 'Only the current Account Owner can transfer ownership',
+                code: 'NOT_OWNER'
+            });
+        }
+
+        // Verify new owner exists and is an ADMIN in the same org
+        const newOwner = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT id, role, first_name, last_name, email FROM users WHERE id = ? AND organization_id = ?',
+                [newOwnerId, organizationId],
+                (err, row) => err ? reject(err) : resolve(row)
+            );
+        });
+
+        if (!newOwner) {
+            return res.status(404).json({ error: 'New owner not found in this organization' });
+        }
+
+        if (newOwner.role !== 'ADMIN' && newOwner.role !== 'OWNER') {
+            return res.status(400).json({ 
+                error: 'New owner must be an Admin. Please promote them to Admin first.',
+                code: 'NEW_OWNER_NOT_ADMIN'
+            });
+        }
+
+        // Perform the transfer in a transaction
+        await new Promise((resolve, reject) => {
+            db.serialize(() => {
+                // 1. Remove ownership from current owner
+                db.run('UPDATE users SET is_owner = 0 WHERE id = ?', [userId]);
+                
+                // 2. Set new owner
+                db.run('UPDATE users SET is_owner = 1, role = ? WHERE id = ?', ['OWNER', newOwnerId]);
+                
+                // 3. Update organization owner_id
+                db.run('UPDATE organizations SET owner_id = ? WHERE id = ?', [newOwnerId, organizationId]);
+                
+                // 4. Record the transfer in audit table
+                const transferId = uuidv4();
+                db.run(
+                    `INSERT INTO ownership_transfers (id, organization_id, from_user_id, to_user_id, reason, transferred_by)
+                     VALUES (?, ?, ?, ?, ?, ?)`,
+                    [transferId, organizationId, userId, newOwnerId, reason || 'Ownership transfer', userId],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+        });
+
+        // Return success with new owner details
+        res.json({
+            success: true,
+            message: `Ownership transferred to ${newOwner.first_name} ${newOwner.last_name}`,
+            newOwner: {
+                id: newOwner.id,
+                firstName: newOwner.first_name,
+                lastName: newOwner.last_name,
+                email: newOwner.email
+            },
+            previousOwner: {
+                id: currentUser.id,
+                firstName: currentUser.first_name,
+                lastName: currentUser.last_name
+            }
+        });
+
+    } catch (err) {
+        console.error('[Organizations] Transfer ownership error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * GET /api/organizations/ownership-history
+ * Get ownership transfer history for current organization
+ */
+router.get('/ownership-history', async (req, res) => {
+    try {
+        const userId = req.user?.id;
+        const organizationId = req.user?.organizationId;
+
+        if (!userId || !organizationId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        // Only Owner/Admin can view history
+        const user = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT role, is_owner FROM users WHERE id = ? AND organization_id = ?',
+                [userId, organizationId],
+                (err, row) => err ? reject(err) : resolve(row)
+            );
+        });
+
+        if (!user || (!['ADMIN', 'OWNER'].includes(user.role) && !user.is_owner)) {
+            return res.status(403).json({ error: 'Only Admins can view ownership history' });
+        }
+
+        const history = await new Promise((resolve, reject) => {
+            db.all(
+                `SELECT 
+                    ot.id,
+                    ot.reason,
+                    ot.transferred_at,
+                    fu.first_name || ' ' || fu.last_name as from_user_name,
+                    fu.email as from_user_email,
+                    tu.first_name || ' ' || tu.last_name as to_user_name,
+                    tu.email as to_user_email,
+                    tb.first_name || ' ' || tb.last_name as transferred_by_name
+                FROM ownership_transfers ot
+                LEFT JOIN users fu ON ot.from_user_id = fu.id
+                LEFT JOIN users tu ON ot.to_user_id = tu.id
+                LEFT JOIN users tb ON ot.transferred_by = tb.id
+                WHERE ot.organization_id = ?
+                ORDER BY ot.transferred_at DESC
+                LIMIT 50`,
+                [organizationId],
+                (err, rows) => err ? reject(err) : resolve(rows || [])
+            );
+        });
+
+        res.json({ success: true, history });
+
+    } catch (err) {
+        console.error('[Organizations] Ownership history error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * GET /api/organizations/owner
+ * Get current owner information
+ */
+router.get('/owner', async (req, res) => {
+    try {
+        const organizationId = req.user?.organizationId;
+
+        if (!organizationId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const owner = await new Promise((resolve, reject) => {
+            db.get(
+                `SELECT id, first_name, last_name, email, role, avatar_url 
+                 FROM users 
+                 WHERE organization_id = ? AND (is_owner = 1 OR role = 'OWNER')
+                 LIMIT 1`,
+                [organizationId],
+                (err, row) => err ? reject(err) : resolve(row)
+            );
+        });
+
+        if (!owner) {
+            return res.status(404).json({ error: 'No owner found for this organization' });
+        }
+
+        res.json({
+            success: true,
+            owner: {
+                id: owner.id,
+                firstName: owner.first_name,
+                lastName: owner.last_name,
+                email: owner.email,
+                role: owner.role,
+                avatarUrl: owner.avatar_url
+            }
+        });
+
+    } catch (err) {
+        console.error('[Organizations] Get owner error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
 

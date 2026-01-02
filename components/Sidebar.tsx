@@ -183,7 +183,9 @@ export const Sidebar: React.FC = () => {
     fullSessionData,
     theme,
     isSidebarCollapsed,
-    toggleSidebarCollapse
+    toggleSidebarCollapse,
+    isChatSlidingPanelOpen,
+    toggleChatSlidingPanel
   } = useAppStore();
 
   const { t } = useTranslation();
@@ -219,12 +221,19 @@ export const Sidebar: React.FC = () => {
       label: t('sidebar.aiChat', 'AI Chat'),
       icon: <MessageSquare size={20} />,
       viewId: AppView.AI_CHAT,
+      // onClick is handled specially in renderMenuItem for chat panel toggle
     },
     {
       id: 'MY_WORK',
       label: t('myWork.title', 'My Work'),
       icon: <Briefcase size={20} />,
       viewId: AppView.MY_WORK,
+    },
+    {
+      id: 'PROJECT_INTELLIGENCE',
+      label: t('sidebar.projectIntelligence', 'Project Intelligence'),
+      icon: <Brain size={20} />,
+      viewId: AppView.PROJECT_INTELLIGENCE,
     },
     // Phase G: Ecosystem Affiliate Dashboard
     ...(currentUser?.journeyState === 'ECOSYSTEM_NODE' ? [{
@@ -328,14 +337,13 @@ export const Sidebar: React.FC = () => {
     label: t('sidebar.adminPanel'),
     icon: <Shield size={20} />,
     subItems: [
-      { id: 'ADMIN_DASHBOARD', label: t('sidebar.dashboard'), viewId: AppView.ADMIN_DASHBOARD, icon: <LayoutDashboard size={16} /> },
-      { id: 'ADMIN_METRICS', label: t('sidebar.metrics'), viewId: AppView.ADMIN_METRICS, icon: <TrendingUp size={16} /> },
-      { id: 'ADMIN_USERS', label: t('sidebar.adminUsers'), viewId: AppView.ADMIN_USERS, icon: <Users size={16} /> },
-      { id: 'ADMIN_PROJECTS', label: t('sidebar.adminProjects'), viewId: AppView.ADMIN_PROJECTS, icon: <Building2 size={16} /> },
-      { id: 'ADMIN_LLM', label: t('sidebar.adminLLM'), viewId: AppView.ADMIN_LLM, icon: <Brain size={16} /> },
-      { id: 'ADMIN_KNOWLEDGE', label: t('sidebar.adminKnowledge'), viewId: AppView.ADMIN_KNOWLEDGE, icon: <BookOpen size={16} /> },
-      { id: 'ADMIN_PLAYBOOK_RUNS', label: t('sidebar.playbookRuns', 'Playbook Runs'), viewId: AppView.ADMIN_PLAYBOOK_RUNS, icon: <Layers size={16} /> },
-      { id: 'ADMIN_FEEDBACK', label: t('sidebar.adminFeedback'), viewId: AppView.ADMIN_FEEDBACK, icon: <MessageSquare size={16} /> },
+      { id: 'ADMIN_OVERVIEW', label: t('admin.modules.overview', 'Overview'), viewId: AppView.ADMIN_OVERVIEW, icon: <LayoutDashboard size={16} /> },
+      { id: 'ADMIN_ORGANIZATION', label: t('admin.modules.organization', 'Organization'), viewId: AppView.ADMIN_ORGANIZATION, icon: <Building2 size={16} /> },
+      { id: 'ADMIN_TEAM', label: t('admin.modules.team', 'Team'), viewId: AppView.ADMIN_TEAM, icon: <Users size={16} /> },
+      { id: 'ADMIN_WORKSPACE', label: t('admin.modules.workspace', 'Workspace'), viewId: AppView.ADMIN_WORKSPACE, icon: <Briefcase size={16} /> },
+      { id: 'ADMIN_AI', label: t('admin.modules.ai', 'AI'), viewId: AppView.ADMIN_AI, icon: <Brain size={16} /> },
+      { id: 'ADMIN_BILLING', label: t('admin.modules.billing', 'Billing'), viewId: AppView.ADMIN_BILLING, icon: <CreditCard size={16} /> },
+      { id: 'ADMIN_SECURITY', label: t('admin.modules.security', 'Security'), viewId: AppView.ADMIN_SECURITY, icon: <Lock size={16} /> },
     ]
   };
 
@@ -356,18 +364,13 @@ export const Sidebar: React.FC = () => {
     id: 'SETTINGS',
     label: t('sidebar.settings'),
     icon: <Settings size={20} />,
-    // viewId: AppView.SETTINGS_PROFILE, // Removed direct link in favor of subitems
     subItems: [
-      { id: 'SETTINGS_PROFILE', label: t('settings.menu.myProfile'), viewId: AppView.SETTINGS_PROFILE, icon: <UserCircle size={16} /> },
-      { id: 'SETTINGS_WORK_PREFERENCES', label: t('settings.menu.workPreferences'), viewId: AppView.SETTINGS_WORK_PREFERENCES, icon: <ClipboardList size={16} /> },
-      { id: 'SETTINGS_DASHBOARD_PREFERENCES', label: t('settings.menu.dashboardPreferences'), viewId: AppView.SETTINGS_DASHBOARD_PREFERENCES, icon: <LayoutGrid size={16} /> },
-      { id: 'SETTINGS_BILLING', label: t('settings.menu.billing'), viewId: AppView.SETTINGS_BILLING, icon: <CreditCard size={16} /> },
-      { id: 'SETTINGS_AI', label: t('settings.menu.aiConfig'), viewId: AppView.SETTINGS_AI, icon: <Brain size={16} /> },
-      { id: 'SETTINGS_NOTIFICATIONS', label: t('settings.menu.notifications'), viewId: AppView.SETTINGS_NOTIFICATIONS, icon: <Bell size={16} /> },
-      { id: 'SETTINGS_INTEGRATIONS', label: t('settings.menu.integrations'), viewId: AppView.SETTINGS_INTEGRATIONS, icon: <Link size={16} /> },
-      { id: 'SETTINGS_REGIONALIZATION', label: t('settings.menu.regionalization'), viewId: AppView.SETTINGS_REGIONALIZATION, icon: <Globe size={16} /> },
-      { id: 'SETTINGS_ACCESSIBILITY', label: t('settings.menu.accessibility'), viewId: AppView.SETTINGS_ACCESSIBILITY, icon: <Accessibility size={16} /> },
-      { id: 'SETTINGS_PRIVACY', label: t('settings.menu.privacy'), viewId: AppView.SETTINGS_PRIVACY, icon: <EyeOff size={16} /> },
+      { id: 'SETTINGS_PROFILE_MODULE', label: t('settings.modules.profile', 'Profile'), viewId: AppView.SETTINGS_PROFILE_MODULE, icon: <UserCircle size={16} /> },
+      { id: 'SETTINGS_AI_MODULE', label: t('settings.modules.aiPreferences', 'AI Preferences'), viewId: AppView.SETTINGS_AI_MODULE, icon: <Brain size={16} /> },
+      { id: 'SETTINGS_NOTIFICATIONS_MODULE', label: t('settings.modules.notifications', 'Notifications'), viewId: AppView.SETTINGS_NOTIFICATIONS_MODULE, icon: <Bell size={16} /> },
+      { id: 'SETTINGS_SECURITY_MODULE', label: t('settings.modules.security', 'Security'), viewId: AppView.SETTINGS_SECURITY_MODULE, icon: <Shield size={16} /> },
+      { id: 'SETTINGS_INTEGRATIONS_MODULE', label: t('settings.modules.integrations', 'Integrations'), viewId: AppView.SETTINGS_INTEGRATIONS_MODULE, icon: <Link size={16} /> },
+      { id: 'SETTINGS_APPEARANCE_MODULE', label: t('settings.modules.appearance', 'Appearance'), viewId: AppView.SETTINGS_APPEARANCE_MODULE, icon: <Globe size={16} /> },
     ]
   };
 
@@ -466,8 +469,20 @@ export const Sidebar: React.FC = () => {
         onMouseLeave={handleMouseLeave}
       >
         <button
+          data-chat-toggle={item.id === 'AI_CHAT' ? 'true' : undefined}
           onClick={() => {
             if (isLocked) return;
+            
+            // Special handling for AI Chat - toggle sliding panel
+            if (item.id === 'AI_CHAT') {
+              toggleChatSlidingPanel();
+              // Also navigate to chat view if not already there
+              if (currentView !== AppView.AI_CHAT) {
+                setCurrentView(AppView.AI_CHAT);
+              }
+              return;
+            }
+            
             if (item.viewId) {
               setCurrentView(item.viewId);
               // Close on mobile/tablet after navigation
@@ -482,7 +497,7 @@ export const Sidebar: React.FC = () => {
             ${isTouchDevice ? 'py-3 min-h-[44px]' : 'py-2.5'}
             ${paddingLeft}
             ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-            ${isActive
+            ${(isActive || (item.id === 'AI_CHAT' && isChatSlidingPanelOpen))
               ? 'bg-purple-600/10 text-purple-600 dark:text-purple-400 border-r-2 border-purple-600'
               : isParentActive
                 ? 'text-navy-900 dark:text-white font-medium bg-slate-50 dark:bg-white/5'

@@ -171,6 +171,13 @@ export const VIEW_TO_MODULE_MAP: Record<string, ViewHelpMapping> = {
     [AppView.SETTINGS_WORK_PREFERENCES]: { moduleId: 'settings', cardId: 'settings-work' },
     [AppView.SETTINGS_DASHBOARD_PREFERENCES]: { moduleId: 'settings', cardId: 'settings-dashboard' },
     [AppView.SETTINGS_ACCESSIBILITY]: { moduleId: 'settings', cardId: 'settings-accessibility' },
+    // New Settings Module Views (6-module structure)
+    [AppView.SETTINGS_PROFILE_MODULE]: { moduleId: 'settings', cardId: 'settings-profile-module' },
+    [AppView.SETTINGS_AI_MODULE]: { moduleId: 'settings', cardId: 'settings-ai-module' },
+    [AppView.SETTINGS_NOTIFICATIONS_MODULE]: { moduleId: 'settings', cardId: 'settings-notifications-module' },
+    [AppView.SETTINGS_SECURITY_MODULE]: { moduleId: 'settings', cardId: 'settings-security-module' },
+    [AppView.SETTINGS_INTEGRATIONS_MODULE]: { moduleId: 'settings', cardId: 'settings-integrations-module' },
+    [AppView.SETTINGS_APPEARANCE_MODULE]: { moduleId: 'settings', cardId: 'settings-appearance-module' },
 
     // ==========================================
     // ADMIN MODULE
@@ -192,6 +199,12 @@ export const VIEW_TO_MODULE_MAP: Record<string, ViewHelpMapping> = {
     [AppView.ADMIN_API_KEYS]: { moduleId: 'admin', cardId: 'admin-api-keys' },
     [AppView.ADMIN_BILLING_MANAGEMENT]: { moduleId: 'admin', cardId: 'admin-billing-mgmt' },
     [AppView.ADMIN_BULK_OPERATIONS]: { moduleId: 'admin', cardId: 'admin-bulk-ops' },
+    // New Admin Module Views (5-module structure)
+    [AppView.ADMIN_OVERVIEW]: { moduleId: 'admin', cardId: 'admin-overview-module' },
+    [AppView.ADMIN_TEAM]: { moduleId: 'admin', cardId: 'admin-team-module' },
+    [AppView.ADMIN_WORKSPACE]: { moduleId: 'admin', cardId: 'admin-workspace-module' },
+    [AppView.ADMIN_AI]: { moduleId: 'admin', cardId: 'admin-ai-module' },
+    [AppView.ADMIN_SETTINGS]: { moduleId: 'admin', cardId: 'admin-settings-module' },
 
     // ==========================================
     // SUPERADMIN MODULE

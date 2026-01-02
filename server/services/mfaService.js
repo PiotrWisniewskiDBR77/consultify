@@ -91,7 +91,294 @@ function dbAll(sql, params = []) {
     });
 }
 
+// SMS Service for SMS MFA fallback
+let SMSService = null;
+function getSMSService() {
+    if (!SMSService) {
+        try {
+            SMSService = require('./smsService');
+        } catch (error) {
+            console.warn('[MFA] SMS Service not available:', error.message);
+        }
+    }
+    return SMSService;
+}
+
 const MFAService = {
+    // ==========================================
+    // SMS MFA METHODS
+    // ==========================================
+
+    /**
+     * Setup SMS as MFA method
+     * @param {string} userId 
+     * @param {string} phoneNumber - E.164 format
+     * @returns {Promise<{success: boolean, error?: string}>}
+     */
+    async setupSMSMFA(userId, phoneNumber) {
+        const smsService = getSMSService();
+        if (!smsService) {
+            return { success: false, error: 'SMS service not available' };
+        }
+
+        // Initiate phone verification
+        const result = await smsService.initiatePhoneVerification(userId, phoneNumber);
+        if (!result.success) {
+            return result;
+        }
+
+        return { 
+            success: true, 
+            message: 'Verification code sent to your phone',
+            expiresAt: result.expiresAt
+        };
+    },
+
+    /**
+     * Verify phone and enable SMS MFA
+     * @param {string} userId 
+     * @param {string} code 
+     * @returns {Promise<{success: boolean, backupCodes?: string[], error?: string}>}
+     */
+    async verifySMSSetup(userId, code) {
+        const smsService = getSMSService();
+        if (!smsService) {
+            return { success: false, error: 'SMS service not available' };
+        }
+
+        // Verify phone
+        const verifyResult = await smsService.completePhoneVerification(userId, code);
+        if (!verifyResult.success) {
+            return verifyResult;
+        }
+
+        // Generate backup codes
+        const { codes, hashedCodes } = await this._generateBackupCodes();
+
+        // Enable SMS MFA
+        await dbRun(
+            `UPDATE users SET 
+                mfa_enabled = 1,
+                mfa_sms_enabled = 1,
+                mfa_primary_method = 'sms',
+                mfa_verified_at = datetime('now'),
+                mfa_backup_codes = ?
+            WHERE id = ?`,
+            [JSON.stringify(hashedCodes), userId]
+        );
+
+        return { success: true, backupCodes: codes };
+    },
+
+    /**
+     * Send SMS code for MFA challenge during login
+     * @param {string} userId 
+     * @returns {Promise<{success: boolean, error?: string}>}
+     */
+    async sendSMSChallenge(userId) {
+        const smsService = getSMSService();
+        if (!smsService) {
+            return { success: false, error: 'SMS service not available' };
+        }
+
+        // Get user's verified phone
+        const user = await dbGet(
+            `SELECT phone_number, phone_verified, mfa_sms_enabled FROM users WHERE id = ?`,
+            [userId]
+        );
+
+        if (!user || !user.phone_number || !user.phone_verified) {
+            return { success: false, error: 'No verified phone number on file' };
+        }
+
+        if (!user.mfa_sms_enabled) {
+            return { success: false, error: 'SMS MFA not enabled for this account' };
+        }
+
+        // Send OTP
+        return smsService.sendOTP(userId, user.phone_number, 'mfa_login');
+    },
+
+    /**
+     * Verify SMS code during login
+     * @param {string} userId 
+     * @param {string} code 
+     * @param {string} ip 
+     * @param {string} userAgent 
+     * @returns {Promise<{success: boolean, error?: string}>}
+     */
+    async verifySMSCode(userId, code, ip = null, userAgent = null) {
+        const smsService = getSMSService();
+        if (!smsService) {
+            return { success: false, error: 'SMS service not available' };
+        }
+
+        // Check brute-force protection
+        const isBlocked = await this._isBlocked(userId, ip);
+        if (isBlocked) {
+            return {
+                success: false,
+                error: 'Too many failed attempts. Please try again later.',
+                blocked: true
+            };
+        }
+
+        // Verify OTP
+        const result = await smsService.verifyOTP(userId, code, 'mfa_login');
+
+        await this._logAttempt(userId, 'SMS', result.success, ip, userAgent);
+
+        return result;
+    },
+
+    /**
+     * Get user's MFA methods and status
+     * @param {string} userId 
+     * @returns {Promise<Object>}
+     */
+    async getMFAMethods(userId) {
+        const user = await dbGet(
+            `SELECT 
+                mfa_enabled, 
+                mfa_secret,
+                mfa_sms_enabled,
+                mfa_primary_method,
+                phone_number,
+                phone_verified
+            FROM users WHERE id = ?`,
+            [userId]
+        );
+
+        if (!user) {
+            return { 
+                enabled: false, 
+                methods: [],
+                primary: null
+            };
+        }
+
+        const methods = [];
+
+        // TOTP (Authenticator app)
+        if (user.mfa_secret) {
+            methods.push({
+                type: 'totp',
+                name: 'Authenticator App',
+                enabled: !!user.mfa_enabled && !user.mfa_sms_enabled,
+                configured: true
+            });
+        }
+
+        // SMS
+        if (user.phone_number && user.phone_verified) {
+            methods.push({
+                type: 'sms',
+                name: 'SMS',
+                enabled: !!user.mfa_sms_enabled,
+                configured: true,
+                phoneNumber: this._maskPhoneNumber(user.phone_number)
+            });
+        }
+
+        return {
+            enabled: !!user.mfa_enabled,
+            methods,
+            primary: user.mfa_primary_method || 'totp',
+            smsAvailable: !!getSMSService()
+        };
+    },
+
+    /**
+     * Set primary MFA method
+     * @param {string} userId 
+     * @param {string} method - 'totp' or 'sms'
+     * @returns {Promise<{success: boolean, error?: string}>}
+     */
+    async setPrimaryMethod(userId, method) {
+        if (!['totp', 'sms'].includes(method)) {
+            return { success: false, error: 'Invalid MFA method' };
+        }
+
+        // Verify method is available
+        const user = await dbGet(
+            `SELECT mfa_secret, mfa_sms_enabled, phone_verified FROM users WHERE id = ?`,
+            [userId]
+        );
+
+        if (!user) {
+            return { success: false, error: 'User not found' };
+        }
+
+        if (method === 'totp' && !user.mfa_secret) {
+            return { success: false, error: 'TOTP not configured. Please set up authenticator app first.' };
+        }
+
+        if (method === 'sms' && (!user.mfa_sms_enabled || !user.phone_verified)) {
+            return { success: false, error: 'SMS MFA not configured. Please verify your phone number first.' };
+        }
+
+        await dbRun(
+            `UPDATE users SET mfa_primary_method = ? WHERE id = ?`,
+            [method, userId]
+        );
+
+        return { success: true };
+    },
+
+    /**
+     * Disable SMS MFA (keep TOTP if enabled)
+     * @param {string} userId 
+     * @param {string} token - TOTP or SMS code for verification
+     * @returns {Promise<{success: boolean, error?: string}>}
+     */
+    async disableSMSMFA(userId, token) {
+        // Verify with current method
+        const user = await dbGet(
+            `SELECT mfa_primary_method, mfa_secret FROM users WHERE id = ?`,
+            [userId]
+        );
+
+        let verificationResult;
+        if (user.mfa_primary_method === 'sms') {
+            verificationResult = await this.verifySMSCode(userId, token);
+        } else {
+            verificationResult = await this.verifyTOTP(userId, token);
+        }
+
+        if (!verificationResult.success) {
+            return verificationResult;
+        }
+
+        // If TOTP is still available, keep MFA enabled but switch to TOTP
+        const hasTOTP = !!user.mfa_secret;
+
+        await dbRun(
+            `UPDATE users SET 
+                mfa_sms_enabled = 0,
+                mfa_primary_method = ?,
+                mfa_enabled = ?
+            WHERE id = ?`,
+            [hasTOTP ? 'totp' : null, hasTOTP ? 1 : 0, userId]
+        );
+
+        return { 
+            success: true, 
+            mfaStillEnabled: hasTOTP,
+            message: hasTOTP 
+                ? 'SMS MFA disabled. Authenticator app MFA is still active.' 
+                : 'SMS MFA disabled. Your account no longer has 2FA protection.'
+        };
+    },
+
+    _maskPhoneNumber(phone) {
+        if (!phone || phone.length < 8) return phone;
+        return phone.slice(0, 3) + '***' + phone.slice(-4);
+    },
+
+    // ==========================================
+    // TOTP METHODS (Original)
+    // ==========================================
+
     /**
      * Generate a new TOTP secret and QR code for MFA setup
      * @param {string} userId 

@@ -1,11 +1,3 @@
-/**
- * Intelligence Components
- * 
- * Components for the Project Intelligence Hub module
- */
-
+export { CategoryIcon } from './CategoryIcon';
 export { InsightDetectionCard } from './InsightDetectionCard';
 export { InterviewProgress } from './InterviewProgress';
-export { CategoryIcon, getCategoryConfig, INSIGHT_CATEGORIES } from './CategoryIcon';
-
-

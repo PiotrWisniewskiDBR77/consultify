@@ -17,6 +17,7 @@ export interface Conversation {
     title: string;
     titleSource: 'auto' | 'user';
     projectId?: string;
+    chatProjectId?: string | null; // Chat organization folder (like Claude projects)
     organizationId?: string;
     starred: boolean;
     archived: boolean;
@@ -554,6 +555,7 @@ function mapApiConversation(api: any): Conversation {
         title: api.title,
         titleSource: api.title_source || 'auto',
         projectId: api.project_id,
+        chatProjectId: api.chat_project_id || null,
         organizationId: api.organization_id,
         starred: api.starred || false,
         archived: api.archived || false,

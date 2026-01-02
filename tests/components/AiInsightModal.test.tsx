@@ -48,3 +48,4 @@ describe('AiInsightModal Component', () => {
 });
 
 
+

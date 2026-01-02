@@ -115,7 +115,8 @@ const STATE_PERMISSIONS = {
         canUseBenchmarks: true,
         canUseReferrals: true,
         canUseConsultantMode: true,
-        canReceiveAIReviews: true
+        canReceiveAIReviews: true,
+        canWorkOnDRD: true
     }
 };
 
@@ -123,6 +124,7 @@ const UserStateMachine = {
     USER_STATES,
     PHASES,
     STATE_TO_PHASE,
+    VALID_TRANSITIONS,
 
     /**
      * Check if a transition is valid
@@ -227,6 +229,15 @@ const UserStateMachine = {
     },
 
     /**
+     * Alias for getAllowedTransitions
+     * @param {string} currentState 
+     * @returns {string[]}
+     */
+    getNextStates(currentState) {
+        return this.getAllowedTransitions(currentState);
+    },
+
+    /**
      * Check if state is valid
      * @param {string} state 
      * @returns {boolean}
@@ -242,6 +253,16 @@ const UserStateMachine = {
      */
     isValidPhase(phase) {
         return Object.values(PHASES).includes(phase);
+    },
+
+    /**
+     * Check if state is terminal (no outgoing transitions)
+     * @param {string} state 
+     * @returns {boolean}
+     */
+    isTerminalState(state) {
+        const transitions = this.getAllowedTransitions(state);
+        return transitions.length === 0;
     }
 };
 

@@ -22,7 +22,7 @@ export const HTMLPreview: React.FC<HTMLPreviewProps> = ({
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Sanitize HTML to prevent XSS - basic sanitization
-  const sanitizedHTML = useMemo(() => {
+  const { sanitizedHTML, parseError } = useMemo(() => {
     try {
       // Remove script tags and event handlers
       let safe = content
@@ -57,13 +57,16 @@ ${safe}
 </html>`;
       }
       
-      setError(null);
-      return safe;
-    } catch (err) {
-      setError('Failed to parse HTML');
-      return '';
+      return { sanitizedHTML: safe, parseError: null };
+    } catch (_err) {
+      return { sanitizedHTML: '', parseError: 'Failed to parse HTML' };
     }
   }, [content]);
+
+  // Update error state when parseError changes
+  useEffect(() => {
+    setError(parseError);
+  }, [parseError]);
 
   // Create blob URL for iframe
   const blobUrl = useMemo(() => {

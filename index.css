@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========================================
+   Admin Module Design System
+   Elegant minimalist tech aesthetic
+   ======================================== */
+:root {
+  --admin-bg: #0a0f1e;
+  --admin-card: rgba(255, 255, 255, 0.03);
+  --admin-card-hover: rgba(255, 255, 255, 0.05);
+  --admin-border: rgba(255, 255, 255, 0.08);
+  --admin-border-strong: rgba(255, 255, 255, 0.12);
+  --admin-accent: #e53e3e;
+  --admin-accent-muted: rgba(229, 62, 62, 0.15);
+  --admin-accent-subtle: rgba(229, 62, 62, 0.08);
+  --admin-text-primary: #ffffff;
+  --admin-text-secondary: #94a3b8;
+  --admin-text-muted: #64748b;
+  --admin-success: #10b981;
+  --admin-warning: #f59e0b;
+  --admin-error: #ef4444;
+}
+
 @layer utilities {
     .animate-fade-up {
         animation: fadeUp 0.5s ease-out forwards;
@@ -378,5 +399,132 @@
 
     .dark .mywork-scrollbar::-webkit-scrollbar-thumb {
         background-color: theme('colors.slate.600');
+    }
+
+    /* ========================================
+       Admin Module UI Components
+       ======================================== */
+
+    /* Admin Card - Clean minimal style */
+    .admin-card {
+        @apply bg-[var(--admin-card)] border border-[var(--admin-border)] rounded-lg transition-colors;
+    }
+
+    .admin-card-hover:hover {
+        @apply bg-[var(--admin-card-hover)] border-[var(--admin-border-strong)];
+    }
+
+    /* Admin Metric Card */
+    .admin-metric {
+        @apply bg-[var(--admin-card)] border border-[var(--admin-border)] rounded-lg p-4;
+    }
+
+    .admin-metric-label {
+        @apply text-xs text-slate-500 uppercase tracking-wider;
+    }
+
+    .admin-metric-value {
+        @apply text-2xl font-semibold text-white mt-1;
+    }
+
+    .admin-metric-subtitle {
+        @apply text-xs text-slate-500 mt-1;
+    }
+
+    /* Admin Table */
+    .admin-table {
+        @apply w-full text-left text-sm;
+    }
+
+    .admin-table thead {
+        @apply bg-black/20;
+    }
+
+    .admin-table th {
+        @apply px-4 py-3 text-xs uppercase text-slate-500 font-medium tracking-wider;
+    }
+
+    .admin-table tbody tr {
+        @apply border-b border-white/5 transition-colors;
+    }
+
+    .admin-table tbody tr:hover {
+        @apply bg-white/[0.02];
+    }
+
+    .admin-table td {
+        @apply px-4 py-3 text-slate-300;
+    }
+
+    /* Admin Status Indicator */
+    .admin-status {
+        @apply inline-flex items-center gap-1.5 text-xs;
+    }
+
+    .admin-status-dot {
+        @apply w-1.5 h-1.5 rounded-full;
+    }
+
+    .admin-status-healthy {
+        @apply text-emerald-400;
+    }
+
+    .admin-status-healthy .admin-status-dot {
+        @apply bg-emerald-400;
+    }
+
+    .admin-status-warning {
+        @apply text-amber-400;
+    }
+
+    .admin-status-warning .admin-status-dot {
+        @apply bg-amber-400;
+    }
+
+    .admin-status-error {
+        @apply text-red-400;
+    }
+
+    .admin-status-error .admin-status-dot {
+        @apply bg-red-400;
+    }
+
+    /* Admin Section Header */
+    .admin-section-header {
+        @apply flex items-center justify-between pb-4 border-b border-[var(--admin-border)];
+    }
+
+    .admin-section-title {
+        @apply text-sm font-medium text-white flex items-center gap-2;
+    }
+
+    /* Admin Tab Underline Style */
+    .admin-tabs {
+        @apply flex gap-1 border-b border-[var(--admin-border)];
+    }
+
+    .admin-tab {
+        @apply px-4 py-2.5 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-colors hover:text-white;
+    }
+
+    .admin-tab-active {
+        @apply text-[var(--admin-accent)] border-[var(--admin-accent)];
+    }
+
+    /* Admin Button Minimal */
+    .admin-btn {
+        @apply inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors;
+    }
+
+    .admin-btn-ghost {
+        @apply bg-transparent text-slate-400 hover:text-white hover:bg-white/5;
+    }
+
+    .admin-btn-subtle {
+        @apply bg-[var(--admin-card)] border border-[var(--admin-border)] text-slate-300 hover:bg-[var(--admin-card-hover)] hover:text-white;
+    }
+
+    .admin-btn-accent {
+        @apply bg-[var(--admin-accent)] text-white hover:opacity-90;
     }
 }

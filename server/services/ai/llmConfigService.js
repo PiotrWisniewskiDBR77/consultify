@@ -37,7 +37,7 @@ const PROVIDER_DEFINITIONS = {
         supportsStreaming: true,
         supportsVision: true,
         supportsTools: true,
-        tier: 'PREMIUM'
+        tier: 'BUDGET'  // Changed from PREMIUM to prioritize for chat
     },
     google: {
         id: 'google',
@@ -120,7 +120,7 @@ const PROVIDER_DEFINITIONS = {
         name: 'Zhipu AI (z.ai)',
         envKey: 'ZAI_API_KEY',
         defaultEndpoint: 'https://api.z.ai/api/paas/v4/chat/completions',
-        defaultModel: 'glm-4',
+        defaultModel: 'glm-4-plus',
         costPer1k: 0.01,
         supportsStreaming: true,
         supportsVision: true,
@@ -145,14 +145,15 @@ const PROVIDER_DEFINITIONS = {
 
 // Tier priority for fallback selection (higher = better)
 const TIER_PRIORITY = {
+    'REASONING': 5,
     'PREMIUM': 4,
     'STANDARD': 3,
     'BUDGET': 2,
     'FREE': 1
 };
 
-// Default fallback chain
-const DEFAULT_FALLBACK_CHAIN = ['google', 'deepseek', 'openai', 'anthropic', 'qwen', 'cohere', 'nvidia'];
+// Default fallback chain - OpenAI first as it's most reliable
+const DEFAULT_FALLBACK_CHAIN = ['openai', 'deepseek', 'google', 'anthropic', 'qwen', 'cohere', 'nvidia'];
 
 // ============================================================================
 // LLM CONFIG SERVICE CLASS
@@ -266,6 +267,7 @@ class LLMConfigService {
                     is_default INTEGER DEFAULT 0,
                     visibility TEXT DEFAULT 'public',
                     priority INTEGER DEFAULT 0,
+                    tier TEXT DEFAULT 'STANDARD',
                     last_health_check TEXT,
                     health_status TEXT DEFAULT 'unknown',
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -312,13 +314,17 @@ class LLMConfigService {
             'ALTER TABLE llm_providers ADD COLUMN last_health_check TEXT',
             'ALTER TABLE llm_providers ADD COLUMN health_status TEXT DEFAULT \'unknown\'',
             'ALTER TABLE llm_providers ADD COLUMN updated_at TEXT',
-            'ALTER TABLE llm_providers ADD COLUMN description TEXT'
+            'ALTER TABLE llm_providers ADD COLUMN description TEXT',
+            'ALTER TABLE llm_providers ADD COLUMN tier TEXT DEFAULT \'STANDARD\''
         ];
 
         for (const sql of migrations) {
             await new Promise((resolve) => {
                 db.run(sql, (err) => {
-                    if (err) aiLogger.warn('LLMConfigService', `Migration warning (might be expected): ${err.message}`);
+                    // Ignore "duplicate column name" errors
+                    if (err && !err.message.includes('duplicate column')) {
+                        aiLogger.warn('LLMConfigService', `Migration warning: ${err.message}`);
+                    }
                     resolve();
                 });
             });
@@ -378,7 +384,8 @@ class LLMConfigService {
                 endpoint: definition.defaultEndpoint,
                 model_id: definition.defaultModel,
                 cost_per_1k: definition.costPer1k,
-                priority: TIER_PRIORITY[definition.tier] || 1
+                priority: TIER_PRIORITY[definition.tier] || 1,
+                tier: definition.tier // Sync tier from definition
             };
 
             // Check if provider exists in database
@@ -428,6 +435,29 @@ class LLMConfigService {
 
         // Clear cache after sync
         this.clearCache();
+    }
+
+    /**
+     * Clear the provider cache
+     */
+    clearCache() {
+        this.providerCache.clear();
+        this.cacheExpiry = 0;
+    }
+
+    /**
+     * Update a provider's tier
+     * @param {string} providerId
+     * @param {string} tier
+     */
+    async updateProviderTier(providerId, tier) {
+        if (!['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING'].includes(tier)) {
+            throw new Error('Invalid tier');
+        }
+
+        await this.updateProviderInDb(providerId, { tier });
+        this.clearCache();
+        return true;
     }
 
     // ========================================================================
@@ -495,8 +525,8 @@ class LLMConfigService {
         return new Promise((resolve, reject) => {
             db.run(
                 `INSERT INTO llm_providers 
-                (id, name, provider, api_key, endpoint, model_id, cost_per_1k, is_active, is_default, priority)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                (id, name, provider, api_key, endpoint, model_id, cost_per_1k, is_active, is_default, priority, tier)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     provider.id || uuidv4(),
                     provider.name,
@@ -507,7 +537,8 @@ class LLMConfigService {
                     provider.cost_per_1k || 0,
                     provider.is_active ?? 1,
                     provider.is_default ?? 0,
-                    provider.priority ?? 0
+                    provider.priority ?? 0,
+                    provider.tier || 'STANDARD'
                 ],
                 function (err) {
                     if (err) reject(err);
@@ -591,7 +622,11 @@ class LLMConfigService {
     async getAllProviders(useCache = true) {
         // Check cache
         if (useCache && this.cacheExpiry > Date.now()) {
-            return Array.from(this.providerCache.values());
+            // Refresh health status from live healthStatus map (may have been updated by health checks)
+            return Array.from(this.providerCache.values()).map(p => ({
+                ...p,
+                healthStatus: this.healthStatus.get(p.provider) || p.healthStatus || 'unknown'
+            }));
         }
 
         return new Promise((resolve, reject) => {
@@ -688,11 +723,14 @@ class LLMConfigService {
 
         return {
             ...dbRow,
+            // CRITICAL: Override 'id' to be model_id (the actual model name like 'gemini-2.0-flash')
+            // instead of database row ID (like 'google-01'). llmService.callStream uses config.id as the model name.
+            id: dbRow.model_id || dbRow.id,
             // Add definition properties
             supportsStreaming: definition.supportsStreaming ?? true,
             supportsVision: definition.supportsVision ?? false,
             supportsTools: definition.supportsTools ?? false,
-            tier: definition.tier || 'STANDARD',
+            tier: dbRow.tier || definition.tier || 'STANDARD', // DB tier takes precedence
             requiresJWT: definition.requiresJWT || false,
             isLocal: definition.isLocal || false,
             // Computed properties

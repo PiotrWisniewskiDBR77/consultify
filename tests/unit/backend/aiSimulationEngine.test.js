@@ -27,7 +27,7 @@ describe('AISimulationEngine', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.resetModules();
-        AISimulationEngine = require('../../../server/ai/aiSimulationEngine');
+        AISimulationEngine = require('../../../server/ai/simulationEngine');
         engine = new AISimulationEngine();
     });
 

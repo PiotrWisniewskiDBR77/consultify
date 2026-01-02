@@ -395,4 +395,4 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
     );
 };
 
-export default InvitationsManagement;
+export { InvitationsManagement };

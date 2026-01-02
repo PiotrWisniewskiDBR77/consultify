@@ -21,3 +21,4 @@ CREATE INDEX IF NOT EXISTS idx_pinned_prompts_org ON pinned_prompts(organization
 CREATE INDEX IF NOT EXISTS idx_pinned_prompts_usage ON pinned_prompts(user_id, usage_count DESC);
 
 
+

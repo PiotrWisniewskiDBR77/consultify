@@ -11,10 +11,10 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    Shield, 
-    Search, 
-    Download, 
+import {
+    Shield,
+    Search,
+    Download,
     RefreshCw,
     AlertTriangle,
     AlertCircle,
@@ -115,7 +115,7 @@ export function AuditLogViewer() {
             });
 
             const response = await api.get(`/ai-security/audit-logs?${params.toString()}`);
-            
+
             if (response.data.success) {
                 setLogs(response.data.logs || []);
                 setTotalPages(Math.ceil((response.data.total || 0) / pageSize));
@@ -157,17 +157,24 @@ export function AuditLogViewer() {
                 ...(filters.endDate && { endDate: filters.endDate })
             });
 
-            const response = await api.get(`/ai-security/audit-logs/export?${params.toString()}`, {
-                responseType: 'blob'
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/ai-security/audit-logs/export?${params.toString()}`, {
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
             });
 
-            const url = window.URL.createObjectURL(new Blob([response.data]));
+            if (!response.ok) throw new Error('Export failed');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `audit-log-${new Date().toISOString().slice(0,10)}.csv`);
+            link.setAttribute('download', `audit-log-${new Date().toISOString().slice(0, 10)}.csv`);
             document.body.appendChild(link);
             link.click();
             link.remove();
+            window.URL.revokeObjectURL(url);
         } catch (err) {
             console.error('Export failed:', err);
         } finally {
@@ -212,8 +219,8 @@ export function AuditLogViewer() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-navy-900 p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
+        <div className="space-y-6">
+            <div className="space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -437,7 +444,7 @@ export function AuditLogViewer() {
                         <div className="flex flex-col items-center justify-center py-20 text-red-500">
                             <AlertTriangle size={32} className="mb-2" />
                             <p>{error}</p>
-                            <button 
+                            <button
                                 onClick={fetchLogs}
                                 className="mt-4 px-4 py-2 bg-red-100 dark:bg-red-900/20 text-red-600 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/30 transition-colors"
                             >
@@ -483,11 +490,10 @@ export function AuditLogViewer() {
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                     {logs.map((log) => (
-                                        <tr 
+                                        <tr
                                             key={log.id}
-                                            className={`hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
-                                                log.flagged ? 'bg-red-50/50 dark:bg-red-900/10' : ''
-                                            }`}
+                                            className={`hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${log.flagged ? 'bg-red-50/50 dark:bg-red-900/10' : ''
+                                                }`}
                                         >
                                             <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">
                                                 <div className="flex items-center gap-2">

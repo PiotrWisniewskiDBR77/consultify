@@ -147,3 +147,4 @@ CREATE TABLE IF NOT EXISTS ai_performance_metrics (
 CREATE INDEX IF NOT EXISTS idx_perf_metrics_period ON ai_performance_metrics(period, timestamp);
 
 
+

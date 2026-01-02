@@ -27,7 +27,7 @@ async function findOrCreateOAuthUser(provider, profile) {
             return reject(new Error('Email not provided by OAuth provider'));
         }
 
-        const providerIdColumn = provider === 'google' ? 'google_id' : 'linkedin_id';
+        const providerIdColumn = provider === 'google' ? 'google_id' : provider === 'microsoft' ? 'microsoft_id' : 'linkedin_id';
 
         // First, try to find by OAuth provider ID
         db.get(
@@ -90,7 +90,7 @@ async function createOAuthUser(provider, providerId, email, firstName, lastName,
     return new Promise((resolve, reject) => {
         const userId = uuidv4();
         const orgId = uuidv4();
-        const providerIdColumn = provider === 'google' ? 'google_id' : 'linkedin_id';
+        const providerIdColumn = provider === 'google' ? 'google_id' : provider === 'microsoft' ? 'microsoft_id' : 'linkedin_id';
 
         // First create organization for the user
         const companyName = `${firstName}'s Organization`;

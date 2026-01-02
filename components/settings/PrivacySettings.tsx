@@ -12,12 +12,12 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { User } from '../../types';
 import { useTranslation } from 'react-i18next';
-import { 
-    Shield, 
-    Eye, 
-    EyeOff, 
-    Users, 
-    UserCircle, 
+import {
+    Shield,
+    Eye,
+    EyeOff,
+    Users,
+    UserCircle,
     AtSign,
     Save,
     Loader2,
@@ -68,7 +68,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
 
     const loadPreferences = async () => {
         try {
-            const data = await Api.get('/settings/preferences/privacy');
+            const data = await Api.get('/api/settings/preferences/privacy');
             if (data.preferences) {
                 setPreferences({ ...DEFAULT_PREFERENCES, ...data.preferences });
             }
@@ -82,7 +82,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
     const handleSave = async () => {
         setSaving(true);
         try {
-            await Api.put('/settings/preferences/privacy', { preferences });
+            await Api.put('/api/settings/preferences/privacy', { preferences });
             toast.success(t('settings.privacy.saved', 'Privacy settings saved'));
         } catch (error) {
             toast.error(t('settings.privacy.error', 'Failed to save preferences'));
@@ -118,7 +118,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-profile" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -146,7 +146,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                     <Eye size={20} className="text-green-500" />
                     {t('settings.privacy.statusTitle', 'Online Status')}
                 </h3>
-                
+
                 <div className="space-y-6">
                     {/* Show Online Status */}
                     <div className="flex items-center justify-between">
@@ -160,9 +160,8 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                         </div>
                         <button
                             onClick={() => updatePreference('showOnlineStatus', !preferences.showOnlineStatus)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                preferences.showOnlineStatus ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
-                            }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.showOnlineStatus ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
+                                }`}
                         >
                             <span className={`${preferences.showOnlineStatus ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                         </button>
@@ -180,9 +179,8 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                         </div>
                         <button
                             onClick={() => updatePreference('showInDirectory', !preferences.showInDirectory)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                preferences.showInDirectory ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
-                            }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.showInDirectory ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
+                                }`}
                         >
                             <span className={`${preferences.showInDirectory ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                         </button>
@@ -199,7 +197,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                     {t('settings.privacy.activityDescription', 'Choose who can see your recent activity and contributions')}
                 </p>
-                
+
                 <div className="grid grid-cols-3 gap-4">
                     {activityVisibilityOptions.map(option => {
                         const Icon = option.icon;
@@ -208,11 +206,10 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                             <button
                                 key={option.value}
                                 onClick={() => updatePreference('activityVisibility', option.value as PrivacyPreferences['activityVisibility'])}
-                                className={`p-4 rounded-xl border-2 transition-all text-left ${
-                                    isSelected
-                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
-                                        : 'border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50'
-                                }`}
+                                className={`p-4 rounded-xl border-2 transition-all text-left ${isSelected
+                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
+                                    : 'border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50'
+                                    }`}
                             >
                                 <Icon size={24} className={isSelected ? 'text-blue-600' : 'text-slate-400'} />
                                 <div className={`mt-2 font-medium ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}>
@@ -234,7 +231,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                     {t('settings.privacy.profileDescription', 'Control who can view your profile information')}
                 </p>
-                
+
                 <div className="grid grid-cols-3 gap-4">
                     {profileVisibilityOptions.map(option => {
                         const Icon = option.icon;
@@ -243,11 +240,10 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                             <button
                                 key={option.value}
                                 onClick={() => updatePreference('profileVisibility', option.value as PrivacyPreferences['profileVisibility'])}
-                                className={`p-4 rounded-xl border-2 transition-all text-left ${
-                                    isSelected
-                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                                        : 'border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/50'
-                                }`}
+                                className={`p-4 rounded-xl border-2 transition-all text-left ${isSelected
+                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
+                                    : 'border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/50'
+                                    }`}
                             >
                                 <Icon size={24} className={isSelected ? 'text-purple-600' : 'text-slate-400'} />
                                 <div className={`mt-2 font-medium ${isSelected ? 'text-purple-700 dark:text-purple-400' : 'text-slate-700 dark:text-slate-300'}`}>
@@ -266,7 +262,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                     <AtSign size={20} className="text-amber-500" />
                     {t('settings.privacy.communicationTitle', 'Communication & AI')}
                 </h3>
-                
+
                 <div className="space-y-6">
                     {/* Allow Mentions */}
                     <div className="flex items-center justify-between">
@@ -280,9 +276,8 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                         </div>
                         <button
                             onClick={() => updatePreference('allowMentions', !preferences.allowMentions)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                preferences.allowMentions ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
-                            }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.allowMentions ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                                }`}
                         >
                             <span className={`${preferences.allowMentions ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                         </button>
@@ -300,9 +295,8 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                         </div>
                         <button
                             onClick={() => updatePreference('shareActivityWithAI', !preferences.shareActivityWithAI)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                preferences.shareActivityWithAI ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
-                            }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.shareActivityWithAI ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                                }`}
                         >
                             <span className={`${preferences.shareActivityWithAI ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                         </button>

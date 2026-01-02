@@ -61,6 +61,10 @@ vi.mock('react-i18next', () => {
     return {
         useTranslation: () => ({
             t: (key: string, options?: any) => {
+                // Handle fallback as second argument (string)
+                if (typeof options === 'string') {
+                    return options;
+                }
                 // Handle returnObjects option
                 if (options?.returnObjects) {
                     return createTranslationObject(key, options.defaultValue);
@@ -90,6 +94,11 @@ vi.mock('react-i18next', () => {
         }),
         Trans: ({ children, i18nKey }: any) => children || i18nKey,
         I18nextProvider: ({ children }: any) => children,
+        initReactI18next: {
+            type: '3rdParty',
+            init: vi.fn(),
+        },
+        Translation: ({ children }: any) => children({ t: (k: string) => k, i18n: {} }),
     };
 });
 
@@ -101,7 +110,23 @@ if (typeof process !== 'undefined' && process.env) {
     process.env.MOCK_DB = process.env.MOCK_DB || 'true';
     // Keep DB in-memory in tests (db chooses :memory: when NODE_ENV === 'test')
     process.env.SQLITE_PATH = process.env.SQLITE_PATH || ':memory:';
+    // Stub API keys to prevent real calls if mocking is accidentally bypassed
+    process.env.GOOGLE_AI_API_KEY = 'test-google-key';
+    process.env.GEMINI_API_KEY = 'test-gemini-key';
+    process.env.OPENAI_API_KEY = 'sk-test-openai-key';
 }
+
+// Mock jsonwebtoken globally
+vi.mock('jsonwebtoken', () => ({
+    default: {
+        sign: vi.fn(() => 'mock-token'),
+        verify: vi.fn(),
+        decode: vi.fn()
+    },
+    sign: vi.fn(() => 'mock-token'),
+    verify: vi.fn(),
+    decode: vi.fn()
+}));
 
 // Reset LLM API mocks before each test
 beforeEach(() => {
@@ -254,6 +279,7 @@ beforeAll(async () => {
             await runSQL(`DROP TABLE IF EXISTS assessments`);
             await runSQL(`CREATE TABLE IF NOT EXISTS assessments (
                 id TEXT PRIMARY KEY,
+                organization_id TEXT,
                 name TEXT,
                 description TEXT,
                 status TEXT DEFAULT 'DRAFT',
@@ -519,11 +545,15 @@ beforeAll(async () => {
                 organization_id TEXT,
                 request_type TEXT NOT NULL,
                 prompt_hash TEXT,
-                response_hash TEXT,
                 response_quality REAL,
-                success INTEGER DEFAULT 1,
                 feedback_score REAL,
                 auto_feedback_score REAL,
+                auto_feedback_reason TEXT,
+                model TEXT,
+                latency_ms INTEGER,
+                token_count INTEGER,
+                prompt_signature TEXT,
+                response_signature TEXT,
                 metadata TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )`);
@@ -647,6 +677,7 @@ beforeAll(async () => {
             // Management Report Templates table
             await runSQL(`CREATE TABLE IF NOT EXISTS management_report_templates (
                 id TEXT PRIMARY KEY,
+                organization_id TEXT,
                 name TEXT NOT NULL,
                 description TEXT,
                 template_type TEXT,

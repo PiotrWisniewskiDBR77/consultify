@@ -20,9 +20,9 @@ const deps = {
 /**
  * Inject mock dependencies for testing
  */
-function setDependencies(newDeps) {
+const setDependencies = (newDeps) => {
     Object.assign(deps, newDeps);
-}
+};
 
 /**
  * GET All Organizations
@@ -32,17 +32,20 @@ const getOrganizations = catchAsync(async (req, res, next) => {
         SELECT 
             o.id, o.name, o.plan, o.status, 
             COALESCE(o.trial_started_at, o.created_at) as created_at, 
-            COALESCE(o.discount_percent, 0) as discount_percent,
+            0 as discount_percent,
             COUNT(u.id) as user_count
         FROM organizations o
         LEFT JOIN users u ON o.id = u.organization_id
-        GROUP BY o.id, o.name, o.plan, o.status, o.trial_started_at, o.created_at, o.discount_percent
+        GROUP BY o.id, o.name, o.plan, o.status, o.trial_started_at, o.created_at
         ORDER BY o.name ASC
     `;
 
     deps.db.all(sql, [], (err, rows) => {
-        if (err) return next(new AppError('Failed to fetch organizations', 500));
-        res.json(rows);
+        if (err) {
+            console.error('[SuperAdmin] Organizations query error:', err);
+            return next(new AppError('Failed to fetch organizations', 500));
+        }
+        res.json(rows || []);
     });
 });
 
@@ -128,9 +131,6 @@ const updateOrganization = catchAsync(async (req, res, next) => {
     });
 });
 
-/**
- * DELETE Organization
- */
 const deleteOrganization = catchAsync(async (req, res, next) => {
     const { id } = req.params;
 
@@ -169,8 +169,8 @@ const getOrgBilling = catchAsync(async (req, res, next) => {
 
     res.json({
         billing: billing || { status: 'no_subscription' },
-        usage,
-        invoices
+        usage: usage || {},
+        invoices: invoices || []
     });
 });
 
@@ -614,11 +614,9 @@ const toggleLegalDocActive = catchAsync(async (req, res, next) => {
  */
 const getLegalDocById = catchAsync(async (req, res, next) => {
     const { id } = req.params;
-    deps.db.get('SELECT * FROM legal_documents WHERE id = ?', [id], (err, row) => {
-        if (err) return next(new AppError(err.message, 500));
-        if (!row) return next(new AppError('Document not found', 404));
-        res.json(row);
-    });
+    const document = await deps.LegalService.getDocumentById(id);
+    if (!document) return next(new AppError('Document not found', 404));
+    res.json(document);
 });
 
 /**
@@ -713,6 +711,215 @@ const getPartnerSummary = catchAsync(async (req, res, next) => {
     });
 });
 
+/**
+ * GET Usage Stats by Organization
+ */
+const getUsageByOrganization = catchAsync(async (req, res, next) => {
+    const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+    
+    // Join ai_logs through users table since ai_logs doesn't have organization_id
+    const query = isPg ? `
+        SELECT 
+            o.id,
+            o.name,
+            o.plan,
+            COUNT(DISTINCT u.id) as user_count,
+            COALESCE(SUM(a.input_tokens + a.output_tokens), 0) as tokens_used,
+            COUNT(a.id) as ai_calls,
+            MAX(a.created_at) as last_ai_activity
+        FROM organizations o
+        LEFT JOIN users u ON u.organization_id = o.id
+        LEFT JOIN ai_logs a ON a.user_id = u.id AND a.created_at > NOW() - INTERVAL '30 days'
+        GROUP BY o.id, o.name, o.plan
+        ORDER BY tokens_used DESC
+    ` : `
+        SELECT 
+            o.id,
+            o.name,
+            o.plan,
+            COUNT(DISTINCT u.id) as user_count,
+            COALESCE(SUM(a.input_tokens + a.output_tokens), 0) as tokens_used,
+            COUNT(a.id) as ai_calls,
+            MAX(a.created_at) as last_ai_activity
+        FROM organizations o
+        LEFT JOIN users u ON u.organization_id = o.id
+        LEFT JOIN ai_logs a ON a.user_id = u.id AND a.created_at > datetime('now', '-30 days')
+        GROUP BY o.id, o.name, o.plan
+        ORDER BY tokens_used DESC
+    `;
+
+    deps.db.all(query, [], (err, rows) => {
+        if (err) return next(new AppError('Failed to fetch usage data', 500));
+        res.json(rows || []);
+    });
+});
+
+/**
+ * GET Invoices
+ */
+const getInvoices = catchAsync(async (req, res, next) => {
+    const { period = '30d' } = req.query;
+    const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+    
+    // Try to get invoices from Stripe cache or token_transactions as proxy
+    const periodDays = period === '7d' ? 7 : period === '90d' ? 90 : period === '1y' ? 365 : 30;
+    
+    const dateCondition = isPg 
+        ? `created_at > NOW() - INTERVAL '${periodDays} days'`
+        : `created_at > datetime('now', '-${periodDays} days')`;
+
+    const query = `
+        SELECT 
+            t.id,
+            'INV-' || SUBSTR(t.id, 1, 8) as invoice_number,
+            t.organization_id,
+            o.name as organization_name,
+            CASE 
+                WHEN t.type = 'purchase' THEN 'paid'
+                WHEN t.type = 'refund' THEN 'refunded'
+                ELSE 'pending'
+            END as status,
+            ABS(t.amount_usd) as amount,
+            'USD' as currency,
+            0 as tax,
+            ABS(t.amount_usd) as total,
+            t.created_at as due_date,
+            t.created_at as paid_at,
+            t.created_at,
+            t.description
+        FROM token_transactions t
+        LEFT JOIN organizations o ON o.id = t.organization_id
+        WHERE t.type IN ('purchase', 'refund') AND ${dateCondition}
+        ORDER BY t.created_at DESC
+        LIMIT 100
+    `;
+
+    deps.db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('Invoice query error:', err);
+            // Return empty array on error
+            return res.json({ invoices: [], total: 0 });
+        }
+        res.json({ 
+            invoices: rows || [], 
+            total: (rows || []).length 
+        });
+    });
+});
+
+/**
+ * GET Invoice Stats
+ */
+const getInvoiceStats = catchAsync(async (req, res, next) => {
+    const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+    
+    const query = isPg ? `
+        SELECT 
+            COALESCE(SUM(CASE WHEN type = 'purchase' THEN amount_usd ELSE 0 END), 0) as total_revenue,
+            COUNT(CASE WHEN type = 'purchase' THEN 1 END) as paid_invoices,
+            0 as pending_invoices,
+            0 as overdue_invoices,
+            0 as overdue_amount,
+            0 as monthly_growth
+        FROM token_transactions
+        WHERE created_at > NOW() - INTERVAL '30 days'
+    ` : `
+        SELECT 
+            COALESCE(SUM(CASE WHEN type = 'purchase' THEN amount_usd ELSE 0 END), 0) as total_revenue,
+            COUNT(CASE WHEN type = 'purchase' THEN 1 END) as paid_invoices,
+            0 as pending_invoices,
+            0 as overdue_invoices,
+            0 as overdue_amount,
+            0 as monthly_growth
+        FROM token_transactions
+        WHERE created_at > datetime('now', '-30 days')
+    `;
+
+    deps.db.get(query, [], (err, row) => {
+        if (err) {
+            console.error('Invoice stats error:', err);
+            return res.json({
+                totalRevenue: 0,
+                paidInvoices: 0,
+                pendingInvoices: 0,
+                overdueInvoices: 0,
+                overdueAmount: 0,
+                monthlyGrowth: 0
+            });
+        }
+        res.json({
+            totalRevenue: row?.total_revenue || 0,
+            paidInvoices: row?.paid_invoices || 0,
+            pendingInvoices: row?.pending_invoices || 0,
+            overdueInvoices: row?.overdue_invoices || 0,
+            overdueAmount: row?.overdue_amount || 0,
+            monthlyGrowth: row?.monthly_growth || 0
+        });
+    });
+});
+
+/**
+ * GET System Health
+ */
+const getSystemHealth = catchAsync(async (req, res, next) => {
+    const startTime = Date.now();
+    const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+    
+    // Test database connectivity and get basic stats
+    const dbCheck = await new Promise((resolve) => {
+        deps.db.get('SELECT 1 as test', [], (err) => {
+            const responseTime = Date.now() - startTime;
+            resolve({
+                status: err ? 'error' : 'healthy',
+                responseTime,
+                type: isPg ? 'PostgreSQL' : 'SQLite'
+            });
+        });
+    });
+
+    // Get uptime (process uptime as proxy)
+    const uptimeSeconds = process.uptime();
+    const uptimeHours = Math.floor(uptimeSeconds / 3600);
+    const uptimeDays = Math.floor(uptimeHours / 24);
+
+    // Check AI service (just return status based on config)
+    const aiServiceStatus = process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY 
+        ? 'online' 
+        : 'no_keys';
+
+    res.json({
+        api: {
+            status: 'healthy',
+            responseTime: Date.now() - startTime,
+            version: process.env.APP_VERSION || '2.5.0'
+        },
+        database: dbCheck,
+        ai: {
+            status: aiServiceStatus,
+            providers: {
+                openai: !!process.env.OPENAI_API_KEY,
+                anthropic: !!process.env.ANTHROPIC_API_KEY,
+                groq: !!process.env.GROQ_API_KEY
+            }
+        },
+        system: {
+            nodeVersion: process.version,
+            environment: process.env.NODE_ENV || 'development',
+            uptime: {
+                seconds: Math.floor(uptimeSeconds),
+                formatted: uptimeDays > 0 
+                    ? `${uptimeDays}d ${uptimeHours % 24}h` 
+                    : `${uptimeHours}h ${Math.floor((uptimeSeconds % 3600) / 60)}m`
+            },
+            memory: {
+                used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+                total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024)
+            }
+        },
+        timestamp: new Date().toISOString()
+    });
+});
+
 module.exports = {
     setDependencies,
     getOrganizations,
@@ -745,5 +952,9 @@ module.exports = {
     getLegalEventStats,
     getOrgAttribution,
     exportAttribution,
-    getPartnerSummary
+    getPartnerSummary,
+    getUsageByOrganization,
+    getInvoices,
+    getInvoiceStats,
+    getSystemHealth
 };

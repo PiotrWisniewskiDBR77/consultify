@@ -1,6 +1,31 @@
+/**
+ * RegionalSettings - Comprehensive regional and locale preferences
+ * 
+ * Features:
+ * - Timezone selection
+ * - Measurement system (metric/imperial)
+ * - Currency format
+ * - Number format (decimal/thousands separators)
+ * - Date format
+ * - Time format (12h/24h)
+ */
+
 import React, { useState, useEffect } from 'react';
 import { User } from '../../types';
-import { Globe, Save, Info } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { 
+    Globe, 
+    Save, 
+    Ruler, 
+    DollarSign, 
+    Hash, 
+    Calendar, 
+    Clock,
+    Loader2,
+    Check
+} from 'lucide-react';
+import { Api } from '../../services/api';
+import { toast } from 'react-hot-toast';
 import { InfoButton } from '../shared/InfoButton';
 
 interface RegionalSettingsProps {
@@ -8,142 +33,486 @@ interface RegionalSettingsProps {
     onUpdateUser: (updates: Partial<User>) => void;
 }
 
+interface RegionalPreferences {
+    timezone: string;
+    units: 'metric' | 'imperial';
+    currency: string;
+    numberFormat: 'en-US' | 'de-DE' | 'pl-PL' | 'fr-FR';
+    dateFormat: 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD' | 'DD.MM.YYYY';
+    timeFormat: '12h' | '24h';
+    firstDayOfWeek: 'monday' | 'sunday';
+}
+
+const DEFAULT_PREFERENCES: RegionalPreferences = {
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+    units: 'metric',
+    currency: 'USD',
+    numberFormat: 'en-US',
+    dateFormat: 'DD/MM/YYYY',
+    timeFormat: '24h',
+    firstDayOfWeek: 'monday'
+};
+
+// Currency options with symbols
+const CURRENCIES = [
+    { code: 'USD', name: 'US Dollar', symbol: '$' },
+    { code: 'EUR', name: 'Euro', symbol: '€' },
+    { code: 'GBP', name: 'British Pound', symbol: '£' },
+    { code: 'PLN', name: 'Polish Zloty', symbol: 'zł' },
+    { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF' },
+    { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
+    { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
+    { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
+    { code: 'CNY', name: 'Chinese Yuan', symbol: '¥' },
+    { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
+];
+
+// Number format options with examples
+const NUMBER_FORMATS = [
+    { code: 'en-US', label: 'English (US)', example: '1,234.56' },
+    { code: 'de-DE', label: 'German', example: '1.234,56' },
+    { code: 'pl-PL', label: 'Polish', example: '1 234,56' },
+    { code: 'fr-FR', label: 'French', example: '1 234,56' },
+];
+
+// Date format options with examples
+const DATE_FORMATS = [
+    { code: 'DD/MM/YYYY', label: 'Day/Month/Year', example: '31/12/2024' },
+    { code: 'MM/DD/YYYY', label: 'Month/Day/Year', example: '12/31/2024' },
+    { code: 'YYYY-MM-DD', label: 'ISO (Year-Month-Day)', example: '2024-12-31' },
+    { code: 'DD.MM.YYYY', label: 'Day.Month.Year', example: '31.12.2024' },
+];
+
+// Time format options
+const TIME_FORMATS = [
+    { code: '24h', label: '24-hour', example: '14:30' },
+    { code: '12h', label: '12-hour', example: '2:30 PM' },
+];
+
 export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser, onUpdateUser }) => {
-    const [timezone, setTimezone] = useState(currentUser.timezone || 'UTC');
-    const [units, setUnits] = useState<'metric' | 'imperial'>(currentUser.units || 'metric');
-    const [isSaving, setIsSaving] = useState(false);
-    const [saveMessage, setSaveMessage] = useState('');
+    const { t } = useTranslation();
+    const [preferences, setPreferences] = useState<RegionalPreferences>(DEFAULT_PREFERENCES);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
 
     const timezones = Intl.supportedValuesOf('timeZone');
 
-    const handleSave = async () => {
-        setIsSaving(true);
-        setSaveMessage('');
+    useEffect(() => {
+        loadPreferences();
+    }, [currentUser.id]);
+
+    const loadPreferences = async () => {
         try {
-            await onUpdateUser({ timezone, units });
-            setSaveMessage('Settings saved successfully');
-            setTimeout(() => setSaveMessage(''), 3000);
+            const data = await Api.get('/settings/preferences/regional');
+            if (data.preferences) {
+                setPreferences({ ...DEFAULT_PREFERENCES, ...data.preferences });
+            } else {
+                // Load from user object for backwards compatibility
+                setPreferences({
+                    ...DEFAULT_PREFERENCES,
+                    timezone: currentUser.timezone || DEFAULT_PREFERENCES.timezone,
+                    units: currentUser.units || DEFAULT_PREFERENCES.units,
+                });
+            }
         } catch (error) {
-            console.error('Failed to save settings:', error);
-            setSaveMessage('Error saving settings');
+            console.error('Failed to load regional preferences:', error);
+            // Fallback to user object
+            setPreferences({
+                ...DEFAULT_PREFERENCES,
+                timezone: currentUser.timezone || DEFAULT_PREFERENCES.timezone,
+                units: currentUser.units || DEFAULT_PREFERENCES.units,
+            });
         } finally {
-            setIsSaving(false);
+            setLoading(false);
         }
     };
 
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            await Api.put('/settings/preferences/regional', { preferences });
+            // Also update user object for backwards compatibility
+            await onUpdateUser({ 
+                timezone: preferences.timezone, 
+                units: preferences.units 
+            });
+            toast.success(t('settings.regional.saved', 'Regional preferences saved'));
+        } catch (error) {
+            toast.error(t('settings.regional.error', 'Failed to save preferences'));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const updatePreference = <K extends keyof RegionalPreferences>(key: K, value: RegionalPreferences[K]) => {
+        setPreferences(prev => ({ ...prev, [key]: value }));
+    };
+
+    // Format example number based on selected format
+    const formatExampleNumber = (format: string) => {
+        const num = 1234567.89;
+        try {
+            return new Intl.NumberFormat(format, { minimumFractionDigits: 2 }).format(num);
+        } catch {
+            return '1,234,567.89';
+        }
+    };
+
+    // Format example currency based on selected format
+    const formatExampleCurrency = () => {
+        const num = 1234.56;
+        try {
+            return new Intl.NumberFormat(preferences.numberFormat, { 
+                style: 'currency', 
+                currency: preferences.currency 
+            }).format(num);
+        } catch {
+            return '$1,234.56';
+        }
+    };
+
+    // Get current time in selected timezone
+    const getCurrentTime = () => {
+        try {
+            const options: Intl.DateTimeFormatOptions = {
+                timeZone: preferences.timezone,
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: preferences.timeFormat === '12h'
+            };
+            return new Date().toLocaleTimeString('en-US', options);
+        } catch {
+            return '--:--';
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 size={32} className="animate-spin text-blue-600" />
+            </div>
+        );
+    }
+
     return (
-        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in relative">
+        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-regional" position="top-right" />
-            <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Regionalization</h1>
-                <p className="text-slate-500 dark:text-slate-400">Configure your timezone and measurement units.</p>
+            
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                        <Globe size={28} className="text-blue-500" />
+                        {t('settings.regional.title', 'Regional Settings')}
+                    </h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                        {t('settings.regional.description', 'Configure your locale, timezone, and format preferences')}
+                    </p>
+                </div>
+                <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                >
+                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                    {saving ? t('settings.saving', 'Saving...') : t('settings.save', 'Save Changes')}
+                </button>
             </div>
 
-            <div className="bg-white dark:bg-navy-800 rounded-xl shadow-sm border border-slate-200 dark:border-white/5 overflow-hidden">
-                <div className="p-6 space-y-8">
-                    {/* Timezone Selection */}
-                    <div className="space-y-4">
-                        <div className="flex items-start gap-4">
-                            <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-lg text-blue-600 dark:text-blue-400">
-                                <Globe size={24} />
-                            </div>
-                            <div className="flex-1">
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                    Timezone
-                                </label>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
-                                    Set your local timezone for accurate dates and times across the platform.
-                                </p>
-                                <select
-                                    value={timezone}
-                                    onChange={(e) => setTimezone(e.target.value)}
-                                    className="w-full max-w-md px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-slate-900 dark:text-white"
-                                >
-                                    {timezones.map((tz) => (
-                                        <option key={tz} value={tz}>
-                                            {tz.replace(/_/g, ' ')}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+            {/* Timezone */}
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Globe size={20} className="text-blue-500" />
+                    {t('settings.regional.timezone', 'Timezone')}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                    {t('settings.regional.timezoneDescription', 'Set your local timezone for accurate dates and times across the platform.')}
+                </p>
+                
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                    <select
+                        value={preferences.timezone}
+                        onChange={(e) => updatePreference('timezone', e.target.value)}
+                        className="flex-1 max-w-md px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-slate-900 dark:text-white"
+                    >
+                        {timezones.map((tz) => (
+                            <option key={tz} value={tz}>
+                                {tz.replace(/_/g, ' ')}
+                            </option>
+                        ))}
+                    </select>
+                    <div className="px-4 py-2 bg-blue-50 dark:bg-blue-500/10 rounded-lg">
+                        <span className="text-sm text-blue-600 dark:text-blue-400">
+                            {t('settings.regional.currentTime', 'Current time:')} <strong>{getCurrentTime()}</strong>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Date & Time Format */}
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Calendar size={20} className="text-purple-500" />
+                    {t('settings.regional.dateTimeTitle', 'Date & Time Format')}
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Date Format */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            {t('settings.regional.dateFormat', 'Date Format')}
+                        </label>
+                        <div className="space-y-2">
+                            {DATE_FORMATS.map(format => {
+                                const isSelected = preferences.dateFormat === format.code;
+                                return (
+                                    <label
+                                        key={format.code}
+                                        className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                            isSelected
+                                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
+                                                : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                type="radio"
+                                                name="dateFormat"
+                                                value={format.code}
+                                                checked={isSelected}
+                                                onChange={() => updatePreference('dateFormat', format.code as RegionalPreferences['dateFormat'])}
+                                                className="sr-only"
+                                            />
+                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                                isSelected ? 'border-purple-500 bg-purple-500' : 'border-slate-300 dark:border-slate-600'
+                                            }`}>
+                                                {isSelected && <Check size={10} className="text-white" />}
+                                            </div>
+                                            <span className={`text-sm font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                                                {format.label}
+                                            </span>
+                                        </div>
+                                        <span className={`text-xs font-mono ${isSelected ? 'text-purple-600' : 'text-slate-500'}`}>
+                                            {format.example}
+                                        </span>
+                                    </label>
+                                );
+                            })}
                         </div>
                     </div>
 
-                    <div className="h-px bg-slate-200 dark:bg-white/5" />
-
-                    {/* Measurement Units */}
-                    <div className="space-y-4">
-                        <div className="flex items-start gap-4">
-                            <div className="p-2 bg-purple-50 dark:bg-purple-500/10 rounded-lg text-purple-600 dark:text-purple-400">
-                                <Info size={24} />
-                            </div>
-                            <div className="flex-1">
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                    Measurement System
-                                </label>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
-                                    Choose your preferred system for weights, distances, and other measurements.
-                                </p>
-                                <div className="flex gap-4">
-                                    <label className={`flex-1 max-w-[200px] cursor-pointer relative p-4 rounded-xl border-2 transition-all ${units === 'metric' ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10' : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'}`}>
-                                        <input
-                                            type="radio"
-                                            name="units"
-                                            value="metric"
-                                            checked={units === 'metric'}
-                                            onChange={() => setUnits('metric')}
-                                            className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-                                        />
-                                        <div className="text-center">
-                                            <span className={`block text-lg font-semibold mb-1 ${units === 'metric' ? 'text-blue-700 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300'}`}>Metric</span>
-                                            <span className={`text-xs ${units === 'metric' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'}`}>meters, kilograms, celsius</span>
+                    {/* Time Format */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            {t('settings.regional.timeFormat', 'Time Format')}
+                        </label>
+                        <div className="space-y-2">
+                            {TIME_FORMATS.map(format => {
+                                const isSelected = preferences.timeFormat === format.code;
+                                return (
+                                    <label
+                                        key={format.code}
+                                        className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                            isSelected
+                                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
+                                                : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                type="radio"
+                                                name="timeFormat"
+                                                value={format.code}
+                                                checked={isSelected}
+                                                onChange={() => updatePreference('timeFormat', format.code as RegionalPreferences['timeFormat'])}
+                                                className="sr-only"
+                                            />
+                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                                isSelected ? 'border-purple-500 bg-purple-500' : 'border-slate-300 dark:border-slate-600'
+                                            }`}>
+                                                {isSelected && <Check size={10} className="text-white" />}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Clock size={16} className={isSelected ? 'text-purple-500' : 'text-slate-400'} />
+                                                <span className={`text-sm font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                                                    {format.label}
+                                                </span>
+                                            </div>
                                         </div>
+                                        <span className={`text-xs font-mono ${isSelected ? 'text-purple-600' : 'text-slate-500'}`}>
+                                            {format.example}
+                                        </span>
                                     </label>
+                                );
+                            })}
+                        </div>
 
-                                    <label className={`flex-1 max-w-[200px] cursor-pointer relative p-4 rounded-xl border-2 transition-all ${units === 'imperial' ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10' : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'}`}>
-                                        <input
-                                            type="radio"
-                                            name="units"
-                                            value="imperial"
-                                            checked={units === 'imperial'}
-                                            onChange={() => setUnits('imperial')}
-                                            className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-                                        />
-                                        <div className="text-center">
-                                            <span className={`block text-lg font-semibold mb-1 ${units === 'imperial' ? 'text-blue-700 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300'}`}>Imperial</span>
-                                            <span className={`text-xs ${units === 'imperial' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'}`}>feet, pounds, fahrenheit</span>
-                                        </div>
-                                    </label>
-                                </div>
+                        {/* First Day of Week */}
+                        <div className="mt-6">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                {t('settings.regional.firstDayOfWeek', 'First Day of Week')}
+                            </label>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => updatePreference('firstDayOfWeek', 'monday')}
+                                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                        preferences.firstDayOfWeek === 'monday'
+                                            ? 'bg-purple-600 text-white'
+                                            : 'bg-slate-100 dark:bg-navy-950 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                                    }`}
+                                >
+                                    {t('settings.regional.monday', 'Monday')}
+                                </button>
+                                <button
+                                    onClick={() => updatePreference('firstDayOfWeek', 'sunday')}
+                                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                        preferences.firstDayOfWeek === 'sunday'
+                                            ? 'bg-purple-600 text-white'
+                                            : 'bg-slate-100 dark:bg-navy-950 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                                    }`}
+                                >
+                                    {t('settings.regional.sunday', 'Sunday')}
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Footer Actions */}
-                <div className="px-6 py-4 bg-slate-50 dark:bg-navy-900 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
-                    <span className={`text-sm ${saveMessage.includes('Error') ? 'text-red-500' : 'text-green-500'}`}>
-                        {saveMessage}
-                    </span>
-                    <button
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20"
-                    >
-                        {isSaving ? (
-                            <>
-                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                Saving...
-                            </>
-                        ) : (
-                            <>
-                                <Save size={18} />
-                                Save Changes
-                            </>
-                        )}
-                    </button>
+            {/* Currency & Number Format */}
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <DollarSign size={20} className="text-green-500" />
+                    {t('settings.regional.currencyTitle', 'Currency & Numbers')}
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Currency */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            {t('settings.regional.currency', 'Currency')}
+                        </label>
+                        <select
+                            value={preferences.currency}
+                            onChange={(e) => updatePreference('currency', e.target.value)}
+                            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all text-slate-900 dark:text-white"
+                        >
+                            {CURRENCIES.map(currency => (
+                                <option key={currency.code} value={currency.code}>
+                                    {currency.symbol} - {currency.name} ({currency.code})
+                                </option>
+                            ))}
+                        </select>
+                        <p className="mt-2 text-xs text-slate-500">
+                            {t('settings.regional.currencyExample', 'Example:')} {formatExampleCurrency()}
+                        </p>
+                    </div>
+
+                    {/* Number Format */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            {t('settings.regional.numberFormat', 'Number Format')}
+                        </label>
+                        <select
+                            value={preferences.numberFormat}
+                            onChange={(e) => updatePreference('numberFormat', e.target.value as RegionalPreferences['numberFormat'])}
+                            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all text-slate-900 dark:text-white"
+                        >
+                            {NUMBER_FORMATS.map(format => (
+                                <option key={format.code} value={format.code}>
+                                    {format.label} ({format.example})
+                                </option>
+                            ))}
+                        </select>
+                        <p className="mt-2 text-xs text-slate-500">
+                            {t('settings.regional.numberExample', 'Large number example:')} {formatExampleNumber(preferences.numberFormat)}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Measurement System */}
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Ruler size={20} className="text-amber-500" />
+                    {t('settings.regional.measurementTitle', 'Measurement System')}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                    {t('settings.regional.measurementDescription', 'Choose your preferred system for weights, distances, and temperatures.')}
+                </p>
+                
+                <div className="grid grid-cols-2 gap-4 max-w-md">
+                    {[
+                        { 
+                            value: 'metric' as const, 
+                            label: t('settings.regional.metric', 'Metric'),
+                            details: 'meters, kilograms, °C'
+                        },
+                        { 
+                            value: 'imperial' as const, 
+                            label: t('settings.regional.imperial', 'Imperial'),
+                            details: 'feet, pounds, °F'
+                        }
+                    ].map(option => {
+                        const isSelected = preferences.units === option.value;
+                        return (
+                            <button
+                                key={option.value}
+                                onClick={() => updatePreference('units', option.value)}
+                                className={`p-4 rounded-xl border-2 transition-all text-center ${
+                                    isSelected
+                                        ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/10'
+                                        : 'border-slate-200 dark:border-white/10 hover:border-amber-300'
+                                }`}
+                            >
+                                <div className={`text-lg font-semibold mb-1 ${isSelected ? 'text-amber-700 dark:text-amber-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                                    {option.label}
+                                </div>
+                                <div className={`text-xs ${isSelected ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500'}`}>
+                                    {option.details}
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Preview Card */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-500/5 dark:to-purple-500/5 border border-blue-200 dark:border-blue-500/20 rounded-xl p-6">
+                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-3">
+                    {t('settings.regional.preview', 'Preview of Your Settings')}
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                        <span className="text-slate-500 dark:text-slate-400 block">{t('settings.regional.dateLabel', 'Date')}</span>
+                        <span className="font-mono text-slate-900 dark:text-white">
+                            {(() => {
+                                const d = new Date();
+                                switch (preferences.dateFormat) {
+                                    case 'MM/DD/YYYY': return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}/${d.getFullYear()}`;
+                                    case 'YYYY-MM-DD': return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                                    case 'DD.MM.YYYY': return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+                                    default: return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+                                }
+                            })()}
+                        </span>
+                    </div>
+                    <div>
+                        <span className="text-slate-500 dark:text-slate-400 block">{t('settings.regional.timeLabel', 'Time')}</span>
+                        <span className="font-mono text-slate-900 dark:text-white">{getCurrentTime()}</span>
+                    </div>
+                    <div>
+                        <span className="text-slate-500 dark:text-slate-400 block">{t('settings.regional.currencyLabel', 'Currency')}</span>
+                        <span className="font-mono text-slate-900 dark:text-white">{formatExampleCurrency()}</span>
+                    </div>
+                    <div>
+                        <span className="text-slate-500 dark:text-slate-400 block">{t('settings.regional.numberLabel', 'Number')}</span>
+                        <span className="font-mono text-slate-900 dark:text-white">{formatExampleNumber(preferences.numberFormat)}</span>
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
+
+export default RegionalSettings;

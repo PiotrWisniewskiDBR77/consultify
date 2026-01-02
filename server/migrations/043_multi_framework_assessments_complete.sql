@@ -298,3 +298,4 @@ COMMENT ON TABLE multi_framework_reports IS 'Generated reports from framework as
 COMMENT ON TABLE multi_framework_initiatives IS 'Initiatives generated from assessment gaps';
 
 
+

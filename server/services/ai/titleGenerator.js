@@ -45,6 +45,8 @@ Title:`;
     try {
         const pipeline = new AIPipeline();
         
+        console.log('[TitleGenerator] Generating title for', messages.length, 'messages');
+        
         // Use a fast, cheap model for title generation
         const result = await pipeline.process({
             type: 'title_generation',
@@ -57,6 +59,8 @@ Title:`;
                 tier: 'budget' // Use cheapest model
             }
         });
+
+        console.log('[TitleGenerator] AI result:', { success: result.success, response: result.response?.slice(0, 100) });
 
         if (result.success && result.response) {
             // Clean up the response
@@ -71,10 +75,15 @@ Title:`;
                 title = title.split(' ').slice(0, 5).join(' ');
             }
             
-            return title || 'New conversation';
+            if (title && title !== 'New conversation') {
+                console.log('[TitleGenerator] Generated title:', title);
+                return title;
+            }
         }
 
-        return 'New conversation';
+        // Fallback if AI returned empty or default
+        console.log('[TitleGenerator] AI fallback, using simple title generation');
+        return generateFallbackTitle(messages);
     } catch (err) {
         console.error('[TitleGenerator] Error generating title:', err.message);
         // Fallback: generate simple title from first user message

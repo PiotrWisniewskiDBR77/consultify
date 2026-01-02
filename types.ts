@@ -1,4 +1,13 @@
 
+export interface Invoice {
+  id: string;
+  created_at: string;
+  amount_paid: number;
+  status: string;
+  currency?: string;
+  downloadUrl?: string;
+}
+
 export enum AppView {
   AI_CHAT = 'AI_CHAT', // Main welcome screen with AI Chat
   WELCOME = 'WELCOME',
@@ -78,7 +87,6 @@ export enum AppView {
   ADMIN_TEAMS = 'ADMIN_TEAMS',
   ADMIN_ANALYTICS = 'ADMIN_ANALYTICS',
   ADMIN_FEEDBACK = 'ADMIN_FEEDBACK',
-  ADMIN_BILLING = 'ADMIN_BILLING',
   ADMIN_METRICS = 'ADMIN_METRICS',
   SETTINGS_PROFILE = 'SETTINGS_PROFILE',
   SETTINGS_BILLING = 'SETTINGS_BILLING',
@@ -87,6 +95,18 @@ export enum AppView {
   SETTINGS_INTEGRATIONS = 'SETTINGS_INTEGRATIONS',
   SETTINGS_REGIONALIZATION = 'SETTINGS_REGIONALIZATION',
   SETTINGS_ORGANIZATION = 'SETTINGS_ORGANIZATION', // NEW
+  SETTINGS_MFA = 'SETTINGS_MFA',
+  SETTINGS_ACTIVE_SESSIONS = 'SETTINGS_ACTIVE_SESSIONS',
+  SETTINGS_LOGIN_HISTORY = 'SETTINGS_LOGIN_HISTORY',
+  SETTINGS_DATA_CONTROLS = 'SETTINGS_DATA_CONTROLS',
+  SETTINGS_API_KEYS = 'ADMIN_API_KEYS', // Mapping to existing key
+  SETTINGS_WEBHOOKS = 'SETTINGS_WEBHOOKS',
+  SETTINGS_CALENDAR_SYNC = 'SETTINGS_CALENDAR_SYNC',
+  SETTINGS_APPEARANCE = 'SETTINGS_APPEARANCE',
+  SETTINGS_AI_MEMORY = 'SETTINGS_AI_MEMORY',
+  SETTINGS_AI_RESPONSE_STYLE = 'SETTINGS_AI_RESPONSE_STYLE',
+  SETTINGS_AI_CHAT_HISTORY = 'SETTINGS_AI_CHAT_HISTORY',
+  SETTINGS_AI_VOICE = 'SETTINGS_AI_VOICE',
 
   // Context Builder (Renamed directly or used as parent)
   CONTEXT_BUILDER = 'CONTEXT_BUILDER',
@@ -98,6 +118,7 @@ export enum AppView {
 
   // Teamwork Views
   MY_WORK = 'MY_WORK', // New Module 7 (Tasks & Workflow)
+  PROJECT_INTELLIGENCE = 'PROJECT_INTELLIGENCE', // AI-powered project knowledge capture
 
   // Initiative Lifecycle Management
   INITIATIVE_MANAGEMENT = 'INITIATIVE_MANAGEMENT', // @deprecated - use PORTFOLIO_ROADMAP
@@ -124,6 +145,8 @@ export enum AppView {
 
   // Org Admin Consultant Views
   ADMIN_SETTINGS_CONSULTANTS = 'ADMIN_SETTINGS_CONSULTANTS',
+  ADMIN_INVITATIONS = 'ADMIN_INVITATIONS',
+  ADMIN_TOKEN_MANAGEMENT = 'ADMIN_TOKEN_MANAGEMENT',
 
   // Ecosystem (Phase G)
   AFFILIATE_DASHBOARD = 'AFFILIATE_DASHBOARD',
@@ -159,8 +182,18 @@ export enum AppView {
   SUPERADMIN_FEEDBACK = 'SUPERADMIN_FEEDBACK',
   SUPERADMIN_BULK_OPERATIONS = 'SUPERADMIN_BULK_OPERATIONS',
 
-  // Admin Enterprise Views
-  ADMIN_SECURITY = 'ADMIN_SECURITY',
+  // Admin Module Views (7-module structure - Best practices from ClickUp/HubSpot/Replit)
+  ADMIN_OVERVIEW = 'ADMIN_OVERVIEW',           // Dashboard, Metrics, Analytics
+  ADMIN_ORGANIZATION = 'ADMIN_ORGANIZATION',   // Profile, Branding, Ownership
+  ADMIN_ORGANIZATION_SETTINGS = 'ADMIN_ORGANIZATION_SETTINGS',
+  ADMIN_TEAM = 'ADMIN_TEAM',                   // Users, Groups, Invitations, Roles
+  ADMIN_WORKSPACE = 'ADMIN_WORKSPACE',         // Projects, Knowledge, Playbooks
+  ADMIN_AI = 'ADMIN_AI',                       // LLM, Health, Analytics, Tokens
+  ADMIN_BILLING = 'ADMIN_BILLING',             // Plans, Payments, Invoices, Alerts
+  ADMIN_SECURITY = 'ADMIN_SECURITY',           // Auth, Access, Audit, Data
+  ADMIN_SETTINGS = 'ADMIN_SETTINGS',           // Legacy - redirects to ADMIN_SECURITY
+
+  // Admin Enterprise Views (legacy - used as tab identifiers)
   ADMIN_API_KEYS = 'ADMIN_API_KEYS',
   ADMIN_BILLING_MANAGEMENT = 'ADMIN_BILLING_MANAGEMENT',
   ADMIN_BULK_OPERATIONS = 'ADMIN_BULK_OPERATIONS',
@@ -179,6 +212,14 @@ export enum AppView {
   SETTINGS_WORK_PREFERENCES = 'SETTINGS_WORK_PREFERENCES',
   SETTINGS_DASHBOARD_PREFERENCES = 'SETTINGS_DASHBOARD_PREFERENCES',
   SETTINGS_ACCESSIBILITY = 'SETTINGS_ACCESSIBILITY',
+
+  // Settings Module Views (6-module structure)
+  SETTINGS_PROFILE_MODULE = 'SETTINGS_PROFILE_MODULE',
+  SETTINGS_AI_MODULE = 'SETTINGS_AI_MODULE',
+  SETTINGS_NOTIFICATIONS_MODULE = 'SETTINGS_NOTIFICATIONS_MODULE',
+  SETTINGS_SECURITY_MODULE = 'SETTINGS_SECURITY_MODULE',
+  SETTINGS_INTEGRATIONS_MODULE = 'SETTINGS_INTEGRATIONS_MODULE',
+  SETTINGS_APPEARANCE_MODULE = 'SETTINGS_APPEARANCE_MODULE',
 
   // Help & Documentation
   KNOWLEDGE_BASE = 'KNOWLEDGE_BASE',
@@ -213,6 +254,7 @@ export enum AuthStep {
 // SCMS: Canonical Roles (Step 1)
 export enum UserRole {
   SUPERADMIN = 'SUPERADMIN',   // DBR77 Platform Owner
+  OWNER = 'OWNER',             // Organization Billing Owner (cannot be deleted!)
   ADMIN = 'ADMIN',             // Tenant Admin (CEO/COO usually)
   PROJECT_MANAGER = 'PROJECT_MANAGER', // PMO Lead
   TEAM_MEMBER = 'TEAM_MEMBER', // Executor
@@ -220,17 +262,217 @@ export enum UserRole {
   CEO = 'CEO',
   MANAGER = 'MANAGER',
   CONSULTANT = 'CONSULTANT',   // External Advisor
+  GUEST = 'GUEST',             // Limited access external user
   OTHER = 'OTHER'
+}
+
+// Organization Ownership Status
+export type OwnershipStatus = 'ACTIVE' | 'PENDING_TRANSFER' | 'SUSPENDED';
+
+// Organization Profile & Ownership (Billing Admin)
+export interface OrganizationOwnership {
+  id: string;
+  organizationId: string;
+  ownerUserId: string;
+  billingEmail: string;
+  billingName?: string;
+  taxId?: string;
+  vatNumber?: string;
+  billingAddress?: BillingAddress;
+  status: OwnershipStatus;
+  transferredFromUserId?: string;
+  transferredAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Billing Address Structure
+export interface BillingAddress {
+  line1: string;
+  line2?: string;
+  city: string;
+  state?: string;
+  postalCode: string;
+  country: string;
+}
+
+// Organization Profile (Branding & Settings)
+export interface OrganizationProfile {
+  id: string;
+  organizationId: string;
+  // Branding
+  logoUrl?: string;
+  faviconUrl?: string;
+  brandColor?: string;
+  accentColor?: string;
+  description?: string;
+  industry?: string;
+  companySize?: CompanySize;
+  website?: string;
+  // Custom Domain
+  customDomain?: string;
+  customDomainVerified?: boolean;
+  customDomainVerifiedAt?: string;
+  // Regional Settings
+  defaultTimezone?: string;
+  defaultLanguage?: string;
+  dateFormat?: 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
+  timeFormat?: '12h' | '24h';
+  currency?: string;
+  // Social
+  linkedinUrl?: string;
+  twitterUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Company Size Options
+export type CompanySize =
+  | '1-10'
+  | '11-50'
+  | '51-200'
+  | '201-500'
+  | '501-1000'
+  | '1001-5000'
+  | '5000+';
+
+// User Group (Team within Organization)
+export interface UserGroup {
+  id: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  leaderId?: string;
+  memberIds: string[];
+  permissions: GroupPermission[];
+  isDefault?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Group-level permissions
+export interface GroupPermission {
+  resource: 'projects' | 'initiatives' | 'tasks' | 'decisions' | 'knowledge' | 'analytics' | 'ai';
+  actions: ('create' | 'read' | 'update' | 'delete' | 'manage')[];
+  scope?: 'all' | 'own' | 'group';
+}
+
+// Custom Role Definition
+export interface CustomRole {
+  id: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  baseRole: UserRole;
+  permissions: RolePermission[];
+  isSystemRole: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Permission entry for custom roles
+export interface RolePermission {
+  resource: string;
+  action: string;
+  allowed: boolean;
+  conditions?: Record<string, any>;
+}
+
+// API Key for integrations
+export interface ApiKey {
+  id: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  keyPrefix: string; // First 8 chars for identification
+  keyHash: string;   // Hashed full key
+  permissions: string[];
+  expiresAt?: string;
+  lastUsedAt?: string;
+  createdBy: string;
+  createdAt: string;
+  revokedAt?: string;
+}
+
+// Ownership Transfer Request
+export interface OwnershipTransferRequest {
+  id: string;
+  organizationId: string;
+  fromUserId: string;
+  toUserId: string;
+  toEmail: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED';
+  requestedAt: string;
+  respondedAt?: string;
+  expiresAt: string;
+  reason?: string;
+}
+
+// Organization Deletion Request
+export interface OrganizationDeletionRequest {
+  id: string;
+  organizationId: string;
+  requestedBy: string;
+  reason?: string;
+  scheduledAt: string;    // 30 days grace period
+  status: 'PENDING' | 'CANCELLED' | 'COMPLETED';
+  createdAt: string;
+  completedAt?: string;
+}
+
+// Announcement (Organization-wide communication)
+export interface Announcement {
+  id: string;
+  organizationId: string;
+  title: string;
+  content: string;
+  type: 'INFO' | 'WARNING' | 'SUCCESS' | 'CRITICAL';
+  targetAudience: 'ALL' | 'ADMINS' | 'MANAGERS' | 'SPECIFIC_GROUPS';
+  targetGroupIds?: string[];
+  publishedAt?: string;
+  expiresAt?: string;
+  isPinned: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Spending Alert Configuration
+export interface SpendingAlert {
+  id: string;
+  organizationId: string;
+  type: 'AI_TOKENS' | 'STORAGE' | 'USERS' | 'TOTAL_SPEND';
+  threshold: number;
+  thresholdType: 'PERCENTAGE' | 'ABSOLUTE';
+  action: 'NOTIFY' | 'NOTIFY_AND_PAUSE' | 'HARD_LIMIT';
+  notifyEmails: string[];
+  isActive: boolean;
+  triggeredAt?: string;
+  createdAt: string;
 }
 
 // SCMS: System Capabilities (Permissions)
 export type Capability =
+  // Owner-Only Scope (Billing Admin)
+  | 'transfer_ownership'      // Transfer org ownership to another user
+  | 'delete_organization'     // Delete entire organization (30-day grace)
+  | 'manage_payment_methods'  // Add/remove payment methods
+
   // Tenant Admin Scope
   | 'manage_users'
   | 'manage_roles'
+  | 'manage_custom_roles'     // Create/edit custom roles
   | 'manage_billing'
   | 'manage_org_settings'
+  | 'manage_org_profile'      // Logo, branding, etc.
   | 'manage_ai_policy'
+  | 'manage_api_keys'         // Create/revoke API keys
+  | 'manage_user_groups'      // Create/manage user groups
+  | 'view_all_users'
+  | 'export_data'             // GDPR export
 
   // Project Governance Scope
   | 'create_project'
@@ -251,7 +493,12 @@ export type Capability =
 
   // AI Scope
   | 'ai_execute_actions'      // "Auto" mode
-  | 'ai_view_insights';
+  | 'ai_view_insights'
+
+  // Communication Scope
+  | 'create_announcements'    // Post org-wide announcements
+  | 'manage_notifications'    // Configure notification settings
+  | 'invite_guests';          // Invite external guests
 
 // Governance: Change Request Status
 export type ChangeRequestStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'IMPLEMENTED';
@@ -1818,7 +2065,7 @@ export interface ProactivityBehavior {
 /** SuperAdmin AI Settings - Platform-wide configuration */
 export interface SuperAdminAISettings {
   id: string; // 'global'
-  
+
   // Provider Management
   defaultProvider: string | null;
   fallbackChain: string[];
@@ -1826,7 +2073,7 @@ export interface SuperAdminAISettings {
     failureThreshold: number;
     cooldownSeconds: number;
   };
-  
+
   // Global Limits
   globalTokenLimit: number;
   globalRateLimit: {
@@ -1835,12 +2082,12 @@ export interface SuperAdminAISettings {
   };
   maxContextWindowSize: number;
   maxTokensPerRequest: number;
-  
+
   // Security & PII
   piiDetectionSensitivity: 'low' | 'medium' | 'high';
   requireEncryption: boolean;
   dataResidency: string | null;
-  
+
   // Timestamps
   createdAt: string;
   updatedAt: string;
@@ -1850,37 +2097,37 @@ export interface SuperAdminAISettings {
 /** Organization AI Settings - Per-org configuration */
 export interface OrgAISettings {
   organizationId: string;
-  
+
   // Policy Configuration
   policyLevel: AIPolicyLevel;
   maxPolicyLevel: AIPolicyLevel;
   defaultProactivityMode: AIProactivityMode;
-  
+
   // AI Roles Configuration
   activeRoles: AIRole[];
   defaultRole: AIRole;
-  
+
   // Model Selection (subset of SuperAdmin providers)
   enabledModelIds: string[];
-  
+
   // Limits & Budget
   maxAICallsPerDay: number;
   maxTokensPerMonth: number;
   monthlyBudgetUSD: number;
   hardLimitUSD: number;
   freezeOnLimit: boolean;
-  
+
   // Feature Toggles
   webSearchEnabled: boolean;
   artifactsEnabled: boolean;
   thinkingStepsEnabled: boolean;
   focusModesEnabled: boolean;
   voiceEnabled: boolean;
-  
+
   // Audit Configuration
   auditAllRequests: boolean;
   auditPolicyChanges: boolean;
-  
+
   // Timestamps
   createdAt: string;
   updatedAt: string;
@@ -1890,17 +2137,17 @@ export interface OrgAISettings {
 /** User AI Settings - Per-user preferences */
 export interface UserAISettings {
   userId: string;
-  
+
   // Response Behavior
   responseStyle: 'concise' | 'balanced' | 'detailed';
   writingTone: 'professional' | 'casual' | 'technical' | 'friendly';
   preferredLanguage: string;
   codeExplanations: boolean;
   showSources: boolean;
-  
+
   // Proactivity Mode
   proactivityMode: AIProactivityMode;
-  
+
   // Model Parameters
   modelTemperature: number;
   maxTokens: number;
@@ -1908,20 +2155,20 @@ export interface UserAISettings {
   frequencyPenalty: number;
   presencePenalty: number;
   systemInstructions: string;
-  
+
   // Model Selection (from org-enabled models)
   visibleModelIds: string[];
   preferredModelId: string | null;
-  
+
   // Privacy Settings
   enablePiiRedaction: boolean;
   dataRetentionPolicy: 'minimal' | 'standard' | 'extended';
   shareUsageAnalytics: boolean;
-  
+
   // Context Settings
   contextRetention: 'session' | 'day' | 'week' | 'month' | 'permanent';
   autoSuggestions: boolean;
-  
+
   // Timestamps
   createdAt: string;
   updatedAt: string;
@@ -1931,18 +2178,18 @@ export interface UserAISettings {
 export interface AISettingsAuditEntry {
   id: string;
   timestamp: string;
-  
+
   // Level & Actor
   level: 'superadmin' | 'admin' | 'user';
   actorId: string;
   actorRole: string;
-  
+
   // Target & Change
   targetId: string; // orgId or userId or 'global'
   settingKey: string;
   oldValue: unknown;
   newValue: unknown;
-  
+
   // Request Metadata
   ipAddress: string | null;
   userAgent: string | null;
@@ -1954,12 +2201,12 @@ export interface EffectiveAISettings {
   policyLevel: AIPolicyLevel;
   proactivityMode: AIProactivityMode;
   proactivityBehavior: ProactivityBehavior;
-  
+
   // Response settings
   responseStyle: 'concise' | 'balanced' | 'detailed';
   writingTone: 'professional' | 'casual' | 'technical' | 'friendly';
   preferredLanguage: string;
-  
+
   // Model settings
   modelTemperature: number;
   maxTokens: number;
@@ -1969,22 +2216,22 @@ export interface EffectiveAISettings {
   systemInstructions: string;
   preferredModelId: string | null;
   availableModelIds: string[];
-  
+
   // Feature flags (from org)
   webSearchEnabled: boolean;
   artifactsEnabled: boolean;
   thinkingStepsEnabled: boolean;
   focusModesEnabled: boolean;
   voiceEnabled: boolean;
-  
+
   // Privacy
   enablePiiRedaction: boolean;
   dataRetentionPolicy: 'minimal' | 'standard' | 'extended';
-  
+
   // Limits (from org)
   maxAICallsPerDay: number;
   maxTokensPerMonth: number;
-  
+
   // Sources (for debugging)
   _sources: {
     superadmin: Partial<SuperAdminAISettings>;
@@ -2242,7 +2489,7 @@ export interface ChatMessage {
   isThinking?: boolean; // For MAX Mode deep reasoning indicator
   citations?: ChatCitation[]; // Citations from PMO data
   actions?: ChatResponseAction[]; // Action buttons in response
-  
+
   // World-Class Chat 2025 Extensions
   artifacts?: Artifact[];           // Generated structured content
   thinkingSteps?: ThinkingStep[];   // Chain of Thought reasoning
@@ -2250,6 +2497,10 @@ export interface ChatMessage {
   regenerateCount?: number;         // How many times regenerated
   focusMode?: FocusMode;            // Which focus was used for context
   feedback?: MessageFeedback;       // User feedback on this message
+  metadata?: {                      // Additional context data
+    responseMode?: string;
+    [key: string]: any;
+  };
   parentMessageId?: string;         // For branching conversations (edit history)
   isStreaming?: boolean;            // Currently being streamed
   streamProgress?: number;          // 0-100 for progress indicator
@@ -3635,6 +3886,54 @@ export interface User {
   aiPreferences?: AIPreferences;
   licensePlanId?: string;
   mfaEnabled?: boolean;
+  // Profile settings extensions
+  jobTitle?: string;
+  timezone?: string;
+  dateFormat?: string;
+  timeFormat?: string;
+  linkedAccounts?: LinkedAccounts;
+}
+
+// Linked social/OAuth accounts
+export interface LinkedAccounts {
+  google?: {
+    id: string;
+    email: string;
+    name?: string;
+    linkedAt: string;
+  };
+  linkedin?: {
+    id: string;
+    email?: string;
+    name?: string;
+    profileUrl?: string;
+    linkedAt: string;
+  };
+}
+
+// Permission request types
+export type PermissionRequestType = 'ROLE_CHANGE' | 'TOKEN_LIMIT' | 'STORAGE_LIMIT' | 'FEATURE_ACCESS';
+export type PermissionRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+export type PermissionRequestPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+
+export interface PermissionRequest {
+  id: string;
+  organizationId: string;
+  userId: string;
+  requestType: PermissionRequestType;
+  currentValue?: string;
+  requestedValue?: string;
+  justification?: string;
+  status: PermissionRequestStatus;
+  priority: PermissionRequestPriority;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  adminNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+  // Populated fields
+  user?: User;
+  reviewer?: User;
 }
 
 export interface AIPreferences {
@@ -3667,13 +3966,13 @@ export interface AIPreferences {
 
   // Response Length Settings (NEW)
   responseLength?: ResponseLengthSettings;
-  
+
   // Contextual Behavior (NEW)
   contextualBehavior?: ContextualBehaviorSettings;
-  
+
   // Formatting Preferences (NEW)
   formatting?: FormattingPreferences;
-  
+
   // Feedback Settings (NEW)
   feedbackSettings?: FeedbackSettings;
 }

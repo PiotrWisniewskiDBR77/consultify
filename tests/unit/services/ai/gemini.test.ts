@@ -91,7 +91,10 @@ describe('Gemini AI Service', () => {
             await sendMessageToAI([], 'Test');
 
             expect(UnifiedAI.sendMessage).toHaveBeenCalledWith(
-                undefined,
+                expect.objectContaining({
+                    provider: 'system',
+                    modelId: ''
+                }),
                 [],
                 'Test',
                 undefined,

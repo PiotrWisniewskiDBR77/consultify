@@ -148,3 +148,4 @@ COMMENT ON COLUMN conversations.tags IS 'Auto-generated tags based on conversati
 COMMENT ON COLUMN conversation_messages.metadata IS 'Rich data: citations, actions, tool calls, etc.';
 
 
+

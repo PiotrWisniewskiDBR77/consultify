@@ -12,12 +12,27 @@ const { enterpriseSecurity } = require('../services/ai/enterpriseSecurity');
 const db = require('../database');
 
 /**
- * GET /api/ai-security/audit-log
- * Get audit log entries
+ * GET /api/ai-security/audit-log OR /api/ai-security/audit-logs
+ * Get audit log entries with pagination, filtering, and search
  */
-router.get('/audit-log', verifyToken, requireRole(['super_admin', 'admin']), async (req, res) => {
+const auditLogHandler = async (req, res) => {
     try {
-        const { userId, action, riskLevel, flagged, limit = 100, offset = 0 } = req.query;
+        const { 
+            userId, 
+            action, 
+            riskLevel, 
+            flagged, 
+            limit = 100, 
+            offset = 0,
+            page = 1,
+            search,
+            startDate,
+            endDate
+        } = req.query;
+        
+        // Calculate offset from page if provided
+        const pageSize = parseInt(limit);
+        const calculatedOffset = page > 1 ? (parseInt(page) - 1) * pageSize : parseInt(offset);
         
         const entries = await enterpriseSecurity.getAuditLog({
             organizationId: req.user.organization_id,
@@ -25,20 +40,46 @@ router.get('/audit-log', verifyToken, requireRole(['super_admin', 'admin']), asy
             action,
             riskLevel,
             flagged: flagged === 'true' ? true : flagged === 'false' ? false : undefined,
-            limit: parseInt(limit),
-            offset: parseInt(offset)
+            search,
+            startDate,
+            endDate,
+            limit: pageSize,
+            offset: calculatedOffset
+        });
+
+        // Get total count for pagination
+        const total = await enterpriseSecurity.getAuditLogCount({
+            organizationId: req.user.organization_id,
+            userId,
+            action,
+            riskLevel,
+            flagged: flagged === 'true' ? true : flagged === 'false' ? false : undefined,
+            search,
+            startDate,
+            endDate
         });
         
         res.json({
             success: true,
-            data: entries,
-            count: entries.length
+            logs: entries,
+            data: entries, // Keep for backward compatibility
+            total,
+            count: entries.length,
+            pagination: {
+                page: parseInt(page),
+                limit: pageSize,
+                total,
+                totalPages: Math.ceil(total / pageSize)
+            }
         });
     } catch (error) {
         console.error('[AI Security API] Error getting audit log:', error);
-        res.status(500).json({ error: 'Failed to get audit log', details: error.message });
+        res.status(500).json({ success: false, error: 'Failed to get audit log', details: error.message });
     }
-});
+};
+
+router.get('/audit-log', verifyToken, requireRole(['super_admin', 'admin']), auditLogHandler);
+router.get('/audit-logs', verifyToken, requireRole(['super_admin', 'admin']), auditLogHandler);
 
 /**
  * GET /api/ai-security/summary
@@ -47,10 +88,88 @@ router.get('/audit-log', verifyToken, requireRole(['super_admin', 'admin']), asy
 router.get('/summary', verifyToken, requireRole(['super_admin', 'admin']), async (req, res) => {
     try {
         const summary = await enterpriseSecurity.getSecuritySummary(req.user.organization_id);
-        res.json({ success: true, data: summary });
+        // Also return in the shape expected by the frontend
+        res.json({ 
+            success: true, 
+            data: summary,
+            // Frontend expects these fields directly
+            total_requests: summary.totalRequests || 0,
+            flagged_requests: summary.flaggedRequests || 0,
+            high_risk: summary.highRiskCount || 0,
+            medium_risk: summary.mediumRiskCount || 0,
+            low_risk: (summary.totalRequests || 0) - (summary.highRiskCount || 0) - (summary.mediumRiskCount || 0),
+            period: summary.period || 'last_24h'
+        });
     } catch (error) {
         console.error('[AI Security API] Error getting summary:', error);
         res.status(500).json({ error: 'Failed to get summary', details: error.message });
+    }
+});
+
+/**
+ * GET /api/ai-security/audit-logs/export
+ * Export audit log entries as CSV
+ */
+router.get('/audit-logs/export', verifyToken, requireRole(['super_admin', 'admin']), async (req, res) => {
+    try {
+        const { 
+            riskLevel, 
+            flagged,
+            startDate,
+            endDate,
+            format = 'csv'
+        } = req.query;
+        
+        const entries = await enterpriseSecurity.getAuditLog({
+            organizationId: req.user.organization_id,
+            riskLevel,
+            flagged: flagged === 'true' ? true : flagged === 'false' ? false : undefined,
+            startDate,
+            endDate,
+            limit: 10000 // Max export limit
+        });
+
+        if (format === 'json') {
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Content-Disposition', `attachment; filename="audit-log-${new Date().toISOString().slice(0, 10)}.json"`);
+            return res.json(entries);
+        }
+
+        // Generate CSV
+        const headers = [
+            'Timestamp', 'User ID', 'Action', 'Resource Type', 'Resource ID',
+            'Model Used', 'Tokens Used', 'Cost USD', 'Risk Level', 'Flagged',
+            'Flag Reason', 'IP Address', 'Request Summary'
+        ];
+        
+        const csvRows = [headers.join(',')];
+        
+        for (const entry of entries) {
+            const row = [
+                entry.timestamp || '',
+                entry.user_id || '',
+                entry.action || '',
+                entry.resource_type || '',
+                entry.resource_id || '',
+                entry.model_used || '',
+                entry.tokens_used || 0,
+                entry.cost_usd || 0,
+                entry.risk_level || 'LOW',
+                entry.flagged ? 'Yes' : 'No',
+                (entry.flag_reason || '').replace(/,/g, ';').replace(/\n/g, ' '),
+                entry.ip_address || '',
+                (entry.request_summary || '').replace(/,/g, ';').replace(/\n/g, ' ').substring(0, 200)
+            ];
+            csvRows.push(row.map(v => `"${v}"`).join(','));
+        }
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="audit-log-${new Date().toISOString().slice(0, 10)}.csv"`);
+        res.send(csvRows.join('\n'));
+
+    } catch (error) {
+        console.error('[AI Security API] Error exporting audit log:', error);
+        res.status(500).json({ error: 'Failed to export audit log', details: error.message });
     }
 });
 

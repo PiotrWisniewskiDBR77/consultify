@@ -77,8 +77,8 @@ describe('DemoSessionService', () => {
             DemoSessionService.createSession(testSessionId);
             const result = DemoSessionService.updateStep(testSessionId, 'focus');
 
-            expect(result.currentStep).toBe('focus');
-            expect(result.stepHistory).toContain('reality');
+            expect(result.session.currentStep).toBe('focus');
+            expect(result.session.stepHistory[0].from).toBe('reality');
         });
 
         it('should track step history', () => {
@@ -87,7 +87,11 @@ describe('DemoSessionService', () => {
             DemoSessionService.updateStep(testSessionId, 'decision');
 
             const session = DemoSessionService.getSession(testSessionId);
-            expect(session.stepHistory).toEqual(['reality', 'focus']);
+            expect(session.stepHistory).toHaveLength(2);
+            expect(session.stepHistory[0].from).toBe('reality');
+            expect(session.stepHistory[0].to).toBe('focus');
+            expect(session.stepHistory[1].from).toBe('focus');
+            expect(session.stepHistory[1].to).toBe('decision');
         });
 
         it('should update lastActivityAt', () => {
@@ -107,15 +111,18 @@ describe('DemoSessionService', () => {
             DemoSessionService.createSession(testSessionId);
             const result = DemoSessionService.updateStep(testSessionId, 'focus');
 
-            expect(result.narrative).toBeDefined();
-            expect(result.narrative.intro).toBeDefined();
+            expect(result.narrativeTrigger).toBe('step_transition');
+
+            // Verify narrative exists for the new step
+            const narrative = DemoSessionService.getNarrative(testSessionId, 'intro');
+            expect(narrative.message).toBeDefined();
         });
     });
 
     describe('recordInteraction', () => {
-        it('should increment interaction count', () => {
+        it('should increment interaction count via recordEvent', () => {
             DemoSessionService.createSession(testSessionId);
-            DemoSessionService.recordInteraction(testSessionId);
+            DemoSessionService.recordEvent(testSessionId, 'click', { target: 'button' });
 
             const session = DemoSessionService.getSession(testSessionId);
             expect(session.interactions).toBe(1);
@@ -127,7 +134,7 @@ describe('DemoSessionService', () => {
             const beforeTime = sessionBefore.lastActivityAt;
 
             setTimeout(() => {
-                DemoSessionService.recordInteraction(testSessionId);
+                DemoSessionService.recordEvent(testSessionId, 'click');
                 const sessionAfter = DemoSessionService.getSession(testSessionId);
                 expect(sessionAfter.lastActivityAt).toBeGreaterThan(beforeTime);
             }, 10);
@@ -135,29 +142,31 @@ describe('DemoSessionService', () => {
     });
 
     describe('markNarrativeSeen', () => {
-        it('should track seen narratives', () => {
+        it('should track seen narratives via getNarrative', () => {
             DemoSessionService.createSession(testSessionId);
-            DemoSessionService.markNarrativeSeen(testSessionId, 'reality_intro');
+            // Calling getNarrative marks it as seen
+            DemoSessionService.getNarrative(testSessionId, 'intro');
 
             const session = DemoSessionService.getSession(testSessionId);
-            expect(session.narrativesSeen).toContain('reality_intro');
+            expect(session.narrativesSeen.length).toBeGreaterThan(0);
+            expect(session.narrativesSeen[0]).toContain('intro');
         });
 
         it('should not duplicate narrative IDs', () => {
             DemoSessionService.createSession(testSessionId);
-            DemoSessionService.markNarrativeSeen(testSessionId, 'reality_intro');
-            DemoSessionService.markNarrativeSeen(testSessionId, 'reality_intro');
+            DemoSessionService.getNarrative(testSessionId, 'intro');
+            DemoSessionService.getNarrative(testSessionId, 'intro');
 
             const session = DemoSessionService.getSession(testSessionId);
-            const count = session.narrativesSeen.filter(id => id === 'reality_intro').length;
+            const count = session.narrativesSeen.filter(id => id.includes('intro')).length;
             expect(count).toBe(1);
         });
     });
 
     describe('completeSession', () => {
-        it('should mark session as completed', () => {
+        it('should mark session as completed when reaching feedback step', () => {
             DemoSessionService.createSession(testSessionId);
-            DemoSessionService.completeSession(testSessionId);
+            DemoSessionService.updateStep(testSessionId, 'feedback');
 
             const session = DemoSessionService.getSession(testSessionId);
             expect(session.completed).toBe(true);
@@ -201,5 +210,6 @@ describe('DemoSessionService', () => {
         });
     });
 });
+
 
 

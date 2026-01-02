@@ -1,9 +1,29 @@
 // Notification Service - Enterprise-grade notification engine
 // Step 5: Execution Control, My Work & Notifications
+// Extended: User-Level Notifications & Integrations System
 
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 const SlackService = require('./slackService');
+
+// User-level services (lazy-loaded to avoid circular deps)
+let UserIntegrationService = null;
+let UserNotificationPreferencesService = null;
+let SlackUserIntegration = null;
+let TeamsUserIntegration = null;
+
+const loadUserServices = () => {
+    if (!UserIntegrationService) {
+        UserIntegrationService = require('./userIntegrationService');
+        UserNotificationPreferencesService = require('./userNotificationPreferencesService');
+        try {
+            SlackUserIntegration = require('./integrations/slackUserIntegration');
+            TeamsUserIntegration = require('./integrations/teamsUserIntegration');
+        } catch (e) {
+            console.log('[NotificationService] User integration services not available');
+        }
+    }
+};
 
 const NOTIFICATION_TYPES = {
     // Execution
@@ -29,7 +49,11 @@ const NOTIFICATION_TYPES = {
     // Trial lifecycle
     TRIAL_WARNING: 'TRIAL_WARNING',
     TRIAL_EXPIRED: 'TRIAL_EXPIRED',
-    TRIAL_UPGRADED: 'TRIAL_UPGRADED'
+    TRIAL_UPGRADED: 'TRIAL_UPGRADED',
+    // Permission Requests
+    PERMISSION_REQUEST_SUBMITTED: 'PERMISSION_REQUEST_SUBMITTED',
+    PERMISSION_REQUEST_APPROVED: 'PERMISSION_REQUEST_APPROVED',
+    PERMISSION_REQUEST_REJECTED: 'PERMISSION_REQUEST_REJECTED'
 };
 
 const SEVERITY = {
@@ -297,7 +321,285 @@ const NotificationService = {
             title: 'Risk Detected',
             message: riskMessage,
             isActionable: false
-        })
+        }),
+
+    // ==========================================
+    // USER-LEVEL NOTIFICATION DELIVERY (V2)
+    // ==========================================
+
+    /**
+     * Deliver notification through user's preferred channels
+     * This is the main entry point for the V2 user-level notification system
+     */
+    deliverNotification: async (userId, notification) => {
+        loadUserServices();
+
+        if (!UserNotificationPreferencesService || !UserIntegrationService) {
+            // Fall back to legacy behavior
+            return NotificationService.create({
+                userId,
+                ...notification
+            });
+        }
+
+        const results = {
+            channels: [],
+            queued: false,
+            delivered: false
+        };
+
+        try {
+            // 1. Check if user should receive notification
+            const shouldNotify = await UserNotificationPreferencesService.shouldNotify(
+                userId, notification.type, notification.severity
+            );
+
+            if (!shouldNotify) {
+                // Check if in quiet hours
+                const inQuietHours = await UserNotificationPreferencesService.isInQuietHours(userId);
+                if (inQuietHours) {
+                    results.queued = true;
+                    results.reason = 'quiet_hours';
+                    // Could queue for later delivery here
+                    return results;
+                }
+                return { delivered: false, reason: 'disabled' };
+            }
+
+            // 2. Get channels for this notification type
+            const channels = await UserNotificationPreferencesService.getChannelsForNotificationType(
+                userId, notification.type
+            );
+
+            if (channels.length === 0) {
+                return { delivered: false, reason: 'no_channels' };
+            }
+
+            // 3. Deliver to each channel
+            for (const channel of channels) {
+                try {
+                    const channelResult = await NotificationService._deliverToChannel(
+                        userId, channel, notification
+                    );
+                    results.channels.push({ channel, ...channelResult });
+                } catch (channelError) {
+                    console.error(`[NotificationService] Channel ${channel} delivery failed:`, channelError);
+                    results.channels.push({ 
+                        channel, 
+                        success: false, 
+                        error: channelError.message 
+                    });
+                }
+            }
+
+            results.delivered = results.channels.some(c => c.success);
+
+        } catch (error) {
+            console.error('[NotificationService] deliverNotification error:', error);
+            results.error = error.message;
+        }
+
+        return results;
+    },
+
+    /**
+     * Deliver to a specific channel
+     */
+    _deliverToChannel: async (userId, channel, notification) => {
+        loadUserServices();
+
+        switch (channel) {
+            case 'in_app':
+                // Create in-app notification
+                const created = await NotificationService.create({
+                    userId,
+                    organizationId: notification.organizationId,
+                    projectId: notification.projectId,
+                    type: notification.type,
+                    severity: notification.severity,
+                    title: notification.title,
+                    message: notification.message,
+                    relatedObjectType: notification.relatedObjectType,
+                    relatedObjectId: notification.relatedObjectId,
+                    isActionable: notification.isActionable,
+                    actionUrl: notification.actionUrl
+                });
+                return { success: !!created, notificationId: created?.id };
+
+            case 'email':
+                // Email notification - would integrate with emailService
+                // For now, just log
+                console.log(`[NotificationService] Email notification for user ${userId}:`, notification.title);
+                return { success: true, method: 'email' };
+
+            case 'push':
+                // Push notification - would integrate with push service
+                console.log(`[NotificationService] Push notification for user ${userId}:`, notification.title);
+                return { success: true, method: 'push' };
+
+            case 'slack':
+                // Slack via user integration
+                if (SlackUserIntegration) {
+                    try {
+                        await SlackUserIntegration.sendNotification(userId, notification);
+                        return { success: true, method: 'slack_user' };
+                    } catch (error) {
+                        console.error('[NotificationService] Slack delivery failed:', error);
+                        return { success: false, error: error.message };
+                    }
+                }
+                return { success: false, error: 'Slack integration not available' };
+
+            case 'teams':
+                // Teams via user integration
+                if (TeamsUserIntegration) {
+                    try {
+                        await TeamsUserIntegration.sendNotification(userId, notification);
+                        return { success: true, method: 'teams_user' };
+                    } catch (error) {
+                        console.error('[NotificationService] Teams delivery failed:', error);
+                        return { success: false, error: error.message };
+                    }
+                }
+                return { success: false, error: 'Teams integration not available' };
+
+            default:
+                console.warn(`[NotificationService] Unknown channel: ${channel}`);
+                return { success: false, error: 'Unknown channel' };
+        }
+    },
+
+    /**
+     * Notify all watchers of an object
+     */
+    notifyWatchers: async (objectType, objectId, notification) => {
+        loadUserServices();
+
+        if (!UserNotificationPreferencesService) {
+            console.log('[NotificationService] User services not available for watcher notifications');
+            return { notified: 0 };
+        }
+
+        try {
+            const watchers = await UserNotificationPreferencesService.getWatchersForObject(objectType, objectId);
+            const results = [];
+
+            for (const watcher of watchers) {
+                // Check if watcher wants this type of notification
+                if (watcher.notify_on === 'mentions' && notification.type !== 'MENTION') {
+                    continue;
+                }
+                if (watcher.notify_on === 'status_changes' && !notification.type.includes('STATUS')) {
+                    continue;
+                }
+
+                const result = await NotificationService.deliverNotification(
+                    watcher.user_id,
+                    {
+                        ...notification,
+                        relatedObjectType: objectType,
+                        relatedObjectId: objectId
+                    }
+                );
+                results.push({ userId: watcher.user_id, ...result });
+            }
+
+            return { notified: results.filter(r => r.delivered).length, results };
+        } catch (error) {
+            console.error('[NotificationService] notifyWatchers error:', error);
+            return { notified: 0, error: error.message };
+        }
+    },
+
+    /**
+     * Send due date reminder
+     */
+    sendDueReminder: async (userId, taskId, taskTitle, reminderType, dueDate) => {
+        loadUserServices();
+
+        if (!UserNotificationPreferencesService) {
+            return { sent: false, reason: 'services_not_available' };
+        }
+
+        try {
+            // Check if reminder already sent
+            const alreadySent = await UserNotificationPreferencesService.wasReminderSent(
+                userId, taskId, reminderType
+            );
+
+            if (alreadySent) {
+                return { sent: false, reason: 'already_sent' };
+            }
+
+            // Get user's reminder preferences
+            const reminderSettings = await UserNotificationPreferencesService.getDueReminderSettings(userId);
+            
+            if (!reminderSettings[reminderType]) {
+                return { sent: false, reason: 'reminder_disabled' };
+            }
+
+            // Build reminder notification
+            const reminderLabels = {
+                '1_week': '1 week',
+                '3_days': '3 days',
+                '1_day': 'tomorrow',
+                '1_hour': '1 hour',
+                'at_due': 'now'
+            };
+
+            const notification = {
+                type: 'TASK_DUE_SOON',
+                severity: reminderType === '1_hour' || reminderType === 'at_due' ? 'WARNING' : 'INFO',
+                title: `Task Due ${reminderLabels[reminderType]}`,
+                message: `"${taskTitle}" is due ${reminderLabels[reminderType]}${dueDate ? ` (${new Date(dueDate).toLocaleString()})` : ''}`,
+                relatedObjectType: 'TASK',
+                relatedObjectId: taskId,
+                isActionable: true,
+                actionUrl: `/tasks/${taskId}`
+            };
+
+            // Deliver notification
+            const result = await NotificationService.deliverNotification(userId, notification);
+
+            // Mark reminder as sent
+            if (result.delivered) {
+                await UserNotificationPreferencesService.markReminderSent(userId, taskId, reminderType);
+            }
+
+            return { sent: result.delivered, ...result };
+        } catch (error) {
+            console.error('[NotificationService] sendDueReminder error:', error);
+            return { sent: false, error: error.message };
+        }
+    },
+
+    /**
+     * Get user's notification preferences summary
+     */
+    getUserPreferencesSummary: async (userId) => {
+        loadUserServices();
+
+        if (!UserNotificationPreferencesService || !UserIntegrationService) {
+            return null;
+        }
+
+        try {
+            const prefs = await UserNotificationPreferencesService.getPreferences(userId);
+            const integrations = await UserIntegrationService.getUserIntegrations(userId);
+            const watchers = await UserNotificationPreferencesService.getWatchedObjects(userId);
+
+            return {
+                globalEnabled: prefs.globalEnabled,
+                quietHoursEnabled: prefs.schedule.quietHoursEnabled,
+                connectedChannels: integrations.filter(i => i.status === 'active').map(i => i.provider),
+                watchingCount: watchers.length,
+                digestsEnabled: prefs.digests.dailyEnabled || prefs.digests.weeklyEnabled
+            };
+        } catch (error) {
+            console.error('[NotificationService] getUserPreferencesSummary error:', error);
+            return null;
+        }
+    }
 };
 
 module.exports = NotificationService;

@@ -1,700 +1,540 @@
-/**
- * Project Intelligence Routes
- * 
- * Routes for managing project insights, interview sessions, and knowledge capture
- * Part of the Project Intelligence Hub module
- */
-
 const express = require('express');
 const router = express.Router();
-const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
-const verifyToken = require('../middleware/authMiddleware');
-const { asyncHandler } = require('../utils/errorHandler');
-const queryHelpers = require('../utils/queryHelpers');
+const db = require('../database');
 
-router.use(verifyToken);
-
-// ==========================================
-// ENSURE TABLES EXIST
-// ==========================================
-const ensureTables = async () => {
-    await db.runAsync(`
-        CREATE TABLE IF NOT EXISTS interview_sessions (
-            id TEXT PRIMARY KEY,
-            project_id TEXT NOT NULL,
-            user_id TEXT NOT NULL,
-            topic TEXT NOT NULL,
-            status TEXT DEFAULT 'active',
-            progress TEXT DEFAULT '{"completed":[],"current":null,"remaining":[]}',
-            started_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            completed_at TEXT,
-            duration_minutes INTEGER
-        )
-    `);
-
-    await db.runAsync(`
-        CREATE TABLE IF NOT EXISTS project_insights (
-            id TEXT PRIMARY KEY,
-            project_id TEXT NOT NULL,
-            session_id TEXT,
-            category TEXT NOT NULL,
-            title TEXT NOT NULL,
-            content TEXT NOT NULL,
-            source TEXT,
-            confidence TEXT DEFAULT 'medium',
-            status TEXT DEFAULT 'draft',
-            related_insights TEXT,
-            pmo_domain TEXT,
-            created_by TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )
-    `);
-
-    await db.runAsync(`
-        CREATE TABLE IF NOT EXISTS interview_messages (
-            id TEXT PRIMARY KEY,
-            session_id TEXT NOT NULL,
-            role TEXT NOT NULL,
-            content TEXT NOT NULL,
-            detected_insights TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )
-    `);
-
-    // Create indexes if they don't exist
-    await db.runAsync(`CREATE INDEX IF NOT EXISTS idx_insights_project ON project_insights(project_id)`);
-    await db.runAsync(`CREATE INDEX IF NOT EXISTS idx_insights_category ON project_insights(category)`);
-    await db.runAsync(`CREATE INDEX IF NOT EXISTS idx_sessions_project ON interview_sessions(project_id)`);
+// Helper to promisify db.all
+const dbAll = (query, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.all(query, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows || []);
+    });
+  });
 };
 
-// ==========================================
-// PROJECT INSIGHTS CRUD
-// ==========================================
+// Helper to promisify db.get
+const dbGet = (query, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.get(query, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+};
 
-// GET all insights for a project
-router.get('/projects/:projectId/insights', asyncHandler(async (req, res) => {
+// Helper to promisify db.run
+const dbRun = (query, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.run(query, params, function(err) {
+      if (err) reject(err);
+      else resolve({ changes: this.changes, lastID: this.lastID });
+    });
+  });
+};
+
+// ===== INSIGHTS ENDPOINTS =====
+
+// Get all insights for a project
+router.get('/projects/:projectId/insights', async (req, res) => {
+  try {
     const { projectId } = req.params;
-    const { category, status, sessionId } = req.query;
-    const orgId = req.user.organizationId;
-
-    await ensureTables();
-
-    // Verify project belongs to org
-    const project = await queryHelpers.queryOne(
-        'SELECT id FROM projects WHERE id = ? AND organization_id = ?',
-        [projectId, orgId]
-    );
-    if (!project) {
-        return res.status(404).json({ error: 'Project not found' });
-    }
-
-    let sql = `
-        SELECT i.*, 
-            u.first_name as creator_first_name, 
-            u.last_name as creator_last_name
-        FROM project_insights i
-        LEFT JOIN users u ON i.created_by = u.id
-        WHERE i.project_id = ?
-    `;
+    const { category, status } = req.query;
+    
+    let query = 'SELECT * FROM project_insights WHERE project_id = ?';
     const params = [projectId];
-
+    
     if (category) {
-        sql += ` AND i.category = ?`;
-        params.push(category);
+      query += ' AND category = ?';
+      params.push(category);
     }
-
     if (status) {
-        sql += ` AND i.status = ?`;
-        params.push(status);
+      query += ' AND status = ?';
+      params.push(status);
     }
-
-    if (sessionId) {
-        sql += ` AND i.session_id = ?`;
-        params.push(sessionId);
-    }
-
-    sql += ` ORDER BY i.created_at DESC`;
-
-    const rows = await queryHelpers.queryAll(sql, params);
-
-    const insights = rows.map(r => ({
-        id: r.id,
-        projectId: r.project_id,
-        sessionId: r.session_id,
-        category: r.category,
-        title: r.title,
-        content: r.content ? JSON.parse(r.content) : {},
-        source: r.source ? JSON.parse(r.source) : null,
-        confidence: r.confidence,
-        status: r.status,
-        relatedInsights: r.related_insights ? JSON.parse(r.related_insights) : [],
-        pmoDomain: r.pmo_domain,
-        createdBy: r.created_by ? {
-            id: r.created_by,
-            firstName: r.creator_first_name,
-            lastName: r.creator_last_name
-        } : null,
-        createdAt: r.created_at,
-        updatedAt: r.updated_at
+    
+    query += ' ORDER BY created_at DESC';
+    
+    const insights = await dbAll(query, params);
+    
+    // Parse JSON fields
+    const parsedInsights = insights.map(insight => ({
+      ...insight,
+      content: JSON.parse(insight.content || '{}'),
+      source: insight.source ? JSON.parse(insight.source) : null,
+      related_insights: insight.related_insights ? JSON.parse(insight.related_insights) : []
     }));
+    
+    res.json(parsedInsights);
+  } catch (error) {
+    console.error('Error fetching insights:', error);
+    res.status(500).json({ error: 'Failed to fetch insights' });
+  }
+});
 
-    // Group by category for counts
-    const categoryCounts = {};
-    insights.forEach(i => {
-        categoryCounts[i.category] = (categoryCounts[i.category] || 0) + 1;
-    });
-
-    res.json({ 
-        insights, 
-        total: insights.length,
-        categoryCounts
-    });
-}));
-
-// GET single insight
-router.get('/insights/:insightId', asyncHandler(async (req, res) => {
-    const { insightId } = req.params;
-    const orgId = req.user.organizationId;
-
-    await ensureTables();
-
-    const row = await queryHelpers.queryOne(`
-        SELECT i.*, 
-            u.first_name as creator_first_name, 
-            u.last_name as creator_last_name,
-            p.name as project_name
-        FROM project_insights i
-        LEFT JOIN users u ON i.created_by = u.id
-        LEFT JOIN projects p ON i.project_id = p.id
-        WHERE i.id = ? AND p.organization_id = ?
-    `, [insightId, orgId]);
-
-    if (!row) {
-        return res.status(404).json({ error: 'Insight not found' });
-    }
-
-    res.json({
-        id: row.id,
-        projectId: row.project_id,
-        projectName: row.project_name,
-        sessionId: row.session_id,
-        category: row.category,
-        title: row.title,
-        content: row.content ? JSON.parse(row.content) : {},
-        source: row.source ? JSON.parse(row.source) : null,
-        confidence: row.confidence,
-        status: row.status,
-        relatedInsights: row.related_insights ? JSON.parse(row.related_insights) : [],
-        pmoDomain: row.pmo_domain,
-        createdBy: row.created_by ? {
-            id: row.created_by,
-            firstName: row.creator_first_name,
-            lastName: row.creator_last_name
-        } : null,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
-    });
-}));
-
-// CREATE insight
-router.post('/projects/:projectId/insights', asyncHandler(async (req, res) => {
+// Create a new insight
+router.post('/projects/:projectId/insights', async (req, res) => {
+  try {
     const { projectId } = req.params;
-    const userId = req.user.id;
-    const orgId = req.user.organizationId;
-    const {
-        category,
-        title,
-        content,
-        source,
-        confidence,
-        status,
-        relatedInsights,
-        pmoDomain,
-        sessionId
+    const { 
+      category, 
+      title, 
+      content, 
+      source, 
+      confidence = 'medium',
+      status = 'draft',
+      session_id,
+      pmo_domain,
+      related_insights = []
     } = req.body;
-
-    if (!category || !title) {
-        return res.status(400).json({ error: 'Category and title are required' });
-    }
-
-    await ensureTables();
-
-    // Verify project belongs to org
-    const project = await queryHelpers.queryOne(
-        'SELECT id FROM projects WHERE id = ? AND organization_id = ?',
-        [projectId, orgId]
-    );
-    if (!project) {
-        return res.status(404).json({ error: 'Project not found' });
-    }
-
+    
     const id = uuidv4();
-    const now = new Date().toISOString();
-
-    await db.runAsync(`
-        INSERT INTO project_insights (
-            id, project_id, session_id, category, title, content,
-            source, confidence, status, related_insights, pmo_domain,
-            created_by, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    const userId = req.user?.id || 'system';
+    
+    await dbRun(`
+      INSERT INTO project_insights (
+        id, project_id, session_id, category, title, content, 
+        source, confidence, status, related_insights, pmo_domain, created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-        id,
-        projectId,
-        sessionId || null,
-        category,
-        title,
-        content ? JSON.stringify(content) : '{}',
-        source ? JSON.stringify(source) : null,
-        confidence || 'medium',
-        status || 'draft',
-        relatedInsights ? JSON.stringify(relatedInsights) : null,
-        pmoDomain || null,
-        userId,
-        now,
-        now
+      id, 
+      projectId, 
+      session_id || null,
+      category, 
+      title, 
+      JSON.stringify(content),
+      source ? JSON.stringify(source) : null,
+      confidence,
+      status,
+      JSON.stringify(related_insights),
+      pmo_domain || null,
+      userId
     ]);
-
+    
+    const insight = await dbGet('SELECT * FROM project_insights WHERE id = ?', [id]);
+    
     res.status(201).json({
-        id,
-        projectId,
-        sessionId: sessionId || null,
-        category,
-        title,
-        content: content || {},
-        source: source || null,
-        confidence: confidence || 'medium',
-        status: status || 'draft',
-        relatedInsights: relatedInsights || [],
-        pmoDomain: pmoDomain || null,
-        createdAt: now,
-        updatedAt: now
+      ...insight,
+      content: JSON.parse(insight.content),
+      source: insight.source ? JSON.parse(insight.source) : null,
+      related_insights: JSON.parse(insight.related_insights || '[]')
     });
-}));
+  } catch (error) {
+    console.error('Error creating insight:', error);
+    res.status(500).json({ error: 'Failed to create insight' });
+  }
+});
 
-// UPDATE insight
-router.patch('/insights/:insightId', asyncHandler(async (req, res) => {
-    const { insightId } = req.params;
-    const orgId = req.user.organizationId;
+// Update an insight
+router.patch('/insights/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
     const updates = req.body;
-
-    await ensureTables();
-
-    // Verify insight belongs to org
-    const existing = await queryHelpers.queryOne(`
-        SELECT i.* FROM project_insights i
-        JOIN projects p ON i.project_id = p.id
-        WHERE i.id = ? AND p.organization_id = ?
-    `, [insightId, orgId]);
-
+    
+    const existing = await dbGet('SELECT * FROM project_insights WHERE id = ?', [id]);
+    
     if (!existing) {
-        return res.status(404).json({ error: 'Insight not found' });
+      return res.status(404).json({ error: 'Insight not found' });
     }
-
-    const now = new Date().toISOString();
-    const updateFields = [];
+    
+    const allowedFields = ['title', 'content', 'confidence', 'status', 'pmo_domain', 'related_insights'];
+    const setClause = [];
     const params = [];
-
-    if (updates.title !== undefined) {
-        updateFields.push('title = ?');
-        params.push(updates.title);
-    }
-    if (updates.content !== undefined) {
-        updateFields.push('content = ?');
-        params.push(JSON.stringify(updates.content));
-    }
-    if (updates.status !== undefined) {
-        updateFields.push('status = ?');
-        params.push(updates.status);
-    }
-    if (updates.confidence !== undefined) {
-        updateFields.push('confidence = ?');
-        params.push(updates.confidence);
-    }
-    if (updates.relatedInsights !== undefined) {
-        updateFields.push('related_insights = ?');
-        params.push(JSON.stringify(updates.relatedInsights));
-    }
-    if (updates.pmoDomain !== undefined) {
-        updateFields.push('pmo_domain = ?');
-        params.push(updates.pmoDomain);
-    }
-
-    updateFields.push('updated_at = ?');
-    params.push(now);
-    params.push(insightId);
-
-    await db.runAsync(
-        `UPDATE project_insights SET ${updateFields.join(', ')} WHERE id = ?`,
-        params
-    );
-
-    res.json({ success: true, updatedAt: now });
-}));
-
-// DELETE insight
-router.delete('/insights/:insightId', asyncHandler(async (req, res) => {
-    const { insightId } = req.params;
-    const orgId = req.user.organizationId;
-
-    await ensureTables();
-
-    // Verify insight belongs to org
-    const existing = await queryHelpers.queryOne(`
-        SELECT i.id FROM project_insights i
-        JOIN projects p ON i.project_id = p.id
-        WHERE i.id = ? AND p.organization_id = ?
-    `, [insightId, orgId]);
-
-    if (!existing) {
-        return res.status(404).json({ error: 'Insight not found' });
-    }
-
-    await db.runAsync('DELETE FROM project_insights WHERE id = ?', [insightId]);
-
-    res.json({ success: true });
-}));
-
-// ==========================================
-// INTERVIEW SESSIONS
-// ==========================================
-
-// GET all sessions for a project
-router.get('/projects/:projectId/sessions', asyncHandler(async (req, res) => {
-    const { projectId } = req.params;
-    const { status } = req.query;
-    const orgId = req.user.organizationId;
-
-    await ensureTables();
-
-    // Verify project belongs to org
-    const project = await queryHelpers.queryOne(
-        'SELECT id FROM projects WHERE id = ? AND organization_id = ?',
-        [projectId, orgId]
-    );
-    if (!project) {
-        return res.status(404).json({ error: 'Project not found' });
-    }
-
-    let sql = `
-        SELECT s.*, 
-            u.first_name, u.last_name,
-            (SELECT COUNT(*) FROM project_insights WHERE session_id = s.id) as insight_count,
-            (SELECT COUNT(*) FROM interview_messages WHERE session_id = s.id) as message_count
-        FROM interview_sessions s
-        LEFT JOIN users u ON s.user_id = u.id
-        WHERE s.project_id = ?
-    `;
-    const params = [projectId];
-
-    if (status) {
-        sql += ` AND s.status = ?`;
-        params.push(status);
-    }
-
-    sql += ` ORDER BY s.started_at DESC`;
-
-    const rows = await queryHelpers.queryAll(sql, params);
-
-    const sessions = rows.map(r => ({
-        id: r.id,
-        projectId: r.project_id,
-        topic: r.topic,
-        status: r.status,
-        progress: r.progress ? JSON.parse(r.progress) : { completed: [], current: null, remaining: [] },
-        startedAt: r.started_at,
-        completedAt: r.completed_at,
-        durationMinutes: r.duration_minutes,
-        user: {
-            id: r.user_id,
-            firstName: r.first_name,
-            lastName: r.last_name
-        },
-        insightCount: r.insight_count,
-        messageCount: r.message_count
-    }));
-
-    res.json({ sessions, total: sessions.length });
-}));
-
-// CREATE session
-router.post('/projects/:projectId/sessions', asyncHandler(async (req, res) => {
-    const { projectId } = req.params;
-    const userId = req.user.id;
-    const orgId = req.user.organizationId;
-    const { topic, progress } = req.body;
-
-    if (!topic) {
-        return res.status(400).json({ error: 'Topic is required' });
-    }
-
-    await ensureTables();
-
-    // Verify project belongs to org
-    const project = await queryHelpers.queryOne(
-        'SELECT id FROM projects WHERE id = ? AND organization_id = ?',
-        [projectId, orgId]
-    );
-    if (!project) {
-        return res.status(404).json({ error: 'Project not found' });
-    }
-
-    const id = uuidv4();
-    const now = new Date().toISOString();
-
-    await db.runAsync(`
-        INSERT INTO interview_sessions (
-            id, project_id, user_id, topic, status, progress, started_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [
-        id,
-        projectId,
-        userId,
-        topic,
-        'active',
-        progress ? JSON.stringify(progress) : '{"completed":[],"current":null,"remaining":[]}',
-        now
-    ]);
-
-    res.status(201).json({
-        id,
-        projectId,
-        userId,
-        topic,
-        status: 'active',
-        progress: progress || { completed: [], current: null, remaining: [] },
-        startedAt: now
-    });
-}));
-
-// UPDATE session
-router.patch('/sessions/:sessionId', asyncHandler(async (req, res) => {
-    const { sessionId } = req.params;
-    const orgId = req.user.organizationId;
-    const updates = req.body;
-
-    await ensureTables();
-
-    // Verify session belongs to org
-    const existing = await queryHelpers.queryOne(`
-        SELECT s.* FROM interview_sessions s
-        JOIN projects p ON s.project_id = p.id
-        WHERE s.id = ? AND p.organization_id = ?
-    `, [sessionId, orgId]);
-
-    if (!existing) {
-        return res.status(404).json({ error: 'Session not found' });
-    }
-
-    const updateFields = [];
-    const params = [];
-
-    if (updates.status !== undefined) {
-        updateFields.push('status = ?');
-        params.push(updates.status);
-        
-        // If completing, set completed_at and calculate duration
-        if (updates.status === 'completed') {
-            const now = new Date().toISOString();
-            updateFields.push('completed_at = ?');
-            params.push(now);
-            
-            const startedAt = new Date(existing.started_at);
-            const completedAt = new Date(now);
-            const durationMinutes = Math.round((completedAt - startedAt) / 60000);
-            updateFields.push('duration_minutes = ?');
-            params.push(durationMinutes);
+    
+    for (const field of allowedFields) {
+      if (updates[field] !== undefined) {
+        setClause.push(`${field} = ?`);
+        if (field === 'content' || field === 'related_insights') {
+          params.push(JSON.stringify(updates[field]));
+        } else {
+          params.push(updates[field]);
         }
+      }
     }
-    if (updates.progress !== undefined) {
-        updateFields.push('progress = ?');
-        params.push(JSON.stringify(updates.progress));
+    
+    if (setClause.length > 0) {
+      setClause.push('updated_at = CURRENT_TIMESTAMP');
+      params.push(id);
+      
+      await dbRun(`UPDATE project_insights SET ${setClause.join(', ')} WHERE id = ?`, params);
     }
-    if (updates.topic !== undefined) {
-        updateFields.push('topic = ?');
-        params.push(updates.topic);
-    }
-
-    if (updateFields.length === 0) {
-        return res.json({ success: true });
-    }
-
-    params.push(sessionId);
-
-    await db.runAsync(
-        `UPDATE interview_sessions SET ${updateFields.join(', ')} WHERE id = ?`,
-        params
-    );
-
-    res.json({ success: true });
-}));
-
-// ==========================================
-// INTERVIEW MESSAGES
-// ==========================================
-
-// GET messages for a session
-router.get('/sessions/:sessionId/messages', asyncHandler(async (req, res) => {
-    const { sessionId } = req.params;
-    const orgId = req.user.organizationId;
-
-    await ensureTables();
-
-    // Verify session belongs to org
-    const session = await queryHelpers.queryOne(`
-        SELECT s.id FROM interview_sessions s
-        JOIN projects p ON s.project_id = p.id
-        WHERE s.id = ? AND p.organization_id = ?
-    `, [sessionId, orgId]);
-
-    if (!session) {
-        return res.status(404).json({ error: 'Session not found' });
-    }
-
-    const rows = await queryHelpers.queryAll(
-        'SELECT * FROM interview_messages WHERE session_id = ? ORDER BY created_at ASC',
-        [sessionId]
-    );
-
-    const messages = rows.map(r => ({
-        id: r.id,
-        sessionId: r.session_id,
-        role: r.role,
-        content: r.content,
-        detectedInsights: r.detected_insights ? JSON.parse(r.detected_insights) : [],
-        createdAt: r.created_at
-    }));
-
-    res.json({ messages });
-}));
-
-// ADD message to session
-router.post('/sessions/:sessionId/messages', asyncHandler(async (req, res) => {
-    const { sessionId } = req.params;
-    const orgId = req.user.organizationId;
-    const { role, content, detectedInsights } = req.body;
-
-    if (!role || !content) {
-        return res.status(400).json({ error: 'Role and content are required' });
-    }
-
-    await ensureTables();
-
-    // Verify session belongs to org
-    const session = await queryHelpers.queryOne(`
-        SELECT s.id FROM interview_sessions s
-        JOIN projects p ON s.project_id = p.id
-        WHERE s.id = ? AND p.organization_id = ?
-    `, [sessionId, orgId]);
-
-    if (!session) {
-        return res.status(404).json({ error: 'Session not found' });
-    }
-
-    const id = uuidv4();
-    const now = new Date().toISOString();
-
-    await db.runAsync(`
-        INSERT INTO interview_messages (id, session_id, role, content, detected_insights, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-    `, [
-        id,
-        sessionId,
-        role,
-        content,
-        detectedInsights ? JSON.stringify(detectedInsights) : null,
-        now
-    ]);
-
-    res.status(201).json({
-        id,
-        sessionId,
-        role,
-        content,
-        detectedInsights: detectedInsights || [],
-        createdAt: now
-    });
-}));
-
-// ==========================================
-// INSIGHT DETECTION (AI)
-// ==========================================
-
-// POST detect insights from text
-router.post('/detect-insights', asyncHandler(async (req, res) => {
-    const { text, context } = req.body;
-
-    if (!text) {
-        return res.status(400).json({ error: 'Text is required' });
-    }
-
-    // This will be enhanced with actual AI detection
-    // For now, return empty array - AI integration will be added later
+    
+    const updated = await dbGet('SELECT * FROM project_insights WHERE id = ?', [id]);
+    
     res.json({
-        detectedInsights: [],
-        message: 'AI insight detection will be implemented with AI prompts integration'
+      ...updated,
+      content: JSON.parse(updated.content),
+      source: updated.source ? JSON.parse(updated.source) : null,
+      related_insights: JSON.parse(updated.related_insights || '[]')
     });
-}));
+  } catch (error) {
+    console.error('Error updating insight:', error);
+    res.status(500).json({ error: 'Failed to update insight' });
+  }
+});
 
-// ==========================================
-// SEED DATA (Development)
-// ==========================================
-
-// POST seed sample data for a project
-router.post('/projects/:projectId/seed', asyncHandler(async (req, res) => {
-    const { projectId } = req.params;
-    const userId = req.user.id;
-    const orgId = req.user.organizationId;
-
-    await ensureTables();
-
-    // Verify project belongs to org
-    const project = await queryHelpers.queryOne(
-        'SELECT id FROM projects WHERE id = ? AND organization_id = ?',
-        [projectId, orgId]
-    );
-    if (!project) {
-        return res.status(404).json({ error: 'Project not found' });
+// Delete an insight
+router.delete('/insights/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await dbRun('DELETE FROM project_insights WHERE id = ?', [id]);
+    
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Insight not found' });
     }
+    
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting insight:', error);
+    res.status(500).json({ error: 'Failed to delete insight' });
+  }
+});
 
-    const { seedIntelligenceData } = require('../seeds/intelligence-seed');
-    const result = await seedIntelligenceData(db, projectId, userId);
+// ===== SESSIONS ENDPOINTS =====
+
+// Get all sessions for a project
+router.get('/projects/:projectId/sessions', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    
+    const sessions = await dbAll(`
+      SELECT * FROM interview_sessions 
+      WHERE project_id = ? 
+      ORDER BY started_at DESC
+    `, [projectId]);
+    
+    const parsedSessions = sessions.map(session => ({
+      ...session,
+      progress: JSON.parse(session.progress || '{}')
+    }));
+    
+    res.json(parsedSessions);
+  } catch (error) {
+    console.error('Error fetching sessions:', error);
+    res.status(500).json({ error: 'Failed to fetch sessions' });
+  }
+});
+
+// Create a new session
+router.post('/projects/:projectId/sessions', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { topic } = req.body;
+    
+    const id = uuidv4();
+    const userId = req.user?.id || 'system';
+    
+    const initialProgress = {
+      completed: [],
+      current: 'objective',
+      remaining: ['stakeholder', 'risk', 'assumption', 'constraint', 'decision', 'dependency', 'success_criteria']
+    };
+    
+    await dbRun(`
+      INSERT INTO interview_sessions (id, project_id, user_id, topic, progress)
+      VALUES (?, ?, ?, ?, ?)
+    `, [id, projectId, userId, topic || 'General Interview', JSON.stringify(initialProgress)]);
+    
+    const session = await dbGet('SELECT * FROM interview_sessions WHERE id = ?', [id]);
+    
+    res.status(201).json({
+      ...session,
+      progress: JSON.parse(session.progress)
+    });
+  } catch (error) {
+    console.error('Error creating session:', error);
+    res.status(500).json({ error: 'Failed to create session' });
+  }
+});
+
+// Complete a session
+router.patch('/sessions/:id/complete', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    await dbRun(`
+      UPDATE interview_sessions 
+      SET status = 'completed', completed_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `, [id]);
+    
+    const session = await dbGet('SELECT * FROM interview_sessions WHERE id = ?', [id]);
+    
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    res.json({
+      ...session,
+      progress: JSON.parse(session.progress)
+    });
+  } catch (error) {
+    console.error('Error completing session:', error);
+    res.status(500).json({ error: 'Failed to complete session' });
+  }
+});
+
+// ===== MESSAGES ENDPOINTS =====
+
+// Get messages for a session
+router.get('/sessions/:sessionId/messages', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    const messages = await dbAll(`
+      SELECT * FROM interview_messages 
+      WHERE session_id = ? 
+      ORDER BY created_at ASC
+    `, [sessionId]);
+    
+    const parsedMessages = messages.map(msg => ({
+      ...msg,
+      detected_insights: msg.detected_insights ? JSON.parse(msg.detected_insights) : []
+    }));
+    
+    res.json(parsedMessages);
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Add message to session
+router.post('/sessions/:sessionId/messages', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { role, content, detected_insights = [] } = req.body;
+    
+    const id = uuidv4();
+    
+    await dbRun(`
+      INSERT INTO interview_messages (id, session_id, role, content, detected_insights)
+      VALUES (?, ?, ?, ?, ?)
+    `, [id, sessionId, role, content, JSON.stringify(detected_insights)]);
+    
+    const message = await dbGet('SELECT * FROM interview_messages WHERE id = ?', [id]);
+    
+    res.status(201).json({
+      ...message,
+      detected_insights: JSON.parse(message.detected_insights || '[]')
+    });
+  } catch (error) {
+    console.error('Error adding message:', error);
+    res.status(500).json({ error: 'Failed to add message' });
+  }
+});
+
+// ===== SEED DATA ENDPOINT =====
+
+// Seed demo data for a project
+router.post('/projects/:projectId/seed', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    
+    // Create sample insights
+    const sampleInsights = [
+      {
+        id: uuidv4(),
+        category: 'objective',
+        title: 'Digital Transformation Initiative',
+        content: {
+          description: 'Transform core business processes through digital technologies',
+          measurable_outcomes: ['30% efficiency improvement', 'Customer satisfaction > 90%'],
+          timeframe: '18 months',
+          priority: 'high'
+        },
+        confidence: 'high',
+        status: 'confirmed',
+        pmo_domain: 'SCOPE_CHANGE_CONTROL'
+      },
+      {
+        id: uuidv4(),
+        category: 'stakeholder',
+        title: 'Executive Sponsor - CEO',
+        content: {
+          name: 'John Smith',
+          role: 'CEO',
+          influence: 'high',
+          interest: 'high',
+          engagement_strategy: 'Monthly steering committee meetings',
+          communication_frequency: 'Weekly status updates'
+        },
+        confidence: 'high',
+        status: 'confirmed',
+        pmo_domain: 'RESOURCE_RESPONSIBILITY'
+      },
+      {
+        id: uuidv4(),
+        category: 'risk',
+        title: 'Technology Integration Risk',
+        content: {
+          description: 'Legacy systems may not integrate smoothly with new platform',
+          probability: 'medium',
+          impact: 'high',
+          mitigation_strategy: 'Phased rollout with extensive testing',
+          owner: 'Technical Lead',
+          contingency: 'Parallel system operation for 3 months'
+        },
+        confidence: 'medium',
+        status: 'confirmed',
+        pmo_domain: 'RISK_ISSUE_MANAGEMENT'
+      },
+      {
+        id: uuidv4(),
+        category: 'assumption',
+        title: 'Budget Availability',
+        content: {
+          statement: 'Full budget will be available at project start',
+          validation_method: 'Finance approval confirmation',
+          impact_if_false: 'Project timeline delay of 2-3 months',
+          owner: 'Project Sponsor'
+        },
+        confidence: 'high',
+        status: 'confirmed',
+        pmo_domain: 'GOVERNANCE_DECISION_MAKING'
+      },
+      {
+        id: uuidv4(),
+        category: 'constraint',
+        title: 'Regulatory Compliance',
+        content: {
+          description: 'Must comply with GDPR and local data protection laws',
+          type: 'regulatory',
+          flexibility: 'none',
+          impact_on_scope: 'Data handling procedures must be documented'
+        },
+        confidence: 'high',
+        status: 'confirmed',
+        pmo_domain: 'GOVERNANCE_DECISION_MAKING'
+      },
+      {
+        id: uuidv4(),
+        category: 'decision',
+        title: 'Cloud Platform Selection',
+        content: {
+          decision: 'Selected AWS as primary cloud provider',
+          rationale: 'Best cost-performance ratio, existing expertise',
+          alternatives_considered: ['Azure', 'GCP'],
+          decision_maker: 'Technical Committee',
+          date: '2024-01-15',
+          reversibility: 'medium'
+        },
+        confidence: 'high',
+        status: 'confirmed',
+        pmo_domain: 'GOVERNANCE_DECISION_MAKING'
+      },
+      {
+        id: uuidv4(),
+        category: 'dependency',
+        title: 'HR System Upgrade',
+        content: {
+          description: 'HR system must be upgraded before employee portal launch',
+          type: 'internal',
+          dependent_project: 'HR Modernization Project',
+          expected_completion: '2024-Q2',
+          criticality: 'high',
+          alternative_path: 'Manual data migration if delayed'
+        },
+        confidence: 'medium',
+        status: 'draft',
+        pmo_domain: 'SCHEDULE_MILESTONES'
+      },
+      {
+        id: uuidv4(),
+        category: 'success_criteria',
+        title: 'User Adoption Rate',
+        content: {
+          criterion: '80% of target users actively using the system within 3 months',
+          measurement_method: 'System analytics dashboard',
+          target_value: '80%',
+          current_baseline: '0%',
+          verification_date: '2024-09-30'
+        },
+        confidence: 'high',
+        status: 'confirmed',
+        pmo_domain: 'BENEFITS_REALIZATION'
+      }
+    ];
+    
+    // Insert insights
+    for (const insight of sampleInsights) {
+      await dbRun(`
+        INSERT INTO project_insights (
+          id, project_id, category, title, content, 
+          confidence, status, pmo_domain, created_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        insight.id,
+        projectId,
+        insight.category,
+        insight.title,
+        JSON.stringify(insight.content),
+        insight.confidence,
+        insight.status,
+        insight.pmo_domain,
+        'system'
+      ]);
+    }
+    
+    // Create a sample session
+    const sessionId = uuidv4();
+    await dbRun(`
+      INSERT INTO interview_sessions (id, project_id, user_id, topic, status, progress)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [
+      sessionId,
+      projectId,
+      'system',
+      'Initial Project Discovery',
+      'completed',
+      JSON.stringify({
+        completed: ['objective', 'stakeholder', 'risk'],
+        current: null,
+        remaining: []
+      })
+    ]);
     
     res.json({ 
-        success: true, 
-        message: 'Sample data created',
-        ...result
+      success: true, 
+      message: 'Demo data seeded successfully',
+      insights_count: sampleInsights.length,
+      sessions_count: 1
     });
-}));
+  } catch (error) {
+    console.error('Error seeding data:', error);
+    res.status(500).json({ error: 'Failed to seed demo data' });
+  }
+});
 
-// GET all insights without project filter (for testing)
-router.get('/all-insights', asyncHandler(async (req, res) => {
-    await ensureTables();
-
-    const rows = await queryHelpers.queryAll(`
-        SELECT i.*, p.name as project_name
-        FROM project_insights i
-        LEFT JOIN projects p ON i.project_id = p.id
-        ORDER BY i.created_at DESC
-        LIMIT 100
-    `, []);
-
-    const insights = rows.map(r => ({
-        id: r.id,
-        projectId: r.project_id,
-        projectName: r.project_name,
-        category: r.category,
-        title: r.title,
-        content: r.content ? JSON.parse(r.content) : {},
-        confidence: r.confidence,
-        status: r.status,
-        pmoDomain: r.pmo_domain,
-        createdAt: r.created_at
-    }));
-
-    res.json({ insights, total: insights.length });
-}));
+// Get insight statistics for a project
+router.get('/projects/:projectId/stats', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    
+    const stats = await dbAll(`
+      SELECT 
+        category,
+        COUNT(*) as count,
+        SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed,
+        SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft
+      FROM project_insights 
+      WHERE project_id = ?
+      GROUP BY category
+    `, [projectId]);
+    
+    const sessionsCount = await dbGet(`
+      SELECT COUNT(*) as count FROM interview_sessions WHERE project_id = ?
+    `, [projectId]);
+    
+    res.json({
+      categories: stats,
+      total_sessions: sessionsCount?.count || 0
+    });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ error: 'Failed to fetch statistics' });
+  }
+});
 
 module.exports = router;
-

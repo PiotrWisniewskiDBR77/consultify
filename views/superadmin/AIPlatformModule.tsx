@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from 'react';
-import { Cpu, Sparkles, BookOpen, DollarSign, HeartPulse, FlaskConical, FileText, Radar, Activity } from 'lucide-react';
+import { Cpu, Sparkles, BookOpen, DollarSign, HeartPulse, FlaskConical, FileText, Radar, Activity, Settings, Shield, BarChart2 } from 'lucide-react';
 import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
 import { LLMManagementView } from './LLMManagementView';
 import { AIIntelligenceView } from './AIIntelligenceView';
@@ -16,6 +16,9 @@ import { ABTestingDashboard } from '../../components/Admin/ABTestingDashboard';
 import { PromptManagementUI } from '../../components/Admin/PromptManagementUI';
 import { AIMissionControl } from '../../components/Admin/AIMissionControl';
 import { AIPerformanceDashboard } from '../../components/Admin/AIPerformanceDashboard';
+import { SuperAdminAISettings } from '../../components/SuperAdmin/SuperAdminAISettings';
+import { SLADashboard } from '../../components/Admin/SLADashboard';
+import { UsageAnalyticsDashboard } from '../../components/Admin/AI/UsageAnalyticsDashboard';
 
 interface AIPlatformModuleProps {
     initialTab?: string;
@@ -26,6 +29,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({ initialTab }
 
     const tabs: Tab[] = [
         { id: 'llm-config', label: 'LLM Config', icon: <Cpu size={16} /> },
+        { id: 'settings', label: 'Settings', icon: <Settings size={16} /> },
         { id: 'intelligence', label: 'Intelligence', icon: <Sparkles size={16} /> },
         { id: 'prompts-admin', label: 'Prompts Admin', icon: <FileText size={16} /> },
         { id: 'experiments', label: 'Experiments', icon: <FlaskConical size={16} /> },
@@ -34,12 +38,16 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({ initialTab }
         { id: 'knowledge', label: 'Knowledge', icon: <BookOpen size={16} /> },
         { id: 'costs', label: 'Costs', icon: <DollarSign size={16} /> },
         { id: 'health', label: 'Health', icon: <HeartPulse size={16} /> },
+        { id: 'sla', label: 'SLA', icon: <Shield size={16} /> },
+        { id: 'analytics', label: 'Analytics', icon: <BarChart2 size={16} /> },
     ];
 
     const renderContent = () => {
         switch (activeTab) {
             case 'llm-config':
                 return <LLMManagementView />;
+            case 'settings':
+                return <SuperAdminAISettings />;
             case 'intelligence':
                 return <AIIntelligenceView />;
             case 'prompts-admin':
@@ -82,6 +90,18 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({ initialTab }
                 return (
                     <div className="p-6 overflow-y-auto h-full">
                         <LLMHealthPanel />
+                    </div>
+                );
+            case 'sla':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <SLADashboard />
+                    </div>
+                );
+            case 'analytics':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <UsageAnalyticsDashboard />
                     </div>
                 );
             default:

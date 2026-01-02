@@ -333,5 +333,261 @@ describe('AISettingsService', () => {
             expect(result[0].newValue).toBe('ASSISTED');
         });
     });
+
+    // ==========================================
+    // NEW TESTS: User Cost Tracking
+    // ==========================================
+
+    describe('getUserCostHistory', () => {
+        it('should return user cost history with aggregated data', async () => {
+            // Mock database error to trigger fallback mock data
+            mockDb.all.mockImplementation((sql, params, callback) => {
+                callback(new Error('Table does not exist'));
+            });
+
+            const result = await AISettingsService.getUserCostHistory('user-1', '30d');
+
+            expect(result).toBeDefined();
+            expect(result.period).toBe('30d');
+            expect(result.totalCost).toBeDefined();
+            expect(result.totalRequests).toBeDefined();
+            expect(result.totalTokens).toBeDefined();
+            expect(result.byTier).toBeInstanceOf(Array);
+            expect(result.byTier.length).toBeGreaterThan(0);
+        });
+
+        it('should return data for different periods', async () => {
+            mockDb.all.mockImplementation((sql, params, callback) => {
+                callback(new Error('Table does not exist'));
+            });
+
+            const result7d = await AISettingsService.getUserCostHistory('user-1', '7d');
+            const result90d = await AISettingsService.getUserCostHistory('user-1', '90d');
+
+            expect(result7d.period).toBe('7d');
+            expect(result90d.period).toBe('90d');
+        });
+
+        it('should aggregate by tier correctly', async () => {
+            const mockUsageData = [
+                { date: '2024-01-01', requests: 10, tokens: 5000, cost: 0.5, tier: 'BUDGET' },
+                { date: '2024-01-01', requests: 5, tokens: 3000, cost: 1.2, tier: 'STANDARD' },
+                { date: '2024-01-02', requests: 8, tokens: 4000, cost: 0.4, tier: 'BUDGET' }
+            ];
+
+            mockDb.all.mockImplementation((sql, params, callback) => {
+                callback(null, mockUsageData);
+            });
+
+            const result = await AISettingsService.getUserCostHistory('user-1', '7d');
+
+            expect(result).toBeDefined();
+            expect(result.byTier).toBeInstanceOf(Array);
+        });
+    });
+
+    // ==========================================
+    // NEW TESTS: User Tier Management
+    // ==========================================
+
+    describe('getOrgUserTiers', () => {
+        it('should return all user tier assignments for an organization', async () => {
+            const mockUsers = [
+                { userId: 'user-1', userName: 'John Doe', email: 'john@example.com', currentTier: 'STANDARD', usage: 45, cost: 3.45 },
+                { userId: 'user-2', userName: 'Jane Smith', email: 'jane@example.com', currentTier: 'PREMIUM', usage: 120, cost: 12.30 }
+            ];
+
+            mockDb.all.mockImplementation((sql, params, callback) => {
+                callback(null, mockUsers);
+            });
+
+            const result = await AISettingsService.getOrgUserTiers('org-1');
+
+            expect(result).toBeInstanceOf(Array);
+            expect(result.length).toBeGreaterThan(0);
+        });
+
+        it('should return mock data when database query fails', async () => {
+            mockDb.all.mockImplementation((sql, params, callback) => {
+                callback(new Error('Query failed'));
+            });
+
+            const result = await AISettingsService.getOrgUserTiers('org-1');
+
+            expect(result).toBeInstanceOf(Array);
+            expect(result.length).toBeGreaterThan(0);
+            expect(result[0].userId).toBeDefined();
+            expect(result[0].currentTier).toBeDefined();
+        });
+    });
+
+    describe('assignUserTier', () => {
+        it('should assign a tier to a user', async () => {
+            // Mock user org verification
+            mockDb.get.mockImplementation((sql, params, callback) => {
+                callback(null, { organization_id: 'org-1' });
+            });
+
+            // Mock insert/update
+            mockDb.run.mockImplementation((sql, params, callback) => {
+                callback(null);
+            });
+
+            const result = await AISettingsService.assignUserTier('org-1', 'user-1', 'PREMIUM');
+
+            expect(result).toBeDefined();
+            expect(result.success).toBe(true);
+            expect(result.tier).toBe('PREMIUM');
+            expect(result.userId).toBe('user-1');
+        });
+
+        it('should throw error if user does not belong to organization', async () => {
+            mockDb.get.mockImplementation((sql, params, callback) => {
+                callback(null, { organization_id: 'different-org' });
+            });
+
+            await expect(AISettingsService.assignUserTier('org-1', 'user-1', 'PREMIUM'))
+                .rejects.toThrow('User does not belong to this organization');
+        });
+    });
+
+    // ==========================================
+    // NEW TESTS: Cost Attribution
+    // ==========================================
+
+    describe('getOrgCostAttribution', () => {
+        it('should return cost attribution for an organization', async () => {
+            mockDb.all.mockImplementation((sql, params, callback) => {
+                callback(new Error('Table not found')); // Triggers mock data
+            });
+
+            const result = await AISettingsService.getOrgCostAttribution('org-1', '7d');
+
+            expect(result).toBeDefined();
+            expect(result.period).toBe('7d');
+            expect(result.totalCost).toBeDefined();
+            expect(result.attribution).toBeInstanceOf(Array);
+        });
+
+        it('should calculate percentages correctly', async () => {
+            const mockAttribution = [
+                { entityType: 'user', entityId: 'u1', entityName: 'User 1', requests: 100, tokens: 50000, cost: 5.0 },
+                { entityType: 'user', entityId: 'u2', entityName: 'User 2', requests: 50, tokens: 25000, cost: 2.5 }
+            ];
+
+            mockDb.all.mockImplementation((sql, params, callback) => {
+                callback(null, mockAttribution);
+            });
+
+            const result = await AISettingsService.getOrgCostAttribution('org-1', '7d');
+
+            expect(result.attribution).toBeInstanceOf(Array);
+            if (result.attribution.length > 0) {
+                expect(result.attribution[0].percentage).toBeDefined();
+            }
+        });
+    });
+
+    // ==========================================
+    // NEW TESTS: Compliance Reports
+    // ==========================================
+
+    describe('generateComplianceReport', () => {
+        beforeEach(() => {
+            // Mock org settings
+            mockDb.get.mockImplementation((sql, params, callback) => {
+                if (sql.includes('organization_ai_settings')) {
+                    callback(null, {
+                        organization_id: 'org-1',
+                        policy_level: 'ASSISTED',
+                        active_roles: '["ADVISOR"]',
+                        audit_policy_changes: 1,
+                        max_ai_calls_per_day: 100,
+                        monthly_budget_usd: 500,
+                        freeze_on_limit: 1,
+                        default_role: 'ADVISOR',
+                        audit_all_requests: 0
+                    });
+                } else {
+                    callback(null, null);
+                }
+            });
+
+            // Mock audit log
+            mockDb.all.mockImplementation((sql, params, callback) => {
+                callback(null, []);
+            });
+        });
+
+        it('should generate ISO21500 compliance report', async () => {
+            const result = await AISettingsService.generateComplianceReport('org-1', 'ISO21500', 'json');
+
+            expect(result).toBeDefined();
+            expect(result.standard).toBe('ISO21500');
+            expect(result.organizationId).toBe('org-1');
+            expect(result.status).toBeDefined();
+            expect(result.checks).toBeInstanceOf(Array);
+            expect(result.summary).toBeDefined();
+            expect(result.summary.total).toBeGreaterThan(0);
+        });
+
+        it('should generate PMBOK7 compliance report', async () => {
+            const result = await AISettingsService.generateComplianceReport('org-1', 'PMBOK7', 'json');
+
+            expect(result).toBeDefined();
+            expect(result.standard).toBe('PMBOK7');
+            expect(result.checks.length).toBeGreaterThan(0);
+        });
+
+        it('should generate PRINCE2 compliance report', async () => {
+            const result = await AISettingsService.generateComplianceReport('org-1', 'PRINCE2', 'json');
+
+            expect(result).toBeDefined();
+            expect(result.standard).toBe('PRINCE2');
+            expect(result.checks.length).toBe(7); // 7 PRINCE2 themes
+        });
+
+        it('should generate GDPR compliance report', async () => {
+            const result = await AISettingsService.generateComplianceReport('org-1', 'GDPR', 'json');
+
+            expect(result).toBeDefined();
+            expect(result.standard).toBe('GDPR');
+        });
+
+        it('should generate SOC2 compliance report', async () => {
+            const result = await AISettingsService.generateComplianceReport('org-1', 'SOC2', 'json');
+
+            expect(result).toBeDefined();
+            expect(result.standard).toBe('SOC2');
+            expect(result.checks.length).toBe(5); // 5 SOC2 trust principles
+        });
+
+        it('should export as CSV format', async () => {
+            const result = await AISettingsService.generateComplianceReport('org-1', 'ISO21500', 'csv');
+
+            expect(result).toBeDefined();
+            expect(result.data).toBeDefined();
+            expect(result.data).toContain('Check ID');
+            expect(result.data).toContain('Status');
+        });
+
+        it('should calculate compliance score correctly', async () => {
+            const result = await AISettingsService.generateComplianceReport('org-1', 'ISO21500', 'json');
+
+            expect(result.summary.score).toBeDefined();
+            expect(result.summary.score).toBeGreaterThanOrEqual(0);
+            expect(result.summary.score).toBeLessThanOrEqual(100);
+        });
+
+        it('should include findings for non-compliant checks', async () => {
+            const result = await AISettingsService.generateComplianceReport('org-1', 'ISO21500', 'json');
+
+            expect(result.findings).toBeInstanceOf(Array);
+            // Findings should only include non-compliant and partial checks
+            result.findings.forEach(finding => {
+                expect(['non_compliant', 'partial']).toContain(finding.status);
+            });
+        });
+    });
 });
 

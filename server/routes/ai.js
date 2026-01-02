@@ -72,6 +72,12 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
     const { AIPipeline } = require('../services/ai/aiPipeline');
     const aiPipeline = new AIPipeline();
 
+    // Set headers for SSE BEFORE any data is written
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
     try {
         const pipelineRequest = {
             type: 'chat',
@@ -98,11 +104,6 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
                 ...progress
             })}\n\n`);
         });
-
-        // Set headers for SSE
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
 
         if (response.stream) {
             for await (const chunk of response.stream) {
@@ -152,9 +153,9 @@ router.post('/chat', verifyToken, async (req, res) => {
             roleDescription: AIOrchestrator.getRoleDescription(result.role),
             intent: result.intent,
             contextSummary: result.contextSummary,
-            dataSources: result.responseContext.dataSources,
+            dataSources: result.responseContext?.dataSources || [],
             prompt: result.prompt, // For LLM integration
-            policyLevel: result.responseContext.policy.policyLevel
+            policyLevel: result.responseContext?.policy?.policyLevel || 'ADVISORY'
         });
     } catch (err) {
         console.error('Chat Error:', err);
@@ -949,6 +950,73 @@ router.get('/actions/pending', verifyToken, async (req, res) => {
     } catch (err) {
         console.error('[AI] Get pending actions error:', err);
         res.status(500).json({ success: false, error: err.message, actions: [] });
+    }
+});
+
+// ==================== FEEDBACK & REPORTING ====================
+
+/**
+ * POST /api/ai/feedback
+ * Report user feedback on an AI message (thumbs up/down)
+ */
+router.post('/feedback', verifyToken, async (req, res) => {
+    const { messageId, rating } = req.body;
+    const userId = req.userId;
+
+    try {
+        // Log feedback for analytics
+        console.log(`[AI Feedback] User ${userId} rated message ${messageId} as ${rating}`);
+        
+        // Store in audit log for tracking (non-blocking)
+        try {
+            const aiLogger = require('../services/ai/logger');
+            await aiLogger.log('feedback', {
+                userId,
+                messageId,
+                rating,
+                timestamp: new Date().toISOString()
+            });
+        } catch (logErr) {
+            console.warn('[AI] Could not log feedback:', logErr.message);
+        }
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[AI] Feedback error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+/**
+ * POST /api/ai/report
+ * Report a problematic AI message
+ */
+router.post('/report', verifyToken, async (req, res) => {
+    const { messageId, reason } = req.body;
+    const userId = req.userId;
+
+    try {
+        // Log report - this is serious, log with emphasis
+        console.error(`[AI REPORT] 🚨 User ${userId} reported message ${messageId}: ${reason}`);
+        
+        // Store in audit log for review (non-blocking)
+        try {
+            const aiLogger = require('../services/ai/logger');
+            await aiLogger.log('report', {
+                userId,
+                messageId,
+                reason,
+                timestamp: new Date().toISOString(),
+                severity: reason === 'harmful' ? 'critical' : 'warning'
+            });
+        } catch (logErr) {
+            console.warn('[AI] Could not log report:', logErr.message);
+        }
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[AI] Report error:', err);
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 

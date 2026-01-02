@@ -87,13 +87,23 @@ export const InvoiceCenterView: React.FC = () => {
         setLoading(true);
         try {
             const [invoicesResult, statsResult] = await Promise.all([
-                Api.get(`/api/superadmin/invoices?period=${dateFilter}`),
-                Api.get('/api/superadmin/invoices/stats'),
+                Api.getSuperAdminInvoices(dateFilter),
+                Api.getSuperAdminInvoiceStats(),
             ]);
             setInvoices(invoicesResult.invoices || []);
             setStats(statsResult);
         } catch (error) {
             console.error('Failed to fetch invoices:', error);
+            // Set empty defaults on error
+            setInvoices([]);
+            setStats({
+                totalRevenue: 0,
+                paidInvoices: 0,
+                pendingInvoices: 0,
+                overdueInvoices: 0,
+                overdueAmount: 0,
+                monthlyGrowth: 0
+            });
         } finally {
             setLoading(false);
         }

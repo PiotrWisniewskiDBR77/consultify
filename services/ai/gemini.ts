@@ -13,12 +13,25 @@ export const sendMessageToAI = async (
     systemInstruction?: string,
     roleName?: string
 ) => {
-    // Get current configuration from store
+    // FORCE Unified Backend Routing
+    // We ignore client-side keys here to ensure we use the backend pipeline
+    // which handles RAG, Memory, and Thinking Processes.
     const state = useAppStore.getState();
     const config = state.currentUser?.aiConfig;
 
+    // We can pass the preferred model ID, but we set provider to 'system'
+    // to ensure UnifiedAI routes it to the backend API.
+    const effectiveConfig = {
+        apiKey: config?.apiKey,
+        endpoint: config?.endpoint,
+        provider: 'system' as const,
+        modelId: config?.modelId || '',
+        visibleModelIds: config?.visibleModelIds,
+        privateModels: config?.privateModels
+    };
+
     try {
-        return await UnifiedAI.sendMessage(config, history, message, systemInstruction, roleName);
+        return await UnifiedAI.sendMessage(effectiveConfig, history, message, systemInstruction, roleName);
     } catch (error) {
         console.error("Error sending message to AI:", error);
         return "I encountered an error while processing your request. Please check your AI settings.";
@@ -36,8 +49,18 @@ export const sendMessageToAIStream = async (
     const state = useAppStore.getState();
     const config = state.currentUser?.aiConfig;
 
+    // FORCE Unified Backend Routing
+    const effectiveConfig = {
+        apiKey: config?.apiKey,
+        endpoint: config?.endpoint,
+        provider: 'system' as const,
+        modelId: config?.modelId || '',
+        visibleModelIds: config?.visibleModelIds,
+        privateModels: config?.privateModels
+    };
+
     try {
-        await UnifiedAI.sendMessageStream(config, history, message, onChunk, onDone, systemInstruction, roleName);
+        await UnifiedAI.sendMessageStream(effectiveConfig, history, message, onChunk, onDone, systemInstruction, roleName);
     } catch (error) {
         console.error("Error sending message to AI (stream):", error);
         onChunk("I encountered an error while processing your request.");

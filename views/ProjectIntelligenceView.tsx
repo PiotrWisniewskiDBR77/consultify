@@ -1,228 +1,145 @@
 /**
  * ProjectIntelligenceView
  * 
- * Project Intelligence Hub - AI-powered knowledge capture
- * Captures and organizes project knowledge through structured interviews
+ * Module: Project Intelligence Hub
+ * AI-powered knowledge capture and organization for projects.
  * 
  * Features:
- * - AI Chat for structured knowledge capture
- * - Knowledge categories with PMO domain mapping
- * - Interview sessions with progress tracking
- * - Auto-detection of insights from conversations
+ * - AI Interview mode for structured knowledge gathering
+ * - Auto-detection of project insights from conversations
+ * - PMO-aligned knowledge categories (Objectives, Stakeholders, Risks, etc.)
+ * - Knowledge base with confirmed insights
+ * - Session history tracking
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
     Brain,
+    MessageSquare,
+    Database,
+    History,
+    Plus,
+    Sparkles,
     Target,
     Users,
     AlertTriangle,
-    FileQuestion,
+    Lightbulb,
     Lock,
-    GitBranch,
     CheckCircle,
-    MessageSquare,
-    BookOpen,
-    History,
-    Plus,
-    RefreshCw,
+    Link,
+    Award,
     Loader2,
+    RefreshCw,
+    Play,
+    FolderOpen,
     ChevronRight,
-    Sparkles,
-    X,
-    Check,
-    Edit2,
+    Info,
     Trash2,
-    Link2
+    Eye,
+    Settings,
+    Download
 } from 'lucide-react';
 import { SplitLayout } from '../components/SplitLayout';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
 import toast from 'react-hot-toast';
-import { 
-    InsightCategory, 
-    ProjectInsight, 
-    InterviewSession,
-    InsightCategoryConfig,
-    PMODomainId 
-} from '../types';
+import { CategoryIcon, getCategoryLabel, CATEGORY_CONFIG, type InsightCategory } from '../components/Intelligence/CategoryIcon';
+import { InsightDetectionCard } from '../components/Intelligence/InsightDetectionCard';
+import { InterviewProgress } from '../components/Intelligence/InterviewProgress';
 
-// Category configuration with icons and colors
-const CATEGORY_CONFIG: Record<InsightCategory, InsightCategoryConfig> = {
-    objective: {
-        id: 'objective',
-        label: 'Objectives',
-        icon: 'Target',
-        color: 'emerald',
-        pmoDomain: PMODomainId.BENEFITS_REALIZATION,
-        description: 'Project goals and expected outcomes'
-    },
-    stakeholder: {
-        id: 'stakeholder',
-        label: 'Stakeholders',
-        icon: 'Users',
-        color: 'purple',
-        pmoDomain: PMODomainId.RESOURCE_RESPONSIBILITY,
-        description: 'Key people and their roles'
-    },
-    risk: {
-        id: 'risk',
-        label: 'Risks',
-        icon: 'AlertTriangle',
-        color: 'amber',
-        pmoDomain: PMODomainId.RISK_ISSUE_MANAGEMENT,
-        description: 'Potential problems and mitigations'
-    },
-    assumption: {
-        id: 'assumption',
-        label: 'Assumptions',
-        icon: 'FileQuestion',
-        color: 'sky',
-        pmoDomain: PMODomainId.SCOPE_CHANGE_CONTROL,
-        description: 'Things assumed to be true'
-    },
-    constraint: {
-        id: 'constraint',
-        label: 'Constraints',
-        icon: 'Lock',
-        color: 'rose',
-        pmoDomain: PMODomainId.SCOPE_CHANGE_CONTROL,
-        description: 'Limitations and boundaries'
-    },
-    decision: {
-        id: 'decision',
-        label: 'Decisions',
-        icon: 'CheckCircle',
-        color: 'indigo',
-        pmoDomain: PMODomainId.GOVERNANCE_DECISION_MAKING,
-        description: 'Key decisions made'
-    },
-    dependency: {
-        id: 'dependency',
-        label: 'Dependencies',
-        icon: 'GitBranch',
-        color: 'orange',
-        pmoDomain: PMODomainId.SCHEDULE_MILESTONES,
-        description: 'External dependencies'
-    },
-    success_criteria: {
-        id: 'success_criteria',
-        label: 'Success Criteria',
-        icon: 'CheckCircle',
-        color: 'teal',
-        pmoDomain: PMODomainId.PERFORMANCE_MONITORING,
-        description: 'How success is measured'
-    }
-};
+// Types
+interface ProjectInsight {
+    id: string;
+    project_id: string;
+    session_id?: string;
+    category: InsightCategory;
+    title: string;
+    content: Record<string, unknown>;
+    source?: { type: string; text: string };
+    confidence: 'high' | 'medium' | 'low';
+    status: 'draft' | 'confirmed' | 'archived';
+    related_insights?: string[];
+    pmo_domain?: string;
+    created_by?: string;
+    created_at: string;
+    updated_at: string;
+}
 
-// Get icon component by name
-const getCategoryIcon = (iconName: string, size = 16) => {
-    const icons: Record<string, React.ReactNode> = {
-        Target: <Target size={size} />,
-        Users: <Users size={size} />,
-        AlertTriangle: <AlertTriangle size={size} />,
-        FileQuestion: <FileQuestion size={size} />,
-        Lock: <Lock size={size} />,
-        CheckCircle: <CheckCircle size={size} />,
-        GitBranch: <GitBranch size={size} />,
+interface InterviewSession {
+    id: string;
+    project_id: string;
+    user_id: string;
+    topic: string;
+    status: 'active' | 'completed' | 'paused';
+    progress: {
+        completed: InsightCategory[];
+        current: InsightCategory | null;
+        remaining: InsightCategory[];
     };
-    return icons[iconName] || <Target size={size} />;
-};
-
-// Color classes for categories
-const getColorClasses = (color: string) => ({
-    bg: `bg-${color}-100 dark:bg-${color}-900/30`,
-    text: `text-${color}-600 dark:text-${color}-400`,
-    border: `border-${color}-200 dark:border-${color}-800`,
-    badge: `bg-${color}-500/20 text-${color}-600 dark:text-${color}-400`
-});
+    started_at: string;
+    completed_at?: string;
+    duration_minutes?: number;
+}
 
 type TabType = 'interview' | 'knowledge' | 'sessions';
 
+const CATEGORY_ORDER: InsightCategory[] = [
+    'objective',
+    'stakeholder',
+    'risk',
+    'assumption',
+    'constraint',
+    'decision',
+    'dependency',
+    'success_criteria'
+];
+
 export const ProjectIntelligenceView: React.FC = () => {
-    const { t } = useTranslation();
-    const { currentProjectId, isChatCollapsed, toggleChatCollapse, setCurrentProjectId } = useAppStore();
-    
-    const [activeTab, setActiveTab] = useState<TabType>('knowledge');
+    const { currentProjectId, projects, isChatCollapsed, toggleChatCollapse } = useAppStore();
+    const [activeTab, setActiveTab] = useState<TabType>('interview');
     const [insights, setInsights] = useState<ProjectInsight[]>([]);
     const [sessions, setSessions] = useState<InterviewSession[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [isSeeding, setIsSeeding] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState<InsightCategory | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<InsightCategory | 'all'>('all');
     const [selectedInsight, setSelectedInsight] = useState<ProjectInsight | null>(null);
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [newInsightCategory, setNewInsightCategory] = useState<InsightCategory>('objective');
-    const [newInsightTitle, setNewInsightTitle] = useState('');
-    const [newInsightContent, setNewInsightContent] = useState('');
-    const [availableProjects, setAvailableProjects] = useState<Array<{ id: string; name: string }>>([]);
+    const [isSeeding, setIsSeeding] = useState(false);
 
-    // Expand chat if collapsed on mount
+    // Get current project name
+    const currentProject = projects?.find(p => p.id === currentProjectId);
+
+    // Expand chat panel on mount if collapsed
     useEffect(() => {
         if (isChatCollapsed) {
             toggleChatCollapse();
         }
-    }, []); // Run only on mount
+    }, []);
 
-    // Auto-detect and set project if none selected
-    useEffect(() => {
-        const fetchAndSetProject = async () => {
-            if (!currentProjectId) {
-                try {
-                    const response = await Api.get('/projects');
-                    const projects = response.projects || response || [];
-                    if (Array.isArray(projects) && projects.length > 0) {
-                        setAvailableProjects(projects.map((p: any) => ({ id: p.id, name: p.name })));
-                        // Auto-select the first project
-                        setCurrentProjectId(projects[0].id);
-                        console.log('[ProjectIntelligence] Auto-selected project:', projects[0].name);
-                    }
-                } catch (err) {
-                    console.error('[ProjectIntelligence] Could not fetch projects:', err);
-                }
-            }
-        };
-        fetchAndSetProject();
-    }, [currentProjectId, setCurrentProjectId]);
-
-    // Fetch insights for the current project
-    const fetchInsights = useCallback(async () => {
-        if (!currentProjectId) {
-            setInsights([]);
-            setIsLoading(false);
-            return;
-        }
+    // Fetch data when project changes
+    const fetchData = useCallback(async () => {
+        if (!currentProjectId) return;
         
         setIsLoading(true);
         try {
-            const response = await Api.get(`/intelligence/projects/${currentProjectId}/insights`);
-            setInsights(response.insights || []);
-        } catch (err) {
-            console.error('[ProjectIntelligence] Error fetching insights:', err);
-            setInsights([]);
+            const [insightsRes, sessionsRes] = await Promise.all([
+                Api.get(`/intelligence/projects/${currentProjectId}/insights`),
+                Api.get(`/intelligence/projects/${currentProjectId}/sessions`)
+            ]);
+            setInsights(insightsRes || []);
+            setSessions(sessionsRes || []);
+        } catch (error) {
+            console.error('[ProjectIntelligence] Error fetching data:', error);
+            // Don't show error toast if no data yet
         } finally {
             setIsLoading(false);
         }
     }, [currentProjectId]);
 
-    // Fetch sessions for the current project
-    const fetchSessions = useCallback(async () => {
-        if (!currentProjectId) {
-            setSessions([]);
-            return;
-        }
-        
-        try {
-            const response = await Api.get(`/intelligence/projects/${currentProjectId}/sessions`);
-            setSessions(response.sessions || []);
-        } catch (err) {
-            console.error('[ProjectIntelligence] Error fetching sessions:', err);
-            setSessions([]);
-        }
-    }, [currentProjectId]);
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
-    // Seed sample data
-    const handleSeedData = async () => {
+    // Seed demo data
+    const handleSeedDemoData = async () => {
         if (!currentProjectId) {
             toast.error('Please select a project first');
             return;
@@ -230,106 +147,93 @@ export const ProjectIntelligenceView: React.FC = () => {
         
         setIsSeeding(true);
         try {
-            await Api.post(`/intelligence/projects/${currentProjectId}/seed`, {});
-            toast.success('Sample data created!');
-            fetchInsights();
-            fetchSessions();
-        } catch (err) {
-            console.error('[ProjectIntelligence] Seed error:', err);
-            toast.error('Failed to create sample data');
+            await Api.post(`/intelligence/projects/${currentProjectId}/seed`);
+            toast.success('Demo data created successfully');
+            fetchData();
+        } catch (error) {
+            console.error('[ProjectIntelligence] Seed error:', error);
+            toast.error('Failed to seed demo data');
         } finally {
             setIsSeeding(false);
         }
     };
 
-    useEffect(() => {
-        fetchInsights();
-        fetchSessions();
-    }, [fetchInsights, fetchSessions]);
-
-    // Calculate category counts
-    const categoryCounts = insights.reduce((acc, insight) => {
-        acc[insight.category] = (acc[insight.category] || 0) + 1;
-        return acc;
-    }, {} as Record<InsightCategory, number>);
-
-    // Filter insights by selected category
-    const filteredInsights = selectedCategory 
-        ? insights.filter(i => i.category === selectedCategory)
-        : insights;
-
-    // Handle adding new insight
-    const handleAddInsight = async () => {
-        if (!currentProjectId || !newInsightTitle.trim()) {
-            toast.error('Title is required');
-            return;
-        }
-
+    // Confirm an insight
+    const handleConfirmInsight = async (insight: ProjectInsight) => {
         try {
-            const response = await Api.post(`/intelligence/projects/${currentProjectId}/insights`, {
-                category: newInsightCategory,
-                title: newInsightTitle,
-                content: { description: newInsightContent },
-                status: 'confirmed'
-            });
-
-            setInsights(prev => [response, ...prev]);
-            setShowAddModal(false);
-            setNewInsightTitle('');
-            setNewInsightContent('');
-            toast.success('Insight added');
-        } catch (err) {
-            toast.error('Failed to add insight');
-        }
-    };
-
-    // Handle deleting insight
-    const handleDeleteInsight = async (insightId: string) => {
-        if (!confirm('Are you sure you want to delete this insight?')) return;
-
-        try {
-            await Api.delete(`/intelligence/insights/${insightId}`);
-            setInsights(prev => prev.filter(i => i.id !== insightId));
-            if (selectedInsight?.id === insightId) {
-                setSelectedInsight(null);
-            }
-            toast.success('Insight deleted');
-        } catch (err) {
-            toast.error('Failed to delete insight');
-        }
-    };
-
-    // Handle confirming insight
-    const handleConfirmInsight = async (insightId: string) => {
-        try {
-            await Api.patch(`/intelligence/insights/${insightId}`, {
-                status: 'confirmed'
-            });
+            await Api.patch(`/intelligence/insights/${insight.id}`, { status: 'confirmed' });
             setInsights(prev => prev.map(i => 
-                i.id === insightId ? { ...i, status: 'confirmed' } : i
+                i.id === insight.id ? { ...i, status: 'confirmed' } : i
             ));
             toast.success('Insight confirmed');
-        } catch (err) {
+        } catch (error) {
             toast.error('Failed to confirm insight');
         }
     };
 
-    // Tabs configuration
-    const tabs = [
-        { id: 'interview', label: 'Interview', icon: MessageSquare },
-        { id: 'knowledge', label: 'Knowledge Base', icon: BookOpen, badge: insights.length },
-        { id: 'sessions', label: 'Sessions', icon: History, badge: sessions.length },
-    ];
+    // Delete an insight
+    const handleDeleteInsight = async (insightId: string) => {
+        try {
+            await Api.delete(`/intelligence/insights/${insightId}`);
+            setInsights(prev => prev.filter(i => i.id !== insightId));
+            toast.success('Insight deleted');
+        } catch (error) {
+            toast.error('Failed to delete insight');
+        }
+    };
+
+    // Filter insights by category
+    const filteredInsights = selectedCategory === 'all' 
+        ? insights 
+        : insights.filter(i => i.category === selectedCategory);
+
+    // Group insights by category for stats
+    const insightStats = CATEGORY_ORDER.reduce((acc, cat) => {
+        acc[cat] = insights.filter(i => i.category === cat).length;
+        return acc;
+    }, {} as Record<InsightCategory, number>);
+
+    // No project selected state
+    if (!currentProjectId) {
+        return (
+            <SplitLayout
+                title={
+                    <div className="flex items-center gap-2">
+                        <Brain className="text-purple-600 dark:text-purple-400" size={20} />
+                        <span className="text-purple-600 dark:text-purple-400">Project Intelligence</span>
+                    </div>
+                }
+                subtitle="AI-powered knowledge capture"
+            >
+                <div className="h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-navy-950 p-8">
+                    <div className="w-20 h-20 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-6">
+                        <FolderOpen className="w-10 h-10 text-purple-500" />
+                    </div>
+                    <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
+                        Select a Project
+                    </h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-center max-w-md mb-6">
+                        Choose a project from the sidebar to start capturing project intelligence. 
+                        The AI will help you organize knowledge about objectives, stakeholders, risks, and more.
+                    </p>
+                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                        <Info size={14} />
+                        <span>Use the project selector in the header</span>
+                    </div>
+                </div>
+            </SplitLayout>
+        );
+    }
 
     return (
         <SplitLayout
             title={
                 <div className="flex items-center gap-2">
                     <Brain className="text-purple-600 dark:text-purple-400" size={20} />
-                    <span className="text-purple-600 dark:text-purple-400">AI</span>
+                    <span className="text-purple-600 dark:text-purple-400">Project Intelligence</span>
                 </div>
             }
-            subtitle="Project Intelligence Assistant"
+            subtitle={currentProject?.name || 'AI-powered knowledge capture'}
         >
             <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
                 {/* Header */}
@@ -337,235 +241,198 @@ export const ProjectIntelligenceView: React.FC = () => {
                     <div className="flex items-center justify-between mb-4">
                         <div>
                             <h1 className="text-2xl font-bold text-navy-900 dark:text-white flex items-center gap-3">
-                                <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl">
-                                    <Brain className="w-6 h-6 text-white" />
-                                </div>
+                                <Brain className="text-purple-500" size={28} />
                                 Project Intelligence Hub
                             </h1>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                Capture and organize project knowledge through AI-powered conversations
+                                AI-powered knowledge capture for {currentProject?.name || 'your project'}
                             </p>
-                            {/* Project Selector */}
-                            {availableProjects.length > 0 && (
-                                <div className="flex items-center gap-2 mt-2">
-                                    <span className="text-xs text-slate-400">Project:</span>
-                                    <select
-                                        value={currentProjectId || ''}
-                                        onChange={(e) => setCurrentProjectId(e.target.value || null)}
-                                        className="text-sm bg-transparent border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 text-purple-600 dark:text-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    >
-                                        <option value="">Select project...</option>
-                                        {availableProjects.map(p => (
-                                            <option key={p.id} value={p.id}>{p.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
                         </div>
-                        <div className="flex items-center gap-2">
-                            {currentProjectId && (
-                                <>
-                                    <button
-                                        onClick={handleSeedData}
-                                        disabled={isSeeding}
-                                        className="flex items-center gap-2 px-3 py-2 border border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                                        title="Generate sample insights for testing"
-                                    >
-                                        {isSeeding ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                                        Seed Demo Data
-                                    </button>
-                                    <button
-                                        onClick={() => setShowAddModal(true)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors"
-                                    >
-                                        <Plus size={16} />
-                                        Add Insight
-                                    </button>
-                                </>
+                        
+                        <div className="flex items-center gap-3">
+                            {insights.length === 0 && (
+                                <button
+                                    onClick={handleSeedDemoData}
+                                    disabled={isSeeding}
+                                    className="flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors text-sm font-medium disabled:opacity-50"
+                                >
+                                    {isSeeding ? (
+                                        <Loader2 size={16} className="animate-spin" />
+                                    ) : (
+                                        <Sparkles size={16} />
+                                    )}
+                                    Load Demo Data
+                                </button>
                             )}
                             <button
-                                onClick={() => { fetchInsights(); fetchSessions(); }}
+                                onClick={fetchData}
                                 className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                             >
-                                <RefreshCw size={16} />
+                                <RefreshCw size={18} />
                             </button>
                         </div>
                     </div>
 
                     {/* Tabs */}
                     <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-950 rounded-lg p-1 w-fit">
-                        {tabs.map(tab => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id as TabType)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                                    activeTab === tab.id
-                                        ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
-                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                }`}
-                            >
-                                <tab.icon size={16} />
-                                {tab.label}
-                                {tab.badge !== undefined && tab.badge > 0 && (
-                                    <span className="px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 rounded-full">
-                                        {tab.badge}
-                                    </span>
-                                )}
-                            </button>
-                        ))}
+                        <button
+                            onClick={() => setActiveTab('interview')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeTab === 'interview'
+                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                        >
+                            <MessageSquare size={16} />
+                            Interview
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('knowledge')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeTab === 'knowledge'
+                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                        >
+                            <Database size={16} />
+                            Knowledge Base
+                            {insights.length > 0 && (
+                                <span className="px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 rounded-full">
+                                    {insights.length}
+                                </span>
+                            )}
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('sessions')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeTab === 'sessions'
+                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                        >
+                            <History size={16} />
+                            Sessions
+                            {sessions.length > 0 && (
+                                <span className="px-1.5 py-0.5 text-xs bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400 rounded-full">
+                                    {sessions.length}
+                                </span>
+                            )}
+                        </button>
                     </div>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-hidden flex">
-                    {!currentProjectId ? (
-                        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 dark:from-navy-700 dark:to-navy-800 flex items-center justify-center mb-6">
-                                <Brain className="w-10 h-10 text-slate-400 dark:text-slate-500" />
-                            </div>
-                            <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
-                                Select a Project
-                            </h2>
-                            <p className="text-slate-500 dark:text-slate-400 max-w-md mb-6">
-                                Choose a project from the dashboard to start capturing project knowledge and insights.
-                            </p>
-                            <div className="text-sm text-slate-400 dark:text-slate-500">
-                                Use the project selector in the navigation or go to Dashboard → Projects
-                            </div>
+                <div className="flex-1 overflow-auto p-6">
+                    {isLoading ? (
+                        <div className="flex items-center justify-center h-64">
+                            <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
                         </div>
                     ) : activeTab === 'interview' ? (
                         <InterviewTabContent 
                             projectId={currentProjectId}
-                            onInsightDetected={(insight) => {
-                                setInsights(prev => [insight, ...prev]);
-                            }}
+                            onInsightCreated={fetchData}
                         />
                     ) : activeTab === 'knowledge' ? (
                         <KnowledgeTabContent
                             insights={filteredInsights}
-                            categoryCounts={categoryCounts}
+                            stats={insightStats}
                             selectedCategory={selectedCategory}
-                            selectedInsight={selectedInsight}
-                            isLoading={isLoading}
-                            onSelectCategory={setSelectedCategory}
-                            onSelectInsight={setSelectedInsight}
+                            onCategorySelect={setSelectedCategory}
                             onConfirmInsight={handleConfirmInsight}
                             onDeleteInsight={handleDeleteInsight}
+                            selectedInsight={selectedInsight}
+                            onSelectInsight={setSelectedInsight}
                         />
-                    ) : activeTab === 'sessions' ? (
-                        <SessionsTabContent
+                    ) : (
+                        <SessionsTabContent 
                             sessions={sessions}
-                            isLoading={isLoading}
+                            onSessionSelect={(session) => console.log('Session selected:', session)}
                         />
-                    ) : null}
+                    )}
                 </div>
-
-                {/* Add Insight Modal */}
-                {showAddModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                        <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                    Add New Insight
-                                </h3>
-                                <button
-                                    onClick={() => setShowAddModal(false)}
-                                    className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded"
-                                >
-                                    <X size={20} />
-                                </button>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                        Category
-                                    </label>
-                                    <select
-                                        value={newInsightCategory}
-                                        onChange={(e) => setNewInsightCategory(e.target.value as InsightCategory)}
-                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-navy-900 dark:text-white"
-                                    >
-                                        {Object.values(CATEGORY_CONFIG).map(cat => (
-                                            <option key={cat.id} value={cat.id}>{cat.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                        Title
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={newInsightTitle}
-                                        onChange={(e) => setNewInsightTitle(e.target.value)}
-                                        placeholder="Enter insight title..."
-                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-navy-900 dark:text-white placeholder-slate-400"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                        Description
-                                    </label>
-                                    <textarea
-                                        value={newInsightContent}
-                                        onChange={(e) => setNewInsightContent(e.target.value)}
-                                        placeholder="Describe this insight..."
-                                        rows={4}
-                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-navy-900 dark:text-white placeholder-slate-400"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end gap-3 mt-6">
-                                <button
-                                    onClick={() => setShowAddModal(false)}
-                                    className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleAddInsight}
-                                    disabled={!newInsightTitle.trim()}
-                                    className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
-                                >
-                                    Add Insight
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </SplitLayout>
     );
 };
 
 // Interview Tab Content
-const InterviewTabContent: React.FC<{
-    projectId: string | null;
-    onInsightDetected: (insight: ProjectInsight) => void;
-}> = ({ projectId, onInsightDetected }) => {
+interface InterviewTabContentProps {
+    projectId: string;
+    onInsightCreated: () => void;
+}
+
+const InterviewTabContent: React.FC<InterviewTabContentProps> = ({ projectId, onInsightCreated }) => {
     return (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500/20 to-indigo-500/20 flex items-center justify-center mb-6">
-                <Sparkles className="w-10 h-10 text-purple-500" />
+        <div className="space-y-6">
+            {/* Instructions Card */}
+            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-2xl p-6 border border-purple-200/50 dark:border-purple-800/30">
+                <div className="flex items-start gap-4">
+                    <div className="p-3 bg-purple-100 dark:bg-purple-900/50 rounded-xl shrink-0">
+                        <MessageSquare className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                        <h3 className="font-semibold text-navy-900 dark:text-white text-lg mb-2">
+                            Start an AI Interview
+                        </h3>
+                        <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">
+                            Use the chat panel on the left to have a conversation with the AI. 
+                            As you discuss your project, the AI will automatically detect and extract 
+                            key insights like objectives, risks, stakeholders, and decisions.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            {CATEGORY_ORDER.slice(0, 4).map(cat => {
+                                const config = CATEGORY_CONFIG[cat];
+                                const IconComponent = config.icon;
+                                return (
+                                    <span 
+                                        key={cat}
+                                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bgColor} ${config.color}`}
+                                    >
+                                        <IconComponent size={12} />
+                                        {config.label}
+                                    </span>
+                                );
+                            })}
+                            <span className="text-xs text-slate-400 dark:text-slate-500 py-1">
+                                +4 more categories
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
-                Start an Interview Session
-            </h2>
-            <p className="text-slate-500 dark:text-slate-400 max-w-md mb-6">
-                Use the AI Chat on the left to capture project knowledge. 
-                The AI will automatically detect and extract insights from your conversation.
-            </p>
-            <div className="flex flex-col gap-3 text-left bg-slate-100 dark:bg-navy-800 rounded-xl p-4 max-w-md">
-                <p className="text-sm font-medium text-navy-900 dark:text-white">Try asking:</p>
-                <div className="space-y-2">
-                    <p className="text-sm text-slate-600 dark:text-slate-400">• "Who are the key stakeholders for this project?"</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">• "What are the main risks we should track?"</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">• "What assumptions are we making?"</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">• "What are our project objectives?"</p>
+
+            {/* Category Overview Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {CATEGORY_ORDER.map(category => {
+                    const config = CATEGORY_CONFIG[category];
+                    const IconComponent = config.icon;
+                    return (
+                        <div 
+                            key={category}
+                            className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-4 hover:shadow-md transition-shadow"
+                        >
+                            <div className={`w-10 h-10 rounded-lg ${config.bgColor} flex items-center justify-center mb-3`}>
+                                <IconComponent size={20} className={config.color} />
+                            </div>
+                            <h4 className="font-medium text-navy-900 dark:text-white text-sm">
+                                {config.label}
+                            </h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                                {getCategoryDescription(category)}
+                            </p>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* PMO Alignment Note */}
+            <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl p-4 flex items-start gap-3">
+                <Info size={18} className="text-slate-400 shrink-0 mt-0.5" />
+                <div>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                        All captured insights are aligned with <strong>ISO 21500</strong>, <strong>PMBOK 7</strong>, 
+                        and <strong>PRINCE2</strong> standards for full PMO compliance and auditability.
+                    </p>
                 </div>
             </div>
         </div>
@@ -573,68 +440,85 @@ const InterviewTabContent: React.FC<{
 };
 
 // Knowledge Tab Content
-const KnowledgeTabContent: React.FC<{
+interface KnowledgeTabContentProps {
     insights: ProjectInsight[];
-    categoryCounts: Record<InsightCategory, number>;
-    selectedCategory: InsightCategory | null;
-    selectedInsight: ProjectInsight | null;
-    isLoading: boolean;
-    onSelectCategory: (category: InsightCategory | null) => void;
-    onSelectInsight: (insight: ProjectInsight | null) => void;
-    onConfirmInsight: (id: string) => void;
+    stats: Record<InsightCategory, number>;
+    selectedCategory: InsightCategory | 'all';
+    onCategorySelect: (cat: InsightCategory | 'all') => void;
+    onConfirmInsight: (insight: ProjectInsight) => void;
     onDeleteInsight: (id: string) => void;
-}> = ({
+    selectedInsight: ProjectInsight | null;
+    onSelectInsight: (insight: ProjectInsight | null) => void;
+}
+
+const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
     insights,
-    categoryCounts,
+    stats,
     selectedCategory,
-    selectedInsight,
-    isLoading,
-    onSelectCategory,
-    onSelectInsight,
+    onCategorySelect,
     onConfirmInsight,
-    onDeleteInsight
+    onDeleteInsight,
+    selectedInsight,
+    onSelectInsight
 }) => {
+    if (insights.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 text-center">
+                <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-4">
+                    <Database className="w-8 h-8 text-slate-400" />
+                </div>
+                <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    No insights captured yet
+                </p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
+                    Start a conversation with the AI to capture project knowledge. 
+                    Insights will appear here as they are detected.
+                </p>
+            </div>
+        );
+    }
+
     return (
-        <div className="flex-1 flex overflow-hidden">
-            {/* Categories Sidebar */}
-            <div className="w-64 shrink-0 border-r border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 overflow-y-auto">
-                <div className="p-4">
-                    <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
-                        Categories
-                    </h3>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Category Filter Sidebar */}
+            <div className="lg:col-span-1">
+                <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+                    <h3 className="font-semibold text-navy-900 dark:text-white mb-4">Categories</h3>
+                    
+                    <button
+                        onClick={() => onCategorySelect('all')}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg mb-2 transition-colors ${
+                            selectedCategory === 'all'
+                                ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                                : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'
+                        }`}
+                    >
+                        <span className="text-sm font-medium">All Insights</span>
+                        <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                            {insights.length}
+                        </span>
+                    </button>
+
                     <div className="space-y-1">
-                        <button
-                            onClick={() => onSelectCategory(null)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                                selectedCategory === null
-                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
-                            }`}
-                        >
-                            <span>All Insights</span>
-                            <span className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-navy-700 rounded-full">
-                                {insights.length}
-                            </span>
-                        </button>
-                        
-                        {Object.values(CATEGORY_CONFIG).map(cat => {
-                            const count = categoryCounts[cat.id] || 0;
+                        {CATEGORY_ORDER.map(cat => {
+                            const config = CATEGORY_CONFIG[cat];
+                            const IconComponent = config.icon;
+                            const count = stats[cat];
+                            
                             return (
                                 <button
-                                    key={cat.id}
-                                    onClick={() => onSelectCategory(cat.id)}
-                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                                        selectedCategory === cat.id
-                                            ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
+                                    key={cat}
+                                    onClick={() => onCategorySelect(cat)}
+                                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                                        selectedCategory === cat
+                                            ? `${config.bgColor} ${config.color}`
+                                            : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'
                                     }`}
                                 >
-                                    <div className="flex items-center gap-2">
-                                        {getCategoryIcon(cat.icon, 14)}
-                                        <span>{cat.label}</span>
-                                    </div>
+                                    <IconComponent size={16} />
+                                    <span className="text-sm font-medium flex-1 text-left">{config.label}</span>
                                     {count > 0 && (
-                                        <span className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-navy-700 rounded-full">
+                                        <span className="text-xs bg-white/50 dark:bg-black/20 px-2 py-0.5 rounded-full">
                                             {count}
                                         </span>
                                     )}
@@ -646,240 +530,200 @@ const KnowledgeTabContent: React.FC<{
             </div>
 
             {/* Insights List */}
-            <div className="flex-1 overflow-y-auto p-4">
-                {isLoading ? (
-                    <div className="flex items-center justify-center h-64">
-                        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-                    </div>
-                ) : insights.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-64 text-center">
-                        <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-4">
-                            <BookOpen className="w-8 h-8 text-slate-400" />
-                        </div>
-                        <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            No insights yet
-                        </p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Start a conversation to capture project knowledge
-                        </p>
-                    </div>
-                ) : (
-                    <div className="grid gap-3">
-                        {insights.map(insight => {
-                            const cat = CATEGORY_CONFIG[insight.category];
-                            return (
-                                <div
-                                    key={insight.id}
-                                    onClick={() => onSelectInsight(insight)}
-                                    className={`bg-white dark:bg-navy-900 rounded-xl border p-4 cursor-pointer transition-all ${
-                                        selectedInsight?.id === insight.id
-                                            ? 'border-purple-500 ring-2 ring-purple-500/20'
-                                            : 'border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-700'
-                                    }`}
-                                >
-                                    <div className="flex items-start gap-3">
-                                        <div className={`p-2 rounded-lg bg-${cat.color}-100 dark:bg-${cat.color}-900/30`}>
-                                            {getCategoryIcon(cat.icon, 16)}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h4 className="font-medium text-navy-900 dark:text-white truncate">
-                                                    {insight.title}
-                                                </h4>
-                                                {insight.status === 'draft' && (
-                                                    <span className="px-2 py-0.5 text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-full">
-                                                        Draft
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
-                                                {(insight.content as any)?.description || JSON.stringify(insight.content)}
-                                            </p>
-                                            <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
-                                                <span className={`px-2 py-0.5 rounded-full bg-${cat.color}-100 dark:bg-${cat.color}-900/30 text-${cat.color}-600 dark:text-${cat.color}-400`}>
-                                                    {cat.label}
-                                                </span>
-                                                <span>
-                                                    {new Date(insight.createdAt).toLocaleDateString()}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            {insight.status === 'draft' && (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); onConfirmInsight(insight.id); }}
-                                                    className="p-1.5 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded"
-                                                    title="Confirm"
-                                                >
-                                                    <Check size={14} />
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); onDeleteInsight(insight.id); }}
-                                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-                                                title="Delete"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
+            <div className="lg:col-span-2 space-y-4">
+                {insights.map(insight => (
+                    <InsightCard
+                        key={insight.id}
+                        insight={insight}
+                        isSelected={selectedInsight?.id === insight.id}
+                        onSelect={() => onSelectInsight(insight)}
+                        onConfirm={() => onConfirmInsight(insight)}
+                        onDelete={() => onDeleteInsight(insight.id)}
+                    />
+                ))}
             </div>
+        </div>
+    );
+};
 
-            {/* Insight Detail Panel */}
-            {selectedInsight && (
-                <div className="w-80 shrink-0 border-l border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 overflow-y-auto">
-                    <div className="p-4">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Insight Detail
-                            </h3>
-                            <button
-                                onClick={() => onSelectInsight(null)}
-                                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded"
-                            >
-                                <X size={16} />
-                            </button>
-                        </div>
+// Insight Card Component
+interface InsightCardProps {
+    insight: ProjectInsight;
+    isSelected: boolean;
+    onSelect: () => void;
+    onConfirm: () => void;
+    onDelete: () => void;
+}
 
-                        <div className="space-y-4">
-                            <div>
-                                <h4 className="text-lg font-semibold text-navy-900 dark:text-white">
-                                    {selectedInsight.title}
-                                </h4>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <span className={`px-2 py-0.5 text-xs rounded-full bg-${CATEGORY_CONFIG[selectedInsight.category].color}-100 dark:bg-${CATEGORY_CONFIG[selectedInsight.category].color}-900/30 text-${CATEGORY_CONFIG[selectedInsight.category].color}-600 dark:text-${CATEGORY_CONFIG[selectedInsight.category].color}-400`}>
-                                        {CATEGORY_CONFIG[selectedInsight.category].label}
-                                    </span>
-                                    <span className={`px-2 py-0.5 text-xs rounded-full ${
-                                        selectedInsight.status === 'confirmed'
-                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                    }`}>
-                                        {selectedInsight.status}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h5 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1">
-                                    Content
-                                </h5>
-                                <p className="text-sm text-navy-900 dark:text-white">
-                                    {(selectedInsight.content as any)?.description || JSON.stringify(selectedInsight.content, null, 2)}
-                                </p>
-                            </div>
-
-                            {selectedInsight.source?.quote && (
-                                <div>
-                                    <h5 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1">
-                                        Source Quote
-                                    </h5>
-                                    <blockquote className="text-sm text-slate-600 dark:text-slate-400 italic border-l-2 border-purple-500 pl-3">
-                                        "{selectedInsight.source.quote}"
-                                    </blockquote>
-                                </div>
-                            )}
-
-                            <div>
-                                <h5 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1">
-                                    PMO Domain
-                                </h5>
-                                <p className="text-sm text-navy-900 dark:text-white">
-                                    {selectedInsight.pmoDomain || CATEGORY_CONFIG[selectedInsight.category].pmoDomain}
-                                </p>
-                            </div>
-
-                            <div>
-                                <h5 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1">
-                                    Created
-                                </h5>
-                                <p className="text-sm text-navy-900 dark:text-white">
-                                    {new Date(selectedInsight.createdAt).toLocaleString()}
-                                    {selectedInsight.createdBy && (
-                                        <span className="text-slate-500 dark:text-slate-400">
-                                            {' '}by {selectedInsight.createdBy.firstName} {selectedInsight.createdBy.lastName}
-                                        </span>
-                                    )}
-                                </p>
-                            </div>
-                        </div>
+const InsightCard: React.FC<InsightCardProps> = ({ 
+    insight, 
+    isSelected, 
+    onSelect, 
+    onConfirm, 
+    onDelete 
+}) => {
+    const config = CATEGORY_CONFIG[insight.category];
+    
+    return (
+        <div 
+            className={`bg-white dark:bg-navy-900 rounded-xl border ${
+                isSelected 
+                    ? 'border-purple-300 dark:border-purple-700 ring-1 ring-purple-200 dark:ring-purple-800' 
+                    : 'border-slate-200 dark:border-white/10'
+            } p-4 hover:shadow-md transition-all cursor-pointer`}
+            onClick={onSelect}
+        >
+            <div className="flex items-start gap-4">
+                <CategoryIcon category={insight.category} size={18} />
+                
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                            {getCategoryLabel(insight.category)}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            insight.status === 'confirmed' 
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                        }`}>
+                            {insight.status}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            insight.confidence === 'high'
+                                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
+                                : insight.confidence === 'medium'
+                                ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400'
+                                : 'bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                        }`}>
+                            {insight.confidence} confidence
+                        </span>
                     </div>
+                    
+                    <h4 className="font-semibold text-navy-900 dark:text-white mb-2">
+                        {insight.title}
+                    </h4>
+                    
+                    {insight.content.description && (
+                        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                            {String(insight.content.description)}
+                        </p>
+                    )}
+                    
+                    {insight.pmo_domain && (
+                        <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
+                            <Target size={12} />
+                            <span>PMO: {insight.pmo_domain.replace(/_/g, ' ')}</span>
+                        </div>
+                    )}
                 </div>
-            )}
+                
+                <div className="flex items-center gap-1 shrink-0">
+                    {insight.status === 'draft' && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onConfirm(); }}
+                            className="p-1.5 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                            title="Confirm insight"
+                        >
+                            <CheckCircle size={18} />
+                        </button>
+                    )}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        title="Delete insight"
+                    >
+                        <Trash2 size={18} />
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };
 
 // Sessions Tab Content
-const SessionsTabContent: React.FC<{
+interface SessionsTabContentProps {
     sessions: InterviewSession[];
-    isLoading: boolean;
-}> = ({ sessions, isLoading }) => {
+    onSessionSelect: (session: InterviewSession) => void;
+}
+
+const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSessionSelect }) => {
+    if (sessions.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 text-center">
+                <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-4">
+                    <History className="w-8 h-8 text-slate-400" />
+                </div>
+                <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    No interview sessions yet
+                </p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
+                    Your AI interview sessions will appear here. Start a conversation to create your first session.
+                </p>
+            </div>
+        );
+    }
+
     return (
-        <div className="flex-1 overflow-y-auto p-6">
-            {isLoading ? (
-                <div className="flex items-center justify-center h-64">
-                    <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-                </div>
-            ) : sessions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-64 text-center">
-                    <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-4">
-                        <History className="w-8 h-8 text-slate-400" />
-                    </div>
-                    <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        No interview sessions yet
-                    </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Your interview history will appear here
-                    </p>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    {sessions.map(session => (
-                        <div
-                            key={session.id}
-                            className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-4"
-                        >
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <h4 className="font-medium text-navy-900 dark:text-white">
-                                        {session.topic}
-                                    </h4>
-                                    <div className="flex items-center gap-3 mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                        <span>{new Date(session.startedAt).toLocaleDateString()}</span>
-                                        {session.durationMinutes && (
-                                            <span>{session.durationMinutes} min</span>
-                                        )}
-                                        {session.insightCount !== undefined && session.insightCount > 0 && (
-                                            <span className="flex items-center gap-1">
-                                                <Sparkles size={12} />
-                                                {session.insightCount} insights
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                                <span className={`px-2 py-0.5 text-xs rounded-full ${
-                                    session.status === 'completed'
-                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                        : session.status === 'active'
-                                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                                }`}>
-                                    {session.status}
-                                </span>
-                            </div>
+        <div className="space-y-4">
+            {sessions.map(session => (
+                <div
+                    key={session.id}
+                    onClick={() => onSessionSelect(session)}
+                    className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-4 hover:shadow-md transition-all cursor-pointer"
+                >
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <h4 className="font-semibold text-navy-900 dark:text-white">
+                                {session.topic}
+                            </h4>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                Started {new Date(session.started_at).toLocaleDateString()}
+                            </p>
                         </div>
-                    ))}
+                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${
+                            session.status === 'completed'
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                : session.status === 'active'
+                                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                        }`}>
+                            {session.status}
+                        </span>
+                    </div>
+                    
+                    {/* Progress */}
+                    <div className="mt-4 flex items-center gap-2">
+                        <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div 
+                                className="h-full bg-gradient-to-r from-purple-500 to-emerald-500 rounded-full"
+                                style={{ 
+                                    width: `${(session.progress.completed.length / 8) * 100}%` 
+                                }}
+                            />
+                        </div>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {session.progress.completed.length}/8 topics
+                        </span>
+                    </div>
                 </div>
-            )}
+            ))}
         </div>
     );
 };
 
-export default ProjectIntelligenceView;
+// Helper function for category descriptions
+function getCategoryDescription(category: InsightCategory): string {
+    const descriptions: Record<InsightCategory, string> = {
+        objective: 'Project goals, targets, and measurable outcomes',
+        stakeholder: 'Key people, their roles, influence, and interests',
+        risk: 'Potential threats, uncertainties, and mitigation strategies',
+        assumption: 'Things taken for granted that need validation',
+        constraint: 'Fixed boundaries, limitations, and requirements',
+        decision: 'Key choices made and their rationale',
+        dependency: 'Internal and external dependencies',
+        success_criteria: 'How success will be measured and validated'
+    };
+    return descriptions[category];
+}
 
+export default ProjectIntelligenceView;

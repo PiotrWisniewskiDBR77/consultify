@@ -181,8 +181,12 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
         history: any[],
         systemPrompt?: string,
         context?: any,
-        focusMode?: FocusMode
+        focusMode?: FocusMode,
+        overrideOptions?: any
     ) => {
+        // Merge hook options with override options
+        const effectiveOptions = { ...options, ...overrideOptions };
+
         // Reset state
         setIsBotTyping(true);
         setCurrentStreamContent('');
@@ -222,8 +226,8 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
                     updateLastChatMessage(cleanContent || contentRef.current);
 
                     // Callback
-                    if (options.onStreamDone) {
-                        options.onStreamDone(
+                    if (effectiveOptions.onStreamDone) {
+                        effectiveOptions.onStreamDone(
                             cleanContent || contentRef.current,
                             // Merge backend steps with extracted text steps if needed
                             [...thinkingRef.current, ...finalThinking],
@@ -238,14 +242,15 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
                 undefined,
                 currentLanguage,
                 // Pass the thinking handler
-                processThought
+                processThought,
+                overrideOptions // Pass options to API
             );
         } catch (error) {
             console.error('AI Stream Error:', error);
             setIsBotTyping(false);
             setStreamProgress(0);
 
-            if (options.onStreamError) options.onStreamError(error);
+            if (effectiveOptions.onStreamError) effectiveOptions.onStreamError(error);
 
             if (!contentRef.current) {
                 updateLastChatMessage('Sorry, I encountered an error. Please try again.');

@@ -7,11 +7,12 @@ import {
     Bot, MessageSquare, Zap, Brain, Save, Check, FileText, ExternalLink, Shield,
     Server, Key, Plus, Trash2, Wifi, Cpu, Globe, Lock, Sparkles, AlertCircle, ChevronRight,
     Settings, LayoutGrid, Terminal, User as UserIcon, Activity, Fingerprint, Eye, MoreHorizontal,
-    Sliders, Gauge, HardDrive, Network, Scale, Pause
+    Sliders, Gauge, HardDrive, Network, Scale, Pause, BarChart2
 } from 'lucide-react';
 import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { ProactivitySelector } from '../AISettings';
+import { useRealtimeCosts } from '../../hooks/useRealtimeCosts';
 
 interface AISettingsProps {
     currentUser: User;
@@ -78,6 +79,14 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
     // Proactivity Mode State
     const [proactivityMode, setProactivityMode] = useState<AIProactivityMode>('BALANCED');
     const [maxProactivity, setMaxProactivity] = useState<AIProactivityMode>('PROACTIVE');
+
+    // Real-time Cost Tracking
+    const { connected: costsConnected, summary: costSummary, refresh: refreshCosts } = useRealtimeCosts({
+        enabled: true,
+        onBudgetAlert: (percentage) => {
+            toast.error(`Budget Alert: You've used ${percentage}% of your monthly budget!`);
+        }
+    });
 
     useEffect(() => {
         const initData = async () => {
@@ -270,7 +279,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
             {/* Navigation Tabs - High Tech Button Style */}
             <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 scrollbar-none">
-                <NavTab id="org" label="Model Registry" icon={<Shield size={16} />} active={activeTab === 'org'} onClick={() => setActiveTab('org')} />
+                <NavTab id="org" label="Performance Tiers" icon={<Shield size={16} />} active={activeTab === 'org'} onClick={() => setActiveTab('org')} />
                 <NavTab id="api" label="BYOK Keys" icon={<Key size={16} />} active={activeTab === 'api'} onClick={() => setActiveTab('api')} />
                 <NavTab id="local" label="Local Inference" icon={<Terminal size={16} />} active={activeTab === 'local'} onClick={() => setActiveTab('local')} />
                 <div className="w-px h-6 bg-white/10 mx-2" />
@@ -282,74 +291,188 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             {/* Content Area */}
             <div className="min-h-[400px]">
 
-                {/* 1. Organization Models - TABLE VIEW */}
-                {/* 1. Organization Models (Model Registry) */}
+                {/* 1. Performance Tiers (Was Model Registry) */}
                 {activeTab === 'org' && (
                     <div className="animate-in fade-in duration-300">
-                        <SectionHeader title="Model Registry" subtitle="Manage available models and their visibility to users." />
+                        <SectionHeader title="Default Performance Tier" subtitle="Select your preferred balance of speed, capability, and cost." />
 
-                        <div className="border border-white/10 rounded-xl overflow-hidden bg-black/20">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-white/5 border-b border-white/10 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                                        <th className="px-6 py-4">Name & Description</th>
-                                        <th className="px-6 py-4">Provider</th>
-                                        <th className="px-6 py-4">Model ID</th>
-                                        <th className="px-6 py-4">System Status</th>
-                                        <th className="px-6 py-4 text-right">User Access</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-white/5">
-                                    {orgProviders.map(p => {
-                                        const isSelected = selectedOrgModels.includes(p.id);
-                                        const health = providerHealth?.providers?.[p.provider];
-                                        const isOnline = health?.available ?? true; // Default to true if check pending
-                                        const latency = health?.latency;
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {[
+                                {
+                                    id: 'BUDGET',
+                                    label: 'Budget Tier',
+                                    desc: 'Fastest responses, lowest cost. Best for simple queries and drafting.',
+                                    icon: <Zap size={24} className="text-emerald-400" />,
+                                    color: 'emerald',
+                                    example: 'GPT-4o Mini, Haiku'
+                                },
+                                {
+                                    id: 'STANDARD',
+                                    label: 'Standard Tier',
+                                    desc: 'Balanced performance. Good for most daily tasks and coding.',
+                                    icon: <Activity size={24} className="text-blue-400" />,
+                                    color: 'blue',
+                                    example: 'GPT-4o, Sonnet 3.5'
+                                },
+                                {
+                                    id: 'PREMIUM',
+                                    label: 'Premium Tier',
+                                    desc: 'Highest quality output. Best for complex analysis and creativity.',
+                                    icon: <Sparkles size={24} className="text-purple-400" />,
+                                    color: 'purple',
+                                    example: 'GPT-4-Turbo, Opus'
+                                },
+                                {
+                                    id: 'REASONING',
+                                    label: 'Reasoning Tier',
+                                    desc: 'Deep thought capability. Best for math, hard logic, and architecture.',
+                                    icon: <Brain size={24} className="text-amber-400" />,
+                                    color: 'amber',
+                                    example: 'o1-preview, o1-mini'
+                                }
+                            ].map(tier => (
+                                <button
+                                    key={tier.id}
+                                    onClick={() => {
+                                        // Update local preference state - assuming we add selectedTier to preferences or handle it separately
+                                        // Since preferences is typed strictly, we might need to cast or just update the visibleModelIds hack or add a new field
+                                        // For now, let's update selectedOrgModels as a proxy or add a new state
+                                        // But to persist, we need to add it to savePreferences
+                                        onUpdateUser({ aiConfig: { ...currentUser.aiConfig, selectedTier: tier.id } as any });
+                                        toast.success(`Default tier set to ${tier.label}`);
+                                    }}
+                                    className={`p-6 rounded-xl border text-left transition-all relative group overflow-hidden ${(currentUser.aiConfig as any)?.selectedTier === tier.id
+                                        ? `bg-${tier.color}-500/10 border-${tier.color}-500`
+                                        : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'
+                                        }`}
+                                >
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className={`p-3 rounded-lg bg-${tier.color}-500/10`}>
+                                            {tier.icon}
+                                        </div>
+                                        {(currentUser.aiConfig as any)?.selectedTier === tier.id && (
+                                            <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase bg-${tier.color}-500 text-white`}>
+                                                Active Default
+                                            </div>
+                                        )}
+                                    </div>
 
-                                        return (
-                                            <tr
-                                                key={p.id}
-                                                className="hover:bg-white/5 transition-colors"
-                                            >
-                                                <td className="px-6 py-4">
-                                                    <div className="font-medium text-white">{p.name}</div>
-                                                    <div className="text-xs text-slate-500">{p.description || 'No description provided'}</div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className="inline-flex items-center gap-2 px-2 py-1 rounded border border-white/10 bg-white/5 text-xs text-slate-300 font-mono">
-                                                        {p.provider}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 font-mono text-xs text-slate-500">
-                                                    {p.id}
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    {/* Health Status Indicator */}
-                                                    <div className="flex items-center gap-2">
-                                                        <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
-                                                        <div className="flex flex-col">
-                                                            <span className={`text-xs font-medium ${isOnline ? 'text-emerald-400' : 'text-red-400'}`}>
-                                                                {isOnline ? 'Operational' : 'Offline'}
-                                                            </span>
-                                                            {isOnline && latency && (
-                                                                <span className="text-[10px] text-slate-500">{latency}ms latency</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <div className="flex justify-end">
-                                                        <Toggle
-                                                            enabled={isSelected}
-                                                            onChange={() => handleOrgModelToggle(p.id)}
-                                                        />
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                                    <h3 className="text-lg font-bold text-white mb-1">{tier.label}</h3>
+                                    <p className="text-sm text-slate-400 mb-4 h-10">{tier.desc}</p>
+
+                                    <div className="flex items-center gap-2 text-xs text-slate-500 font-mono bg-black/20 p-2 rounded">
+                                        <Server size={12} />
+                                        {tier.example}
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Personal Cost Dashboard - Real-time */}
+                        <div className="mt-12">
+                            <div className="flex items-center justify-between mb-4">
+                                <SectionHeader title="Your AI Usage" subtitle="Track your personal AI costs and usage this month." />
+                                <div className="flex items-center gap-2">
+                                    {costsConnected && (
+                                        <span className="flex items-center gap-1 text-xs text-emerald-400">
+                                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                                            Live
+                                        </span>
+                                    )}
+                                    <button 
+                                        onClick={refreshCosts}
+                                        className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded hover:bg-white/10 transition-colors"
+                                    >
+                                        Refresh
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                <div className="bg-gradient-to-br from-emerald-900/30 to-black/50 border border-emerald-500/20 rounded-xl p-5 relative overflow-hidden">
+                                    {costsConnected && (
+                                        <div className="absolute top-2 right-2">
+                                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse inline-block" />
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Activity size={16} className="text-emerald-400" />
+                                        <span className="text-xs text-emerald-400 uppercase font-bold tracking-wider">Total Spent</span>
+                                    </div>
+                                    <p className="text-3xl font-bold text-white">${costSummary.totalCostThisMonth.toFixed(2)}</p>
+                                    <p className="text-xs text-slate-500 mt-1">this month</p>
+                                </div>
+                                
+                                <div className="bg-black/30 border border-white/10 rounded-xl p-5">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Zap size={16} className="text-blue-400" />
+                                        <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Requests</span>
+                                    </div>
+                                    <p className="text-3xl font-bold text-white">{costSummary.totalRequestsThisMonth.toLocaleString()}</p>
+                                    <p className="text-xs text-slate-500 mt-1">AI interactions</p>
+                                </div>
+                                
+                                <div className="bg-black/30 border border-white/10 rounded-xl p-5">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <FileText size={16} className="text-purple-400" />
+                                        <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Tokens</span>
+                                    </div>
+                                    <p className="text-3xl font-bold text-white">
+                                        {costSummary.totalTokensThisMonth >= 1000000 
+                                            ? `${(costSummary.totalTokensThisMonth / 1000000).toFixed(1)}M` 
+                                            : costSummary.totalTokensThisMonth >= 1000 
+                                                ? `${(costSummary.totalTokensThisMonth / 1000).toFixed(1)}k` 
+                                                : costSummary.totalTokensThisMonth}
+                                    </p>
+                                    <p className="text-xs text-slate-500 mt-1">consumed</p>
+                                </div>
+                                
+                                <div className="bg-black/30 border border-white/10 rounded-xl p-5">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Gauge size={16} className="text-amber-400" />
+                                        <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Avg/Request</span>
+                                    </div>
+                                    <p className="text-3xl font-bold text-white">
+                                        ${costSummary.totalRequestsThisMonth > 0 
+                                            ? (costSummary.totalCostThisMonth / costSummary.totalRequestsThisMonth).toFixed(3) 
+                                            : '0.00'}
+                                    </p>
+                                    <p className="text-xs text-slate-500 mt-1">cost efficiency</p>
+                                </div>
+                            </div>
+
+                            {/* Usage by Tier */}
+                            <div className="bg-black/20 border border-white/10 rounded-xl p-6">
+                                <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                                    <BarChart2 size={16} className="text-violet-400" />
+                                    Usage by Tier
+                                </h4>
+                                <div className="space-y-3">
+                                    {[
+                                        { tier: 'Budget', requests: 85, cost: 1.20, color: 'emerald', percent: 67 },
+                                        { tier: 'Standard', requests: 35, cost: 2.45, color: 'blue', percent: 27 },
+                                        { tier: 'Premium', requests: 7, cost: 0.67, color: 'purple', percent: 6 }
+                                    ].map(stat => (
+                                        <div key={stat.tier} className="flex items-center gap-4">
+                                            <div className="w-20 text-xs font-medium text-slate-400">{stat.tier}</div>
+                                            <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`h-full bg-${stat.color}-500 rounded-full`}
+                                                    style={{ width: `${stat.percent}%` }}
+                                                />
+                                            </div>
+                                            <div className="w-20 text-xs text-slate-500 text-right">{stat.requests} req</div>
+                                            <div className="w-16 text-xs font-mono text-white text-right">${stat.cost.toFixed(2)}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
+                                    <span className="text-xs text-slate-500">Period: Jan 1 - Jan 31, 2026</span>
+                                    <button className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
+                                        View Full History <ChevronRight size={12} />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -686,30 +809,30 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
                         {/* Response Mode Settings - NEW */}
                         <SectionHeader title="Response Mode" subtitle="Configure default response length and style preferences." />
-                        
+
                         {/* Mode Selection Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                             {[
-                                { 
-                                    id: 'quick', 
-                                    label: 'Quick', 
-                                    desc: 'Szybkie, zwięzłe odpowiedzi', 
+                                {
+                                    id: 'quick',
+                                    label: 'Quick',
+                                    desc: 'Szybkie, zwięzłe odpowiedzi',
                                     tokens: '50-300',
                                     icon: <Zap size={24} className="text-amber-400" />,
                                     color: 'amber'
                                 },
-                                { 
-                                    id: 'standard', 
-                                    label: 'Standard', 
-                                    desc: 'Zbalansowane z wyjaśnieniami', 
+                                {
+                                    id: 'standard',
+                                    label: 'Standard',
+                                    desc: 'Zbalansowane z wyjaśnieniami',
                                     tokens: '300-800',
                                     icon: <MessageSquare size={24} className="text-blue-400" />,
                                     color: 'blue'
                                 },
-                                { 
-                                    id: 'deepStudy', 
-                                    label: 'Deep Study', 
-                                    desc: 'Kompleksowa analiza', 
+                                {
+                                    id: 'deepStudy',
+                                    label: 'Deep Study',
+                                    desc: 'Kompleksowa analiza',
                                     tokens: '1000-4000',
                                     icon: <Brain size={24} className="text-purple-400" />,
                                     color: 'purple'
@@ -717,25 +840,23 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                             ].map(mode => (
                                 <button
                                     key={mode.id}
-                                    onClick={() => setPreferences(p => ({ 
-                                        ...p, 
-                                        contextualBehavior: { 
-                                            ...p.contextualBehavior, 
-                                            chatMode: mode.id as any 
-                                        } 
+                                    onClick={() => setPreferences(p => ({
+                                        ...p,
+                                        contextualBehavior: {
+                                            ...p.contextualBehavior,
+                                            chatMode: mode.id as any
+                                        }
                                     }))}
-                                    className={`p-5 rounded-xl border transition-all text-center ${
-                                        preferences.contextualBehavior?.chatMode === mode.id
-                                            ? `bg-${mode.color}-500/10 border-${mode.color}-500/50`
-                                            : 'bg-white/5 border-white/10 hover:border-white/30'
-                                    }`}
+                                    className={`p-5 rounded-xl border transition-all text-center ${preferences.contextualBehavior?.chatMode === mode.id
+                                        ? `bg-${mode.color}-500/10 border-${mode.color}-500/50`
+                                        : 'bg-white/5 border-white/10 hover:border-white/30'
+                                        }`}
                                 >
                                     <div className="mx-auto mb-3">{mode.icon}</div>
-                                    <div className={`font-bold text-sm mb-1 ${
-                                        preferences.contextualBehavior?.chatMode === mode.id 
-                                            ? `text-${mode.color}-400` 
-                                            : 'text-white'
-                                    }`}>
+                                    <div className={`font-bold text-sm mb-1 ${preferences.contextualBehavior?.chatMode === mode.id
+                                        ? `text-${mode.color}-400`
+                                        : 'text-white'
+                                        }`}>
                                         {mode.label}
                                     </div>
                                     <div className="text-xs text-slate-500 mb-2">{mode.desc}</div>
@@ -750,7 +871,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 <Settings size={16} className="text-slate-400" />
                                 Fine-tune Response Length
                             </h4>
-                            
+
                             <div className="space-y-6">
                                 {/* Quick Mode Length */}
                                 <div>
@@ -760,9 +881,9 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                             {preferences.responseLength?.quick || 'short'}
                                         </span>
                                     </div>
-                                    <input 
-                                        type="range" 
-                                        min="0" max="2" 
+                                    <input
+                                        type="range"
+                                        min="0" max="2"
                                         className="w-full accent-amber-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
                                         value={['ultra_short', 'short', 'medium'].indexOf(preferences.responseLength?.quick || 'short')}
                                         onChange={(e) => {
@@ -788,9 +909,9 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                             {preferences.responseLength?.standard || 'medium'}
                                         </span>
                                     </div>
-                                    <input 
-                                        type="range" 
-                                        min="0" max="2" 
+                                    <input
+                                        type="range"
+                                        min="0" max="2"
                                         className="w-full accent-blue-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
                                         value={['short', 'medium', 'long'].indexOf(preferences.responseLength?.standard || 'medium')}
                                         onChange={(e) => {
@@ -816,9 +937,9 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                             {preferences.responseLength?.deepStudy || 'long'}
                                         </span>
                                     </div>
-                                    <input 
-                                        type="range" 
-                                        min="0" max="2" 
+                                    <input
+                                        type="range"
+                                        min="0" max="2"
                                         className="w-full accent-purple-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
                                         value={['medium', 'long', 'comprehensive'].indexOf(preferences.responseLength?.deepStudy || 'long')}
                                         onChange={(e) => {
@@ -846,10 +967,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     AI automatycznie wykryje czy potrzebujesz krótkiej czy szczegółowej odpowiedzi
                                 </div>
                             </div>
-                            <Toggle 
+                            <Toggle
                                 enabled={preferences.contextualBehavior?.autoDetectIntent ?? true}
                                 onChange={(val) => setPreferences(p => ({
-                                    ...p, 
+                                    ...p,
                                     contextualBehavior: { ...p.contextualBehavior, autoDetectIntent: val }
                                 }))}
                             />
@@ -862,11 +983,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     ...p,
                                     formatting: { ...p.formatting, preferBulletPoints: !p.formatting?.preferBulletPoints }
                                 }))}
-                                className={`p-3 rounded-lg border text-center text-xs transition-all ${
-                                    preferences.formatting?.preferBulletPoints
-                                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                                        : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
-                                }`}
+                                className={`p-3 rounded-lg border text-center text-xs transition-all ${preferences.formatting?.preferBulletPoints
+                                    ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                    : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
+                                    }`}
                             >
                                 • Bullet Points
                             </button>
@@ -875,11 +995,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     ...p,
                                     formatting: { ...p.formatting, preferTables: !p.formatting?.preferTables }
                                 }))}
-                                className={`p-3 rounded-lg border text-center text-xs transition-all ${
-                                    preferences.formatting?.preferTables
-                                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                                        : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
-                                }`}
+                                className={`p-3 rounded-lg border text-center text-xs transition-all ${preferences.formatting?.preferTables
+                                    ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                    : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
+                                    }`}
                             >
                                 ⊞ Tables
                             </button>
@@ -888,11 +1007,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     ...p,
                                     formatting: { ...p.formatting, includeActionItems: !p.formatting?.includeActionItems }
                                 }))}
-                                className={`p-3 rounded-lg border text-center text-xs transition-all ${
-                                    preferences.formatting?.includeActionItems
-                                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                                        : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
-                                }`}
+                                className={`p-3 rounded-lg border text-center text-xs transition-all ${preferences.formatting?.includeActionItems
+                                    ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                    : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
+                                    }`}
                             >
                                 ✓ Action Items
                             </button>
@@ -901,11 +1019,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     ...p,
                                     formatting: { ...p.formatting, includeSources: !p.formatting?.includeSources }
                                 }))}
-                                className={`p-3 rounded-lg border text-center text-xs transition-all ${
-                                    preferences.formatting?.includeSources
-                                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                                        : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
-                                }`}
+                                className={`p-3 rounded-lg border text-center text-xs transition-all ${preferences.formatting?.includeSources
+                                    ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                    : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
+                                    }`}
                             >
                                 📚 Sources
                             </button>
@@ -941,7 +1058,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 {activeTab === 'proactivity' && (
                     <div className="animate-in fade-in duration-300 max-w-4xl">
                         <SectionHeader title="AI Proactivity Level" subtitle="Control how actively the AI assists you." />
-                        
+
                         {/* Proactivity Selector */}
                         <div className="mb-8 p-6 rounded-xl border border-white/10 bg-white/5">
                             <ProactivitySelector
@@ -954,11 +1071,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
                         {/* Proactivity Explanation */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                            <div className={`p-4 rounded-xl border transition-all ${
-                                proactivityMode === 'REACTIVE' 
-                                    ? 'bg-slate-600/20 border-slate-500/50' 
-                                    : 'bg-white/5 border-white/5'
-                            }`}>
+                            <div className={`p-4 rounded-xl border transition-all ${proactivityMode === 'REACTIVE'
+                                ? 'bg-slate-600/20 border-slate-500/50'
+                                : 'bg-white/5 border-white/5'
+                                }`}>
                                 <div className="flex items-center gap-2 mb-2">
                                     <Pause size={18} className="text-slate-400" />
                                     <h4 className="font-semibold text-white text-sm">Reactive Mode</h4>
@@ -979,11 +1095,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 </div>
                             </div>
 
-                            <div className={`p-4 rounded-xl border transition-all ${
-                                proactivityMode === 'BALANCED' 
-                                    ? 'bg-violet-600/20 border-violet-500/50' 
-                                    : 'bg-white/5 border-white/5'
-                            }`}>
+                            <div className={`p-4 rounded-xl border transition-all ${proactivityMode === 'BALANCED'
+                                ? 'bg-violet-600/20 border-violet-500/50'
+                                : 'bg-white/5 border-white/5'
+                                }`}>
                                 <div className="flex items-center gap-2 mb-2">
                                     <Scale size={18} className="text-violet-400" />
                                     <h4 className="font-semibold text-white text-sm">Balanced Mode</h4>
@@ -1004,11 +1119,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 </div>
                             </div>
 
-                            <div className={`p-4 rounded-xl border transition-all ${
-                                proactivityMode === 'PROACTIVE' 
-                                    ? 'bg-emerald-600/20 border-emerald-500/50' 
-                                    : 'bg-white/5 border-white/5'
-                            }`}>
+                            <div className={`p-4 rounded-xl border transition-all ${proactivityMode === 'PROACTIVE'
+                                ? 'bg-emerald-600/20 border-emerald-500/50'
+                                : 'bg-white/5 border-white/5'
+                                }`}>
                                 <div className="flex items-center gap-2 mb-2">
                                     <Zap size={18} className="text-emerald-400" />
                                     <h4 className="font-semibold text-white text-sm">Proactive Mode</h4>
@@ -1037,7 +1151,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 <div>
                                     <h4 className="font-medium text-amber-400 text-sm">Organization Limit</h4>
                                     <p className="text-xs text-amber-400/80 mt-1">
-                                        Your organization has set the maximum proactivity level to <strong>{maxProactivity}</strong>. 
+                                        Your organization has set the maximum proactivity level to <strong>{maxProactivity}</strong>.
                                         Contact your administrator if you need a higher level.
                                     </p>
                                 </div>

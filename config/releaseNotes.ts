@@ -32,6 +32,84 @@ export interface ReleaseNote {
 
 export const RELEASE_NOTES: ReleaseNote[] = [
     {
+        version: '2.6.0',
+        date: '2024-12-28',
+        type: 'minor',
+        title: {
+            en: 'Admin & Settings Restructure',
+            pl: 'Restrukturyzacja Admin i Ustawień'
+        },
+        summary: {
+            en: 'Complete restructure of Admin Panel (5 modules) and User Settings (6 modules) following SuperAdmin pattern.',
+            pl: 'Pełna restrukturyzacja Panelu Admin (5 modułów) i Ustawień Użytkownika (6 modułów) według wzoru SuperAdmin.'
+        },
+        features: [
+            {
+                title: { en: 'Admin 5-Module Structure', pl: 'Admin - Struktura 5 Modułów' },
+                description: {
+                    en: 'Overview, Team, Workspace, AI, and Settings modules with tab-based navigation.',
+                    pl: 'Moduły Przegląd, Zespół, Przestrzeń Robocza, AI i Ustawienia z nawigacją zakładkową.'
+                },
+                icon: 'Shield',
+                module: 'admin'
+            },
+            {
+                title: { en: 'Settings 6-Module Structure', pl: 'Ustawienia - Struktura 6 Modułów' },
+                description: {
+                    en: 'Profile, AI Preferences, Notifications, Security, Integrations, and Appearance modules.',
+                    pl: 'Moduły Profil, Preferencje AI, Powiadomienia, Bezpieczeństwo, Integracje i Wygląd.'
+                },
+                icon: 'Settings',
+                module: 'settings'
+            },
+            {
+                title: { en: 'AI Memory Management', pl: 'Zarządzanie Pamięcią AI' },
+                description: {
+                    en: 'Control AI memory, clear stored context, and manage chat history.',
+                    pl: 'Kontroluj pamięć AI, wyczyść zapisany kontekst i zarządzaj historią czatu.'
+                },
+                icon: 'Brain',
+                module: 'settings'
+            },
+            {
+                title: { en: 'Security Dashboard', pl: 'Panel Bezpieczeństwa' },
+                description: {
+                    en: 'View active sessions, login history, and manage data controls.',
+                    pl: 'Przeglądaj aktywne sesje, historię logowań i zarządzaj kontrolą danych.'
+                },
+                icon: 'Shield',
+                module: 'settings'
+            },
+            {
+                title: { en: 'GDPR Data Controls', pl: 'Kontrola Danych GDPR' },
+                description: {
+                    en: 'Training opt-out, data retention settings, and full data export.',
+                    pl: 'Rezygnacja z treningu, ustawienia retencji danych i pełny eksport danych.'
+                },
+                icon: 'Database',
+                module: 'settings'
+            },
+            {
+                title: { en: 'Calendar Sync', pl: 'Synchronizacja Kalendarza' },
+                description: {
+                    en: 'Connect Google Calendar or Outlook for task synchronization.',
+                    pl: 'Połącz Kalendarz Google lub Outlook do synchronizacji zadań.'
+                },
+                icon: 'Calendar',
+                module: 'settings'
+            }
+        ],
+        improvements: [
+            { en: 'Reduced sidebar menu items for cleaner navigation', pl: 'Zmniejszona liczba pozycji menu dla czystszej nawigacji' },
+            { en: 'Consistent module pattern across Admin, Settings, and SuperAdmin', pl: 'Spójny wzorzec modułów w Admin, Ustawieniach i SuperAdmin' },
+            { en: 'Better organization of AI-related settings', pl: 'Lepsza organizacja ustawień związanych z AI' }
+        ],
+        fixes: [
+            { en: 'Fixed navigation between Admin and Settings modules', pl: 'Naprawiono nawigację między modułami Admin i Ustawień' },
+            { en: 'Resolved sidebar state persistence issues', pl: 'Rozwiązano problemy z trwałością stanu paska bocznego' }
+        ]
+    },
+    {
         version: '2.5.0',
         date: '2024-12-28',
         type: 'minor',

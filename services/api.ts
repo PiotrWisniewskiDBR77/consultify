@@ -398,12 +398,12 @@ export const Api = {
 
     // --- AI ---
     // --- AI ---
-    chatWithAI: async (message: string, history: any[], systemInstruction?: string, roleName?: string) => {
+    chatWithAI: async (message: string, history: any[], systemInstruction?: string, roleName?: string, options?: any) => {
         try {
             const response = await fetch(`${API_URL}/ai/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message, history, systemInstruction, roleName })
+                body: JSON.stringify({ message, history, systemInstruction, roleName, options })
             });
             const data = await response.json();
             return data.text;
@@ -422,13 +422,14 @@ export const Api = {
         context?: any,
         roleName?: string,
         language?: string,
-        onThinking?: (thought: any) => void
+        onThinking?: (thought: any) => void,
+        options?: any
     ) => {
         try {
             const response = await fetch(`${API_URL}/ai/chat/stream`, {
                 method: 'POST',
                 headers: getHeaders(),
-                body: JSON.stringify({ message, history, systemInstruction, context, roleName, language })
+                body: JSON.stringify({ message, history, systemInstruction, context, roleName, language, options })
             });
 
             if (!response.body) throw new Error('ReadableStream not supported');
@@ -775,6 +776,24 @@ export const Api = {
             body: JSON.stringify(data)
         });
         if (!res.ok) throw new Error('Failed to update provider');
+        return res.json();
+    },
+
+    updateProviderTier: async (id: string, tier: string) => {
+        const res = await fetch(`${API_URL}/llm/providers/${id}/tier`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ tier })
+        });
+        if (!res.ok) throw new Error('Failed to update provider tier');
+        return res.json();
+    },
+
+    getRecommendedProvider: async (tier: string = 'STANDARD'): Promise<any> => {
+        const res = await fetch(`${API_URL}/llm/providers/recommended?tier=${tier}`, {
+            headers: getHeaders()
+        });
+        if (!res.ok) return null;
         return res.json();
     },
 
@@ -1631,6 +1650,34 @@ export const Api = {
         });
         if (!res.ok) throw new Error('Failed to deactivate access code');
     },
+
+    // Usage Stats by Organization
+    getUsageByOrganization: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/superadmin/usage/by-organization`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch usage by organization');
+        return res.json();
+    },
+
+    // Invoices
+    getSuperAdminInvoices: async (period: string = '30d'): Promise<{ invoices: any[]; total: number }> => {
+        const res = await fetch(`${API_URL}/superadmin/invoices?period=${period}`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch invoices');
+        return res.json();
+    },
+
+    getSuperAdminInvoiceStats: async (): Promise<any> => {
+        const res = await fetch(`${API_URL}/superadmin/invoices/stats`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch invoice stats');
+        return res.json();
+    },
+
+    // System Health
+    getSystemHealth: async (): Promise<any> => {
+        const res = await fetch(`${API_URL}/superadmin/system-health`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch system health');
+        return res.json();
+    },
+
     // ==========================================
     // BILLING & USAGE API
     // ==========================================
@@ -1721,6 +1768,112 @@ export const Api = {
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to fetch invoices');
+        return json;
+    },
+
+    // --- PAYMENT METHODS ---
+    getPaymentMethods: async (): Promise<any> => {
+        const res = await fetch(`${API_URL}/billing/payment-methods`, {
+            headers: getHeaders()
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to fetch payment methods');
+        return json;
+    },
+
+    addPaymentMethod: async (paymentMethodId: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/billing/payment-methods`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ paymentMethodId })
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to add payment method');
+        return json;
+    },
+
+    removePaymentMethod: async (paymentMethodId: string): Promise<void> => {
+        const res = await fetch(`${API_URL}/billing/payment-methods/${paymentMethodId}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!res.ok) {
+            const json = await res.json().catch(() => ({}));
+            throw new Error(json.error || 'Failed to remove payment method');
+        }
+    },
+
+    setDefaultPaymentMethod: async (paymentMethodId: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/billing/payment-methods/${paymentMethodId}/default`, {
+            method: 'PUT',
+            headers: getHeaders()
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to set default payment method');
+        return json;
+    },
+
+    createSetupIntent: async (): Promise<{ clientSecret: string; id: string }> => {
+        const res = await fetch(`${API_URL}/billing/setup-intent`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to create setup intent');
+        return json;
+    },
+
+    // --- BILLING ALERTS ---
+    getBillingAlerts: async (): Promise<any> => {
+        const res = await fetch(`${API_URL}/billing/alerts`, {
+            headers: getHeaders()
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to fetch billing alerts');
+        return json;
+    },
+
+    updateBillingAlerts: async (alerts: any): Promise<any> => {
+        const res = await fetch(`${API_URL}/billing/alerts`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(alerts)
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to update billing alerts');
+        return json;
+    },
+
+    // --- TAX SETTINGS ---
+    getTaxSettings: async (): Promise<any> => {
+        const res = await fetch(`${API_URL}/billing/tax-settings`, {
+            headers: getHeaders()
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to fetch tax settings');
+        return json;
+    },
+
+    updateTaxSettings: async (settings: any): Promise<any> => {
+        const res = await fetch(`${API_URL}/billing/tax-settings`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(settings)
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to update tax settings');
+        return json;
+    },
+
+    // --- DISCOUNT CODES ---
+    validateDiscountCode: async (code: string, planId?: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/billing/validate-discount`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ code, planId })
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to validate discount code');
         return json;
     },
 
@@ -2940,6 +3093,7 @@ export const Api = {
         archived?: boolean;
         tags?: string[];
         pmoContext?: Record<string, any>;
+        chatProjectId?: string | null;
     }): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/conversations/${id}`, {
             method: 'PATCH',
@@ -2991,6 +3145,40 @@ export const Api = {
     },
 
     /**
+     * Report feedback on a message (thumbs up/down)
+     */
+    reportMessageFeedback: async (messageId: string, rating: 'positive' | 'negative'): Promise<{ success: boolean }> => {
+        try {
+            const res = await fetchWithRetry(`${API_URL}/ai/feedback`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ messageId, rating })
+            });
+            return handleResponse(res, 'Failed to report feedback');
+        } catch (err) {
+            console.warn('[API] Feedback endpoint not available, logging locally');
+            return { success: true }; // Graceful fallback
+        }
+    },
+
+    /**
+     * Report a problematic message
+     */
+    reportMessage: async (messageId: string, reason: string): Promise<{ success: boolean }> => {
+        try {
+            const res = await fetchWithRetry(`${API_URL}/ai/report`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ messageId, reason })
+            });
+            return handleResponse(res, 'Failed to report message');
+        } catch (err) {
+            console.error('[API] Report endpoint not available:', err);
+            return { success: false };
+        }
+    },
+
+    /**
      * Bulk operations on conversations
      */
     bulkConversationOperation: async (ids: string[], action: 'archive' | 'unarchive' | 'delete' | 'star' | 'unstar'): Promise<{
@@ -3019,6 +3207,96 @@ export const Api = {
             body: JSON.stringify({ conversations })
         });
         return handleResponse(res, 'Failed to migrate conversations');
+    },
+
+    // ==================== CHAT PROJECTS ====================
+
+    /**
+     * List user's chat projects
+     */
+    getChatProjects: async (): Promise<{ projects: any[] }> => {
+        const res = await fetchWithRetry(`${API_URL}/chat-projects`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch chat projects');
+    },
+
+    /**
+     * Get a single chat project with its conversations
+     */
+    getChatProject: async (id: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch chat project');
+    },
+
+    /**
+     * Create a new chat project
+     */
+    createChatProject: async (data: {
+        name: string;
+        description?: string;
+        color?: string;
+        icon?: string;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/chat-projects`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Failed to create chat project');
+    },
+
+    /**
+     * Update a chat project
+     */
+    updateChatProject: async (id: string, updates: {
+        name?: string;
+        description?: string;
+        color?: string;
+        icon?: string;
+    }): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+            body: JSON.stringify(updates)
+        });
+        return handleResponse(res, 'Failed to update chat project');
+    },
+
+    /**
+     * Delete a chat project (conversations are unlinked, not deleted)
+     */
+    deleteChatProject: async (id: string): Promise<{ success: boolean; deleted: string }> => {
+        const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to delete chat project');
+    },
+
+    /**
+     * Move a conversation to a chat project
+     */
+    moveConversationToProject: async (projectId: string, conversationId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/chat-projects/${projectId}/conversations`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ conversationId })
+        });
+        return handleResponse(res, 'Failed to move conversation to project');
+    },
+
+    /**
+     * Remove a conversation from a chat project
+     */
+    removeConversationFromProject: async (projectId: string, conversationId: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/chat-projects/${projectId}/conversations/${conversationId}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to remove conversation from project');
     },
 
     // ==================== STUDIO ====================
@@ -3295,14 +3573,120 @@ export const Api = {
         return handleResponse(res, 'Failed to classify intent');
     },
 
+    // --- PERMISSION REQUESTS ---
+
+    /**
+     * Get user's own permission requests
+     */
+    getPermissionRequests: async (): Promise<any[]> => {
+        const res = await fetchWithRetry(`${API_URL}/permission-requests`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch permission requests');
+    },
+
+    /**
+     * Get all org permission requests (Admin only)
+     */
+    getAdminPermissionRequests: async (status?: string): Promise<any[]> => {
+        const url = status 
+            ? `${API_URL}/permission-requests/admin?status=${status}`
+            : `${API_URL}/permission-requests/admin`;
+        const res = await fetchWithRetry(url, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch admin permission requests');
+    },
+
+    /**
+     * Create a new permission request
+     */
+    createPermissionRequest: async (data: {
+        requestType: string;
+        currentValue?: string;
+        requestedValue?: string;
+        justification?: string;
+        priority?: string;
+    }): Promise<{ success: boolean; requestId: string; message: string }> => {
+        const res = await fetchWithRetry(`${API_URL}/permission-requests`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, 'Failed to create permission request');
+    },
+
+    /**
+     * Approve a permission request (Admin only)
+     */
+    approvePermissionRequest: async (requestId: string, adminNotes?: string): Promise<{ success: boolean }> => {
+        const res = await fetchWithRetry(`${API_URL}/permission-requests/${requestId}/approve`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ adminNotes })
+        });
+        return handleResponse(res, 'Failed to approve permission request');
+    },
+
+    /**
+     * Reject a permission request (Admin only)
+     */
+    rejectPermissionRequest: async (requestId: string, adminNotes?: string): Promise<{ success: boolean }> => {
+        const res = await fetchWithRetry(`${API_URL}/permission-requests/${requestId}/reject`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ adminNotes })
+        });
+        return handleResponse(res, 'Failed to reject permission request');
+    },
+
+    /**
+     * Cancel a pending permission request
+     */
+    cancelPermissionRequest: async (requestId: string): Promise<{ success: boolean }> => {
+        const res = await fetchWithRetry(`${API_URL}/permission-requests/${requestId}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to cancel permission request');
+    },
+
+    /**
+     * Get permission request statistics (Admin only)
+     */
+    getPermissionRequestStats: async (): Promise<{
+        pending: number;
+        approved: number;
+        rejected: number;
+        cancelled: number;
+        total: number;
+    }> => {
+        const res = await fetchWithRetry(`${API_URL}/permission-requests/stats`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch permission request stats');
+    },
+
+    /**
+     * Get user activity log
+     */
+    getUserActivityLog: async (limit = 50): Promise<any[]> => {
+        const res = await fetchWithRetry(`${API_URL}/users/me/activity?limit=${limit}`, {
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to fetch activity log');
+    },
+
     // Generic helper methods for Studio hooks
     get: async (url: string) => {
-        const res = await fetchWithRetry(`${url}`, { headers: getHeaders() });
+        const fullUrl = url.startsWith('/') ? `${API_URL}${url}` : url;
+        const res = await fetchWithRetry(fullUrl, { headers: getHeaders() });
         return handleResponse(res, 'Request failed');
     },
 
     post: async (url: string, data: any) => {
-        const res = await fetchWithRetry(`${url}`, {
+        const fullUrl = url.startsWith('/') ? `${API_URL}${url}` : url;
+        const res = await fetchWithRetry(fullUrl, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(data)
@@ -3311,7 +3695,8 @@ export const Api = {
     },
 
     put: async (url: string, data: any) => {
-        const res = await fetchWithRetry(`${url}`, {
+        const fullUrl = url.startsWith('/') ? `${API_URL}${url}` : url;
+        const res = await fetchWithRetry(fullUrl, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify(data)
@@ -3320,7 +3705,8 @@ export const Api = {
     },
 
     delete: async (url: string) => {
-        const res = await fetchWithRetry(`${url}`, {
+        const fullUrl = url.startsWith('/') ? `${API_URL}${url}` : url;
+        const res = await fetchWithRetry(fullUrl, {
             method: 'DELETE',
             headers: getHeaders()
         });

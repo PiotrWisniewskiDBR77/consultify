@@ -287,3 +287,4 @@ COMMENT ON TABLE multi_framework_audit_retention IS 'Retention policies for diff
 COMMENT ON FUNCTION log_mf_audit IS 'Helper function to log audit entries with automatic diff calculation';
 
 
+

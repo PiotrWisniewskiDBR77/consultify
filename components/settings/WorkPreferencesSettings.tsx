@@ -8,6 +8,9 @@
  * - Completed tasks visibility
  * - Auto-archive settings
  * - Time tracking preferences
+ * - Default task priority
+ * - Default reminder settings
+ * - Snooze preferences
  */
 
 import React, { useState, useEffect } from 'react';
@@ -23,7 +26,12 @@ import {
     CheckSquare, 
     Save, 
     Loader2,
-    ArrowUpDown
+    ArrowUpDown,
+    Flag,
+    Bell,
+    AlarmClock,
+    Zap,
+    Target
 } from 'lucide-react';
 import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -35,14 +43,30 @@ interface WorkPreferencesSettingsProps {
 }
 
 interface WorkPreferences {
+    // View & Display
     defaultProjectView: 'kanban' | 'list' | 'timeline' | 'calendar';
     defaultTaskSort: 'priority' | 'dueDate' | 'created' | 'alphabetical';
     weekStartDay: 'monday' | 'sunday';
     showCompletedTasks: boolean;
-    autoArchiveDays: number;
-    defaultTimeTracking: 'none' | 'manual' | 'automatic';
-    taskDefaultDueDays: number;
     showSubtasks: boolean;
+    
+    // Automation
+    autoArchiveDays: number;
+    taskDefaultDueDays: number;
+    defaultTimeTracking: 'none' | 'manual' | 'automatic';
+    
+    // Task Defaults (NEW)
+    defaultTaskPriority: 'none' | 'low' | 'medium' | 'high' | 'urgent';
+    defaultReminderBefore: 'none' | '15min' | '30min' | '1hour' | '3hours' | '1day' | '3days';
+    
+    // Snooze Settings (NEW)
+    defaultSnoozeDuration: '15min' | '30min' | '1hour' | '3hours' | 'tomorrow' | 'nextWeek';
+    autoSnoozeOverdue: boolean;
+    
+    // Focus Mode (NEW)
+    enableFocusMode: boolean;
+    focusModeBlocksNotifications: boolean;
+    defaultFocusDuration: number; // minutes
 }
 
 const DEFAULT_PREFERENCES: WorkPreferences = {
@@ -50,11 +74,57 @@ const DEFAULT_PREFERENCES: WorkPreferences = {
     defaultTaskSort: 'priority',
     weekStartDay: 'monday',
     showCompletedTasks: false,
+    showSubtasks: true,
     autoArchiveDays: 30,
-    defaultTimeTracking: 'none',
     taskDefaultDueDays: 7,
-    showSubtasks: true
+    defaultTimeTracking: 'none',
+    defaultTaskPriority: 'medium',
+    defaultReminderBefore: '1day',
+    defaultSnoozeDuration: '1hour',
+    autoSnoozeOverdue: false,
+    enableFocusMode: true,
+    focusModeBlocksNotifications: true,
+    defaultFocusDuration: 25
 };
+
+// Priority options with colors
+const PRIORITY_OPTIONS = [
+    { value: 'none', label: 'No Priority', color: 'slate' },
+    { value: 'low', label: 'Low', color: 'blue' },
+    { value: 'medium', label: 'Medium', color: 'yellow' },
+    { value: 'high', label: 'High', color: 'orange' },
+    { value: 'urgent', label: 'Urgent', color: 'red' }
+];
+
+// Reminder options
+const REMINDER_OPTIONS = [
+    { value: 'none', label: 'No reminder' },
+    { value: '15min', label: '15 minutes before' },
+    { value: '30min', label: '30 minutes before' },
+    { value: '1hour', label: '1 hour before' },
+    { value: '3hours', label: '3 hours before' },
+    { value: '1day', label: '1 day before' },
+    { value: '3days', label: '3 days before' }
+];
+
+// Snooze options
+const SNOOZE_OPTIONS = [
+    { value: '15min', label: '15 minutes' },
+    { value: '30min', label: '30 minutes' },
+    { value: '1hour', label: '1 hour' },
+    { value: '3hours', label: '3 hours' },
+    { value: 'tomorrow', label: 'Tomorrow morning' },
+    { value: 'nextWeek', label: 'Next week' }
+];
+
+// Focus duration options
+const FOCUS_DURATION_OPTIONS = [
+    { value: 15, label: '15 minutes' },
+    { value: 25, label: '25 minutes (Pomodoro)' },
+    { value: 45, label: '45 minutes' },
+    { value: 60, label: '1 hour' },
+    { value: 90, label: '90 minutes' }
+];
 
 export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
@@ -117,14 +187,25 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
         { value: 'alphabetical', label: t('settings.work.sort.alphabetical', 'Alphabetical') }
     ];
 
+    const getPriorityColor = (priority: string) => {
+        switch (priority) {
+            case 'low': return 'bg-blue-500';
+            case 'medium': return 'bg-yellow-500';
+            case 'high': return 'bg-orange-500';
+            case 'urgent': return 'bg-red-500';
+            default: return 'bg-slate-400';
+        }
+    };
+
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-            <InfoButton cardId="settings-profile" position="top-right" />
+            <InfoButton cardId="settings-work" position="top-right" />
             
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                        <Target size={28} className="text-purple-500" />
                         {t('settings.work.title', 'Work Preferences')}
                     </h2>
                     <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -173,6 +254,194 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                             </button>
                         );
                     })}
+                </div>
+            </div>
+
+            {/* Task Defaults - NEW SECTION */}
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Flag size={20} className="text-orange-500" />
+                    {t('settings.work.taskDefaults', 'Task Defaults')}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                    {t('settings.work.taskDefaultsDescription', 'Set default values for new tasks')}
+                </p>
+                
+                <div className="space-y-6">
+                    {/* Default Priority */}
+                    <div>
+                        <label className="block font-medium text-slate-700 dark:text-slate-300 mb-3">
+                            {t('settings.work.defaultPriority', 'Default Task Priority')}
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            {PRIORITY_OPTIONS.map(option => {
+                                const isSelected = preferences.defaultTaskPriority === option.value;
+                                return (
+                                    <button
+                                        key={option.value}
+                                        onClick={() => updatePreference('defaultTaskPriority', option.value as WorkPreferences['defaultTaskPriority'])}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
+                                            isSelected
+                                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
+                                                : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
+                                        }`}
+                                    >
+                                        <div className={`w-3 h-3 rounded-full ${getPriorityColor(option.value)}`} />
+                                        <span className={`text-sm font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                                            {t(`settings.work.priority.${option.value}`, option.label)}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Default Reminder */}
+                    <div className="pt-4 border-t border-slate-100 dark:border-white/5">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                    <Bell size={16} className="text-blue-500" />
+                                    {t('settings.work.defaultReminder', 'Default Reminder')}
+                                </label>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    {t('settings.work.defaultReminderDescription', 'When to remind you before task due date')}
+                                </p>
+                            </div>
+                            <select
+                                value={preferences.defaultReminderBefore}
+                                onChange={(e) => updatePreference('defaultReminderBefore', e.target.value as WorkPreferences['defaultReminderBefore'])}
+                                className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                            >
+                                {REMINDER_OPTIONS.map(option => (
+                                    <option key={option.value} value={option.value}>
+                                        {t(`settings.work.reminder.${option.value}`, option.label)}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Snooze & Focus Settings - NEW SECTION */}
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <AlarmClock size={20} className="text-indigo-500" />
+                    {t('settings.work.snoozeAndFocus', 'Snooze & Focus')}
+                </h3>
+                
+                <div className="space-y-6">
+                    {/* Default Snooze Duration */}
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <label className="block font-medium text-slate-700 dark:text-slate-300">
+                                {t('settings.work.defaultSnooze', 'Default Snooze Duration')}
+                            </label>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                {t('settings.work.defaultSnoozeDescription', 'How long to snooze notifications by default')}
+                            </p>
+                        </div>
+                        <select
+                            value={preferences.defaultSnoozeDuration}
+                            onChange={(e) => updatePreference('defaultSnoozeDuration', e.target.value as WorkPreferences['defaultSnoozeDuration'])}
+                            className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                        >
+                            {SNOOZE_OPTIONS.map(option => (
+                                <option key={option.value} value={option.value}>
+                                    {t(`settings.work.snooze.${option.value}`, option.label)}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Auto-Snooze Overdue */}
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/5">
+                        <div>
+                            <label className="block font-medium text-slate-700 dark:text-slate-300">
+                                {t('settings.work.autoSnoozeOverdue', 'Auto-Snooze Overdue Tasks')}
+                            </label>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                {t('settings.work.autoSnoozeOverdueDescription', 'Automatically snooze notifications for overdue tasks')}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => updatePreference('autoSnoozeOverdue', !preferences.autoSnoozeOverdue)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                preferences.autoSnoozeOverdue ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'
+                            }`}
+                        >
+                            <span className={`${preferences.autoSnoozeOverdue ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                        </button>
+                    </div>
+
+                    {/* Focus Mode */}
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/5">
+                        <div>
+                            <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                <Zap size={16} className="text-yellow-500" />
+                                {t('settings.work.enableFocusMode', 'Enable Focus Mode')}
+                            </label>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                {t('settings.work.enableFocusModeDescription', 'Allow activating focus mode for distraction-free work')}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => updatePreference('enableFocusMode', !preferences.enableFocusMode)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                preferences.enableFocusMode ? 'bg-yellow-500' : 'bg-slate-200 dark:bg-slate-700'
+                            }`}
+                        >
+                            <span className={`${preferences.enableFocusMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                        </button>
+                    </div>
+
+                    {preferences.enableFocusMode && (
+                        <>
+                            {/* Focus Mode Blocks Notifications */}
+                            <div className="flex items-center justify-between pl-6">
+                                <div>
+                                    <label className="block font-medium text-slate-700 dark:text-slate-300">
+                                        {t('settings.work.focusBlocksNotifications', 'Block Notifications During Focus')}
+                                    </label>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                        {t('settings.work.focusBlocksNotificationsDescription', 'Pause all notifications when focus mode is active')}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => updatePreference('focusModeBlocksNotifications', !preferences.focusModeBlocksNotifications)}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                        preferences.focusModeBlocksNotifications ? 'bg-yellow-500' : 'bg-slate-200 dark:bg-slate-700'
+                                    }`}
+                                >
+                                    <span className={`${preferences.focusModeBlocksNotifications ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                                </button>
+                            </div>
+
+                            {/* Default Focus Duration */}
+                            <div className="flex items-center justify-between pl-6">
+                                <div>
+                                    <label className="block font-medium text-slate-700 dark:text-slate-300">
+                                        {t('settings.work.defaultFocusDuration', 'Default Focus Duration')}
+                                    </label>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                        {t('settings.work.defaultFocusDurationDescription', 'Default timer length for focus sessions')}
+                                    </p>
+                                </div>
+                                <select
+                                    value={preferences.defaultFocusDuration}
+                                    onChange={(e) => updatePreference('defaultFocusDuration', parseInt(e.target.value))}
+                                    className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                                >
+                                    {FOCUS_DURATION_OPTIONS.map(option => (
+                                        <option key={option.value} value={option.value}>
+                                            {t(`settings.work.focus.${option.value}min`, option.label)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -365,5 +634,3 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
 };
 
 export default WorkPreferencesSettings;
-
-

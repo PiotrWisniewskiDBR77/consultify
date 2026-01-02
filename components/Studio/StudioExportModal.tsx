@@ -3,16 +3,16 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { 
-    X, 
-    Download, 
-    Image, 
-    FileText, 
+import {
+    X,
+    Download,
+    Image,
+    FileText,
     FileCode,
     Loader2,
     Check
 } from 'lucide-react';
-import { toPng, toSvg } from 'reactflow';
+import { toPng, toSvg } from 'html-to-image';
 import { toast } from 'react-hot-toast';
 
 interface StudioExportModalProps {
@@ -35,7 +35,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
 
     const handleExport = useCallback(async () => {
         setExporting(true);
-        
+
         try {
             // Get the React Flow viewport element
             const viewportElement = document.querySelector('.react-flow__viewport');
@@ -50,25 +50,25 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
                     backgroundColor: includeBackground ? '#020617' : 'transparent',
                     pixelRatio: quality
                 });
-                
+
                 // Download
                 const link = document.createElement('a');
                 link.href = dataUrl;
                 link.download = `${filename}.png`;
                 link.click();
-                
+
                 toast.success('PNG exported');
             } else if (format === 'svg') {
                 const dataUrl = await toSvg(viewportElement as HTMLElement, {
                     backgroundColor: includeBackground ? '#020617' : 'transparent'
                 });
-                
+
                 // Download
                 const link = document.createElement('a');
                 link.href = dataUrl;
                 link.download = `${filename}.svg`;
                 link.click();
-                
+
                 toast.success('SVG exported');
             } else if (format === 'json') {
                 // Export nodes/edges as JSON
@@ -221,5 +221,6 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
 };
 
 export default StudioExportModal;
+
 
 

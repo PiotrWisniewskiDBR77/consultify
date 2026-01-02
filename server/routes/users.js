@@ -15,8 +15,8 @@ router.get('/', (req, res) => {
     
     const { canReview } = req.query;
     
-    // Build SQL based on filters
-    let sql = 'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, license_plan_id, ai_config FROM users WHERE organization_id = ?';
+    // Build SQL based on filters - include is_owner for Owner badge display
+    let sql = 'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, license_plan_id, ai_config, is_owner FROM users WHERE organization_id = ?';
     const params = [req.user.organizationId];
     
     // If canReview=true, filter to users with review permissions (Admin, Manager, or specific role)
@@ -24,7 +24,7 @@ router.get('/', (req, res) => {
         sql += ` AND (role IN ('ADMIN', 'MANAGER', 'REVIEWER', 'LEADER') OR status = 'ACTIVE')`;
     }
     
-    sql += ' ORDER BY first_name, last_name';
+    sql += ' ORDER BY is_owner DESC, first_name, last_name'; // Owner first
 
     db.all(sql, params, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -39,7 +39,8 @@ router.get('/', (req, res) => {
             avatarUrl: u.avatar_url,
             lastLogin: u.last_login,
             aiConfig: u.ai_config ? JSON.parse(u.ai_config) : {},
-            licensePlanId: u.license_plan_id
+            licensePlanId: u.license_plan_id,
+            isOwner: u.is_owner === 1 || u.is_owner === true
         }));
         
         // Return in format expected by modal
@@ -147,47 +148,96 @@ router.post('/', (req, res) => {
         });
 });
 
-// UPDATE USER
+// UPDATE USER (Protected: Cannot change Owner role without Transfer)
 router.put('/:id', (req, res) => {
     const { id } = req.params;
     const { firstName, lastName, email, role, status, aiConfig, licensePlanId } = req.body;
     const organizationId = req.user.organizationId;
 
-    let fields = [];
-    let params = [];
+    // First check if user is Owner and if role change is attempted
+    db.get('SELECT id, is_owner, role FROM users WHERE id = ? AND organization_id = ?', 
+        [id, organizationId], 
+        (err, user) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (!user) return res.status(404).json({ error: 'User not found or access denied' });
 
-    if (firstName !== undefined) { fields.push('first_name = ?'); params.push(firstName); }
-    if (lastName !== undefined) { fields.push('last_name = ?'); params.push(lastName); }
-    if (email !== undefined) { fields.push('email = ?'); params.push(email); }
-    if (role !== undefined) { fields.push('role = ?'); params.push(role); }
-    if (status !== undefined) { fields.push('status = ?'); params.push(status); }
-    if (aiConfig !== undefined) { fields.push('ai_config = ?'); params.push(JSON.stringify(aiConfig)); }
-    if (licensePlanId !== undefined) { fields.push('license_plan_id = ?'); params.push(licensePlanId); }
+            // OWNER PROTECTION: Cannot change Owner's role or deactivate
+            const isOwner = user.is_owner === 1 || user.is_owner === true || user.role === 'OWNER';
+            
+            if (isOwner) {
+                // Block role changes for Owner
+                if (role !== undefined && role !== user.role && role !== 'OWNER') {
+                    return res.status(403).json({ 
+                        error: 'Cannot change Account Owner role. Use Transfer Ownership instead.',
+                        code: 'OWNER_ROLE_PROTECTED'
+                    });
+                }
+                // Block deactivation of Owner
+                if (status !== undefined && status !== 'active') {
+                    return res.status(403).json({ 
+                        error: 'Cannot deactivate Account Owner. Transfer ownership first.',
+                        code: 'OWNER_STATUS_PROTECTED'
+                    });
+                }
+            }
 
-    if (fields.length === 0) {
-        return res.json({ message: 'No changes provided' });
-    }
+            // Build update query
+            let fields = [];
+            let params = [];
 
-    const sql = `UPDATE users SET ${fields.join(', ')} WHERE id = ? AND organization_id = ?`;
-    params.push(id, organizationId);
+            if (firstName !== undefined) { fields.push('first_name = ?'); params.push(firstName); }
+            if (lastName !== undefined) { fields.push('last_name = ?'); params.push(lastName); }
+            if (email !== undefined) { fields.push('email = ?'); params.push(email); }
+            if (role !== undefined) { fields.push('role = ?'); params.push(role); }
+            if (status !== undefined) { fields.push('status = ?'); params.push(status); }
+            if (aiConfig !== undefined) { fields.push('ai_config = ?'); params.push(JSON.stringify(aiConfig)); }
+            if (licensePlanId !== undefined) { fields.push('license_plan_id = ?'); params.push(licensePlanId); }
 
-    db.run(sql, params, function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        if (this.changes === 0) return res.status(404).json({ error: 'User not found or access denied' });
-        res.json({ message: 'Updated successfully' });
-    });
+            if (fields.length === 0) {
+                return res.json({ message: 'No changes provided' });
+            }
+
+            const sql = `UPDATE users SET ${fields.join(', ')} WHERE id = ? AND organization_id = ?`;
+            params.push(id, organizationId);
+
+            db.run(sql, params, function (err) {
+                if (err) return res.status(500).json({ error: err.message });
+                if (this.changes === 0) return res.status(404).json({ error: 'User not found or access denied' });
+                res.json({ message: 'Updated successfully' });
+            });
+        }
+    );
 });
 
-// DELETE USER
+// DELETE USER (Protected: Cannot delete Owner)
 router.delete('/:id', (req, res) => {
     const { id } = req.params;
     const organizationId = req.user.organizationId;
 
-    db.run('DELETE FROM users WHERE id = ? AND organization_id = ?', [id, organizationId], function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        if (this.changes === 0) return res.status(404).json({ error: 'User not found or access denied' });
-        res.json({ message: 'Deleted successfully' });
-    });
+    // First check if user is Owner - Owners cannot be deleted
+    db.get('SELECT id, is_owner, role, first_name, last_name FROM users WHERE id = ? AND organization_id = ?', 
+        [id, organizationId], 
+        (err, user) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (!user) return res.status(404).json({ error: 'User not found or access denied' });
+
+            // OWNER PROTECTION: Cannot delete account owner
+            if (user.is_owner === 1 || user.is_owner === true || user.role === 'OWNER') {
+                return res.status(403).json({ 
+                    error: 'Cannot delete Account Owner. Transfer ownership first.',
+                    code: 'OWNER_PROTECTED',
+                    message: `${user.first_name} ${user.last_name} is the Account Owner and cannot be deleted. Use "Transfer Ownership" to assign ownership to another admin first.`
+                });
+            }
+
+            // Safe to delete
+            db.run('DELETE FROM users WHERE id = ? AND organization_id = ?', [id, organizationId], function (err) {
+                if (err) return res.status(500).json({ error: err.message });
+                if (this.changes === 0) return res.status(404).json({ error: 'User not found or access denied' });
+                res.json({ message: 'Deleted successfully' });
+            });
+        }
+    );
 });
 
 module.exports = router;

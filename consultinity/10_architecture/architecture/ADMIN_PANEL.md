@@ -1,0 +1,184 @@
+# Admin Panel Architecture
+
+## Overview
+
+The Admin Panel provides organization administrators with comprehensive tools to manage their Consultify instance. Following the SuperAdmin pattern, it uses a **5-module structure** with tab-based navigation within each module.
+
+## Module Structure
+
+```
+Admin Panel (5 Modules)
+├── Overview Module
+│   ├── Dashboard
+│   ├── Metrics
+│   └── Analytics
+├── Team Module
+│   ├── Users
+│   ├── Invitations
+│   ├── Work Mode
+│   └── Consultants
+├── Workspace Module
+│   ├── Projects
+│   ├── Knowledge
+│   ├── Playbook Runs
+│   └── Bulk Operations
+├── AI Module
+│   ├── LLM Config
+│   ├── AI Health
+│   ├── Help Analytics
+│   └── Token Management
+└── Settings Module
+    ├── Organization
+    ├── Billing
+    ├── Security
+    └── Feedback
+```
+
+## Component Architecture
+
+### Sidebar Navigation
+
+**File:** `components/AdminSidebar.tsx`
+
+The AdminSidebar component follows the SuperAdmin pattern with:
+- Collapsible/expandable states
+- Pin/unpin functionality
+- Section-based navigation
+- Badge indicators for pending items
+- Hover tooltips in collapsed mode
+
+### Module Components
+
+| Module | File | Tabs |
+|--------|------|------|
+| Overview | `views/admin/OverviewModule.tsx` | Dashboard, Metrics, Analytics |
+| Team | `views/admin/TeamModule.tsx` | Users, Invitations, Work Mode, Consultants |
+| Workspace | `views/admin/WorkspaceModule.tsx` | Projects, Knowledge, Playbook Runs, Bulk Ops |
+| AI | `views/admin/AIModule.tsx` | LLM Config, AI Health, Help Analytics, Tokens |
+| Settings | `views/admin/AdminSettingsModule.tsx` | Organization, Billing, Security, Feedback |
+
+### AppView Mappings
+
+```typescript
+// Admin Module Views (5-module structure)
+ADMIN_OVERVIEW = 'ADMIN_OVERVIEW'
+ADMIN_TEAM = 'ADMIN_TEAM'
+ADMIN_WORKSPACE = 'ADMIN_WORKSPACE'
+ADMIN_AI = 'ADMIN_AI'
+ADMIN_SETTINGS = 'ADMIN_SETTINGS'
+```
+
+## Data Flow
+
+```
+AdminView.tsx
+    │
+    ├── AdminSidebar (Navigation)
+    │   └── Section selection → setCurrentView()
+    │
+    └── Module Components
+        └── Tab selection → local state
+```
+
+## Features by Module
+
+### Overview Module
+- **Dashboard:** Key metrics, recent activity, quick actions
+- **Metrics:** Detailed operational metrics, charts
+- **Analytics:** Usage analytics, trends, reports
+
+### Team Module
+- **Users:** User management, roles, permissions
+- **Invitations:** Pending invitations, bulk invite
+- **Work Mode:** Organization work mode configuration
+- **Consultants:** External consultant management
+
+### Workspace Module
+- **Projects:** Project list, status, assignments
+- **Knowledge:** Knowledge base management
+- **Playbook Runs:** Active and completed playbook executions
+- **Bulk Operations:** Mass data operations
+
+### AI Module
+- **LLM Config:** Model selection, parameters
+- **AI Health:** Mission Control dashboard
+- **Help Analytics:** Help system usage metrics
+- **Tokens:** Token usage and management
+
+### Settings Module
+- **Organization:** Profile, branding, settings
+- **Billing:** Subscription, invoices, usage
+- **Security:** MFA policies, API keys, audit
+- **Feedback:** User feedback management
+
+## Permissions
+
+Admin Panel access requires:
+- `role: 'admin'` or higher
+- Valid organization membership
+- Active subscription
+
+## Integration with Help System
+
+Each module and tab is mapped in `config/viewToModuleMapping.ts` for contextual help.
+
+```typescript
+[AppView.ADMIN_OVERVIEW]: { moduleId: 'admin', cardId: 'admin-overview-module' },
+[AppView.ADMIN_TEAM]: { moduleId: 'admin', cardId: 'admin-team-module' },
+// ... etc
+```
+
+## Translation Keys
+
+All UI text uses i18n keys under the `admin` namespace:
+
+```json
+{
+  "admin": {
+    "modules": {
+      "overview": "Overview",
+      "team": "Team",
+      "workspace": "Workspace",
+      "ai": "AI",
+      "settings": "Settings"
+    },
+    "tabs": {
+      "dashboard": "Dashboard",
+      "metrics": "Metrics",
+      // ... etc
+    }
+  }
+}
+```
+
+## Migration from Legacy Structure
+
+The new modular structure consolidates the previous flat menu:
+
+| Old View | New Module > Tab |
+|----------|------------------|
+| ADMIN_DASHBOARD | Overview > Dashboard |
+| ADMIN_METRICS | Overview > Metrics |
+| ADMIN_ANALYTICS | Overview > Analytics |
+| ADMIN_USERS | Team > Users |
+| ADMIN_PROJECTS | Workspace > Projects |
+| ADMIN_LLM | AI > LLM Config |
+| ADMIN_FEEDBACK | Settings > Feedback |
+
+Legacy AppView values continue to work via the `appViewToAdminSection` mapping in AdminSidebar.
+
+## Best Practices
+
+1. **Tab State:** Each module manages its own tab state locally
+2. **Data Fetching:** Fetch data at the module level, pass to tabs
+3. **Error Handling:** Use ErrorBoundary at module level
+4. **Loading States:** Show loading indicators during data fetch
+5. **Responsiveness:** Test all modules on mobile viewports
+
+## Related Documentation
+
+- [SuperAdmin Architecture](./SUPERADMIN_PANEL.md)
+- [User Settings Architecture](./USER_SETTINGS.md)
+- [Work Dimensions System](./WORK_DIMENSIONS.md)
+- [Help System](./HELP_SYSTEM.md)
+

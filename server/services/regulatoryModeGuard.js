@@ -214,6 +214,33 @@ const RegulatoryModeGuard = {
     },
 
     /**
+     * Filters a prompt to remove forbidden verbs and inject advisory language
+     * @param {string} prompt - The prompt to filter
+     * @returns {string} - The filtered prompt
+     */
+    filterPrompt: (prompt) => {
+        if (!prompt) return prompt;
+        let filtered = prompt;
+        FORBIDDEN_VERBS.forEach(verb => {
+            const regex = new RegExp(`\\b${verb}\\b`, 'gi');
+            filtered = filtered.replace(regex, '[RESTRICTED]');
+        });
+        return filtered;
+    },
+
+    /**
+     * High-level check for action permission
+     * @param {string} projectId 
+     * @param {string} action 
+     * @returns {Promise<boolean>}
+     */
+    canPerformAction: async (projectId, action) => {
+        const isEnabled = await RegulatoryModeGuard.isEnabled(projectId);
+        if (!isEnabled) return true;
+        return RegulatoryModeGuard.isActionAllowed(action);
+    },
+
+    /**
      * Get the regulatory mode prompt constraints
      * Used to modify AI behavior when regulatory mode is active
      * @returns {string} - Prompt text to inject

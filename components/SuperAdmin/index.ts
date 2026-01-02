@@ -18,4 +18,7 @@ export { LegalPanel } from './LegalPanel';
 // Existing SuperAdmin components
 export { SuperAdminSignalCenter } from './SuperAdminSignalCenter';
 
+// AI Settings
+export { SuperAdminAISettings } from './SuperAdminAISettings';
+
 

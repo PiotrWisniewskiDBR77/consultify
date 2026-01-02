@@ -35,22 +35,25 @@ export const UsageStatsPanel: React.FC = () => {
     const fetchUsageData = async () => {
         setLoading(true);
         try {
-            const orgs = await Api.getOrganizations();
-            const dashboard = await Api.getSuperAdminDashboard();
+            // Fetch real usage data from the new endpoint
+            const [usageData, dashboard] = await Promise.all([
+                Api.getUsageByOrganization().catch(() => []),
+                Api.getSuperAdminDashboard()
+            ]);
             
-            const usage: OrgUsage[] = orgs.map((org: any) => ({
+            const usage: OrgUsage[] = usageData.map((org: any) => ({
                 id: org.id,
                 name: org.name,
                 plan: org.plan || 'free',
                 userCount: org.user_count || 0,
-                aiCalls: Math.floor(Math.random() * 1000), // Placeholder
-                tokensUsed: Math.floor(Math.random() * 100000), // Placeholder
-                lastActive: org.updated_at || org.created_at
+                aiCalls: org.ai_calls || 0,
+                tokensUsed: org.tokens_used || 0,
+                lastActive: org.last_ai_activity || ''
             }));
 
             setOrgUsage(usage);
             setTotals({
-                totalOrgs: orgs.length,
+                totalOrgs: usageData.length,
                 totalUsers: dashboard?.counts?.total_users || 0,
                 totalAiCalls: dashboard?.ai?.total_ai_calls || 0,
                 totalTokens: dashboard?.ai?.total_tokens || 0

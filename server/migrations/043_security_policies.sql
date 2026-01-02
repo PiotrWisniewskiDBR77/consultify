@@ -180,3 +180,4 @@ INSERT OR IGNORE INTO security_policies (id, organization_id, compliance_preset)
 VALUES ('default-global', NULL, 'none');
 
 
+

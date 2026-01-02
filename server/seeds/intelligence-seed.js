@@ -359,3 +359,4 @@ async function seedIntelligenceData(db, projectId, userId) {
 module.exports = { seedIntelligenceData, SAMPLE_INSIGHTS, SAMPLE_MESSAGES };
 
 
+

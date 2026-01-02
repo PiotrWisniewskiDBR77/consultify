@@ -7,22 +7,8 @@ import multiFrameworkAssessmentService from '../../../server/services/multiFrame
 import db from '../../../server/database';
 // Import other dependencies if needed, or mock them
 
-// Mock database
-// Mock database
-const mockQuery = vi.fn();
-const mockGet = vi.fn();
-const mockRun = vi.fn();
-
-vi.mock('../../../server/database', () => ({
-    query: mockQuery,
-    get: mockGet,
-    run: mockRun,
-    default: {
-        query: mockQuery,
-        get: mockGet,
-        run: mockRun
-    }
-}));
+// Mock database removed - using Real DB (SQLite with Polyfill)
+// The db module exports the instance directly, and our Polyfill in database.sqlite.active.js makes it compatible.
 
 // Mock audit service
 vi.mock('../../../server/services/multiFrameworkAuditService', () => ({
@@ -42,8 +28,10 @@ vi.mock('../../../server/services/multiFrameworkAuditService', () => ({
 import { calculateFrameworkScore } from '../../../server/services/frameworkScoreCalculators';
 
 describe('MultiFrameworkAssessmentService', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.clearAllMocks();
+        // Clean up DB tables if needed
+        await db.run('DELETE FROM multi_framework_assessments');
     });
 
     describe('createAssessment', () => {
@@ -65,17 +53,6 @@ describe('MultiFrameworkAssessmentService', () => {
             };
             const userId = 'user-123';
 
-            db.query.mockResolvedValueOnce({
-                rows: [{
-                    id: 'assessment-123',
-                    project_id: projectId,
-                    framework,
-                    data,
-                    status: 'DRAFT',
-                    version: 1,
-                }],
-            });
-
             const result = await multiFrameworkAssessmentService.createAssessment(
                 projectId,
                 framework,
@@ -86,7 +63,7 @@ describe('MultiFrameworkAssessmentService', () => {
 
             expect(result).toBeDefined();
             expect(result.framework).toBe('SIRI');
-            expect(db.query).toHaveBeenCalled();
+            // expect(db.query).toHaveBeenCalled(); // Removed
         });
 
         it('should create ADMA assessment with valid data', async () => {
@@ -102,17 +79,6 @@ describe('MultiFrameworkAssessmentService', () => {
                 legalDisclaimerAccepted: true,
             };
             const userId = 'user-123';
-
-            db.query.mockResolvedValueOnce({
-                rows: [{
-                    id: 'assessment-456',
-                    project_id: projectId,
-                    framework,
-                    data,
-                    status: 'DRAFT',
-                    version: 1,
-                }],
-            });
 
             const result = await multiFrameworkAssessmentService.createAssessment(
                 projectId,
@@ -144,17 +110,6 @@ describe('MultiFrameworkAssessmentService', () => {
             };
             const userId = 'user-123';
 
-            db.query.mockResolvedValueOnce({
-                rows: [{
-                    id: 'assessment-789',
-                    project_id: projectId,
-                    framework,
-                    data,
-                    status: 'DRAFT',
-                    version: 1,
-                }],
-            });
-
             const result = await multiFrameworkAssessmentService.createAssessment(
                 projectId,
                 framework,
@@ -182,17 +137,6 @@ describe('MultiFrameworkAssessmentService', () => {
                 },
             };
             const userId = 'user-123';
-
-            db.query.mockResolvedValueOnce({
-                rows: [{
-                    id: 'assessment-abc',
-                    project_id: projectId,
-                    framework,
-                    data,
-                    status: 'DRAFT',
-                    version: 1,
-                }],
-            });
 
             const result = await multiFrameworkAssessmentService.createAssessment(
                 projectId,
@@ -232,18 +176,6 @@ describe('MultiFrameworkAssessmentService', () => {
                 },
             };
 
-            db.query.mockResolvedValueOnce({
-                rows: [{
-                    id: 'assessment-xyz',
-                    project_id: 'project-123',
-                    framework: 'SIRI',
-                    data,
-                    overall_score: 3.4,
-                    status: 'DRAFT',
-                    version: 1,
-                }],
-            });
-
             const result = await multiFrameworkAssessmentService.createAssessment(
                 'project-123',
                 'SIRI',
@@ -252,11 +184,8 @@ describe('MultiFrameworkAssessmentService', () => {
                 { organizationId: 'org-123' }
             );
 
-            // Check that score calculation was called (via INSERT query)
-            expect(db.query).toHaveBeenCalledWith(
-                expect.stringContaining('INSERT INTO multi_framework_assessments'),
-                expect.any(Array)
-            );
+            // Check correctness of calculation
+            expect(result.overall_score).toBeCloseTo(3.375, 2); // 27/8 = 3.375
         });
     });
 
@@ -470,5 +399,6 @@ describe('FrameworkScoreCalculators', () => {
         });
     });
 });
+
 
 

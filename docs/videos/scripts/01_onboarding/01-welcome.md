@@ -65,3 +65,4 @@ We've designed every screen to be self-explanatory, but help is always just one 
 - 5:30 - End card with "Next: Setting Up Your Profile"
 
 
+

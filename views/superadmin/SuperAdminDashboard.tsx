@@ -1,6 +1,28 @@
+/**
+ * SuperAdminDashboard - Minimalist Dashboard
+ * 
+ * Redesigned with elegant technological minimalism:
+ * - No colorful gradients
+ * - Clean metric displays
+ * - Subtle interactions
+ */
+
 import React from 'react';
-import { Building, Users, Brain, Zap, Activity, DollarSign, TrendingUp, UserPlus, RefreshCw } from 'lucide-react';
-import { InfoButton } from '../../components/shared/InfoButton';
+import { 
+    Building, 
+    Users, 
+    Brain, 
+    Zap, 
+    Activity, 
+    DollarSign, 
+    ChevronRight,
+    UserPlus,
+    TrendingUp,
+    Clock
+} from 'lucide-react';
+import { MetricCard } from '../../components/Admin/shared/MetricCard';
+import { Card, Section } from '../../components/Admin/shared/Card';
+import { PageHeader } from '../../components/Admin/shared/PageHeader';
 
 interface SuperAdminStats {
     totalOrgs: number;
@@ -34,6 +56,64 @@ interface SuperAdminDashboardProps {
     onNavigateToBilling: () => void;
 }
 
+// Quick Action Button - Minimalist
+const QuickAction: React.FC<{
+    icon: React.ElementType;
+    label: string;
+    description: string;
+    onClick: () => void;
+    badge?: number;
+}> = ({ icon: Icon, label, description, onClick, badge }) => (
+    <button
+        onClick={onClick}
+        className="group relative border border-white/[0.06] hover:border-white/[0.12] rounded-xl p-4 text-left transition-all hover:bg-white/[0.02]"
+    >
+        {badge !== undefined && badge > 0 && (
+            <span className="absolute top-3 right-3 bg-amber-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                {badge}
+            </span>
+        )}
+        <div className="flex items-center gap-3 mb-1.5">
+            <Icon size={18} className="text-slate-400 group-hover:text-slate-300 transition-colors" />
+            <span className="text-sm font-medium text-slate-200 group-hover:text-white transition-colors">
+                {label}
+            </span>
+            <ChevronRight size={14} className="ml-auto text-slate-600 group-hover:text-slate-400 transition-colors" />
+        </div>
+        <p className="text-xs text-slate-500">{description}</p>
+    </button>
+);
+
+// Activity Item - Clean
+const ActivityRow: React.FC<{ activity: ActivityItem }> = ({ activity }) => {
+    const actionColors: Record<string, string> = {
+        created: 'bg-emerald-400',
+        deleted: 'bg-red-400',
+        updated: 'bg-blue-400',
+    };
+    
+    return (
+        <div className="flex items-center gap-3 py-2.5 border-b border-white/[0.04] last:border-b-0">
+            <span className={`w-1.5 h-1.5 rounded-full ${actionColors[activity.action || ''] || 'bg-slate-500'}`} />
+            <span className="text-sm text-slate-400 min-w-[100px] truncate">
+                {activity.user_name || activity.user_email || 'System'}
+            </span>
+            <span className="text-xs text-slate-500 px-1.5 py-0.5 rounded bg-slate-800/50">
+                {activity.action}
+            </span>
+            <span className="text-sm text-slate-300 font-medium">
+                {activity.entity_type}
+            </span>
+            <span className="text-sm text-slate-500 truncate flex-1">
+                {activity.entity_name || activity.entity_id?.slice(0, 8) || ''}
+            </span>
+            <span className="text-xs text-slate-600 ml-auto whitespace-nowrap">
+                {activity.created_at ? new Date(activity.created_at).toLocaleString() : ''}
+            </span>
+        </div>
+    );
+};
+
 export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
     stats,
     activities,
@@ -44,159 +124,122 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
     onNavigateToBilling
 }) => {
     return (
-        <div className="p-8 overflow-y-auto relative">
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">System overview and quick actions</p>
-                </div>
-            </div>
+        <div className="p-8 overflow-y-auto">
+            {/* Header */}
+            <PageHeader 
+                title="Dashboard" 
+                subtitle="System overview and quick actions"
+            />
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                <button
-                    onClick={onNavigateToOrganizations}
-                    className="bg-gradient-to-br from-blue-600/20 to-blue-700/10 border border-blue-500/20 rounded-xl p-4 text-left hover:border-blue-500/40 transition-all group"
-                >
-                    <div className="flex items-center gap-3 mb-2">
-                        <Building size={20} className="text-blue-500 dark:text-blue-400" />
-                        <span className="text-slate-900 dark:text-white font-medium">Organizations</span>
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Manage orgs & subscriptions</p>
-                </button>
-                <button
-                    onClick={onNavigateToUsers}
-                    className="bg-gradient-to-br from-emerald-600/20 to-emerald-700/10 border border-emerald-500/20 rounded-xl p-4 text-left hover:border-emerald-500/40 transition-all group"
-                >
-                    <div className="flex items-center gap-3 mb-2">
-                        <UserPlus size={20} className="text-emerald-500 dark:text-emerald-400" />
-                        <span className="text-slate-900 dark:text-white font-medium">Invite User</span>
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Add new users to system</p>
-                </button>
-                <button
-                    onClick={onNavigateToBilling}
-                    className="bg-gradient-to-br from-purple-600/20 to-purple-700/10 border border-purple-500/20 rounded-xl p-4 text-left hover:border-purple-500/40 transition-all group"
-                >
-                    <div className="flex items-center gap-3 mb-2">
-                        <TrendingUp size={20} className="text-purple-500 dark:text-purple-400" />
-                        <span className="text-slate-900 dark:text-white font-medium">Revenue</span>
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">View billing & analytics</p>
-                </button>
-                {stats.pendingRequests > 0 && (
-                    <button
+            <Section className="mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <QuickAction
+                        icon={Building}
+                        label="Organizations"
+                        description="Manage orgs & subscriptions"
                         onClick={onNavigateToOrganizations}
-                        className="bg-gradient-to-br from-yellow-600/20 to-yellow-700/10 border border-yellow-500/20 rounded-xl p-4 text-left hover:border-yellow-500/40 transition-all group relative"
-                    >
-                        <span className="absolute top-2 right-2 bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 rounded-full">
-                            {stats.pendingRequests}
-                        </span>
-                        <div className="flex items-center gap-3 mb-2">
-                            <Users size={20} className="text-yellow-500 dark:text-yellow-400" />
-                            <span className="text-slate-900 dark:text-white font-medium">Pending</span>
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Review access requests</p>
-                    </button>
-                )}
-            </div>
+                    />
+                    <QuickAction
+                        icon={UserPlus}
+                        label="Invite User"
+                        description="Add new users to system"
+                        onClick={onNavigateToUsers}
+                    />
+                    <QuickAction
+                        icon={TrendingUp}
+                        label="Revenue"
+                        description="View billing & analytics"
+                        onClick={onNavigateToBilling}
+                    />
+                    {stats.pendingRequests > 0 && (
+                        <QuickAction
+                            icon={Clock}
+                            label="Pending"
+                            description="Review access requests"
+                            onClick={onNavigateToOrganizations}
+                            badge={stats.pendingRequests}
+                        />
+                    )}
+                </div>
+            </Section>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
-                <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 flex items-center gap-3 shadow-sm dark:shadow-none">
-                    <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-500/20 flex items-center justify-center text-blue-500 dark:text-blue-400">
-                        <Building size={20} />
-                    </div>
-                    <div>
-                        <p className="text-slate-500 dark:text-slate-400 text-xs">Organizations</p>
-                        <p className="text-xl font-bold text-slate-900 dark:text-white">{stats.totalOrgs}</p>
-                    </div>
+            {/* Metrics Grid */}
+            <Section className="mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                    <Card variant="bordered" padding="md">
+                        <MetricCard
+                            icon={Building}
+                            label="Organizations"
+                            value={stats.totalOrgs}
+                        />
+                    </Card>
+                    <Card variant="bordered" padding="md">
+                        <MetricCard
+                            icon={Users}
+                            label="Total Users"
+                            value={stats.totalUsers}
+                        />
+                    </Card>
+                    <Card variant="bordered" padding="md">
+                        <MetricCard
+                            icon={Activity}
+                            label="Live Now"
+                            value={stats.liveUsers}
+                            subtitle="Active sessions"
+                        />
+                    </Card>
+                    <Card variant="bordered" padding="md">
+                        <MetricCard
+                            icon={Users}
+                            label="Active (7d)"
+                            value={stats.activeUsers7d}
+                        />
+                    </Card>
+                    <Card variant="bordered" padding="md">
+                        <MetricCard
+                            icon={Brain}
+                            label="AI Calls (7d)"
+                            value={stats.aiCalls.toLocaleString()}
+                        />
+                    </Card>
+                    <Card variant="bordered" padding="md">
+                        <MetricCard
+                            icon={Zap}
+                            label="Tokens (7d)"
+                            value={`${(stats.tokens / 1000).toFixed(1)}k`}
+                        />
+                    </Card>
+                    <Card variant="bordered" padding="md">
+                        <MetricCard
+                            icon={DollarSign}
+                            label="MRR (Est)"
+                            value={`$${stats.revenue.toFixed(0)}`}
+                        />
+                    </Card>
                 </div>
-                <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 flex items-center gap-3 shadow-sm dark:shadow-none">
-                    <div className="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-500/20 flex items-center justify-center text-green-500 dark:text-green-400">
-                        <Users size={20} />
-                    </div>
-                    <div>
-                        <p className="text-slate-500 dark:text-slate-400 text-xs">Total Users</p>
-                        <p className="text-xl font-bold text-slate-900 dark:text-white">{stats.totalUsers}</p>
-                    </div>
-                </div>
-                <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 flex items-center gap-3 shadow-sm dark:shadow-none">
-                    <div className="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-500/20 flex items-center justify-center text-red-500 relative">
-                        <Activity size={20} />
-                        <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border border-white dark:border-navy-900"></span>
-                    </div>
-                    <div>
-                        <p className="text-slate-500 dark:text-slate-400 text-xs">Live Now</p>
-                        <p className="text-xl font-bold text-slate-900 dark:text-white">{stats.liveUsers}</p>
-                    </div>
-                </div>
-                <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 flex items-center gap-3 shadow-sm dark:shadow-none">
-                    <div className="w-10 h-10 rounded-lg bg-yellow-50 dark:bg-yellow-500/20 flex items-center justify-center text-yellow-500 dark:text-yellow-400">
-                        <Users size={20} />
-                    </div>
-                    <div>
-                        <p className="text-slate-500 dark:text-slate-400 text-xs">Active (7d)</p>
-                        <p className="text-xl font-bold text-slate-900 dark:text-white">{stats.activeUsers7d}</p>
-                    </div>
-                </div>
-                <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 flex items-center gap-3 shadow-sm dark:shadow-none">
-                    <div className="w-10 h-10 rounded-lg bg-purple-50 dark:bg-purple-500/20 flex items-center justify-center text-purple-500 dark:text-purple-400">
-                        <Brain size={20} />
-                    </div>
-                    <div>
-                        <p className="text-slate-500 dark:text-slate-400 text-xs">AI Calls (7d)</p>
-                        <p className="text-xl font-bold text-slate-900 dark:text-white">{stats.aiCalls}</p>
-                    </div>
-                </div>
-                <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 flex items-center gap-3 shadow-sm dark:shadow-none">
-                    <div className="w-10 h-10 rounded-lg bg-cyan-50 dark:bg-cyan-500/20 flex items-center justify-center text-cyan-500 dark:text-cyan-400">
-                        <Zap size={20} />
-                    </div>
-                    <div>
-                        <p className="text-slate-500 dark:text-slate-400 text-xs">Tokens (7d)</p>
-                        <p className="text-xl font-bold text-slate-900 dark:text-white">{(stats.tokens / 1000).toFixed(1)}k</p>
-                    </div>
-                </div>
-                <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 flex items-center gap-3 shadow-sm dark:shadow-none">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-500 dark:text-emerald-400">
-                        <DollarSign size={20} />
-                    </div>
-                    <div>
-                        <p className="text-slate-500 dark:text-slate-400 text-xs">MRR (Est)</p>
-                        <p className="text-xl font-bold text-slate-900 dark:text-white">${stats.revenue.toFixed(0)}</p>
-                    </div>
-                </div>
-            </div>
+            </Section>
 
             {/* Recent Activity */}
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-sm dark:shadow-none">
-                <h2 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Recent Activity</h2>
-                {activities.length === 0 ? (
-                    <p className="text-slate-500 text-sm">No recent activity recorded yet.</p>
-                ) : (
-                    <div className="space-y-3 max-h-64 overflow-y-auto">
-                        {activities.slice(0, 10).map((act, idx) => (
-                            <div key={act.id || idx} className="flex items-center gap-3 text-sm border-b border-slate-100 dark:border-white/5 pb-2">
-                                <div className={`w-2 h-2 rounded-full ${act.action === 'created' ? 'bg-green-500' :
-                                    act.action === 'deleted' ? 'bg-red-500' :
-                                        'bg-blue-500'
-                                    }`} />
-                                <span className="text-slate-500 dark:text-slate-400">{act.user_name || act.user_email || 'System'}</span>
-                                <span className="text-slate-500">{act.action}</span>
-                                <span className="text-slate-900 dark:text-white font-medium">{act.entity_type}</span>
-                                <span className="text-slate-500">{act.entity_name || act.entity_id?.slice(0, 8) || ''}</span>
-                                <span className="ml-auto text-slate-500 dark:text-slate-600 text-xs">
-                                    {act.created_at ? new Date(act.created_at).toLocaleString() : ''}
-                                </span>
+            <Section title="Recent Activity">
+                <Card variant="bordered" padding="none">
+                    <div className="p-5">
+                        {activities.length === 0 ? (
+                            <p className="text-slate-500 text-sm py-4 text-center">
+                                No recent activity recorded yet.
+                            </p>
+                        ) : (
+                            <div className="max-h-72 overflow-y-auto">
+                                {activities.slice(0, 15).map((act, idx) => (
+                                    <ActivityRow key={act.id || idx} activity={act} />
+                                ))}
                             </div>
-                        ))}
+                        )}
                     </div>
-                )}
-            </div>
+                </Card>
+            </Section>
         </div>
     );
 };
 
 export default SuperAdminDashboard;
-

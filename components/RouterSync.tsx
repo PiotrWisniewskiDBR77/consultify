@@ -114,7 +114,8 @@ export const RouterSync: React.FC = () => {
             const preservedViews = [
                 'ADMIN_', 'SUPERADMIN_', 'SETTINGS_', 'CONTEXT_BUILDER_',
                 'MY_WORK', 'PORTFOLIO_', 'IMPLEMENTATION', 'BENEFITS_', 
-                'ECONOMICS', 'ASSESSMENT_', 'AI_ACTION_', 'KPI_OKR_', 'STUDIO'
+                'ECONOMICS', 'ASSESSMENT_', 'AI_ACTION_', 'KPI_OKR_', 'STUDIO',
+                'PROJECT_INTELLIGENCE'
             ];
             const shouldPreserve = preservedViews.some(prefix => currentView.startsWith(prefix));
             if (!shouldPreserve && currentView !== AppView.AI_CHAT) {

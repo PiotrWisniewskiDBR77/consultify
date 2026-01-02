@@ -136,3 +136,4 @@ CREATE INDEX IF NOT EXISTS idx_report_approvals_report ON report_approvals(repor
 -- ALTER TABLE assessment_reports ADD COLUMN approved_at TEXT;
 
 
+

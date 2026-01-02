@@ -5,9 +5,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useAIStream } from '../../../hooks/useAIStream';
+import { Api } from '../../../services/api';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useAppStore } from '../../../store/useAppStore';
-import { useArtifactsStore } from '../../../store/useArtifactsStore';
+import { useArtifactsStore, parseArtifactsFromResponse } from '../../../store/useArtifactsStore';
 
 // Mock stores
 vi.mock('../../../store/useAppStore', () => ({
@@ -15,24 +16,25 @@ vi.mock('../../../store/useAppStore', () => ({
 }));
 
 vi.mock('../../../store/useArtifactsStore', () => ({
-  useArtifactsStore: vi.fn()
+  useArtifactsStore: vi.fn(),
+  parseArtifactsFromResponse: vi.fn(() => [])
 }));
 
-vi.mock('../../../services/api', () => ({
-  Api: {
-    streamChat: vi.fn()
-  }
-}));
+
 
 describe('Enhanced Streaming Integration', () => {
   const mockUpdateLastChatMessage = vi.fn();
   const mockSetIsBotTyping = vi.fn();
   const mockSetCurrentStreamContent = vi.fn();
   const mockAddArtifact = vi.fn();
+  let chatSpy: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
+    // Spy on the API method and provide default implementation
+    chatSpy = vi.spyOn(Api, 'chatWithAIStream').mockImplementation(async () => { });
+
     (useAppStore as any).mockReturnValue({
       updateLastChatMessage: mockUpdateLastChatMessage,
       setIsBotTyping: mockSetIsBotTyping,
@@ -44,11 +46,14 @@ describe('Enhanced Streaming Integration', () => {
     (useArtifactsStore as any).mockReturnValue({
       addArtifact: mockAddArtifact
     });
+
+    (parseArtifactsFromResponse as any).mockReturnValue([]);
+
   });
 
   it('extracts thinking steps during streaming', async () => {
-    const { Api } = await import('../../../services/api');
-    
+
+
     // Mock streaming response with thinking steps
     const mockStream = {
       [Symbol.asyncIterator]: async function* () {
@@ -58,7 +63,13 @@ describe('Enhanced Streaming Integration', () => {
       }
     };
 
-    (Api.streamChat as any).mockResolvedValue(mockStream);
+    chatSpy.mockImplementation(async (msg: any, hist: any, onChunk: any, onDone: any) => {
+      for await (const chunk of mockStream) {
+        onChunk(chunk.content);
+        await new Promise(r => setTimeout(r, 100));
+      }
+      onDone();
+    });
 
     const { result } = renderHook(() => useAIStream());
 
@@ -70,8 +81,8 @@ describe('Enhanced Streaming Integration', () => {
   });
 
   it('detects artifacts during streaming', async () => {
-    const { Api } = await import('../../../services/api');
-    
+
+
     const mockStream = {
       [Symbol.asyncIterator]: async function* () {
         yield { content: 'Here is code:\n```artifact:code:javascript:Test\n' };
@@ -79,7 +90,15 @@ describe('Enhanced Streaming Integration', () => {
       }
     };
 
-    (Api.streamChat as any).mockResolvedValue(mockStream);
+    (parseArtifactsFromResponse as any).mockReturnValue([{ id: 'test', type: 'code' }]);
+
+    chatSpy.mockImplementation(async (msg: any, hist: any, onChunk: any, onDone: any) => {
+      for await (const chunk of mockStream) {
+        onChunk(chunk.content);
+        await new Promise(r => setTimeout(r, 100));
+      }
+      onDone();
+    });
 
     const { result } = renderHook(() => useAIStream({
       onArtifactDetected: vi.fn()
@@ -93,8 +112,8 @@ describe('Enhanced Streaming Integration', () => {
   });
 
   it('tracks progress during streaming', async () => {
-    const { Api } = await import('../../../services/api');
-    
+
+
     const chunks = ['Chunk 1', 'Chunk 2', 'Chunk 3'];
     const mockStream = {
       [Symbol.asyncIterator]: async function* () {
@@ -104,7 +123,13 @@ describe('Enhanced Streaming Integration', () => {
       }
     };
 
-    (Api.streamChat as any).mockResolvedValue(mockStream);
+    chatSpy.mockImplementation(async (msg: any, hist: any, onChunk: any, onDone: any) => {
+      for await (const chunk of mockStream) {
+        onChunk(chunk.content);
+        await new Promise(r => setTimeout(r, 100));
+      }
+      onDone();
+    });
 
     const { result } = renderHook(() => useAIStream());
 
@@ -116,9 +141,9 @@ describe('Enhanced Streaming Integration', () => {
   });
 
   it('handles streaming errors gracefully', async () => {
-    const { Api } = await import('../../../services/api');
-    
-    (Api.streamChat as any).mockRejectedValue(new Error('Stream error'));
+
+
+    chatSpy.mockRejectedValue(new Error('Stream error'));
 
     const onError = vi.fn();
     const { result } = renderHook(() => useAIStream({
@@ -133,15 +158,21 @@ describe('Enhanced Streaming Integration', () => {
   });
 
   it('calls onStreamDone when streaming completes', async () => {
-    const { Api } = await import('../../../services/api');
-    
+
+
     const mockStream = {
       [Symbol.asyncIterator]: async function* () {
         yield { content: 'Complete response' };
       }
     };
 
-    (Api.streamChat as any).mockResolvedValue(mockStream);
+    chatSpy.mockImplementation(async (msg: any, hist: any, onChunk: any, onDone: any) => {
+      for await (const chunk of mockStream) {
+        onChunk(chunk.content);
+        await new Promise(r => setTimeout(r, 100));
+      }
+      onDone();
+    });
 
     const onDone = vi.fn();
     const { result } = renderHook(() => useAIStream({
@@ -156,8 +187,8 @@ describe('Enhanced Streaming Integration', () => {
   });
 
   it('updates streamed content in real-time', async () => {
-    const { Api } = await import('../../../services/api');
-    
+
+
     const chunks = ['Hello', ' World', '!'];
     const mockStream = {
       [Symbol.asyncIterator]: async function* () {
@@ -167,16 +198,22 @@ describe('Enhanced Streaming Integration', () => {
       }
     };
 
-    (Api.streamChat as any).mockResolvedValue(mockStream);
+    chatSpy.mockImplementation(async (msg: any, hist: any, onChunk: any, onDone: any) => {
+      for await (const chunk of mockStream) {
+        onChunk(chunk.content);
+        await new Promise(r => setTimeout(r, 100));
+      }
+      onDone();
+    });
 
     const { result } = renderHook(() => useAIStream());
 
     await result.current.startStream('Test', [], 'System prompt');
 
     await waitFor(() => {
-      expect(result.current.streamedContent).toContain('Hello');
-      expect(result.current.streamedContent).toContain('World');
+      // Check if the store action was called with the expected content parts
+      expect(mockSetCurrentStreamContent).toHaveBeenCalledWith(expect.stringContaining('Hello'));
+      expect(mockSetCurrentStreamContent).toHaveBeenCalledWith(expect.stringContaining('World'));
     }, { timeout: 2000 });
   });
 });
-

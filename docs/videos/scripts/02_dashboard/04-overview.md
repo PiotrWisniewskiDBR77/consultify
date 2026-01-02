@@ -76,3 +76,4 @@ These buttons adapt based on your transformation stage. If you haven't completed
 - 6:00 - End card with "Next: Customizing Your Dashboard"
 
 
+

@@ -174,7 +174,9 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
         if (recognitionRef.current) {
             try {
                 recognitionRef.current.stop();
-            } catch (e) {}
+            } catch (_e) {
+                // Ignore errors when stopping recognition
+            }
         }
 
         // Stop MediaRecorder
@@ -283,7 +285,9 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
         if (recognitionRef.current) {
             try {
                 recognitionRef.current.stop();
-            } catch (e) {}
+            } catch (_e) {
+                // Ignore errors when stopping recognition
+            }
         }
 
         if (recordingTimerRef.current) {

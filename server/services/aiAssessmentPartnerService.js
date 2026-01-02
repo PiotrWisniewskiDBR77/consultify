@@ -9,7 +9,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 // AI THINKING_PARTNER Mode Configuration
 const AI_PARTNER_CONFIG = {
     mode: 'THINKING_PARTNER',
-    
+
     allowed: [
         'ASK_CLARIFYING_QUESTION',    // Deepen understanding
         'EXPLAIN_WHY_ASKING',         // "I ask because..."
@@ -22,14 +22,14 @@ const AI_PARTNER_CONFIG = {
         'GAP_ANALYSIS',               // Analyze gaps between actual and target
         'PATHWAY_SUGGESTION'          // Suggest improvement pathways
     ],
-    
+
     blocked: [
         'JUMP_TO_CONCLUSION',         // Never skip steps
         'SUMMARIZE_PREMATURELY',      // Wait until user is ready
         'SUGGEST_SOLUTION',           // Insight, not answers
         'EVALUATE_ANSWERS'            // Never judge input
     ],
-    
+
     tone: {
         style: 'partner',             // Collaborative, not instructive
         formality: 'professional',
@@ -143,8 +143,15 @@ class AIAssessmentPartnerService {
     initializeAI() {
         const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
         if (apiKey) {
-            this.genAI = new GoogleGenerativeAI(apiKey);
-            this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+            try {
+                this.genAI = new GoogleGenerativeAI(apiKey);
+                this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+            } catch (err) {
+                console.error('[AIPartner] Failed to initialize Google AI:', err.message);
+            }
+        } else {
+            this.genAI = null;
+            this.model = null;
         }
     }
 
@@ -158,11 +165,11 @@ class AIAssessmentPartnerService {
         }
 
         const prompt = this._buildGuidancePrompt(axis, axisId, currentScore, targetScore, context);
-        
+
         try {
             const result = await this.model.generateContent(prompt);
             const response = result.response.text();
-            
+
             return {
                 axisId,
                 guidance: response,
@@ -189,10 +196,10 @@ class AIAssessmentPartnerService {
      */
     async validateScoreConsistency(assessment, organizationContext = {}) {
         const inconsistencies = [];
-        
+
         // Check for common inconsistencies
         const scores = Object.entries(assessment).filter(([key, val]) => val?.actual);
-        
+
         // Rule 1: AI Maturity shouldn't exceed Data Management by more than 2 levels
         if (assessment.aiMaturity?.actual && assessment.dataManagement?.actual) {
             const aiScore = assessment.aiMaturity.actual;
@@ -252,8 +259,8 @@ class AIAssessmentPartnerService {
         return {
             hasInconsistencies: inconsistencies.length > 0,
             inconsistencies,
-            overallAssessment: inconsistencies.length === 0 
-                ? 'Assessment appears internally consistent' 
+            overallAssessment: inconsistencies.length === 0
+                ? 'Assessment appears internally consistent'
                 : `Found ${inconsistencies.length} potential inconsistencies to review`
         };
     }
@@ -268,7 +275,7 @@ class AIAssessmentPartnerService {
         }
 
         const gap = targetScore - currentScore;
-        
+
         // Build pathway from current to target
         const pathway = [];
         for (let level = currentScore + 1; level <= targetScore; level++) {
@@ -295,10 +302,10 @@ class AIAssessmentPartnerService {
                     Provide practical, actionable recommendations in JSON format:
                     [{"title": "...", "description": "...", "priority": "HIGH|MEDIUM|LOW", "timeframe": "..."}]
                 `;
-                
+
                 const result = await this.model.generateContent(prompt);
                 const responseText = result.response.text();
-                
+
                 // Try to parse JSON from response
                 const jsonMatch = responseText.match(/\[[\s\S]*\]/);
                 if (jsonMatch) {
@@ -484,7 +491,7 @@ class AIAssessmentPartnerService {
     _getFallbackGuidance(axisId, currentScore, targetScore) {
         const axis = DRD_AXES[axisId];
         const gap = targetScore - currentScore;
-        
+
         if (gap <= 0) {
             return `Your current ${axis?.name} maturity meets or exceeds your target. Consider if the target reflects your true ambition.`;
         } else if (gap <= 2) {
@@ -504,7 +511,7 @@ class AIAssessmentPartnerService {
             5: 12, // 5 → 6: AI/advanced
             6: 18  // 6 → 7: autonomous
         };
-        
+
         const axisComplexity = {
             processes: 1.0,
             digitalProducts: 1.2,
@@ -514,10 +521,10 @@ class AIAssessmentPartnerService {
             cybersecurity: 1.0,
             aiMaturity: 1.4
         };
-        
+
         const base = baseMonths[fromLevel] || 6;
         const multiplier = axisComplexity[axisId] || 1.0;
-        
+
         return Math.round(base * multiplier);
     }
 
@@ -580,7 +587,7 @@ class AIAssessmentPartnerService {
                 7: ['AI-native organization', 'Autonomous AI systems']
             }
         };
-        
+
         return activities[axisId]?.[level] || ['Assess current capabilities', 'Define improvement roadmap'];
     }
 
@@ -617,7 +624,7 @@ class AIAssessmentPartnerService {
 
         try {
             if (!this.model) {
-                return { 
+                return {
                     suggestion: this._getFallbackJustification(axisId, score),
                     mode: 'FALLBACK'
                 };
@@ -625,7 +632,7 @@ class AIAssessmentPartnerService {
 
             const result = await this.model.generateContent(prompt);
             const suggestion = result.response.text().trim();
-            
+
             return {
                 axisId,
                 score,
@@ -670,7 +677,7 @@ class AIAssessmentPartnerService {
 
         try {
             if (!this.model) {
-                return { 
+                return {
                     evidence: this._getFallbackEvidence(axisId, score),
                     mode: 'FALLBACK'
                 };
@@ -678,11 +685,11 @@ class AIAssessmentPartnerService {
 
             const result = await this.model.generateContent(prompt);
             const responseText = result.response.text();
-            
+
             // Parse JSON array from response
             const jsonMatch = responseText.match(/\[[\s\S]*\]/);
             const evidence = jsonMatch ? JSON.parse(jsonMatch[0]) : this._getFallbackEvidence(axisId, score);
-            
+
             return {
                 axisId,
                 score,
@@ -768,7 +775,7 @@ class AIAssessmentPartnerService {
 
         try {
             if (!this.model) {
-                return { 
+                return {
                     correctedText: text,
                     mode: 'UNCHANGED'
                 };
@@ -776,7 +783,7 @@ class AIAssessmentPartnerService {
 
             const result = await this.model.generateContent(prompt);
             const correctedText = result.response.text().trim();
-            
+
             return {
                 originalText: text,
                 correctedText,
@@ -818,7 +825,7 @@ class AIAssessmentPartnerService {
 
         try {
             if (!this.model) {
-                return { 
+                return {
                     completion: '',
                     mode: 'FALLBACK'
                 };
@@ -826,7 +833,7 @@ class AIAssessmentPartnerService {
 
             const result = await this.model.generateContent(prompt);
             const completion = result.response.text().trim();
-            
+
             return {
                 partialText,
                 completion,
@@ -902,7 +909,7 @@ class AIAssessmentPartnerService {
 
             const result = await this.model.generateContent(prompt);
             const summary = result.response.text().trim();
-            
+
             return {
                 summary,
                 metrics: {
@@ -966,7 +973,7 @@ class AIAssessmentPartnerService {
 
         try {
             if (!this.model) {
-                return { 
+                return {
                     view: `Podsumowanie dla ${stakeholderRole} wymaga połączenia z AI.`,
                     mode: 'FALLBACK'
                 };
@@ -974,7 +981,7 @@ class AIAssessmentPartnerService {
 
             const result = await this.model.generateContent(prompt);
             const view = result.response.text().trim();
-            
+
             return {
                 stakeholderRole,
                 view,
@@ -1025,7 +1032,7 @@ class AIAssessmentPartnerService {
 
         try {
             if (!this.model) {
-                return { 
+                return {
                     commentary: 'Komentarz benchmarkowy wymaga połączenia z AI.',
                     mode: 'FALLBACK'
                 };
@@ -1033,12 +1040,12 @@ class AIAssessmentPartnerService {
 
             const result = await this.model.generateContent(prompt);
             const commentary = result.response.text().trim();
-            
+
             // Calculate summary stats
             const withBenchmark = scores.filter(s => s.benchmark !== null);
             const aboveAvg = withBenchmark.filter(s => s.vsIndustry > 0).length;
             const belowAvg = withBenchmark.filter(s => s.vsIndustry < 0).length;
-            
+
             return {
                 commentary,
                 summary: {
@@ -1109,11 +1116,11 @@ class AIAssessmentPartnerService {
 
             const result = await this.model.generateContent(prompt);
             const responseText = result.response.text();
-            
+
             // Parse JSON from response
             const jsonMatch = responseText.match(/\[[\s\S]*\]/);
             const initiatives = jsonMatch ? JSON.parse(jsonMatch[0]) : this._getFallbackInitiatives(sortedGaps).initiatives;
-            
+
             return {
                 initiatives,
                 basedOnGaps: sortedGaps.slice(0, 5).map(g => g.axisName || g.axis),
@@ -1173,14 +1180,14 @@ class AIAssessmentPartnerService {
 
             const result = await this.model.generateContent(prompt);
             const responseText = result.response.text();
-            
+
             const jsonMatch = responseText.match(/\[[\s\S]*\]/);
             const prioritizedList = jsonMatch ? JSON.parse(jsonMatch[0]) : initiatives.map((i, idx) => ({
                 rank: idx + 1,
                 name: i.name,
                 priorityScore: 100 - idx * 10
             }));
-            
+
             return {
                 prioritizedList,
                 criteria,
@@ -1241,10 +1248,10 @@ class AIAssessmentPartnerService {
 
             const result = await this.model.generateContent(prompt);
             const responseText = result.response.text();
-            
+
             const jsonMatch = responseText.match(/\{[\s\S]*\}/);
             const roiEstimate = jsonMatch ? JSON.parse(jsonMatch[0]) : this._getFallbackROI(initiative).estimate;
-            
+
             return {
                 initiative: initiative.name,
                 estimate: roiEstimate,
@@ -1278,7 +1285,7 @@ class AIAssessmentPartnerService {
     _getTargetReasoning(axisId, current, target, ambitionLevel) {
         const gap = target - current;
         const axis = DRD_AXES[axisId];
-        
+
         if (gap === 0) return 'Obecny poziom spełnia oczekiwania.';
         if (gap === 1) return `Konserwatywny cel: osiągnięcie poziomu ${target} w ${axis?.name || axisId} jest realistyczne w ciągu 6-9 miesięcy.`;
         if (gap === 2) return `Zbalansowany cel: przejście na poziom ${target} wymaga średnioterminowego programu transformacji (12-18 miesięcy).`;
@@ -1296,7 +1303,7 @@ class AIAssessmentPartnerService {
     _getFallbackExecutiveSummary(scores, avgActual, avgTarget) {
         const topStrengths = [...scores].sort((a, b) => b.actual - a.actual).slice(0, 3);
         const topGaps = [...scores].sort((a, b) => b.gap - a.gap).slice(0, 3);
-        
+
         return {
             summary: `Organizacja osiągnęła średni poziom dojrzałości cyfrowej ${avgActual.toFixed(1)}/7. ` +
                 `Mocne strony to: ${topStrengths.map(s => s.name).join(', ')}. ` +

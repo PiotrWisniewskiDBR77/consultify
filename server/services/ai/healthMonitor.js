@@ -388,7 +388,7 @@ class AIHealthMonitor {
                 try {
                     const criticalFailure = results.checks.find(c => !c.healthy);
                     if (criticalFailure) {
-                        const notificationService = require('../../notificationService');
+                        const notificationService = require('../notificationService');
                         // Use a static debounce map to avoid spamming the DB every minute
                         const alertKey = `health_${criticalFailure.name}`;
                         const lastSent = this._lastAlertTime?.[alertKey] || 0;

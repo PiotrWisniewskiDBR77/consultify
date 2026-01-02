@@ -55,6 +55,7 @@ export default defineConfig({
                 'server/test-*.js',
                 'server/database.postgres.js',
                 'server/database.sqlite.js',
+                '**/trash_node_modules_*/**',
             ],
             thresholds: {
                 global: {

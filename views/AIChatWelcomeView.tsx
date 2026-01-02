@@ -24,13 +24,15 @@ import { useActionHandler, ActionPayload, ACTION_TYPES } from '../hooks/useActio
 import { ChatMessage, ChatCitation, ChatResponseAction } from '../types';
 
 // Components
-import { ChatMenu } from '../components/AIChat/ChatMenu';
-import { ChatHistorySidebar } from '../components/AIChat/ChatHistorySidebar';
+import { ChatSlidingPanel } from '../components/AIChat/ChatSlidingPanel';
 import { ChatExportModal } from '../components/AIChat/ChatExportModal';
 import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
 import { CitationList } from '../components/AIChat/CitationList';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
+import { MessageActions } from '../components/AIChat/Messages/MessageActions';
+import { Api } from '../services/api';
+import { MessageFeedback } from '../types';
 
 // Time-aware greeting helper
 const getTimeContext = () => {
@@ -64,7 +66,7 @@ export const AIChatWelcomeView: React.FC = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // App state
-    const { currentUser, selectedProject, activeChatMessages, addChatMessage } = useAppStore();
+    const { currentUser, selectedProject, activeChatMessages, addChatMessage, clearChat } = useAppStore();
 
     // Conversation store
     const {
@@ -88,10 +90,20 @@ export const AIChatWelcomeView: React.FC = () => {
                 content: fullText,
                 messageType: 'text'
             });
+            
+            // Trigger title generation after first AI response
+            if (isFirstExchangeRef.current && activeConversationId) {
+                isFirstExchangeRef.current = false;
+                console.log('[Chat] First exchange complete, generating title...');
+                // Use small delay to ensure messages are persisted
+                setTimeout(() => {
+                    generateTitle(activeConversationId);
+                }, 500);
+            }
         } catch (err) {
             console.error('[Chat] Failed to persist AI response:', err);
         }
-    }, [addMessage]);
+    }, [addMessage, activeConversationId, generateTitle]);
 
     const { isStreaming, streamedContent, startStream } = useAIStream({
         onStreamDone: handleStreamDone
@@ -143,7 +155,9 @@ export const AIChatWelcomeView: React.FC = () => {
     const [showExportModal, setShowExportModal] = useState(false);
     const [aiMemoryContext, setAiMemoryContext] = useState<string | null>(null);
     const [coThinkerPhase, setCoThinkerPhase] = useState<string>('discovery');
+    const [messageFeedback, setMessageFeedback] = useState<Record<string, MessageFeedback>>({});
     const lastSpokenContentRef = useRef<string>('');
+    const isFirstExchangeRef = useRef<boolean>(true);
 
     // Get time-aware context
     const timeContext = useMemo(() => getTimeContext(), []);
@@ -412,8 +426,12 @@ For example: REMEMBER: preferred_language: Polish`;
 
     // Handle new chat
     const handleNewChat = useCallback(() => {
+        // Clear both stores - conversation store (backend) and app store (UI)
         clearActiveChat();
-    }, [clearActiveChat]);
+        clearChat();
+        // Reset first exchange flag for title generation
+        isFirstExchangeRef.current = true;
+    }, [clearActiveChat, clearChat]);
 
     // Handle export
     const handleExport = useCallback(() => {
@@ -443,27 +461,76 @@ For example: REMEMBER: preferred_language: Polish`;
         }
     }, [selectedProject, addChatMessage]);
 
+    // Handle message feedback (thumbs up/down)
+    const handleFeedback = useCallback((messageId: string, feedback: MessageFeedback) => {
+        setMessageFeedback(prev => ({
+            ...prev,
+            [messageId]: feedback
+        }));
+        
+        // Report to backend for analytics
+        Api.reportMessageFeedback?.(messageId, feedback.rating).catch(err => {
+            console.error('[Feedback] Failed to report:', err);
+        });
+        
+        console.log('[Chat] Feedback recorded:', messageId, feedback.rating);
+    }, []);
+
+    // Handle report problem - visual alert
+    const handleReport = useCallback((messageId: string, reason: string) => {
+        console.error('[REPORT] 🚨 Problem reported:', { messageId, reason });
+        
+        // Show visual feedback - "krzyk" (scream)
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'fixed top-4 right-4 z-50 p-4 bg-red-600 text-white rounded-lg shadow-xl animate-pulse';
+        alertDiv.innerHTML = `
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">⚠️</span>
+                <div>
+                    <div class="font-bold">Zgłoszono problem</div>
+                    <div class="text-sm opacity-90">${reason === 'harmful' ? 'Szkodliwa treść' : 
+                        reason === 'incorrect' ? 'Błędne informacje' :
+                        reason === 'unhelpful' ? 'Nieprzydatne' : 'Inny problem'}</div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(alertDiv);
+        
+        // Remove after 4 seconds
+        setTimeout(() => {
+            alertDiv.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+            setTimeout(() => document.body.removeChild(alertDiv), 500);
+        }, 4000);
+        
+        // Report to backend
+        Api.reportMessage?.(messageId, reason).catch(err => {
+            console.error('[Report] Failed to send report:', err);
+        });
+    }, []);
+
+    // Handle message regenerate
+    const handleRegenerate = useCallback((messageId: string) => {
+        // Find the user message before this AI message and resend
+        const msgIndex = activeChatMessages.findIndex(m => m.id === messageId);
+        if (msgIndex > 0) {
+            const previousUserMsg = activeChatMessages[msgIndex - 1];
+            if (previousUserMsg && previousUserMsg.role === 'user') {
+                handleSend(previousUserMsg.content);
+            }
+        }
+    }, [activeChatMessages, handleSend]);
+
     const hasMessages = activeChatMessages.length > 0;
 
     // Chat View (when messages exist)
     if (hasMessages) {
         return (
             <div className="h-full w-full bg-slate-50 dark:bg-navy-950 overflow-hidden relative">
-                {/* Floating Menu Button - positioned inside the chat area */}
-                <div className="absolute top-4 left-4 z-50">
-                    <ChatMenu
-                        projectId={selectedProject?.id}
-                        onNewChat={handleNewChat}
-                        onExport={handleExport}
-                        onDailyBrief={handleDailyBrief}
-                        onPromptSelect={handleSend}
-                    />
-                </div>
-
-                {/* History Sidebar - Hidden by default, opened from menu */}
-                <ChatHistorySidebar
-                    projectId={selectedProject?.id}
+                {/* Claude-style Sliding Panel */}
+                <ChatSlidingPanel
                     onNewChat={handleNewChat}
+                    onSelectConversation={(id) => setActiveConversation(id)}
+                    activeConversationId={activeConversationId}
                 />
 
                 {/* Main Chat Area - Full width, sidebar is overlay */}
@@ -530,6 +597,26 @@ For example: REMEMBER: preferred_language: Polish`;
                                                 </button>
                                             )}
                                         </div>
+                                        
+                                        {/* Message Actions - shown below AI messages */}
+                                        {isAiMessage && !isStreamingThis && displayContent && (
+                                            <div className="mt-2 flex items-center gap-1">
+                                                <MessageActions
+                                                    message={{
+                                                        id: msg.id,
+                                                        role: 'ai',
+                                                        content: displayContent,
+                                                        timestamp: msg.timestamp,
+                                                        feedback: messageFeedback[msg.id]
+                                                    }}
+                                                    onFeedback={handleFeedback}
+                                                    onReport={handleReport}
+                                                    onRegenerate={handleRegenerate}
+                                                    onSpeak={ttsSupported ? (content) => speak(cleanTextForSpeech(content)) : undefined}
+                                                    showAlwaysVisible={true}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -632,21 +719,11 @@ For example: REMEMBER: preferred_language: Polish`;
     // Welcome Screen
     return (
         <div className="h-full w-full bg-slate-50 dark:bg-navy-950 overflow-hidden relative">
-            {/* Floating Menu Button - positioned inside the chat area */}
-            <div className="absolute top-4 left-4 z-50">
-                <ChatMenu
-                    projectId={selectedProject?.id}
-                    onNewChat={handleNewChat}
-                    onExport={handleExport}
-                    onDailyBrief={handleDailyBrief}
-                    onPromptSelect={handleSend}
-                />
-            </div>
-
-            {/* History Sidebar - Hidden by default, opened from menu */}
-            <ChatHistorySidebar
-                projectId={selectedProject?.id}
+            {/* Claude-style Sliding Panel */}
+            <ChatSlidingPanel
                 onNewChat={handleNewChat}
+                onSelectConversation={(id) => setActiveConversation(id)}
+                activeConversationId={activeConversationId}
             />
 
             {/* Main Welcome Area - Full width, sidebar is overlay */}
