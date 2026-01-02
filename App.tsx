@@ -37,7 +37,7 @@ const ProjectIntelligenceView = React.lazy(() => import('./views/ProjectIntellig
 const BenefitsRealizationView = React.lazy(() => import('./views/BenefitsRealizationView').then(m => ({ default: m.BenefitsRealizationView })));
 const PortfolioView = React.lazy(() => import('./views/PortfolioView'));
 import { AppView, SessionMode, AuthStep, User } from './types';
-import { Menu, ChevronRight, Loader2, Monitor, Languages, Bot, Database, Layers, Box, Sparkles } from 'lucide-react';
+import { Menu, ChevronRight, Loader2, Sparkles } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -48,7 +48,7 @@ import { NotificationDropdown } from './components/NotificationDropdown';
 import { TaskDropdown } from './components/TaskDropdown';
 import { AutoSaveProvider } from './src/context/AutoSaveContext';
 import { SystemHealth } from './components/SystemHealth';
-import { ChatOverlay } from './components/AIChat/ChatOverlay';
+// import { ChatOverlay } from './components/AIChat/ChatOverlay';
 import { AIProvider } from './contexts/AIContext';
 import { PMOStatusBar } from './components/PMO';
 // PMO context is available via usePMOContext hook when needed in child components
@@ -72,16 +72,16 @@ import { FeedbackSidePanel } from './components/Feedback/FeedbackSidePanel';
 import { UserProfileMenu } from './components/UserProfileMenu';
 
 
-// Help system wrapper component
-const _HelpButtonWrapper = () => {
-    const { isPanelOpen, openPanel, closePanel } = useHelpPanel();
-    return (
-        <>
-            <HelpButton onClick={openPanel} />
-            <HelpPanel isOpen={isPanelOpen} onClose={closePanel} />
-        </>
-    );
-};
+// Help system wrapper component - disabled, using direct HelpButton in layouts
+// const HelpButtonWrapper = () => {
+//     const { isPanelOpen, openPanel, closePanel } = useHelpPanel();
+//     return (
+//         <>
+//             <HelpButton onClick={openPanel} />
+//             <HelpPanel isOpen={isPanelOpen} onClose={closePanel} />
+//         </>
+//     );
+// };
 
 // Invitation acceptance wrapper component
 const AcceptInvitationView = React.lazy(() => import('./views/AcceptInvitationView'));
@@ -391,9 +391,12 @@ const AppContent: React.FC = () => {
         currentUser?.role !== 'SUPERADMIN';
 
     const getBreadcrumbs = () => {
-        const sidebarT = t('sidebar', { returnObjects: true }) as any;
-        const step1T = t('step1', { returnObjects: true }) as any;
-        const dashboardSubT = t('sidebar.dashboardSub', { returnObjects: true }) as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sidebarT = t('sidebar', { returnObjects: true }) as Record<string, any>;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const step1T = t('step1', { returnObjects: true }) as Record<string, any>;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const dashboardSubT = t('sidebar.dashboardSub', { returnObjects: true }) as Record<string, any>;
 
         const viewParts = currentView.split('_');
 

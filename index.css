@@ -612,7 +612,7 @@
 }
 
 /* ========================================
-   LIGHT MODE GLOBAL ELEMENT OVERRIDES
+   LIGHT MODE NAVY BLUE VISIBILITY ENHANCEMENTS
    Applied outside @layer for higher specificity
    ======================================== */
 
@@ -622,7 +622,7 @@ body:not(.dark) aside {
     border-color: var(--light-border);
 }
 
-/* Input fields in light mode */
+/* Input fields in light mode - stronger borders */
 body:not(.dark) input,
 body:not(.dark) select,
 body:not(.dark) textarea {
@@ -643,11 +643,6 @@ body:not(.dark) textarea:focus {
     box-shadow: 0 0 0 3px var(--light-accent-navy-surface);
 }
 
-/* Icons in light mode - navy tint */
-body:not(.dark) svg.lucide {
-    color: currentColor;
-}
-
 /* Dropdown menus in light mode */
 body:not(.dark) [role="menu"],
 body:not(.dark) [role="listbox"] {
@@ -660,4 +655,176 @@ body:not(.dark) [role="listbox"] {
 body:not(.dark) [role="tooltip"] {
     background-color: var(--light-navy-900);
     color: white;
+}
+
+/* ========================================
+   LIGHT MODE - Component Visibility Overrides
+   ======================================== */
+
+/* Admin Metric Cards - Darker text and borders */
+body:not(.dark) .admin-metric {
+    background-color: white;
+    border-color: #CBD5E1;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+body:not(.dark) .admin-metric-label {
+    color: #475569;
+}
+
+body:not(.dark) .admin-metric-value {
+    color: #0F172A;
+}
+
+body:not(.dark) .admin-metric-subtitle {
+    color: #475569;
+}
+
+/* Admin Tables - Better contrast */
+body:not(.dark) .admin-table thead {
+    background-color: #F1F5F9;
+}
+
+body:not(.dark) .admin-table th {
+    color: #334155;
+    border-bottom: 1px solid #CBD5E1;
+}
+
+body:not(.dark) .admin-table tbody tr {
+    border-bottom: 1px solid #E2E8F0;
+}
+
+body:not(.dark) .admin-table tbody tr:hover {
+    background-color: #F8FAFC;
+}
+
+body:not(.dark) .admin-table td {
+    color: #334155;
+}
+
+/* Status Colors - More vibrant in light mode */
+body:not(.dark) .admin-status-healthy {
+    color: #059669;
+}
+
+body:not(.dark) .admin-status-healthy .admin-status-dot {
+    background-color: #059669;
+}
+
+body:not(.dark) .admin-status-warning {
+    color: #D97706;
+}
+
+body:not(.dark) .admin-status-warning .admin-status-dot {
+    background-color: #D97706;
+}
+
+body:not(.dark) .admin-status-error {
+    color: #DC2626;
+}
+
+body:not(.dark) .admin-status-error .admin-status-dot {
+    background-color: #DC2626;
+}
+
+/* Section headers - Navy accent */
+body:not(.dark) .admin-section-header {
+    border-bottom-color: #CBD5E1;
+}
+
+body:not(.dark) .admin-section-title {
+    color: #0F172A;
+}
+
+/* Tabs - Navy blue accent in light mode */
+body:not(.dark) .admin-tabs {
+    border-bottom-color: #CBD5E1;
+}
+
+body:not(.dark) .admin-tab {
+    color: #475569;
+}
+
+body:not(.dark) .admin-tab:hover {
+    color: #0F172A;
+}
+
+body:not(.dark) .admin-tab-active {
+    color: #1E3A5F;
+    border-bottom-color: #1E3A5F;
+}
+
+/* Buttons in light mode - Navy styling */
+body:not(.dark) .admin-btn-ghost {
+    color: #475569;
+}
+
+body:not(.dark) .admin-btn-ghost:hover {
+    color: #0F172A;
+    background-color: #F1F5F9;
+}
+
+body:not(.dark) .admin-btn-subtle {
+    background-color: white;
+    border-color: #CBD5E1;
+    color: #334155;
+}
+
+body:not(.dark) .admin-btn-subtle:hover {
+    background-color: #F8FAFC;
+    color: #0F172A;
+}
+
+/* Glass panels - Stronger borders */
+body:not(.dark) .glass-panel {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-color: #CBD5E1;
+    box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.1);
+}
+
+body:not(.dark) .glass-card {
+    background-color: white;
+    border-color: #CBD5E1;
+}
+
+body:not(.dark) .glass-card:hover {
+    border-color: #94A3B8;
+    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.12);
+}
+
+/* Text colors - Darker for better visibility */
+body:not(.dark) .text-slate-400 {
+    color: #475569 !important;
+}
+
+body:not(.dark) .text-slate-500 {
+    color: #334155 !important;
+}
+
+body:not(.dark) .text-gray-400 {
+    color: #475569 !important;
+}
+
+body:not(.dark) .text-gray-500 {
+    color: #334155 !important;
+}
+
+/* Border colors - More visible */
+body:not(.dark) .border-slate-200 {
+    border-color: #CBD5E1 !important;
+}
+
+body:not(.dark) .border-white\/10,
+body:not(.dark) .border-white\/5 {
+    border-color: #CBD5E1 !important;
+}
+
+/* Background improvements */
+body:not(.dark) .bg-slate-50 {
+    background-color: #F1F5F9 !important;
+}
+
+body:not(.dark) .bg-white\/50,
+body:not(.dark) .bg-white\/70 {
+    background-color: rgba(255, 255, 255, 0.95) !important;
 }
