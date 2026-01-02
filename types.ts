@@ -196,6 +196,7 @@ export enum AppView {
   ADMIN_SETTINGS = 'ADMIN_SETTINGS',           // Legacy - redirects to ADMIN_SECURITY
 
   // Admin Enterprise Views (legacy - used as tab identifiers)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   ADMIN_API_KEYS = 'ADMIN_API_KEYS',
   ADMIN_BILLING_MANAGEMENT = 'ADMIN_BILLING_MANAGEMENT',
   ADMIN_BULK_OPERATIONS = 'ADMIN_BULK_OPERATIONS',

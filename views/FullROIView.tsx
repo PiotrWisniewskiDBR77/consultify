@@ -1,9 +1,9 @@
-`import React from 'react';`
+import React from 'react';
 import { SplitLayout } from '../components/SplitLayout';
 // import { FullROIWorkspace } from '../components/FullROIWorkspace';
-`// import { useTranslation } from 'react-i18next';`
+// import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
-`// import { Api } from '../services/api';`
+// import { Api } from '../services/api';
 
 export const FullROIView: React.FC = () => {
   const { addChatMessage: addMessage, setIsBotTyping: setTyping } = useAppStore();

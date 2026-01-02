@@ -73,7 +73,7 @@ import { UserProfileMenu } from './components/UserProfileMenu';
 
 
 // Help system wrapper component
-const HelpButtonWrapper = () => {
+const _HelpButtonWrapper = () => {
     const { isPanelOpen, openPanel, closePanel } = useHelpPanel();
     return (
         <>

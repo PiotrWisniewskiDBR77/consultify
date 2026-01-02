@@ -31,6 +31,26 @@ export default {
                     800: '#151E32', // Card background
                     700: '#2A3655', // Borders/Separators
                     600: '#374151', // Hover states
+                    // Light mode navy blue accents
+                    500: '#475569', // Light mode - muted text
+                    400: '#64748B', // Light mode - labels
+                    300: '#94A3B8', // Light mode - hints
+                    200: '#CBD5E1', // Light mode - borders
+                    100: '#E2E8F0', // Light mode - hover bg
+                    50: '#F1F5F9',  // Light mode - subtle bg
+                },
+                // Deep Navy Blue for Light Mode Accents
+                navyBlue: {
+                    900: '#0F2744', // Darkest - hover
+                    800: '#1E3A5F', // Primary navy accent
+                    700: '#2E4A6F', // Active states
+                    600: '#3E5A7F', // Secondary
+                    500: '#4E6A8F', // Muted
+                    400: '#6E8AAF', // Light
+                    300: '#8EAACF', // Lighter
+                    200: '#AECAEF', // Surface
+                    100: '#DEEAFF', // Subtle bg
+                    50: '#F0F5FF',  // Lightest bg
                 },
                 primary: {
                     50: '#F5F3FF',
