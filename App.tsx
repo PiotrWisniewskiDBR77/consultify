@@ -108,7 +108,7 @@ const ConsultantPanelView = React.lazy(() => import('./src/views/consultant/Cons
 const ConsultantInviteView = React.lazy(() => import('./src/views/consultant/ConsultantInviteView').then(module => ({ default: module.ConsultantInviteView })));
 
 // Assessment Module Components (NEW)
-const RapidLeanWizard = React.lazy(() => import('./components/assessment/RapidLeanWizard').then(module => ({ default: module.RapidLeanWizard })));
+const _RapidLeanWizard = React.lazy(() => import('./components/assessment/RapidLeanWizard').then(module => ({ default: module.RapidLeanWizard })));
 const ExternalDigitalWorkspace = React.lazy(() => import('./components/assessment/ExternalDigitalWorkspace').then(module => ({ default: module.ExternalDigitalWorkspace })));
 const AssessmentHubDashboard = React.lazy(() => import('./components/assessment/AssessmentHubDashboard').then(module => ({ default: module.AssessmentHubDashboard })));
 const GenericReportsWorkspace = React.lazy(() => import('./components/assessment/GenericReportsWorkspace').then(module => ({ default: module.GenericReportsWorkspace })));
@@ -219,7 +219,7 @@ const AppContent: React.FC = () => {
                     try {
                         const userData = JSON.parse(storedUser);
                         setCurrentUser({ ...userData, isAuthenticated: true });
-                    } catch (e) {
+                    } catch {
                         console.warn('[Auth] Stale user data in localStorage');
                     }
                 }

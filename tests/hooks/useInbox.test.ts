@@ -301,7 +301,7 @@ describe('useInbox Hook', () => {
             await act(async () => {
                 try {
                     await result.current.triageItem('item-1', 'DISMISS');
-                } catch {}
+                } catch { /* expected error */ }
             });
 
             // Should reload inbox on error

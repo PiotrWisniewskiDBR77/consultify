@@ -63,6 +63,7 @@ export enum AppView {
   ECONOMICS = 'ECONOMICS', // Module: Economics & Value Realization (Digitization Maturity)
   FULL_STEP5_EXECUTION = 'FULL_STEP5_EXECUTION', // Keeping for backward compat
   IMPLEMENTATION = 'IMPLEMENTATION', // Module 4: Wdrożenie
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   FULL_PILOT_EXECUTION = 'IMPLEMENTATION', // @deprecated - use IMPLEMENTATION
   FULL_ROLLOUT = 'FULL_ROLLOUT', // Module 5
   FULL_STEP6_REPORTS = 'FULL_STEP6_REPORTS',
@@ -99,6 +100,7 @@ export enum AppView {
   SETTINGS_ACTIVE_SESSIONS = 'SETTINGS_ACTIVE_SESSIONS',
   SETTINGS_LOGIN_HISTORY = 'SETTINGS_LOGIN_HISTORY',
   SETTINGS_DATA_CONTROLS = 'SETTINGS_DATA_CONTROLS',
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   SETTINGS_API_KEYS = 'ADMIN_API_KEYS', // Mapping to existing key
   SETTINGS_WEBHOOKS = 'SETTINGS_WEBHOOKS',
   SETTINGS_CALENDAR_SYNC = 'SETTINGS_CALENDAR_SYNC',

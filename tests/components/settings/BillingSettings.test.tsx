@@ -3,7 +3,7 @@
  * 
  * Tests for the Billing Settings component.
  */
-
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
