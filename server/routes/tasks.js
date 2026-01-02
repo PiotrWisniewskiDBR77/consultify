@@ -30,7 +30,7 @@ router.get('/', (req, res) => {
             r.last_name as reporter_last_name,
             r.avatar_url as reporter_avatar,
             p.name as project_name,
-            i.name as initiative_name
+            i.title as initiative_name
         FROM tasks t
         LEFT JOIN users a ON t.assignee_id = a.id
         LEFT JOIN users r ON t.reporter_id = r.id
@@ -154,7 +154,7 @@ router.get('/:id', (req, res) => {
             r.last_name as reporter_last_name,
             r.avatar_url as reporter_avatar,
             p.name as project_name,
-            i.name as initiative_name
+            i.title as initiative_name
         FROM tasks t
         LEFT JOIN users a ON t.assignee_id = a.id
         LEFT JOIN users r ON t.reporter_id = r.id

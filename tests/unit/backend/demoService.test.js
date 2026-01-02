@@ -1,24 +1,225 @@
-/**
- * DemoService Tests
- * 
- * Tests for demo organization creation and management.
- */
-
-const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
-const DemoService = require('../../../server/services/demoService');
+const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
+// Use vi.hoisted to ensure db instance exists for the mock factory
+const { db } = vi.hoisted(() => {
+    const sqlite3 = require('sqlite3').verbose();
+    const db = new sqlite3.Database(':memory:');
+
+    // Add polyfills
+    db.initPromise = Promise.resolve();
+    db.query = (sql, params) => {
+        return new Promise((resolve, reject) => {
+            db.all(sql, params, (err, rows) => {
+                if (err) return reject(err);
+                resolve({ rows: rows || [], rowCount: rows ? rows.length : 0 });
+            });
+        });
+    };
+
+    return { db };
+});
+
+const dbPath = path.resolve(__dirname, '../../../server/database');
+
+vi.doMock(dbPath, () => {
+    return {
+        default: db,
+        // Explicitly bind methods to the db instance to ensure 'this' context works
+        serialize: (cb) => {
+            console.log('[MOCK_DB] serialize called');
+            db.serialize(cb);
+        },
+        run: (sql, params, cb) => {
+            console.log('[MOCK_DB] run called:', sql.substring(0, 50));
+            db.run(sql, params, cb);
+        },
+        get: (sql, params, cb) => {
+            console.log('[MOCK_DB] get called:', sql.substring(0, 50));
+            db.get(sql, params, cb);
+        },
+        all: (sql, params, cb) => {
+            console.log('[MOCK_DB] all called:', sql.substring(0, 50));
+            db.all(sql, params, cb);
+        },
+        exec: (sql, cb) => db.exec(sql, cb),
+        initPromise: Promise.resolve(),
+        query: db.query
+    };
+});
+
+// Mock ActivityService to avoid side effects
+vi.mock('../../../server/services/activityService', () => ({
+    log: vi.fn().mockResolvedValue(true)
+}));
+
+// Local helpers bound to the SPECIFIC db instance used in mock
+const dbRun = (sql, params = []) => new Promise((resolve, reject) => {
+    db.run(sql, params, function (err) {
+        if (err) {
+            console.error('[TEST] SQL Error:', err);
+            reject(err);
+        } else {
+            resolve({ lastID: this.lastID, changes: this.changes });
+        }
+    });
+});
+
+let DemoService;
+
+const dbAll = (sql, params = []) => new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+    });
+});
+
+
 describe('DemoService', () => {
+    let originalMock;
+
     beforeAll(async () => {
-        await initTestDb();
+        // Save original global mock
+        originalMock = global.__TEST_DB_MOCK__;
+
+        // Create a wrapper that matches what server/database.js expects
+        // But routes calls to our in-memory 'db' instance
+        const dbWrapper = {
+            run: (sql, params, cb) => {
+                db.run(sql, params, cb);
+                return dbWrapper; // chainable
+            },
+            get: (sql, params, cb) => {
+                db.get(sql, params, cb);
+                return dbWrapper;
+            },
+            all: (sql, params, cb) => {
+                db.all(sql, params, cb);
+                return dbWrapper;
+            },
+            exec: (sql, cb) => {
+                db.exec(sql, cb);
+                return dbWrapper;
+            },
+            serialize: (cb) => {
+                db.serialize(cb);
+                return dbWrapper;
+            },
+            on: () => dbWrapper,
+            close: (cb) => { if (cb) cb(null); },
+            query: db.query, // Postgres polyfill
+            initPromise: Promise.resolve()
+        };
+
+        // Inject our wrapper
+        global.__TEST_DB_MOCK__ = dbWrapper;
+
+        vi.resetModules(); // Critical: Force server/database.js to reload and pick up new global
+
+        // Import Service AFTER injection
+        DemoService = require('../../../server/services/demoService');
+
+
+        // Create Schema Sequentially
+        await dbRun(`CREATE TABLE organizations (
+            id TEXT PRIMARY KEY, 
+            name TEXT, 
+            plan TEXT, 
+            status TEXT, 
+            organization_type TEXT, 
+            trial_started_at TEXT, 
+            is_active INTEGER, 
+            created_at TEXT
+        )`);
+
+        await dbRun(`CREATE TABLE users (
+            id TEXT PRIMARY KEY, 
+            organization_id TEXT, 
+            email TEXT, 
+            first_name TEXT, 
+            last_name TEXT, 
+            role TEXT, 
+            status TEXT, 
+            created_at TEXT
+        )`);
+
+        await dbRun(`CREATE TABLE demo_templates (
+            id TEXT PRIMARY KEY, 
+            name TEXT, 
+            seed_data_json TEXT, 
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT
+        )`);
+
+        await dbRun(`CREATE TABLE access_policy_limits (
+            organization_id TEXT PRIMARY KEY,
+            max_users INTEGER,
+            max_projects INTEGER,
+            max_storage_gb INTEGER,
+            updated_at TEXT
+        )`);
+
+        await dbRun(`CREATE TABLE organization_limits (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT,
+            max_users INTEGER,
+            max_projects INTEGER,
+            max_ai_calls_per_day INTEGER,
+            max_initiatives INTEGER,
+            max_storage_mb INTEGER,
+            ai_roles_enabled_json TEXT,
+            updated_at TEXT
+        )`);
+
+        await dbRun(`CREATE TABLE projects (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT,
+            name TEXT,
+            status TEXT,
+            governance_model TEXT,
+            current_phase TEXT,
+            created_at TEXT
+        )`);
+
+        await dbRun(`CREATE TABLE initiatives (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT,
+            project_id TEXT,
+            name TEXT,
+            summary TEXT,
+            status TEXT,
+            priority TEXT,
+            created_at TEXT
+        )`);
+
+        await dbRun(`CREATE TABLE tasks (
+            id TEXT PRIMARY KEY,
+            project_id TEXT,
+            organization_id TEXT,
+            title TEXT,
+            description TEXT,
+            status TEXT,
+            priority TEXT,
+            initiative_id TEXT,
+            created_at TEXT
+        )`);
     });
 
     afterEach(async () => {
-        await cleanTables([
+        const tables = [
             'organizations',
             'users',
-            'access_policy_limits'
-        ]);
+            'access_policy_limits',
+            'demo_templates',
+            'projects',
+            'initiatives',
+            'tasks'
+        ];
+
+        for (const table of tables) {
+            await dbRun(`DELETE FROM ${table}`);
+        }
+        vi.clearAllMocks();
     });
 
     describe('createDemoOrganization', () => {
@@ -49,14 +250,21 @@ describe('DemoService', () => {
             // Create a template first
             const templateId = uuidv4();
             await dbRun(
-                `INSERT INTO demo_templates (id, name, seed_data_json, created_at)
-                 VALUES (?, ?, ?, datetime('now'))`,
-                [templateId, 'Test Template', JSON.stringify({ test: 'data' })]
+                `INSERT INTO demo_templates (id, name, seed_data_json, is_active, created_at)
+                 VALUES (?, ?, ?, 1, datetime('now'))`,
+                [templateId, 'Test Template', JSON.stringify({ project: { name: 'Seeded Project' } })]
             );
 
             const result = await DemoService.createDemoOrganization(templateId);
 
             expect(result.organizationId).toBeDefined();
+
+            // Check if seeded project exists
+            const projects = await dbAll(
+                'SELECT * FROM projects WHERE organization_id = ?',
+                [result.organizationId]
+            );
+            expect(projects.length).toBeGreaterThan(0);
         });
 
         it('should set expiration to 24 hours', async () => {
@@ -84,14 +292,16 @@ describe('DemoService', () => {
         it('should remove expired demo organizations', async () => {
             // Create expired demo
             const expiredOrgId = `demo-${uuidv4().split('-')[0]}`;
-            const pastDate = new Date(Date.now() - 25 * 60 * 60 * 1000); // 25 hours ago
+            const pastDate = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(); // 25 hours ago
+
             await dbRun(
                 `INSERT INTO organizations (id, name, plan, status, organization_type, trial_started_at, created_at)
                  VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [expiredOrgId, 'Expired Demo', 'demo', 'active', 'DEMO', pastDate.toISOString(), pastDate.toISOString()]
+                [expiredOrgId, 'Expired Demo', 'demo', 'active', 'DEMO', pastDate, pastDate]
             );
 
-            await DemoService.cleanupExpiredDemos();
+            const count = await DemoService.cleanupExpiredDemos();
+            expect(count).toBeGreaterThanOrEqual(1);
 
             const orgs = await dbAll(
                 'SELECT * FROM organizations WHERE id = ?',

@@ -8,18 +8,30 @@
  * - Generic Reports
  */
 
-const db = require('../database');
+const defaultDb = require('../database');
 const RapidLeanService = require('./rapidLeanService');
 const ExternalAssessmentService = require('./externalAssessmentService');
 
 class AssessmentOverviewService {
+    constructor() {
+        this.db = defaultDb;
+    }
+
+    /**
+     * Inject dependencies for testing
+     * @param {Object} deps 
+     */
+    setDependencies(deps) {
+        if (deps.db) this.db = deps.db;
+    }
+
     /**
      * Get comprehensive assessment overview for organization/project
      * @param {string} organizationId - Organization ID
      * @param {string} projectId - Project ID (optional)
      * @returns {Promise<Object>} Assessment overview
      */
-    static async getAssessmentOverview(organizationId, projectId = null) {
+    async getAssessmentOverview(organizationId, projectId = null) {
         try {
             const overview = {
                 drd: await this.getDRDSummary(organizationId, projectId),
@@ -45,7 +57,7 @@ class AssessmentOverviewService {
      * @param {string} projectId - Project ID
      * @returns {Promise<Object>} DRD summary
      */
-    static async getDRDSummary(organizationId, projectId) {
+    async getDRDSummary(organizationId, projectId) {
         return new Promise((resolve, reject) => {
             if (!projectId) {
                 return resolve({ exists: false, message: 'No project selected' });
@@ -59,7 +71,7 @@ class AssessmentOverviewService {
                 LIMIT 1
             `;
 
-            db.get(sql, [projectId], (err, row) => {
+            this.db.get(sql, [projectId], (err, row) => {
                 if (err) return reject(err);
                 if (!row) {
                     return resolve({ exists: false, message: 'No DRD assessment found' });
@@ -83,7 +95,7 @@ class AssessmentOverviewService {
      * @param {string} projectId - Project ID
      * @returns {Promise<Object>} RapidLean summary
      */
-    static async getRapidLeanSummary(organizationId, projectId) {
+    async getRapidLeanSummary(organizationId, projectId) {
         return new Promise((resolve, reject) => {
             let sql = `
                 SELECT overall_score, industry_benchmark, assessment_date
@@ -100,7 +112,7 @@ class AssessmentOverviewService {
 
             sql += ` ORDER BY assessment_date DESC LIMIT 1`;
 
-            db.get(sql, params, (err, row) => {
+            this.db.get(sql, params, (err, row) => {
                 if (err) return reject(err);
                 if (!row) {
                     return resolve({ exists: false, message: 'No RapidLean assessment found' });
@@ -123,7 +135,7 @@ class AssessmentOverviewService {
      * @param {string} projectId - Project ID
      * @returns {Promise<Object>} External assessments summary
      */
-    static async getExternalDigitalSummary(organizationId, projectId) {
+    async getExternalDigitalSummary(organizationId, projectId) {
         return new Promise((resolve, reject) => {
             let sql = `
                 SELECT framework_type, COUNT(*) as count, 
@@ -141,7 +153,7 @@ class AssessmentOverviewService {
 
             sql += ` GROUP BY framework_type`;
 
-            db.all(sql, params, (err, rows) => {
+            this.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
                 if (!rows || rows.length === 0) {
                     return resolve({ exists: false, message: 'No external assessments found' });
@@ -166,7 +178,7 @@ class AssessmentOverviewService {
      * @param {string} projectId - Project ID
      * @returns {Promise<Object>} Reports summary
      */
-    static async getGenericReportsSummary(organizationId, projectId) {
+    async getGenericReportsSummary(organizationId, projectId) {
         return new Promise((resolve, reject) => {
             let sql = `
                 SELECT report_type, COUNT(*) as count
@@ -183,7 +195,7 @@ class AssessmentOverviewService {
 
             sql += ` GROUP BY report_type`;
 
-            db.all(sql, params, (err, rows) => {
+            this.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
                 if (!rows || rows.length === 0) {
                     return resolve({ exists: false, message: 'No generic reports found' });
@@ -206,7 +218,7 @@ class AssessmentOverviewService {
      * @param {Object} overview - Overview data from all sources
      * @returns {Object} Consolidated metrics
      */
-    static calculateConsolidatedMetrics(overview) {
+    calculateConsolidatedMetrics(overview) {
         const metrics = {
             totalAssessments: 0,
             completedModules: 0,
@@ -261,7 +273,7 @@ class AssessmentOverviewService {
      * @param {string} currentUserId - Current user ID for review detection
      * @returns {Promise<Array>} List of assessments
      */
-    static async getAssessmentsList(organizationId, projectId, currentUserId = null) {
+    async getAssessmentsList(organizationId, projectId, currentUserId = null) {
         return new Promise((resolve, reject) => {
             // Build SQL with review information
             let sql = `
@@ -301,7 +313,7 @@ class AssessmentOverviewService {
 
             sql += ` ORDER BY aw.updated_at DESC`;
 
-            db.all(sql, params, (err, rows) => {
+            this.db.all(sql, params, (err, rows) => {
                 if (err) {
                     // If table doesn't exist, return empty array
                     if (err.message && err.message.includes('no such table')) {
@@ -342,7 +354,7 @@ class AssessmentOverviewService {
      * @param {string} projectId - Project ID
      * @returns {Promise<Array>} List of reports
      */
-    static async getReportsList(organizationId, projectId) {
+    async getReportsList(organizationId, projectId) {
         return new Promise((resolve, reject) => {
             // assessment_reports table columns: title, report_status, generated_at, based_on_id, project_id
             let sql = `
@@ -372,7 +384,7 @@ class AssessmentOverviewService {
 
             sql += ` ORDER BY ar.generated_at DESC`;
 
-            db.all(sql, params, (err, rows) => {
+            this.db.all(sql, params, (err, rows) => {
                 if (err) {
                     // If table doesn't exist, return empty array
                     if (err.message && err.message.includes('no such table')) {
@@ -405,7 +417,7 @@ class AssessmentOverviewService {
      * @param {string} assessmentId - Assessment ID (from assessment_workflows)
      * @returns {Promise<Object|null>} Full assessment details or null
      */
-    static async getAssessmentDetails(assessmentId) {
+    async getAssessmentDetails(assessmentId) {
         return new Promise((resolve, reject) => {
             const sql = `
                 SELECT 
@@ -426,7 +438,7 @@ class AssessmentOverviewService {
                 WHERE aw.id = ? OR aw.assessment_id = ?
             `;
 
-            db.get(sql, [assessmentId, assessmentId], (err, row) => {
+            this.db.get(sql, [assessmentId, assessmentId], (err, row) => {
                 if (err) return reject(err);
                 if (!row) return resolve(null);
 
@@ -435,7 +447,7 @@ class AssessmentOverviewService {
                 try {
                     const scores = JSON.parse(row.axis_scores || '[]');
                     // Convert DB format to frontend format
-                    axisData = AssessmentOverviewService.convertAxisScoresToFrontendFormat(scores);
+                    axisData = this.convertAxisScoresToFrontendFormat(scores);
                 } catch (e) {
                     console.warn('[AssessmentOverview] Could not parse axis_scores:', e);
                 }
@@ -462,7 +474,7 @@ class AssessmentOverviewService {
      * @param {Array|Object} scores - Axis scores from DB
      * @returns {Object} Frontend-compatible axis data
      */
-    static convertAxisScoresToFrontendFormat(scores) {
+    convertAxisScoresToFrontendFormat(scores) {
         const axisMapping = {
             'processes': 'processes',
             'digitalProducts': 'digitalProducts',
@@ -517,5 +529,5 @@ class AssessmentOverviewService {
     }
 }
 
-module.exports = AssessmentOverviewService;
-
+// Export singleton instance
+module.exports = new AssessmentOverviewService();

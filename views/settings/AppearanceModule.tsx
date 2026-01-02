@@ -5,14 +5,30 @@
  */
 
 import React, { useState } from 'react';
-import { Palette, Globe, Clock, Accessibility, Briefcase, LayoutDashboard } from 'lucide-react';
+import { Palette, Globe, Clock, Accessibility, Briefcase, LayoutDashboard, Keyboard, Moon, Zap, Shield } from 'lucide-react';
 import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
 import { RegionalSettings } from '../../components/settings/RegionalSettings';
 import { AccessibilitySettings } from '../../components/settings/AccessibilitySettings';
 import { WorkPreferencesSettings } from '../../components/settings/WorkPreferencesSettings';
 import { DashboardPreferencesSettings } from '../../components/settings/DashboardPreferencesSettings';
+import { KeyboardShortcutsSettings } from '../../components/settings/KeyboardShortcutsSettings';
+import { QuietHoursSettings } from '../../components/settings/QuietHoursSettings';
+import { PerformanceSettings } from '../../components/settings/PerformanceSettings';
+import { DataPrivacySettings } from '../../components/settings/DataPrivacySettings';
 import { useTranslation } from 'react-i18next';
 import { User } from '../../types';
+
+// Accent color options
+const ACCENT_COLORS = [
+    { id: 'purple', label: 'Purple', value: '#8B5CF6', dark: '#A78BFA' },
+    { id: 'blue', label: 'Blue', value: '#3B82F6', dark: '#60A5FA' },
+    { id: 'green', label: 'Green', value: '#10B981', dark: '#34D399' },
+    { id: 'amber', label: 'Amber', value: '#F59E0B', dark: '#FBBF24' },
+    { id: 'rose', label: 'Rose', value: '#F43F5E', dark: '#FB7185' },
+    { id: 'cyan', label: 'Cyan', value: '#06B6D4', dark: '#22D3EE' },
+    { id: 'indigo', label: 'Indigo', value: '#6366F1', dark: '#818CF8' },
+    { id: 'teal', label: 'Teal', value: '#14B8A6', dark: '#2DD4BF' },
+];
 
 interface AppearanceModuleProps {
     initialTab?: string;
@@ -22,12 +38,13 @@ interface AppearanceModuleProps {
     toggleTheme: (newTheme?: 'light' | 'dark' | 'system') => void;
 }
 
-// Theme Settings Component
+// Theme Settings Component with Accent Colors
 const ThemeSettings: React.FC<{
     theme: 'light' | 'dark' | 'system';
     toggleTheme: (newTheme?: 'light' | 'dark' | 'system') => void;
 }> = ({ theme, toggleTheme }) => {
     const { t } = useTranslation();
+    const [accentColor, setAccentColor] = useState('purple');
 
     const themes = [
         { id: 'light', label: t('settings.theme.light', 'Light'), icon: '☀️' },
@@ -35,45 +52,97 @@ const ThemeSettings: React.FC<{
         { id: 'system', label: t('settings.theme.system', 'System'), icon: '💻' },
     ] as const;
 
+    const handleAccentColorChange = (colorId: string) => {
+        setAccentColor(colorId);
+        const color = ACCENT_COLORS.find(c => c.id === colorId);
+        if (color) {
+            document.documentElement.style.setProperty('--accent-color', color.value);
+            document.documentElement.style.setProperty('--accent-color-dark', color.dark);
+        }
+    };
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
+            {/* Theme Mode */}
             <div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                    {t('settings.theme.title', 'Theme')}
+                    {t('settings.theme.title', 'Theme Mode')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
                     {t('settings.theme.description', 'Choose your preferred appearance')}
                 </p>
+                
+                <div className="grid grid-cols-3 gap-4">
+                    {themes.map((t_) => (
+                        <button
+                            key={t_.id}
+                            onClick={() => toggleTheme(t_.id)}
+                            className={`p-6 rounded-xl border-2 transition-all ${
+                                theme === t_.id
+                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
+                                    : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-white/5'
+                            }`}
+                        >
+                            <div className="text-4xl mb-3">{t_.icon}</div>
+                            <p className={`font-medium ${
+                                theme === t_.id
+                                    ? 'text-purple-700 dark:text-purple-300'
+                                    : 'text-slate-900 dark:text-white'
+                            }`}>
+                                {t_.label}
+                            </p>
+                        </button>
+                    ))}
+                </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-                {themes.map((t_) => (
-                    <button
-                        key={t_.id}
-                        onClick={() => toggleTheme(t_.id)}
-                        className={`p-6 rounded-xl border-2 transition-all ${
-                            theme === t_.id
-                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
-                                : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-white/5'
-                        }`}
-                    >
-                        <div className="text-4xl mb-3">{t_.icon}</div>
-                        <p className={`font-medium ${
-                            theme === t_.id
-                                ? 'text-purple-700 dark:text-purple-300'
-                                : 'text-slate-900 dark:text-white'
-                        }`}>
-                            {t_.label}
-                        </p>
-                    </button>
-                ))}
+            {/* Accent Color */}
+            <div className="pt-6 border-t border-slate-200 dark:border-white/10">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                    {t('settings.theme.accentColor', 'Accent Color')}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+                    {t('settings.theme.accentColorDescription', 'Customize the highlight color used throughout the app')}
+                </p>
+                
+                <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
+                    {ACCENT_COLORS.map((color) => (
+                        <button
+                            key={color.id}
+                            onClick={() => handleAccentColorChange(color.id)}
+                            className={`relative w-12 h-12 rounded-full transition-all transform hover:scale-110 ${
+                                accentColor === color.id ? 'ring-2 ring-offset-2 ring-slate-900 dark:ring-white' : ''
+                            }`}
+                            style={{ backgroundColor: color.value }}
+                            title={color.label}
+                        >
+                            {accentColor === color.id && (
+                                <span className="absolute inset-0 flex items-center justify-center text-white font-bold">
+                                    ✓
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Theme Preview */}
             <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg">
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {t('settings.theme.currentTheme', 'Current theme')}: <strong className="text-slate-900 dark:text-white">{theme}</strong>
-                </p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                            {t('settings.theme.currentTheme', 'Current theme')}: <strong className="text-slate-900 dark:text-white capitalize">{theme}</strong>
+                        </p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                            {t('settings.theme.currentAccent', 'Accent color')}: <strong className="capitalize" style={{ color: ACCENT_COLORS.find(c => c.id === accentColor)?.value }}>{accentColor}</strong>
+                        </p>
+                    </div>
+                    {/* Preview Swatch */}
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10" style={{ backgroundColor: ACCENT_COLORS.find(c => c.id === accentColor)?.value }} />
+                        <div className="text-sm text-slate-500">{ACCENT_COLORS.find(c => c.id === accentColor)?.value}</div>
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -149,6 +218,7 @@ export const AppearanceModule: React.FC<AppearanceModuleProps> = ({
     const [activeTab, setActiveTab] = useState(initialTab || 'theme');
 
     const tabs: Tab[] = [
+        // Appearance
         { 
             id: 'theme', 
             label: t('settings.tabs.theme', 'Theme'), 
@@ -169,6 +239,12 @@ export const AppearanceModule: React.FC<AppearanceModuleProps> = ({
             label: t('settings.tabs.accessibility', 'Accessibility'), 
             icon: <Accessibility size={16} /> 
         },
+        // Productivity
+        { 
+            id: 'shortcuts', 
+            label: t('settings.tabs.shortcuts', 'Shortcuts'), 
+            icon: <Keyboard size={16} /> 
+        },
         { 
             id: 'work', 
             label: t('settings.tabs.work', 'Work'), 
@@ -178,6 +254,22 @@ export const AppearanceModule: React.FC<AppearanceModuleProps> = ({
             id: 'dashboard', 
             label: t('settings.tabs.dashboard', 'Dashboard'), 
             icon: <LayoutDashboard size={16} /> 
+        },
+        // Focus & Privacy
+        { 
+            id: 'quiet-hours', 
+            label: t('settings.tabs.quietHours', 'Quiet Hours'), 
+            icon: <Moon size={16} /> 
+        },
+        { 
+            id: 'performance', 
+            label: t('settings.tabs.performance', 'Performance'), 
+            icon: <Zap size={16} /> 
+        },
+        { 
+            id: 'privacy', 
+            label: t('settings.tabs.privacy', 'Privacy'), 
+            icon: <Shield size={16} /> 
         },
     ];
 
@@ -199,10 +291,34 @@ export const AppearanceModule: React.FC<AppearanceModuleProps> = ({
                 return <RegionalSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
             case 'accessibility':
                 return <AccessibilitySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'shortcuts':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <KeyboardShortcutsSettings currentUser={currentUser} />
+                    </div>
+                );
             case 'work':
                 return <WorkPreferencesSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
             case 'dashboard':
                 return <DashboardPreferencesSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'quiet-hours':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <QuietHoursSettings currentUser={currentUser} />
+                    </div>
+                );
+            case 'performance':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <PerformanceSettings currentUser={currentUser} />
+                    </div>
+                );
+            case 'privacy':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <DataPrivacySettings currentUser={currentUser} />
+                    </div>
+                );
             default:
                 return (
                     <div className="p-6 overflow-y-auto h-full">

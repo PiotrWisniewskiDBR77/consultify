@@ -156,6 +156,84 @@ class SlackService {
             console.error('[SlackService] Failed to send alert:', error.message);
         }
     }
+
+    /**
+     * Send AI Health Alert to Slack
+     * @param {Object} alertData - Alert data containing title, message, severity, failedTests, color
+     */
+    async sendAIHealthAlert(alertData) {
+        if (!this.webhookUrl) {
+            console.log('[SlackService] No webhook URL configured for AI Health Alert');
+            return { sent: false, reason: 'No webhook configured' };
+        }
+
+        try {
+            const { title, message, severity, failedTests = [], color } = alertData;
+
+            // Build failed tests section
+            const failedTestsText = failedTests.length > 0
+                ? failedTests.map(t => `• *${t.capability}*: ${t.error || 'Failed'}`).join('\n')
+                : 'No details available';
+
+            const payload = {
+                attachments: [
+                    {
+                        color: color || '#ff0000',
+                        blocks: [
+                            {
+                                type: "header",
+                                text: {
+                                    type: "plain_text",
+                                    text: title,
+                                    emoji: true
+                                }
+                            },
+                            {
+                                type: "section",
+                                text: {
+                                    type: "mrkdwn",
+                                    text: `*Severity:* ${severity}\n*Environment:* ${process.env.NODE_ENV || 'development'}`
+                                }
+                            },
+                            {
+                                type: "divider"
+                            },
+                            {
+                                type: "section",
+                                text: {
+                                    type: "mrkdwn",
+                                    text: `*Failed Tests:*\n${failedTestsText}`
+                                }
+                            },
+                            {
+                                type: "section",
+                                text: {
+                                    type: "mrkdwn",
+                                    text: message
+                                }
+                            },
+                            {
+                                type: "context",
+                                elements: [
+                                    {
+                                        type: "mrkdwn",
+                                        text: `🕐 ${new Date().toLocaleString('pl-PL')} | 🔗 <${process.env.APP_URL || 'http://localhost:5173'}/superadmin/ai-platform|View Dashboard>`
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            };
+
+            await axios.post(this.webhookUrl, payload);
+            console.log('[SlackService] AI Health Alert sent successfully');
+            return { sent: true, severity };
+        } catch (error) {
+            console.error('[SlackService] Failed to send AI Health Alert:', error.message);
+            throw error;
+        }
+    }
 }
 
 module.exports = new SlackService();

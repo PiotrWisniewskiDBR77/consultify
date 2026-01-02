@@ -1,11 +1,9 @@
 /**
- * RolesPermissionsView - Custom Roles & Permission Matrix
+ * RolesPermissionsView - Account Types & Project Roles Management
  * 
- * Features:
- * - View default system roles
- * - Create custom roles
- * - Permission matrix visualization
- * - Role hierarchy
+ * Structure:
+ * 1. Account Types (Organization Level) - OWNER, ADMIN, USER - System defined, not editable
+ * 2. Project Roles (Project Level) - PM, Team Lead, Member, Consultant, Viewer - Editable permissions
  */
 
 import React, { useState, useEffect } from 'react';
@@ -27,142 +25,174 @@ import {
     Users,
     Eye,
     Briefcase,
-    AlertTriangle
+    UserCog,
+    Building2,
+    FolderKanban,
+    AlertTriangle,
+    Info
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAppStore } from '../../store/useAppStore';
 import { CustomRole, UserRole, RolePermission } from '../../types';
 import { InfoButton } from '../../components/shared/InfoButton';
 
-// System roles with their default permissions
-const SYSTEM_ROLES = [
+// ============================================
+// ACCOUNT TYPES (Organization Level)
+// These determine what users can do at organization level
+// ============================================
+const ACCOUNT_TYPES = [
     {
         id: 'OWNER',
         name: 'Owner',
-        description: 'Organization owner with full access including billing',
+        description: 'Organization owner with full access including billing, ownership transfer, and deletion',
         icon: Crown,
         color: 'amber',
-        isSystem: true,
-        permissions: ['*'] // All permissions
+        capabilities: [
+            'Full access to all organization features',
+            'Manage billing and subscription',
+            'Transfer organization ownership',
+            'Delete organization',
+            'Access all projects'
+        ]
     },
     {
         id: 'ADMIN',
-        name: 'Administrator',
-        description: 'Full access except billing and ownership transfer',
+        name: 'Admin',
+        description: 'Administrator with full access except billing and ownership management',
         icon: Shield,
         color: 'violet',
+        capabilities: [
+            'Manage users and invitations',
+            'Create and manage all projects',
+            'Configure organization settings',
+            'Manage AI settings and policies',
+            'Cannot access billing or transfer ownership'
+        ]
+    },
+    {
+        id: 'USER',
+        name: 'User',
+        description: 'Standard user with access to assigned projects only',
+        icon: Users,
+        color: 'blue',
+        capabilities: [
+            'Access assigned projects',
+            'Work on tasks and initiatives',
+            'Use AI features (per project settings)',
+            'Cannot manage organization settings',
+            'Cannot invite other users'
+        ]
+    }
+];
+
+// ============================================
+// PROJECT ROLES (Project Level) - PRINCE2/PMBOK aligned
+// These determine what users can do within specific projects
+// ============================================
+const PROJECT_ROLES = [
+    {
+        id: 'PROJECT_EXECUTIVE',
+        name: 'Project Executive / Sponsor',
+        level: 0,
+        description: 'Ultimate decision authority, budget approval, strategic direction',
+        icon: Crown,
+        color: 'amber',
         isSystem: true,
-        permissions: ['users:*', 'projects:*', 'ai:*', 'settings:*']
+        defaultPermissions: ['approve_budget', 'approve_gates', 'strategic_decisions', 'view_all', 'escalation_authority']
     },
     {
         id: 'PROJECT_MANAGER',
         name: 'Project Manager',
-        description: 'Manage projects and team members',
+        level: 1,
+        description: 'Day-to-day project management, team coordination, reporting',
         icon: Briefcase,
         color: 'blue',
         isSystem: true,
-        permissions: ['projects:*', 'tasks:*', 'initiatives:*', 'users:read']
+        defaultPermissions: ['manage_tasks', 'assign_work', 'manage_team', 'approve_changes', 'view_all', 'use_ai', 'manage_risks']
+    },
+    {
+        id: 'TEAM_LEAD',
+        name: 'Team Lead / Technical Lead',
+        level: 2,
+        description: 'Lead functional team, technical decisions, work package management',
+        icon: UserCog,
+        color: 'indigo',
+        isSystem: true,
+        defaultPermissions: ['manage_tasks', 'assign_work', 'view_all', 'use_ai', 'technical_decisions']
     },
     {
         id: 'TEAM_MEMBER',
         name: 'Team Member',
-        description: 'Standard access to assigned projects',
+        level: 3,
+        description: 'Execute assigned tasks, collaborate with team, report progress',
         icon: Users,
         color: 'green',
         isSystem: true,
-        permissions: ['projects:read', 'tasks:*:own', 'decisions:read']
+        defaultPermissions: ['view_assigned', 'update_own_tasks', 'add_comments', 'use_ai']
     },
     {
-        id: 'VIEWER',
-        name: 'Viewer',
-        description: 'Read-only access to projects',
+        id: 'CONSULTANT',
+        name: 'Consultant',
+        level: 3,
+        description: 'External advisor with project-specific access, free seat with access code',
+        icon: UserCog,
+        color: 'purple',
+        isSystem: true,
+        defaultPermissions: [] // Initially no permissions - configured per invite
+    },
+    {
+        id: 'STAKEHOLDER',
+        name: 'Stakeholder / Viewer',
+        level: 4,
+        description: 'View project status, receive updates, provide input when requested',
         icon: Eye,
         color: 'slate',
         isSystem: true,
-        permissions: ['projects:read', 'tasks:read', 'analytics:read']
-    },
-    {
-        id: 'GUEST',
-        name: 'Guest',
-        description: 'Limited access for external users',
-        icon: Lock,
-        color: 'slate',
-        isSystem: true,
-        permissions: ['projects:read:invited']
+        defaultPermissions: ['view_summary', 'add_comments']
     }
 ];
 
-// Permission categories and items
-const PERMISSION_MATRIX = [
+// Project-level permission definitions
+const PROJECT_PERMISSIONS = [
     {
-        category: 'Organization',
+        category: 'View Access',
         permissions: [
-            { id: 'org:manage', label: 'Manage Organization', description: 'Edit organization settings' },
-            { id: 'org:billing', label: 'Manage Billing', description: 'Access billing & subscription' },
-            { id: 'org:delete', label: 'Delete Organization', description: 'Delete the organization' }
+            { id: 'view_all', label: 'View All', description: 'See all project data' },
+            { id: 'view_assigned', label: 'View Assigned', description: 'See only assigned items' },
+            { id: 'view_summary', label: 'View Summary', description: 'See high-level status only' }
         ]
     },
     {
-        category: 'Users',
+        category: 'Tasks & Work',
         permissions: [
-            { id: 'users:read', label: 'View Users', description: 'See user list and details' },
-            { id: 'users:create', label: 'Create Users', description: 'Add new users' },
-            { id: 'users:update', label: 'Update Users', description: 'Edit user information' },
-            { id: 'users:delete', label: 'Delete Users', description: 'Remove users' },
-            { id: 'users:roles', label: 'Manage Roles', description: 'Assign roles to users' }
+            { id: 'manage_tasks', label: 'Manage Tasks', description: 'Create, edit, delete tasks' },
+            { id: 'assign_work', label: 'Assign Work', description: 'Assign tasks to team members' },
+            { id: 'update_own_tasks', label: 'Update Own Tasks', description: 'Update assigned task status' }
         ]
     },
     {
-        category: 'Projects',
+        category: 'Approvals & Decisions',
         permissions: [
-            { id: 'projects:read', label: 'View Projects', description: 'See project list' },
-            { id: 'projects:create', label: 'Create Projects', description: 'Create new projects' },
-            { id: 'projects:update', label: 'Update Projects', description: 'Edit project details' },
-            { id: 'projects:delete', label: 'Delete Projects', description: 'Remove projects' },
-            { id: 'projects:settings', label: 'Project Settings', description: 'Manage project settings' }
+            { id: 'approve_gates', label: 'Approve Stage Gates', description: 'Approve phase transitions' },
+            { id: 'approve_changes', label: 'Approve Changes', description: 'Approve change requests' },
+            { id: 'approve_budget', label: 'Approve Budget', description: 'Approve budget changes' },
+            { id: 'strategic_decisions', label: 'Strategic Decisions', description: 'Make strategic project decisions' },
+            { id: 'technical_decisions', label: 'Technical Decisions', description: 'Make technical decisions' }
         ]
     },
     {
-        category: 'Tasks',
+        category: 'Team & Collaboration',
         permissions: [
-            { id: 'tasks:read', label: 'View Tasks', description: 'See task list' },
-            { id: 'tasks:create', label: 'Create Tasks', description: 'Create new tasks' },
-            { id: 'tasks:update', label: 'Update Tasks', description: 'Edit task details' },
-            { id: 'tasks:delete', label: 'Delete Tasks', description: 'Remove tasks' },
-            { id: 'tasks:assign', label: 'Assign Tasks', description: 'Assign tasks to users' }
+            { id: 'manage_team', label: 'Manage Team', description: 'Add/remove project team members' },
+            { id: 'add_comments', label: 'Add Comments', description: 'Comment on tasks and items' },
+            { id: 'escalation_authority', label: 'Escalation Authority', description: 'Receive and handle escalations' }
         ]
     },
     {
-        category: 'Initiatives',
+        category: 'Risk & AI',
         permissions: [
-            { id: 'initiatives:read', label: 'View Initiatives', description: 'See initiatives' },
-            { id: 'initiatives:create', label: 'Create Initiatives', description: 'Create new initiatives' },
-            { id: 'initiatives:update', label: 'Update Initiatives', description: 'Edit initiatives' },
-            { id: 'initiatives:approve', label: 'Approve Initiatives', description: 'Approve stage gates' }
-        ]
-    },
-    {
-        category: 'Decisions',
-        permissions: [
-            { id: 'decisions:read', label: 'View Decisions', description: 'See decisions' },
-            { id: 'decisions:create', label: 'Create Decisions', description: 'Create new decisions' },
-            { id: 'decisions:vote', label: 'Vote on Decisions', description: 'Cast votes' },
-            { id: 'decisions:close', label: 'Close Decisions', description: 'Finalize decisions' }
-        ]
-    },
-    {
-        category: 'AI',
-        permissions: [
-            { id: 'ai:use', label: 'Use AI Features', description: 'Access AI assistant' },
-            { id: 'ai:settings', label: 'AI Settings', description: 'Configure AI behavior' },
-            { id: 'ai:execute', label: 'AI Execute', description: 'Allow AI auto-actions' }
-        ]
-    },
-    {
-        category: 'Analytics',
-        permissions: [
-            { id: 'analytics:read', label: 'View Analytics', description: 'Access dashboards' },
-            { id: 'analytics:export', label: 'Export Data', description: 'Download reports' }
+            { id: 'manage_risks', label: 'Manage Risks', description: 'Create and manage risk register' },
+            { id: 'use_ai', label: 'Use AI Features', description: 'Access AI assistant for project' }
         ]
     }
 ];
@@ -176,97 +206,47 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
     const { currentOrganization } = useAppStore();
 
     const [loading, setLoading] = useState(true);
-    const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
+    const [activeSection, setActiveSection] = useState<'account' | 'project'>('project');
+    const [customProjectRoles, setCustomProjectRoles] = useState<any[]>([]);
     const [selectedRole, setSelectedRole] = useState<string | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [editingRole, setEditingRole] = useState<CustomRole | null>(null);
-    const [expandedCategories, setExpandedCategories] = useState<string[]>(['Organization', 'Users', 'Projects']);
+    const [editingRole, setEditingRole] = useState<any | null>(null);
+    const [expandedCategories, setExpandedCategories] = useState<string[]>(['View Access', 'Tasks & Work']);
 
-    // Form state
+    // Form state for custom project roles
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        baseRole: 'TEAM_MEMBER' as UserRole,
+        level: 3,
         permissions: [] as string[]
     });
 
     const [saving, setSaving] = useState(false);
 
-    const loadCustomRoles = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch(`/api/organizations/${currentOrganization?.id}/roles`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setCustomRoles(data);
-            } else {
-                // Mock data for development if API fails
-                setCustomRoles([
-                    {
-                        id: 'custom-1',
-                        organizationId: currentOrganization?.id || '',
-                        name: 'Senior Developer',
-                        description: 'Extended permissions for senior team members',
-                        baseRole: UserRole.TEAM_MEMBER,
-                        permissions: [
-                            { resource: 'tasks', action: '*', allowed: true },
-                            { resource: 'projects', action: 'read', allowed: true },
-                            { resource: 'initiatives', action: 'read', allowed: true },
-                            { resource: 'initiatives', action: 'create', allowed: true }
-                        ],
-                        isSystemRole: false,
-                        createdBy: 'user-1',
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
-                    }
-                ]);
-            }
-        } catch (error) {
-            console.error('Failed to load custom roles:', error);
-            // Mock data for development
-            setCustomRoles([
-                {
-                    id: 'custom-1',
-                    organizationId: currentOrganization?.id || '',
-                    name: 'Senior Developer',
-                    description: 'Extended permissions for senior team members',
-                    baseRole: UserRole.TEAM_MEMBER,
-                    permissions: [
-                        { resource: 'tasks', action: '*', allowed: true },
-                        { resource: 'projects', action: 'read', allowed: true },
-                        { resource: 'initiatives', action: 'read', allowed: true },
-                        { resource: 'initiatives', action: 'create', allowed: true }
-                    ],
-                    isSystemRole: false,
-                    createdBy: 'user-1',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                }
-            ]);
-        }
-        setLoading(false);
-    };
+    useEffect(() => {
+        // Simulate loading
+        const timer = setTimeout(() => setLoading(false), 500);
+        return () => clearTimeout(timer);
+    }, [currentOrganization?.id]);
 
     const openCreateModal = () => {
         setEditingRole(null);
         setFormData({
             name: '',
             description: '',
-            baseRole: UserRole.TEAM_MEMBER,
+            level: 3,
             permissions: []
         });
         setShowCreateModal(true);
     };
 
-    const openEditModal = (role: CustomRole) => {
+    const openEditModal = (role: any) => {
         setEditingRole(role);
         setFormData({
             name: role.name,
             description: role.description || '',
-            baseRole: role.baseRole,
-            permissions: role.permissions.filter(p => p.allowed).map(p => `${p.resource}:${p.action}`)
+            level: role.level || 3,
+            permissions: role.defaultPermissions || []
         });
         setShowCreateModal(true);
     };
@@ -279,71 +259,38 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
 
         setSaving(true);
         try {
-            const url = editingRole
-                ? `/api/organizations/${currentOrganization?.id}/roles/${editingRole.id}`
-                : `/api/organizations/${currentOrganization?.id}/roles`;
-
-            const res = await fetch(url, {
-                method: editingRole ? 'PUT' : 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({
-                    ...formData,
-                    permissions: formData.permissions.map(p => {
-                        const [resource, action] = p.split(':');
-                        return { resource, action, allowed: true };
-                    })
-                })
-            });
-
-            if (res.ok) {
-                toast.success(editingRole ? 'Role updated' : 'Role created');
-                setShowCreateModal(false);
-                loadCustomRoles();
-            }
-        } catch (error) {
-            // Mock success
-            toast.success(editingRole ? 'Role updated' : 'Role created');
+            // API call would go here
+            toast.success(editingRole ? 'Project role updated' : 'Project role created');
             setShowCreateModal(false);
 
             if (!editingRole) {
-                const newRole: CustomRole = {
+                const newRole = {
                     id: `custom-${Date.now()}`,
-                    organizationId: currentOrganization?.id || '',
                     name: formData.name,
                     description: formData.description,
-                    baseRole: formData.baseRole,
-                    permissions: formData.permissions.map(p => {
-                        const [resource, action] = p.split(':');
-                        return { resource, action, allowed: true };
-                    }),
-                    isSystemRole: false,
-                    createdBy: 'current-user',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
+                    level: formData.level,
+                    defaultPermissions: formData.permissions,
+                    isSystem: false,
+                    color: 'cyan'
                 };
-                setCustomRoles(prev => [...prev, newRole]);
+                setCustomProjectRoles(prev => [...prev, newRole]);
+            } else {
+                setCustomProjectRoles(prev => prev.map(r => 
+                    r.id === editingRole.id 
+                        ? { ...r, ...formData, defaultPermissions: formData.permissions }
+                        : r
+                ));
             }
+        } catch (error) {
+            toast.error('Failed to save role');
         }
         setSaving(false);
     };
 
-    const handleDeleteRole = async (roleId: string) => {
-        if (!confirm('Are you sure you want to delete this role?')) return;
-
-        try {
-            await fetch(`/api/organizations/${currentOrganization?.id}/roles/${roleId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
-            toast.success('Role deleted');
-            setCustomRoles(prev => prev.filter(r => r.id !== roleId));
-        } catch (error) {
-            toast.success('Role deleted');
-            setCustomRoles(prev => prev.filter(r => r.id !== roleId));
-        }
+    const handleDeleteRole = (roleId: string) => {
+        if (!confirm('Are you sure you want to delete this custom role?')) return;
+        setCustomProjectRoles(prev => prev.filter(r => r.id !== roleId));
+        toast.success('Role deleted');
     };
 
     const togglePermission = (permId: string) => {
@@ -368,10 +315,24 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
             amber: { bg: 'bg-amber-500', text: 'text-amber-500', light: 'bg-amber-100 dark:bg-amber-900/30' },
             violet: { bg: 'bg-violet-500', text: 'text-violet-500', light: 'bg-violet-100 dark:bg-violet-900/30' },
             blue: { bg: 'bg-blue-500', text: 'text-blue-500', light: 'bg-blue-100 dark:bg-blue-900/30' },
+            indigo: { bg: 'bg-indigo-500', text: 'text-indigo-500', light: 'bg-indigo-100 dark:bg-indigo-900/30' },
             green: { bg: 'bg-green-500', text: 'text-green-500', light: 'bg-green-100 dark:bg-green-900/30' },
-            slate: { bg: 'bg-slate-500', text: 'text-slate-500', light: 'bg-slate-100 dark:bg-slate-900/30' }
+            purple: { bg: 'bg-purple-500', text: 'text-purple-500', light: 'bg-purple-100 dark:bg-purple-900/30' },
+            slate: { bg: 'bg-slate-500', text: 'text-slate-500', light: 'bg-slate-100 dark:bg-slate-900/30' },
+            cyan: { bg: 'bg-cyan-500', text: 'text-cyan-500', light: 'bg-cyan-100 dark:bg-cyan-900/30' }
         };
         return colors[color] || colors.slate;
+    };
+
+    const getLevelLabel = (level: number) => {
+        const labels: Record<number, string> = {
+            0: 'Executive',
+            1: 'Manager',
+            2: 'Lead',
+            3: 'Member',
+            4: 'Observer'
+        };
+        return labels[level] || 'Custom';
     };
 
     if (loading) {
@@ -381,6 +342,8 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
             </div>
         );
     }
+
+    const allProjectRoles = [...PROJECT_ROLES, ...customProjectRoles];
 
     return (
         <div className={`space-y-6 ${className}`}>
@@ -394,169 +357,258 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                         {t('admin.roles.title', 'Roles & Permissions')}
                     </h2>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {t('admin.roles.desc', 'Manage system roles and create custom permission sets')}
+                        Manage account types and project role permissions
                     </p>
                 </div>
+            </div>
+
+            {/* Section Tabs */}
+            <div className="flex gap-2 border-b border-slate-200 dark:border-navy-700">
                 <button
-                    onClick={openCreateModal}
-                    className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
+                    onClick={() => setActiveSection('account')}
+                    className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                        activeSection === 'account'
+                            ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+                            : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                    }`}
                 >
-                    <Plus size={18} />
-                    Create Custom Role
+                    <div className="flex items-center gap-2">
+                        <Building2 size={16} />
+                        Account Types
+                    </div>
+                </button>
+                <button
+                    onClick={() => setActiveSection('project')}
+                    className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                        activeSection === 'project'
+                            ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+                            : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                    }`}
+                >
+                    <div className="flex items-center gap-2">
+                        <FolderKanban size={16} />
+                        Project Roles
+                    </div>
                 </button>
             </div>
 
-            {/* System Roles */}
-            <div>
-                <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">System Roles</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {SYSTEM_ROLES.map(role => {
-                        const Icon = role.icon;
-                        const colors = getColorClasses(role.color);
-
-                        return (
-                            <div
-                                key={role.id}
-                                onClick={() => setSelectedRole(selectedRole === role.id ? null : role.id)}
-                                className={`p-4 bg-white dark:bg-navy-800 rounded-xl border cursor-pointer transition-all ${selectedRole === role.id
-                                        ? 'border-violet-500 ring-2 ring-violet-500/20'
-                                        : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
-                                    }`}
-                            >
-                                <div className="flex items-start gap-3">
-                                    <div className={`p-2.5 rounded-lg ${colors.light}`}>
-                                        <Icon className={colors.text} size={20} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <h4 className="font-medium text-slate-900 dark:text-white">{role.name}</h4>
-                                            <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-navy-700 text-slate-500 text-[10px] rounded">
-                                                SYSTEM
-                                            </span>
-                                        </div>
-                                        <p className="text-xs text-slate-500 mt-1">{role.description}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Custom Roles */}
-            <div>
-                <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Custom Roles</h3>
-                {customRoles.length === 0 ? (
-                    <div className="p-8 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-                        <Key className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                        <p className="text-slate-500">No custom roles yet</p>
-                        <button
-                            onClick={openCreateModal}
-                            className="mt-3 text-violet-600 hover:text-violet-500 text-sm font-medium"
-                        >
-                            Create your first custom role
-                        </button>
+            {/* Account Types Section */}
+            {activeSection === 'account' && (
+                <div className="space-y-4">
+                    {/* Info Banner */}
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start gap-3">
+                        <Info className="text-blue-500 mt-0.5 flex-shrink-0" size={18} />
+                        <div className="text-sm text-blue-800 dark:text-blue-300">
+                            <p className="font-medium">Account Types are organization-level permissions</p>
+                            <p className="mt-1 text-blue-600 dark:text-blue-400">
+                                These determine what users can do across the entire organization. Account types are system-defined and cannot be modified.
+                                You can assign account types to users in the "Users" tab.
+                            </p>
+                        </div>
                     </div>
-                ) : (
-                    <div className="space-y-3">
-                        {customRoles.map(role => (
-                            <div
-                                key={role.id}
-                                className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700"
-                            >
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2.5 rounded-lg bg-violet-100 dark:bg-violet-900/30">
-                                            <Key className="text-violet-500" size={20} />
+
+                    {/* Account Types Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {ACCOUNT_TYPES.map(type => {
+                            const Icon = type.icon;
+                            const colors = getColorClasses(type.color);
+
+                            return (
+                                <div
+                                    key={type.id}
+                                    className="p-5 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700"
+                                >
+                                    <div className="flex items-start gap-3 mb-4">
+                                        <div className={`p-2.5 rounded-lg ${colors.light}`}>
+                                            <Icon className={colors.text} size={22} />
                                         </div>
                                         <div>
-                                            <h4 className="font-medium text-slate-900 dark:text-white">{role.name}</h4>
-                                            <p className="text-xs text-slate-500">{role.description || 'No description'}</p>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-xs text-slate-400">Based on:</span>
-                                                <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300 text-xs rounded">
-                                                    {role.baseRole}
-                                                </span>
-                                                <span className="text-xs text-slate-400">•</span>
-                                                <span className="text-xs text-slate-500">
-                                                    {role.permissions.length} custom permissions
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="font-semibold text-slate-900 dark:text-white">{type.name}</h4>
+                                                <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-navy-700 text-slate-500 text-[10px] rounded">
+                                                    SYSTEM
                                                 </span>
                                             </div>
+                                            <p className="text-xs text-slate-500 mt-1">{type.description}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => openEditModal(role)}
-                                            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg text-slate-500"
-                                        >
-                                            <Edit size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteRole(role.id)}
-                                            className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg text-slate-500 hover:text-red-600"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                    <div className="space-y-2">
+                                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Capabilities</p>
+                                        <ul className="space-y-1.5">
+                                            {type.capabilities.map((cap, i) => (
+                                                <li key={i} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
+                                                    <Check size={12} className="text-green-500 mt-0.5 flex-shrink-0" />
+                                                    {cap}
+                                                </li>
+                                            ))}
+                                        </ul>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {/* Permission Matrix (when role selected) */}
-            {selectedRole && (
-                <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-                    <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">
-                        {SYSTEM_ROLES.find(r => r.id === selectedRole)?.name} Permissions
-                    </h3>
-                    <div className="space-y-3">
-                        {PERMISSION_MATRIX.map(category => (
-                            <div key={category.category} className="border border-slate-200 dark:border-navy-600 rounded-lg overflow-hidden">
-                                <button
-                                    onClick={() => toggleCategory(category.category)}
-                                    className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-900 text-left"
-                                >
-                                    <span className="font-medium text-slate-700 dark:text-slate-300">{category.category}</span>
-                                    {expandedCategories.includes(category.category) ? (
-                                        <ChevronDown size={18} className="text-slate-400" />
-                                    ) : (
-                                        <ChevronRight size={18} className="text-slate-400" />
-                                    )}
-                                </button>
-                                {expandedCategories.includes(category.category) && (
-                                    <div className="p-3 space-y-2">
-                                        {category.permissions.map(perm => {
-                                            const hasPermission = selectedRole === 'OWNER' ||
-                                                (selectedRole === 'ADMIN' && !perm.id.includes('org:'));
-                                            return (
-                                                <div
-                                                    key={perm.id}
-                                                    className="flex items-center justify-between py-2"
-                                                >
-                                                    <div>
-                                                        <span className="text-sm text-slate-900 dark:text-white">{perm.label}</span>
-                                                        <p className="text-xs text-slate-500">{perm.description}</p>
-                                                    </div>
-                                                    <div className={`w-6 h-6 rounded flex items-center justify-center ${hasPermission
-                                                            ? 'bg-green-500 text-white'
-                                                            : 'bg-slate-200 dark:bg-navy-700 text-slate-400'
-                                                        }`}>
-                                                        {hasPermission ? <Check size={14} /> : <X size={14} />}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             )}
 
-            {/* Create/Edit Modal */}
+            {/* Project Roles Section */}
+            {activeSection === 'project' && (
+                <div className="space-y-4">
+                    {/* Info Banner + Create Button */}
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg flex items-start gap-3">
+                            <Info className="text-purple-500 mt-0.5 flex-shrink-0" size={18} />
+                            <div className="text-sm text-purple-800 dark:text-purple-300">
+                                <p className="font-medium">Project Roles define permissions within specific projects</p>
+                                <p className="mt-1 text-purple-600 dark:text-purple-400">
+                                    Based on PRINCE2 & PMBOK standards. You can customize permissions for each role or create custom roles.
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={openCreateModal}
+                            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium whitespace-nowrap"
+                        >
+                            <Plus size={18} />
+                            Create Custom Role
+                        </button>
+                    </div>
+
+                    {/* Project Roles by Level */}
+                    {[0, 1, 2, 3, 4].map(level => {
+                        const rolesAtLevel = allProjectRoles.filter(r => r.level === level);
+                        if (rolesAtLevel.length === 0) return null;
+
+                        return (
+                            <div key={level} className="space-y-3">
+                                <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                    <span className="w-5 h-5 rounded bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-[10px] font-bold">
+                                        {level}
+                                    </span>
+                                    Level {level} - {getLevelLabel(level)}
+                                </h3>
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                    {rolesAtLevel.map(role => {
+                                        const Icon = role.icon || UserCog;
+                                        const colors = getColorClasses(role.color);
+                                        const isSelected = selectedRole === role.id;
+
+                                        return (
+                                            <div
+                                                key={role.id}
+                                                onClick={() => setSelectedRole(isSelected ? null : role.id)}
+                                                className={`p-4 bg-white dark:bg-navy-800 rounded-xl border cursor-pointer transition-all ${
+                                                    isSelected
+                                                        ? 'border-violet-500 ring-2 ring-violet-500/20'
+                                                        : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
+                                                }`}
+                                            >
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex items-start gap-3">
+                                                        <div className={`p-2 rounded-lg ${colors.light}`}>
+                                                            <Icon className={colors.text} size={18} />
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <h4 className="font-medium text-slate-900 dark:text-white text-sm">
+                                                                    {role.name}
+                                                                </h4>
+                                                                {role.isSystem ? (
+                                                                    <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-navy-700 text-slate-500 text-[10px] rounded">
+                                                                        STANDARD
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="px-1.5 py-0.5 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 text-[10px] rounded">
+                                                                        CUSTOM
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-xs text-slate-500 mt-0.5">{role.description}</p>
+                                                            <div className="flex items-center gap-2 mt-2">
+                                                                <span className="text-[10px] text-slate-400">
+                                                                    {role.defaultPermissions?.length || 0} permissions
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {!role.isSystem && (
+                                                        <div className="flex items-center gap-1">
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); openEditModal(role); }}
+                                                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-navy-700 rounded text-slate-400 hover:text-slate-600"
+                                                            >
+                                                                <Edit size={14} />
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); handleDeleteRole(role.id); }}
+                                                                className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-slate-400 hover:text-red-600"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {/* Permission Matrix when role selected */}
+                    {selectedRole && (
+                        <div className="p-5 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                                    {allProjectRoles.find(r => r.id === selectedRole)?.name} - Permissions
+                                </h3>
+                                {!allProjectRoles.find(r => r.id === selectedRole)?.isSystem && (
+                                    <button
+                                        onClick={() => openEditModal(allProjectRoles.find(r => r.id === selectedRole))}
+                                        className="text-xs text-violet-600 hover:text-violet-500 font-medium"
+                                    >
+                                        Edit Permissions
+                                    </button>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {PROJECT_PERMISSIONS.map(category => (
+                                    <div key={category.category}>
+                                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+                                            {category.category}
+                                        </p>
+                                        <div className="space-y-1.5">
+                                            {category.permissions.map(perm => {
+                                                const role = allProjectRoles.find(r => r.id === selectedRole);
+                                                const hasPermission = role?.defaultPermissions?.includes(perm.id);
+                                                return (
+                                                    <div
+                                                        key={perm.id}
+                                                        className="flex items-center gap-2 text-sm"
+                                                    >
+                                                        <div className={`w-5 h-5 rounded flex items-center justify-center ${
+                                                            hasPermission
+                                                                ? 'bg-green-500 text-white'
+                                                                : 'bg-slate-200 dark:bg-navy-700 text-slate-400'
+                                                        }`}>
+                                                            {hasPermission ? <Check size={12} /> : <X size={12} />}
+                                                        </div>
+                                                        <span className={hasPermission ? 'text-slate-900 dark:text-white' : 'text-slate-400'}>
+                                                            {perm.label}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Create/Edit Custom Project Role Modal */}
             <AnimatePresence>
                 {showCreateModal && (
                     <motion.div
@@ -573,21 +625,41 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                         >
                             <div className="p-6 border-b border-slate-200 dark:border-navy-700">
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                                    {editingRole ? 'Edit Custom Role' : 'Create Custom Role'}
+                                    {editingRole ? 'Edit Project Role' : 'Create Custom Project Role'}
                                 </h3>
+                                <p className="text-sm text-slate-500 mt-1">
+                                    Define a custom role with specific permissions for project team members
+                                </p>
                             </div>
                             <div className="p-6 space-y-4 overflow-y-auto max-h-[60vh]">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                        Role Name *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        placeholder="e.g., Senior Developer"
-                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg"
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                            Role Name *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                            placeholder="e.g., Senior Developer"
+                                            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                            Level
+                                        </label>
+                                        <select
+                                            value={formData.level}
+                                            onChange={(e) => setFormData({ ...formData, level: parseInt(e.target.value) })}
+                                            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+                                        >
+                                            <option value={1}>Level 1 - Manager</option>
+                                            <option value={2}>Level 2 - Lead</option>
+                                            <option value={3}>Level 3 - Member</option>
+                                            <option value={4}>Level 4 - Observer</option>
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div>
@@ -598,47 +670,32 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                         type="text"
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        placeholder="Brief description of this role"
-                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg"
+                                        placeholder="Brief description of this role's responsibilities"
+                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                        Base Role
-                                    </label>
-                                    <select
-                                        value={formData.baseRole}
-                                        onChange={(e) => setFormData({ ...formData, baseRole: e.target.value as UserRole })}
-                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg"
-                                    >
-                                        {SYSTEM_ROLES.filter(r => r.id !== 'OWNER').map(role => (
-                                            <option key={role.id} value={role.id}>{role.name}</option>
-                                        ))}
-                                    </select>
-                                    <p className="text-xs text-slate-500 mt-1">
-                                        This role will inherit permissions from the base role
-                                    </p>
-                                </div>
-
-                                <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        Additional Permissions
+                                        Permissions
                                     </label>
-                                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                                        {PERMISSION_MATRIX.map(category => (
+                                    <div className="space-y-4 max-h-64 overflow-y-auto p-3 bg-slate-50 dark:bg-navy-900 rounded-lg">
+                                        {PROJECT_PERMISSIONS.map(category => (
                                             <div key={category.category}>
-                                                <p className="text-xs font-medium text-slate-500 mb-1">{category.category}</p>
-                                                <div className="flex flex-wrap gap-2 mb-3">
+                                                <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                                                    {category.category}
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
                                                     {category.permissions.map(perm => (
                                                         <button
                                                             key={perm.id}
                                                             type="button"
                                                             onClick={() => togglePermission(perm.id)}
-                                                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${formData.permissions.includes(perm.id)
+                                                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                                                formData.permissions.includes(perm.id)
                                                                     ? 'bg-violet-600 text-white'
-                                                                    : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                                                                }`}
+                                                                    : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-600 hover:border-violet-300'
+                                                            }`}
                                                         >
                                                             {perm.label}
                                                         </button>
@@ -652,7 +709,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                             <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
                                 <button
                                     onClick={() => setShowCreateModal(false)}
-                                    className="px-4 py-2 text-slate-600 dark:text-slate-400"
+                                    className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg"
                                 >
                                     Cancel
                                 </button>
@@ -674,5 +731,3 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
 };
 
 export default RolesPermissionsView;
-
-

@@ -54,7 +54,7 @@ const UserWorkloadRow: React.FC<{
                     <img 
                         src={user.avatarUrl} 
                         alt={user.userName}
-                        className="w-8 h-8 rounded-full"
+                        className="w-8 h-8 rounded-full object-cover"
                     />
                 ) : (
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-purple-600 flex items-center justify-center text-white text-sm font-medium">

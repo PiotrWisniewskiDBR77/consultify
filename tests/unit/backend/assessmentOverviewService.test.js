@@ -17,7 +17,12 @@ const mockDb = {
     all: vi.fn()
 };
 
-vi.mock('../../../server/database', () => ({ default: mockDb }));
+// We mock the database module to avoid side effects during import,
+// but we will primarily rely on DI (setDependencies) for the actual test logic.
+vi.mock('../../../server/database', () => ({
+    default: {} // Return empty object, we inject mockDb via DI
+}));
+
 vi.mock('../../../server/services/rapidLeanService', () => ({ default: {} }));
 vi.mock('../../../server/services/externalAssessmentService', () => ({ default: {} }));
 
@@ -29,8 +34,18 @@ describe('AssessmentOverviewService', () => {
         vi.clearAllMocks();
 
         try {
+            // Import the service instance
             const module = await import('../../../server/services/assessmentOverviewService.js');
             AssessmentOverviewService = module.default || module;
+
+            // Inject dependencies
+            if (AssessmentOverviewService.setDependencies) {
+                AssessmentOverviewService.setDependencies({
+                    db: mockDb
+                });
+            } else {
+                console.warn('AssessmentOverviewService does not support setDependencies');
+            }
         } catch (e) {
             console.warn('Failed to import AssessmentOverviewService:', e.message);
             // Skip tests if service cannot be loaded
@@ -43,15 +58,12 @@ describe('AssessmentOverviewService', () => {
     });
 
     // =========================================================================
-    // getAssessmentOverview TESTS (corrected from getOrganizationOverview)
+    // getAssessmentOverview TESTS
     // =========================================================================
 
     describe('getAssessmentOverview', () => {
         it('should return comprehensive assessment overview', async () => {
-            if (!AssessmentOverviewService?.getAssessmentOverview) {
-                console.warn('Skipping: getAssessmentOverview not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
             mockDb.all.mockImplementation((sql, params, callback) => {
                 callback(null, []);
@@ -69,10 +81,7 @@ describe('AssessmentOverviewService', () => {
         });
 
         it('should handle organization with no assessments', async () => {
-            if (!AssessmentOverviewService?.getAssessmentOverview) {
-                console.warn('Skipping: getAssessmentOverview not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
             mockDb.all.mockImplementation((sql, params, callback) => {
                 callback(null, []);
@@ -88,10 +97,7 @@ describe('AssessmentOverviewService', () => {
         });
 
         it('should include project filter when provided', async () => {
-            if (!AssessmentOverviewService?.getAssessmentOverview) {
-                console.warn('Skipping: getAssessmentOverview not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
             mockDb.all.mockImplementation((sql, params, callback) => {
                 callback(null, []);
@@ -113,10 +119,7 @@ describe('AssessmentOverviewService', () => {
 
     describe('getAssessmentsList', () => {
         it('should return list of assessments for table view', async () => {
-            if (!AssessmentOverviewService?.getAssessmentsList) {
-                console.warn('Skipping: getAssessmentsList not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
             mockDb.all.mockImplementation((sql, params, callback) => {
                 callback(null, [
@@ -131,10 +134,7 @@ describe('AssessmentOverviewService', () => {
         });
 
         it('should return empty array when no assessments exist', async () => {
-            if (!AssessmentOverviewService?.getAssessmentsList) {
-                console.warn('Skipping: getAssessmentsList not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
             mockDb.all.mockImplementation((sql, params, callback) => {
                 callback(null, []);
@@ -152,21 +152,23 @@ describe('AssessmentOverviewService', () => {
 
     describe('getAssessmentDetails', () => {
         it('should return full assessment details', async () => {
-            if (!AssessmentOverviewService?.getAssessmentDetails) {
-                console.warn('Skipping: getAssessmentDetails not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
             mockDb.get.mockImplementation((sql, params, callback) => {
+                const assessmentId = params[0]; // Logic uses params[0] and params[1] as ID
+
                 callback(null, {
-                    id: 'assessment-123',
+                    id: assessmentId || 'assessment-123',
+                    assessment_id: assessmentId || 'assessment-123',
                     name: 'Test Assessment',
+                    project_name: 'Test Project',
                     axis_scores: JSON.stringify({
                         processes: { actual: 4, target: 5 },
                         culture: { actual: 3, target: 5 }
                     }),
                     overall_as_is: 3.5,
-                    overall_to_be: 5.0
+                    overall_to_be: 5.0,
+                    is_complete: 0
                 });
             });
 
@@ -177,10 +179,7 @@ describe('AssessmentOverviewService', () => {
         });
 
         it('should return null for non-existent assessment', async () => {
-            if (!AssessmentOverviewService?.getAssessmentDetails) {
-                console.warn('Skipping: getAssessmentDetails not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
             mockDb.get.mockImplementation((sql, params, callback) => {
                 callback(null, null);
@@ -198,10 +197,7 @@ describe('AssessmentOverviewService', () => {
 
     describe('getReportsList', () => {
         it('should return list of reports', async () => {
-            if (!AssessmentOverviewService?.getReportsList) {
-                console.warn('Skipping: getReportsList not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
             mockDb.all.mockImplementation((sql, params, callback) => {
                 callback(null, [
@@ -216,10 +212,7 @@ describe('AssessmentOverviewService', () => {
         });
 
         it('should return empty array when no reports exist', async () => {
-            if (!AssessmentOverviewService?.getReportsList) {
-                console.warn('Skipping: getReportsList not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
             mockDb.all.mockImplementation((sql, params, callback) => {
                 callback(null, []);
@@ -237,10 +230,7 @@ describe('AssessmentOverviewService', () => {
 
     describe('getDRDSummary', () => {
         it('should return DRD assessment summary', async () => {
-            if (!AssessmentOverviewService?.getDRDSummary) {
-                console.warn('Skipping: getDRDSummary not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
             mockDb.get.mockImplementation((sql, params, callback) => {
                 callback(null, {
@@ -266,16 +256,13 @@ describe('AssessmentOverviewService', () => {
 
     describe('calculateConsolidatedMetrics', () => {
         it('should calculate consolidated metrics from overview data', async () => {
-            if (!AssessmentOverviewService?.calculateConsolidatedMetrics) {
-                console.warn('Skipping: calculateConsolidatedMetrics not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
             const overview = {
-                drd: { count: 3, avgMaturity: 3.5 },
-                rapidLean: { count: 2, avgScore: 4.0 },
-                externalDigital: { count: 1, avgScore: 3.0 },
-                genericReports: { count: 5 }
+                drd: { count: 3, avgMaturity: 3.5, exists: true, overallScore: 3.5 },
+                rapidLean: { count: 2, avgScore: 4.0, exists: true, overallScore: 4.0 },
+                externalDigital: { count: 1, avgScore: 3.0, exists: true, totalCount: 1 },
+                genericReports: { count: 5, exists: true, totalCount: 5 }
             };
 
             const result = AssessmentOverviewService.calculateConsolidatedMetrics(overview);
@@ -291,10 +278,7 @@ describe('AssessmentOverviewService', () => {
 
     describe('convertAxisScoresToFrontendFormat', () => {
         it('should convert DB axis scores to frontend format', async () => {
-            if (!AssessmentOverviewService?.convertAxisScoresToFrontendFormat) {
-                console.warn('Skipping: convertAxisScoresToFrontendFormat not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
             const dbScores = {
                 processes: { actual: 4, target: 5 },
@@ -307,10 +291,7 @@ describe('AssessmentOverviewService', () => {
         });
 
         it('should handle array format scores', async () => {
-            if (!AssessmentOverviewService?.convertAxisScoresToFrontendFormat) {
-                console.warn('Skipping: convertAxisScoresToFrontendFormat not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
             const dbScores = [
                 { axis: 'processes', actual: 4, target: 5 },
@@ -323,10 +304,7 @@ describe('AssessmentOverviewService', () => {
         });
 
         it('should handle null/undefined input', async () => {
-            if (!AssessmentOverviewService?.convertAxisScoresToFrontendFormat) {
-                console.warn('Skipping: convertAxisScoresToFrontendFormat not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
             const result = AssessmentOverviewService.convertAxisScoresToFrontendFormat(null);
 
@@ -340,13 +318,17 @@ describe('AssessmentOverviewService', () => {
 
     describe('Error Handling', () => {
         it('should handle database errors gracefully', async () => {
-            if (!AssessmentOverviewService?.getAssessmentOverview) {
-                console.warn('Skipping: getAssessmentOverview not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
+            // Mock getDRDSummary (which calls db.get) to FAIL
+            // Since getAssessmentOverview calls getDRDSummary first.
+            mockDb.get.mockImplementation((sql, params, callback) => {
+                callback(new Error('Database connection failed'), null);
+            });
+
+            // Also mock db.all just in case
             mockDb.all.mockImplementation((sql, params, callback) => {
-                callback(new Error('Database connection failed'));
+                callback(new Error('Database connection failed'), null);
             });
 
             await expect(
@@ -355,10 +337,7 @@ describe('AssessmentOverviewService', () => {
         });
 
         it('should handle null organization ID', async () => {
-            if (!AssessmentOverviewService?.getAssessmentOverview) {
-                console.warn('Skipping: getAssessmentOverview not available');
-                return;
-            }
+            if (!AssessmentOverviewService) return;
 
             mockDb.all.mockImplementation((sql, params, callback) => {
                 callback(null, []);
@@ -375,5 +354,3 @@ describe('AssessmentOverviewService', () => {
         });
     });
 });
-
-

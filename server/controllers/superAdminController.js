@@ -14,7 +14,8 @@ const deps = {
     jwt: require('jsonwebtoken'),
     bcrypt: require('bcryptjs'),
     config: require('../config'),
-    uuid: require('uuid')
+    uuid: require('uuid'),
+    InvitationService: require('../services/invitationService')
 };
 
 /**
@@ -62,7 +63,7 @@ const getActivities = catchAsync(async (req, res, next) => {
  * GET Dashboard Stats
  */
 const getDashboardStats = catchAsync(async (req, res, next) => {
-    const [activityStats, aiStats] = await Promise.all([
+    const [activityStats, aiStats, activities] = await Promise.all([
         deps.ActivityService.getStats().catch(err => {
             console.error('[SuperAdmin] Activity Stats Error:', err);
             return { total: 0, last_hour: 0, last_24h: 0, last_7d: 0 };
@@ -76,6 +77,10 @@ const getDashboardStats = catchAsync(async (req, res, next) => {
                 FROM ai_logs 
                 WHERE created_at > datetime('now', '-7 days')
             `, [], (err, row) => resolve(row || {}));
+        }),
+        deps.ActivityService.getRecent(15).catch(err => {
+            console.error('[SuperAdmin] Activities Error:', err);
+            return [];
         })
     ]);
 
@@ -92,7 +97,8 @@ const getDashboardStats = catchAsync(async (req, res, next) => {
         activity: activityStats,
         ai: aiStats,
         counts,
-        live: deps.RealtimeService.getGlobalStats()
+        live: deps.RealtimeService.getGlobalStats(),
+        activities: activities || []
     });
 });
 
@@ -274,32 +280,33 @@ const inviteUser = catchAsync(async (req, res, next) => {
 
     if (!email || !organizationId) return next(new AppError('Email and Organization are required', 400));
 
-    deps.db.get('SELECT id FROM users WHERE email = ?', [email], (err, user) => {
-        if (err) return next(new AppError('Database error', 500));
-        if (user) return next(new AppError('User already exists', 400));
+    try {
+        const result = await deps.InvitationService.createOrgInvitation(
+            organizationId,
+            email,
+            role || 'USER',
+            req.user.id,
+            {}, // metadata
+            { ip: req.ip, userAgent: req.get('user-agent') }
+        );
 
-        const token = deps.uuid.v4();
-        const inviteId = deps.uuid.v4();
-        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        const inviteLink = `${req.protocol}://${req.get('host')}/register?token=${result.token}`;
 
-        const sql = `INSERT INTO invitations(id, organization_id, email, role, token, status, invited_by, expires_at) VALUES(?, ?, ?, ?, ?, 'pending', ?, ?)`;
-
-        deps.db.run(sql, [inviteId, organizationId, email, role || 'USER', token, req.user.id, expiresAt], function (err) {
-            if (err) return next(new AppError(err.message, 500));
-
-            const inviteLink = `${req.protocol}://${req.get('host')}/register?token=${token}`;
-
-            deps.ActivityService.log({
-                userId: req.user.id,
-                action: 'invited',
-                entityType: 'user',
-                entityName: email,
-                details: { organizationId, role }
-            });
-
-            res.json({ message: 'Invitation created', inviteLink, token });
+        deps.ActivityService.log({
+            userId: req.user.id,
+            action: 'invited',
+            entityType: 'user',
+            entityName: email,
+            details: { organizationId, role }
         });
-    });
+
+        res.json({ message: 'Invitation created', inviteLink, token: result.token });
+    } catch (err) {
+        if (err.message.includes('already a member')) {
+            return next(new AppError('User already exists in this organization', 400));
+        }
+        return next(new AppError(err.message, 500));
+    }
 });
 
 /**
@@ -716,7 +723,7 @@ const getPartnerSummary = catchAsync(async (req, res, next) => {
  */
 const getUsageByOrganization = catchAsync(async (req, res, next) => {
     const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
-    
+
     // Join ai_logs through users table since ai_logs doesn't have organization_id
     const query = isPg ? `
         SELECT 
@@ -760,11 +767,11 @@ const getUsageByOrganization = catchAsync(async (req, res, next) => {
 const getInvoices = catchAsync(async (req, res, next) => {
     const { period = '30d' } = req.query;
     const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
-    
+
     // Try to get invoices from Stripe cache or token_transactions as proxy
     const periodDays = period === '7d' ? 7 : period === '90d' ? 90 : period === '1y' ? 365 : 30;
-    
-    const dateCondition = isPg 
+
+    const dateCondition = isPg
         ? `created_at > NOW() - INTERVAL '${periodDays} days'`
         : `created_at > datetime('now', '-${periodDays} days')`;
 
@@ -800,9 +807,9 @@ const getInvoices = catchAsync(async (req, res, next) => {
             // Return empty array on error
             return res.json({ invoices: [], total: 0 });
         }
-        res.json({ 
-            invoices: rows || [], 
-            total: (rows || []).length 
+        res.json({
+            invoices: rows || [],
+            total: (rows || []).length
         });
     });
 });
@@ -812,7 +819,7 @@ const getInvoices = catchAsync(async (req, res, next) => {
  */
 const getInvoiceStats = catchAsync(async (req, res, next) => {
     const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
-    
+
     const query = isPg ? `
         SELECT 
             COALESCE(SUM(CASE WHEN type = 'purchase' THEN amount_usd ELSE 0 END), 0) as total_revenue,
@@ -864,7 +871,7 @@ const getInvoiceStats = catchAsync(async (req, res, next) => {
 const getSystemHealth = catchAsync(async (req, res, next) => {
     const startTime = Date.now();
     const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
-    
+
     // Test database connectivity and get basic stats
     const dbCheck = await new Promise((resolve) => {
         deps.db.get('SELECT 1 as test', [], (err) => {
@@ -883,8 +890,8 @@ const getSystemHealth = catchAsync(async (req, res, next) => {
     const uptimeDays = Math.floor(uptimeHours / 24);
 
     // Check AI service (just return status based on config)
-    const aiServiceStatus = process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY 
-        ? 'online' 
+    const aiServiceStatus = process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY
+        ? 'online'
         : 'no_keys';
 
     res.json({
@@ -907,8 +914,8 @@ const getSystemHealth = catchAsync(async (req, res, next) => {
             environment: process.env.NODE_ENV || 'development',
             uptime: {
                 seconds: Math.floor(uptimeSeconds),
-                formatted: uptimeDays > 0 
-                    ? `${uptimeDays}d ${uptimeHours % 24}h` 
+                formatted: uptimeDays > 0
+                    ? `${uptimeDays}d ${uptimeHours % 24}h`
                     : `${uptimeHours}h ${Math.floor((uptimeSeconds % 3600) / 60)}m`
             },
             memory: {

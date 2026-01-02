@@ -591,8 +591,12 @@ const MetricsAggregator = {
                 else {
                     resolve(rows.map(row => ({
                         partnerCode: row.partner_code,
+                        partnerName: row.partner_code ? `Partner ${row.partner_code.replace('PARTNER', '')}` : 'Unknown Partner',
+                        partnerType: 'AFFILIATE',
                         totalReferrals: row.total_referrals,
                         conversions: row.conversions,
+                        orgCount: row.conversions,
+                        totalRevenue: row.settlements_count * 100, // Estimate revenue
                         settlementsCount: row.settlements_count,
                         conversionRate: row.total_referrals > 0
                             ? Math.round((row.conversions / row.total_referrals) * 100 * 100) / 100

@@ -53,13 +53,11 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
     // Modal states
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [showBillingModal, setShowBillingModal] = useState(false);
 
     // Form states
     const [selectedAdminId, setSelectedAdminId] = useState('');
     const [transferReason, setTransferReason] = useState('');
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
-    const [billingForm, setBillingForm] = useState<Partial<OrganizationOwnership>>({});
 
     const isOwner = currentUser?.id === ownership?.ownerUserId;
 
@@ -74,7 +72,6 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                 const data = await ownershipRes.json();
                 setOwnership(data.ownership);
                 setOwnerUser(data.owner);
-                setBillingForm(data.ownership || {});
             }
 
             // Load admins for transfer
@@ -213,28 +210,6 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
         setSaving(false);
     };
 
-    const handleSaveBillingInfo = async () => {
-        setSaving(true);
-        try {
-            const res = await fetch(`/api/organizations/${currentOrganization?.id}/billing-info`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(billingForm)
-            });
-
-            if (res.ok) {
-                toast.success('Billing information updated');
-                setShowBillingModal(false);
-                loadOwnershipData();
-            }
-        } catch (error) {
-            toast.error('Failed to update billing information');
-        }
-        setSaving(false);
-    };
 
     if (loading) {
         return (
@@ -313,7 +288,7 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                         </div>
                         <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{ownerUser?.email}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
-                            Billing Admin since {new Date(ownership?.createdAt || '').toLocaleDateString()}
+                            Billing Admin since {ownership?.createdAt ? new Date(ownership.createdAt).toLocaleDateString() : 'Initial Setup'}
                         </p>
                     </div>
                     {isOwner && (
@@ -333,90 +308,6 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                     <p className="text-xs text-amber-700 dark:text-amber-300">
                         The organization owner is the billing admin and cannot be deleted. To remove this user, ownership must be transferred first.
                     </p>
-                </div>
-            </div>
-
-            {/* Billing Information */}
-            <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
-                        <FileText size={20} />
-                        Billing Information
-                    </h3>
-                    {isOwner && (
-                        <button
-                            onClick={() => setShowBillingModal(true)}
-                            className="text-sm text-violet-600 dark:text-violet-400 hover:underline"
-                        >
-                            Edit
-                        </button>
-                    )}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center gap-3">
-                        <Mail className="w-5 h-5 text-slate-400" />
-                        <div>
-                            <p className="text-xs text-slate-500">Billing Email</p>
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">
-                                {ownership?.billingEmail || ownerUser?.email}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <UserIcon className="w-5 h-5 text-slate-400" />
-                        <div>
-                            <p className="text-xs text-slate-500">Billing Name</p>
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">
-                                {ownership?.billingName || `${ownerUser?.firstName} ${ownerUser?.lastName}`}
-                            </p>
-                        </div>
-                    </div>
-                    {ownership?.taxId && (
-                        <div className="flex items-center gap-3">
-                            <Building2 className="w-5 h-5 text-slate-400" />
-                            <div>
-                                <p className="text-xs text-slate-500">Tax ID / VAT</p>
-                                <p className="text-sm font-medium text-slate-900 dark:text-white">
-                                    {ownership.taxId}
-                                </p>
-                            </div>
-                        </div>
-                    )}
-                    {ownership?.billingAddress && (
-                        <div className="flex items-center gap-3">
-                            <MapPin className="w-5 h-5 text-slate-400" />
-                            <div>
-                                <p className="text-xs text-slate-500">Billing Address</p>
-                                <p className="text-sm font-medium text-slate-900 dark:text-white">
-                                    {ownership.billingAddress.city}, {ownership.billingAddress.country}
-                                </p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Payment Method Preview */}
-            <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
-                        <CreditCard size={20} />
-                        Payment Method
-                    </h3>
-                    {isOwner && (
-                        <a href="#billing" className="text-sm text-violet-600 dark:text-violet-400 hover:underline">
-                            Manage
-                        </a>
-                    )}
-                </div>
-                <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-navy-700/50 rounded-lg">
-                    <div className="p-3 bg-white dark:bg-navy-800 rounded-lg">
-                        <CreditCard className="w-6 h-6 text-slate-600 dark:text-slate-300" />
-                    </div>
-                    <div>
-                        <p className="font-medium text-slate-900 dark:text-white">•••• •••• •••• 4242</p>
-                        <p className="text-sm text-slate-500">Expires 12/2026</p>
-                    </div>
                 </div>
             </div>
 
@@ -588,163 +479,6 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                 )}
             </AnimatePresence>
 
-            {/* Billing Info Modal */}
-            <AnimatePresence>
-                {showBillingModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden max-h-[90vh] overflow-y-auto"
-                        >
-                            <div className="p-6 border-b border-slate-200 dark:border-navy-700">
-                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                                    <FileText size={20} />
-                                    Edit Billing Information
-                                </h3>
-                            </div>
-                            <div className="p-6 space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="col-span-2">
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                            Billing Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={billingForm.billingName || ''}
-                                            onChange={(e) => setBillingForm({ ...billingForm, billingName: e.target.value })}
-                                            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
-                                        />
-                                    </div>
-                                    <div className="col-span-2">
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                            Billing Email
-                                        </label>
-                                        <input
-                                            type="email"
-                                            value={billingForm.billingEmail || ''}
-                                            onChange={(e) => setBillingForm({ ...billingForm, billingEmail: e.target.value })}
-                                            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                            Tax ID
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={billingForm.taxId || ''}
-                                            onChange={(e) => setBillingForm({ ...billingForm, taxId: e.target.value })}
-                                            placeholder="e.g., PL1234567890"
-                                            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                            VAT Number
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={billingForm.vatNumber || ''}
-                                            onChange={(e) => setBillingForm({ ...billingForm, vatNumber: e.target.value })}
-                                            placeholder="e.g., EU123456789"
-                                            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 border-t border-slate-200 dark:border-navy-700">
-                                    <h4 className="font-medium text-slate-900 dark:text-white mb-3">Billing Address</h4>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="col-span-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Address Line 1"
-                                                value={billingForm.billingAddress?.line1 || ''}
-                                                onChange={(e) => setBillingForm({
-                                                    ...billingForm,
-                                                    billingAddress: { ...billingForm.billingAddress, line1: e.target.value } as BillingAddress
-                                                })}
-                                                className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
-                                            />
-                                        </div>
-                                        <div className="col-span-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Address Line 2 (optional)"
-                                                value={billingForm.billingAddress?.line2 || ''}
-                                                onChange={(e) => setBillingForm({
-                                                    ...billingForm,
-                                                    billingAddress: { ...billingForm.billingAddress, line2: e.target.value } as BillingAddress
-                                                })}
-                                                className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
-                                            />
-                                        </div>
-                                        <div>
-                                            <input
-                                                type="text"
-                                                placeholder="City"
-                                                value={billingForm.billingAddress?.city || ''}
-                                                onChange={(e) => setBillingForm({
-                                                    ...billingForm,
-                                                    billingAddress: { ...billingForm.billingAddress, city: e.target.value } as BillingAddress
-                                                })}
-                                                className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
-                                            />
-                                        </div>
-                                        <div>
-                                            <input
-                                                type="text"
-                                                placeholder="Postal Code"
-                                                value={billingForm.billingAddress?.postalCode || ''}
-                                                onChange={(e) => setBillingForm({
-                                                    ...billingForm,
-                                                    billingAddress: { ...billingForm.billingAddress, postalCode: e.target.value } as BillingAddress
-                                                })}
-                                                className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
-                                            />
-                                        </div>
-                                        <div className="col-span-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Country"
-                                                value={billingForm.billingAddress?.country || ''}
-                                                onChange={(e) => setBillingForm({
-                                                    ...billingForm,
-                                                    billingAddress: { ...billingForm.billingAddress, country: e.target.value } as BillingAddress
-                                                })}
-                                                className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
-                                <button
-                                    onClick={() => setShowBillingModal(false)}
-                                    className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSaveBillingInfo}
-                                    disabled={saving}
-                                    className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium disabled:opacity-50"
-                                >
-                                    {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
-                                    Save Changes
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </div>
     );
 };

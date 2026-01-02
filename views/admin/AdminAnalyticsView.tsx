@@ -53,12 +53,28 @@ export const AdminAnalyticsView: React.FC = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [statsData, ideasData, obsData] = await Promise.all([
+            const [statsData, aiAnalyticsData, ideasData, obsData] = await Promise.all([
                 Api.getAIDeepReports().catch(() => null),
+                Api.getOrgMetricsAIAnalytics().catch(() => null),
                 Api.getAIIdeas().catch(() => []),
                 Api.getAIObservations().catch(() => [])
             ]);
-            setStats(statsData);
+            
+            // Merge real AI analytics data with stats
+            if (aiAnalyticsData) {
+                setStats({
+                    ...statsData,
+                    successRate: aiAnalyticsData.successRate,
+                    avgResponseTime: aiAnalyticsData.avgResponseTime,
+                    totalTokens: aiAnalyticsData.totalTokens,
+                    estCost: aiAnalyticsData.estCost,
+                    usageTrend: aiAnalyticsData.usageTrend || [],
+                    paygUsage: aiAnalyticsData.paygUsage,
+                    forecast: aiAnalyticsData.forecast
+                });
+            } else {
+                setStats(statsData);
+            }
             setIdeas(ideasData || []);
             setObservations(obsData || []);
         } catch (error) {
@@ -101,8 +117,14 @@ export const AdminAnalyticsView: React.FC = () => {
         return `$${value.toFixed(2)}`;
     };
 
-    // Use mock data if real data is empty
-    const usageData = stats?.usageTrend?.length > 0 ? stats.usageTrend : generateMockUsageData();
+    // Use real data, fallback to mock only if completely empty
+    const usageData = stats?.usageTrend?.length > 0 
+        ? stats.usageTrend.map((d: any) => ({
+            date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            tokens: d.tokens || 0,
+            cost: d.cost || 0
+        }))
+        : generateMockUsageData();
     const failureData = stats?.topFailureModes?.length > 0 ? stats.topFailureModes : generateMockFailureData();
 
     if (loading) {
@@ -118,11 +140,11 @@ export const AdminAnalyticsView: React.FC = () => {
             {/* Header - Clean minimal */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-lg font-medium text-white flex items-center gap-2">
+                    <h1 className="text-lg font-medium text-navy-900 dark:text-white flex items-center gap-2">
                         <BarChart2 className="w-5 h-5 text-slate-500" />
                         {t('admin.analytics.title', 'AI Strategic Center')}
                     </h1>
-                    <p className="text-sm text-slate-500 mt-0.5">
+                    <p className="text-sm text-slate-600 dark:text-slate-500 mt-0.5">
                         {t('admin.analytics.subtitle', 'Monitor AI performance, costs, and strategic insights')}
                     </p>
                 </div>
@@ -142,31 +164,28 @@ export const AdminAnalyticsView: React.FC = () => {
             <div className="flex space-x-1">
                 <button
                     onClick={() => setActiveTab('kpis')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        activeTab === 'kpis' 
-                            ? 'bg-white/10 text-white' 
-                            : 'text-slate-500 hover:text-white hover:bg-white/5'
-                    }`}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'kpis'
+                            ? 'bg-slate-200 text-navy-900 dark:bg-white/10 dark:text-white'
+                            : 'text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-white/5'
+                        }`}
                 >
                     {t('admin.analytics.performanceKpis', 'Performance & KPIs')}
                 </button>
                 <button
                     onClick={() => setActiveTab('ideas')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        activeTab === 'ideas' 
-                            ? 'bg-white/10 text-white' 
-                            : 'text-slate-500 hover:text-white hover:bg-white/5'
-                    }`}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'ideas'
+                            ? 'bg-slate-200 text-navy-900 dark:bg-white/10 dark:text-white'
+                            : 'text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-white/5'
+                        }`}
                 >
                     {t('admin.analytics.strategicIdeas', 'Strategic Ideas')}
                 </button>
                 <button
                     onClick={() => setActiveTab('observations')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        activeTab === 'observations' 
-                            ? 'bg-white/10 text-white' 
-                            : 'text-slate-500 hover:text-white hover:bg-white/5'
-                    }`}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'observations'
+                            ? 'bg-slate-200 text-navy-900 dark:bg-white/10 dark:text-white'
+                            : 'text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-white/5'
+                        }`}
                 >
                     {t('admin.analytics.observations', 'Observations')}
                 </button>
@@ -184,7 +203,7 @@ export const AdminAnalyticsView: React.FC = () => {
                                         {t('admin.analytics.successRate', 'Success Rate')}
                                     </p>
                                     <p className="admin-metric-value">
-                                        {formatPercentage(stats?.successRate)}
+                                        {formatPercentage(stats?.successRate || 0)}
                                     </p>
                                 </div>
                                 <CheckCircle className="w-5 h-5 text-slate-600" />
@@ -222,7 +241,7 @@ export const AdminAnalyticsView: React.FC = () => {
                                         {t('admin.analytics.totalTokens', 'Total Tokens')}
                                     </p>
                                     <p className="admin-metric-value">
-                                        {formatNumber(stats?.totalTokens, '1.2M')}
+                                        {formatNumber(stats?.totalTokens || stats?.usageTrend?.reduce((sum: number, d: any) => sum + (d.tokens || 0), 0) || 0, '1.2M')}
                                     </p>
                                 </div>
                                 <Cpu className="w-5 h-5 text-slate-600" />
@@ -239,7 +258,7 @@ export const AdminAnalyticsView: React.FC = () => {
                                         {t('admin.analytics.estCost', 'Est. Cost')}
                                     </p>
                                     <p className="admin-metric-value">
-                                        {formatCurrency(stats?.estimatedCost)}
+                                        {formatCurrency(stats?.estCost || stats?.forecast?.currentCost || 0)}
                                     </p>
                                 </div>
                                 <DollarSign className="w-5 h-5 text-slate-600" />
@@ -254,7 +273,7 @@ export const AdminAnalyticsView: React.FC = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {/* Failure Modes */}
                         <div className="admin-card p-4">
-                            <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+                            <h3 className="text-sm font-medium text-navy-900 dark:text-white mb-4 flex items-center gap-2">
                                 <AlertTriangle className="w-4 h-4 text-slate-500" />
                                 {t('admin.analytics.failureModes', 'Failure Modes Analysis')}
                             </h3>
@@ -265,13 +284,13 @@ export const AdminAnalyticsView: React.FC = () => {
                                             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={true} vertical={false} />
                                             <XAxis type="number" stroke="#64748b" fontSize={12} />
                                             <YAxis dataKey="reason" type="category" stroke="#64748b" fontSize={12} width={80} />
-                                            <Tooltip 
-                                                contentStyle={{ 
-                                                    backgroundColor: '#0f172a', 
+                                            <Tooltip
+                                                contentStyle={{
+                                                    backgroundColor: '#0f172a',
                                                     border: '1px solid rgba(255,255,255,0.1)',
                                                     borderRadius: '8px',
                                                     color: '#fff'
-                                                }} 
+                                                }}
                                             />
                                             <Bar dataKey="count" fill="#64748b" radius={[0, 4, 4, 0]} />
                                         </BarChart>
@@ -287,7 +306,7 @@ export const AdminAnalyticsView: React.FC = () => {
 
                         {/* Token Usage Trend */}
                         <div className="admin-card p-4">
-                            <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+                            <h3 className="text-sm font-medium text-navy-900 dark:text-white mb-4 flex items-center gap-2">
                                 <TrendingUp className="w-4 h-4 text-slate-500" />
                                 {t('admin.analytics.tokenUsageTrend', 'Token Usage Trend')}
                             </h3>
@@ -296,28 +315,28 @@ export const AdminAnalyticsView: React.FC = () => {
                                     <AreaChart data={usageData}>
                                         <defs>
                                             <linearGradient id="tokenGradient" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#64748b" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="#64748b" stopOpacity={0}/>
+                                                <stop offset="5%" stopColor="#64748b" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#64748b" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                                         <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-                                        <YAxis stroke="#64748b" fontSize={12} tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
-                                        <Tooltip 
-                                            contentStyle={{ 
-                                                backgroundColor: '#0f172a', 
+                                        <YAxis stroke="#64748b" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
+                                        <Tooltip
+                                            contentStyle={{
+                                                backgroundColor: '#0f172a',
                                                 border: '1px solid rgba(255,255,255,0.1)',
                                                 borderRadius: '8px',
                                                 color: '#fff'
                                             }}
                                             formatter={(value: any) => [value.toLocaleString(), 'Tokens']}
                                         />
-                                        <Area 
-                                            type="monotone" 
-                                            dataKey="tokens" 
-                                            stroke="#94a3b8" 
-                                            strokeWidth={2} 
-                                            fill="url(#tokenGradient)" 
+                                        <Area
+                                            type="monotone"
+                                            dataKey="tokens"
+                                            stroke="#94a3b8"
+                                            strokeWidth={2}
+                                            fill="url(#tokenGradient)"
                                         />
                                     </AreaChart>
                                 </ResponsiveContainer>
@@ -327,7 +346,7 @@ export const AdminAnalyticsView: React.FC = () => {
 
                     {/* Model Performance */}
                     <div className="admin-card p-4">
-                        <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+                        <h3 className="text-sm font-medium text-navy-900 dark:text-white mb-4 flex items-center gap-2">
                             <Cpu className="w-4 h-4 text-slate-500" />
                             {t('admin.analytics.modelPerformance', 'Model Performance by Provider')}
                         </h3>
@@ -337,9 +356,9 @@ export const AdminAnalyticsView: React.FC = () => {
                                 { name: 'Claude 3.5', success: 97.2, tokens: '320K', cost: '$8.20', color: 'purple' },
                                 { name: 'Gemini Pro', success: 95.8, tokens: '180K', cost: '$4.30', color: 'blue' }
                             ].map((model, idx) => (
-                                <div key={idx} className="p-4 bg-white/5 rounded-lg">
+                                <div key={idx} className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg">
                                     <div className="flex items-center justify-between mb-3">
-                                        <span className="font-medium text-white">{model.name}</span>
+                                        <span className="font-medium text-navy-900 dark:text-white">{model.name}</span>
                                         <span className={`text-xs px-2 py-1 rounded-full bg-${model.color}-500/20 text-${model.color}-400`}>
                                             {model.success}% success
                                         </span>
@@ -372,13 +391,12 @@ export const AdminAnalyticsView: React.FC = () => {
                         {ideas.length > 0 ? ideas.map((idea) => (
                             <div key={idea.id} className="bg-navy-900 border border-white/5 p-5 rounded-xl hover:border-purple-500/30 transition-colors">
                                 <div className="flex justify-between items-start mb-3">
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                        idea.priority === 'high' 
-                                            ? 'bg-red-500/20 text-red-400' 
-                                            : idea.priority === 'medium' 
-                                                ? 'bg-amber-500/20 text-amber-400' 
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${idea.priority === 'high'
+                                            ? 'bg-red-500/20 text-red-400'
+                                            : idea.priority === 'medium'
+                                                ? 'bg-amber-500/20 text-amber-400'
                                                 : 'bg-emerald-500/20 text-emerald-400'
-                                    }`}>
+                                        }`}>
                                         {idea.priority?.toUpperCase() || 'LOW'}
                                     </span>
                                     <span className="text-xs text-slate-500">
@@ -396,26 +414,25 @@ export const AdminAnalyticsView: React.FC = () => {
                                         >
                                             <ThumbsUp className="w-4 h-4" />
                                         </button>
-                                        <button 
-                                            className="p-2 hover:bg-red-500/20 rounded-lg text-red-400 transition-colors" 
+                                        <button
+                                            className="p-2 hover:bg-red-500/20 rounded-lg text-red-400 transition-colors"
                                             title="Reject"
                                         >
                                             <ThumbsDown className="w-4 h-4" />
                                         </button>
-                                        <button 
-                                            className="p-2 hover:bg-blue-500/20 rounded-lg text-blue-400 transition-colors" 
+                                        <button
+                                            className="p-2 hover:bg-blue-500/20 rounded-lg text-blue-400 transition-colors"
                                             title="View Details"
                                         >
                                             <Eye className="w-4 h-4" />
                                         </button>
                                     </div>
-                                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                                        idea.status === 'new' 
-                                            ? 'bg-blue-500/20 text-blue-400' 
-                                            : idea.status === 'approved' 
-                                                ? 'bg-emerald-500/20 text-emerald-400' 
+                                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${idea.status === 'new'
+                                            ? 'bg-blue-500/20 text-blue-400'
+                                            : idea.status === 'approved'
+                                                ? 'bg-emerald-500/20 text-emerald-400'
                                                 : 'bg-white/10 text-slate-400'
-                                    }`}>
+                                        }`}>
                                         {idea.status?.toUpperCase() || 'NEW'}
                                     </span>
                                 </div>
@@ -448,17 +465,16 @@ export const AdminAnalyticsView: React.FC = () => {
                         {observations.length > 0 ? observations.map((obs) => (
                             <div key={obs.id} className="p-5 hover:bg-white/5 transition-colors">
                                 <div className="flex items-start">
-                                    <div className={`mt-1 p-2 rounded-lg mr-4 ${
-                                        obs.category === 'anomaly' 
-                                            ? 'bg-red-500/20 text-red-400' 
-                                            : obs.category === 'insight' 
-                                                ? 'bg-purple-500/20 text-purple-400' 
+                                    <div className={`mt-1 p-2 rounded-lg mr-4 ${obs.category === 'anomaly'
+                                            ? 'bg-red-500/20 text-red-400'
+                                            : obs.category === 'insight'
+                                                ? 'bg-purple-500/20 text-purple-400'
                                                 : 'bg-slate-500/20 text-slate-400'
-                                    }`}>
-                                        {obs.category === 'anomaly' 
-                                            ? <AlertTriangle className="w-5 h-5" /> 
-                                            : obs.category === 'insight' 
-                                                ? <Lightbulb className="w-5 h-5" /> 
+                                        }`}>
+                                        {obs.category === 'anomaly'
+                                            ? <AlertTriangle className="w-5 h-5" />
+                                            : obs.category === 'insight'
+                                                ? <Lightbulb className="w-5 h-5" />
                                                 : <Activity className="w-5 h-5" />
                                         }
                                     </div>

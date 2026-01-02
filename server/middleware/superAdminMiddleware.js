@@ -3,7 +3,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey_change_this_in_prod
 
 // Dependencies object to allow injection
 const deps = {
-    jwt: defaultJwt
+    jwt: defaultJwt,
+    db: require('../database')
 };
 
 const verifySuperAdmin = (req, res, next) => {
@@ -11,10 +12,39 @@ const verifySuperAdmin = (req, res, next) => {
     const token = headers['authorization'];
     if (!token) return res.status(403).json({ error: 'No token provided' });
 
-    deps.jwt.verify(token.split(' ')[1], JWT_SECRET, (err, decoded) => {
+    deps.jwt.verify(token.split(' ')[1], JWT_SECRET, async (err, decoded) => {
         if (err) return res.status(401).json({ error: 'Unauthorized' });
 
-        if (decoded.role !== 'SUPERADMIN' && decoded.role !== 'SUPER_ADMIN') {
+        // Check role from token first
+        let userRole = decoded.role;
+
+        // If role is not SUPERADMIN, check database as fallback (in case role was changed)
+        if (userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') {
+            console.log(`[SuperAdmin Middleware] Initial role check failed for: ${userRole}`);
+            try {
+                const user = await new Promise((resolve, reject) => {
+                    deps.db.get('SELECT role FROM users WHERE id = ?', [decoded.id], (err, row) => {
+                        if (err) reject(err);
+                        else resolve(row);
+                    });
+                });
+
+                if (user && (user.role === 'SUPERADMIN' || user.role === 'SUPER_ADMIN')) {
+                    // Role was changed in database, update decoded token
+                    console.log('[SuperAdmin Middleware] Role promoted via DB check');
+                    userRole = user.role;
+                    decoded.role = user.role;
+                } else {
+                    console.log('[SuperAdmin Middleware] DB check validated non-superadmin role:', user?.role);
+                }
+            } catch (dbErr) {
+                console.error('[SuperAdmin Middleware] Database check error:', dbErr);
+                // Continue with token role if DB check fails
+            }
+        }
+
+        if (userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') {
+            console.log(`[SuperAdmin Middleware] Access Denied. Role: ${userRole}`);
             return res.status(403).json({ error: 'Requires Super Admin privileges' });
         }
 

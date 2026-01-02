@@ -76,12 +76,9 @@ export const RouterSync: React.FC = () => {
             }
         } else if (path.startsWith('/share/')) {
             // Public share links - no auth required, handled by App.tsx directly
-            // Just log for debugging, the App component will render PublicReportView
             console.log('[RouterSync] Public Share Link accessed');
-            // No state change needed - App.tsx will handle this route
         } else if (path === '/login' || path === '/auth') {
             // Login/Auth route - show auth view ONLY if not authenticated
-            // If user is already authenticated, redirect to dashboard
             if (currentUser?.isAuthenticated) {
                 console.log('[RouterSync] User authenticated, redirecting to chat');
                 navigate('/chat', { replace: true });
@@ -99,8 +96,22 @@ export const RouterSync: React.FC = () => {
                 navigate('/login', { replace: true });
                 return;
             }
+            // TRAP FIX: Only force STUDIO if we are not already in a different view (navigating away)
+            // But on mount/refresh, we want to respect the URL.
+            // We can check if the STORE matches the URL. If not, and we just mounted/navigated, we sync.
+            // Problem: On sidebar click, STORE updates, URL doesn't.
+            // So logic: If URL is /studio, and we ARE NOT in Studio view, it means either:
+            // a) We just clicked sidebar (Store changed, URL stale) -> UPDATE URL
+            // b) We just loaded URL (Store stale, URL correct) -> UPDATE STORE
+
+            // To distinguish, we need to know if this is a "popstate" or "pushState" vs internal update.
+            // OR simpler: `RouterSync` handles URL -> State. 
+            // We need a separate effect for State -> URL (Step 3).
+
             if (currentView !== AppView.STUDIO) {
-                console.log('[RouterSync] Navigating to Studio');
+                // Assuming Step 3 handles the escape, we only enforce here if "entry"
+                // For now, let's keep it simple: Enforce Studio ONLY if we assume URL is truth.
+                // We will rely on Step 3 to change URL if currentView changes.
                 setCurrentView(AppView.STUDIO);
             }
         } else if (path === '/chat') {
@@ -110,12 +121,13 @@ export const RouterSync: React.FC = () => {
                 navigate('/login', { replace: true });
                 return;
             }
-            // Don't override Admin/SuperAdmin/Settings views - they share /chat URL
+            // Don't override Admin/SuperAdmin/Settings/etc views - they share /chat URL
             const preservedViews = [
                 'ADMIN_', 'SUPERADMIN_', 'SETTINGS_', 'CONTEXT_BUILDER_',
-                'MY_WORK', 'PORTFOLIO_', 'IMPLEMENTATION', 'BENEFITS_', 
+                'MY_WORK', 'PORTFOLIO_', 'IMPLEMENTATION', 'BENEFITS_',
                 'ECONOMICS', 'ASSESSMENT_', 'AI_ACTION_', 'KPI_OKR_', 'STUDIO',
-                'PROJECT_INTELLIGENCE'
+                'PROJECT_INTELLIGENCE', 'FULL_', 'AFFILIATE_', 'DRD_', 'ONBOARDING_',
+                'CONSULTANT_', 'ORG_SETUP_'
             ];
             const shouldPreserve = preservedViews.some(prefix => currentView.startsWith(prefix));
             if (!shouldPreserve && currentView !== AppView.AI_CHAT) {
@@ -123,14 +135,11 @@ export const RouterSync: React.FC = () => {
                 setCurrentView(AppView.AI_CHAT);
             }
         } else if (path === '/' || path === '') {
-            // Phase A: Public Landing Page (ProductEntryPage)
-            // If authenticated, redirect to AI Chat
             if (currentUser?.isAuthenticated) {
                 console.log('[RouterSync] User authenticated, redirecting to AI Chat');
                 navigate('/chat', { replace: true });
                 return;
             }
-            // Only set to WELCOME if we're not already in AUTH (login dialog might be open)
             console.log('[RouterSync] Phase A: Product Entry Page');
             if (currentView !== AppView.WELCOME && currentView !== AppView.AUTH) {
                 setCurrentView(AppView.WELCOME);
@@ -138,6 +147,18 @@ export const RouterSync: React.FC = () => {
         }
 
     }, [location, setCurrentView, setSessionMode, setAuthInitialStep, currentUser, currentView]);
+
+    // 3. State -> URL Sync (Escape Traps)
+    useEffect(() => {
+        const path = location.pathname;
+
+        // If we are on a "Trap" URL but the view is different, escape to /chat
+        if (path === '/studio' && currentView !== AppView.STUDIO) {
+            navigate('/chat', { replace: true });
+        }
+
+        // Add other traps here if we add more dedicated routes
+    }, [currentView, location.pathname, navigate]);
 
     // 3. State -> URL Sync (Optional / One-way for now)
     // If we wanted the URL to change when user clicks in-app nav:

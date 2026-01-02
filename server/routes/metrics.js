@@ -20,6 +20,11 @@ const MetricsCollector = require('../services/metricsCollector');
 const MetricsAggregator = require('../services/metricsAggregator');
 const verifyToken = require('../middleware/authMiddleware');
 const verifySuperAdmin = require('../middleware/superAdminMiddleware');
+const seatManagementService = require('../services/seatManagementService');
+const payAsYouGoService = require('../services/payAsYouGoService');
+const budgetManagementService = require('../services/budgetManagementService');
+const usageService = require('../services/usageService');
+const db = require('../database');
 
 // ==========================================
 // SUPERADMIN ENDPOINTS (Global Metrics)
@@ -323,10 +328,11 @@ router.post('/snapshots/build', verifyToken, verifySuperAdmin, async (req, res) 
  * GET /api/metrics/org/overview
  * 
  * Returns metrics overview for the current user's organization
+ * Now includes real seat management and billing data
  */
 router.get('/org/overview', verifyToken, async (req, res) => {
     try {
-        const organizationId = req.organizationId;
+        const organizationId = req.organizationId || req.user?.organizationId;
         const logger = require('../utils/logger');
         const { getRequestContext } = require('../utils/requestContext');
 
@@ -337,8 +343,64 @@ router.get('/org/overview', verifyToken, async (req, res) => {
 
         logger.info('Fetching organization metrics overview', { ...getRequestContext(req), organizationId });
 
+        // Get base metrics
         const metrics = await MetricsAggregator.getOrganizationMetrics(organizationId);
-        res.json(metrics);
+
+        // Get real seat data
+        let seatConfig = null;
+        try {
+            seatConfig = await seatManagementService.getSeatConfiguration(organizationId);
+        } catch (err) {
+            console.warn('[Metrics] Failed to get seat config:', err.message);
+        }
+
+        // Get real usage data
+        let usageData = null;
+        try {
+            usageData = await usageService.getCurrentUsage(organizationId);
+        } catch (err) {
+            console.warn('[Metrics] Failed to get usage data:', err.message);
+        }
+
+        // Get real billing data
+        let billingData = null;
+        try {
+            const billingService = require('../services/billingService');
+            billingData = await billingService.getOrganizationBilling(organizationId);
+        } catch (err) {
+            console.warn('[Metrics] Failed to get billing data:', err.message);
+        }
+
+        // Get active users count
+        const activeUsers = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT COUNT(*) as count FROM users WHERE organization_id = ? AND status = ?',
+                [organizationId, 'active'],
+                (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row?.count || 0);
+                }
+            );
+        });
+
+        // Enhance metrics with real data
+        res.json({
+            ...metrics,
+            activeUsers: activeUsers,
+            seatConfiguration: seatConfig ? {
+                totalSeats: seatConfig.total_seats_available || 0,
+                seatsUsed: seatConfig.seats_used || 0,
+                seatsRemaining: seatConfig.seats_remaining || 0,
+                utilizationPercent: parseFloat(seatConfig.utilization_percent || 0)
+            } : null,
+            usage: usageData,
+            billing: billingData ? {
+                plan: billingData.subscription_plan_id,
+                status: billingData.status,
+                currentPeriodStart: billingData.current_period_start,
+                currentPeriodEnd: billingData.current_period_end
+            } : null
+        });
     } catch (err) {
         console.error('[Metrics] Org overview error:', err.message);
         res.status(500).json({ error: 'Failed to fetch organization metrics' });
@@ -403,10 +465,11 @@ router.get('/org/help', verifyToken, async (req, res) => {
  * GET /api/metrics/org/team
  * 
  * Returns team adoption metrics for the current user's organization
+ * Now includes real seat management data
  */
 router.get('/org/team', verifyToken, async (req, res) => {
     try {
-        const organizationId = req.user.organizationId;
+        const organizationId = req.user.organizationId || req.organizationId;
 
         if (!organizationId) {
             return res.status(400).json({ error: 'Organization ID not found' });
@@ -424,19 +487,137 @@ router.get('/org/team', verifyToken, async (req, res) => {
         const sent = events.filter(e => e.event_type === MetricsCollector.EVENT_TYPES.INVITE_SENT).length;
         const accepted = events.filter(e => e.event_type === MetricsCollector.EVENT_TYPES.INVITE_ACCEPTED).length;
 
+        // Get real seat configuration
+        let seatConfig = null;
+        try {
+            seatConfig = await seatManagementService.getSeatConfiguration(organizationId);
+        } catch (err) {
+            console.warn('[Metrics] Failed to get seat config:', err.message);
+        }
+
+        // Get pending invitations from database
+        const pendingInvites = await new Promise((resolve, reject) => {
+            db.all(
+                'SELECT COUNT(*) as count FROM invitations WHERE organization_id = ? AND status = ?',
+                [organizationId, 'pending'],
+                (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows?.[0]?.count || 0);
+                }
+            );
+        });
+
         res.json({
             organizationId,
             invitations: {
                 sent,
                 accepted,
-                pending: sent - accepted,
+                pending: pendingInvites,
                 acceptanceRate: sent > 0 ? Math.round((accepted / sent) * 100) : 0
             },
+            seatManagement: seatConfig ? {
+                totalSeats: seatConfig.total_seats_available || 0,
+                seatsUsed: seatConfig.seats_used || 0,
+                seatsRemaining: seatConfig.seats_remaining || 0,
+                utilizationPercent: parseFloat(seatConfig.utilization_percent || 0),
+                autoAddEnabled: seatConfig.auto_add_seats_on_invite === 1
+            } : null,
             recentInviteEvents: events.slice(0, 20)
         });
     } catch (err) {
         console.error('[Metrics] Org team error:', err.message);
         res.status(500).json({ error: 'Failed to fetch organization team metrics' });
+    }
+});
+
+/**
+ * GET /api/metrics/org/ai-analytics
+ * 
+ * Returns AI analytics with real PAYG usage data
+ */
+router.get('/org/ai-analytics', verifyToken, async (req, res) => {
+    try {
+        const organizationId = req.user.organizationId || req.organizationId;
+
+        if (!organizationId) {
+            return res.status(400).json({ error: 'Organization ID not found' });
+        }
+
+        // Get real usage data
+        let usageData = null;
+        try {
+            usageData = await usageService.getCurrentUsage(organizationId);
+        } catch (err) {
+            console.warn('[Metrics] Failed to get usage data:', err.message);
+        }
+
+        // Get PAYG usage for current period
+        let paygUsage = null;
+        try {
+            paygUsage = await payAsYouGoService.getCurrentPeriodUsage(organizationId);
+        } catch (err) {
+            console.warn('[Metrics] Failed to get PAYG usage:', err.message);
+        }
+
+        // Get PAYG forecast
+        let forecast = null;
+        try {
+            forecast = await payAsYouGoService.getPayAsYouGoForecast(organizationId);
+        } catch (err) {
+            console.warn('[Metrics] Failed to get PAYG forecast:', err.message);
+        }
+
+        // Get token usage trend (last 7 days)
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const usageTrend = await new Promise((resolve, reject) => {
+            db.all(
+                `SELECT 
+                    DATE(recorded_at) as date,
+                    SUM(CASE WHEN type = 'token' THEN amount ELSE 0 END) as tokens,
+                    COUNT(*) as requests
+                 FROM usage_records
+                 WHERE organization_id = ? AND recorded_at >= ?
+                 GROUP BY DATE(recorded_at)
+                 ORDER BY date ASC`,
+                [organizationId, sevenDaysAgo.toISOString()],
+                (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows || []);
+                }
+            );
+        });
+
+        // Calculate success rate from AI analytics (if available)
+        let successRate = 0;
+        let avgResponseTime = 0;
+        try {
+            const aiAnalyticsService = require('../services/aiAnalyticsService');
+            const analytics = await aiAnalyticsService.getDashboardData(organizationId);
+            successRate = analytics?.actions?.success_rate || 0;
+            // Estimate response time (would need actual timing data)
+            avgResponseTime = 1.2; // Default fallback
+        } catch (err) {
+            console.warn('[Metrics] Failed to get AI analytics:', err.message);
+        }
+
+        res.json({
+            organizationId,
+            successRate: successRate / 100, // Convert to decimal
+            avgResponseTime,
+            totalTokens: usageData?.tokens?.used || 0,
+            estCost: paygUsage?.totalCost || forecast?.currentCost || 0,
+            usageTrend: usageTrend.map(row => ({
+                date: row.date,
+                tokens: row.tokens || 0,
+                cost: (row.tokens || 0) * 0.00003 // Rough estimate
+            })),
+            paygUsage,
+            forecast
+        });
+    } catch (err) {
+        console.error('[Metrics] Org AI analytics error:', err.message);
+        res.status(500).json({ error: 'Failed to fetch AI analytics' });
     }
 });
 

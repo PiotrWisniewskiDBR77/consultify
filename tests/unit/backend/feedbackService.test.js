@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const { initTestDb, cleanTables, dbAll, dbGet } = require('../../helpers/dbHelper.cjs');
-const FeedbackService = require('../../../server/services/feedbackService.js');
+// Requires moved to beforeAll for dynamic environment config
 
 /**
  * Integration tests for FeedbackService
@@ -11,17 +9,37 @@ const FeedbackService = require('../../../server/services/feedbackService.js');
 describe('Backend Service Test: FeedbackService', () => {
     let testOrgId;
     let testUserId;
+    let FeedbackService;
+    let db;
+    let dbHelper;
+    // Helper functions reference
+    let initTestDb, cleanTables, dbAll;
 
     beforeAll(async () => {
+        // RESET MODULES to ensure we load specific DB versions
+        vi.resetModules();
+        process.env.MOCK_DB = 'false'; // Force real DB logic
+        process.env.NODE_ENV = 'test'; // Ensure :memory: usage
+
+        const createRequire = (await import('module')).createRequire;
+        const require = createRequire(import.meta.url);
+
+        // Re-import dependencies with new environment
+        dbHelper = require('../../helpers/dbHelper.cjs');
+        initTestDb = dbHelper.initTestDb;
+        cleanTables = dbHelper.cleanTables;
+        dbAll = dbHelper.dbAll;
+
+        FeedbackService = require('../../../server/services/feedbackService.js');
+        db = require('../../../server/database.js');
+        const bcrypt = require('bcryptjs');
+
         await initTestDb();
-        
+
         // Create test organization and user
         testOrgId = 'test-org-feedback-' + Date.now();
         testUserId = 'test-user-feedback-' + Date.now();
-        
-        const db = require('../../../server/database.js');
-        const bcrypt = require('bcryptjs');
-        
+
         await new Promise((resolve, reject) => {
             db.serialize(() => {
                 db.run(
@@ -29,13 +47,13 @@ describe('Backend Service Test: FeedbackService', () => {
                     [testOrgId, 'Feedback Test Org', 'free', 'active'],
                     (err) => err && !err.message.includes('UNIQUE') ? reject(err) : null
                 );
-                
+
                 db.run(
                     'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
                     [testUserId, testOrgId, `feedback-${Date.now()}@test.com`, bcrypt.hashSync('test', 8), 'Test', 'USER'],
                     (err) => err && !err.message.includes('UNIQUE') ? reject(err) : null
                 );
-                
+
                 setTimeout(resolve, 100);
             });
         });
@@ -43,7 +61,7 @@ describe('Backend Service Test: FeedbackService', () => {
 
     beforeEach(async () => {
         // Clean feedback table before each test
-        await cleanTables(['ai_feedback']);
+        if (cleanTables) await cleanTables(['ai_feedback']);
     });
 
     describe('saveFeedback', () => {
@@ -100,7 +118,7 @@ describe('Backend Service Test: FeedbackService', () => {
         it('retrieves learning examples for context', async () => {
             const db = require('../../../server/database.js');
             const { v4: uuidv4 } = require('uuid');
-            
+
             // Insert test feedback with high rating
             await new Promise((resolve) => {
                 db.run(
@@ -109,7 +127,7 @@ describe('Backend Service Test: FeedbackService', () => {
                     resolve
                 );
             });
-            
+
             await new Promise((resolve) => {
                 db.run(
                     'INSERT INTO ai_feedback (id, user_id, context, prompt, response, rating, correction) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -144,7 +162,7 @@ describe('Backend Service Test: FeedbackService', () => {
         it('only returns examples with rating >= 4', async () => {
             const db = require('../../../server/database.js');
             const { v4: uuidv4 } = require('uuid');
-            
+
             // Insert low rating feedback
             await new Promise((resolve) => {
                 db.run(
@@ -153,7 +171,7 @@ describe('Backend Service Test: FeedbackService', () => {
                     resolve
                 );
             });
-            
+
             // Insert high rating feedback
             await new Promise((resolve) => {
                 db.run(

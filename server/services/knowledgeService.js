@@ -33,6 +33,11 @@ const KnowledgeService = {
 
     updateCandidateStatus: (id, status, adminComment = '') => {
         return new Promise((resolve, reject) => {
+            // Support new statuses: pending, approved, rejected, implemented, archived
+            const validStatuses = ['pending', 'approved', 'rejected', 'implemented', 'archived'];
+            if (!validStatuses.includes(status)) {
+                return reject(new Error(`Invalid status: ${status}`));
+            }
             deps.db.run("UPDATE knowledge_candidates SET status = ?, admin_comment = ? WHERE id = ?", [status, adminComment, id], function (err) {
                 if (err) reject(err);
                 else resolve(this.changes);
@@ -40,24 +45,411 @@ const KnowledgeService = {
         });
     },
 
+    updateCandidate: (id, updates) => {
+        return new Promise((resolve, reject) => {
+            const fields = [];
+            const values = [];
+            
+            if (updates.category !== undefined) {
+                fields.push('category = ?');
+                values.push(updates.category);
+            }
+            if (updates.tags !== undefined) {
+                fields.push('tags = ?');
+                values.push(JSON.stringify(updates.tags));
+            }
+            if (updates.implementation_notes !== undefined) {
+                fields.push('implementation_notes = ?');
+                values.push(updates.implementation_notes);
+            }
+            if (updates.impact_score !== undefined) {
+                fields.push('impact_score = ?');
+                values.push(updates.impact_score);
+            }
+            if (updates.status !== undefined) {
+                fields.push('status = ?');
+                values.push(updates.status);
+            }
+            
+            if (fields.length === 0) {
+                return resolve(0);
+            }
+            
+            values.push(id);
+            const sql = `UPDATE knowledge_candidates SET ${fields.join(', ')} WHERE id = ?`;
+            deps.db.run(sql, values, function (err) {
+                if (err) reject(err);
+                else resolve(this.changes);
+            });
+        });
+    },
+
+    linkIdeaToProject: (ideaId, projectId, notes = '') => {
+        return new Promise((resolve, reject) => {
+            deps.db.get("SELECT related_project_ids FROM knowledge_candidates WHERE id = ?", [ideaId], (err, idea) => {
+                if (err) return reject(err);
+                if (!idea) return reject(new Error('Idea not found'));
+                
+                try {
+                    const projectIds = idea.related_project_ids ? JSON.parse(idea.related_project_ids) : [];
+                    if (!projectIds.includes(projectId)) {
+                        projectIds.push(projectId);
+                    }
+                    
+                    const updateFields = ['related_project_ids = ?'];
+                    const updateValues = [JSON.stringify(projectIds)];
+                    
+                    if (notes) {
+                        updateFields.push('implementation_notes = ?');
+                        updateValues.push(notes);
+                    }
+                    
+                    // Update status to implemented if not already
+                    if (idea.status === 'approved') {
+                        updateFields.push('status = ?');
+                        updateValues.push('implemented');
+                    }
+                    
+                    updateValues.push(ideaId);
+                    const sql = `UPDATE knowledge_candidates SET ${updateFields.join(', ')} WHERE id = ?`;
+                    deps.db.run(sql, updateValues, function (err) {
+                        if (err) reject(err);
+                        else resolve(this.changes);
+                    });
+                } catch (e) {
+                    reject(new Error('Failed to parse related_project_ids: ' + e.message));
+                }
+            });
+        });
+    },
+
+    getApprovedIdeas: (filters = {}) => {
+        return new Promise((resolve, reject) => {
+            let sql = "SELECT * FROM knowledge_candidates WHERE status IN ('approved', 'implemented')";
+            const params = [];
+            
+            if (filters.category) {
+                sql += " AND category = ?";
+                params.push(filters.category);
+            }
+            
+            sql += " ORDER BY created_at DESC";
+            
+            deps.db.all(sql, params, (err, rows) => {
+                if (err) reject(err);
+                else {
+                    // Parse JSON fields
+                    const parsed = (rows || []).map(row => ({
+                        ...row,
+                        tags: row.tags ? JSON.parse(row.tags) : [],
+                        related_project_ids: row.related_project_ids ? JSON.parse(row.related_project_ids) : []
+                    }));
+                    resolve(parsed);
+                }
+            });
+        });
+    },
+
+    getIdeasByCategory: (category) => {
+        return new Promise((resolve, reject) => {
+            deps.db.all("SELECT * FROM knowledge_candidates WHERE category = ? AND status IN ('approved', 'implemented') ORDER BY created_at DESC", 
+                [category], (err, rows) => {
+                    if (err) reject(err);
+                    else {
+                        const parsed = (rows || []).map(row => ({
+                            ...row,
+                            tags: row.tags ? JSON.parse(row.tags) : [],
+                            related_project_ids: row.related_project_ids ? JSON.parse(row.related_project_ids) : []
+                        }));
+                        resolve(parsed);
+                    }
+                });
+        });
+    },
+
+    getIdeasByProject: (projectId) => {
+        return new Promise((resolve, reject) => {
+            deps.db.all("SELECT * FROM knowledge_candidates WHERE related_project_ids LIKE ? ORDER BY created_at DESC", 
+                [`%${projectId}%`], (err, rows) => {
+                    if (err) reject(err);
+                    else {
+                        // Filter to ensure projectId is actually in the array
+                        const filtered = (rows || []).filter(row => {
+                            try {
+                                const projectIds = row.related_project_ids ? JSON.parse(row.related_project_ids) : [];
+                                return projectIds.includes(projectId);
+                            } catch (e) {
+                                return false;
+                            }
+                        }).map(row => ({
+                            ...row,
+                            tags: row.tags ? JSON.parse(row.tags) : [],
+                            related_project_ids: row.related_project_ids ? JSON.parse(row.related_project_ids) : []
+                        }));
+                        resolve(filtered);
+                    }
+                });
+        });
+    },
+
     // --- 2. GLOBAL STRATEGY (Admin Direction) ---
 
-    addStrategy: (title, description, createdBy = 'admin') => {
+    addStrategy: (title, description, createdBy = 'admin', options = {}) => {
         return new Promise((resolve, reject) => {
             const id = deps.uuidv4();
-            deps.db.run("INSERT INTO global_strategies (id, title, description, created_by) VALUES (?, ?, ?, ?)",
-                [id, title, description, createdBy], function (err) {
+            const successMetrics = JSON.stringify(options.success_metrics || []);
+            const priority = options.priority || 'medium';
+            const targetDate = options.target_date || null;
+            const progressPercentage = options.progress_percentage || 0;
+            
+            deps.db.run("INSERT INTO global_strategies (id, title, description, created_by, success_metrics, priority, target_date, progress_percentage) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                [id, title, description, createdBy, successMetrics, priority, targetDate, progressPercentage], function (err) {
                     if (err) reject(err);
                     else resolve(id);
                 });
         });
     },
 
+    updateStrategy: (id, updates) => {
+        return new Promise((resolve, reject) => {
+            const fields = [];
+            const values = [];
+            
+            if (updates.title !== undefined) {
+                fields.push('title = ?');
+                values.push(updates.title);
+            }
+            if (updates.description !== undefined) {
+                fields.push('description = ?');
+                values.push(updates.description);
+            }
+            if (updates.success_metrics !== undefined) {
+                fields.push('success_metrics = ?');
+                values.push(JSON.stringify(updates.success_metrics));
+            }
+            if (updates.priority !== undefined) {
+                fields.push('priority = ?');
+                values.push(updates.priority);
+            }
+            if (updates.target_date !== undefined) {
+                fields.push('target_date = ?');
+                values.push(updates.target_date);
+            }
+            if (updates.progress_percentage !== undefined) {
+                fields.push('progress_percentage = ?');
+                values.push(updates.progress_percentage);
+            }
+            if (updates.is_active !== undefined) {
+                fields.push('is_active = ?');
+                values.push(updates.is_active ? 1 : 0);
+            }
+            
+            if (fields.length === 0) {
+                return resolve(0);
+            }
+            
+            values.push(id);
+            const sql = `UPDATE global_strategies SET ${fields.join(', ')} WHERE id = ?`;
+            deps.db.run(sql, values, function (err) {
+                if (err) reject(err);
+                else resolve(this.changes);
+            });
+        });
+    },
+
+    linkStrategyToDocument: (strategyId, docId) => {
+        return new Promise((resolve, reject) => {
+            deps.db.get("SELECT related_document_ids FROM global_strategies WHERE id = ?", [strategyId], (err, strategy) => {
+                if (err) return reject(err);
+                if (!strategy) return reject(new Error('Strategy not found'));
+                
+                try {
+                    const docIds = strategy.related_document_ids ? JSON.parse(strategy.related_document_ids) : [];
+                    if (!docIds.includes(docId)) {
+                        docIds.push(docId);
+                    }
+                    
+                    deps.db.run("UPDATE global_strategies SET related_document_ids = ? WHERE id = ?", 
+                        [JSON.stringify(docIds), strategyId], function (err) {
+                            if (err) reject(err);
+                            else resolve(this.changes);
+                        });
+                } catch (e) {
+                    reject(new Error('Failed to parse related_document_ids: ' + e.message));
+                }
+            });
+        });
+    },
+
+    linkStrategyToIdea: (strategyId, ideaId) => {
+        return new Promise((resolve, reject) => {
+            deps.db.get("SELECT related_idea_ids FROM global_strategies WHERE id = ?", [strategyId], (err, strategy) => {
+                if (err) return reject(err);
+                if (!strategy) return reject(new Error('Strategy not found'));
+                
+                try {
+                    const ideaIds = strategy.related_idea_ids ? JSON.parse(strategy.related_idea_ids) : [];
+                    if (!ideaIds.includes(ideaId)) {
+                        ideaIds.push(ideaId);
+                    }
+                    
+                    deps.db.run("UPDATE global_strategies SET related_idea_ids = ? WHERE id = ?", 
+                        [JSON.stringify(ideaIds), strategyId], function (err) {
+                            if (err) reject(err);
+                            else resolve(this.changes);
+                        });
+                } catch (e) {
+                    reject(new Error('Failed to parse related_idea_ids: ' + e.message));
+                }
+            });
+        });
+    },
+
+    unlinkStrategyFromDocument: (strategyId, docId) => {
+        return new Promise((resolve, reject) => {
+            deps.db.get("SELECT related_document_ids FROM global_strategies WHERE id = ?", [strategyId], (err, strategy) => {
+                if (err) return reject(err);
+                if (!strategy) return reject(new Error('Strategy not found'));
+                
+                try {
+                    const docIds = strategy.related_document_ids ? JSON.parse(strategy.related_document_ids) : [];
+                    const filtered = docIds.filter(id => id !== docId);
+                    
+                    deps.db.run("UPDATE global_strategies SET related_document_ids = ? WHERE id = ?", 
+                        [JSON.stringify(filtered), strategyId], function (err) {
+                            if (err) reject(err);
+                            else resolve(this.changes);
+                        });
+                } catch (e) {
+                    reject(new Error('Failed to parse related_document_ids: ' + e.message));
+                }
+            });
+        });
+    },
+
+    unlinkStrategyFromIdea: (strategyId, ideaId) => {
+        return new Promise((resolve, reject) => {
+            deps.db.get("SELECT related_idea_ids FROM global_strategies WHERE id = ?", [strategyId], (err, strategy) => {
+                if (err) return reject(err);
+                if (!strategy) return reject(new Error('Strategy not found'));
+                
+                try {
+                    const ideaIds = strategy.related_idea_ids ? JSON.parse(strategy.related_idea_ids) : [];
+                    const filtered = ideaIds.filter(id => id !== ideaId);
+                    
+                    deps.db.run("UPDATE global_strategies SET related_idea_ids = ? WHERE id = ?", 
+                        [JSON.stringify(filtered), strategyId], function (err) {
+                            if (err) reject(err);
+                            else resolve(this.changes);
+                        });
+                } catch (e) {
+                    reject(new Error('Failed to parse related_idea_ids: ' + e.message));
+                }
+            });
+        });
+    },
+
+    updateStrategyProgress: (strategyId, percentage) => {
+        return new Promise((resolve, reject) => {
+            if (percentage < 0 || percentage > 100) {
+                return reject(new Error('Progress percentage must be between 0 and 100'));
+            }
+            deps.db.run("UPDATE global_strategies SET progress_percentage = ? WHERE id = ?", 
+                [percentage, strategyId], function (err) {
+                    if (err) reject(err);
+                    else resolve(this.changes);
+                });
+        });
+    },
+
+    getStrategyWithRelated: (strategyId) => {
+        return new Promise((resolve, reject) => {
+            deps.db.get("SELECT * FROM global_strategies WHERE id = ?", [strategyId], async (err, strategy) => {
+                if (err) return reject(err);
+                if (!strategy) return resolve(null);
+                
+                try {
+                    const docIds = strategy.related_document_ids ? JSON.parse(strategy.related_document_ids) : [];
+                    const ideaIds = strategy.related_idea_ids ? JSON.parse(strategy.related_idea_ids) : [];
+                    const successMetrics = strategy.success_metrics ? JSON.parse(strategy.success_metrics) : [];
+                    
+                    // Fetch related documents
+                    let documents = [];
+                    if (docIds.length > 0) {
+                        const placeholders = docIds.map(() => '?').join(',');
+                        documents = await new Promise((resolve, reject) => {
+                            deps.db.all(`SELECT * FROM knowledge_docs WHERE id IN (${placeholders}) AND deleted_at IS NULL`, 
+                                docIds, (err, rows) => {
+                                    if (err) reject(err);
+                                    else resolve(rows || []);
+                                });
+                        });
+                    }
+                    
+                    // Fetch related ideas
+                    let ideas = [];
+                    if (ideaIds.length > 0) {
+                        const placeholders = ideaIds.map(() => '?').join(',');
+                        ideas = await new Promise((resolve, reject) => {
+                            deps.db.all(`SELECT * FROM knowledge_candidates WHERE id IN (${placeholders})`, 
+                                ideaIds, (err, rows) => {
+                                    if (err) reject(err);
+                                    else resolve(rows || []);
+                                });
+                        });
+                    }
+                    
+                    resolve({
+                        ...strategy,
+                        success_metrics: successMetrics,
+                        related_documents: documents,
+                        related_ideas: ideas.map(idea => ({
+                            ...idea,
+                            tags: idea.tags ? JSON.parse(idea.tags) : [],
+                            related_project_ids: idea.related_project_ids ? JSON.parse(idea.related_project_ids) : []
+                        }))
+                    });
+                } catch (e) {
+                    reject(new Error('Failed to parse strategy data: ' + e.message));
+                }
+            });
+        });
+    },
+
     getActiveStrategies: () => {
         return new Promise((resolve, reject) => {
-            deps.db.all("SELECT * FROM global_strategies WHERE is_active = 1", (err, rows) => {
+            deps.db.all("SELECT * FROM global_strategies WHERE is_active = 1 ORDER BY priority DESC, created_at DESC", (err, rows) => {
                 if (err) reject(err);
-                else resolve(rows || []);
+                else {
+                    // Parse JSON fields
+                    const parsed = (rows || []).map(row => ({
+                        ...row,
+                        success_metrics: row.success_metrics ? JSON.parse(row.success_metrics) : [],
+                        related_document_ids: row.related_document_ids ? JSON.parse(row.related_document_ids) : [],
+                        related_idea_ids: row.related_idea_ids ? JSON.parse(row.related_idea_ids) : [],
+                        related_initiative_ids: row.related_initiative_ids ? JSON.parse(row.related_initiative_ids) : []
+                    }));
+                    resolve(parsed);
+                }
+            });
+        });
+    },
+
+    getAllStrategies: () => {
+        return new Promise((resolve, reject) => {
+            deps.db.all("SELECT * FROM global_strategies ORDER BY priority DESC, created_at DESC", (err, rows) => {
+                if (err) reject(err);
+                else {
+                    // Parse JSON fields
+                    const parsed = (rows || []).map(row => ({
+                        ...row,
+                        success_metrics: row.success_metrics ? JSON.parse(row.success_metrics) : [],
+                        related_document_ids: row.related_document_ids ? JSON.parse(row.related_document_ids) : [],
+                        related_idea_ids: row.related_idea_ids ? JSON.parse(row.related_idea_ids) : [],
+                        related_initiative_ids: row.related_initiative_ids ? JSON.parse(row.related_initiative_ids) : []
+                    }));
+                    resolve(parsed);
+                }
             });
         });
     },
@@ -107,14 +499,85 @@ const KnowledgeService = {
 
     // --- 4. KNOWLEDGE DOCUMENTS (RAG) ---
 
-    addDocument: (filename, filepath, orgId, projectId, size) => {
-        const id = uuidv4();
+    addDocument: (filename, filepath, orgId, projectId, size, category = null, tags = []) => {
+        const id = deps.uuidv4();
+        const tagsJson = JSON.stringify(tags || []);
+        // Force project_id = NULL for global knowledge docs
+        const globalProjectId = null;
         return new Promise((resolve, reject) => {
-            deps.db.run("INSERT INTO knowledge_docs (id, filename, filepath, organization_id, project_id, file_size_bytes, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')",
-                [id, filename, filepath, orgId, projectId, size], function (err) {
+            deps.db.run("INSERT INTO knowledge_docs (id, filename, filepath, organization_id, project_id, file_size_bytes, status, category, tags) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
+                [id, filename, filepath, orgId, globalProjectId, size, category, tagsJson], function (err) {
                     if (err) reject(err);
                     else resolve(id);
                 });
+        });
+    },
+
+    updateDocument: (docId, updates) => {
+        return new Promise((resolve, reject) => {
+            const fields = [];
+            const values = [];
+            
+            if (updates.category !== undefined) {
+                fields.push('category = ?');
+                values.push(updates.category);
+            }
+            if (updates.tags !== undefined) {
+                fields.push('tags = ?');
+                values.push(JSON.stringify(updates.tags));
+            }
+            if (updates.version !== undefined) {
+                fields.push('version = ?');
+                values.push(updates.version);
+            }
+            if (updates.parent_doc_id !== undefined) {
+                fields.push('parent_doc_id = ?');
+                values.push(updates.parent_doc_id);
+            }
+            
+            if (fields.length === 0) {
+                return resolve(0);
+            }
+            
+            values.push(docId);
+            const sql = `UPDATE knowledge_docs SET ${fields.join(', ')} WHERE id = ?`;
+            deps.db.run(sql, values, function (err) {
+                if (err) reject(err);
+                else resolve(this.changes);
+            });
+        });
+    },
+
+    getDocumentsByCategory: (orgId, category) => {
+        return new Promise((resolve, reject) => {
+            deps.db.all("SELECT * FROM knowledge_docs WHERE organization_id = ? AND category = ? AND deleted_at IS NULL ORDER BY created_at DESC", 
+                [orgId, category], (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows || []);
+                });
+        });
+    },
+
+    getDocumentsByStrategy: (strategyId) => {
+        return new Promise((resolve, reject) => {
+            deps.db.get("SELECT related_document_ids FROM global_strategies WHERE id = ?", [strategyId], (err, strategy) => {
+                if (err) return reject(err);
+                if (!strategy || !strategy.related_document_ids) return resolve([]);
+                
+                try {
+                    const docIds = JSON.parse(strategy.related_document_ids);
+                    if (docIds.length === 0) return resolve([]);
+                    
+                    const placeholders = docIds.map(() => '?').join(',');
+                    deps.db.all(`SELECT * FROM knowledge_docs WHERE id IN (${placeholders}) AND deleted_at IS NULL ORDER BY created_at DESC`, 
+                        docIds, (err, rows) => {
+                            if (err) reject(err);
+                            else resolve(rows || []);
+                        });
+                } catch (e) {
+                    resolve([]);
+                }
+            });
         });
     },
 

@@ -1,13 +1,10 @@
 import request from 'supertest';
 import { describe, it, expect, beforeAll } from 'vitest';
-import { createRequire } from 'module';
+import { TestDatabaseFactory } from '../utils/TestDatabaseFactory.js';
 
-const require = createRequire(import.meta.url);
-const db = require('../../server/database.js');
-const app = require('../../server/index.js');
-
-// Helper to wait for DB to sync
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+// We delay importing app/db until after we set up the mock DB
+let app;
+let db;
 
 describe('Auth Integration', () => {
     let token;
@@ -15,31 +12,50 @@ describe('Auth Integration', () => {
     const email = `auth-${testId}@dbr77.com`;
     const password = 'password123';
 
-    beforeAll(async () => {
-        if (db.initPromise) {
-            await db.initPromise;
-        }
+    // Explicitly mock Sentry here to survive resetModules or ensure it's picked up
 
-        const bcrypt = require('bcryptjs');
+
+    beforeAll(async () => {
+        // 1. Create a fresh in-memory DB with schema
+        const testDb = await TestDatabaseFactory.create();
+
+        // 2. Inject it into the global mock slot (which server/database.js uses when MOCK_DB=true)
+        // Note: tests/setup.ts sets MOCK_DB=true
+        global.__TEST_DB_MOCK__ = testDb;
+
+        // 3. Reset modules to ensure server/database.js is re-evaluated and picks up the new global mock
+        vi.resetModules();
+
+        // 4. Import the app and db (using dynamic import to ensure freshness)
+        // We use createRequire for compatibility if needed, or just import
+        const dbModule = await import('../../server/database.js');
+        db = dbModule.default;
+
+        const appModule = await import('../../server/index.js');
+        app = appModule.default || appModule; // Handle CJS/ESM interop
+
+        const bcrypt = await import('bcryptjs');
         const hash = bcrypt.hashSync(password, 8);
         const orgId = `org-auth-${testId}`;
         const userId = `user-auth-${testId}`;
 
-        db.serialize(() => {
-            // Create org
-            db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
-                [orgId, 'Auth Test Org', 'free', 'active'], (err) => {
-                    if (err) console.error('Auth org error:', err.message);
-                });
+        // 5. Seed data using the testDb directly (or the imported db wrapper, they should be the same now)
+        await new Promise((resolve, reject) => {
+            testDb.serialize(() => {
+                // Create org
+                testDb.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
+                    [orgId, 'Auth Test Org', 'free', 'active'], (err) => {
+                        if (err) console.error('Auth org error:', err.message);
+                    });
 
-            // Create user
-            db.run('INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-                [userId, orgId, email, hash, 'AuthTester', 'ADMIN'], (err) => {
-                    if (err) console.error('Auth user error:', err.message);
-                });
+                // Create user
+                testDb.run('INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+                    [userId, orgId, email, hash, 'AuthTester', 'ADMIN'], (err) => {
+                        if (err) console.error('Auth user error:', err.message);
+                        resolve();
+                    });
+            });
         });
-
-        await sleep(200);
     });
 
     it('should login successfully with valid credentials', async () => {
@@ -113,7 +129,7 @@ describe('Auth Integration', () => {
         const user2Email = `auth-user2-${testId2}@test.com`;
 
         beforeAll(async () => {
-            const bcrypt = require('bcryptjs');
+            const bcrypt = await import('bcryptjs');
             const hash = bcrypt.hashSync('test123', 8);
 
             await new Promise((resolve) => {
@@ -129,7 +145,7 @@ describe('Auth Integration', () => {
                     db.run(
                         'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
                         [`user1-${testId2}`, org1Id, user1Email, hash, 'User1', 'USER'],
-                        () => {}
+                        () => { }
                     );
                     db.run(
                         'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
@@ -151,6 +167,10 @@ describe('Auth Integration', () => {
         });
 
         it('should return correct organizationId in /me endpoint', async () => {
+            // Need to verify tokens were actually obtained
+            expect(org1Token).toBeDefined();
+            expect(org2Token).toBeDefined();
+
             const res1 = await request(app)
                 .get('/api/auth/me')
                 .set('Authorization', `Bearer ${org1Token}`);

@@ -63,7 +63,7 @@ describe('Initiatives Integration', () => {
             .set('Authorization', `Bearer ${token}`);
 
         expect(res.status).toBe(200);
-        expect(Array.isArray(res.body)).toBe(true);
+        expect(Array.isArray(res.body.initiatives)).toBe(true);
     });
 
     it('should create an initiative', async () => {

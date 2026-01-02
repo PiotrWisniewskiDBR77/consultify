@@ -23,27 +23,27 @@ router.post('/feedback', async (req, res) => {
         const userId = req.user?.id;
         const orgId = req.user?.organization_id;
         const { contentType, contentId, isHelpful, rating, comment, metadata } = req.body;
-        
+
         if (!contentType || !contentId) {
             return res.status(400).json({ error: 'contentType and contentId are required' });
         }
-        
+
         const validTypes = ['module', 'card', 'faq', 'video'];
         if (!validTypes.includes(contentType)) {
             return res.status(400).json({ error: `contentType must be one of: ${validTypes.join(', ')}` });
         }
-        
+
         const id = uuidv4();
-        
+
         await db.run(`
             INSERT INTO help_feedback (id, user_id, organization_id, content_type, content_id, is_helpful, rating, comment, metadata)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [id, userId, orgId, contentType, contentId, isHelpful, rating, comment, JSON.stringify(metadata || {})]);
-        
+
         console.log(`[HelpFeedback] Feedback submitted: ${contentType}/${contentId} - helpful: ${isHelpful}`);
-        
-        res.json({ 
-            success: true, 
+
+        res.json({
+            success: true,
             id,
             message: 'Thank you for your feedback!'
         });
@@ -60,22 +60,22 @@ router.post('/feedback', async (req, res) => {
 router.get('/feedback/stats', async (req, res) => {
     try {
         const { contentType, contentId, days = 30 } = req.query;
-        
+
         let whereClause = `WHERE created_at >= datetime('now', '-${parseInt(days)} days')`;
         const params = [];
-        
+
         if (contentType) {
             whereClause += ` AND content_type = ?`;
             params.push(contentType);
         }
-        
+
         if (contentId) {
             whereClause += ` AND content_id = ?`;
             params.push(contentId);
         }
-        
+
         // Overall stats
-        const overallStats = await db.get(`
+        const overallStatsResult = await db.query(`
             SELECT 
                 COUNT(*) as total_feedback,
                 SUM(CASE WHEN is_helpful = 1 THEN 1 ELSE 0 END) as helpful_count,
@@ -84,9 +84,10 @@ router.get('/feedback/stats', async (req, res) => {
             FROM help_feedback
             ${whereClause}
         `, params);
-        
+        const overallStats = overallStatsResult.rows[0];
+
         // Stats by content type
-        const byType = await db.all(`
+        const byTypeResult = await db.query(`
             SELECT 
                 content_type,
                 COUNT(*) as count,
@@ -96,9 +97,10 @@ router.get('/feedback/stats', async (req, res) => {
             ${whereClause}
             GROUP BY content_type
         `, params);
-        
+        const byType = byTypeResult.rows;
+
         // Most helpful content
-        const topContent = await db.all(`
+        const topContentResult = await db.query(`
             SELECT 
                 content_type,
                 content_id,
@@ -112,9 +114,10 @@ router.get('/feedback/stats', async (req, res) => {
             ORDER BY helpfulness_rate DESC, feedback_count DESC
             LIMIT 10
         `, params);
-        
+        const topContent = topContentResult.rows;
+
         // Least helpful content (needs improvement)
-        const needsImprovement = await db.all(`
+        const needsImprovementResult = await db.query(`
             SELECT 
                 content_type,
                 content_id,
@@ -128,9 +131,10 @@ router.get('/feedback/stats', async (req, res) => {
             ORDER BY helpfulness_rate ASC
             LIMIT 10
         `, params);
-        
+        const needsImprovement = needsImprovementResult.rows;
+
         // Recent comments
-        const recentComments = await db.all(`
+        const recentCommentsResult = await db.query(`
             SELECT 
                 id,
                 content_type,
@@ -144,7 +148,8 @@ router.get('/feedback/stats', async (req, res) => {
             ORDER BY created_at DESC
             LIMIT 20
         `, params);
-        
+        const recentComments = recentCommentsResult.rows;
+
         res.json({
             overall: overallStats,
             byType,
@@ -166,13 +171,13 @@ router.get('/feedback/stats', async (req, res) => {
 router.get('/feedback/content/:type/:id', async (req, res) => {
     try {
         const { type, id } = req.params;
-        
-        const ratings = await db.get(`
+
+        const ratingsResult = await db.query(`
             SELECT * FROM help_content_ratings
             WHERE content_type = ? AND content_id = ?
         `, [type, id]);
-        
-        res.json(ratings || {
+
+        res.json(ratingsResult.rows[0] || {
             content_type: type,
             content_id: id,
             total_ratings: 0,
@@ -199,19 +204,19 @@ router.post('/analytics/event', async (req, res) => {
         const userId = req.user?.id;
         const orgId = req.user?.organization_id;
         const { eventType, contentType, contentId, metadata, durationMs, sessionId } = req.body;
-        
+
         const validEvents = ['view', 'search', 'click', 'complete', 'video_progress', 'tour_step', 'tour_complete', 'feedback_submit'];
         if (!validEvents.includes(eventType)) {
             return res.status(400).json({ error: `eventType must be one of: ${validEvents.join(', ')}` });
         }
-        
+
         const id = uuidv4();
-        
+
         await db.run(`
             INSERT INTO help_analytics (id, user_id, organization_id, session_id, event_type, content_type, content_id, metadata, duration_ms)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [id, userId, orgId, sessionId, eventType, contentType, contentId, JSON.stringify(metadata || {}), durationMs]);
-        
+
         res.json({ success: true, id });
     } catch (error) {
         console.error('[HelpAnalytics] Error tracking event:', error);
@@ -227,9 +232,9 @@ router.get('/analytics/summary', async (req, res) => {
     try {
         const { days = 30 } = req.query;
         const daysInt = parseInt(days);
-        
+
         // Total events by type
-        const eventsByType = await db.all(`
+        const eventsByTypeResult = await db.query(`
             SELECT 
                 event_type,
                 COUNT(*) as count
@@ -238,9 +243,10 @@ router.get('/analytics/summary', async (req, res) => {
             GROUP BY event_type
             ORDER BY count DESC
         `);
-        
+        const eventsByType = eventsByTypeResult.rows;
+
         // Most viewed content
-        const mostViewed = await db.all(`
+        const mostViewedResult = await db.query(`
             SELECT 
                 content_type,
                 content_id,
@@ -253,9 +259,10 @@ router.get('/analytics/summary', async (req, res) => {
             ORDER BY views DESC
             LIMIT 15
         `);
-        
+        const mostViewed = mostViewedResult.rows;
+
         // Search queries
-        const topSearches = await db.all(`
+        const topSearchesResult = await db.query(`
             SELECT 
                 json_extract(metadata, '$.query') as query,
                 COUNT(*) as count
@@ -266,9 +273,10 @@ router.get('/analytics/summary', async (req, res) => {
             ORDER BY count DESC
             LIMIT 20
         `);
-        
+        const topSearches = topSearchesResult.rows;
+
         // Video completion rates
-        const videoStats = await db.all(`
+        const videoStatsResult = await db.query(`
             SELECT 
                 content_id,
                 COUNT(CASE WHEN event_type = 'view' THEN 1 END) as views,
@@ -279,9 +287,10 @@ router.get('/analytics/summary', async (req, res) => {
             AND created_at >= datetime('now', '-${daysInt} days')
             GROUP BY content_id
         `);
-        
+        const videoStats = videoStatsResult.rows;
+
         // Tour completion rates
-        const tourStats = await db.all(`
+        const tourStatsResult = await db.query(`
             SELECT 
                 content_id as tour_id,
                 COUNT(CASE WHEN event_type = 'tour_step' THEN 1 END) as steps_viewed,
@@ -291,9 +300,10 @@ router.get('/analytics/summary', async (req, res) => {
             AND created_at >= datetime('now', '-${daysInt} days')
             GROUP BY content_id
         `);
-        
+        const tourStats = tourStatsResult.rows;
+
         // Daily activity trend
-        const dailyTrend = await db.all(`
+        const dailyTrendResult = await db.query(`
             SELECT 
                 date(created_at) as date,
                 COUNT(*) as events
@@ -302,7 +312,8 @@ router.get('/analytics/summary', async (req, res) => {
             GROUP BY date(created_at)
             ORDER BY date ASC
         `);
-        
+        const dailyTrend = dailyTrendResult.rows;
+
         res.json({
             eventsByType,
             mostViewed,
@@ -332,15 +343,15 @@ router.post('/video/progress', async (req, res) => {
         if (!userId) {
             return res.status(401).json({ error: 'Authentication required' });
         }
-        
+
         const { videoId, progressPercent, lastPositionSeconds, watchTimeSeconds, isCompleted } = req.body;
-        
+
         if (!videoId) {
             return res.status(400).json({ error: 'videoId is required' });
         }
-        
+
         const id = uuidv4();
-        
+
         await db.run(`
             INSERT INTO help_video_progress (id, user_id, video_id, progress_percent, last_position_seconds, watch_time_seconds, is_completed, completed_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -352,7 +363,7 @@ router.post('/video/progress', async (req, res) => {
                 completed_at = CASE WHEN excluded.is_completed = 1 AND help_video_progress.completed_at IS NULL THEN CURRENT_TIMESTAMP ELSE help_video_progress.completed_at END,
                 updated_at = CURRENT_TIMESTAMP
         `, [id, userId, videoId, progressPercent, lastPositionSeconds, watchTimeSeconds, isCompleted, isCompleted ? new Date().toISOString() : null]);
-        
+
         res.json({ success: true });
     } catch (error) {
         console.error('[HelpVideo] Error saving progress:', error);
@@ -370,13 +381,13 @@ router.get('/video/progress', async (req, res) => {
         if (!userId) {
             return res.json({ progress: [] });
         }
-        
+
         const progress = await db.all(`
             SELECT video_id, progress_percent, is_completed, watch_time_seconds, last_position_seconds
             FROM help_video_progress
             WHERE user_id = ?
         `, [userId]);
-        
+
         res.json({ progress });
     } catch (error) {
         console.error('[HelpVideo] Error fetching progress:', error);
@@ -398,15 +409,15 @@ router.post('/tour/progress', async (req, res) => {
         if (!userId) {
             return res.status(401).json({ error: 'Authentication required' });
         }
-        
+
         const { tourId, currentStep, isCompleted, isSkipped } = req.body;
-        
+
         if (!tourId) {
             return res.status(400).json({ error: 'tourId is required' });
         }
-        
+
         const id = uuidv4();
-        
+
         await db.run(`
             INSERT INTO help_tour_progress (id, user_id, tour_id, current_step, is_completed, is_skipped, completed_at, skipped_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -418,7 +429,7 @@ router.post('/tour/progress', async (req, res) => {
                 skipped_at = CASE WHEN excluded.is_skipped = 1 AND help_tour_progress.skipped_at IS NULL THEN CURRENT_TIMESTAMP ELSE help_tour_progress.skipped_at END,
                 updated_at = CURRENT_TIMESTAMP
         `, [id, userId, tourId, currentStep || 0, isCompleted, isSkipped, isCompleted ? new Date().toISOString() : null, isSkipped ? new Date().toISOString() : null]);
-        
+
         res.json({ success: true });
     } catch (error) {
         console.error('[HelpTour] Error saving progress:', error);
@@ -436,13 +447,13 @@ router.get('/tour/progress', async (req, res) => {
         if (!userId) {
             return res.json({ progress: [] });
         }
-        
+
         const progress = await db.all(`
             SELECT tour_id, current_step, is_completed, is_skipped
             FROM help_tour_progress
             WHERE user_id = ?
         `, [userId]);
-        
+
         res.json({ progress });
     } catch (error) {
         console.error('[HelpTour] Error fetching progress:', error);

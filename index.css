@@ -12,45 +12,61 @@
    Inspired by Outlook's clear visibility
    ======================================== */
 :root {
-  /* Light Mode Primary Colors - Navy Blue Accents */
-  --light-navy-900: #0F172A;    /* Deepest navy - headings */
-  --light-navy-800: #1E293B;    /* Dark navy - primary text */
-  --light-navy-700: #334155;    /* Navy - secondary text */
-  --light-navy-600: #475569;    /* Muted navy - labels */
-  --light-navy-500: #64748B;    /* Light navy - hints */
-  --light-navy-400: #94A3B8;    /* Lightest navy - disabled */
-  
-  /* Light Mode Backgrounds */
-  --light-bg-primary: #F8FAFC;  /* Main background - slightly warm */
-  --light-bg-card: #FFFFFF;     /* Card background */
-  --light-bg-elevated: #F1F5F9; /* Elevated sections */
-  --light-bg-hover: #E2E8F0;    /* Hover states */
-  
-  /* Light Mode Borders - More visible */
-  --light-border: #CBD5E1;      /* Default border - darker */
-  --light-border-strong: #94A3B8; /* Strong border */
-  --light-border-subtle: #E2E8F0; /* Subtle border */
-  
-  /* Navy Blue Accent for Light Mode */
-  --light-accent-navy: #1E3A5F;  /* Deep navy blue accent */
-  --light-accent-navy-hover: #0F2744; /* Navy hover */
-  --light-accent-navy-surface: rgba(30, 58, 95, 0.08); /* Navy surface */
-  
-  /* Admin tokens - Dark mode defaults */
-  --admin-bg: #0a0f1e;
-  --admin-card: rgba(255, 255, 255, 0.03);
-  --admin-card-hover: rgba(255, 255, 255, 0.05);
-  --admin-border: rgba(255, 255, 255, 0.08);
-  --admin-border-strong: rgba(255, 255, 255, 0.12);
-  --admin-accent: #e53e3e;
-  --admin-accent-muted: rgba(229, 62, 62, 0.15);
-  --admin-accent-subtle: rgba(229, 62, 62, 0.08);
-  --admin-text-primary: #ffffff;
-  --admin-text-secondary: #94a3b8;
-  --admin-text-muted: #64748b;
-  --admin-success: #10b981;
-  --admin-warning: #f59e0b;
-  --admin-error: #ef4444;
+    /* Light Mode Primary Colors - Navy Blue Accents */
+    --light-navy-900: #0F172A;
+    /* Deepest navy - headings */
+    --light-navy-800: #1E293B;
+    /* Dark navy - primary text */
+    --light-navy-700: #334155;
+    /* Navy - secondary text */
+    --light-navy-600: #475569;
+    /* Muted navy - labels */
+    --light-navy-500: #64748B;
+    /* Light navy - hints */
+    --light-navy-400: #94A3B8;
+    /* Lightest navy - disabled */
+
+    /* Light Mode Backgrounds */
+    --light-bg-primary: #F8FAFC;
+    /* Main background - slightly warm */
+    --light-bg-card: #FFFFFF;
+    /* Card background */
+    --light-bg-elevated: #F1F5F9;
+    /* Elevated sections */
+    --light-bg-hover: #E2E8F0;
+    /* Hover states */
+
+    /* Light Mode Borders - More visible */
+    --light-border: #CBD5E1;
+    /* Default border - darker */
+    --light-border-strong: #94A3B8;
+    /* Strong border */
+    --light-border-subtle: #E2E8F0;
+    /* Subtle border */
+
+    /* Navy Blue Accent for Light Mode */
+    --light-accent-navy: #1E3A5F;
+    /* Deep navy blue accent */
+    --light-accent-navy-hover: #0F2744;
+    /* Navy hover */
+    --light-accent-navy-surface: rgba(30, 58, 95, 0.08);
+    /* Navy surface */
+
+    /* Admin tokens - Dark mode defaults */
+    --admin-bg: #0a0f1e;
+    --admin-card: rgba(255, 255, 255, 0.03);
+    --admin-card-hover: rgba(255, 255, 255, 0.05);
+    --admin-border: rgba(255, 255, 255, 0.08);
+    --admin-border-strong: rgba(255, 255, 255, 0.12);
+    --admin-accent: #e53e3e;
+    --admin-accent-muted: rgba(229, 62, 62, 0.15);
+    --admin-accent-subtle: rgba(229, 62, 62, 0.08);
+    --admin-text-primary: #ffffff;
+    --admin-text-secondary: #94a3b8;
+    --admin-text-muted: #64748b;
+    --admin-success: #10b981;
+    --admin-warning: #f59e0b;
+    --admin-error: #ef4444;
 }
 
 @layer utilities {
@@ -89,9 +105,12 @@
     }
 
     @keyframes breathing-glow {
-        0%, 100% {
+
+        0%,
+        100% {
             opacity: 0.4;
         }
+
         50% {
             opacity: 0.6;
         }
@@ -101,7 +120,7 @@
        Global Light Mode Contrast Improvements
        Navy Blue Theme - Better Visibility
        ======================================== */
-    
+
     /* Note: Light mode text contrast is handled via component-level styles
        to avoid circular dependency issues with @apply */
 
@@ -136,6 +155,7 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
+
     .scrollbar-hide::-webkit-scrollbar {
         display: none;
     }
@@ -160,7 +180,7 @@
         content: '';
         position: absolute;
         inset: 0;
-        background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
         opacity: 0;
         transform: scale(0);
         transition: transform 0.3s ease-out, opacity 0.3s ease-out;
@@ -209,39 +229,119 @@
         @apply bg-white/50 dark:bg-navy-800/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 transition-all duration-300 hover:border-brand/30 dark:hover:border-white/10 hover:shadow-glow;
     }
 
+    /* ========================================
+       DBR77 BUTTON SYSTEM
+       See: docs/00_foundation/COLOR_SYSTEM_STANDARD.md
+       ======================================== */
+
     /* Button Base Utilities */
     .btn-base {
         @apply inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none active:scale-[0.98];
     }
 
-    /* Primary Button */
+    /* PRIMARY Button - Fiolet (główna akcja na stronie) */
     .btn-primary {
-        @apply btn-base bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white shadow-lg shadow-brand/25 border border-white/10 relative overflow-hidden;
+        @apply btn-base text-white shadow-lg border border-white/10 relative overflow-hidden;
+        background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
+        box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.25);
     }
 
-    /* Secondary Button */
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%);
+    }
+
+    .btn-primary:focus-visible {
+        --tw-ring-color: #7C3AED;
+    }
+
+    /* SECONDARY Button - Navy (akcja drugorzędna) */
     .btn-secondary {
-        @apply btn-base bg-navy-800 hover:bg-navy-700 text-white border border-white/10 shadow-lg hover:shadow-xl hover:border-white/20;
+        @apply btn-base text-white border shadow-lg hover:shadow-xl;
+        background-color: #1E3A5F;
+        border-color: rgba(255, 255, 255, 0.1);
     }
 
-    /* Ghost Button - Darkened text for light mode */
+    .btn-secondary:hover {
+        background-color: #0F2744;
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:focus-visible {
+        --tw-ring-color: #1E3A5F;
+    }
+
+    /* GHOST Button - Transparentny (akcja trzeciorzędna) */
     .btn-ghost {
         @apply btn-base bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white border border-transparent;
     }
 
-    /* Danger Button */
+    .btn-ghost:focus-visible {
+        --tw-ring-color: #7C3AED;
+    }
+
+    /* DANGER Button - Czerwony (TYLKO destrukcyjne akcje!) */
     .btn-danger {
-        @apply btn-base bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-500/20 border border-transparent;
+        @apply btn-base text-white shadow-lg border border-transparent;
+        background-color: #DC2626;
+        box-shadow: 0 10px 25px -5px rgba(220, 38, 38, 0.2);
     }
 
-    /* Outline Button */
+    .btn-danger:hover {
+        background-color: #B91C1C;
+    }
+
+    .btn-danger:focus-visible {
+        --tw-ring-color: #DC2626;
+    }
+
+    /* OUTLINE Button - Obramowanie (alternatywa secondary) */
     .btn-outline {
-        @apply btn-base bg-transparent border border-slate-200 dark:border-white/10 hover:border-brand/50 text-slate-700 dark:text-slate-200 hover:text-brand dark:hover:text-white;
+        @apply btn-base bg-transparent border text-slate-700 dark:text-slate-200;
+        border-color: #CBD5E1;
     }
 
-    /* Glass Button (Special Variant) */
+    html.dark .btn-outline {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-outline:hover {
+        border-color: #7C3AED;
+        color: #7C3AED;
+    }
+
+    html.dark .btn-outline:hover {
+        color: white;
+    }
+
+    /* GLASS Button - Szklany efekt */
     .btn-glass {
         @apply btn-base bg-white/5 hover:bg-white/10 text-navy-900 dark:text-white border border-white/10 backdrop-blur-sm shadow-sm;
+    }
+
+    /* ========================================
+       DBR77 TEXT COLOR CLASSES
+       Semantic text colors - use sparingly!
+       ======================================== */
+
+    /* Status text - ONLY for semantic meaning */
+    .text-status-success {
+        @apply dark:text-success-400;
+        color: #059669;
+    }
+
+    .text-status-danger {
+        @apply dark:text-danger-400;
+        color: #DC2626;
+    }
+
+    .text-status-primary {
+        @apply dark:text-primary-400;
+        color: #7C3AED;
+    }
+
+    .text-status-muted {
+        @apply dark:text-navy-400;
+        color: #64748B;
     }
 
     /* Compact layout utilities */
@@ -259,53 +359,69 @@
 
     /* ========================================
        PMO Priority System - My Work Module
+       Updated to DBR77 Color Standard
        ======================================== */
 
     /* PMO Category Cards - Strategic Priority Visualization */
     .pmo-blocking-phase {
-        @apply border-l-4 border-red-500 bg-red-50/50 dark:bg-red-900/10;
+        /* DANGER - Czerwony dla blokujących faz */
+        @apply border-l-4 bg-danger-50/50 dark:bg-danger-900/10;
+        border-color: #DC2626;
     }
 
     .pmo-blocking-initiative {
-        @apply border-l-4 border-orange-500 bg-orange-50/50 dark:bg-orange-900/10;
+        /* PRIMARY - Fiolet dla blokujących inicjatyw */
+        @apply border-l-4 bg-primary-50/50 dark:bg-primary-900/10;
+        border-color: #7C3AED;
     }
 
     .pmo-decision-required {
-        @apply border-l-4 border-amber-500 bg-amber-50/50 dark:bg-amber-900/10;
+        /* PRIMARY LIGHT - Jaśniejszy fiolet dla decyzji */
+        @apply border-l-4 bg-primary-100/50 dark:bg-primary-900/20;
+        border-color: #8B5CF6;
     }
 
     .pmo-deadline-critical {
+        /* NEUTRAL - Szary dla deadline'ów */
         @apply border-l-4 border-slate-700 bg-slate-50/50 dark:bg-slate-800/50;
     }
 
     .pmo-high-strategic {
-        @apply border-l-4 border-blue-500 bg-blue-50/50 dark:bg-blue-900/10;
+        /* SECONDARY - Navy dla strategicznych */
+        @apply border-l-4 bg-secondary-50/50 dark:bg-secondary-900/10;
+        border-color: #1E3A5F;
     }
 
     .pmo-routine {
-        @apply border-l-4 border-green-500 bg-green-50/50 dark:bg-green-900/10;
+        /* SUCCESS - Zielony dla rutynowych */
+        @apply border-l-4 bg-success-50/50 dark:bg-success-900/10;
+        border-color: #059669;
     }
 
-    /* Focus Board Time Block Headers */
+    /* Focus Board Time Block Headers - DBR77 Colors */
     .time-block-morning {
-        @apply bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20;
+        @apply bg-gradient-to-r from-primary-100 to-primary-50 dark:from-primary-900/20 dark:to-primary-900/10;
     }
 
     .time-block-afternoon {
-        @apply bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20;
+        @apply bg-gradient-to-r from-secondary-100 to-secondary-50 dark:from-secondary-900/20 dark:to-secondary-900/10;
     }
 
     .time-block-buffer {
         @apply bg-gradient-to-r from-slate-100 to-gray-100 dark:from-slate-800/50 dark:to-gray-800/50;
     }
 
-    /* Inbox Item Urgency Indicators */
+    /* Inbox Item Urgency Indicators - DBR77 Colors */
     .inbox-critical {
-        @apply bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500;
+        /* DANGER - Czerwony dla krytycznych */
+        @apply bg-danger-50 dark:bg-danger-900/20 border-l-4;
+        border-color: #DC2626;
     }
 
     .inbox-high {
-        @apply bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500;
+        /* PRIMARY - Fiolet dla wysokiego priorytetu */
+        @apply bg-primary-50 dark:bg-primary-900/20 border-l-4;
+        border-color: #7C3AED;
     }
 
     .inbox-normal {
@@ -319,61 +435,66 @@
     /* Execution Score Gauge */
     .execution-score-ring {
         @apply rounded-full;
-        background: conic-gradient(
-            from 0deg,
-            theme('colors.green.500') 0%,
-            theme('colors.green.500') var(--score-percent, 0%),
-            theme('colors.slate.200') var(--score-percent, 0%),
-            theme('colors.slate.200') 100%
-        );
+        background: conic-gradient(from 0deg,
+                theme('colors.green.500') 0%,
+                theme('colors.green.500') var(--score-percent, 0%),
+                theme('colors.slate.200') var(--score-percent, 0%),
+                theme('colors.slate.200') 100%);
     }
 
     .dark .execution-score-ring {
-        background: conic-gradient(
-            from 0deg,
-            theme('colors.green.400') 0%,
-            theme('colors.green.400') var(--score-percent, 0%),
-            theme('colors.slate.700') var(--score-percent, 0%),
-            theme('colors.slate.700') 100%
-        );
+        background: conic-gradient(from 0deg,
+                theme('colors.green.400') 0%,
+                theme('colors.green.400') var(--score-percent, 0%),
+                theme('colors.slate.700') var(--score-percent, 0%),
+                theme('colors.slate.700') 100%);
     }
 
-    /* Workload Heatmap Cells */
+    /* Workload Heatmap Cells - DBR77 Colors */
     .workload-available {
-        @apply bg-green-100 dark:bg-green-900/30;
+        /* SUCCESS - Zielony dla dostępnego */
+        @apply bg-success-100 dark:bg-success-900/30;
     }
 
     .workload-normal {
-        @apply bg-blue-100 dark:bg-blue-900/30;
+        /* SECONDARY - Navy dla normalnego */
+        @apply bg-secondary-100 dark:bg-secondary-900/30;
     }
 
     .workload-high {
-        @apply bg-amber-100 dark:bg-amber-900/30;
+        /* PRIMARY - Fiolet dla wysokiego */
+        @apply bg-primary-100 dark:bg-primary-900/30;
     }
 
     .workload-overloaded {
-        @apply bg-red-100 dark:bg-red-900/30;
+        /* DANGER - Czerwony dla przeciążonego */
+        @apply bg-danger-100 dark:bg-danger-900/30;
     }
 
-    /* Triage Action Buttons */
+    /* Triage Action Buttons - DBR77 Colors */
     .triage-accept {
-        @apply bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-300;
+        /* SUCCESS */
+        @apply bg-success-100 hover:bg-success-200 text-success-700 dark:bg-success-900/30 dark:hover:bg-success-900/50 dark:text-success-300;
     }
 
     .triage-schedule {
-        @apply bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300;
+        /* SECONDARY */
+        @apply bg-secondary-100 hover:bg-secondary-200 text-secondary-700 dark:bg-secondary-900/30 dark:hover:bg-secondary-900/50 dark:text-secondary-300;
     }
 
     .triage-delegate {
-        @apply bg-purple-100 hover:bg-purple-200 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 dark:text-purple-300;
+        /* PRIMARY */
+        @apply bg-primary-100 hover:bg-primary-200 text-primary-700 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 dark:text-primary-300;
     }
 
     .triage-archive {
+        /* NEUTRAL */
         @apply bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300;
     }
 
     .triage-reject {
-        @apply bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-300;
+        /* DANGER */
+        @apply bg-danger-100 hover:bg-danger-200 text-danger-700 dark:bg-danger-900/30 dark:hover:bg-danger-900/50 dark:text-danger-300;
     }
 
     /* Notification Badge Pulse */
@@ -398,9 +519,10 @@
         @apply shadow-xl scale-105 ring-2 ring-brand;
     }
 
-    /* Streak Badge */
+    /* Streak Badge - DBR77 Primary Gradient */
     .streak-badge {
-        @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold;
+        @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-white text-xs font-bold;
+        background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
     }
 
     /* Custom scrollbar for My Work panels */
@@ -436,7 +558,7 @@
 
     /* Admin Card - Clean minimal style */
     .admin-card {
-        @apply bg-[var(--admin-card)] border border-[var(--admin-border)] rounded-lg transition-colors;
+        @apply bg-white border border-slate-200 dark:bg-[var(--admin-card)] dark:border-[var(--admin-border)] rounded-lg transition-colors;
     }
 
     .admin-card-hover:hover {
@@ -445,7 +567,7 @@
 
     /* Admin Metric Card */
     .admin-metric {
-        @apply bg-[var(--admin-card)] border border-[var(--admin-border)] rounded-lg p-4;
+        @apply bg-white border border-slate-200 dark:bg-[var(--admin-card)] dark:border-[var(--admin-border)] rounded-lg p-4;
     }
 
     .admin-metric-label {
@@ -453,7 +575,7 @@
     }
 
     .admin-metric-value {
-        @apply text-2xl font-semibold text-white mt-1;
+        @apply text-2xl font-semibold text-navy-900 dark:text-white mt-1;
     }
 
     .admin-metric-subtitle {
@@ -466,7 +588,7 @@
     }
 
     .admin-table thead {
-        @apply bg-black/20;
+        @apply bg-slate-50 dark:bg-black/20;
     }
 
     .admin-table th {
@@ -474,15 +596,15 @@
     }
 
     .admin-table tbody tr {
-        @apply border-b border-white/5 transition-colors;
+        @apply border-b border-slate-100 dark:border-white/5 transition-colors;
     }
 
     .admin-table tbody tr:hover {
-        @apply bg-white/[0.02];
+        @apply hover:bg-slate-50 dark:hover:bg-white/[0.02];
     }
 
     .admin-table td {
-        @apply px-4 py-3 text-slate-300;
+        @apply px-4 py-3 text-slate-600 dark:text-slate-300;
     }
 
     /* Admin Status Indicator */
@@ -556,7 +678,7 @@
     .admin-btn-accent {
         @apply bg-[var(--admin-accent)] text-white hover:opacity-90;
     }
-    
+
 }
 
 /* ========================================
@@ -720,4 +842,84 @@ html:not(.dark) .border-slate-200 {
 html:not(.dark) .border-white\/10,
 html:not(.dark) .border-white\/5 {
     border-color: #CBD5E1;
+}
+
+/* ========================================
+   LIGHT MODE TYPOGRAPHY - Dark headings
+   ======================================== */
+
+/* Headings - Force dark text in light mode */
+html:not(.dark) h1,
+html:not(.dark) h2,
+html:not(.dark) h3,
+html:not(.dark) h4 {
+    color: #0F172A;
+}
+
+/* Override text-white in light mode */
+html:not(.dark) .text-white {
+    color: #0F172A;
+}
+
+/* Override specific slate colors used for text */
+html:not(.dark) .text-slate-200,
+html:not(.dark) .text-slate-300 {
+    color: #334155;
+}
+
+html:not(.dark) .text-navy-900 {
+    color: #0F172A;
+}
+
+/* Sidebar text in light mode */
+html:not(.dark) .sidebar-link,
+html:not(.dark) aside a,
+html:not(.dark) nav button span {
+    color: #334155;
+}
+
+/* Main content headings */
+html:not(.dark) main h1,
+html:not(.dark) main h2 {
+    color: #0F172A;
+}
+
+/* Descriptions and paragraphs */
+html:not(.dark) main p {
+    color: #475569;
+}
+
+/* Tab text in light mode */
+html:not(.dark) [role="tab"] {
+    color: #334155;
+}
+
+html:not(.dark) [role="tab"][aria-selected="true"] {
+    color: #1E3A5F;
+}
+
+/* Cards text - darker in light mode */
+html:not(.dark) .bg-white\/5 h1,
+html:not(.dark) .bg-white\/5 h2,
+html:not(.dark) .bg-white\/5 h3,
+html:not(.dark) .bg-navy-800\/40 h1,
+html:not(.dark) .bg-navy-800\/40 h2,
+html:not(.dark) .bg-navy-800\/40 h3 {
+    color: #0F172A;
+}
+
+/* Background overrides for light mode */
+html:not(.dark) .bg-navy-950,
+html:not(.dark) .bg-navy-900 {
+    background-color: #F8FAFC;
+}
+
+html:not(.dark) .bg-navy-800,
+html:not(.dark) .bg-navy-800\/40 {
+    background-color: white;
+}
+
+html:not(.dark) .bg-white\/5,
+html:not(.dark) .bg-white\/3 {
+    background-color: white;
 }

@@ -57,7 +57,7 @@ const MyWorkService = Object.assign({}, BaseService, {
         const today = new Date().toISOString().split('T')[0];
 
         let sql = `
-            SELECT t.*, i.name as initiative_name, p.name as project_name
+            SELECT t.*, i.title as initiative_name, p.name as project_name
             FROM tasks t
             LEFT JOIN initiatives i ON t.initiative_id = i.id
             LEFT JOIN projects p ON t.project_id = p.id

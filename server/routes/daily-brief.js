@@ -157,7 +157,7 @@ router.get('/', verifyToken, async (req, res) => {
         // 5. Upcoming Milestones (next 7 days)
         let milestonesQuery = `
             SELECT m.id, m.name, m.target_date, m.status,
-                   i.name as initiative_name,
+                   i.title as initiative_name,
                    p.name as project_name
             FROM milestones m
             LEFT JOIN initiatives i ON m.initiative_id = i.id

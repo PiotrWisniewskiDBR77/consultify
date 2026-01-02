@@ -5,13 +5,34 @@ let db;
 if (process.env.MOCK_DB === 'true') {
     console.log('[Database] Mocking database for tests');
     db = global.__TEST_DB_MOCK__ || {
-        run: (sql, params, cb) => (typeof params === 'function' ? params(null) : cb && cb(null)),
-        get: (sql, params, cb) => (typeof params === 'function' ? params(null, null) : cb && cb(null, null)),
-        all: (sql, params, cb) => (typeof params === 'function' ? params(null, []) : cb && cb(null, [])),
-        exec: (sql, cb) => (cb && cb(null)),
-        serialize: (cb) => cb(),
-        on: () => { },
-        close: (cb) => (cb && cb(null))
+        run: function (sql, params, cb) {
+            const callback = typeof params === 'function' ? params : cb;
+            // Execute with context for this.lastID coverage
+            if (callback) callback.call({ lastID: 1, changes: 1 }, null);
+            return this;
+        },
+        get: function (sql, params, cb) {
+            const callback = typeof params === 'function' ? params : cb;
+            if (callback) callback(null, null); // Default no row
+            return this;
+        },
+        all: function (sql, params, cb) {
+            const callback = typeof params === 'function' ? params : cb;
+            if (callback) callback(null, []); // Default empty array
+            return this;
+        },
+        exec: function (sql, cb) {
+            if (cb) cb(null);
+            return this;
+        },
+        serialize: function (cb) {
+            if (cb) cb();
+            return this;
+        },
+        on: function () { return this; },
+        close: function (cb) {
+            if (cb) cb(null);
+        }
     };
 } else if (config.type === 'postgres') {
     console.log('[Database] Selected: PostgreSQL');

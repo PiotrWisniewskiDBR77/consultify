@@ -85,50 +85,84 @@ router.delete('/sessions/:id', authMiddleware, async (req, res) => {
 
 
 // GET ME - Validate token and return user data (Phase 5: Real-time Profile Sync)
-router.get('/me', authMiddleware, (req, res) => {
-    // Fetch latest user data from DB to ensure avatar and other fields are up-to-date
-    // req.user is populated by authMiddleware (from token)
-    db.get(
-        `SELECT u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name, u.avatar_url, u.impersonator_id,
-                o.name as organization_name
-         FROM users u
-         LEFT JOIN organizations o ON u.organization_id = o.id
-         WHERE u.id = ?`,
-        [req.user.id],
-        (err, user) => {
-            if (err) {
-                console.error('[Auth] /me DB error:', err);
-                // Fallback to token data if DB fails
-                return res.json({
-                    user: {
-                        id: req.user.id,
-                        email: req.user.email,
-                        role: req.user.role,
-                        organizationId: req.user.organizationId,
-                        impersonatorId: req.user.impersonator_id
-                    }
-                });
-            }
+router.get('/me', authMiddleware, async (req, res) => {
+    try {
+        // Fetch latest user data from DB to ensure avatar and other fields are up-to-date
+        // req.user is populated by authMiddleware (from token)
+        const user = await new Promise((resolve, reject) => {
+            db.get(
+                `SELECT u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name, u.avatar_url, u.impersonator_id,
+                        o.name as organization_name
+                 FROM users u
+                 LEFT JOIN organizations o ON u.organization_id = o.id
+                 WHERE u.id = ?`,
+                [req.user.id],
+                (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row);
+                }
+            );
+        });
 
-            if (!user) {
-                return res.status(404).json({ error: 'User not found' });
-            }
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
-            res.json({
-                user: {
+        // Check if role changed in database - if so, generate new token
+        let newToken = null;
+        if (user.role !== req.user.role) {
+            const RefreshTokenService = require('../services/refreshTokenService');
+            const deviceInfo = (req.get('user-agent') || 'Unknown Device').substring(0, 200);
+            const tokenPair = await RefreshTokenService.generateTokenPair(
+                {
                     id: user.id,
                     email: user.email,
                     role: user.role,
-                    organizationId: user.organization_id,
-                    organizationName: user.organization_name,
-                    firstName: user.first_name,
-                    lastName: user.last_name,
-                    avatarUrl: user.avatar_url,
-                    impersonatorId: user.impersonator_id
+                    organization_id: user.organization_id
+                },
+                {
+                    deviceInfo,
+                    ip: req.ip,
+                    userAgent: req.get('user-agent')
                 }
-            });
+            );
+            newToken = tokenPair.accessToken;
         }
-    );
+
+        const response = {
+            user: {
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                organizationId: user.organization_id,
+                organizationName: user.organization_name,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                avatarUrl: user.avatar_url,
+                impersonatorId: user.impersonator_id
+            }
+        };
+
+        // Include new token if role changed
+        if (newToken) {
+            response.token = newToken;
+            response.roleChanged = true;
+        }
+
+        res.json(response);
+    } catch (err) {
+        console.error('[Auth] /me DB error:', err);
+        // Fallback to token data if DB fails
+        return res.json({
+            user: {
+                id: req.user.id,
+                email: req.user.email,
+                role: req.user.role,
+                organizationId: req.user.organizationId,
+                impersonatorId: req.user.impersonator_id
+            }
+        });
+    }
 });
 
 // LOGOUT - Revokes the current token

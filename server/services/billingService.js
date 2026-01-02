@@ -807,6 +807,95 @@ function incrementDiscountCodeUsage(codeId) {
     });
 }
 
+/**
+ * Get seat pricing for a plan
+ */
+function getSeatPricing(planId) {
+    return new Promise((resolve, reject) => {
+        deps.db.get(
+            'SELECT seats_included, seat_price_monthly, max_seats FROM subscription_plans WHERE id = ?',
+            [planId],
+            (err, row) => {
+                if (err) reject(err);
+                else resolve(row || { seats_included: 0, seat_price_monthly: 0, max_seats: -1 });
+            }
+        );
+    });
+}
+
+/**
+ * Calculate seat cost
+ */
+function calculateSeatCost(orgId, quantity) {
+    return new Promise((resolve, reject) => {
+        deps.db.get(
+            `SELECT sp.seat_price_monthly, os.seat_price_monthly as org_seat_price
+             FROM organization_billing ob
+             LEFT JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
+             LEFT JOIN organization_seats os ON ob.organization_id = os.organization_id
+             WHERE ob.organization_id = ?`,
+            [orgId],
+            (err, row) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+
+                const seatPrice = row?.org_seat_price || row?.seat_price_monthly || 0;
+                const totalCost = seatPrice * quantity;
+                resolve({ unitPrice: seatPrice, totalCost, quantity });
+            }
+        );
+    });
+}
+
+/**
+ * Process seat purchase (with Stripe integration)
+ */
+function processSeatPurchase(orgId, quantity, paymentMethodId) {
+    return new Promise((resolve, reject) => {
+        calculateSeatCost(orgId, quantity)
+            .then((cost) => {
+                // In a full implementation, this would create a Stripe invoice item
+                // For now, return the cost calculation
+                resolve({
+                    success: true,
+                    quantity,
+                    unitPrice: cost.unitPrice,
+                    totalCost: cost.totalCost,
+                    paymentMethodId
+                });
+            })
+            .catch(reject);
+    });
+}
+
+/**
+ * Get billing model for organization
+ */
+function getBillingModel(orgId) {
+    return new Promise((resolve, reject) => {
+        deps.db.get(
+            `SELECT os.billing_model, sp.billing_model as plan_billing_model
+             FROM organization_seats os
+             LEFT JOIN organization_billing ob ON os.organization_id = ob.organization_id
+             LEFT JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
+             WHERE os.organization_id = ?`,
+            [orgId],
+            (err, row) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+
+                resolve({
+                    billingModel: row?.billing_model || row?.plan_billing_model || 'subscription'
+                });
+            }
+        );
+    });
+}
+
 module.exports = {
     setDependencies,
     getPlans,
@@ -842,5 +931,10 @@ module.exports = {
     updateTaxSettings,
     // Discount Codes
     validateDiscountCode,
-    incrementDiscountCodeUsage
+    incrementDiscountCodeUsage,
+    // Seat Management
+    getSeatPricing,
+    calculateSeatCost,
+    processSeatPurchase,
+    getBillingModel
 };

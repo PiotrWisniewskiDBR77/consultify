@@ -1,11 +1,11 @@
 /**
- * Model Router - Intelligent Provider Selection & Fallback
+ * Model Router - Dynamic LLM Provider Selection & Fallback
  * 
- * Responsibilities:
- * - Select optimal model based on Capability, Tier, and Budget
- * - Automatic fallback to healthy providers when primary fails
- * - Integration with LLMConfigService for centralized configuration
- * - Organization-level overrides
+ * NEW ARCHITECTURE (v2):
+ * - Models can be assigned to multiple tiers (many-to-many)
+ * - Admin enables/disables providers for their organization
+ * - Round-robin selection within each tier
+ * - Cross-tier fallback when all models in a tier fail
  * - Health-aware routing (avoids unhealthy providers)
  * 
  * @module server/services/ai/modelRouter
@@ -29,10 +29,13 @@ function getLLMConfigService() {
 }
 
 // ============================================================================
-// CAPABILITY & TIER CONFIGURATION
+// TIER CONFIGURATION
 // ============================================================================
 
-// Capability to Tier mapping
+// Tier hierarchy for fallback (higher index = better tier)
+const TIER_HIERARCHY = ['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING'];
+
+// Capability to Tier mapping (used when user doesn't explicitly select a tier)
 const CAPABILITY_TIERS = {
     // Chat capabilities
     'chat': 'BUDGET',
@@ -59,64 +62,7 @@ const CAPABILITY_TIERS = {
     'buildRoadmap': 'PREMIUM'
 };
 
-// Tier to Model defaults
-// Tier to Model defaults
-const TIER_DEFAULTS = {
-    'BUDGET': 'gpt-4o-mini',            // Verified - High speed/low cost
-    'STANDARD': 'gpt-4o',               // Verified - Best balance
-    'PREMIUM': 'gpt-4o',                // Verified - High intelligence
-    'REASONING': 'gpt-4o',              // Verified - Fallback for O1 if not available
-    'VISION': 'gpt-4o'                  // Verified - Excellent vision
-};
-
-// Fallback chains per tier (ordered by preference)
-const TIER_FALLBACK_CHAINS = {
-    'BUDGET': [
-        'gpt-4o-mini',          // OpenAI
-        'deepseek-chat',        // DeepSeek (Verified)
-        'gemini-1.5-flash',     // Google
-        'qwen-turbo',           // Alibaba (Verified)
-        'glm-4-flash'           // Z.AI
-    ],
-    'STANDARD': [
-        'gpt-4o',
-        'gemini-1.5-pro',
-        'claude-3-5-sonnet',    // Anthropic (if key exists)
-        'command-r-plus',       // Cohere (Verified)
-        'qwen-max',             // Alibaba
-        'glm-4-plus'            // Z.AI (Verified)
-    ],
-    'PREMIUM': [
-        'gpt-4o',
-        'claude-3-opus',
-        'gemini-1.5-pro',
-        'meta/llama-3.1-405b-instruct', // Nvidia (Verified)
-        'glm-4-plus'
-    ],
-    'REASONING': [
-        'o1-preview',
-        'gpt-4o',               // Strong reasoning fallback
-        'deepseek-chat',        // Good reasoning
-        'claude-3-opus'
-    ],
-    'VISION': [
-        'gpt-4o',
-        'gemini-1.5-pro',
-        'claude-3-5-sonnet',
-        'qwen-vl-max'           // Alibaba Vision
-    ]
-};
-
-// Simple single fallback for backwards compatibility
-const TIER_FALLBACKS = {
-    'BUDGET': 'gpt-4o-mini',
-    'STANDARD': 'gpt-4o-mini',
-    'PREMIUM': 'gpt-4o',
-    'REASONING': 'gpt-4o',
-    'VISION': 'gemini-1.5-pro'
-};
-
-// Model to Provider mapping
+// Model to Provider mapping (for inferring provider from model ID)
 const MODEL_PROVIDER_MAP = {
     // OpenAI
     'gpt-4o': 'openai',
@@ -164,6 +110,32 @@ const MODEL_PROVIDER_MAP = {
     'glm-4.6': 'zai'
 };
 
+// Static fallback defaults (used when DB is empty)
+const TIER_DEFAULTS = {
+    'BUDGET': 'gpt-4o-mini',
+    'STANDARD': 'gpt-4o',
+    'PREMIUM': 'gpt-4o',
+    'REASONING': 'gpt-4o',
+    'VISION': 'gpt-4o'
+};
+
+// Static fallback chains (used when DB is empty)
+const TIER_FALLBACK_CHAINS = {
+    'BUDGET': ['gpt-4o-mini', 'deepseek-chat', 'gemini-1.5-flash', 'qwen-turbo', 'glm-4-flash'],
+    'STANDARD': ['gpt-4o', 'gemini-1.5-pro', 'claude-3-5-sonnet', 'command-r-plus', 'qwen-max', 'glm-4-plus'],
+    'PREMIUM': ['gpt-4o', 'claude-3-opus', 'gemini-1.5-pro', 'meta/llama-3.1-405b-instruct', 'glm-4-plus'],
+    'REASONING': ['o1-preview', 'gpt-4o', 'deepseek-chat', 'claude-3-opus'],
+    'VISION': ['gpt-4o', 'gemini-1.5-pro', 'claude-3-5-sonnet', 'qwen-vl-max']
+};
+
+const TIER_FALLBACKS = {
+    'BUDGET': 'gpt-4o-mini',
+    'STANDARD': 'gpt-4o-mini',
+    'PREMIUM': 'gpt-4o',
+    'REASONING': 'gpt-4o',
+    'VISION': 'gemini-1.5-pro'
+};
+
 // ============================================================================
 // MODEL ROUTER CLASS
 // ============================================================================
@@ -175,50 +147,70 @@ class ModelRouter {
         this.defaultProviderExpiry = 0;
         this.healthStatusCache = new Map();
         this.healthCacheExpiry = 0;
+        this.tierAssignmentsCache = new Map();
+        this.tierCacheExpiry = 0;
     }
 
     // ========================================================================
-    // MAIN SELECTION METHOD
+    // MAIN SELECTION METHOD (v2 - Dynamic Tier-Based)
     // ========================================================================
 
     /**
-     * Select optimal model for a given capability
+     * Select optimal model for a given tier or capability
+     * User only selects a tier - system handles provider/model selection
+     * 
      * @param {Object} params - Selection parameters
-     * @param {string} params.capability - Requested capability
-     * @param {string} params.organizationId - Organization ID (for overrides)
-     * @param {Object} params.options - Additional options (tier, model override)
+     * @param {string} params.capability - Requested capability (optional)
+     * @param {string} params.tier - User-selected tier (BUDGET, STANDARD, PREMIUM, REASONING)
+     * @param {string} params.organizationId - Organization ID (for provider filtering)
+     * @param {Object} params.options - Additional options
      * @returns {Promise<Object>} Provider configuration
      */
     async select(params) {
         const { capability, organizationId, options = {} } = params;
 
-        // 1. Check for Organization Override FIRST
+        // 1. Determine the tier (user selection or capability mapping)
+        const tier = options.tier || params.tier || CAPABILITY_TIERS[capability] || 'STANDARD';
+        
+        aiLogger.info('ModelRouter', `Selecting model for tier: ${tier}, org: ${organizationId || 'global'}`);
+
+        // 2. Check for Organization Override (specific capability override)
         const override = await this.getOrgOverride(organizationId, capability);
         if (override) {
             aiLogger.info('ModelRouter', `Using org override for ${capability}: ${override.model_id}`);
-            return this.getProviderConfig(override.model_id, override.tier || 'CUSTOM');
+            return this.getProviderConfig(override.model_id, override.tier || tier);
         }
 
-        // 2. User override (request-level)
-        if (options.model) {
-            aiLogger.info('ModelRouter', `Using user-specified model: ${options.model}`);
-            return this.getProviderConfig(options.model, options.tier || 'CUSTOM');
+        // 3. Get available models for this tier (filtered by org settings)
+        const availableModels = await this.getModelsForTier(tier, organizationId);
+        
+        if (availableModels.length > 0) {
+            // 4. Select model using round-robin within the tier
+            const selectedModel = await this.selectWithRoundRobin(tier, organizationId, availableModels);
+            
+            if (selectedModel) {
+                aiLogger.info('ModelRouter', `Selected via round-robin: ${selectedModel.model_id} (${selectedModel.provider})`);
+                return {
+                    id: selectedModel.model_id,
+                    tier: tier,
+                    provider: selectedModel.provider,
+                    apiKey: selectedModel.api_key,
+                    endpoint: selectedModel.endpoint,
+                    source: 'tier_assignment',
+                    raw: selectedModel
+                };
+            }
         }
 
-        // 3. Determine Tier from capability
-        const tier = options.tier || CAPABILITY_TIERS[capability] || 'STANDARD';
-
-        // 4. Try to get from LLMConfigService (centralized source)
+        // 5. Fallback: Try LLMConfigService
         const configService = getLLMConfigService();
         if (configService) {
             try {
                 const fallbackChain = await configService.getFallbackChain(tier);
-
-                // Find first healthy provider
                 for (const providerId of fallbackChain) {
                     const providerConfig = await configService.getProviderConfig(providerId);
                     if (providerConfig && providerConfig.isConfigured && providerConfig.healthStatus !== 'unhealthy') {
-                        aiLogger.info('ModelRouter', `Selected ${providerId} from health-aware chain for ${tier}`);
+                        aiLogger.info('ModelRouter', `Selected ${providerId} from config service for ${tier}`);
                         return {
                             id: providerConfig.model_id,
                             tier: tier,
@@ -234,7 +226,7 @@ class ModelRouter {
             }
         }
 
-        // 5. Fallback to database default
+        // 6. Fallback to database default
         const defaultProvider = await this.getDefaultProvider();
         if (defaultProvider && defaultProvider.api_key) {
             aiLogger.info('ModelRouter', `Using database default: ${defaultProvider.model_id} (${defaultProvider.provider})`);
@@ -247,25 +239,242 @@ class ModelRouter {
             };
         }
 
-        // 6. Use tier default and find any available provider
+        // 7. Ultimate fallback: Use static defaults
         const model = TIER_DEFAULTS[tier];
+        aiLogger.warn('ModelRouter', `Using static fallback: ${model} for tier ${tier}`);
         return this.getProviderConfig(model, tier);
     }
 
     // ========================================================================
-    // FALLBACK SELECTION
+    // TIER-BASED MODEL RETRIEVAL
     // ========================================================================
 
     /**
-     * Select next available fallback from chain
-     * @param {string} tier - Capability tier
+     * Get all models assigned to a tier, filtered by organization settings
+     * @param {string} tier - The tier to get models for
+     * @param {string} organizationId - Organization ID for filtering
+     * @returns {Promise<Array>} Array of available models
+     */
+    async getModelsForTier(tier, organizationId) {
+        return new Promise((resolve) => {
+            let query;
+            let params;
+
+            if (organizationId) {
+                // Get models for tier, filtered by org-enabled providers
+                query = `
+                    SELECT p.*, mta.priority as tier_priority
+                    FROM llm_providers p
+                    INNER JOIN model_tier_assignments mta ON p.id = mta.provider_id
+                    LEFT JOIN organization_provider_settings ops ON p.id = ops.provider_id AND ops.organization_id = ?
+                    WHERE mta.tier = ?
+                      AND mta.is_active = 1
+                      AND p.is_active = 1
+                      AND p.api_key IS NOT NULL
+                      AND p.api_key != ''
+                      AND (ops.is_enabled IS NULL OR ops.is_enabled = 1)
+                      AND (p.health_status IS NULL OR p.health_status != 'unhealthy')
+                    ORDER BY COALESCE(ops.custom_priority, mta.priority), p.priority
+                `;
+                params = [organizationId, tier];
+            } else {
+                // Global: Get all models for tier
+                query = `
+                    SELECT p.*, mta.priority as tier_priority
+                    FROM llm_providers p
+                    INNER JOIN model_tier_assignments mta ON p.id = mta.provider_id
+                    WHERE mta.tier = ?
+                      AND mta.is_active = 1
+                      AND p.is_active = 1
+                      AND p.api_key IS NOT NULL
+                      AND p.api_key != ''
+                      AND (p.health_status IS NULL OR p.health_status != 'unhealthy')
+                    ORDER BY mta.priority, p.priority
+                `;
+                params = [tier];
+            }
+
+            db.all(query, params, (err, rows) => {
+                if (err) {
+                    aiLogger.error('ModelRouter', `Failed to get models for tier ${tier}: ${err.message}`);
+                    resolve([]);
+                } else {
+                    resolve(rows || []);
+                }
+            });
+        });
+    }
+
+    /**
+     * Get all tier assignments (for UI display)
+     * @returns {Promise<Object>} Tier assignments grouped by tier
+     */
+    async getAllTierAssignments() {
+        return new Promise((resolve) => {
+            const query = `
+                SELECT 
+                    mta.id,
+                    mta.tier,
+                    mta.priority,
+                    mta.is_active,
+                    p.id as provider_id,
+                    p.name,
+                    p.provider,
+                    p.model_id,
+                    p.health_status
+                FROM model_tier_assignments mta
+                INNER JOIN llm_providers p ON mta.provider_id = p.id
+                WHERE p.is_active = 1
+                ORDER BY mta.tier, mta.priority
+            `;
+
+            db.all(query, [], (err, rows) => {
+                if (err) {
+                    aiLogger.error('ModelRouter', `Failed to get tier assignments: ${err.message}`);
+                    resolve({});
+                } else {
+                    // Group by tier
+                    const grouped = {};
+                    for (const row of (rows || [])) {
+                        if (!grouped[row.tier]) {
+                            grouped[row.tier] = [];
+                        }
+                        grouped[row.tier].push(row);
+                    }
+                    resolve(grouped);
+                }
+            });
+        });
+    }
+
+    // ========================================================================
+    // ROUND-ROBIN SELECTION
+    // ========================================================================
+
+    /**
+     * Select a model using round-robin within a tier
+     * @param {string} tier - The tier
+     * @param {string} organizationId - Organization ID
+     * @param {Array} availableModels - List of available models
+     * @returns {Promise<Object|null>} Selected model or null
+     */
+    async selectWithRoundRobin(tier, organizationId, availableModels) {
+        if (!availableModels || availableModels.length === 0) {
+            return null;
+        }
+
+        if (availableModels.length === 1) {
+            return availableModels[0];
+        }
+
+        // Get last used provider for this tier/org combo
+        const lastUsed = await this.getLastUsedProvider(tier, organizationId);
+        
+        // Find the index of the last used provider
+        let lastIndex = -1;
+        if (lastUsed) {
+            lastIndex = availableModels.findIndex(m => m.id === lastUsed);
+        }
+
+        // Select next provider in round-robin fashion
+        const nextIndex = (lastIndex + 1) % availableModels.length;
+        const selectedModel = availableModels[nextIndex];
+
+        // Update round-robin state
+        await this.updateLastUsedProvider(tier, organizationId, selectedModel.id);
+
+        aiLogger.info('ModelRouter', `Round-robin selected: ${selectedModel.name} (index ${nextIndex}/${availableModels.length})`);
+        return selectedModel;
+    }
+
+    /**
+     * Get the last used provider for a tier
+     */
+    async getLastUsedProvider(tier, organizationId) {
+        return new Promise((resolve) => {
+            const query = `
+                SELECT last_provider_id 
+                FROM tier_round_robin_state 
+                WHERE tier = ? AND (organization_id = ? OR (organization_id IS NULL AND ? IS NULL))
+            `;
+            db.get(query, [tier, organizationId, organizationId], (err, row) => {
+                resolve(row?.last_provider_id || null);
+            });
+        });
+    }
+
+    /**
+     * Update the last used provider for a tier
+     */
+    async updateLastUsedProvider(tier, organizationId, providerId) {
+        return new Promise((resolve) => {
+            const id = `${organizationId || 'global'}-${tier}`;
+            const query = `
+                INSERT OR REPLACE INTO tier_round_robin_state (id, organization_id, tier, last_provider_id, last_used_at)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            `;
+            db.run(query, [id, organizationId, tier, providerId], (err) => {
+                if (err) {
+                    aiLogger.warn('ModelRouter', `Failed to update round-robin state: ${err.message}`);
+                }
+                resolve();
+            });
+        });
+    }
+
+    // ========================================================================
+    // CROSS-TIER FALLBACK
+    // ========================================================================
+
+    /**
+     * Select next available fallback, potentially from a lower tier
+     * @param {string} tier - Original tier
      * @param {Array} excludeModels - Models to skip (already failed)
+     * @param {string} organizationId - Organization ID
      * @returns {Promise<Object|null>} Next provider config or null
      */
-    async selectFallback(tier, excludeModels = []) {
+    async selectFallback(tier, excludeModels = [], organizationId = null) {
         const excludeSet = new Set(excludeModels.map(m => m.toLowerCase()));
 
-        // Try LLMConfigService first (health-aware)
+        // 1. First try remaining models in the same tier
+        const sameTierModels = await this.getModelsForTier(tier, organizationId);
+        for (const model of sameTierModels) {
+            if (!excludeSet.has(model.model_id.toLowerCase())) {
+                aiLogger.info('ModelRouter', `Fallback within tier ${tier}: ${model.model_id}`);
+                return {
+                    id: model.model_id,
+                    tier: tier,
+                    provider: model.provider,
+                    apiKey: model.api_key,
+                    endpoint: model.endpoint,
+                    source: 'fallback_same_tier'
+                };
+            }
+        }
+
+        // 2. Try lower tiers (cross-tier fallback)
+        const tierIndex = TIER_HIERARCHY.indexOf(tier);
+        for (let i = tierIndex - 1; i >= 0; i--) {
+            const fallbackTier = TIER_HIERARCHY[i];
+            const fallbackModels = await this.getModelsForTier(fallbackTier, organizationId);
+            
+            for (const model of fallbackModels) {
+                if (!excludeSet.has(model.model_id.toLowerCase())) {
+                    aiLogger.info('ModelRouter', `Cross-tier fallback from ${tier} to ${fallbackTier}: ${model.model_id}`);
+                    return {
+                        id: model.model_id,
+                        tier: fallbackTier,
+                        provider: model.provider,
+                        apiKey: model.api_key,
+                        endpoint: model.endpoint,
+                        source: 'fallback_lower_tier',
+                        originalTier: tier
+                    };
+                }
+            }
+        }
+
+        // 3. Try LLMConfigService
         const configService = getLLMConfigService();
         if (configService) {
             try {
@@ -286,21 +495,7 @@ class ModelRouter {
             }
         }
 
-        // Fallback to static chain
-        const chain = this.getFallbackChain(tier);
-
-        for (const modelId of chain) {
-            if (excludeSet.has(modelId.toLowerCase())) continue;
-
-            // Check if we have this model configured and active
-            const config = await this.getProviderConfig(modelId, tier);
-            if (config && config.apiKey) {
-                aiLogger.info('ModelRouter', `Selected static fallback: ${modelId} for tier ${tier}`);
-                return config;
-            }
-        }
-
-        // Ultimate fallback: try any active provider
+        // 4. Ultimate fallback: any active provider
         return this.getAnyActiveProvider(tier, excludeModels);
     }
 
@@ -336,14 +531,136 @@ class ModelRouter {
     }
 
     // ========================================================================
+    // TIER ASSIGNMENT MANAGEMENT (SuperAdmin)
+    // ========================================================================
+
+    /**
+     * Assign a model to a tier (or update existing assignment)
+     * @param {string} providerId - LLM provider ID
+     * @param {string} tier - Tier to assign to
+     * @param {number} priority - Priority within tier (lower = higher priority)
+     * @returns {Promise<Object>} Assignment result
+     */
+    async assignModelToTier(providerId, tier, priority = 0) {
+        return new Promise((resolve, reject) => {
+            const id = `${providerId}-${tier}`;
+            const query = `
+                INSERT OR REPLACE INTO model_tier_assignments (id, provider_id, tier, priority, is_active, updated_at)
+                VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
+            `;
+            db.run(query, [id, providerId, tier, priority], function(err) {
+                if (err) {
+                    aiLogger.error('ModelRouter', `Failed to assign model to tier: ${err.message}`);
+                    reject(err);
+                } else {
+                    aiLogger.info('ModelRouter', `Assigned provider ${providerId} to tier ${tier} with priority ${priority}`);
+                    resolve({ id, providerId, tier, priority });
+                }
+            });
+        });
+    }
+
+    /**
+     * Remove a model from a tier
+     * @param {string} providerId - LLM provider ID
+     * @param {string} tier - Tier to remove from
+     */
+    async removeModelFromTier(providerId, tier) {
+        return new Promise((resolve, reject) => {
+            const query = `DELETE FROM model_tier_assignments WHERE provider_id = ? AND tier = ?`;
+            db.run(query, [providerId, tier], function(err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    aiLogger.info('ModelRouter', `Removed provider ${providerId} from tier ${tier}`);
+                    resolve({ success: true });
+                }
+            });
+        });
+    }
+
+    /**
+     * Update priority of a model within a tier
+     * @param {string} providerId - LLM provider ID
+     * @param {string} tier - Tier
+     * @param {number} priority - New priority
+     */
+    async updateTierPriority(providerId, tier, priority) {
+        return new Promise((resolve, reject) => {
+            const query = `
+                UPDATE model_tier_assignments 
+                SET priority = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE provider_id = ? AND tier = ?
+            `;
+            db.run(query, [priority, providerId, tier], function(err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve({ success: true });
+                }
+            });
+        });
+    }
+
+    // ========================================================================
+    // ORGANIZATION PROVIDER SETTINGS (Admin)
+    // ========================================================================
+
+    /**
+     * Enable/disable a provider for an organization
+     * @param {string} organizationId - Organization ID
+     * @param {string} providerId - Provider ID
+     * @param {boolean} isEnabled - Whether to enable or disable
+     */
+    async setOrgProviderEnabled(organizationId, providerId, isEnabled) {
+        return new Promise((resolve, reject) => {
+            const id = `${organizationId}-${providerId}`;
+            const query = `
+                INSERT OR REPLACE INTO organization_provider_settings 
+                (id, organization_id, provider_id, is_enabled, updated_at)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            `;
+            db.run(query, [id, organizationId, providerId, isEnabled ? 1 : 0], function(err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    aiLogger.info('ModelRouter', `Set provider ${providerId} enabled=${isEnabled} for org ${organizationId}`);
+                    resolve({ success: true });
+                }
+            });
+        });
+    }
+
+    /**
+     * Get organization's provider settings
+     * @param {string} organizationId - Organization ID
+     * @returns {Promise<Array>} Provider settings
+     */
+    async getOrgProviderSettings(organizationId) {
+        return new Promise((resolve) => {
+            const query = `
+                SELECT 
+                    p.*,
+                    COALESCE(ops.is_enabled, 1) as is_enabled_for_org,
+                    ops.custom_priority
+                FROM llm_providers p
+                LEFT JOIN organization_provider_settings ops 
+                    ON p.id = ops.provider_id AND ops.organization_id = ?
+                WHERE p.is_active = 1
+                ORDER BY p.priority
+            `;
+            db.all(query, [organizationId], (err, rows) => {
+                resolve(rows || []);
+            });
+        });
+    }
+
+    // ========================================================================
     // PROVIDER CONFIGURATION
     // ========================================================================
 
     /**
      * Get full provider configuration from database
-     * @param {string} modelId - Model identifier
-     * @param {string} tier - Tier level
-     * @returns {Promise<Object>} Provider configuration
      */
     async getProviderConfig(modelId, tier) {
         const providerName = this.inferProvider(modelId);
@@ -391,7 +708,6 @@ class ModelRouter {
         }
 
         return {
-            // Prefer database model_id over passed-in modelId (e.g., use 'gemini-2.0-flash' from DB instead of 'gemini-1.5-flash' from fallback chain)
             id: provider?.model_id || modelId,
             tier: tier,
             provider: providerName,
@@ -459,7 +775,7 @@ class ModelRouter {
     // ========================================================================
 
     /**
-     * Get fallback chain for a tier
+     * Get fallback chain for a tier (static fallback)
      */
     getFallbackChain(tier) {
         return TIER_FALLBACK_CHAINS[tier] || TIER_FALLBACK_CHAINS['STANDARD'];
@@ -534,6 +850,8 @@ class ModelRouter {
         this.defaultProviderExpiry = 0;
         this.healthStatusCache.clear();
         this.healthCacheExpiry = 0;
+        this.tierAssignmentsCache.clear();
+        this.tierCacheExpiry = 0;
     }
 
     /**
@@ -541,7 +859,7 @@ class ModelRouter {
      */
     async isProviderConfigured(providerId) {
         const config = await this.getProviderConfig(
-            TIER_DEFAULTS['STANDARD'], // Doesn't matter, we check by provider
+            TIER_DEFAULTS['STANDARD'],
             'STANDARD'
         );
         return config && !!config.apiKey;
@@ -561,30 +879,27 @@ class ModelRouter {
             );
         });
     }
+
     /**
      * Legacy alias for select method
      * @deprecated Use select() instead
      */
     async route(capabilityOrUserId, intentOrCapability) {
-        // Handle different signature styles
         let params = {};
 
         if (typeof capabilityOrUserId === 'object') {
             params = capabilityOrUserId;
         } else {
-            // Assume (userId, intent) signature from legacy calls
             params = {
                 capability: intentOrCapability || 'chat',
                 userId: capabilityOrUserId
             };
         }
 
-        // Ensure options exists
         params.options = params.options || {};
 
         const result = await this.select(params);
 
-        // Map to legacy format
         return {
             providerConfig: result.raw || {
                 model_id: result.id,
@@ -602,11 +917,16 @@ class ModelRouter {
 // EXPORTS
 // ============================================================================
 
+// Singleton instance
+const modelRouter = new ModelRouter();
+
 module.exports = {
     ModelRouter,
+    modelRouter,
     CAPABILITY_TIERS,
     TIER_DEFAULTS,
     TIER_FALLBACK_CHAINS,
     TIER_FALLBACKS,
-    MODEL_PROVIDER_MAP
+    MODEL_PROVIDER_MAP,
+    TIER_HIERARCHY
 };

@@ -6,12 +6,22 @@ describe('PlanLimits Middleware', () => {
     let db;
 
     beforeEach(async () => {
-        // Load Database (Singleton)
+        vi.resetModules(); // Clear module cache
+
+        // Temporarily disable mock DB to use real sqlite :memory:
+        process.env.MOCK_DB = 'false';
+        process.env.NODE_ENV = 'test'; // Ensure test env
+
+        // Load Database (Real SQLite :memory:)
         const dbModule = await import('../../../../server/database.js');
         db = dbModule.default || dbModule;
-        await db.initPromise;
 
-        // Import middleware (Shares same DB instance due to module cache)
+        // Wait for initialization
+        if (db.initPromise) {
+            await db.initPromise;
+        }
+
+        // Import middleware (Using the REAL DB instance)
         const mod = await import('../../../../server/middleware/planLimits.js');
         checkPlanLimit = mod.checkPlanLimit;
 

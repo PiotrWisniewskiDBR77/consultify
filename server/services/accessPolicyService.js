@@ -17,7 +17,8 @@
 // Dependency injection container (for deterministic unit tests)
 const deps = {
     db: require('../database'),
-    uuidv4: require('uuid').v4
+    uuidv4: require('uuid').v4,
+    SeatManagementService: require('./seatManagementService')
 };
 
 // Organization types
@@ -718,11 +719,20 @@ const AccessPolicyService = {
             return { allowed: false, reasonCode: 'TRIAL_EXPIRED' };
         }
 
-        // Check seat limit
-        if (limits) {
-            const currentUsers = await AccessPolicyService._countOrgUsers(organizationId);
-            if (currentUsers >= limits.maxUsers) {
+        // Check seat limit using SeatManagementService
+        try {
+            const canAdd = await deps.SeatManagementService.canAddUser(organizationId);
+            if (!canAdd) {
                 return { allowed: false, reasonCode: 'USER_LIMIT_REACHED' };
+            }
+        } catch (seatErr) {
+            // Fallback to old limit check if seat service fails
+            console.warn('[AccessPolicyService] Seat check failed, using fallback:', seatErr.message);
+            if (limits) {
+                const currentUsers = await AccessPolicyService._countOrgUsers(organizationId);
+                if (currentUsers >= limits.maxUsers) {
+                    return { allowed: false, reasonCode: 'USER_LIMIT_REACHED' };
+                }
             }
         }
 
@@ -757,6 +767,29 @@ const AccessPolicyService = {
             currentSeats,
             seatsRemaining: Math.max(0, limits.maxUsers - currentSeats)
         };
+    },
+
+    /**
+     * Get seat availability using SeatManagementService (enhanced version)
+     */
+    getSeatAvailabilityEnhanced: async (organizationId) => {
+        try {
+            // Try to get seat configuration from SeatManagementService
+            const seatConfig = await deps.SeatManagementService.getSeatConfiguration(organizationId);
+            return {
+                maxSeats: seatConfig.total_seats_available || -1,
+                currentSeats: seatConfig.seats_used || 0,
+                seatsRemaining: seatConfig.seats_remaining || 0,
+                utilizationPercent: parseFloat(seatConfig.utilization_percent || 0),
+                baseSeatsIncluded: seatConfig.base_seats_included || 0,
+                additionalSeatsPurchased: seatConfig.additional_seats_purchased || 0,
+                autoAddEnabled: seatConfig.auto_add_seats_on_invite === 1
+            };
+        } catch (seatErr) {
+            // Fallback to old method
+            console.warn('[AccessPolicyService] Seat config failed, using fallback:', seatErr.message);
+            return await AccessPolicyService.getSeatAvailability(organizationId);
+        }
     }
 };
 

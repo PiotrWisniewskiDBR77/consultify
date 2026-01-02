@@ -311,7 +311,7 @@ const InboxItemCard: React.FC<{
                                     <img 
                                         src={item.source.avatarUrl} 
                                         alt="" 
-                                        className="w-4 h-4 rounded-full"
+                                        className="w-4 h-4 rounded-full object-cover"
                                     />
                                 ) : (
                                     <div className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700" />

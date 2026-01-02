@@ -21,11 +21,15 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     children?: React.ReactNode;
 }
 
+/**
+ * DBR77 Color System - Button Variants
+ * See: docs/00_foundation/COLOR_SYSTEM_STANDARD.md
+ */
 const variantClasses: Record<ButtonVariant, string> = {
-    primary: 'bg-blue-600 hover:bg-blue-500 text-white',
-    secondary: 'border border-white/10 hover:border-white/20 hover:bg-white/[0.02] text-slate-300',
+    primary: 'bg-primary-600 hover:bg-primary-700 text-white',  // Fiolet
+    secondary: 'bg-secondary-800 hover:bg-secondary-900 text-white border border-white/10',  // Navy
     ghost: 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-300',
-    danger: 'bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/20',
+    danger: 'bg-danger-600/10 hover:bg-danger-600/20 text-danger-400 border border-danger-500/20',  // Czerwień
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -59,7 +63,7 @@ export const Button: React.FC<ButtonProps> = ({
             className={`
                 inline-flex items-center justify-center font-medium rounded-lg 
                 transition-colors focus:outline-none focus-visible:ring-2 
-                focus-visible:ring-blue-500/50 focus-visible:ring-offset-2 
+                focus-visible:ring-primary-500/50 focus-visible:ring-offset-2 
                 focus-visible:ring-offset-slate-900
                 disabled:opacity-50 disabled:cursor-not-allowed
                 ${variantClasses[variant]}
@@ -111,7 +115,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
             className={`
                 ${paddingClass} rounded-lg transition-colors
                 focus:outline-none focus-visible:ring-2 
-                focus-visible:ring-blue-500/50
+                focus-visible:ring-primary-500/50
                 disabled:opacity-50 disabled:cursor-not-allowed
                 ${variantClass}
                 ${className}

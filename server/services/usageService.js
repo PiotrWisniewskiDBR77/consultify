@@ -7,22 +7,52 @@
 const deps = {
     db: require('../database'),
     uuidv4: require('uuid').v4,
-    billingService: require('./billingService')
+    billingService: require('./billingService'),
+    payAsYouGoService: require('./payAsYouGoService'),
+    budgetManagementService: require('./budgetManagementService')
 };
 
 /**
  * Record token usage
  */
-function recordTokenUsage(orgId, userId, tokens, action, metadata = {}) {
+async function recordTokenUsage(orgId, userId, tokens, action, metadata = {}) {
+    // Check budget limits before recording usage
+    try {
+        const budgetCheck = await deps.budgetManagementService.checkBudgetLimit(orgId, userId, null, 'tokens', tokens);
+        if (!budgetCheck.allowed && budgetCheck.reason === 'Budget limit exceeded') {
+            throw new Error(`Budget limit exceeded: ${budgetCheck.usagePercent}% used`);
+        }
+    } catch (budgetErr) {
+        // Log but don't block if budget check fails
+        console.warn('[UsageService] Budget check failed:', budgetErr.message);
+    }
+
     const id = `usage-${deps.uuidv4()}`;
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         deps.db.run(
             `INSERT INTO usage_records (id, organization_id, user_id, type, amount, action, metadata)
              VALUES (?, ?, ?, 'token', ?, ?, ?)`,
             [id, orgId, userId, tokens, action, JSON.stringify(metadata)],
-            function (err) {
-                if (err) reject(err);
-                else resolve({ id, tokens });
+            async function (err) {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+
+                // Record PAYG usage if billing model is PAYG
+                try {
+                    const billingModel = await deps.billingService.getBillingModel(orgId);
+                    if (billingModel.billingModel === 'pay_as_you_go' || billingModel.billingModel === 'hybrid') {
+                        const costCalc = await deps.payAsYouGoService.calculateUsageCost(orgId, 'tokens', tokens);
+                        if (costCalc.cost > 0) {
+                            await deps.payAsYouGoService.recordUsage(orgId, 'tokens', tokens, costCalc.unitPrice, metadata, userId, null);
+                        }
+                    }
+                } catch (paygErr) {
+                    console.warn('[UsageService] PAYG recording failed:', paygErr.message);
+                }
+
+                resolve({ id, tokens });
             }
         );
     });
@@ -31,16 +61,45 @@ function recordTokenUsage(orgId, userId, tokens, action, metadata = {}) {
 /**
  * Record storage usage
  */
-function recordStorageUsage(orgId, bytes, action, metadata = {}) {
+async function recordStorageUsage(orgId, bytes, action, metadata = {}) {
+    const gb = bytes / (1024 * 1024 * 1024);
+    
+    // Check budget limits before recording usage
+    try {
+        const budgetCheck = await deps.budgetManagementService.checkBudgetLimit(orgId, null, null, 'storage', gb);
+        if (!budgetCheck.allowed && budgetCheck.reason === 'Budget limit exceeded') {
+            throw new Error(`Budget limit exceeded: ${budgetCheck.usagePercent}% used`);
+        }
+    } catch (budgetErr) {
+        console.warn('[UsageService] Budget check failed:', budgetErr.message);
+    }
+
     const id = `usage-${deps.uuidv4()}`;
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         deps.db.run(
             `INSERT INTO usage_records (id, organization_id, user_id, type, amount, action, metadata)
              VALUES (?, ?, NULL, 'storage', ?, ?, ?)`,
             [id, orgId, null, bytes, action, JSON.stringify(metadata)],
-            function (err) {
-                if (err) reject(err);
-                else resolve({ id, bytes });
+            async function (err) {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+
+                // Record PAYG usage if billing model is PAYG
+                try {
+                    const billingModel = await deps.billingService.getBillingModel(orgId);
+                    if (billingModel.billingModel === 'pay_as_you_go' || billingModel.billingModel === 'hybrid') {
+                        const costCalc = await deps.payAsYouGoService.calculateUsageCost(orgId, 'storage', gb);
+                        if (costCalc.cost > 0) {
+                            await deps.payAsYouGoService.recordUsage(orgId, 'storage', gb, costCalc.unitPrice, metadata, null, null);
+                        }
+                    }
+                } catch (paygErr) {
+                    console.warn('[UsageService] PAYG recording failed:', paygErr.message);
+                }
+
+                resolve({ id, bytes });
             }
         );
     });

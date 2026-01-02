@@ -3,6 +3,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
 const verifyToken = require('../middleware/authMiddleware');
+const verifySuperAdmin = require('../middleware/superAdminMiddleware');
 const { AIPipeline } = require('../services/ai/aiPipeline.js');
 
 // Helper: Run DB Run
@@ -514,14 +515,76 @@ router.get('/health/status', verifyToken, async (req, res) => {
 // POST /api/llm/health/test/:capability - Test a specific AI capability
 router.post('/health/test/:capability', verifyToken, async (req, res) => {
     const { capability } = req.params;
-    const { context } = req.body;
+    const { context, sendAlerts = false } = req.body;
 
     try {
         const { AIHealthService } = require('../services/ai/aiHealthService');
         const results = await AIHealthService.testCapability(capability, context);
+        
+        // If test failed and alerts are enabled, trigger alert
+        if (results.status === 'FAILED' && sendAlerts) {
+            try {
+                const AIHealthAlertService = require('../services/ai/aiHealthAlertService');
+                const alertResult = await AIHealthAlertService.triggerHealthAlert(
+                    { results: { [capability]: results } },
+                    req.user?.email || 'system'
+                );
+                results.alertSent = alertResult.alertSent;
+                results.alertDetails = alertResult;
+            } catch (alertErr) {
+                console.error('[LLM API] Failed to send alert:', alertErr.message);
+                results.alertSent = false;
+                results.alertError = alertErr.message;
+            }
+        }
+        
         res.json(results);
     } catch (err) {
         res.status(500).json({ error: `Test failed for ${capability}`, details: err.message });
+    }
+});
+
+// POST /api/llm/health/test-all - Run all AI capability tests with alerts
+router.post('/health/test-all', verifyToken, async (req, res) => {
+    const { sendAlerts = true } = req.body;
+    
+    try {
+        const { AIHealthService } = require('../services/ai/aiHealthService');
+        const testResults = await AIHealthService.runAllTests();
+        
+        // If any test failed and alerts are enabled, trigger alerts
+        if (!testResults.summary.allPassed && sendAlerts) {
+            try {
+                const AIHealthAlertService = require('../services/ai/aiHealthAlertService');
+                const alertResult = await AIHealthAlertService.triggerHealthAlert(
+                    testResults,
+                    req.user?.email || 'system'
+                );
+                testResults.alertSent = alertResult.alertSent;
+                testResults.alertDetails = alertResult;
+            } catch (alertErr) {
+                console.error('[LLM API] Failed to send alert:', alertErr.message);
+                testResults.alertSent = false;
+                testResults.alertError = alertErr.message;
+            }
+        }
+        
+        res.json(testResults);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to run all tests', details: err.message });
+    }
+});
+
+// GET /api/llm/health/alerts - Get AI health alert history
+router.get('/health/alerts', verifyToken, async (req, res) => {
+    const limit = parseInt(req.query.limit) || 50;
+    
+    try {
+        const AIHealthAlertService = require('../services/ai/aiHealthAlertService');
+        const alerts = await AIHealthAlertService.getAlertHistory(limit);
+        res.json({ alerts, total: alerts.length });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch alert history', details: err.message });
     }
 });
 
@@ -1111,7 +1174,7 @@ router.post('/magic-wand', async (req, res) => {
 });
 
 // CONTROL PLANE API
-router.get('/control/usage', async (req, res) => {
+router.get('/control/usage', verifyToken, async (req, res) => {
     try {
         const { quotaService } = require('../services/ai/quotaService');
         const { cacheService } = require('../services/ai/cacheService');
@@ -1131,7 +1194,7 @@ router.get('/control/usage', async (req, res) => {
     }
 });
 
-router.get('/control/models', async (req, res) => {
+router.get('/control/models', verifyToken, async (req, res) => {
     try {
         const { CAPABILITY_TIERS, TIER_DEFAULTS } = require('../services/ai/modelRouter');
         const overrides = await dbAll(`SELECT * FROM ai_model_overrides WHERE organization_id = ?`, [req.user.organization_id]);
@@ -1146,7 +1209,7 @@ router.get('/control/models', async (req, res) => {
     }
 });
 
-router.put('/control/models/:capability', async (req, res) => {
+router.put('/control/models/:capability', verifyToken, async (req, res) => {
     const { capability } = req.params;
     const { modelId, tier } = req.body;
     const orgId = req.user.organization_id;
@@ -1167,7 +1230,7 @@ router.put('/control/models/:capability', async (req, res) => {
     }
 });
 
-router.get('/control/quotas', async (req, res) => {
+router.get('/control/quotas', verifyToken, async (req, res) => {
     try {
         const { DEFAULT_QUOTAS } = require('../services/ai/quotaService');
         const quotas = await dbAll(`SELECT * FROM ai_usage_quotas WHERE entity_type = 'organization' AND entity_id = ?`, [req.user.organization_id]);
@@ -1177,7 +1240,7 @@ router.get('/control/quotas', async (req, res) => {
     }
 });
 
-router.put('/control/quotas', async (req, res) => {
+router.put('/control/quotas', verifyToken, async (req, res) => {
     const { entityType, entityId, dailyLimit, monthlyLimit } = req.body;
     try {
         const { quotaService } = require('../services/ai/quotaService');
@@ -1189,7 +1252,7 @@ router.put('/control/quotas', async (req, res) => {
 });
 
 // AUDIT DASHBOARD API
-router.get('/audit/stats', async (req, res) => {
+router.get('/audit/stats', verifyToken, async (req, res) => {
     try {
         const { cacheService } = require('../services/ai/cacheService');
         const tokensToday = await dbGet(`SELECT SUM(tokens_used_today) as total FROM ai_usage_quotas WHERE entity_type = 'organization'`);
@@ -1616,6 +1679,299 @@ router.get('/logs', verifyToken, async (req, res) => {
     } catch (error) {
         aiLogger.error('API', 'Failed to fetch logs', error);
         res.status(500).json({ error: 'Failed to fetch logs' });
+    }
+});
+
+// ==========================================
+// NEW LLM DELIVERY SYSTEM - Tier Assignments
+// ==========================================
+
+const { modelRouter, TIER_HIERARCHY } = require('../services/ai/modelRouter');
+
+/**
+ * GET /api/llm/tiers/assignments
+ * Get all model-to-tier assignments (SuperAdmin only)
+ */
+router.get('/tiers/assignments', verifyToken, async (req, res) => {
+    if (!req.user.is_super_admin) {
+        return res.status(403).json({ error: 'SuperAdmin access required' });
+    }
+
+    try {
+        const assignments = await modelRouter.getAllTierAssignments();
+        res.json({
+            success: true,
+            tiers: TIER_HIERARCHY,
+            assignments
+        });
+    } catch (error) {
+        console.error('[LLM] Failed to get tier assignments:', error);
+        res.status(500).json({ error: 'Failed to get tier assignments', details: error.message });
+    }
+});
+
+/**
+ * POST /api/llm/tiers/assign
+ * Assign a model to a tier (SuperAdmin only)
+ */
+router.post('/tiers/assign', verifyToken, async (req, res) => {
+    if (!req.user.is_super_admin) {
+        return res.status(403).json({ error: 'SuperAdmin access required' });
+    }
+
+    try {
+        const { providerId, tier, priority = 0 } = req.body;
+
+        if (!providerId || !tier) {
+            return res.status(400).json({ error: 'providerId and tier are required' });
+        }
+
+        if (!TIER_HIERARCHY.includes(tier)) {
+            return res.status(400).json({ error: `Invalid tier. Must be one of: ${TIER_HIERARCHY.join(', ')}` });
+        }
+
+        const result = await modelRouter.assignModelToTier(providerId, tier, priority);
+        
+        // Clear cache after assignment change
+        modelRouter.clearCache();
+
+        res.json({
+            success: true,
+            assignment: result
+        });
+    } catch (error) {
+        console.error('[LLM] Failed to assign model to tier:', error);
+        res.status(500).json({ error: 'Failed to assign model to tier', details: error.message });
+    }
+});
+
+/**
+ * DELETE /api/llm/tiers/assign
+ * Remove a model from a tier (SuperAdmin only)
+ */
+router.delete('/tiers/assign', verifyToken, async (req, res) => {
+    if (!req.user.is_super_admin) {
+        return res.status(403).json({ error: 'SuperAdmin access required' });
+    }
+
+    try {
+        const { providerId, tier } = req.body;
+
+        if (!providerId || !tier) {
+            return res.status(400).json({ error: 'providerId and tier are required' });
+        }
+
+        await modelRouter.removeModelFromTier(providerId, tier);
+        
+        // Clear cache after assignment change
+        modelRouter.clearCache();
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[LLM] Failed to remove model from tier:', error);
+        res.status(500).json({ error: 'Failed to remove model from tier', details: error.message });
+    }
+});
+
+/**
+ * PUT /api/llm/tiers/priority
+ * Update priority of a model within a tier (SuperAdmin only)
+ */
+router.put('/tiers/priority', verifyToken, async (req, res) => {
+    if (!req.user.is_super_admin) {
+        return res.status(403).json({ error: 'SuperAdmin access required' });
+    }
+
+    try {
+        const { providerId, tier, priority } = req.body;
+
+        if (!providerId || !tier || priority === undefined) {
+            return res.status(400).json({ error: 'providerId, tier, and priority are required' });
+        }
+
+        await modelRouter.updateTierPriority(providerId, tier, priority);
+        
+        // Clear cache after priority change
+        modelRouter.clearCache();
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[LLM] Failed to update tier priority:', error);
+        res.status(500).json({ error: 'Failed to update tier priority', details: error.message });
+    }
+});
+
+/**
+ * POST /api/llm/tiers/bulk-assign
+ * Bulk assign models to tiers (SuperAdmin only)
+ * Body: { assignments: [{ providerId, tier, priority }] }
+ */
+router.post('/tiers/bulk-assign', verifyToken, async (req, res) => {
+    if (!req.user.is_super_admin) {
+        return res.status(403).json({ error: 'SuperAdmin access required' });
+    }
+
+    try {
+        const { assignments } = req.body;
+
+        if (!Array.isArray(assignments) || assignments.length === 0) {
+            return res.status(400).json({ error: 'assignments array is required' });
+        }
+
+        const results = [];
+        for (const assignment of assignments) {
+            const { providerId, tier, priority = 0 } = assignment;
+            if (providerId && tier && TIER_HIERARCHY.includes(tier)) {
+                const result = await modelRouter.assignModelToTier(providerId, tier, priority);
+                results.push(result);
+            }
+        }
+
+        // Clear cache after bulk changes
+        modelRouter.clearCache();
+
+        res.json({
+            success: true,
+            count: results.length,
+            assignments: results
+        });
+    } catch (error) {
+        console.error('[LLM] Failed to bulk assign models to tiers:', error);
+        res.status(500).json({ error: 'Failed to bulk assign', details: error.message });
+    }
+});
+
+// ==========================================
+// NEW LLM DELIVERY SYSTEM - Organization Provider Settings
+// ==========================================
+
+/**
+ * GET /api/llm/org/:orgId/providers
+ * Get organization's provider settings (Admin only)
+ */
+router.get('/org/:orgId/providers', verifyToken, async (req, res) => {
+    const { orgId } = req.params;
+
+    // Check access: must be admin of this org or superadmin
+    if (!req.user.is_super_admin && req.user.organization_id !== orgId && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    try {
+        const providers = await modelRouter.getOrgProviderSettings(orgId);
+        res.json({
+            success: true,
+            organizationId: orgId,
+            providers
+        });
+    } catch (error) {
+        console.error('[LLM] Failed to get org provider settings:', error);
+        res.status(500).json({ error: 'Failed to get provider settings', details: error.message });
+    }
+});
+
+/**
+ * PUT /api/llm/org/:orgId/providers/:providerId
+ * Enable/disable a provider for an organization (Admin only)
+ */
+router.put('/org/:orgId/providers/:providerId', verifyToken, async (req, res) => {
+    const { orgId, providerId } = req.params;
+    const { isEnabled } = req.body;
+
+    // Check access: must be admin of this org or superadmin
+    if (!req.user.is_super_admin && req.user.organization_id !== orgId && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    try {
+        await modelRouter.setOrgProviderEnabled(orgId, providerId, isEnabled);
+        
+        // Clear cache after settings change
+        modelRouter.clearCache();
+
+        res.json({
+            success: true,
+            organizationId: orgId,
+            providerId,
+            isEnabled
+        });
+    } catch (error) {
+        console.error('[LLM] Failed to update org provider setting:', error);
+        res.status(500).json({ error: 'Failed to update provider setting', details: error.message });
+    }
+});
+
+/**
+ * PUT /api/llm/org/:orgId/providers/bulk
+ * Bulk update provider settings for an organization (Admin only)
+ * Body: { settings: [{ providerId, isEnabled, customPriority? }] }
+ */
+router.put('/org/:orgId/providers/bulk', verifyToken, async (req, res) => {
+    const { orgId } = req.params;
+    const { settings } = req.body;
+
+    // Check access: must be admin of this org or superadmin
+    if (!req.user.is_super_admin && req.user.organization_id !== orgId && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    if (!Array.isArray(settings)) {
+        return res.status(400).json({ error: 'settings array is required' });
+    }
+
+    try {
+        for (const setting of settings) {
+            const { providerId, isEnabled } = setting;
+            if (providerId !== undefined && isEnabled !== undefined) {
+                await modelRouter.setOrgProviderEnabled(orgId, providerId, isEnabled);
+            }
+        }
+
+        // Clear cache after bulk changes
+        modelRouter.clearCache();
+
+        res.json({
+            success: true,
+            organizationId: orgId,
+            updated: settings.length
+        });
+    } catch (error) {
+        console.error('[LLM] Failed to bulk update org provider settings:', error);
+        res.status(500).json({ error: 'Failed to bulk update', details: error.message });
+    }
+});
+
+/**
+ * GET /api/llm/org/:orgId/available-models
+ * Get available models for organization based on enabled providers and tier
+ */
+router.get('/org/:orgId/available-models', verifyToken, async (req, res) => {
+    const { orgId } = req.params;
+    const { tier } = req.query;
+
+    try {
+        const result = {};
+        const tiersToFetch = tier ? [tier] : TIER_HIERARCHY;
+
+        for (const t of tiersToFetch) {
+            const models = await modelRouter.getModelsForTier(t, orgId);
+            result[t] = models.map(m => ({
+                id: m.id,
+                name: m.name,
+                provider: m.provider,
+                model_id: m.model_id,
+                health_status: m.health_status
+            }));
+        }
+
+        res.json({
+            success: true,
+            organizationId: orgId,
+            tiers: result
+        });
+    } catch (error) {
+        console.error('[LLM] Failed to get available models:', error);
+        res.status(500).json({ error: 'Failed to get available models', details: error.message });
     }
 });
 

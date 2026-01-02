@@ -88,7 +88,7 @@ const BudgetService = {
      */
     getBudget: async (initiativeId, orgId) => {
         const budget = await queryHelpers.queryOne(`
-            SELECT b.*, i.name as initiative_name
+            SELECT b.*, i.title as initiative_name
             FROM initiative_budgets b
             JOIN initiatives i ON b.initiative_id = i.id
             WHERE b.initiative_id = ? AND b.organization_id = ?
@@ -495,7 +495,7 @@ const BudgetService = {
             SELECT 
                 b.id,
                 b.initiative_id,
-                i.name as initiative_name,
+                i.title as initiative_name,
                 i.status as initiative_status,
                 b.planned_amount,
                 b.approved_amount,

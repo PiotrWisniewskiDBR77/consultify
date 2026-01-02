@@ -120,7 +120,7 @@ const AIRiskChangeControl = {
         // Check overdue tasks
         const overdueTasks = await new Promise((resolve) => {
             deps.db.all(`
-                SELECT t.*, i.name as initiative_name
+                SELECT t.*, i.title as initiative_name
                 FROM tasks t
                 LEFT JOIN initiatives i ON t.initiative_id = i.id
                 WHERE t.project_id = ?

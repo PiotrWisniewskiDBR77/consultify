@@ -152,11 +152,8 @@ function validateCredentials(key, credentials) {
  * Get all categories.
  * @returns {Object[]} Categories with labels
  */
-function getCategories() {
-    return Object.entries(CONNECTOR_CATEGORIES).map(([key, data]) => ({
-        key,
-        ...data
-    }));
+function getAllCategories() {
+    return CONNECTOR_CATEGORIES;
 }
 
 module.exports = {
@@ -168,5 +165,5 @@ module.exports = {
     hasCapability,
     getRequiredCredentials,
     validateCredentials,
-    getCategories
+    getAllCategories
 };

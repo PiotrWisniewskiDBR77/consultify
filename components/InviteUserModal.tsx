@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Mail, UserPlus, AlertCircle, Loader2 } from 'lucide-react';
+import { X, Mail, UserPlus, AlertCircle, Loader2, Plus, CreditCard } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 
 interface InviteUserModalProps {
@@ -13,6 +13,16 @@ interface Project {
     name: string;
 }
 
+interface SeatInfo {
+    maxSeats: number;
+    seatsUsed: number;
+    seatsRemaining: number;
+    canAddSeats: boolean;
+    seatPrice: number;
+    currency: string;
+    isPaidOrg: boolean;
+}
+
 const API_URL = '/api';
 
 const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, projectId }) => {
@@ -20,12 +30,17 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
     const token = localStorage.getItem('token');
     const [email, setEmail] = useState('');
     const [role, setRole] = useState('USER');
-    const [projectRole, setProjectRole] = useState('member');
+    const [projectRole, setProjectRole] = useState('TEAM_MEMBER');
     const [selectedProject, setSelectedProject] = useState(projectId || '');
     const [isProjectInvite, setIsProjectInvite] = useState(!!projectId);
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    
+    // Seat management state
+    const [seatInfo, setSeatInfo] = useState<SeatInfo | null>(null);
+    const [autoAddSeat, setAutoAddSeat] = useState(false);
+    const [addingSeat, setAddingSeat] = useState(false);
 
     // Fetch projects for project invite option
     useEffect(() => {
@@ -49,6 +64,36 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
         fetchProjects();
     }, [token]);
 
+    // Fetch seat availability
+    useEffect(() => {
+        const fetchSeatInfo = async () => {
+            try {
+                const res = await fetch(`${API_URL}/billing/seats`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setSeatInfo(data);
+                    // Auto-enable add seat if no seats remaining
+                    if (data.seatsRemaining === 0 && data.canAddSeats) {
+                        setAutoAddSeat(true);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch seat info:', err);
+            }
+        };
+
+        fetchSeatInfo();
+    }, [token]);
+
+    // Check if seats are full
+    const seatsAreFull = seatInfo && seatInfo.seatsRemaining === 0 && !seatInfo.isPaidOrg;
+    const canProceed = !seatsAreFull || autoAddSeat;
+
     const validateEmail = (email: string) => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return regex.test(email);
@@ -67,10 +112,46 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
             return;
         }
 
+        // Check if we need to add a seat first
+        if (seatsAreFull && !autoAddSeat) {
+            setError('Please enable "Add seat automatically" to proceed, or contact your administrator to upgrade your plan.');
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
         try {
+            // Step 1: Add seat if needed
+            if (seatsAreFull && autoAddSeat) {
+                setAddingSeat(true);
+                const addSeatRes = await fetch(`${API_URL}/billing/seats/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ quantity: 1 })
+                });
+
+                const addSeatData = await addSeatRes.json();
+                setAddingSeat(false);
+
+                if (!addSeatRes.ok) {
+                    throw new Error(addSeatData.error || 'Failed to add seat');
+                }
+
+                // Update local seat info
+                if (seatInfo) {
+                    setSeatInfo({
+                        ...seatInfo,
+                        maxSeats: addSeatData.newMaxSeats,
+                        seatsRemaining: addSeatData.newMaxSeats - seatInfo.seatsUsed
+                    });
+                }
+            }
+
+            // Step 2: Send invitation
             const endpoint = isProjectInvite
                 ? `${API_URL}/invitations/project`
                 : `${API_URL}/invitations/org`;
@@ -99,6 +180,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
             setError(err instanceof Error ? err.message : 'Failed to send invitation');
         } finally {
             setLoading(false);
+            setAddingSeat(false);
         }
     };
 
@@ -123,6 +205,44 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    {/* Seat Limit Warning */}
+                    {seatsAreFull && (
+                        <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm">
+                            <div className="flex items-start gap-2">
+                                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                                <div className="flex-1">
+                                    <p className="font-medium">Organization has reached maximum seats.</p>
+                                    <p className="text-amber-700 text-xs mt-1">
+                                        {seatInfo?.seatsUsed}/{seatInfo?.maxSeats} seats used. 
+                                        {seatInfo?.canAddSeats && ` Add a seat for $${seatInfo?.seatPrice}/month to continue.`}
+                                    </p>
+                                    
+                                    {/* Auto-add seat option */}
+                                    {seatInfo?.canAddSeats && (
+                                        <label className="flex items-center gap-2 mt-3 cursor-pointer bg-white/50 p-2 rounded-lg border border-amber-300">
+                                            <input
+                                                type="checkbox"
+                                                checked={autoAddSeat}
+                                                onChange={(e) => setAutoAddSeat(e.target.checked)}
+                                                className="w-4 h-4 text-amber-600 rounded border-amber-300 focus:ring-amber-500"
+                                            />
+                                            <div className="flex-1">
+                                                <span className="font-medium text-amber-900 flex items-center gap-1">
+                                                    <Plus className="w-3 h-3" />
+                                                    Add seat automatically
+                                                </span>
+                                                <span className="text-xs text-amber-600 block">
+                                                    +${seatInfo?.seatPrice}/{seatInfo?.currency}/month will be added to your billing
+                                                </span>
+                                            </div>
+                                            <CreditCard className="w-4 h-4 text-amber-600" />
+                                        </label>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm">
                             <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -203,10 +323,10 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                         </div>
                     )}
 
-                    {/* Organization Role */}
+                    {/* Account Type (Organization-level permission) */}
                     <div>
                         <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                            Organization Role
+                            Account Type
                         </label>
                         <select
                             id="role"
@@ -236,14 +356,18 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                                 onChange={(e) => setProjectRole(e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             >
-                                <option value="member">Member</option>
-                                <option value="admin">Admin</option>
-                                <option value="owner">Owner</option>
+                                <option value="PROJECT_EXECUTIVE">Project Executive / Sponsor</option>
+                                <option value="PROJECT_MANAGER">Project Manager</option>
+                                <option value="TEAM_LEAD">Team Lead</option>
+                                <option value="TEAM_MEMBER">Team Member</option>
+                                <option value="STAKEHOLDER">Stakeholder / Viewer</option>
                             </select>
                             <p className="mt-1 text-xs text-gray-500">
-                                {projectRole === 'member' && 'Can view and contribute to the project'}
-                                {projectRole === 'admin' && 'Can manage project settings and members'}
-                                {projectRole === 'owner' && 'Full control over the project'}
+                                {projectRole === 'PROJECT_EXECUTIVE' && 'Strategic oversight and sponsorship'}
+                                {projectRole === 'PROJECT_MANAGER' && 'Full project management responsibilities'}
+                                {projectRole === 'TEAM_LEAD' && 'Leads a workstream or team within the project'}
+                                {projectRole === 'TEAM_MEMBER' && 'Executes tasks and contributes to deliverables'}
+                                {projectRole === 'STAKEHOLDER' && 'View-only access to project progress'}
                             </p>
                         </div>
                     )}
@@ -252,13 +376,13 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                         <h4 className="text-sm font-medium text-gray-700 mb-2">Invitation Preview</h4>
                         <p className="text-sm text-gray-600">
-                            <span className="font-medium">{email || 'user@example.com'}</span> will be invited as a{' '}
-                            <span className="font-medium">{role}</span> to the organization
+                            <span className="font-medium">{email || 'user@example.com'}</span> will be invited with{' '}
+                            <span className="font-medium">{role}</span> account type
                             {isProjectInvite && selectedProject && (
                                 <>
-                                    {' '}and as{' '}
-                                    <span className="font-medium">{projectRole}</span>
-                                    {' '}to the selected project
+                                    {' '}and{' '}
+                                    <span className="font-medium">{projectRole.replace(/_/g, ' ')}</span>
+                                    {' '}project role
                                 </>
                             )}
                             .
@@ -279,13 +403,25 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                         </button>
                         <button
                             type="submit"
-                            disabled={loading || !email}
+                            disabled={loading || !email || (seatsAreFull && !autoAddSeat)}
                             className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {loading ? (
+                                addingSeat ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Adding Seat...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Sending...
+                                    </>
+                                )
+                            ) : seatsAreFull && autoAddSeat ? (
                                 <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    Sending...
+                                    <Plus className="w-4 h-4" />
+                                    Add Seat & Invite
                                 </>
                             ) : (
                                 <>

@@ -61,11 +61,11 @@ class PerformanceOptimizer {
             this.metrics.cachedResponses++;
         }
 
-        if (error) {
-            this.metrics.errorRate = 
-                (this.metrics.errorRate * (this.metrics.totalRequests - 1) + 1) / 
-                this.metrics.totalRequests;
-        }
+        // Update error rate (Exponential Moving Average could be better, but sticking to running average for test)
+        const isError = error ? 1 : 0;
+        this.metrics.errorRate =
+            (this.metrics.errorRate * (this.metrics.totalRequests - 1) + isError) /
+            this.metrics.totalRequests;
 
         aiLogger.debug('PerformanceOptimizer', `Recorded: ${responseTime}ms, ${tokensUsed} tokens`);
     }

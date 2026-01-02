@@ -175,9 +175,9 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
             {/* Header */}
             <div className="flex items-center gap-2">
                 <Icon className={`w-5 h-5 ${selectedConfig.color}`} />
-                <h3 className="text-lg font-semibold text-white">AI Proactivity</h3>
+                <h3 className="text-lg font-semibold text-navy-900 dark:text-white">AI Proactivity</h3>
             </div>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
                 How should AI interact with you?
             </p>
 
@@ -198,7 +198,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                                 relative p-4 rounded-xl transition-all duration-300 text-left
                                 ${isSelected 
                                     ? `bg-gradient-to-br ${config.bgGradient} ${config.borderColor} border-2 shadow-xl ${config.glowColor}`
-                                    : 'bg-slate-800/30 border border-slate-700/50 hover:border-slate-600 hover:bg-slate-800/50'
+                                    : 'bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800/50'
                                 }
                                 ${!allowed ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
                                 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
@@ -225,26 +225,26 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                                 w-10 h-10 rounded-lg flex items-center justify-center mb-3
                                 ${isSelected 
                                     ? `bg-gradient-to-br ${config.bgGradient} border ${config.borderColor}`
-                                    : 'bg-slate-700/50'
+                                    : 'bg-slate-200 dark:bg-slate-700/50'
                                 }
                             `}>
-                                <ModeIcon className={`w-5 h-5 ${isSelected ? config.color : 'text-slate-400'}`} />
+                                <ModeIcon className={`w-5 h-5 ${isSelected ? config.color : 'text-slate-500 dark:text-slate-400'}`} />
                             </div>
 
                             {/* Title */}
-                            <h4 className={`font-semibold mb-1 ${isSelected ? config.color : 'text-slate-300'}`}>
+                            <h4 className={`font-semibold mb-1 ${isSelected ? config.color : 'text-navy-900 dark:text-slate-300'}`}>
                                 {config.title}
                             </h4>
 
                             {/* Short description */}
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
                                 {config.shortDescription}
                             </p>
 
                             {/* Locked indicator */}
                             {!allowed && (
-                                <div className="absolute inset-0 rounded-xl bg-slate-900/60 flex items-center justify-center">
-                                    <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded">
+                                <div className="absolute inset-0 rounded-xl bg-white/60 dark:bg-slate-900/60 flex items-center justify-center">
+                                    <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
                                         Org limit
                                     </span>
                                 </div>

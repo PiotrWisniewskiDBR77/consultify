@@ -58,16 +58,30 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`/api/billing/payment-methods?orgId=${currentOrganization?.id}`, {
+            const response = await fetch(`/api/billing/payment-methods`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {
                 const data = await response.json();
-                setPaymentMethods(data.paymentMethods || []);
+                // Transform backend format to frontend format
+                // Handle both last4 and last_four column names
+                const methods = (data.paymentMethods || []).map((pm: any) => ({
+                    id: pm.id,
+                    type: pm.type || 'card',
+                    brand: pm.brand,
+                    last4: pm.last4 || pm.last_four || '****',
+                    expMonth: pm.exp_month || pm.expMonth,
+                    expYear: pm.exp_year || pm.expYear,
+                    isDefault: Boolean(pm.is_default || pm.isDefault),
+                    createdAt: pm.created_at || pm.createdAt
+                }));
+                setPaymentMethods(methods);
+            } else {
+                setPaymentMethods([]);
             }
         } catch (error) {
             console.error('Failed to load payment methods:', error);
-            // setPaymentMethods(mockData); // Mock data if needed
+            setPaymentMethods([]);
         } finally {
             setLoading(false);
         }
@@ -87,6 +101,10 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
 
         setAddingMethod(true);
         try {
+            // Generate a mock Stripe payment method ID for testing
+            // In production, this would use Stripe Elements to create a real payment method
+            const mockPaymentMethodId = `pm_test_${Date.now()}`;
+            
             const res = await fetch(`/api/billing/payment-methods`, {
                 method: 'POST',
                 headers: {
@@ -94,10 +112,7 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
                 body: JSON.stringify({
-                    cardNumber: cardNumber.replace(/\s/g, ''),
-                    expiry: cardExpiry,
-                    cvc: cardCvc,
-                    name: cardName
+                    paymentMethodId: mockPaymentMethodId
                 })
             });
 
@@ -106,44 +121,48 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
                 setShowAddModal(false);
                 resetForm();
                 loadPaymentMethods();
+            } else {
+                // Add locally as mock for development
+                const newMethod: PaymentMethod = {
+                    id: `pm_${Date.now()}`,
+                    type: 'card',
+                    brand: cardNumber.startsWith('4') ? 'visa' : 'mastercard',
+                    last4: cardNumber.replace(/\s/g, '').slice(-4),
+                    expMonth: parseInt(cardExpiry.split('/')[0]),
+                    expYear: 2000 + parseInt(cardExpiry.split('/')[1]),
+                    isDefault: paymentMethods.length === 0,
+                    createdAt: new Date().toISOString()
+                };
+                setPaymentMethods(prev => [...prev, newMethod]);
+                toast.success('Payment method added (dev mode)');
+                setShowAddModal(false);
+                resetForm();
             }
         } catch (error) {
-            // Mock success
-            toast.success('Payment method added');
-            const newMethod: PaymentMethod = {
-                id: `pm_${Date.now()}`,
-                type: 'card',
-                brand: cardNumber.startsWith('4') ? 'visa' : 'mastercard',
-                last4: cardNumber.slice(-4),
-                expMonth: parseInt(cardExpiry.split('/')[0]),
-                expYear: 2000 + parseInt(cardExpiry.split('/')[1]),
-                isDefault: paymentMethods.length === 0,
-                createdAt: new Date().toISOString()
-            };
-            setPaymentMethods(prev => [...prev, newMethod]);
-            setShowAddModal(false);
-            resetForm();
+            console.error('Failed to add payment method:', error);
+            toast.error('Failed to add payment method');
         }
         setAddingMethod(false);
     };
 
     const handleSetDefault = async (methodId: string) => {
         try {
-            await fetch(`/api/billing/payment-methods/${methodId}/default`, {
-                method: 'POST',
+            const res = await fetch(`/api/billing/payment-methods/${methodId}/default`, {
+                method: 'PUT',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
-            toast.success('Default payment method updated');
-            setPaymentMethods(prev => prev.map(pm => ({
-                ...pm,
-                isDefault: pm.id === methodId
-            })));
+            if (res.ok) {
+                toast.success('Default payment method updated');
+                setPaymentMethods(prev => prev.map(pm => ({
+                    ...pm,
+                    isDefault: pm.id === methodId
+                })));
+            } else {
+                toast.error('Failed to update default payment method');
+            }
         } catch (error) {
-            toast.success('Default payment method updated');
-            setPaymentMethods(prev => prev.map(pm => ({
-                ...pm,
-                isDefault: pm.id === methodId
-            })));
+            console.error('Failed to set default payment method:', error);
+            toast.error('Failed to update default payment method');
         }
     };
 
@@ -157,15 +176,19 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
         if (!confirm('Are you sure you want to remove this payment method?')) return;
 
         try {
-            await fetch(`/api/billing/payment-methods/${methodId}`, {
+            const res = await fetch(`/api/billing/payment-methods/${methodId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
-            toast.success('Payment method removed');
-            setPaymentMethods(prev => prev.filter(pm => pm.id !== methodId));
+            if (res.ok || res.status === 204) {
+                toast.success('Payment method removed');
+                setPaymentMethods(prev => prev.filter(pm => pm.id !== methodId));
+            } else {
+                toast.error('Failed to remove payment method');
+            }
         } catch (error) {
-            toast.success('Payment method removed');
-            setPaymentMethods(prev => prev.filter(pm => pm.id !== methodId));
+            console.error('Failed to delete payment method:', error);
+            toast.error('Failed to remove payment method');
         }
     };
 

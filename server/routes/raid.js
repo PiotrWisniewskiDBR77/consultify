@@ -24,7 +24,7 @@ router.get('/', asyncHandler(async (req, res) => {
     let sql = `
         SELECT r.*, 
             u.first_name as owner_first_name, u.last_name as owner_last_name,
-            i.name as initiative_name
+            i.title as initiative_name
         FROM raid_items r
         LEFT JOIN users u ON r.owner_id = u.id
         LEFT JOIN initiatives i ON r.initiative_id = i.id

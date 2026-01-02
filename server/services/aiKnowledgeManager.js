@@ -102,22 +102,42 @@ const AIKnowledgeManager = {
     /**
      * Internal: Get knowledge with strict scoping
      */
-    _getScopedKnowledge: async ({ organizationId, projectId, phase, query, visibility, maxChunks, minRelevance }) => {
+    _getScopedKnowledge: async ({ organizationId, projectId, phase, query, visibility, maxChunks, minRelevance, category, tags }) => {
         return new Promise(async (resolve) => {
             // Build the base query with organization filter
             let sql = `
-                SELECT c.id, c.content, c.embedding, d.id as doc_id, d.filename, d.phase, d.knowledge_type
+                SELECT c.id, c.content, c.embedding, d.id as doc_id, d.filename, d.phase, d.knowledge_type, d.category, d.tags
                 FROM knowledge_chunks c
                 JOIN knowledge_docs d ON c.doc_id = d.id
                 WHERE d.organization_id = ?
                 AND d.status = 'indexed'
+                AND d.deleted_at IS NULL
             `;
             const params = [organizationId];
 
             // Apply project scope if visibility is project-level
+            // For global knowledge brain, always use project_id IS NULL (organization-level only)
             if (visibility === VISIBILITY_SCOPES.PROJECT && projectId) {
                 sql += ` AND (d.project_id = ? OR d.project_id IS NULL)`;
                 params.push(projectId);
+            } else {
+                // Global knowledge docs should always have project_id IS NULL
+                sql += ` AND d.project_id IS NULL`;
+            }
+
+            // Filter by category if provided
+            if (category) {
+                sql += ` AND d.category = ?`;
+                params.push(category);
+            }
+
+            // Filter by tags if provided (JSON array contains)
+            if (tags && Array.isArray(tags) && tags.length > 0) {
+                // SQLite doesn't have great JSON support, so we'll use LIKE for simple matching
+                // This is a basic implementation - could be improved
+                const tagConditions = tags.map(() => `d.tags LIKE ?`).join(' OR ');
+                sql += ` AND (${tagConditions})`;
+                tags.forEach(tag => params.push(`%${tag}%`));
             }
 
             // Apply phase filter if specified

@@ -168,14 +168,14 @@ export const FeaturesPrivacyTab: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            {/* Header with Save Button */}
+            {/* Header with Save Button - DBR77 Compatible */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                        <Sparkles className="text-violet-400" size={20} />
+                    <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
+                        <Sparkles className="text-primary-600 dark:text-violet-400" size={20} />
                         Features & Privacy
                     </h2>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                         Configure AI features, data policies, and custom instructions
                     </p>
                 </div>
@@ -184,7 +184,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
                         <motion.span
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="text-xs text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-full"
+                            className="text-xs text-warning-700 dark:text-amber-400 bg-warning-500/10 px-3 py-1.5 rounded-full border border-warning-500/30 dark:border-transparent"
                         >
                             Unsaved changes
                         </motion.span>
@@ -194,8 +194,8 @@ export const FeaturesPrivacyTab: React.FC = () => {
                         disabled={saving || !hasChanges}
                         className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all ${
                             hasChanges
-                                ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20'
-                                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-500/20'
+                                : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                         }`}
                     >
                         {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -204,14 +204,14 @@ export const FeaturesPrivacyTab: React.FC = () => {
                 </div>
             </div>
 
-            {/* Sub-tabs */}
-            <div className="flex gap-2 border-b border-white/10 pb-1">
+            {/* Sub-tabs - DBR77 Compatible */}
+            <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
                 <button
                     onClick={() => setActiveSubTab('features')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                         activeSubTab === 'features' 
-                            ? 'border-violet-500 text-violet-400' 
-                            : 'border-transparent text-slate-400 hover:text-white'
+                            ? 'border-primary-500 text-primary-600 dark:text-violet-400' 
+                            : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                     }`}
                 >
                     <Sparkles size={14} className="inline mr-2" />
@@ -221,8 +221,8 @@ export const FeaturesPrivacyTab: React.FC = () => {
                     onClick={() => setActiveSubTab('data')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                         activeSubTab === 'data' 
-                            ? 'border-violet-500 text-violet-400' 
-                            : 'border-transparent text-slate-400 hover:text-white'
+                            ? 'border-primary-500 text-primary-600 dark:text-violet-400' 
+                            : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                     }`}
                 >
                     <Database size={14} className="inline mr-2" />
@@ -232,8 +232,8 @@ export const FeaturesPrivacyTab: React.FC = () => {
                     onClick={() => setActiveSubTab('instructions')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                         activeSubTab === 'instructions' 
-                            ? 'border-violet-500 text-violet-400' 
-                            : 'border-transparent text-slate-400 hover:text-white'
+                            ? 'border-primary-500 text-primary-600 dark:text-violet-400' 
+                            : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                     }`}
                 >
                     <MessageSquare size={14} className="inline mr-2" />
@@ -243,8 +243,8 @@ export const FeaturesPrivacyTab: React.FC = () => {
                     onClick={() => setActiveSubTab('personas')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                         activeSubTab === 'personas' 
-                            ? 'border-violet-500 text-violet-400' 
-                            : 'border-transparent text-slate-400 hover:text-white'
+                            ? 'border-primary-500 text-primary-600 dark:text-violet-400' 
+                            : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                     }`}
                 >
                     <Brain size={14} className="inline mr-2" />
@@ -347,17 +347,17 @@ export const FeaturesPrivacyTab: React.FC = () => {
                                     onClick={() => setDataRetention(opt.value)}
                                     className={`p-4 rounded-xl text-left transition-all ${
                                         dataRetention === opt.value
-                                            ? 'bg-violet-500/20 border-2 border-violet-500/50'
-                                            : 'bg-slate-800/30 border border-slate-700/50 hover:border-slate-600'
+                                            ? 'bg-primary-500/20 border-2 border-primary-500/50'
+                                            : 'bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600'
                                     }`}
                                 >
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-semibold text-white">{opt.label}</span>
+                                        <span className="font-semibold text-navy-900 dark:text-white">{opt.label}</span>
                                         {dataRetention === opt.value && (
-                                            <Check size={14} className="text-violet-400" />
+                                            <Check size={14} className="text-primary-600 dark:text-violet-400" />
                                         )}
                                     </div>
-                                    <p className="text-xs text-slate-400">{opt.description}</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">{opt.description}</p>
                                 </button>
                             ))}
                         </div>
@@ -372,25 +372,25 @@ export const FeaturesPrivacyTab: React.FC = () => {
                         <div className="space-y-4">
                             <div className={`p-4 rounded-xl transition-all cursor-pointer ${
                                 aiLearningEnabled
-                                    ? 'bg-emerald-500/20 border border-emerald-500/30'
-                                    : 'bg-slate-800/30 border border-slate-700/50'
+                                    ? 'bg-success-500/20 border border-success-500/30'
+                                    : 'bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50'
                             }`}
                             onClick={() => setAILearningEnabled(!aiLearningEnabled)}
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${aiLearningEnabled ? 'bg-emerald-500/20' : 'bg-slate-700'}`}>
-                                            <Brain size={18} className={aiLearningEnabled ? 'text-emerald-400' : 'text-slate-400'} />
+                                        <div className={`p-2 rounded-lg ${aiLearningEnabled ? 'bg-success-500/20' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                                            <Brain size={18} className={aiLearningEnabled ? 'text-success-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'} />
                                         </div>
                                         <div>
-                                            <h4 className="font-medium text-white">Allow AI to Learn from Organization Data</h4>
-                                            <p className="text-xs text-slate-400 mt-0.5">
+                                            <h4 className="font-medium text-navy-900 dark:text-white">Allow AI to Learn from Organization Data</h4>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                                                 AI will improve responses based on your organization's patterns and decisions
                                             </p>
                                         </div>
                                     </div>
                                     <div className={`w-11 h-6 rounded-full transition-colors ${
-                                        aiLearningEnabled ? 'bg-emerald-500' : 'bg-slate-600'
+                                        aiLearningEnabled ? 'bg-success-600 dark:bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
                                     }`}>
                                         <div className={`w-4 h-4 rounded-full bg-white mt-1 transition-transform ${
                                             aiLearningEnabled ? 'translate-x-6' : 'translate-x-1'
@@ -399,12 +399,12 @@ export const FeaturesPrivacyTab: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                            <div className="p-4 bg-warning-500/10 border border-warning-500/20 rounded-xl">
                                 <div className="flex gap-3">
-                                    <Shield size={18} className="text-amber-400 shrink-0 mt-0.5" />
+                                    <Shield size={18} className="text-warning-600 dark:text-amber-400 shrink-0 mt-0.5" />
                                     <div>
-                                        <h4 className="font-medium text-amber-300">Privacy Notice</h4>
-                                        <p className="text-xs text-amber-200/70 mt-1">
+                                        <h4 className="font-medium text-warning-700 dark:text-amber-300">Privacy Notice</h4>
+                                        <p className="text-xs text-warning-700/70 dark:text-amber-200/70 mt-1">
                                             When enabled, AI learning uses only aggregated, anonymized patterns. 
                                             No personal or sensitive data is used for training.
                                         </p>
@@ -422,25 +422,25 @@ export const FeaturesPrivacyTab: React.FC = () => {
                     >
                         <div className={`p-4 rounded-xl transition-all cursor-pointer ${
                             externalDataEnabled
-                                ? 'bg-cyan-500/20 border border-cyan-500/30'
-                                : 'bg-slate-800/30 border border-slate-700/50'
+                                ? 'bg-info-500/20 border border-info-500/30'
+                                : 'bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50'
                         }`}
                         onClick={() => setExternalDataEnabled(!externalDataEnabled)}
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg ${externalDataEnabled ? 'bg-cyan-500/20' : 'bg-slate-700'}`}>
-                                        <Globe size={18} className={externalDataEnabled ? 'text-cyan-400' : 'text-slate-400'} />
+                                    <div className={`p-2 rounded-lg ${externalDataEnabled ? 'bg-info-500/20' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                                        <Globe size={18} className={externalDataEnabled ? 'text-info-600 dark:text-cyan-400' : 'text-slate-500 dark:text-slate-400'} />
                                     </div>
                                     <div>
-                                        <h4 className="font-medium text-white">Allow External Data Access</h4>
-                                        <p className="text-xs text-slate-400 mt-0.5">
+                                        <h4 className="font-medium text-navy-900 dark:text-white">Allow External Data Access</h4>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                                             AI can fetch industry benchmarks, market data, and external references
                                         </p>
                                     </div>
                                 </div>
                                 <div className={`w-11 h-6 rounded-full transition-colors ${
-                                    externalDataEnabled ? 'bg-cyan-500' : 'bg-slate-600'
+                                    externalDataEnabled ? 'bg-info-600 dark:bg-cyan-500' : 'bg-slate-300 dark:bg-slate-600'
                                 }`}>
                                     <div className={`w-4 h-4 rounded-full bg-white mt-1 transition-transform ${
                                         externalDataEnabled ? 'translate-x-6' : 'translate-x-1'
@@ -463,11 +463,11 @@ export const FeaturesPrivacyTab: React.FC = () => {
                     >
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm text-slate-400 mb-2">Tone & Style</label>
+                                <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">Tone & Style</label>
                                 <select
                                     value={toneGuidelines}
                                     onChange={(e) => setToneGuidelines(e.target.value)}
-                                    className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
+                                    className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-navy-900 dark:text-white focus:border-primary-500 outline-none"
                                 >
                                     <option value="professional">Professional - Formal and business-appropriate</option>
                                     <option value="friendly">Friendly - Approachable and conversational</option>
@@ -478,7 +478,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm text-slate-400 mb-2">Custom System Instructions</label>
+                                <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">Custom System Instructions</label>
                                 <textarea
                                     value={customInstructions}
                                     onChange={(e) => setCustomInstructions(e.target.value)}
@@ -488,7 +488,7 @@ Example:
 - Always mention relevant ISO standards when discussing processes
 - Use metric units for all measurements
 - Reference company policies when applicable"
-                                    className="w-full h-48 bg-slate-800/50 border border-slate-700 rounded-lg p-4 text-white font-mono text-sm focus:border-violet-500 outline-none resize-none"
+                                    className="w-full h-48 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-4 text-navy-900 dark:text-white font-mono text-sm focus:border-primary-500 outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                                 />
                                 <p className="text-xs text-slate-500 mt-2">
                                     These instructions are prepended to every AI request in your organization.
@@ -516,14 +516,14 @@ Example:
                                 ].map(topic => (
                                     <label 
                                         key={topic.id}
-                                        className="flex items-start gap-3 p-3 bg-slate-800/30 border border-slate-700/50 rounded-lg hover:border-slate-600 cursor-pointer"
+                                        className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 rounded-lg hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer"
                                     >
                                         <input
                                             type="checkbox"
-                                            className="w-4 h-4 mt-0.5 rounded border-slate-600 text-rose-500 focus:ring-rose-500 bg-slate-700"
+                                            className="w-4 h-4 mt-0.5 rounded border-slate-300 dark:border-slate-600 text-danger-500 focus:ring-danger-500 bg-white dark:bg-slate-700"
                                         />
                                         <div>
-                                            <span className="font-medium text-white text-sm">{topic.label}</span>
+                                            <span className="font-medium text-navy-900 dark:text-white text-sm">{topic.label}</span>
                                             <p className="text-xs text-slate-500 mt-0.5">{topic.desc}</p>
                                         </div>
                                     </label>
@@ -531,10 +531,10 @@ Example:
                             </div>
                             
                             <div>
-                                <label className="block text-sm text-slate-400 mb-2">Custom Restricted Keywords</label>
+                                <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">Custom Restricted Keywords</label>
                                 <textarea
                                     placeholder="Enter keywords or phrases the AI should avoid, one per line..."
-                                    className="w-full h-24 bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-white font-mono text-sm focus:border-violet-500 outline-none resize-none"
+                                    className="w-full h-24 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-navy-900 dark:text-white font-mono text-sm focus:border-primary-500 outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                                 />
                             </div>
                         </div>

@@ -207,4 +207,114 @@ router.get('/:id/logs', async (req, res) => {
     }
 });
 
+/**
+ * GET /api/webhooks/:id/deliveries
+ * Get delivery history (alias for /logs, using new analytics table)
+ */
+router.get('/:id/deliveries', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { limit = 50 } = req.query;
+        
+        // Verify ownership
+        const subscription = await WebhookDeliveryService.getSubscription(id);
+        if (!subscription) {
+            return res.status(404).json({ error: 'Webhook not found' });
+        }
+        if (subscription.organization_id !== req.user.organizationId) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+        
+        // Use IntegrationAnalyticsService for new analytics table
+        const IntegrationAnalyticsService = require('../services/integrationAnalyticsService');
+        const deliveries = await IntegrationAnalyticsService.getWebhookDeliveries(id, parseInt(limit));
+        
+        res.json({ deliveries });
+    } catch (error) {
+        console.error('[Webhooks] Get deliveries error:', error);
+        res.status(500).json({ error: 'Failed to get deliveries' });
+    }
+});
+
+/**
+ * POST /api/webhooks/:id/test
+ * Test webhook with sample event
+ */
+router.post('/:id/test', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { eventType, payload } = req.body;
+        
+        // Verify ownership
+        const subscription = await WebhookDeliveryService.getSubscription(id);
+        if (!subscription) {
+            return res.status(404).json({ error: 'Webhook not found' });
+        }
+        if (subscription.organization_id !== req.user.organizationId) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+        
+        // Send test event
+        const result = await WebhookDeliveryService.testWebhook(
+            subscription.target_url,
+            subscription.secret_key,
+            eventType || 'test.event',
+            payload
+        );
+        
+        res.json(result);
+    } catch (error) {
+        console.error('[Webhooks] Test error:', error);
+        res.status(500).json({ error: 'Failed to test webhook' });
+    }
+});
+
+/**
+ * POST /api/webhooks/:id/retry
+ * Manually retry failed webhook delivery
+ */
+router.post('/:id/retry', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { deliveryId } = req.body;
+        
+        // Verify ownership
+        const subscription = await WebhookDeliveryService.getSubscription(id);
+        if (!subscription) {
+            return res.status(404).json({ error: 'Webhook not found' });
+        }
+        if (subscription.organization_id !== req.user.organizationId) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+        
+        // Get failed delivery and retry
+        const db = require('../database');
+        const delivery = await new Promise((resolve, reject) => {
+            db.get('SELECT * FROM webhook_delivery_logs WHERE id = ? AND webhook_id = ?', 
+                [deliveryId, id], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+        
+        if (!delivery) {
+            return res.status(404).json({ error: 'Delivery not found' });
+        }
+        
+        // Retry delivery
+        const payload = delivery.payload ? JSON.parse(delivery.payload) : {};
+        const result = await WebhookDeliveryService.testWebhook(
+            subscription.target_url,
+            subscription.secret_key,
+            delivery.event_type,
+            payload
+        );
+        
+        res.json({ success: true, result });
+    } catch (error) {
+        console.error('[Webhooks] Retry error:', error);
+        res.status(500).json({ error: 'Failed to retry webhook' });
+    }
+});
+
 module.exports = router;

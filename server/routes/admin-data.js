@@ -531,6 +531,206 @@ router.get('/user-groups/:orgId', authMiddleware, async (req, res) => {
 });
 
 // ==========================================
+// SCHEDULED EVENTS (Calendar)
+// ==========================================
+
+/**
+ * GET /api/admin-data/scheduled-events/:orgId
+ * Get upcoming scheduled events for organization
+ */
+router.get('/scheduled-events/:orgId', authMiddleware, async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const { limit = 10, includeCompleted = false } = req.query;
+        
+        let whereClause = `WHERE se.organization_id = ? AND se.start_time >= datetime('now', '-1 day')`;
+        if (includeCompleted === 'false') {
+            whereClause += ` AND se.status != 'COMPLETED' AND se.status != 'CANCELLED'`;
+        }
+        
+        const events = await new Promise((resolve, reject) => {
+            db.all(`
+                SELECT 
+                    se.id,
+                    se.title,
+                    se.description,
+                    se.event_type as eventType,
+                    se.start_time as startTime,
+                    se.end_time as endTime,
+                    se.location,
+                    se.is_all_day as isAllDay,
+                    se.status,
+                    se.project_id as projectId,
+                    p.name as projectName,
+                    se.attendees,
+                    se.created_by as createdBy,
+                    u.email as creatorEmail,
+                    u.first_name || ' ' || u.last_name as creatorName
+                FROM scheduled_events se
+                LEFT JOIN projects p ON se.project_id = p.id
+                LEFT JOIN users u ON se.created_by = u.id
+                ${whereClause}
+                ORDER BY se.start_time ASC
+                LIMIT ?
+            `, [orgId, parseInt(limit)], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows || []);
+            });
+        });
+
+        // Parse attendees JSON
+        const formattedEvents = events.map(e => ({
+            ...e,
+            attendees: e.attendees ? JSON.parse(e.attendees) : []
+        }));
+
+        res.json(formattedEvents);
+    } catch (error) {
+        console.error('[Admin Data] Error getting scheduled events:', error);
+        res.status(500).json({ error: 'Failed to get scheduled events' });
+    }
+});
+
+/**
+ * POST /api/admin-data/scheduled-events/:orgId
+ * Create a new scheduled event
+ */
+router.post('/scheduled-events/:orgId', authMiddleware, async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const { 
+            title, 
+            description, 
+            eventType = 'meeting', 
+            startTime, 
+            endTime, 
+            location = '', 
+            isAllDay = false,
+            projectId = null,
+            attendees = []
+        } = req.body;
+        const userId = req.user.id;
+        
+        if (!title || !startTime) {
+            return res.status(400).json({ error: 'Title and start time are required' });
+        }
+
+        const eventId = require('uuid').v4();
+        
+        await new Promise((resolve, reject) => {
+            db.run(`
+                INSERT INTO scheduled_events (
+                    id, organization_id, title, description, event_type, 
+                    start_time, end_time, location, is_all_day, status, 
+                    project_id, attendees, created_by, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'SCHEDULED', ?, ?, ?, datetime('now'))
+            `, [
+                eventId, orgId, title, description, eventType,
+                startTime, endTime, location, isAllDay ? 1 : 0,
+                projectId, JSON.stringify(attendees), userId
+            ], (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+
+        res.status(201).json({ 
+            id: eventId, 
+            title, 
+            description,
+            eventType,
+            startTime, 
+            endTime, 
+            location,
+            isAllDay,
+            status: 'SCHEDULED',
+            projectId,
+            attendees 
+        });
+    } catch (error) {
+        console.error('[Admin Data] Error creating scheduled event:', error);
+        res.status(500).json({ error: 'Failed to create scheduled event' });
+    }
+});
+
+/**
+ * PUT /api/admin-data/scheduled-events/:eventId
+ * Update a scheduled event
+ */
+router.put('/scheduled-events/:eventId', authMiddleware, async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const { 
+            title, 
+            description, 
+            eventType, 
+            startTime, 
+            endTime, 
+            location, 
+            isAllDay,
+            status,
+            projectId,
+            attendees 
+        } = req.body;
+        
+        const updates = [];
+        const params = [];
+        
+        if (title !== undefined) { updates.push('title = ?'); params.push(title); }
+        if (description !== undefined) { updates.push('description = ?'); params.push(description); }
+        if (eventType !== undefined) { updates.push('event_type = ?'); params.push(eventType); }
+        if (startTime !== undefined) { updates.push('start_time = ?'); params.push(startTime); }
+        if (endTime !== undefined) { updates.push('end_time = ?'); params.push(endTime); }
+        if (location !== undefined) { updates.push('location = ?'); params.push(location); }
+        if (isAllDay !== undefined) { updates.push('is_all_day = ?'); params.push(isAllDay ? 1 : 0); }
+        if (status !== undefined) { updates.push('status = ?'); params.push(status); }
+        if (projectId !== undefined) { updates.push('project_id = ?'); params.push(projectId); }
+        if (attendees !== undefined) { updates.push('attendees = ?'); params.push(JSON.stringify(attendees)); }
+        
+        updates.push('updated_at = datetime(\'now\')');
+        params.push(eventId);
+        
+        await new Promise((resolve, reject) => {
+            db.run(`
+                UPDATE scheduled_events 
+                SET ${updates.join(', ')}
+                WHERE id = ?
+            `, params, (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[Admin Data] Error updating scheduled event:', error);
+        res.status(500).json({ error: 'Failed to update scheduled event' });
+    }
+});
+
+/**
+ * DELETE /api/admin-data/scheduled-events/:eventId
+ * Delete a scheduled event
+ */
+router.delete('/scheduled-events/:eventId', authMiddleware, async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        
+        await new Promise((resolve, reject) => {
+            db.run('DELETE FROM scheduled_events WHERE id = ?', [eventId], (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[Admin Data] Error deleting scheduled event:', error);
+        res.status(500).json({ error: 'Failed to delete scheduled event' });
+    }
+});
+
+// ==========================================
 // HELPER FUNCTIONS
 // ==========================================
 

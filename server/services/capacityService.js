@@ -49,7 +49,7 @@ const CapacityService = {
         fourWeeksLater.setDate(fourWeeksLater.getDate() + 28);
 
         const sql = `
-            SELECT t.id, t.title, t.effort_estimate, t.due_date, t.initiative_id, i.name as initiative_name
+            SELECT t.id, t.title, t.effort_estimate, t.due_date, t.initiative_id, i.title as initiative_name
             FROM tasks t
             LEFT JOIN initiatives i ON t.initiative_id = i.id
             WHERE t.assignee_id = ? 

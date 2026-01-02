@@ -9,7 +9,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
     Link2, RefreshCw, Check, AlertCircle, Loader2,
-    MessageSquare, Database, CheckCircle2, AlertTriangle, Clock, ExternalLink
+    MessageSquare, Database, CheckCircle2, AlertTriangle, Clock, ExternalLink, FileText, Calendar
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useUserIntegrations, Provider, UserIntegration } from '../../hooks/useUserIntegrations';
@@ -26,26 +26,95 @@ const PROVIDER_ICONS: Record<string, React.ElementType> = {
     slack: SlackIcon,
     teams: MessageSquare,
     jira: Database,
-    clickup: CheckCircle2
+    clickup: CheckCircle2,
+    hubspot: MessageSquare,
+    monday: Calendar,
+    asana: CheckCircle2,
+    notion: FileText,
+    trello: CheckCircle2,
+    google_ai: Database,
+    openai: Database,
+    anthropic: Database
 };
 
+// Integration categories
+export type IntegrationCategory = 'productivity' | 'ai' | 'communication' | 'crm' | 'all';
+
 // Provider descriptions and features
-const PROVIDER_INFO: Record<string, { description: string; features: string[] }> = {
+const PROVIDER_INFO: Record<string, { 
+    description: string; 
+    features: string[];
+    category: IntegrationCategory;
+    popular?: boolean;
+}> = {
     slack: {
         description: 'Receive notifications and create tasks from Slack',
-        features: ['Real-time notifications', 'Interactive buttons']
+        features: ['Real-time notifications', 'Interactive buttons'],
+        category: 'communication',
+        popular: true
     },
     teams: {
         description: 'Get notified in Microsoft Teams',
-        features: ['Adaptive cards', 'Direct messages']
+        features: ['Adaptive cards', 'Direct messages'],
+        category: 'communication',
+        popular: true
     },
     jira: {
         description: 'Sync tasks and issues with Jira',
-        features: ['Bi-directional sync', 'Status mapping']
+        features: ['Bi-directional sync', 'Status mapping'],
+        category: 'productivity',
+        popular: true
     },
     clickup: {
         description: 'Sync tasks with ClickUp',
-        features: ['Task sync', 'Status sync']
+        features: ['Task sync', 'Status sync'],
+        category: 'productivity',
+        popular: true
+    },
+    hubspot: {
+        description: 'Sync contacts, deals, and activities with HubSpot',
+        features: ['Contact sync', 'Deal tracking', 'Activity logging'],
+        category: 'crm',
+        popular: true
+    },
+    monday: {
+        description: 'Sync boards and items with Monday.com',
+        features: ['Board sync', 'Item mapping', 'Status sync'],
+        category: 'productivity',
+        popular: true
+    },
+    asana: {
+        description: 'Sync tasks and projects with Asana',
+        features: ['Task sync', 'Project sync', 'Status mapping'],
+        category: 'productivity'
+    },
+    notion: {
+        description: 'Sync pages and databases with Notion',
+        features: ['Page sync', 'Database sync', 'Content mapping'],
+        category: 'productivity'
+    },
+    trello: {
+        description: 'Sync boards and cards with Trello',
+        features: ['Board sync', 'Card sync', 'List mapping'],
+        category: 'productivity'
+    },
+    google_ai: {
+        description: 'Connect to Google AI Studio for advanced AI capabilities',
+        features: ['Gemini API', 'Custom models', 'Token tracking'],
+        category: 'ai',
+        popular: true
+    },
+    openai: {
+        description: 'Connect to OpenAI for GPT models and embeddings',
+        features: ['GPT-4', 'Embeddings', 'Fine-tuning'],
+        category: 'ai',
+        popular: true
+    },
+    anthropic: {
+        description: 'Connect to Anthropic Claude for AI assistance',
+        features: ['Claude API', 'Long context', 'Advanced reasoning'],
+        category: 'ai',
+        popular: true
     }
 };
 
@@ -56,6 +125,8 @@ interface ConnectedAppsSettingsProps {
 export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ className = '' }) => {
     const { t } = useTranslation();
     const [testingProvider, setTestingProvider] = useState<string | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<IntegrationCategory>('all');
+    const [searchQuery, setSearchQuery] = useState('');
     
     const {
         integrations,
@@ -68,6 +139,22 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
         testConnection,
         refresh
     } = useUserIntegrations();
+
+    // Filter providers by category and search
+    const filteredProviders = providers.filter(provider => {
+        const info = PROVIDER_INFO[provider.id];
+        if (!info) return true;
+        
+        const matchesCategory = selectedCategory === 'all' || info.category === selectedCategory;
+        const matchesSearch = !searchQuery || 
+            provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            info.description.toLowerCase().includes(searchQuery.toLowerCase());
+        
+        return matchesCategory && matchesSearch;
+    });
+
+    // Get popular providers
+    const popularProviders = providers.filter(p => PROVIDER_INFO[p.id]?.popular);
 
     // Handle connect
     const handleConnect = async (provider: string) => {
@@ -133,6 +220,14 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
         );
     }
 
+    const categories: { id: IntegrationCategory; label: string; count?: number }[] = [
+        { id: 'all', label: t('settings.integrations.categories.all', 'All') },
+        { id: 'productivity', label: t('settings.integrations.categories.productivity', 'Productivity') },
+        { id: 'ai', label: t('settings.integrations.categories.ai', 'AI') },
+        { id: 'communication', label: t('settings.integrations.categories.communication', 'Communication') },
+        { id: 'crm', label: t('settings.integrations.categories.crm', 'CRM') }
+    ];
+
     return (
         <div className={`space-y-6 ${className}`}>
             {/* Header */}
@@ -155,6 +250,106 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                 </button>
             </div>
 
+            {/* Search and Categories */}
+            <div className="space-y-4">
+                {/* Search */}
+                <div className="relative">
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder={t('settings.integrations.searchPlaceholder', 'Search integrations...')}
+                        className="w-full px-4 py-2 pl-10 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand"
+                    />
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+
+                {/* Category Tabs */}
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                    {categories.map(category => (
+                        <button
+                            key={category.id}
+                            onClick={() => setSelectedCategory(category.id)}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                                selectedCategory === category.id
+                                    ? 'bg-brand text-white'
+                                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                            }`}
+                        >
+                            {category.label}
+                            {category.count !== undefined && (
+                                <span className="ml-2 px-1.5 py-0.5 bg-white/20 dark:bg-white/10 rounded text-xs">
+                                    {category.count}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Popular Integrations */}
+            {selectedCategory === 'all' && popularProviders.length > 0 && (
+                <div>
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                        {t('settings.integrations.popular', 'Popular Integrations')}
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                        {popularProviders.slice(0, 4).map(provider => {
+                            const connection = integrations.find(i => i.provider === provider.id);
+                            const isConnected = provider.isConnected;
+                            const info = PROVIDER_INFO[provider.id] || { description: '', features: [] };
+                            const Icon = PROVIDER_ICONS[provider.id] || Link2;
+
+                            return (
+                                <div
+                                    key={provider.id}
+                                    className={`p-4 rounded-xl border transition-all ${
+                                        isConnected 
+                                            ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30' 
+                                            : 'bg-slate-50 dark:bg-navy-800/50 border-slate-200 dark:border-white/10'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 flex items-center justify-center rounded-xl ${
+                                                isConnected 
+                                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                                                    : 'bg-white dark:bg-navy-700 text-slate-500 dark:text-slate-400'
+                                            }`}>
+                                                <Icon className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-slate-900 dark:text-white text-sm">
+                                                    {provider.name}
+                                                </p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                    {info.description}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {isConnected ? (
+                                            <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                                                <Check size={12} />
+                                                {t('common.connected', 'Connected')}
+                                            </span>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleConnect(provider.id)}
+                                                className="px-3 py-1 text-xs font-medium text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors"
+                                            >
+                                                {t('common.connect', 'Connect')}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
             {/* Connection count badge */}
             {connectedCount > 0 && (
                 <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
@@ -173,7 +368,14 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
 
             {/* Provider cards */}
             <div className="space-y-3">
-                {providers.map((provider) => {
+                {filteredProviders.length === 0 ? (
+                    <div className="text-center py-12 bg-slate-50 dark:bg-navy-800/50 rounded-xl">
+                        <p className="text-slate-500 dark:text-slate-400">
+                            {t('settings.integrations.noResults', 'No integrations found')}
+                        </p>
+                    </div>
+                ) : (
+                    filteredProviders.map((provider) => {
                     const connection = integrations.find(i => i.provider === provider.id);
                     const isConnected = provider.isConnected;
                     const isError = connection?.status === 'error';
@@ -311,7 +513,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                             )}
                         </div>
                     );
-                })}
+                }))}
             </div>
 
             {/* Help text */}

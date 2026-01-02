@@ -11,19 +11,28 @@
   /* ================================
      BACKGROUND COLORS
      ================================ */
-  --admin-bg-primary: #0F172A;        /* navy-950 - Main background */
-  --admin-bg-secondary: #1E293B;      /* slate-800 - Cards/sections */
-  --admin-bg-tertiary: #334155;       /* slate-700 - Hover states */
-  --admin-bg-elevated: rgba(30, 41, 59, 0.5);  /* slate-800/50 - Subtle elevation */
+  --admin-bg-primary: #0F172A;
+  /* navy-950 - Main background */
+  --admin-bg-secondary: #1E293B;
+  /* slate-800 - Cards/sections */
+  --admin-bg-tertiary: #334155;
+  /* slate-700 - Hover states */
+  --admin-bg-elevated: rgba(30, 41, 59, 0.5);
+  /* slate-800/50 - Subtle elevation */
 
   /* ================================
      TEXT COLORS
      ================================ */
-  --admin-text-primary: #F8FAFC;      /* slate-50 - Headlines, important */
-  --admin-text-secondary: #CBD5E1;    /* slate-300 - Body text */
-  --admin-text-tertiary: #94A3B8;     /* slate-400 - Muted text */
-  --admin-text-muted: #64748B;        /* slate-500 - Labels, captions */
-  --admin-text-disabled: #475569;     /* slate-600 - Disabled */
+  --admin-text-primary: #F8FAFC;
+  /* slate-50 - Headlines, important */
+  --admin-text-secondary: #CBD5E1;
+  /* slate-300 - Body text */
+  --admin-text-tertiary: #94A3B8;
+  /* slate-400 - Muted text */
+  --admin-text-muted: #64748B;
+  /* slate-500 - Labels, captions */
+  --admin-text-disabled: #475569;
+  /* slate-600 - Disabled */
 
   /* ================================
      BORDER COLORS
@@ -36,21 +45,27 @@
   /* ================================
      ACCENT COLORS (Use sparingly)
      ================================ */
-  --admin-accent: #3B82F6;            /* blue-500 - Primary actions */
-  --admin-accent-hover: #2563EB;      /* blue-600 - Hover state */
+  --admin-accent: #3B82F6;
+  /* blue-500 - Primary actions */
+  --admin-accent-hover: #2563EB;
+  /* blue-600 - Hover state */
   --admin-accent-subtle: rgba(59, 130, 246, 0.10);
   --admin-accent-ring: rgba(59, 130, 246, 0.20);
 
   /* ================================
      SEMANTIC COLORS (Status only)
      ================================ */
-  --admin-success: #10B981;           /* emerald-500 */
+  --admin-success: #10B981;
+  /* emerald-500 */
   --admin-success-subtle: rgba(16, 185, 129, 0.10);
-  --admin-warning: #F59E0B;           /* amber-500 */
+  --admin-warning: #F59E0B;
+  /* amber-500 */
   --admin-warning-subtle: rgba(245, 158, 11, 0.10);
-  --admin-error: #EF4444;             /* red-500 */
+  --admin-error: #EF4444;
+  /* red-500 */
   --admin-error-subtle: rgba(239, 68, 68, 0.10);
-  --admin-info: #3B82F6;              /* blue-500 */
+  --admin-info: #3B82F6;
+  /* blue-500 */
   --admin-info-subtle: rgba(59, 130, 246, 0.10);
 
   /* ================================
@@ -94,13 +109,20 @@
   --admin-font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
 
   /* Font sizes */
-  --admin-text-xs: 0.75rem;           /* 12px */
-  --admin-text-sm: 0.8125rem;         /* 13px */
-  --admin-text-base: 0.875rem;        /* 14px */
-  --admin-text-md: 1rem;              /* 16px */
-  --admin-text-lg: 1.125rem;          /* 18px */
-  --admin-text-xl: 1.25rem;           /* 20px */
-  --admin-text-2xl: 1.5rem;           /* 24px */
+  --admin-text-xs: 0.75rem;
+  /* 12px */
+  --admin-text-sm: 0.8125rem;
+  /* 13px */
+  --admin-text-base: 0.875rem;
+  /* 14px */
+  --admin-text-md: 1rem;
+  /* 16px */
+  --admin-text-lg: 1.125rem;
+  /* 18px */
+  --admin-text-xl: 1.25rem;
+  /* 20px */
+  --admin-text-2xl: 1.5rem;
+  /* 24px */
 
   /* Line heights */
   --admin-leading-tight: 1.25;
@@ -116,6 +138,37 @@
 
   /* Legacy support - map to new tokens */
   --admin-card: var(--admin-bg-secondary);
+}
+
+/* ================================
+   LIGHT MODE OVERRIDES
+   ================================ */
+html:not(.dark) {
+  /* Backgrounds */
+  --admin-bg-primary: #F8FAFC;
+  --admin-bg-secondary: #FFFFFF;
+  --admin-bg-tertiary: #F1F5F9;
+  --admin-bg-elevated: #FFFFFF;
+
+  /* Text */
+  --admin-text-primary: #0F172A;
+  --admin-text-secondary: #334155;
+  --admin-text-tertiary: #64748B;
+  --admin-text-muted: #94A3B8;
+
+  /* Borders */
+  --admin-border: #E2E8F0;
+  --admin-border-subtle: #F1F5F9;
+  --admin-border-emphasis: #CBD5E1;
+
+  /* Hover */
+  --admin-hover-bg: #F1F5F9;
+  --admin-active-bg: #E2E8F0;
+
+  /* Shadows */
+  --admin-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --admin-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --admin-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 /* ================================
@@ -323,7 +376,8 @@
   background: var(--admin-bg-elevated);
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius-lg);
-  color: var(--admin-text-secondary);
+  color: var(--admin-text-primary);
+  /* Changed to primary for better contrast */
   font-size: var(--admin-text-sm);
   transition: all var(--admin-transition-base);
 }
@@ -376,7 +430,7 @@
   transition: background var(--admin-transition-base);
 }
 
-.admin-toggle-input:checked + .admin-toggle-track {
+.admin-toggle-input:checked+.admin-toggle-track {
   background: var(--admin-accent);
 }
 
@@ -391,7 +445,7 @@
   transition: transform var(--admin-transition-base);
 }
 
-.admin-toggle-input:checked ~ .admin-toggle-thumb {
+.admin-toggle-input:checked~.admin-toggle-thumb {
   transform: translateX(16px);
 }
 
@@ -437,5 +491,3 @@
   color: var(--admin-text-muted);
   margin-bottom: var(--admin-space-2);
 }
-
-

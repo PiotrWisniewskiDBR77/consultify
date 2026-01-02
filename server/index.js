@@ -183,23 +183,34 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// TEMP DEBUG: Disabling correlation middleware
 // Correlation & Context Tracking
-// const { correlationMiddleware } = require('./utils/requestStore');
-// app.use(correlationMiddleware);
+const { correlationMiddleware } = require('./utils/requestStore');
+app.use(correlationMiddleware);
 
 // Health Check - MUST be before routers and auth middleware
 // This endpoint is used by the frontend to show "System Online/Offline"
 app.get('/api/health', (req, res) => {
     const start = Date.now();
     const db = require('./database');
+    const { healthMonitor } = require('./services/ai/healthMonitor');
+
     db.get('SELECT 1', [], (err) => {
         const duration = Date.now() - start;
         if (err) {
             console.error('Health Check DB Error:', err);
             return res.status(500).json({ status: 'error', message: 'Database unreachable', error: err.message });
         }
-        res.json({ status: 'ok', timestamp: new Date(), latency: duration, database: 'connected' });
+
+        // Include AI System Health
+        const aiStatus = healthMonitor ? healthMonitor.getStatus() : { status: 'unknown' };
+
+        res.json({
+            status: 'ok',
+            timestamp: new Date(),
+            latency: duration,
+            database: 'connected',
+            aiSystem: aiStatus
+        });
     });
 });
 
@@ -240,6 +251,8 @@ const webhookRoutes = require('./routes/webhooks');
 const aiTrainingRoutes = require('./routes/ai-training');
 // Billing & Usage Routes
 const billingRoutes = require('./routes/billing');
+const budgetsRoutes = require('./routes/budgets');
+const adminAlertsRoutes = require('./routes/adminAlerts');
 const stripeWebhookRoutes = require('./routes/webhooks/stripe');
 const tokenBillingRoutes = require('./routes/tokenBilling');
 const documentRoutes = require('./routes/documents');
@@ -266,6 +279,27 @@ const demoGuard = require('./middleware/demoGuard');
 app.use(demoGuard);
 
 app.use('/api/users', userRoutes);
+const userContactRoutes = require('./routes/user-contact');
+app.use('/api/user/contact-information', userContactRoutes);
+const userAvailabilityRoutes = require('./routes/user-availability');
+app.use('/api/user/availability', userAvailabilityRoutes);
+const userProfileCompletenessRoutes = require('./routes/user-profile-completeness');
+app.use('/api/user/profile-completeness', userProfileCompletenessRoutes);
+const userProfessionalProfileRoutes = require('./routes/user-professional-profile');
+app.use('/api/user/professional-profile', userProfessionalProfileRoutes);
+const userSecurityAdvancedRoutes = require('./routes/user-security-advanced');
+app.use('/api/user/security', userSecurityAdvancedRoutes);
+const userPrivacyExtendedRoutes = require('./routes/user-privacy-extended');
+app.use('/api/user/privacy-settings', userPrivacyExtendedRoutes);
+const userDataControlsRoutes = require('./routes/user-data-controls');
+app.use('/api/user/data-controls', userDataControlsRoutes);
+const aiPreferencesExtendedRoutes = require('./routes/ai-preferences-extended');
+app.use('/api/user/ai-preferences', aiPreferencesExtendedRoutes);
+const notificationRulesRoutes = require('./routes/notification-rules');
+app.use('/api/user/notification-rules', notificationRulesRoutes);
+app.use('/api/user/notification-channels', notificationRulesRoutes);
+const userProfileExtendedRoutes = require('./routes/user-profile-extended');
+app.use('/api/profile', userProfileExtendedRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/ai', aiRoutes);
 const conversationsRoutes = require('./routes/conversations');
@@ -345,6 +379,8 @@ app.use('/api/ai-training', aiTrainingRoutes);
 // Billing & Stripe
 app.use('/api/billing', billingRoutes);
 app.use('/api/token-billing', tokenBillingRoutes);
+app.use('/api/budgets', budgetsRoutes);
+app.use('/api/admin-alerts', adminAlertsRoutes);
 // Pricing (from legal-metadata.json)
 const pricingRoutes = require('./routes/pricing');
 app.use('/api/pricing', pricingRoutes);
@@ -384,6 +420,10 @@ app.use('/api/referrals', referralRoutes);
 
 const consultantRoutes = require('./routes/consultants');
 app.use('/api/consultants', consultantRoutes);
+
+// Consultant Project Access (Project-level consultant management)
+const consultantProjectAccessRoutes = require('./routes/consultant-project-access');
+app.use('/api/consultant-project-access', consultantProjectAccessRoutes);
 
 const userOrgsRoutes = require('./routes/userOrgs');
 app.use('/api/users', userOrgsRoutes);

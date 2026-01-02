@@ -611,7 +611,7 @@ const EconomicsService = {
      */
     getValueHypotheses: async (projectId, initiativeId = null) => {
         let sql = `
-            SELECT vh.*, u.first_name, u.last_name, i.name as initiative_name
+            SELECT vh.*, u.first_name, u.last_name, i.title as initiative_name
             FROM value_hypotheses vh
             LEFT JOIN users u ON vh.owner_id = u.id
             LEFT JOIN initiatives i ON vh.initiative_id = i.id

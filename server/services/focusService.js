@@ -39,7 +39,7 @@ const FocusService = Object.assign({}, BaseService, {
                 t.due_date as dueDate,
                 t.priority,
                 t.status,
-                i.name as initiativeName,
+                i.title as initiativeName,
                 i.id as initiativeId,
                 p.name as projectName
             FROM focus_tasks ft
@@ -253,7 +253,7 @@ const FocusService = Object.assign({}, BaseService, {
                 t.priority,
                 t.due_date as dueDate,
                 t.status,
-                i.name as initiativeName,
+                i.title as initiativeName,
                 CASE 
                     WHEN t.priority = 'urgent' THEN 1
                     WHEN t.priority = 'high' THEN 2

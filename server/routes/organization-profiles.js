@@ -52,7 +52,7 @@ function calculateProfileCompleteness(profile) {
     fields.forEach(field => {
         totalWeight += field.weight;
         const value = profile[field.name];
-        
+
         if (field.isJson) {
             try {
                 const parsed = typeof value === 'string' ? JSON.parse(value) : value;
@@ -70,37 +70,35 @@ function calculateProfileCompleteness(profile) {
     return Math.round((completedWeight / totalWeight) * 100);
 }
 
-/**
- * Parse JSON fields safely
- */
-function parseJsonFields(profile) {
-    if (!profile) return null;
-    
-    const jsonFields = [
-        'strategic_priorities',
-        'technology_stack',
-        'primary_markets',
-        'customer_segments',
-        'key_competitors',
-        'regulatory_environment'
-    ];
+function mapFrontendToDb(profileData) {
+    const mapping = {
+        'companySize': 'company_size',
+        'employeeCount': 'employee_count',
+        'annualRevenue': 'annual_revenue',
+        'foundingYear': 'founding_year',
+        'headquartersCountry': 'headquarters_country',
+        'logoUrl': 'logo_url',
+        'faviconUrl': 'favicon_url',
+        'brandColor': 'brand_color',
+        'accentColor': 'accent_color',
+        'customDomain': 'custom_domain',
+        'customDomainVerified': 'custom_domain_verified',
+        'linkedinUrl': 'linkedin_url',
+        'twitterUrl': 'twitter_url',
+        'defaultTimezone': 'default_timezone',
+        'defaultLanguage': 'default_language',
+        'dateFormat': 'date_format',
+        'timeFormat': 'time_format'
+    };
 
-    const parsed = { ...profile };
-    jsonFields.forEach(field => {
-        if (parsed[field]) {
-            try {
-                parsed[field] = typeof parsed[field] === 'string' 
-                    ? JSON.parse(parsed[field]) 
-                    : parsed[field];
-            } catch {
-                parsed[field] = [];
-            }
-        } else {
-            parsed[field] = [];
+    const mapped = { ...profileData };
+    Object.entries(mapping).forEach(([frontend, db]) => {
+        if (mapped[frontend] !== undefined) {
+            mapped[db] = mapped[frontend];
+            delete mapped[frontend];
         }
     });
-
-    return parsed;
+    return mapped;
 }
 
 // ============================================================================
@@ -218,8 +216,7 @@ router.put('/:orgId', verifyToken, async (req, res) => {
 
         if (existingProfile) {
             // Update existing profile
-            const updateFields = [];
-            const updateValues = [];
+            const mappedData = mapFrontendToDb(profileData);
 
             const allowedFields = [
                 'industry', 'industry_code', 'industry_subsector',
@@ -228,8 +225,18 @@ router.put('/:orgId', verifyToken, async (req, res) => {
                 'digital_maturity_overall', 'technology_stack', 'digital_budget_percent', 'cloud_adoption_level',
                 'primary_markets', 'customer_segments', 'key_competitors', 'market_share_estimate',
                 'regulatory_environment', 'risk_appetite', 'budget_constraints', 'timeline_constraints',
-                'preferred_language', 'communication_style', 'industry_jargon_level'
+                'preferred_language', 'communication_style', 'industry_jargon_level',
+                'logo_url', 'favicon_url', 'brand_color', 'accent_color', 'custom_domain', 'custom_domain_verified',
+                'linkedin_url', 'twitter_url', 'website', 'description',
+                'default_timezone', 'default_language', 'date_format', 'time_format', 'currency'
             ];
+
+            allowedFields.forEach(field => {
+                if (mappedData[field] !== undefined) {
+                    updateFields.push(`${field} = ?`);
+                    updateValues.push(mappedData[field]);
+                }
+            });
 
             allowedFields.forEach(field => {
                 if (profileData[field] !== undefined) {
@@ -255,55 +262,79 @@ router.put('/:orgId', verifyToken, async (req, res) => {
             });
 
         } else {
-            // Create new profile
+            const mappedData = mapFrontendToDb(profileData);
             const profileId = uuidv4();
-            const completeness = calculateProfileCompleteness(profileData);
+            const completeness = calculateProfileCompleteness(mappedData);
+
+            const fields = [
+                'id', 'organization_id', 'industry', 'industry_code', 'industry_subsector',
+                'company_size', 'employee_count', 'annual_revenue', 'founding_year', 'headquarters_country',
+                'strategic_priorities', 'competitive_position', 'growth_stage', 'mission_statement', 'vision_statement',
+                'digital_maturity_overall', 'technology_stack', 'digital_budget_percent', 'cloud_adoption_level',
+                'primary_markets', 'customer_segments', 'key_competitors', 'market_share_estimate',
+                'regulatory_environment', 'risk_appetite', 'budget_constraints', 'timeline_constraints',
+                'preferred_language', 'communication_style', 'industry_jargon_level',
+                'logo_url', 'favicon_url', 'brand_color', 'accent_color', 'custom_domain', 'custom_domain_verified',
+                'linkedin_url', 'twitter_url', 'website', 'description',
+                'default_timezone', 'default_language', 'date_format', 'time_format', 'currency',
+                'profile_completeness', 'created_at', 'updated_at', 'created_by', 'updated_by'
+            ];
+
+            const placeholders = fields.map(() => '?').join(', ');
+            const values = [
+                profileId, orgId,
+                mappedData.industry || null,
+                mappedData.industry_code || null,
+                mappedData.industry_subsector || null,
+                mappedData.company_size || null,
+                mappedData.employee_count || null,
+                mappedData.annual_revenue || null,
+                mappedData.founding_year || null,
+                mappedData.headquarters_country || null,
+                mappedData.strategic_priorities || '[]',
+                mappedData.competitive_position || null,
+                mappedData.growth_stage || null,
+                mappedData.mission_statement || null,
+                mappedData.vision_statement || null,
+                mappedData.digital_maturity_overall || null,
+                mappedData.technology_stack || '[]',
+                mappedData.digital_budget_percent || null,
+                mappedData.cloud_adoption_level || null,
+                mappedData.primary_markets || '[]',
+                mappedData.customer_segments || '[]',
+                mappedData.key_competitors || '[]',
+                mappedData.market_share_estimate || null,
+                mappedData.regulatory_environment || '[]',
+                mappedData.risk_appetite || 'MODERATE',
+                mappedData.budget_constraints || null,
+                mappedData.timeline_constraints || null,
+                mappedData.preferred_language || 'pl',
+                mappedData.communication_style || 'PROFESSIONAL',
+                mappedData.industry_jargon_level || 'MEDIUM',
+                mappedData.logo_url || null,
+                mappedData.favicon_url || null,
+                mappedData.brand_color || null,
+                mappedData.accent_color || null,
+                mappedData.custom_domain || null,
+                mappedData.custom_domain_verified || 0,
+                mappedData.linkedin_url || null,
+                mappedData.twitter_url || null,
+                mappedData.website || null,
+                mappedData.description || null,
+                mappedData.default_timezone || 'Europe/Warsaw',
+                mappedData.default_language || 'en',
+                mappedData.date_format || 'DD/MM/YYYY',
+                mappedData.time_format || '24h',
+                mappedData.currency || 'USD',
+                completeness, now, now, userId, userId
+            ];
 
             await new Promise((resolve, reject) => {
-                db.run(`
-                    INSERT INTO organization_profiles (
-                        id, organization_id,
-                        industry, industry_code, industry_subsector,
-                        company_size, employee_count, annual_revenue, founding_year, headquarters_country,
-                        strategic_priorities, competitive_position, growth_stage, mission_statement, vision_statement,
-                        digital_maturity_overall, technology_stack, digital_budget_percent, cloud_adoption_level,
-                        primary_markets, customer_segments, key_competitors, market_share_estimate,
-                        regulatory_environment, risk_appetite, budget_constraints, timeline_constraints,
-                        preferred_language, communication_style, industry_jargon_level,
-                        profile_completeness, created_at, updated_at, created_by, updated_by
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `, [
-                    profileId, orgId,
-                    profileData.industry || null,
-                    profileData.industry_code || null,
-                    profileData.industry_subsector || null,
-                    profileData.company_size || null,
-                    profileData.employee_count || null,
-                    profileData.annual_revenue || null,
-                    profileData.founding_year || null,
-                    profileData.headquarters_country || null,
-                    profileData.strategic_priorities || '[]',
-                    profileData.competitive_position || null,
-                    profileData.growth_stage || null,
-                    profileData.mission_statement || null,
-                    profileData.vision_statement || null,
-                    profileData.digital_maturity_overall || null,
-                    profileData.technology_stack || '[]',
-                    profileData.digital_budget_percent || null,
-                    profileData.cloud_adoption_level || null,
-                    profileData.primary_markets || '[]',
-                    profileData.customer_segments || '[]',
-                    profileData.key_competitors || '[]',
-                    profileData.market_share_estimate || null,
-                    profileData.regulatory_environment || '[]',
-                    profileData.risk_appetite || 'MODERATE',
-                    profileData.budget_constraints || null,
-                    profileData.timeline_constraints || null,
-                    profileData.preferred_language || 'pl',
-                    profileData.communication_style || 'PROFESSIONAL',
-                    profileData.industry_jargon_level || 'MEDIUM',
-                    completeness, now, now, userId, userId
-                ], (err) => err ? reject(err) : resolve());
+                db.run(
+                    `INSERT INTO organization_profiles (${fields.join(', ')}) VALUES (${placeholders})`,
+                    values,
+                    (err) => err ? reject(err) : resolve()
+                );
             });
         }
 
@@ -479,7 +510,7 @@ function getMissingFields(profile) {
 function generateStrategicPositioningAnalysis(profile) {
     const position = profile.competitive_position || 'UNKNOWN';
     const stage = profile.growth_stage || 'UNKNOWN';
-    
+
     const positionInsights = {
         'LEADER': {
             strength: 'Strong market position with competitive advantage',
@@ -515,7 +546,7 @@ function generateStrategicPositioningAnalysis(profile) {
 function generateDigitalReadinessAnalysis(profile) {
     const maturity = profile.digital_maturity_overall || 0;
     const cloudLevel = profile.cloud_adoption_level || 'NONE';
-    
+
     let readinessLevel = 'LOW';
     if (maturity >= 5) readinessLevel = 'HIGH';
     else if (maturity >= 3) readinessLevel = 'MEDIUM';
@@ -545,7 +576,7 @@ function generateCompetitiveLandscapeAnalysis(profile) {
 
 function generatePositionRecommendations(position, stage) {
     const recommendations = [];
-    
+
     if (position === 'LEADER') {
         recommendations.push('Invest in innovation to maintain competitive moat');
         recommendations.push('Explore adjacent markets for growth');
@@ -573,7 +604,7 @@ function generatePositionRecommendations(position, stage) {
 
 function identifyDigitalGaps(profile) {
     const gaps = [];
-    
+
     if ((profile.digital_maturity_overall || 0) < 3) {
         gaps.push('Overall digital maturity below industry average');
     }
@@ -592,7 +623,7 @@ function identifyDigitalGaps(profile) {
 
 function suggestDigitalQuickWins(maturity, cloudLevel) {
     const quickWins = [];
-    
+
     if (maturity < 3) {
         quickWins.push('Implement basic workflow automation');
         quickWins.push('Deploy collaboration tools');
@@ -610,7 +641,7 @@ function suggestDigitalQuickWins(maturity, cloudLevel) {
 
 function assessCompetitiveThreats(profile) {
     const threats = [];
-    
+
     if (profile.competitive_position === 'FOLLOWER' || profile.competitive_position === 'NICHE') {
         threats.push({ level: 'HIGH', description: 'Market leaders expanding into segment' });
     }
@@ -626,7 +657,7 @@ function assessCompetitiveThreats(profile) {
 
 function identifyOpportunities(profile) {
     const opportunities = [];
-    
+
     if (profile.competitive_position === 'LEADER') {
         opportunities.push('Platform ecosystem development');
         opportunities.push('International expansion');

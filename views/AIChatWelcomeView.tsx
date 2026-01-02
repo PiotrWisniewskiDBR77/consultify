@@ -15,6 +15,7 @@
 import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
+import { usePMOStore } from '../store/usePMOStore';
 import { useConversationStore, Conversation } from '../store/useConversationStore';
 import { useAIStream } from '../hooks/useAIStream';
 import { useAIContext } from '../contexts/AIContext';
@@ -33,6 +34,7 @@ import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { MessageActions } from '../components/AIChat/Messages/MessageActions';
 import { Api } from '../services/api';
 import { MessageFeedback } from '../types';
+import { PanelLeft, Plus } from 'lucide-react';
 
 // Time-aware greeting helper
 const getTimeContext = () => {
@@ -66,7 +68,11 @@ export const AIChatWelcomeView: React.FC = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // App state
-    const { currentUser, selectedProject, activeChatMessages, addChatMessage, clearChat } = useAppStore();
+    const { currentUser, currentProjectId, activeChatMessages, addChatMessage, clearChat, setChatSlidingPanelOpen } = useAppStore();
+    const { projectName } = usePMOStore();
+
+    // Derived state for compatibility
+    const selectedProject = useMemo(() => currentProjectId ? { id: currentProjectId, name: projectName } : null, [currentProjectId, projectName]);
 
     // Conversation store
     const {
@@ -90,7 +96,7 @@ export const AIChatWelcomeView: React.FC = () => {
                 content: fullText,
                 messageType: 'text'
             });
-            
+
             // Trigger title generation after first AI response
             if (isFirstExchangeRef.current && activeConversationId) {
                 isFirstExchangeRef.current = false;
@@ -108,7 +114,7 @@ export const AIChatWelcomeView: React.FC = () => {
     const { isStreaming, streamedContent, startStream } = useAIStream({
         onStreamDone: handleStreamDone
     });
-    
+
     // AI context
     const { pmoContext, globalContext, screenContext } = useAIContext();
 
@@ -198,7 +204,7 @@ export const AIChatWelcomeView: React.FC = () => {
         const lastMessage = activeChatMessages[activeChatMessages.length - 1];
         if (lastMessage?.role === 'ai' && lastMessage.content) {
             const contentToSpeak = cleanTextForSpeech(lastMessage.content);
-            
+
             // Only speak if it's new content
             if (contentToSpeak && contentToSpeak !== lastSpokenContentRef.current) {
                 lastSpokenContentRef.current = contentToSpeak;
@@ -238,9 +244,9 @@ export const AIChatWelcomeView: React.FC = () => {
             payload: action.payload || action,
             requiresConfirmation: action.requiresConfirmation || false
         };
-        
+
         const result = await executeAction(actionPayload);
-        
+
         if (result.status === 'success' && result.result?.message) {
             // Add feedback message to chat
             const feedbackMsg: ChatMessage = {
@@ -251,14 +257,14 @@ export const AIChatWelcomeView: React.FC = () => {
             };
             addChatMessage(feedbackMsg);
         }
-        
+
         return result;
     }, [executeAction, addChatMessage]);
 
     // Handle pending action confirmation
     const handleConfirmPendingAction = useCallback(async (actionId: string, confirmed: boolean) => {
         const result = await confirmAction(actionId, confirmed);
-        
+
         if (result.status === 'success') {
             const feedbackMsg: ChatMessage = {
                 id: Date.now().toString(),
@@ -467,19 +473,19 @@ For example: REMEMBER: preferred_language: Polish`;
             ...prev,
             [messageId]: feedback
         }));
-        
+
         // Report to backend for analytics
         Api.reportMessageFeedback?.(messageId, feedback.rating).catch(err => {
             console.error('[Feedback] Failed to report:', err);
         });
-        
+
         console.log('[Chat] Feedback recorded:', messageId, feedback.rating);
     }, []);
 
     // Handle report problem - visual alert
     const handleReport = useCallback((messageId: string, reason: string) => {
         console.error('[REPORT] 🚨 Problem reported:', { messageId, reason });
-        
+
         // Show visual feedback - "krzyk" (scream)
         const alertDiv = document.createElement('div');
         alertDiv.className = 'fixed top-4 right-4 z-50 p-4 bg-red-600 text-white rounded-lg shadow-xl animate-pulse';
@@ -488,20 +494,20 @@ For example: REMEMBER: preferred_language: Polish`;
                 <span class="text-2xl">⚠️</span>
                 <div>
                     <div class="font-bold">Zgłoszono problem</div>
-                    <div class="text-sm opacity-90">${reason === 'harmful' ? 'Szkodliwa treść' : 
-                        reason === 'incorrect' ? 'Błędne informacje' :
-                        reason === 'unhelpful' ? 'Nieprzydatne' : 'Inny problem'}</div>
+                    <div class="text-sm opacity-90">${reason === 'harmful' ? 'Szkodliwa treść' :
+                reason === 'incorrect' ? 'Błędne informacje' :
+                    reason === 'unhelpful' ? 'Nieprzydatne' : 'Inny problem'}</div>
                 </div>
             </div>
         `;
         document.body.appendChild(alertDiv);
-        
+
         // Remove after 4 seconds
         setTimeout(() => {
             alertDiv.classList.add('opacity-0', 'transition-opacity', 'duration-500');
             setTimeout(() => document.body.removeChild(alertDiv), 500);
         }, 4000);
-        
+
         // Report to backend
         Api.reportMessage?.(messageId, reason).catch(err => {
             console.error('[Report] Failed to send report:', err);
@@ -535,6 +541,28 @@ For example: REMEMBER: preferred_language: Polish`;
 
                 {/* Main Chat Area - Full width, sidebar is overlay */}
                 <div className="h-full flex flex-col overflow-hidden">
+                    {/* Header with Sidebar Toggle and New Chat */}
+                    <div className="shrink-0 h-14 border-b border-slate-200 dark:border-white/5 flex items-center px-4 justify-between bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm z-10">
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setChatSlidingPanelOpen(true)}
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
+                                title={t('aiChat.openSidebar', 'Open Sidebar')}
+                            >
+                                <PanelLeft size={20} />
+                            </button>
+                            <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1" />
+                            <button
+                                onClick={handleNewChat}
+                                className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-600 dark:text-slate-300 transition-colors"
+                                title={t('aiChat.newChat', 'New Chat')}
+                            >
+                                <Plus size={18} className="text-primary-600 dark:text-primary-400" />
+                                <span className="font-medium text-sm hidden sm:inline">{t('aiChat.newChat', 'New Chat')}</span>
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Messages */}
                     <div className="flex-1 overflow-y-auto">
                         <div className="max-w-3xl mx-auto px-4 py-8">
@@ -542,23 +570,22 @@ For example: REMEMBER: preferred_language: Polish`;
                                 const isLastMessage = index === activeChatMessages.length - 1;
                                 const isAiMessage = msg.role === 'ai';
                                 const isStreamingThis = isStreaming && isLastMessage && isAiMessage;
-                                
+
                                 const displayContent = isStreamingThis ? streamedContent : msg.content;
-                                
+
                                 if (isAiMessage && !displayContent && !isStreamingThis) {
                                     return null;
                                 }
-                                
+
                                 return (
-                                    <div 
-                                        key={msg.id} 
+                                    <div
+                                        key={msg.id}
                                         className={`mb-6 ${msg.role === 'user' ? 'text-right' : ''}`}
                                     >
-                                        <div className={`inline-block max-w-[85%] ${
-                                            msg.role === 'user' 
-                                                ? 'bg-primary-600 text-white rounded-2xl rounded-br-md px-4 py-3' 
-                                                : 'text-navy-900 dark:text-slate-200'
-                                        }`}>
+                                        <div className={`inline-block max-w-[85%] ${msg.role === 'user'
+                                            ? 'bg-primary-600 text-white rounded-2xl rounded-br-md px-4 py-3'
+                                            : 'text-navy-900 dark:text-slate-200'
+                                            }`}>
                                             <div className="whitespace-pre-wrap text-[15px] leading-relaxed">
                                                 {displayContent}
                                                 {isStreamingThis && (
@@ -597,7 +624,7 @@ For example: REMEMBER: preferred_language: Polish`;
                                                 </button>
                                             )}
                                         </div>
-                                        
+
                                         {/* Message Actions - shown below AI messages */}
                                         {isAiMessage && !isStreamingThis && displayContent && (
                                             <div className="mt-2 flex items-center gap-1">
@@ -620,7 +647,7 @@ For example: REMEMBER: preferred_language: Polish`;
                                     </div>
                                 );
                             })}
-                            
+
                             <div ref={messagesEndRef} />
                         </div>
                     </div>
@@ -687,17 +714,16 @@ For example: REMEMBER: preferred_language: Polish`;
                                 voiceModeEnabled={voiceModeEnabled}
                                 onVoiceModeChange={handleVoiceModeChange}
                             />
-                            
+
                             {/* Continuous Voice Toggle */}
                             {voiceSupported && (
                                 <div className="flex justify-center mt-2">
                                     <button
                                         onClick={handleContinuousVoiceToggle}
-                                        className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                                            continuousVoiceMode
-                                                ? 'bg-primary-500 text-white'
-                                                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
-                                        }`}
+                                        className={`text-xs px-3 py-1 rounded-full transition-colors ${continuousVoiceMode
+                                            ? 'bg-primary-500 text-white'
+                                            : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
+                                            }`}
                                     >
                                         {continuousVoiceMode ? '🎙️ Tryb rozmowy włączony' : '🎙️ Włącz rozmowę głosową'}
                                     </button>
@@ -728,9 +754,31 @@ For example: REMEMBER: preferred_language: Polish`;
 
             {/* Main Welcome Area - Full width, sidebar is overlay */}
             <div className="h-full flex flex-col overflow-hidden">
+                {/* Header with Sidebar Toggle and New Chat */}
+                <div className="shrink-0 h-14 flex items-center px-4 justify-between absolute top-0 left-0 right-0 z-10">
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setChatSlidingPanelOpen(true)}
+                            className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
+                            title={t('aiChat.openSidebar', 'Open Sidebar')}
+                        >
+                            <PanelLeft size={20} />
+                        </button>
+                        <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1" />
+                        <button
+                            onClick={handleNewChat}
+                            className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-600 dark:text-slate-300 transition-colors"
+                            title={t('aiChat.newChat', 'New Chat')}
+                        >
+                            <Plus size={18} className="text-primary-600 dark:text-primary-400" />
+                            <span className="font-medium text-sm hidden sm:inline">{t('aiChat.newChat', 'New Chat')}</span>
+                        </button>
+                    </div>
+                </div>
+
                 {/* Centered Content */}
                 <div className="flex-1 flex flex-col items-center justify-center px-4">
-                    
+
                     {/* Personalized Greeting */}
                     <div className="text-center mb-10">
                         <h1 className="text-4xl md:text-5xl font-semibold text-navy-900 dark:text-white">
@@ -751,17 +799,16 @@ For example: REMEMBER: preferred_language: Polish`;
                             voiceModeEnabled={voiceModeEnabled}
                             onVoiceModeChange={handleVoiceModeChange}
                         />
-                        
+
                         {/* Continuous Voice Toggle */}
                         {voiceSupported && (
                             <div className="flex justify-center mt-3">
                                 <button
                                     onClick={handleContinuousVoiceToggle}
-                                    className={`text-xs px-4 py-2 rounded-full transition-colors flex items-center gap-2 ${
-                                        continuousVoiceMode
-                                            ? 'bg-primary-500 text-white'
-                                            : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
-                                    }`}
+                                    className={`text-xs px-4 py-2 rounded-full transition-colors flex items-center gap-2 ${continuousVoiceMode
+                                        ? 'bg-primary-500 text-white'
+                                        : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
+                                        }`}
                                 >
                                     <span className={`w-2 h-2 rounded-full ${continuousVoiceMode ? 'bg-white animate-pulse' : 'bg-slate-400'}`} />
                                     {continuousVoiceMode ? 'Rozmowa głosowa aktywna' : 'Rozpocznij rozmowę głosową'}

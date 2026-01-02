@@ -1,33 +1,38 @@
 // AI Recommendation Engine Unit Tests
 // Tests the AI recommendation engine for intelligent suggestions
 
-const AIRecommendationEngine = require('../../../server/ai/aiRecommendationEngine');
-
-describe('AIRecommendationEngine', () => {
-    let engine;
-    let mockDb;
-    let mockAIService;
-
-    beforeEach(() => {
-        mockDb = {
+const { mockDb, mockAIService } = vi.hoisted(() => {
+    return {
+        mockDb: {
             all: vi.fn(),
             get: vi.fn(),
             run: vi.fn()
-        };
-
-        mockAIService = {
+        },
+        mockAIService: {
             generateRecommendations: vi.fn(),
             analyzeContext: vi.fn()
-        };
+        }
+    };
+});
 
-        vi.mock('../../../server/database', () => mockDb);
-        vi.mock('../../../server/services/aiService', () => mockAIService);
+vi.mock('../../../server/database', () => mockDb);
+vi.mock('../../../server/services/aiService', () => mockAIService);
 
-        engine = new AIRecommendationEngine();
+const AIRecommendationEngine = require('../../../server/ai/recommendationEngine');
+
+describe('AIRecommendationEngine', () => {
+    let engine;
+
+    beforeEach(() => {
+        vi.resetAllMocks(); // Clear call history
+        engine = new AIRecommendationEngine({
+            db: mockDb,
+            aiService: mockAIService
+        });
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('generateRecommendations', () => {

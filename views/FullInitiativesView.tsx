@@ -28,6 +28,36 @@ export const FullInitiativesView: React.FC = () => {
   const language = currentUser?.preferredLanguage || 'EN';
   const { t: translate } = useTranslation();
   const t = translate('fullInitiatives', { returnObjects: true }) as Record<string, any>;
+  // 0. FETCH ON MOUNT - Connect to DB
+  useEffect(() => {
+    let mounted = true;
+    const loadInitiatives = async () => {
+      try {
+        // Fetch from DB using current project context
+        const response = await Api.getInitiatives(currentProjectId || undefined) as any;
+
+        // Handle response format variations (array vs object with initiatives prop)
+        const initiatives = Array.isArray(response)
+          ? response
+          : (response.initiatives || []);
+
+        if (mounted) {
+          console.log('[FullInitiativesView] Loaded initiatives from DB:', initiatives.length);
+          // Update store with persistent DB data
+          updateFullSession({ initiatives });
+        }
+      } catch (err) {
+        console.error('[FullInitiativesView] Failed to load initiatives:', err);
+        // On error, we might keep existing or show error state 
+        // For now, silent fail means we rely on whatever is in state (likely empty)
+      }
+    };
+
+    loadInitiatives();
+
+    return () => { mounted = false; };
+  }, [currentProjectId, updateFullSession]); // Re-fetch on project change
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -99,34 +129,61 @@ export const FullInitiativesView: React.FC = () => {
         newInitiatives = engineGenerate(fullSession);
       }
       // 3. Update State & DB
-      // Ensure we preserve existing if merging, but here we replace or append? likely replace for initial gens.
-      updateFullSession({ initiatives: newInitiatives });
-      await Api.saveSession(currentUser!.id, SessionMode.FULL, { ...fullSession, initiatives: newInitiatives }, currentProjectId || undefined);
-      addAiMessage(`I have generated ${newInitiatives.length} strategic initiatives. Note that each is linked to a specific gap found in your assessment.`);
+      // Persist to DB first to ensure IDs are valid (though we generate UUIDs client side? No, typically backend does or we do)
+      // The Engine generates UUIDs?
+      // engineGenerate likely generates string IDs.
+      // We must save them to DB.
+
+      const initiativesWithRealIds = await Promise.all(newInitiatives.map(async (init) => {
+        try {
+          // Ensure it has a project ID
+          const payload = { ...init, projectId: currentProjectId || undefined };
+          // Use Api to create. Note: Api.createInitiative returns the created object with ID
+          // But engine generated initiatives might strictly be formatted for frontend.
+          // We need to match backend schema.
+          // Create one by one.
+          await Api.createInitiative(payload);
+          return init; // Keep the one we have, or update if ID changed?
+          // Usually backend assigns ID if not provided, or uses provided UUID.
+          // Let's assume we keep the generated ID if valid UUID, or backend handles it.
+          // For safety, let's assume create returns the persisted object.
+        } catch (err) {
+          console.error("Failed to persist generated initiative", init.name, err);
+          return init; // Keep in session at least?
+        }
+      }));
+
+      updateFullSession({ initiatives: initiativesWithRealIds });
+      await Api.saveSession(currentUser!.id, SessionMode.FULL, { ...fullSession, initiatives: initiativesWithRealIds }, currentProjectId || undefined);
+
+      addAiMessage(`I have generated ${initiativesWithRealIds.length} strategic initiatives. Note that each is linked to a specific gap found in your assessment.`);
     } catch (e) {
       console.error("Initiative Gen Error", e);
       addAiMessage(formatChatError(e as Error, 'initiative_generation'));
-      // Fallback on error
+
+      // Fallback on error - simple engine gen, no DB persistence for fallback yet?
+      // Or should we persist fallback too? Yes.
       const fallback = engineGenerate(fullSession);
+      // Try persist fallback
+      fallback.forEach(f => Api.createInitiative({ ...f, projectId: currentProjectId || undefined }).catch(console.error));
+
       updateFullSession({ initiatives: fallback });
       await Api.saveSession(currentUser!.id, SessionMode.FULL, { ...fullSession, initiatives: fallback }, currentProjectId || undefined);
     }
   }, [fullSession, updateFullSession, addAiMessage, currentUser, currentProjectId]);
+
+  // MOVED: Don't auto-generate on mount if empty, because we fetch from DB now.
+  // Only generate if explicitly requested or if we confirm DB is truly empty AND assessment is done?
+  // Actually, better to leave auto-gen logic but guard it with a "loaded" state?
+  // For now, removing the auto-trigger effect to prevent overwriting DB data with empty check race condition.
+  // The user can click "Generate" if they want.
+
+  /* 
   useEffect(() => {
-    // Generate if empty.
-    // Also consider regeneration if assessment changed? 
-    // For now, simple check: if empty, generate.
-    if (!fullSession.initiatives || fullSession.initiatives.length === 0) {
-      // Ensure we have some assessment data before generating?
-      const hasAssessment = Object.keys(fullSession.assessment || {}).length > 0;
-      if (hasAssessment) {
-        addAiMessage("Analyzing your assessment results and generating transformation initiatives...");
-        generateInitiatives();
-      } else {
-        addAiMessage("Please complete the assessment first to generate initiatives.");
-      }
-    }
-  }, [fullSession, generateInitiatives, addAiMessage]); // Added dependencies to prevent loop
+     if (!fullSession.initiatives || fullSession.initiatives.length === 0) { ... }
+  }, ...);
+  */
+
   const handleUpdateInitiative = async (updated: FullInitiative) => {
     // Optimistic UI update
     const newInits = fullSession.initiatives.map(i => i.id === updated.id ? updated : i);
@@ -197,6 +254,9 @@ export const FullInitiativesView: React.FC = () => {
               };
               const updatedList = fullSession.initiatives.map(i => i.id === id ? updatedInit : i);
               updateFullSession({ initiatives: updatedList });
+
+              // Persist update to DB
+              await Api.updateInitiative(updatedInit.id, updatedInit);
               await Api.saveSession(currentUser!.id, SessionMode.FULL, { ...fullSession, initiatives: updatedList }, currentProjectId || undefined);
               addAiMessage(`Analysis complete. I've updated "${initToEnrich.name}" with a detailed business case, risks, and deliverables.`);
             } catch (e) {

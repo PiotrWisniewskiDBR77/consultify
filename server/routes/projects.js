@@ -14,8 +14,16 @@ router.get('/', asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
 
     // Optional: Filter by user assignment? For now, allow all users in org to see projects.
+    // Enhanced to include description, goal and counts
     const sql = `
-        SELECT p.*, u.first_name as owner_first_name, u.last_name as owner_last_name 
+        SELECT 
+            p.*, 
+            u.first_name as owner_first_name, 
+            u.last_name as owner_last_name,
+            (SELECT COUNT(*) FROM project_members WHERE project_id = p.id) as real_member_count,
+            (SELECT COUNT(*) FROM initiatives WHERE project_id = p.id) as real_initiative_count,
+            (SELECT COUNT(*) FROM multi_framework_assessments WHERE project_id = p.id) as real_assessment_count,
+            (SELECT COUNT(*) FROM knowledge_docs WHERE project_id = p.id) as real_document_count
         FROM projects p
         LEFT JOIN users u ON p.owner_id = u.id
         WHERE p.organization_id = ?
@@ -23,7 +31,15 @@ router.get('/', asyncHandler(async (req, res) => {
     `;
 
     const rows = await queryHelpers.queryAll(sql, [orgId]);
-    res.json(rows);
+
+    // Map real counts to the response if needed, but we can also just return the rows
+    res.json(rows.map(row => ({
+        ...row,
+        memberCount: row.real_member_count,
+        initiativeCount: row.real_initiative_count,
+        assessmentCount: row.real_assessment_count,
+        documentCount: row.real_document_count
+    })));
 }));
 
 const { checkPlanLimit } = require('../middleware/planLimits');
@@ -32,17 +48,93 @@ const { checkPlanLimit } = require('../middleware/planLimits');
 // REFACTORED: Uses asyncHandler and queryHelpers
 router.post('/', checkPlanLimit('max_projects'), asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
-    const { name, ownerId } = req.body;
+    const { name, ownerId, description, goal } = req.body;
 
     if (!name) return res.status(400).json({ error: 'Project name is required' });
 
     const id = uuidv4();
     const owner = ownerId || req.user.id; // Default to creator if not specified
 
-    const sql = `INSERT INTO projects (id, organization_id, name, status, owner_id) VALUES (?, ?, ?, ?, ?)`;
+    const sql = `INSERT INTO projects (id, organization_id, name, description, goal, status, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
-    await queryHelpers.queryRun(sql, [id, orgId, name, 'active', owner]);
-    res.json({ id, name, status: 'active', ownerId: owner });
+    await queryHelpers.queryRun(sql, [id, orgId, name, description || null, goal || null, 'active', owner]);
+    res.json({ id, name, description, goal, status: 'active', ownerId: owner });
+}));
+
+// GET Single Project Details
+router.get('/:id', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const { id } = req.params;
+    
+    console.log('[Projects API] GET /:id - orgId:', orgId, 'projectId:', id);
+
+    const sql = `
+        SELECT 
+            p.*, 
+            u.first_name as owner_first_name, 
+            u.last_name as owner_last_name
+        FROM projects p
+        LEFT JOIN users u ON p.owner_id = u.id
+        WHERE p.id = ? AND p.organization_id = ?
+    `;
+
+    const project = await queryHelpers.queryOne(sql, [id, orgId]);
+    if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Fetch team members
+    const membersSql = `
+        SELECT pm.*, u.first_name, u.last_name, u.email, u.avatar_url, u.role as account_role
+        FROM project_members pm
+        JOIN users u ON pm.user_id = u.id
+        WHERE pm.project_id = ?
+    `;
+    const members = await queryHelpers.queryAll(membersSql, [id]);
+
+    // Fetch workstreams
+    const workstreams = await queryHelpers.queryAll(`SELECT * FROM workstreams WHERE project_id = ?`, [id]);
+
+    // Fetch initiatives
+    const initiatives = await queryHelpers.queryAll(`SELECT * FROM initiatives WHERE project_id = ?`, [id]);
+
+    // Fetch assessments
+    const assessments = await queryHelpers.queryAll(`SELECT * FROM multi_framework_assessments WHERE project_id = ?`, [id]);
+
+    // Fetch documents
+    const documents = await queryHelpers.queryAll(`SELECT * FROM knowledge_docs WHERE project_id = ? AND deleted_at IS NULL`, [id]);
+
+    res.json({
+        ...project,
+        team: members,
+        workstreams,
+        initiatives,
+        assessments,
+        documents
+    });
+}));
+
+// UPDATE Project
+router.put('/:id', asyncHandler(async (req, res) => {
+    const orgId = req.user.organizationId;
+    const { id } = req.params;
+    const { name, description, goal, status } = req.body;
+
+    const sql = `
+        UPDATE projects 
+        SET name = COALESCE(?, name), 
+            description = COALESCE(?, description), 
+            goal = COALESCE(?, goal), 
+            status = COALESCE(?, status)
+        WHERE id = ? AND organization_id = ?
+    `;
+
+    const result = await queryHelpers.queryRun(sql, [name, description, goal, status, id, orgId]);
+    if (result.changes === 0) {
+        return res.status(404).json({ error: 'Project not found or access denied' });
+    }
+
+    res.json({ message: 'Project updated' });
 }));
 
 // DELETE Project
@@ -133,7 +225,7 @@ router.put('/:id/notification-settings', asyncHandler(async (req, res) => {
         email_notifications ? 1 : 0,
         in_app_notifications ? 1 : 0
     ]);
-    
+
     res.json({ success: true, message: 'Notification settings saved' });
 }));
 

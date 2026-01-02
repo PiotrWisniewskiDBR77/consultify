@@ -15,6 +15,29 @@ const mockGenerateInitiativesFromGaps = vi.fn();
 const mockPrioritizeInitiatives = vi.fn();
 const mockEstimateInitiativeROI = vi.fn();
 
+// Mock @google/generative-ai is now handled globally via Dependency Injection in setup.ts
+// to ensure consistency across all tests.
+
+const { aiAssessmentPartner } = require('../../../server/services/aiAssessmentPartnerService.js');
+const { GoogleGenerativeAI } = require('../../__mocks__/@google/generative-ai');
+
+// Explicitly inject the mock client into the singleton
+const mockClient = new GoogleGenerativeAI('test-key');
+aiAssessmentPartner.injectAIClient(mockClient);
+
+const mockAIResponse = {
+    response: {
+        text: () => JSON.stringify([
+            {
+                title: 'AI Recommendation 1',
+                description: 'Test recommendation description',
+                priority: 'HIGH',
+                timeframe: 'Quick Win'
+            }
+        ])
+    }
+};
+
 vi.mock('../../../server/services/aiAssessmentPartnerService', () => ({
     aiAssessmentPartner: {
         generateExecutiveSummary: mockGenerateExecutiveSummary,

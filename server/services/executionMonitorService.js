@@ -189,7 +189,7 @@ const ExecutionMonitorService = {
             deps.db.all(`SELECT t.id, t.title, 'TASK' as type FROM tasks t
                     WHERE t.project_id = ? AND t.status = 'BLOCKED' AND (t.blocked_reason IS NULL OR t.blocked_reason = '')
                     UNION ALL
-                    SELECT i.id, i.name as title, 'INITIATIVE' as type FROM initiatives i
+                    SELECT i.id, i.title, 'INITIATIVE' as type FROM initiatives i
                     WHERE i.project_id = ? AND i.status = 'BLOCKED' AND (i.blocked_reason IS NULL OR i.blocked_reason = '')`,
                 [projectId, projectId], (err, rows) => {
                     if (err) return reject(err);

@@ -188,14 +188,14 @@ export const AccessLimitsTab: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            {/* Header with Save Button */}
+            {/* Header with Save Button - DBR77 Compatible */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                        <DollarSign className="text-emerald-400" size={20} />
+                    <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
+                        <DollarSign className="text-success-600 dark:text-emerald-400" size={20} />
                         Access & Limits
                     </h2>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                         Manage AI access tiers, usage limits, and budget controls
                     </p>
                 </div>
@@ -204,7 +204,7 @@ export const AccessLimitsTab: React.FC = () => {
                         <motion.span
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="text-xs text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-full"
+                            className="text-xs text-warning-700 dark:text-amber-400 bg-warning-500/10 px-3 py-1.5 rounded-full border border-warning-500/30 dark:border-transparent"
                         >
                             Unsaved changes
                         </motion.span>
@@ -214,8 +214,8 @@ export const AccessLimitsTab: React.FC = () => {
                         disabled={saving || !hasChanges}
                         className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all ${
                             hasChanges
-                                ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20'
-                                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-500/20'
+                                : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                         }`}
                     >
                         {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -224,14 +224,14 @@ export const AccessLimitsTab: React.FC = () => {
                 </div>
             </div>
 
-            {/* Sub-tabs */}
-            <div className="flex gap-2 border-b border-white/10 pb-1">
+            {/* Sub-tabs - DBR77 Compatible */}
+            <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
                 <button
                     onClick={() => setActiveSubTab('limits')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                         activeSubTab === 'limits' 
-                            ? 'border-violet-500 text-violet-400' 
-                            : 'border-transparent text-slate-400 hover:text-white'
+                            ? 'border-primary-500 text-primary-600 dark:text-violet-400' 
+                            : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                     }`}
                 >
                     <AlertTriangle size={14} className="inline mr-2" />
@@ -241,8 +241,8 @@ export const AccessLimitsTab: React.FC = () => {
                     onClick={() => setActiveSubTab('tiers')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                         activeSubTab === 'tiers' 
-                            ? 'border-violet-500 text-violet-400' 
-                            : 'border-transparent text-slate-400 hover:text-white'
+                            ? 'border-primary-500 text-primary-600 dark:text-violet-400' 
+                            : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                     }`}
                 >
                     <Users size={14} className="inline mr-2" />
@@ -252,8 +252,8 @@ export const AccessLimitsTab: React.FC = () => {
                     onClick={() => setActiveSubTab('costs')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                         activeSubTab === 'costs' 
-                            ? 'border-violet-500 text-violet-400' 
-                            : 'border-transparent text-slate-400 hover:text-white'
+                            ? 'border-primary-500 text-primary-600 dark:text-violet-400' 
+                            : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                     }`}
                 >
                     <BarChart2 size={14} className="inline mr-2" />
@@ -305,22 +305,22 @@ export const AccessLimitsTab: React.FC = () => {
                         <div className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm text-slate-400 mb-2">Monthly Budget (USD)</label>
+                                    <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">Monthly Budget (USD)</label>
                                     <input
                                         type="number"
                                         value={settings.monthlyBudgetUSD}
                                         onChange={(e) => updateSetting('monthlyBudgetUSD', parseFloat(e.target.value) || 0)}
-                                        className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
+                                        className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-navy-900 dark:text-white focus:border-primary-500 outline-none"
                                         placeholder="0 = unlimited"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm text-slate-400 mb-2">Hard Limit (USD)</label>
+                                    <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">Hard Limit (USD)</label>
                                     <input
                                         type="number"
                                         value={settings.hardLimitUSD}
                                         onChange={(e) => updateSetting('hardLimitUSD', parseFloat(e.target.value) || 0)}
-                                        className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
+                                        className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-navy-900 dark:text-white focus:border-primary-500 outline-none"
                                         placeholder="0 = no hard limit"
                                     />
                                 </div>
@@ -347,35 +347,35 @@ export const AccessLimitsTab: React.FC = () => {
                         <div className="space-y-4">
                             <div className="grid grid-cols-3 gap-4">
                                 {[
-                                    { threshold: 70, label: 'Warning Alert', color: 'amber' },
-                                    { threshold: 85, label: 'Critical Alert', color: 'orange' },
-                                    { threshold: 95, label: 'Emergency Alert', color: 'red' }
+                                    { threshold: 70, label: 'Warning Alert', color: 'warning' },
+                                    { threshold: 85, label: 'Critical Alert', color: 'warning' },
+                                    { threshold: 95, label: 'Emergency Alert', color: 'danger' }
                                 ].map(alert => (
                                     <div 
                                         key={alert.threshold}
-                                        className="bg-navy-900/50 border border-white/10 rounded-lg p-4"
+                                        className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-sm dark:shadow-none"
                                     >
                                         <div className="flex items-center justify-between mb-2">
-                                            <span className={`text-${alert.color}-400 font-medium`}>{alert.threshold}%</span>
+                                            <span className={`text-${alert.color}-600 dark:text-${alert.color}-400 font-medium`}>{alert.threshold}%</span>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input type="checkbox" defaultChecked className="sr-only peer" />
-                                                <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-500"></div>
+                                                <div className="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
                                             </label>
                                         </div>
-                                        <p className="text-xs text-slate-400">{alert.label}</p>
+                                        <p className="text-xs text-slate-600 dark:text-slate-400">{alert.label}</p>
                                         <p className="text-xs text-slate-500 mt-1">
                                             Notify admins at {alert.threshold}% budget usage
                                         </p>
                                     </div>
                                 ))}
                             </div>
-                            <div className="flex items-center gap-4 pt-2 border-t border-white/5">
+                            <div className="flex items-center gap-4 pt-2 border-t border-slate-200 dark:border-white/5">
                                 <input 
                                     type="email" 
                                     placeholder="Alert email (optional)" 
-                                    className="flex-1 bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
+                                    className="flex-1 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-navy-900 dark:text-white text-sm"
                                 />
-                                <button className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm rounded-lg">
+                                <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg">
                                     Add Email
                                 </button>
                             </div>

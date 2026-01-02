@@ -26,13 +26,19 @@ describe('Super Admin Middleware (DI Refactored)', () => {
     let mockReq;
     let mockRes;
     let mockNext;
+    let mockDb;
 
     beforeEach(() => {
         vi.clearAllMocks();
 
-        // Inject dependencies using the global mocked jwt
+        mockDb = {
+            get: vi.fn().mockImplementation((sql, params, cb) => cb(null, null)), // Default no user
+        };
+
+        // Inject dependencies using the global mocked jwt AND mock db
         verifySuperAdmin.setDependencies({
-            jwt: jwt
+            jwt: jwt,
+            db: mockDb
         });
 
         mockReq = {
@@ -136,95 +142,105 @@ describe('Super Admin Middleware (DI Refactored)', () => {
 
     // ===== Role Verification =====
 
+    // ===== Role Verification =====
+
     describe('role verification', () => {
-        it('should allow SUPERADMIN role', () => {
+        it('should allow SUPERADMIN role', async () => {
             mockReq.headers = { authorization: 'Bearer valid-token' };
             vi.mocked(jwt.verify).mockImplementation((token, secret, callback) => {
                 callback(null, { id: 1, role: 'SUPERADMIN' });
             });
 
             verifySuperAdmin(mockReq, mockRes, mockNext);
+            await new Promise(resolve => setTimeout(resolve, 10)); // Allow async callback to finish
 
             expect(mockNext).toHaveBeenCalledTimes(1);
             expect(mockReq.user).toEqual({ id: 1, role: 'SUPERADMIN' });
         });
 
-        it('should allow SUPER_ADMIN role (alternative format)', () => {
+        it('should allow SUPER_ADMIN role (alternative format)', async () => {
             mockReq.headers = { authorization: 'Bearer valid-token' };
             vi.mocked(jwt.verify).mockImplementation((token, secret, callback) => {
                 callback(null, { id: 2, role: 'SUPER_ADMIN' });
             });
 
             verifySuperAdmin(mockReq, mockRes, mockNext);
+            await new Promise(resolve => setTimeout(resolve, 10));
 
             expect(mockNext).toHaveBeenCalledTimes(1);
             expect(mockReq.user).toEqual({ id: 2, role: 'SUPER_ADMIN' });
         });
 
-        it('should deny ADMIN role', () => {
+        it('should deny ADMIN role', async () => {
             mockReq.headers = { authorization: 'Bearer valid-token' };
             vi.mocked(jwt.verify).mockImplementation((token, secret, callback) => {
                 callback(null, { id: 3, role: 'ADMIN' });
             });
 
             verifySuperAdmin(mockReq, mockRes, mockNext);
+            await new Promise(resolve => setTimeout(resolve, 10));
 
             expect(mockRes.status).toHaveBeenCalledWith(403);
             expect(mockRes.json).toHaveBeenCalledWith({ error: 'Requires Super Admin privileges' });
             expect(mockNext).not.toHaveBeenCalled();
         });
 
-        it('should deny USER role', () => {
+        it('should deny USER role', async () => {
             mockReq.headers = { authorization: 'Bearer valid-token' };
             vi.mocked(jwt.verify).mockImplementation((token, secret, callback) => {
                 callback(null, { id: 4, role: 'USER' });
             });
 
             verifySuperAdmin(mockReq, mockRes, mockNext);
+            await new Promise(resolve => setTimeout(resolve, 10));
 
             expect(mockRes.status).toHaveBeenCalledWith(403);
         });
 
-        it('should deny OWNER role', () => {
+        it('should deny OWNER role', async () => {
             mockReq.headers = { authorization: 'Bearer valid-token' };
             vi.mocked(jwt.verify).mockImplementation((token, secret, callback) => {
                 callback(null, { id: 5, role: 'OWNER' });
             });
 
             verifySuperAdmin(mockReq, mockRes, mockNext);
+            await new Promise(resolve => setTimeout(resolve, 10));
 
             expect(mockRes.status).toHaveBeenCalledWith(403);
         });
 
-        it('should deny when role is undefined', () => {
+        it('should deny when role is undefined', async () => {
             mockReq.headers = { authorization: 'Bearer valid-token' };
             vi.mocked(jwt.verify).mockImplementation((token, secret, callback) => {
                 callback(null, { id: 6 }); // No role property
             });
 
             verifySuperAdmin(mockReq, mockRes, mockNext);
+            await new Promise(resolve => setTimeout(resolve, 10));
 
             expect(mockRes.status).toHaveBeenCalledWith(403);
         });
 
-        it('should deny when role is null', () => {
+        it('should deny when role is null', async () => {
             mockReq.headers = { authorization: 'Bearer valid-token' };
             vi.mocked(jwt.verify).mockImplementation((token, secret, callback) => {
                 callback(null, { id: 7, role: null });
             });
 
             verifySuperAdmin(mockReq, mockRes, mockNext);
+            await new Promise(resolve => setTimeout(resolve, 10));
 
             expect(mockRes.status).toHaveBeenCalledWith(403);
         });
 
-        it('should deny when role is empty string', () => {
+        it('should deny when role is empty string', async () => {
             mockReq.headers = { authorization: 'Bearer valid-token' };
             vi.mocked(jwt.verify).mockImplementation((token, secret, callback) => {
                 callback(null, { id: 8, role: '' });
             });
 
             verifySuperAdmin(mockReq, mockRes, mockNext);
+            await new Promise(resolve => setTimeout(resolve, 10));
 
             expect(mockRes.status).toHaveBeenCalledWith(403);
         });
@@ -289,30 +305,32 @@ describe('Super Admin Middleware (DI Refactored)', () => {
             expect(jwt.verify).toHaveBeenCalled();
         });
 
-        it('should handle role with different casing (lowercase)', () => {
+        it('should handle role with different casing (lowercase)', async () => {
             mockReq.headers = { authorization: 'Bearer valid-token' };
             vi.mocked(jwt.verify).mockImplementation((token, secret, callback) => {
                 callback(null, { id: 1, role: 'superadmin' }); // lowercase
             });
 
             verifySuperAdmin(mockReq, mockRes, mockNext);
+            await new Promise(resolve => setTimeout(resolve, 10));
 
             // Current implementation is case-sensitive, so lowercase should fail
             expect(mockRes.status).toHaveBeenCalledWith(403);
         });
 
-        it('should handle role with mixed casing', () => {
+        it('should handle role with mixed casing', async () => {
             mockReq.headers = { authorization: 'Bearer valid-token' };
             vi.mocked(jwt.verify).mockImplementation((token, secret, callback) => {
                 callback(null, { id: 1, role: 'SuperAdmin' }); // Mixed case
             });
 
             verifySuperAdmin(mockReq, mockRes, mockNext);
+            await new Promise(resolve => setTimeout(resolve, 10));
 
             expect(mockRes.status).toHaveBeenCalledWith(403);
         });
 
-        it('should not modify original headers', () => {
+        it('should not modify original headers', async () => {
             const originalHeaders = { authorization: 'Bearer my-token' };
             mockReq.headers = { ...originalHeaders };
 
@@ -321,6 +339,7 @@ describe('Super Admin Middleware (DI Refactored)', () => {
             });
 
             verifySuperAdmin(mockReq, mockRes, mockNext);
+            await new Promise(resolve => setTimeout(resolve, 10));
 
             expect(mockReq.headers).toEqual(originalHeaders);
         });

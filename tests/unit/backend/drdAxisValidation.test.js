@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { aiAssessmentPartner, DRD_AXES, AI_PARTNER_CONFIG } from '../../../server/services/aiAssessmentPartnerService.js';
+const DRDAxisValidationService = require('../../../server/services/drdAxisValidationService.js');
+const { aiAssessmentPartner, DRD_AXES, AI_PARTNER_CONFIG } = require('../../../server/services/aiAssessmentPartnerService.js');
+const { GoogleGenerativeAI } = require('../../__mocks__/@google/generative-ai');
+
+// Explicitly inject the mock client into the singleton
+const mockClient = new GoogleGenerativeAI('test-key');
+aiAssessmentPartner.injectAIClient(mockClient);
 
 // Mock Google AI
 vi.mock('@google/generative-ai', () => {

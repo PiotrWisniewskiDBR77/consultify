@@ -309,7 +309,8 @@ export const Sidebar: React.FC = () => {
       label: t('sidebar.economics'),
       icon: <Calculator size={20} />,
       viewId: AppView.ECONOMICS,
-      requiresView: AppView.MY_WORK
+      viewId: AppView.ECONOMICS,
+      requiresView: AppView.FULL_STEP5_EXECUTION
     },
     // Raporty - simplified to single item
     {
@@ -472,7 +473,7 @@ export const Sidebar: React.FC = () => {
           data-chat-toggle={item.id === 'AI_CHAT' ? 'true' : undefined}
           onClick={() => {
             if (isLocked) return;
-            
+
             // Special handling for AI Chat - toggle sliding panel
             if (item.id === 'AI_CHAT') {
               toggleChatSlidingPanel();
@@ -482,7 +483,7 @@ export const Sidebar: React.FC = () => {
               }
               return;
             }
-            
+
             if (item.viewId) {
               setCurrentView(item.viewId);
               // Close on mobile/tablet after navigation

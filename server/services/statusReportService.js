@@ -452,7 +452,7 @@ const StatusReportService = {
      */
     getReport: async (reportId, orgId) => {
         const report = await queryHelpers.queryOne(`
-            SELECT r.*, i.name as initiative_name,
+            SELECT r.*, i.title as initiative_name,
                 u.first_name as created_by_first, u.last_name as created_by_last
             FROM status_reports r
             JOIN initiatives i ON r.initiative_id = i.id

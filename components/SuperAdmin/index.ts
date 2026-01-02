@@ -21,4 +21,5 @@ export { SuperAdminSignalCenter } from './SuperAdminSignalCenter';
 // AI Settings
 export { SuperAdminAISettings } from './SuperAdminAISettings';
 
-
+// LLM Tier Management
+export { ModelTierAssignments } from './ModelTierAssignments';

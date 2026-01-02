@@ -100,7 +100,7 @@ export enum AppView {
   SETTINGS_ACTIVE_SESSIONS = 'SETTINGS_ACTIVE_SESSIONS',
   SETTINGS_LOGIN_HISTORY = 'SETTINGS_LOGIN_HISTORY',
   SETTINGS_DATA_CONTROLS = 'SETTINGS_DATA_CONTROLS',
-   
+
   SETTINGS_API_KEYS = 'ADMIN_API_KEYS', // Mapping to existing key
   SETTINGS_WEBHOOKS = 'SETTINGS_WEBHOOKS',
   SETTINGS_CALENDAR_SYNC = 'SETTINGS_CALENDAR_SYNC',
@@ -190,6 +190,7 @@ export enum AppView {
   ADMIN_ORGANIZATION_SETTINGS = 'ADMIN_ORGANIZATION_SETTINGS',
   ADMIN_TEAM = 'ADMIN_TEAM',                   // Users, Groups, Invitations, Roles
   ADMIN_WORKSPACE = 'ADMIN_WORKSPACE',         // Projects, Knowledge, Playbooks
+  ADMIN_PROJECT_DETAILS = 'ADMIN_PROJECT_DETAILS', // Specific project management
   ADMIN_AI = 'ADMIN_AI',                       // LLM, Health, Analytics, Tokens
   ADMIN_BILLING = 'ADMIN_BILLING',             // Plans, Payments, Invoices, Alerts
   ADMIN_SECURITY = 'ADMIN_SECURITY',           // Auth, Access, Audit, Data
@@ -255,19 +256,94 @@ export enum AuthStep {
 }
 
 // SCMS: Canonical Roles (Step 1)
+/**
+ * UserRole (Account Type) - Organization-level access control
+ * 
+ * These determine what users can do across the ENTIRE ORGANIZATION.
+ * For project-level roles (PM, Team Lead, etc.), see ProjectRole enum below.
+ * 
+ * Account Types:
+ * - OWNER: Organization owner with billing, ownership transfer, deletion rights
+ * - ADMIN: Administrator - full access except billing
+ * - USER: Standard user - works in assigned projects only
+ * 
+ * Note: CONSULTANT is deprecated as a separate account type. 
+ *       Consultants should have USER account type + CONSULTANT project role.
+ */
 export enum UserRole {
-  SUPERADMIN = 'SUPERADMIN',   // DBR77 Platform Owner
-  OWNER = 'OWNER',             // Organization Billing Owner (cannot be deleted!)
-  ADMIN = 'ADMIN',             // Tenant Admin (CEO/COO usually)
-  PROJECT_MANAGER = 'PROJECT_MANAGER', // PMO Lead
-  TEAM_MEMBER = 'TEAM_MEMBER', // Executor
-  VIEWER = 'VIEWER',            // Stakeholder/Auditor
-  CEO = 'CEO',
-  MANAGER = 'MANAGER',
-  CONSULTANT = 'CONSULTANT',   // External Advisor
-  GUEST = 'GUEST',             // Limited access external user
-  OTHER = 'OTHER'
+  // Platform Level (DBR77 internal)
+  SUPERADMIN = 'SUPERADMIN',   // DBR77 Platform Owner - manages all tenants
+
+  // Organization Level (Account Types)
+  OWNER = 'OWNER',             // Organization Owner - billing, ownership, deletion
+  ADMIN = 'ADMIN',             // Organization Admin - users, projects, settings
+  USER = 'USER',               // Standard User - project access only
+
+  // Legacy roles - kept for backward compatibility, map to USER internally
+  PROJECT_MANAGER = 'PROJECT_MANAGER', // @deprecated - use ProjectRole.PROJECT_MANAGER
+  TEAM_MEMBER = 'TEAM_MEMBER', // @deprecated - use ProjectRole.TEAM_MEMBER
+  VIEWER = 'VIEWER',           // @deprecated - use ProjectRole.STAKEHOLDER
+  CEO = 'CEO',                 // @deprecated - use OWNER or ADMIN
+  MANAGER = 'MANAGER',         // @deprecated - use ADMIN
+  CONSULTANT = 'CONSULTANT',   // @deprecated - use USER + ProjectRole.CONSULTANT
+  GUEST = 'GUEST',             // @deprecated - use USER + limited project access
+  OTHER = 'OTHER'              // @deprecated - use USER
 }
+
+/**
+ * ProjectRole - Project-level access control (PRINCE2/PMBOK aligned)
+ * 
+ * These determine what users can do within SPECIFIC PROJECTS.
+ * Users must have a UserRole (Account Type) + ProjectRole for each project.
+ * 
+ * Hierarchy:
+ * Level 0: PROJECT_EXECUTIVE - Strategic decisions, budget approval
+ * Level 1: PROJECT_MANAGER - Day-to-day management
+ * Level 2: TEAM_LEAD - Team/technical leadership
+ * Level 3: TEAM_MEMBER - Task execution
+ * Level 3: CONSULTANT - External advisor (free seat with access code)
+ * Level 4: STAKEHOLDER - Observer, read-only
+ */
+export enum ProjectRole {
+  PROJECT_EXECUTIVE = 'PROJECT_EXECUTIVE',   // Sponsor, ultimate authority
+  PROJECT_MANAGER = 'PROJECT_MANAGER',       // Day-to-day management
+  TEAM_LEAD = 'TEAM_LEAD',                   // Technical/functional lead
+  TEAM_MEMBER = 'TEAM_MEMBER',               // Standard project member
+  CONSULTANT = 'CONSULTANT',                 // External advisor (free seat)
+  STAKEHOLDER = 'STAKEHOLDER'                // Observer, read-only
+}
+
+// ============================================
+// TYPE ALIASES FOR TERMINOLOGY CLARITY
+// ============================================
+
+/**
+ * AccountType - Alias for UserRole
+ * Use this when referring to organization-level user types (OWNER, ADMIN, USER)
+ */
+export type AccountType = UserRole;
+export const AccountType = UserRole;
+
+/**
+ * PROJECT_ROLES - List of valid project roles for UI dropdowns
+ */
+export const PROJECT_ROLES = [
+  { id: ProjectRole.PROJECT_EXECUTIVE, name: 'Project Executive / Sponsor', level: 0 },
+  { id: ProjectRole.PROJECT_MANAGER, name: 'Project Manager', level: 1 },
+  { id: ProjectRole.TEAM_LEAD, name: 'Team Lead', level: 2 },
+  { id: ProjectRole.TEAM_MEMBER, name: 'Team Member', level: 3 },
+  { id: ProjectRole.CONSULTANT, name: 'Consultant', level: 3 },
+  { id: ProjectRole.STAKEHOLDER, name: 'Stakeholder / Viewer', level: 4 }
+] as const;
+
+/**
+ * ACCOUNT_TYPES - List of valid account types for UI dropdowns
+ */
+export const ACCOUNT_TYPES = [
+  { id: UserRole.OWNER, name: 'Owner', description: 'Full organization control including billing' },
+  { id: UserRole.ADMIN, name: 'Admin', description: 'Manage users, projects, and settings' },
+  { id: UserRole.USER, name: 'User', description: 'Access assigned projects only' }
+] as const;
 
 // Organization Ownership Status
 export type OwnershipStatus = 'ACTIVE' | 'PENDING_TRANSFER' | 'SUSPENDED';
@@ -2569,9 +2645,10 @@ export interface User {
   lastName: string;
   email: string;
   phone?: string;
+  linkedinId?: string;
   companyName: string;
   role?: string; // e.g. CEO, ADMIN
-  status: 'active' | 'inactive';
+  status: 'active' | 'inactive' | 'suspended';
   lastLogin?: string; // ISO date
 
   isAuthenticated: boolean;
@@ -3702,7 +3779,8 @@ export interface PrivateModel {
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 // Task Status (Workflow)
 // Extended to include legacy aliases used in some components
-export type ProjectRole = 'owner' | 'admin' | 'member' | 'viewer';
+// Basic access roles for the legacy project_users table
+export type ProjectUserRole = 'owner' | 'admin' | 'member' | 'viewer';
 export type TeamRole = 'lead' | 'member';
 
 export interface ChecklistItem {
@@ -3816,7 +3894,7 @@ export interface ProjectUser {
   projectId: string;
   userId: string;
   user?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
-  role: ProjectRole;
+  role: ProjectUserRole;
   assignedAt: string;
 }
 
@@ -3872,9 +3950,10 @@ export interface User {
   lastName: string;
   email: string;
   phone?: string;
+  linkedinId?: string;
   companyName: string;
   role?: string; // SUPERADMIN, ADMIN, USER
-  status: 'active' | 'inactive';
+  status: 'active' | 'inactive' | 'suspended';
   lastLogin?: string;
   isAuthenticated: boolean;
   accessLevel: 'free' | 'full';
@@ -3896,6 +3975,42 @@ export interface User {
   dateFormat?: string;
   timeFormat?: string;
   linkedAccounts?: LinkedAccounts;
+  // Professional Profile extensions
+  bio?: string;
+  skills?: string[];
+  certifications?: Certification[];
+  education?: Education[];
+  workExperience?: WorkExperience[];
+  socialLinks?: SocialLinks;
+  // Contact extensions
+  emails?: ContactEmail[];
+  phones?: ContactPhone[];
+  officeAddress?: Address;
+  emergencyContact?: EmergencyContact;
+  preferredContactMethod?: 'email' | 'phone' | 'in-app';
+  // Availability & Status
+  statusMessage?: string;
+  outOfOfficeDates?: OutOfOfficePeriod[];
+  workingHours?: WorkingHours;
+  doNotDisturbHours?: DoNotDisturbHours;
+  // Profile enhancements
+  displayName?: string;
+  pronouns?: 'he/him' | 'she/her' | 'they/them' | 'other' | '';
+  department?: string;
+  isOutOfOffice?: boolean;
+  outOfOfficeUntil?: string;
+  outOfOfficeMessage?: string;
+  // Extended Profile Fields (Phase 1)
+  birthday?: string; // ISO date string
+  location?: string; // City/Country
+  availabilityStatus?: 'online' | 'away' | 'busy' | 'dnd'; // Real-time availability status
+  profileVisibility?: 'public' | 'team' | 'private';
+  profileCompletionScore?: number; // 0-100
+  activityStatus?: UserActivityStatus;
+  // UI Preferences
+  uiDensity?: 'comfortable' | 'compact' | 'spacious';
+  startPage?: 'dashboard' | 'myTasks' | 'inbox' | 'lastVisited';
+  fontScale?: number; // 90, 100, 110, 120
 }
 
 // Linked social/OAuth accounts
@@ -3913,6 +4028,496 @@ export interface LinkedAccounts {
     profileUrl?: string;
     linkedAt: string;
   };
+}
+
+// Professional Profile Types
+export interface Certification {
+  id: string;
+  name: string;
+  issuer: string;
+  issueDate: string;
+  expiryDate?: string;
+  credentialId?: string;
+  credentialUrl?: string;
+}
+
+export interface Education {
+  id: string;
+  institution: string;
+  degree: string;
+  fieldOfStudy?: string;
+  startDate: string;
+  endDate?: string;
+  isCurrent?: boolean;
+  description?: string;
+}
+
+export interface WorkExperience {
+  id: string;
+  company: string;
+  position: string;
+  startDate: string;
+  endDate?: string;
+  isCurrent?: boolean;
+  description?: string;
+  location?: string;
+}
+
+export interface SocialLinks {
+  twitter?: string;
+  github?: string;
+  website?: string;
+  portfolio?: string;
+  medium?: string;
+  devto?: string;
+}
+
+// Contact Information Types
+export interface ContactEmail {
+  id: string;
+  email: string;
+  type: 'work' | 'personal' | 'other';
+  isPrimary: boolean;
+  isVerified: boolean;
+}
+
+export interface ContactPhone {
+  id: string;
+  phone: string;
+  type: 'work' | 'mobile' | 'home' | 'other';
+  isPrimary: boolean;
+  countryCode?: string;
+}
+
+export interface Address {
+  street?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  formatted?: string;
+}
+
+export interface EmergencyContact {
+  name: string;
+  relationship: string;
+  phone: string;
+  email?: string;
+}
+
+// Availability Types
+export interface OutOfOfficePeriod {
+  id: string;
+  startDate: string;
+  endDate: string;
+  reason?: string;
+  isAllDay: boolean;
+}
+
+export interface WorkingHours {
+  timezone: string;
+  days: {
+    monday?: DaySchedule;
+    tuesday?: DaySchedule;
+    wednesday?: DaySchedule;
+    thursday?: DaySchedule;
+    friday?: DaySchedule;
+    saturday?: DaySchedule;
+    sunday?: DaySchedule;
+  };
+}
+
+export interface DaySchedule {
+  enabled: boolean;
+  startTime: string; // HH:mm format
+  endTime: string; // HH:mm format
+  breaks?: BreakPeriod[];
+}
+
+export interface BreakPeriod {
+  startTime: string;
+  endTime: string;
+}
+
+export interface DoNotDisturbHours {
+  enabled: boolean;
+  startTime: string; // HH:mm format
+  endTime: string; // HH:mm format
+  days: ('monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday')[];
+}
+
+// ==========================================
+// EXTENDED PROFILE TYPES (Settings Enhancement)
+// ==========================================
+
+/**
+ * Extended User Profile
+ * Comprehensive profile data beyond basic user info
+ */
+export interface UserProfileExtended {
+  userId: string;
+  
+  // Bio & About
+  shortBio?: string;
+  longBio?: string;
+  skills?: string[] | UserSkill[];
+  certifications?: Certification[];
+  yearsExperience?: number;
+  education?: Education[];
+  
+  // Professional Details
+  department?: string;
+  managerId?: string;
+  employeeId?: string;
+  hireDate?: string;
+  contractType?: ContractType;
+  workingHours?: { start: string; end: string };
+  workDays?: number[]; // 0-6, where 0 = Sunday
+  
+  // Social Links (extended)
+  socialLinks?: ExtendedSocialLinks;
+  
+  // Contact Information (extended)
+  contactInfo?: ExtendedContactInfo;
+  
+  // Visibility Settings
+  visibility?: ProfileVisibility;
+  
+  // Email Preferences
+  emailPreferences?: EmailPreferences;
+  
+  // Profile Completion
+  profileCompletion?: ProfileCompletion;
+  
+  // Timestamps
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type ContractType = 'full-time' | 'part-time' | 'contractor' | 'freelance';
+
+export interface UserSkill {
+  id: string;
+  name: string;
+  category?: 'technical' | 'soft' | 'language' | 'tool';
+  proficiencyLevel?: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  yearsExperience?: number;
+  isPrimary?: boolean;
+  endorsementCount?: number;
+}
+
+export interface ExtendedSocialLinks extends SocialLinks {
+  linkedin?: string;
+  custom?: CustomSocialLink[];
+}
+
+export interface CustomSocialLink {
+  name: string;
+  url: string;
+  icon?: string;
+}
+
+export interface ExtendedContactInfo {
+  workPhone?: string;
+  mobilePhone?: string;
+  officeAddress?: string;
+  officeBuilding?: string;
+  officeFloor?: string;
+  officeDesk?: string;
+  skype?: string;
+  teams?: string;
+  slack?: string;
+  discord?: string;
+  zoomLink?: string;
+}
+
+export interface ProfileVisibility {
+  profile: 'public' | 'organization' | 'team' | 'private';
+  showEmail: boolean;
+  showPhone: boolean;
+  showActivityStatus: boolean;
+  showLastSeen: boolean;
+  showInDirectory: boolean;
+  allowMentionsFrom: 'all' | 'team' | 'none';
+  allowDirectMessagesFrom: 'all' | 'team' | 'none';
+}
+
+export interface EmailPreferences {
+  signature?: string;
+  signatureHtml?: string;
+  aliases?: string[];
+  forwarding?: EmailForwarding[];
+  outOfOffice?: OutOfOfficeSettings;
+  digestFrequency?: 'realtime' | 'daily' | 'weekly' | 'never';
+}
+
+export interface EmailForwarding {
+  email: string;
+  enabled: boolean;
+}
+
+export interface OutOfOfficeSettings {
+  enabled: boolean;
+  message?: string;
+  start?: string;
+  end?: string;
+  autoReply?: boolean;
+}
+
+export interface ProfileCompletion {
+  score: number; // 0-100
+  details: Record<string, boolean>;
+}
+
+// ==========================================
+// KEYBOARD SHORTCUTS TYPES
+// ==========================================
+
+export type ShortcutPreset = 'default' | 'vscode' | 'sublime' | 'vim' | 'custom';
+
+export interface KeyboardShortcuts {
+  preset: ShortcutPreset;
+  enabled: boolean;
+  showHints: boolean;
+  customShortcuts?: Record<string, string>;
+  disabledShortcuts?: string[];
+}
+
+export interface ShortcutAction {
+  id: string;
+  name: string;
+  description: string;
+  category: ShortcutCategory;
+  defaultKey: string;
+  currentKey?: string;
+  isCustom?: boolean;
+}
+
+export type ShortcutCategory = 
+  | 'navigation'
+  | 'editing'
+  | 'task_management'
+  | 'search'
+  | 'ai'
+  | 'general';
+
+// ==========================================
+// EXTENDED PREFERENCES TYPES
+// ==========================================
+
+export interface CollaborationPreferences {
+  defaultMentionBehavior: 'notify' | 'silent' | 'none';
+  defaultCommentVisibility: 'team' | 'project' | 'public';
+  autoFollowCreated: boolean;
+  autoFollowAssigned: boolean;
+  autoFollowCommented: boolean;
+  showTypingIndicators: boolean;
+  showReadReceipts: boolean;
+  defaultSharePermission: 'view' | 'comment' | 'edit';
+  collaborationMode: 'realtime' | 'periodic' | 'manual';
+}
+
+export interface PerformancePreferences {
+  imageQuality: 'low' | 'medium' | 'high' | 'original';
+  videoQuality: 'low' | 'medium' | 'high' | 'auto';
+  autoLoadImages: boolean;
+  autoLoadVideos: boolean;
+  bandwidthSaverMode: boolean;
+  offlineModeEnabled: boolean;
+  offlineSyncWifiOnly: boolean;
+  cacheSizeMb: number;
+  animationEnabled: boolean;
+  reduceDataUsage: boolean;
+  preloadContent: boolean;
+}
+
+export interface MobilePreferences {
+  pushNotificationsEnabled: boolean;
+  mobileDataSyncEnabled: boolean;
+  wifiOnlySync: boolean;
+  mobileOfflineMode: boolean;
+  biometricLoginEnabled: boolean;
+  quickActions: string[];
+  widgetConfig?: Record<string, unknown>;
+  hapticFeedbackEnabled: boolean;
+}
+
+export interface AutomationRule {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  triggerType: AutomationTriggerType;
+  triggerConfig: Record<string, unknown>;
+  actionType: AutomationActionType;
+  actionConfig: Record<string, unknown>;
+  isEnabled: boolean;
+  runCount: number;
+  lastRunAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AutomationTriggerType = 
+  | 'task_created'
+  | 'task_completed'
+  | 'task_assigned'
+  | 'due_date_approaching'
+  | 'status_changed'
+  | 'comment_added'
+  | 'tag_added';
+
+export type AutomationActionType = 
+  | 'notify'
+  | 'assign'
+  | 'move'
+  | 'tag'
+  | 'set_priority'
+  | 'add_comment'
+  | 'create_task';
+
+export interface AILearningPreferences {
+  allowLearningFromInteractions: boolean;
+  allowLearningFromDocuments: boolean;
+  allowLearningFromTasks: boolean;
+  allowPersonalization: boolean;
+  shareAnonymousUsage: boolean;
+  aiSuggestionsEnabled: boolean;
+  aiAutoCompleteEnabled: boolean;
+  aiSmartRepliesEnabled: boolean;
+  aiSummaryEnabled: boolean;
+  aiPrioritySuggestions: boolean;
+  feedbackCollectionEnabled: boolean;
+  modelPreference: 'speed' | 'balanced' | 'quality';
+}
+
+export interface QuietHoursSettings {
+  id?: string;
+  name?: string;
+  enabled: boolean;
+  startTime: string; // HH:MM format
+  endTime: string;   // HH:MM format
+  daysOfWeek: number[]; // 0-6
+  allowUrgent: boolean;
+  allowMentions: boolean;
+  allowDirectMessages: boolean;
+  autoReplyEnabled: boolean;
+  autoReplyMessage?: string;
+}
+
+export interface SecurityAlertPreferences {
+  alertNewLogin: boolean;
+  alertNewDevice: boolean;
+  alertPasswordChange: boolean;
+  alertEmailChange: boolean;
+  alertMfaChange: boolean;
+  alertApiKeyCreated: boolean;
+  alertSuspiciousActivity: boolean;
+  alertFailedLoginAttempts: boolean;
+  failedLoginThreshold: number;
+  alertSessionTimeout: boolean;
+  alertDataExport: boolean;
+  alertChannel: 'email' | 'push' | 'both';
+}
+
+// Extended Accessibility Preferences
+export interface AccessibilityPreferencesExtended {
+  fontSize: 'small' | 'medium' | 'large' | 'extra-large';
+  highContrastMode: boolean;
+  reduceMotion: boolean;
+  screenReaderOptimized: boolean;
+  showKeyboardShortcuts: boolean;
+  focusHighlight: boolean;
+  cursorSize: 'default' | 'large' | 'extra-large';
+  textSpacing: 'default' | 'wide' | 'wider';
+  underlineLinks: boolean;
+  // New extended options
+  colorBlindMode?: 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia';
+  fontFamily?: string;
+  lineHeight?: 'default' | 'relaxed' | 'loose';
+  letterSpacing?: 'default' | 'wide' | 'wider';
+  voiceCommandsEnabled?: boolean;
+  textToSpeechEnabled?: boolean;
+  speechToTextEnabled?: boolean;
+  caretWidth?: 'default' | 'thick';
+  focusIndicatorStyle?: 'default' | 'high-contrast' | 'animated';
+}
+
+// Extended Regional Settings
+export interface RegionalPreferencesExtended {
+  timezone: string;
+  units: 'metric' | 'imperial';
+  currency: string;
+  numberFormat: string;
+  dateFormat: string;
+  timeFormat: '12h' | '24h';
+  firstDayOfWeek: 'sunday' | 'monday' | 'saturday';
+  // New extended options
+  fiscalYearStartMonth?: number; // 1-12
+  businessHours?: {
+    start: string;
+    end: string;
+  };
+  weekNumberingStyle?: 'iso' | 'us';
+  publicHolidaysCalendar?: string;
+}
+
+// Task Template for quick creation
+export interface TaskTemplate {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  defaultTitle?: string;
+  defaultDescription?: string;
+  defaultPriority?: 'low' | 'medium' | 'high' | 'urgent';
+  defaultTags?: string[];
+  defaultChecklist?: ChecklistItem[];
+  defaultAssignee?: 'self' | 'manager' | string;
+  defaultDueDays?: number;
+  defaultProjectId?: string;
+  isFavorite?: boolean;
+  useCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Dashboard Layout for multiple saved configurations
+export interface DashboardLayout {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  isDefault: boolean;
+  layoutConfig: DashboardLayoutConfig;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DashboardLayoutConfig {
+  widgets: DashboardWidget[];
+  columns?: number;
+  compactMode?: boolean;
+}
+
+export interface DashboardWidget {
+  id: string;
+  type: string;
+  title?: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  config?: Record<string, unknown>;
+  refreshInterval?: number; // seconds
+  isVisible?: boolean;
+}
+
+// User Activity Status (Phase 1)
+export interface UserActivityStatus {
+  userId: string;
+  status: 'online' | 'away' | 'busy' | 'dnd';
+  statusMessage?: string;
+  lastSeen: string; // ISO datetime
+  currentlyActive: boolean;
 }
 
 // Permission request types
@@ -4049,12 +4654,17 @@ export interface Project {
   id: string;
   organizationId: string;
   name: string;
+  description?: string;
+  goal?: string;
   status: 'active' | 'archived' | 'completed';
   ownerId?: string;
   owner?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
   createdAt: string;
   taskCount?: number;
   memberCount?: number;
+  initiativeCount?: number;
+  assessmentCount?: number;
+  documentCount?: number;
 }
 
 // ==========================================

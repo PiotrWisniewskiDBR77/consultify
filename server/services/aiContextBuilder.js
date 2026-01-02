@@ -418,6 +418,39 @@ const AIContextBuilder = {
      * @param {string} focusMode - Focus mode for potential pre-filtering
      */
     _buildKnowledgeContext: async (projectId, focusMode = 'all') => {
+        const KnowledgeService = require('./knowledgeService');
+        
+        // Get organization ID from project
+        let organizationId = null;
+        if (projectId) {
+            const project = await new Promise((resolve) => {
+                deps.db.get(`SELECT organization_id FROM projects WHERE id = ?`, [projectId], (err, row) => {
+                    resolve(row || {});
+                });
+            });
+            organizationId = project.organization_id;
+        }
+
+        // Get global strategic directions (always available at org level)
+        let strategicDirections = [];
+        if (organizationId) {
+            try {
+                strategicDirections = await KnowledgeService.getActiveStrategies();
+            } catch (err) {
+                console.warn('[AIContextBuilder] Failed to load strategic directions:', err.message);
+            }
+        }
+
+        // Get approved ideas (organization-level knowledge)
+        let approvedIdeas = [];
+        if (organizationId) {
+            try {
+                approvedIdeas = await KnowledgeService.getApprovedIdeas({});
+            } catch (err) {
+                console.warn('[AIContextBuilder] Failed to load approved ideas:', err.message);
+            }
+        }
+
         if (!projectId) {
             return {
                 ragDisabled: false,
@@ -425,7 +458,18 @@ const AIContextBuilder = {
                 previousDecisions: [],
                 changeRequests: [],
                 lessonsLearned: [],
-                phaseHistory: []
+                phaseHistory: [],
+                strategicDirections: strategicDirections.map(s => ({
+                    title: s.title,
+                    description: s.description,
+                    priority: s.priority,
+                    progress_percentage: s.progress_percentage
+                })),
+                approvedIdeas: approvedIdeas.slice(0, 5).map(i => ({
+                    content: i.content,
+                    category: i.category,
+                    tags: i.tags || []
+                }))
             };
         }
 
@@ -472,8 +516,25 @@ const AIContextBuilder = {
             phaseHistory = JSON.parse(projectInfo.phase_history || '[]');
         } catch { }
 
+        // Get global knowledge documents (organization-level)
+        let documents = [];
+        if (organizationId) {
+            try {
+                const KnowledgeService = require('./knowledgeService');
+                documents = await KnowledgeService.getDocuments(organizationId);
+            } catch (err) {
+                console.warn('[AIContextBuilder] Failed to load documents:', err.message);
+            }
+        }
+
         return {
-            projectDocuments: [], // Could integrate document storage
+            ragDisabled: false,
+            projectDocuments: documents.map(d => ({
+                id: d.id,
+                filename: d.filename,
+                category: d.category || null,
+                tags: d.tags ? (typeof d.tags === 'string' ? JSON.parse(d.tags) : d.tags) : []
+            })),
             previousDecisions: decisions.map(d => ({
                 id: d.id, title: d.title, outcome: d.outcome || 'N/A'
             })),
@@ -481,6 +542,19 @@ const AIContextBuilder = {
             lessonsLearned: [],
             phaseHistory: phaseHistory.map(ph => ({
                 phase: ph.phase, enteredAt: ph.enteredAt
+            })),
+            strategicDirections: strategicDirections.map(s => ({
+                title: s.title,
+                description: s.description,
+                priority: s.priority,
+                progress_percentage: s.progress_percentage,
+                success_metrics: s.success_metrics || []
+            })),
+            approvedIdeas: approvedIdeas.slice(0, 5).map(i => ({
+                content: i.content,
+                category: i.category,
+                tags: i.tags || [],
+                impact_score: i.impact_score
             }))
         };
     },

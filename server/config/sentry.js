@@ -5,25 +5,45 @@
  * Import this at the very top of server/index.js, before other imports.
  */
 
-const Sentry = require('@sentry/node');
-const { nodeProfilingIntegration } = require('@sentry/profiling-node');
-
 const isProduction = process.env.NODE_ENV === 'production';
 const isStaging = process.env.NODE_ENV === 'staging';
-const isEnabled = (isProduction || isStaging) && process.env.SENTRY_DSN;
+const isTest = process.env.NODE_ENV === 'test';
+
+// Only load Sentry if NOT in test mode (avoids native binding issues in Vitest/Jest)
+let Sentry, nodeProfilingIntegration;
+if (!isTest) {
+    try {
+        Sentry = require('@sentry/node');
+        nodeProfilingIntegration = require('@sentry/profiling-node').nodeProfilingIntegration;
+    } catch (e) {
+        console.warn('[Sentry] Optional dependencies missing, skipping initialization');
+    }
+}
+
+const isEnabled = (isProduction || isStaging) && process.env.SENTRY_DSN && !isTest && Sentry;
 
 /**
  * Initialize Sentry
  * @param {Express} app - Express application instance
  */
 function initSentry(app) {
-    if (!isEnabled) {
-        console.log('[Sentry] Disabled (no SENTRY_DSN or not in production/staging)');
+    if (!isEnabled || !Sentry) {
+        if (!isTest) console.log('[Sentry] Disabled (no SENTRY_DSN, not in prod/staging, or dependencies missing)');
         return {
             requestHandler: () => (req, res, next) => next(),
             tracingHandler: () => (req, res, next) => next(),
             errorHandler: () => (err, req, res, next) => next(err),
         };
+    }
+
+    const integrations = [
+        // Express integration - handles request/tracing automatically
+        Sentry.expressIntegration({ app }),
+    ];
+
+    // Add profiling if available
+    if (nodeProfilingIntegration) {
+        integrations.push(nodeProfilingIntegration());
     }
 
     Sentry.init({
@@ -32,12 +52,7 @@ function initSentry(app) {
         release: process.env.npm_package_version || '1.0.0',
 
         // Integrations
-        integrations: [
-            // Express integration - handles request/tracing automatically
-            Sentry.expressIntegration({ app }),
-            // Profiling (optional, requires @sentry/profiling-node)
-            nodeProfilingIntegration(),
-        ],
+        integrations: integrations,
 
         // Performance Monitoring
         tracesSampleRate: isProduction ? 0.1 : 1.0, // 10% in prod, 100% in staging
@@ -81,7 +96,7 @@ function initSentry(app) {
     // In Sentry v8, Express integration is automatic via expressIntegration
     // Request and tracing are handled automatically
     // We only need to set up the error handler
-    
+
     // Create error handler middleware with custom filtering
     const errorHandler = Sentry.expressErrorHandler({
         shouldHandleError(error) {

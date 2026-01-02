@@ -11,5 +11,4 @@ export { PolicyGovernanceTab } from './PolicyGovernanceTab';
 export { AccessLimitsTab } from './AccessLimitsTab';
 export { FeaturesPrivacyTab } from './FeaturesPrivacyTab';
 export { AuditComplianceTab } from './AuditComplianceTab';
-
-
+export { OrgProviderSettings } from './OrgProviderSettings';

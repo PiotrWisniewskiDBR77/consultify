@@ -56,6 +56,7 @@ import { InvitationsManagement } from './InvitationsManagement';
 import { WorkModeSettings } from '../../components/Admin/WorkModeSettings';
 import { AdminSettingsConsultants } from './AdminSettingsConsultants';
 import { AdminProjectManagement } from './AdminProjectManagement';
+import { ProjectDetailsView } from './ProjectDetailsView';
 import { AdminKnowledgeView } from './AdminKnowledgeView';
 import { PlaybookRunsView } from './PlaybookRunsView';
 import { BulkOperationsView } from './BulkOperationsView';
@@ -93,6 +94,9 @@ import { PaymentMethodsView } from './PaymentMethodsView';
 import { InvoicesView } from './InvoicesView';
 import { SpendingAlertsView } from './SpendingAlertsView';
 import { AuditLogView } from './AuditLogView';
+import { UsageDashboardView } from './UsageDashboardView';
+import { BillingSettingsView } from './BillingSettingsView';
+import { CostAllocationView } from './CostAllocationView';
 
 // Admin section type - expanded to 8 modules (with dedicated Feedback module)
 type AdminSection = 'overview' | 'organization' | 'team' | 'workspace' | 'ai' | 'billing' | 'security' | 'feedback';
@@ -123,7 +127,7 @@ const getAdminSection = (view: AppView): AdminSection => {
         return 'team';
     }
     // Workspace module
-    if (view === AppView.ADMIN_PROJECTS || view === AppView.ADMIN_KNOWLEDGE || view === AppView.ADMIN_PLAYBOOK_RUNS || view === AppView.ADMIN_BULK_OPERATIONS) {
+    if (view === AppView.ADMIN_PROJECTS || view === AppView.ADMIN_PROJECT_DETAILS || view === AppView.ADMIN_KNOWLEDGE || view === AppView.ADMIN_PLAYBOOK_RUNS || view === AppView.ADMIN_BULK_OPERATIONS) {
         return 'workspace';
     }
     // AI module
@@ -143,6 +147,29 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
     const { t } = useTranslation();
     const [users, setUsers] = useState<User[]>([]);
     const [projects, setProjects] = useState<Project[]>([]);
+
+    // Handle URL module parameter on mount
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const moduleParam = params.get('module');
+        if (moduleParam) {
+            const moduleMap: Record<string, AppView> = {
+                'dashboard': AppView.ADMIN_OVERVIEW,
+                'overview': AppView.ADMIN_OVERVIEW,
+                'organization': AppView.ADMIN_ORGANIZATION,
+                'team': AppView.ADMIN_TEAM,
+                'workspace': AppView.ADMIN_WORKSPACE,
+                'ai': AppView.ADMIN_AI,
+                'billing': AppView.ADMIN_BILLING,
+                'security': AppView.ADMIN_SECURITY,
+                'feedback': AppView.ADMIN_FEEDBACK
+            };
+            const targetView = moduleMap[moduleParam.toLowerCase()];
+            if (targetView && currentView !== targetView) {
+                setCurrentView(targetView);
+            }
+        }
+    }, []); // Run only on mount
 
     // Derive active section from currentView
     const activeSection = useMemo<AdminSection>(() => {
@@ -310,7 +337,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                             </TabsTrigger>
                             <TabsTrigger value="groups" className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none">
                                 <UsersRound size={14} />
-                                {t('admin.team.tabs.groups', 'Groups')}
+                                {t('admin.team.tabs.groups', 'Teams')}
                             </TabsTrigger>
                             <TabsTrigger value="invitations" className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none">
                                 <UserPlus size={14} />
@@ -344,6 +371,14 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                 );
 
             case 'workspace':
+                if (currentView === AppView.ADMIN_PROJECT_DETAILS) {
+                    return (
+                        <ProjectDetailsView
+                            projectId={useAppStore.getState().currentProjectId || ''}
+                            onBack={() => setCurrentView(AppView.ADMIN_PROJECTS)}
+                        />
+                    );
+                }
                 return (
                     <Tabs defaultValue="projects" className="w-full">
                         <TabsList className="admin-tabs bg-transparent p-0 h-auto">
@@ -431,11 +466,15 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
 
             case 'billing':
                 return (
-                    <Tabs defaultValue="plan" className="w-full">
-                        <TabsList className="admin-tabs bg-transparent p-0 h-auto">
+                    <Tabs defaultValue="usage" className="w-full">
+                        <TabsList className="admin-tabs bg-transparent p-0 h-auto flex-wrap">
+                            <TabsTrigger value="usage" className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none">
+                                <Activity size={14} />
+                                {t('admin.billing.tabs.usage', 'Usage Dashboard')}
+                            </TabsTrigger>
                             <TabsTrigger value="plan" className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none">
                                 <CreditCard size={14} />
-                                {t('admin.billing.tabs.plan', 'Plan & Usage')}
+                                {t('admin.billing.tabs.plan', 'Plan & Subscription')}
                             </TabsTrigger>
                             <TabsTrigger value="payment" className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none">
                                 <CreditCard size={14} />
@@ -449,7 +488,18 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                                 <Bell size={14} />
                                 {t('admin.billing.tabs.alerts', 'Spending Alerts')}
                             </TabsTrigger>
+                            <TabsTrigger value="settings" className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none">
+                                <Settings size={14} />
+                                {t('admin.billing.tabs.settings', 'Billing Settings')}
+                            </TabsTrigger>
+                            <TabsTrigger value="cost-allocation" className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none">
+                                <Building2 size={14} />
+                                {t('admin.billing.tabs.costAllocation', 'Cost Allocation')}
+                            </TabsTrigger>
                         </TabsList>
+                        <TabsContent value="usage" className="mt-6">
+                            <UsageDashboardView />
+                        </TabsContent>
                         <TabsContent value="plan" className="mt-6">
                             <AdminBillingManagement />
                         </TabsContent>
@@ -461,6 +511,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                         </TabsContent>
                         <TabsContent value="alerts" className="mt-6">
                             <SpendingAlertsView />
+                        </TabsContent>
+                        <TabsContent value="settings" className="mt-6">
+                            <BillingSettingsView />
+                        </TabsContent>
+                        <TabsContent value="cost-allocation" className="mt-6">
+                            <CostAllocationView />
                         </TabsContent>
                     </Tabs>
                 );
@@ -520,11 +576,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
         <div className="h-full overflow-auto">
             <div className="p-6">
                 {/* Header - Clean minimal */}
-                <div className="mb-6 pb-4 border-b border-[var(--admin-border)]">
-                    <h1 className="text-lg font-medium text-white">
+                <div className="mb-6 pb-4 border-b border-slate-200 dark:border-[var(--admin-border)]">
+                    <h1 className="text-lg font-medium text-navy-900 dark:text-white">
                         {sectionInfo.title}
                     </h1>
-                    <p className="text-sm text-slate-500 mt-0.5">
+                    <p className="text-sm text-slate-600 dark:text-slate-500 mt-0.5">
                         {sectionInfo.subtitle}
                     </p>
                 </div>

@@ -353,7 +353,7 @@ router.post('/transfer-ownership', async (req, res) => {
 
         const isCurrentOwner = currentUser.is_owner === 1 || currentUser.is_owner === true || currentUser.role === 'OWNER';
         if (!isCurrentOwner) {
-            return res.status(403).json({ 
+            return res.status(403).json({
                 error: 'Only the current Account Owner can transfer ownership',
                 code: 'NOT_OWNER'
             });
@@ -373,7 +373,7 @@ router.post('/transfer-ownership', async (req, res) => {
         }
 
         if (newOwner.role !== 'ADMIN' && newOwner.role !== 'OWNER') {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 error: 'New owner must be an Admin. Please promote them to Admin first.',
                 code: 'NEW_OWNER_NOT_ADMIN'
             });
@@ -384,13 +384,13 @@ router.post('/transfer-ownership', async (req, res) => {
             db.serialize(() => {
                 // 1. Remove ownership from current owner
                 db.run('UPDATE users SET is_owner = 0 WHERE id = ?', [userId]);
-                
+
                 // 2. Set new owner
                 db.run('UPDATE users SET is_owner = 1, role = ? WHERE id = ?', ['OWNER', newOwnerId]);
-                
+
                 // 3. Update organization owner_id
                 db.run('UPDATE organizations SET owner_id = ? WHERE id = ?', [newOwnerId, organizationId]);
-                
+
                 // 4. Record the transfer in audit table
                 const transferId = uuidv4();
                 db.run(
@@ -526,6 +526,23 @@ router.get('/owner', async (req, res) => {
 
     } catch (err) {
         console.error('[Organizations] Get owner error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+const roleService = require('../services/pmoRoleService');
+
+/**
+ * GET /api/organizations/:orgId/roles
+ * Get custom roles for an organization
+ */
+router.get('/:orgId/roles', async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const roles = await roleService.getAllRoles({ organizationId: orgId, includeCustom: true });
+        res.json(roles || []);
+    } catch (err) {
+        console.error('[Organizations] Error getting roles:', err);
         res.status(500).json({ error: err.message });
     }
 });

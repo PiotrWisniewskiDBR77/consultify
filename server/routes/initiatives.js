@@ -60,7 +60,7 @@ router.get('/', asyncHandler(async (req, res) => {
             id: i.id,
             organizationId: i.organization_id,
             projectId: i.project_id,
-            name: i.name,
+            name: i.title,
             axis: i.axis,
             area: i.area,
             summary: i.summary,
@@ -158,7 +158,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
             id: i.id,
             organizationId: i.organization_id,
             projectId: i.project_id,
-            name: i.name,
+            name: i.title,
             axis: i.axis,
             area: i.area,
             summary: i.summary,
@@ -167,7 +167,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
             status: i.status,
             progress: i.progress || 0,
             currentStage: i.current_stage,
-            
+
             // Financial metrics
             businessValue: i.business_value,
             costCapex: i.cost_capex,
@@ -176,7 +176,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
             valueDriver: i.value_driver,
             confidenceLevel: i.confidence_level,
             valueTiming: i.value_timing,
-            
+
             // Dates
             plannedStartDate: i.planned_start_date || i.start_date,
             plannedEndDate: i.planned_end_date || i.end_date,
@@ -269,7 +269,7 @@ router.post('/', asyncHandler(async (req, res) => {
 
     const sql = `
         INSERT INTO initiatives (
-            id, organization_id, name, axis, area, summary, hypothesis,
+            id, organization_id, title, axis, area, summary, hypothesis,
             business_value, competencies_required,
             cost_capex, cost_opex, expected_roi, social_impact,
             value_driver, confidence_level, value_timing,
@@ -362,14 +362,18 @@ router.put('/:id', asyncHandler(async (req, res) => {
         // camelCase check for body keys
         const bodyKey = field.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
 
+        // Map 'name' in body to 'title' in DB
+        let dbField = field;
+        if (field === 'name') dbField = 'title';
+
         if (body[bodyKey] !== undefined) {
             // Handle JSON fields
             if (['competencies_required', 'deliverables', 'success_criteria', 'scope_in', 'scope_out', 'key_risks',
                 'strategic_fit', 'attachments', 'change_log', 'target_state', 'decision_readiness_breakdown'].includes(field)) {
-                updates.push(`${field} = ?`);
+                updates.push(`${dbField} = ?`);
                 params.push(JSON.stringify(body[bodyKey]));
             } else {
-                updates.push(`${field} = ?`);
+                updates.push(`${dbField} = ?`);
                 params.push(body[bodyKey]);
             }
         }
@@ -386,10 +390,10 @@ router.put('/:id', asyncHandler(async (req, res) => {
     const sql = `UPDATE initiatives SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`;
 
     await queryHelpers.queryRun(sql, params);
-    
+
     // Update charter completeness after any update
     await InitiativeStatusService.updateCompleteness(id, orgId);
-    
+
     res.json({ message: 'Initiative updated' });
 }));
 
@@ -409,7 +413,7 @@ router.patch('/:id/status', asyncHandler(async (req, res) => {
 
     // Validate that newStatus is a valid initiative status
     if (!Object.values(StatusMachine.INITIATIVE_STATUSES).includes(newStatus)) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             error: 'Invalid status',
             validStatuses: Object.values(StatusMachine.INITIATIVE_STATUSES)
         });
@@ -417,9 +421,9 @@ router.patch('/:id/status', asyncHandler(async (req, res) => {
 
     // Perform transition with validation
     const result = await InitiativeStatusService.transitionStatus(
-        id, 
-        orgId, 
-        userId, 
+        id,
+        orgId,
+        userId,
         newStatus,
         { reason, comment }
     );
@@ -453,14 +457,14 @@ router.patch('/:id/status', asyncHandler(async (req, res) => {
             name: result.initiative.name,
             priority: result.initiative.priority
         };
-        
+
         const decision = await DecisionTriggerService.onInitiativeStatusChange(
             initiativeData,
             previousStatus,
             newStatus,
             userId
         );
-        
+
         if (decision) {
             console.log(`[Initiatives] Auto-created decision: ${decision.id} for initiative ${id}`);
         }
@@ -486,7 +490,7 @@ router.get('/:id/transitions', asyncHandler(async (req, res) => {
 
     // Get initiative with context
     const initiative = await InitiativeStatusService.getInitiativeWithContext(id, orgId);
-    
+
     if (!initiative) {
         return res.status(404).json({ error: 'Initiative not found' });
     }
@@ -547,7 +551,7 @@ router.get('/by-status/:status', asyncHandler(async (req, res) => {
         LEFT JOIN locations l ON i.location_id = l.id
         WHERE i.organization_id = ?
     `;
-    
+
     const params = [orgId];
 
     // Handle multiple statuses (comma-separated)
@@ -577,7 +581,7 @@ router.get('/by-status/:status', asyncHandler(async (req, res) => {
             projectName: i.project_name,
             locationId: i.location_id,
             locationName: i.location_name,
-            name: i.name,
+            name: i.title,
             axis: i.axis,
             area: i.area,
             summary: i.summary,
@@ -827,7 +831,7 @@ router.get('/:id/kpis', asyncHandler(async (req, res) => {
                 sortOrder: k.sort_order,
                 latestValue: k.latest_value,
                 latestMeasurementDate: k.latest_measurement_date,
-                isOnTarget: k.alert_direction === 'BELOW' 
+                isOnTarget: k.alert_direction === 'BELOW'
                     ? (k.latest_value || 0) >= (k.alert_threshold || 0)
                     : (k.latest_value || 0) <= (k.alert_threshold || 0),
                 createdAt: k.created_at
@@ -845,9 +849,9 @@ router.get('/:id/kpis', asyncHandler(async (req, res) => {
 router.post('/:id/kpis', asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
     const { id } = req.params;
-    const { 
-        name, description, targetValue, unit, 
-        measurementFrequency, alertThreshold, alertDirection, isPrimary 
+    const {
+        name, description, targetValue, unit,
+        measurementFrequency, alertThreshold, alertDirection, isPrimary
     } = req.body;
 
     if (!name) {
@@ -881,7 +885,7 @@ router.post('/:id/kpis', asyncHandler(async (req, res) => {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
         kpiId, id, name, description || null, targetValue || null, unit || null,
-        measurementFrequency || 'MONTHLY', alertThreshold || null, 
+        measurementFrequency || 'MONTHLY', alertThreshold || null,
         alertDirection || 'BELOW', isPrimary ? 1 : 0, sortOrder, now, now
     ]);
 
@@ -912,7 +916,7 @@ router.put('/:id/kpis/:kpiId', asyncHandler(async (req, res) => {
     const params = [];
 
     const allowedFields = [
-        'name', 'description', 'target_value', 'unit', 
+        'name', 'description', 'target_value', 'unit',
         'measurement_frequency', 'alert_threshold', 'alert_direction', 'is_primary', 'sort_order'
     ];
 
@@ -1003,7 +1007,7 @@ router.post('/:id/kpis/:kpiId/measurements', asyncHandler(async (req, res) => {
         (id, kpi_id, value, measured_at, notes, explanation, action_items, created_by, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-        measurementId, kpiId, value, 
+        measurementId, kpiId, value,
         measuredAt || now, notes || null, explanation || null,
         actionItems ? JSON.stringify(actionItems) : null,
         userId, now
@@ -1071,7 +1075,7 @@ const PortfolioService = require('../services/portfolioService');
 router.get('/portfolio', asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
     const { projectId, status, priority, owner, quarter, search } = req.query;
-    
+
     const filters = {
         projectId,
         status: status ? (Array.isArray(status) ? status : [status]) : undefined,
@@ -1080,12 +1084,12 @@ router.get('/portfolio', asyncHandler(async (req, res) => {
         quarter,
         search
     };
-    
+
     const [initiatives, stats] = await Promise.all([
         PortfolioService.getPortfolioData(orgId, filters),
         PortfolioService.getPortfolioStats(orgId, projectId)
     ]);
-    
+
     res.json({
         initiatives,
         stats
@@ -1099,7 +1103,7 @@ router.get('/portfolio', asyncHandler(async (req, res) => {
 router.get('/portfolio/stats', asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
     const { projectId } = req.query;
-    
+
     const stats = await PortfolioService.getPortfolioStats(orgId, projectId);
     res.json(stats);
 }));
@@ -1111,7 +1115,7 @@ router.get('/portfolio/stats', asyncHandler(async (req, res) => {
 router.get('/portfolio/dependencies', asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
     const { projectId } = req.query;
-    
+
     const dependencies = await PortfolioService.getInitiativeDependencies(orgId, projectId);
     res.json({ dependencies });
 }));
@@ -1133,7 +1137,7 @@ router.patch('/:id/quick-update', asyncHandler(async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
     const userId = req.user.id;
-    
+
     await PortfolioService.quickUpdate(id, updates, userId);
     res.json({ success: true });
 }));
@@ -1145,15 +1149,15 @@ router.patch('/:id/quick-update', asyncHandler(async (req, res) => {
 router.post('/bulk-status', asyncHandler(async (req, res) => {
     const { initiativeIds, status, reason } = req.body;
     const userId = req.user.id;
-    
+
     if (!initiativeIds || !Array.isArray(initiativeIds) || initiativeIds.length === 0) {
         return res.status(400).json({ error: 'Initiative IDs required' });
     }
-    
+
     if (!status) {
         return res.status(400).json({ error: 'Status required' });
     }
-    
+
     const result = await PortfolioService.bulkUpdateStatus(initiativeIds, status, reason, userId);
     res.json(result);
 }));
@@ -1164,11 +1168,11 @@ router.post('/bulk-status', asyncHandler(async (req, res) => {
  */
 router.post('/reorder', asyncHandler(async (req, res) => {
     const { initiativeIds } = req.body;
-    
+
     if (!initiativeIds || !Array.isArray(initiativeIds)) {
         return res.status(400).json({ error: 'Initiative IDs array required' });
     }
-    
+
     const result = await PortfolioService.reorderInitiatives(initiativeIds, initiativeIds);
     res.json(result);
 }));

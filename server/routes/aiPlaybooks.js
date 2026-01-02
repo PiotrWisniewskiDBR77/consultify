@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
+const verifySuperAdmin = require('../middleware/superAdminMiddleware');
 const AIPlaybookService = require('../ai/aiPlaybookService');
 const AIPlaybookEngine = require('../ai/aiPlaybookEngine');
 const AIPlaybookExecutor = require('../ai/aiPlaybookExecutor');
-
-router.use(authMiddleware);
 
 /**
  * @route GET /api/ai/playbooks/templates
@@ -13,11 +12,8 @@ router.use(authMiddleware);
  * @access SUPERADMIN
  * @query status - Optional filter: 'DRAFT' | 'PUBLISHED' | 'DEPRECATED'
  */
-router.get('/templates', async (req, res) => {
+router.get('/templates', authMiddleware, verifySuperAdmin, async (req, res) => {
     try {
-        if (req.user.role !== 'SUPERADMIN') {
-            return res.status(403).json({ error: 'Forbidden: SuperAdmin access required' });
-        }
 
         const { status } = req.query;
 

@@ -23,7 +23,8 @@ const deps = {
     uuidv4: require('uuid').v4,
     AccessPolicyService: require('./accessPolicyService'),
     AttributionService: require('./attributionService'),
-    MetricsCollector: require('./metricsCollector')
+    MetricsCollector: require('./metricsCollector'),
+    SeatManagementService: require('./seatManagementService')
 };
 
 // Constants
@@ -290,6 +291,26 @@ const InvitationService = {
             throw new Error('User is already a member of this organization');
         }
 
+        // Check seat limits and auto-add if needed
+        try {
+            const canAdd = await deps.SeatManagementService.canAddUser(organizationId);
+            if (!canAdd) {
+                // Try auto-adding a seat
+                const autoAddResult = await deps.SeatManagementService.autoAddSeatOnInvite(organizationId, invitedByUserId);
+                if (!autoAddResult.autoAdded) {
+                    // Still can't add - check again
+                    const canAddAfterAuto = await deps.SeatManagementService.canAddUser(organizationId);
+                    if (!canAddAfterAuto) {
+                        throw new Error('No available seats. Please purchase additional seats or contact your administrator.');
+                    }
+                }
+            }
+        } catch (seatErr) {
+            // If seat check fails, log but don't block invitation (graceful degradation)
+            console.warn('[InvitationService] Seat check failed:', seatErr.message);
+            // In production, you might want to throw here instead
+        }
+
         // Create invitation
         const id = deps.uuidv4();
         const token = InvitationService.generateSecureToken();
@@ -299,9 +320,9 @@ const InvitationService = {
         return new Promise((resolve, reject) => {
             deps.db.run(
                 `INSERT INTO invitations 
-                 (id, organization_id, email, role, role_to_assign, token_hash, status, invited_by, expires_at, invitation_type, metadata) 
-                 VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, 'ORG', ?)`,
-                [id, organizationId, email.toLowerCase(), role, role, tokenHash, invitedByUserId, expiresAt, JSON.stringify(metadata)],
+                 (id, organization_id, email, role, role_to_assign, token, token_hash, status, invited_by, expires_at, invitation_type, metadata) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, 'ORG', ?)`,
+                [id, organizationId, email.toLowerCase(), role, role, token, tokenHash, invitedByUserId, expiresAt, JSON.stringify(metadata)],
                 async function (err) {
                     if (err) return reject(err);
 
@@ -405,9 +426,9 @@ const InvitationService = {
         return new Promise((resolve, reject) => {
             deps.db.run(
                 `INSERT INTO invitations 
-                 (id, organization_id, project_id, email, role, role_to_assign, token_hash, status, invited_by, expires_at, invitation_type, metadata) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, 'PROJECT', ?)`,
-                [id, organizationId, projectId, email.toLowerCase(), orgRole, orgRole, tokenHash, invitedByUserId, expiresAt, JSON.stringify(invitationMetadata)],
+                 (id, organization_id, project_id, email, role, role_to_assign, token, token_hash, status, invited_by, expires_at, invitation_type, metadata) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, 'PROJECT', ?)`,
+                [id, organizationId, projectId, email.toLowerCase(), orgRole, orgRole, token, tokenHash, invitedByUserId, expiresAt, JSON.stringify(invitationMetadata)],
                 async function (err) {
                     if (err) return reject(err);
 

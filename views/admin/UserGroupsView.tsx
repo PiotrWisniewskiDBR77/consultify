@@ -1,11 +1,16 @@
 /**
- * UserGroupsView - User Groups Management
+ * UserGroupsView - Reusable Teams Management
+ * 
+ * Teams are reusable groups of users that can be assigned to projects.
+ * Instead of adding users one by one to each project, you can:
+ * 1. Create teams here (e.g., "Frontend Team", "PMO Office", "QA Team")
+ * 2. When creating/editing a project, assign entire teams or individual users
  * 
  * Features:
- * - Create, edit, delete user groups
- * - Assign members to groups
- * - Set group permissions
- * - Group leaders
+ * - Create, edit, delete teams
+ * - Assign members to teams
+ * - Set default project role for team members
+ * - Team leader designation
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -25,7 +30,9 @@ import {
     Crown,
     ChevronDown,
     ChevronRight,
-    Palette
+    Palette,
+    FolderKanban,
+    Info
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAppStore } from '../../store/useAppStore';
@@ -84,6 +91,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
         description: '',
         color: 'violet',
         leaderId: '',
+        defaultProjectRole: 'TEAM_MEMBER', // Default role when team is added to project
         permissions: [] as GroupPermission[]
     });
 
@@ -168,6 +176,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
             description: '',
             color: 'violet',
             leaderId: '',
+            defaultProjectRole: 'TEAM_MEMBER',
             permissions: []
         });
         setShowCreateModal(true);
@@ -180,6 +189,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
             description: group.description || '',
             color: group.color || 'violet',
             leaderId: group.leaderId || '',
+            defaultProjectRole: (group as any).defaultProjectRole || 'TEAM_MEMBER',
             permissions: group.permissions || []
         });
         setShowCreateModal(true);
@@ -367,10 +377,10 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                 <div>
                     <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                         <UsersRound size={24} />
-                        {t('admin.groups.title', 'User Groups')}
+                        {t('admin.groups.title', 'Teams')}
                     </h2>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {t('admin.groups.desc', 'Organize users into groups with shared permissions')}
+                        {t('admin.groups.desc', 'Create reusable teams to quickly assign to projects')}
                     </p>
                 </div>
                 <button
@@ -378,8 +388,24 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                     className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
                 >
                     <Plus size={18} />
-                    Create Group
+                    Create Team
                 </button>
+            </div>
+
+            {/* Info Banner - How teams work */}
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start gap-3">
+                <Info className="text-blue-500 mt-0.5 flex-shrink-0" size={18} />
+                <div className="text-sm text-blue-800 dark:text-blue-300">
+                    <p className="font-medium flex items-center gap-2">
+                        <FolderKanban size={16} />
+                        Teams connect to Projects
+                    </p>
+                    <p className="mt-1 text-blue-600 dark:text-blue-400">
+                        Create teams here (e.g., "Frontend Team", "PMO Office", "QA"). When adding members to a project, 
+                        you can select entire teams instead of individual users. All team members are added with their 
+                        default project role.
+                    </p>
+                </div>
             </div>
 
             {/* Search */}
@@ -389,22 +415,22 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search groups..."
+                    placeholder="Search teams..."
                     className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                 />
             </div>
 
-            {/* Groups List */}
+            {/* Teams List */}
             {filteredGroups.length === 0 ? (
                 <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
                     <UsersRound className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Groups</h3>
-                    <p className="text-slate-500 mt-1 mb-4">Create your first group to organize users</p>
+                    <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Teams</h3>
+                    <p className="text-slate-500 mt-1 mb-4">Create your first team to quickly assign groups of users to projects</p>
                     <button
                         onClick={openCreateModal}
                         className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
                     >
-                        Create Group
+                        Create Team
                     </button>
                 </div>
             ) : (
@@ -443,8 +469,8 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                                         {group.memberIds.length} members
                                                     </span>
                                                     <span className="flex items-center gap-1">
-                                                        <Shield size={12} />
-                                                        {group.permissions?.length || 0} permissions
+                                                        <FolderKanban size={12} />
+                                                        Default: {(group as any).defaultProjectRole?.replace('_', ' ') || 'Team Member'}
                                                     </span>
                                                 </div>
                                             </div>
@@ -567,7 +593,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                             <div className="p-6 border-b border-slate-200 dark:border-navy-700">
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                     <UsersRound size={20} />
-                                    {editingGroup ? 'Edit Group' : 'Create Group'}
+                                    {editingGroup ? 'Edit Team' : 'Create Team'}
                                 </h3>
                             </div>
                             <div className="p-6 space-y-6 overflow-y-auto max-h-[60vh]">
@@ -616,7 +642,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                            Group Leader
+                                            Team Leader
                                         </label>
                                         <select
                                             value={formData.leaderId}
@@ -631,6 +657,28 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                             ))}
                                         </select>
                                     </div>
+                                </div>
+
+                                {/* Default Project Role */}
+                                <div className="p-4 bg-slate-50 dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-600">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-2">
+                                        <FolderKanban size={16} />
+                                        Default Project Role
+                                    </label>
+                                    <p className="text-xs text-slate-500 mb-2">
+                                        When this team is added to a project, members will be assigned this role by default.
+                                    </p>
+                                    <select
+                                        value={formData.defaultProjectRole}
+                                        onChange={(e) => setFormData({ ...formData, defaultProjectRole: e.target.value })}
+                                        className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+                                    >
+                                        <option value="PROJECT_EXECUTIVE">Project Executive / Sponsor (Level 0)</option>
+                                        <option value="PROJECT_MANAGER">Project Manager (Level 1)</option>
+                                        <option value="TEAM_LEAD">Team Lead (Level 2)</option>
+                                        <option value="TEAM_MEMBER">Team Member (Level 3)</option>
+                                        <option value="STAKEHOLDER">Stakeholder / Viewer (Level 4)</option>
+                                    </select>
                                 </div>
 
                                 {/* Permissions Matrix */}
@@ -692,7 +740,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                     className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium disabled:opacity-50"
                                 >
                                     {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
-                                    {editingGroup ? 'Save Changes' : 'Create Group'}
+                                    {editingGroup ? 'Save Changes' : 'Create Team'}
                                 </button>
                             </div>
                         </motion.div>

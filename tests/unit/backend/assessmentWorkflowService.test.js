@@ -18,7 +18,7 @@ const mockDb = {
 const mockUuidv4 = vi.fn(() => 'mock-uuid-workflow');
 
 const mockAuditLogger = {
-    log: vi.fn()
+    log: vi.fn().mockResolvedValue()
 };
 
 // We don't need module level mocks for internal dependencies anymore because we use DI,

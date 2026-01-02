@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from 'react';
-import { Cpu, Sparkles, BookOpen, DollarSign, HeartPulse, FlaskConical, FileText, Radar, Activity, Settings, Shield, BarChart2 } from 'lucide-react';
+import { Cpu, Sparkles, BookOpen, DollarSign, HeartPulse, FlaskConical, FileText, Radar, Activity, Settings, Shield, BarChart2, Layers } from 'lucide-react';
 import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
 import { LLMManagementView } from './LLMManagementView';
 import { AIIntelligenceView } from './AIIntelligenceView';
@@ -19,6 +19,7 @@ import { AIPerformanceDashboard } from '../../components/Admin/AIPerformanceDash
 import { SuperAdminAISettings } from '../../components/SuperAdmin/SuperAdminAISettings';
 import { SLADashboard } from '../../components/Admin/SLADashboard';
 import { UsageAnalyticsDashboard } from '../../components/Admin/AI/UsageAnalyticsDashboard';
+import { ModelTierAssignments } from '../../components/SuperAdmin/ModelTierAssignments';
 
 interface AIPlatformModuleProps {
     initialTab?: string;
@@ -29,6 +30,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({ initialTab }
 
     const tabs: Tab[] = [
         { id: 'llm-config', label: 'LLM Config', icon: <Cpu size={16} /> },
+        { id: 'tier-assignments', label: 'Tier Assignments', icon: <Layers size={16} /> },
         { id: 'settings', label: 'Settings', icon: <Settings size={16} /> },
         { id: 'intelligence', label: 'Intelligence', icon: <Sparkles size={16} /> },
         { id: 'prompts-admin', label: 'Prompts Admin', icon: <FileText size={16} /> },
@@ -46,6 +48,12 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({ initialTab }
         switch (activeTab) {
             case 'llm-config':
                 return <LLMManagementView />;
+            case 'tier-assignments':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <ModelTierAssignments />
+                    </div>
+                );
             case 'settings':
                 return <SuperAdminAISettings />;
             case 'intelligence':

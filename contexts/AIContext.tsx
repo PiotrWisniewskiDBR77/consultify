@@ -342,7 +342,7 @@ _Context: ${pmoContext.currentScreen}_`,
             const fetchAIRole = async () => {
                 try {
                     const { Api } = await import('../services/api');
-                    const response = await Api.get(`/api/projects/${currentProjectId}/ai-role`);
+                    const response = await Api.get(`/projects/${currentProjectId}/ai-role`);
                     if (response?.aiRole) {
                         setProjectAIRole(response.aiRole);
                     }

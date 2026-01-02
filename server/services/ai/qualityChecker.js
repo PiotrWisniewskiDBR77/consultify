@@ -55,6 +55,37 @@ class QualityChecker {
 
         this.checksPerformed++;
 
+        // FAIL FAST: Empty response
+        if (!response.content || !response.content.trim()) {
+            return {
+                passed: false,
+                overallScore: 0,
+                checks: {
+                    hallucinationRisk: { score: 0, passed: false },
+                    citationCompliance: { score: 0, passed: false },
+                    relevance: { score: 0, passed: false },
+                    lengthAppropriate: { score: 0, passed: false },
+                    structureValid: { score: 0, passed: false },
+                    languageQuality: { score: 0, passed: false }
+                },
+                scores: {
+                    hallucination: 0,
+                    citation: 0,
+                    relevance: 0,
+                    length: 0,
+                    structure: 0,
+                    language: 0
+                },
+                warnings: ['Response is empty'],
+                suggestions: ['Retry generation'],
+                metadata: {
+                    checkDuration: Date.now() - startTime,
+                    strictMode,
+                    capability
+                }
+            };
+        }
+
         const checks = {
             hallucinationRisk: this.checkHallucination(response.content),
             citationCompliance: this.checkCitations(response.content, context),
@@ -189,8 +220,11 @@ class QualityChecker {
             ? overlap.length / queryWords.length
             : 0.5;
 
+        // Only apply boost if there is SOME relevance
+        const boost = (relevanceScore > 0 || queryWords.length === 0) ? 0.3 : 0;
+
         return {
-            score: Math.min(1, relevanceScore + 0.3), // Base boost for any response
+            score: Math.min(1, relevanceScore + boost),
             passed: relevanceScore >= QUALITY_THRESHOLDS.MIN_RELEVANCE,
             overlapCount: overlap.length,
             queryKeywords: queryWords.length,
@@ -301,6 +335,13 @@ class QualityChecker {
         if (placeholders.length > 2) {
             issues.push('Contains placeholder text');
             score -= 0.15;
+        }
+
+        // Check for generic non-answers
+        const dismissalPattern = /^(i (don'?t|do not) know|i (can'?t|cannot) answer|i am not sure|i'?m not sure)/i;
+        if (content.length < 50 && dismissalPattern.test(content.trim())) {
+            issues.push('Response is a generic dismissal');
+            score = 0.1; // Heavy penalty
         }
 
         // Check for mixed language issues (basic)

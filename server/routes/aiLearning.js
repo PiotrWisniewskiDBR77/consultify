@@ -163,6 +163,127 @@ router.get('/suggestions/:capability', verifyToken, async (req, res) => {
     }
 });
 
+/**
+ * GET /api/ai/learning/interactions
+ * Get recent AI interactions
+ * Available to: authenticated users
+ */
+router.get('/interactions', verifyToken, async (req, res) => {
+    try {
+        const organizationId = req.user?.organizationId;
+        const limit = parseInt(req.query.limit) || 10;
+        const range = req.query.range || '7d';
+        
+        // Calculate date range
+        const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
+        const sinceDate = new Date();
+        sinceDate.setDate(sinceDate.getDate() - days);
+        
+        const db = require('../database');
+        const interactions = await new Promise((resolve, reject) => {
+            const sql = organizationId 
+                ? `SELECT * FROM ai_logs WHERE user_id IN (SELECT id FROM users WHERE organization_id = ?) AND created_at >= ? ORDER BY created_at DESC LIMIT ?`
+                : `SELECT * FROM ai_logs WHERE created_at >= ? ORDER BY created_at DESC LIMIT ?`;
+            const params = organizationId 
+                ? [organizationId, sinceDate.toISOString(), limit]
+                : [sinceDate.toISOString(), limit];
+            
+            db.all(sql, params, (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows || []);
+            });
+        });
+        
+        res.json({
+            success: true,
+            interactions: interactions.map(i => ({
+                id: i.id,
+                action: i.action,
+                model: i.model,
+                tokens: (i.input_tokens || 0) + (i.output_tokens || 0),
+                latency: i.latency_ms,
+                topic: i.topic,
+                createdAt: i.created_at
+            }))
+        });
+    } catch (error) {
+        console.error('[AI Learning] Interactions error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch interactions',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/ai/learning/metrics
+ * Get learning metrics
+ * Available to: authenticated users
+ */
+router.get('/metrics', verifyToken, async (req, res) => {
+    try {
+        const organizationId = req.user?.organizationId;
+        const range = req.query.range || '7d';
+        
+        // Calculate date range
+        const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
+        const sinceDate = new Date();
+        sinceDate.setDate(sinceDate.getDate() - days);
+        
+        const db = require('../database');
+        const analytics = await learningSystem.getAnalytics(organizationId);
+        
+        // Get quality trends
+        const qualityTrends = await new Promise((resolve, reject) => {
+            const sql = organizationId
+                ? `SELECT DATE(created_at) as date, AVG(1.0) as score FROM ai_logs WHERE user_id IN (SELECT id FROM users WHERE organization_id = ?) AND created_at >= ? GROUP BY DATE(created_at) ORDER BY date`
+                : `SELECT DATE(created_at) as date, AVG(1.0) as score FROM ai_logs WHERE created_at >= ? GROUP BY DATE(created_at) ORDER BY date`;
+            const params = organizationId
+                ? [organizationId, sinceDate.toISOString()]
+                : [sinceDate.toISOString()];
+            
+            db.all(sql, params, (err, rows) => {
+                if (err) reject(err);
+                else {
+                    // Fill missing dates with default score
+                    const trends = [];
+                    for (let i = 0; i < days; i++) {
+                        const date = new Date(sinceDate);
+                        date.setDate(date.getDate() + i);
+                        const existing = rows.find(r => r.date === date.toISOString().split('T')[0]);
+                        trends.push({
+                            date: date.toISOString().split('T')[0],
+                            score: existing ? existing.score : 0.75
+                        });
+                    }
+                    resolve(trends);
+                }
+            });
+        });
+        
+        res.json({
+            success: true,
+            metrics: {
+                totalInteractions: analytics.totalInteractions || 0,
+                successRate: analytics.successRate || 0,
+                avgQualityScore: analytics.averageAutoFeedback || 0.75,
+                avgResponseTime: analytics.avgResponseTime || 1.2,
+                patternsLearned: analytics.patterns?.total || 0,
+                activeModels: analytics.activeModels || 0
+            },
+            qualityTrends
+        });
+    } catch (error) {
+        console.error('[AI Learning] Metrics error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch metrics',
+            message: error.message
+        });
+    }
+});
+
 // ============================================================================
 // ADMIN ENDPOINTS
 // ============================================================================

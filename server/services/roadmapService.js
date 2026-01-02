@@ -80,7 +80,7 @@ const RoadmapService = {
             const sql = `
                 SELECT 
                     w.id as wave_id, w.name as wave_name, w.start_date, w.end_date, w.status,
-                    i.id as initiative_id, i.name as initiative_name, i.status as initiative_status, i.priority
+                    i.id as initiative_id, i.title as initiative_name, i.status as initiative_status, i.priority
                 FROM roadmap_waves w
                 LEFT JOIN initiatives i ON i.wave_id = w.id
                 WHERE w.project_id = ?

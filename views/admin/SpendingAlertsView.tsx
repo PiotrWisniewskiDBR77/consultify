@@ -64,72 +64,27 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
         isActive: true
     });
 
+    // Load alerts on mount
+    useEffect(() => {
+        loadAlerts();
+    }, []);
+
     const loadAlerts = async () => {
         setLoading(true);
         try {
-            // Assuming 'api' is an imported axios instance or similar
-            // For this example, I'll use fetch as in the original code, but adapt to the instruction's structure
-            const res = await fetch(`/api/organizations/${currentOrganization?.id}/spending-alerts`, {
+            const res = await fetch(`/api/billing/spending-alerts`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
-            if (res.ok) { // Assuming res.ok implies success, similar to response.data.success
+            if (res.ok) {
                 const data = await res.json();
-                setAlerts(data || []); // Assuming data directly contains the alerts array
+                setAlerts(data || []);
             } else {
                 console.error('Failed to load alerts:', res.statusText);
-                // Fallback to mock data if API call fails or is not ok
-                setAlerts([
-                    {
-                        id: 'alert-1',
-                        organizationId: currentOrganization?.id || '',
-                        type: 'AI_TOKENS',
-                        threshold: 80,
-                        thresholdType: 'PERCENTAGE',
-                        action: 'NOTIFY',
-                        notifyEmails: [currentUser?.email || 'admin@company.com'],
-                        isActive: true,
-                        createdAt: new Date().toISOString()
-                    },
-                    {
-                        id: 'alert-2',
-                        organizationId: currentOrganization?.id || '',
-                        type: 'TOTAL_SPEND',
-                        threshold: 500,
-                        thresholdType: 'ABSOLUTE',
-                        action: 'NOTIFY_AND_PAUSE',
-                        notifyEmails: [currentUser?.email || 'admin@company.com', 'finance@company.com'],
-                        isActive: true,
-                        createdAt: new Date().toISOString()
-                    }
-                ]);
+                setAlerts([]);
             }
         } catch (error) {
             console.error('Failed to load alerts:', error);
-            // Mock data
-            setAlerts([
-                {
-                    id: 'alert-1',
-                    organizationId: currentOrganization?.id || '',
-                    type: 'AI_TOKENS',
-                    threshold: 80,
-                    thresholdType: 'PERCENTAGE',
-                    action: 'NOTIFY',
-                    notifyEmails: [currentUser?.email || 'admin@company.com'],
-                    isActive: true,
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'alert-2',
-                    organizationId: currentOrganization?.id || '',
-                    type: 'TOTAL_SPEND',
-                    threshold: 500,
-                    thresholdType: 'ABSOLUTE',
-                    action: 'NOTIFY_AND_PAUSE',
-                    notifyEmails: [currentUser?.email || 'admin@company.com', 'finance@company.com'],
-                    isActive: true,
-                    createdAt: new Date().toISOString()
-                }
-            ]);
+            setAlerts([]);
         }
         setLoading(false);
     };
@@ -169,8 +124,8 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
         setSaving(true);
         try {
             const url = editingAlert
-                ? `/api/organizations/${currentOrganization?.id}/spending-alerts/${editingAlert.id}`
-                : `/api/organizations/${currentOrganization?.id}/spending-alerts`;
+                ? `/api/billing/spending-alerts/${editingAlert.id}`
+                : `/api/billing/spending-alerts`;
 
             const res = await fetch(url, {
                 method: editingAlert ? 'PUT' : 'POST',
@@ -188,28 +143,12 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                 toast.success(editingAlert ? 'Alert updated' : 'Alert created');
                 setShowCreateModal(false);
                 loadAlerts();
+            } else {
+                toast.error('Failed to save alert');
             }
         } catch (error) {
-            // Mock success
-            toast.success(editingAlert ? 'Alert updated' : 'Alert created');
-            setShowCreateModal(false);
-
-            if (!editingAlert) {
-                const newAlert: SpendingAlert = {
-                    id: `alert-${Date.now()}`,
-                    organizationId: currentOrganization?.id || '',
-                    ...formData,
-                    notifyEmails: formData.notifyEmails.filter(e => e.trim()),
-                    createdAt: new Date().toISOString()
-                };
-                setAlerts(prev => [...prev, newAlert]);
-            } else {
-                setAlerts(prev => prev.map(a =>
-                    a.id === editingAlert.id
-                        ? { ...a, ...formData, notifyEmails: formData.notifyEmails.filter(e => e.trim()) }
-                        : a
-                ));
-            }
+            console.error('Failed to save alert:', error);
+            toast.error('Failed to save alert');
         }
         setSaving(false);
     };
@@ -219,34 +158,38 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
         if (!alert) return;
 
         try {
-            await fetch(`/api/organizations/${currentOrganization?.id}/spending-alerts/${alertId}/toggle`, {
+            const res = await fetch(`/api/billing/spending-alerts/${alertId}/toggle`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
+            if (res.ok) {
+                setAlerts(prev => prev.map(a =>
+                    a.id === alertId ? { ...a, isActive: !a.isActive } : a
+                ));
+                toast.success(alert.isActive ? 'Alert paused' : 'Alert activated');
+            }
         } catch (error) {
-            // Continue with local update
+            console.error('Failed to toggle alert:', error);
+            toast.error('Failed to toggle alert');
         }
-
-        setAlerts(prev => prev.map(a =>
-            a.id === alertId ? { ...a, isActive: !a.isActive } : a
-        ));
-        toast.success(alert.isActive ? 'Alert paused' : 'Alert activated');
     };
 
     const handleDeleteAlert = async (alertId: string) => {
         if (!confirm('Are you sure you want to delete this alert?')) return;
 
         try {
-            await fetch(`/api/organizations/${currentOrganization?.id}/spending-alerts/${alertId}`, {
+            const res = await fetch(`/api/billing/spending-alerts/${alertId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
+            if (res.ok) {
+                setAlerts(prev => prev.filter(a => a.id !== alertId));
+                toast.success('Alert deleted');
+            }
         } catch (error) {
-            // Continue with local update
+            console.error('Failed to delete alert:', error);
+            toast.error('Failed to delete alert');
         }
-
-        setAlerts(prev => prev.filter(a => a.id !== alertId));
-        toast.success('Alert deleted');
     };
 
     const addEmailField = () => {

@@ -172,14 +172,20 @@ const InvoiceService = {
             params.push(status);
         }
 
-        query += ` ORDER BY invoice_date DESC LIMIT ? OFFSET ?`;
+        query += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
         params.push(limit, offset);
 
         const invoices = await dbAll(query, params);
 
         return invoices.map(inv => ({
             ...inv,
-            formattedTotal: CurrencyService.formatAmount(inv.total, inv.currency),
+            // Map database columns to expected frontend format
+            invoice_number: inv.invoice_number || `INV-${inv.id?.slice(0, 8) || 'UNKNOWN'}`,
+            invoice_date: inv.created_at,
+            due_date: inv.period_end,
+            total: inv.amount_paid || inv.amount_due || 0,
+            currency: inv.currency || 'USD',
+            formattedTotal: CurrencyService.formatAmount(inv.total || inv.amount_paid || inv.amount_due || 0, inv.currency || 'USD'),
         }));
     },
 

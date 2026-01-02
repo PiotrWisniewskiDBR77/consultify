@@ -32,9 +32,19 @@ export const AdminMetricsDashboardView: React.FC = () => {
                 (Api as any).getOrgMetricsEvents?.(20) || Promise.resolve({ events: [] })
             ]);
 
-            setOverview(overviewData);
+            setOverview({
+                ...overviewData,
+                // Use real active users from overview
+                activeUsers: overviewData?.activeUsers || 0,
+                // Use real seat data if available
+                seatConfiguration: overviewData?.seatConfiguration
+            });
             setHelpMetrics(helpData);
-            setTeamMetrics(teamData);
+            setTeamMetrics({
+                ...teamData,
+                // Use real seat management data
+                seatManagement: teamData?.seatManagement
+            });
             setRecentEvents(eventsData.events || []);
         } catch (err: any) {
             console.error('Failed to fetch org metrics:', err);
@@ -85,9 +95,9 @@ export const AdminMetricsDashboardView: React.FC = () => {
                 <MetricCard
                     title="Team Adoption Rate"
                     value={`${teamMetrics?.invitations?.acceptanceRate || 0}%`}
-                    subtitle="Invitations Accepted"
+                    subtitle={`${teamMetrics?.invitations?.accepted || 0} / ${teamMetrics?.invitations?.sent || 0} accepted`}
                     icon={<Users className="text-purple-400" />}
-                    trend="+12%" // Mock trend for premium feel
+                    trend={teamMetrics?.seatManagement ? `${teamMetrics.seatManagement.seatsUsed}/${teamMetrics.seatManagement.totalSeats} seats` : "+12%"}
                     color="purple"
                 />
                 <MetricCard
@@ -100,10 +110,10 @@ export const AdminMetricsDashboardView: React.FC = () => {
                 />
                 <MetricCard
                     title="Active Users"
-                    value={overview?.activeUsers || 0}
-                    subtitle="30-Day Activity"
+                    value={overview?.activeUsers || overview?.seatConfiguration?.seatsUsed || 0}
+                    subtitle={overview?.seatConfiguration ? `${overview.seatConfiguration.seatsRemaining} seats remaining` : "30-Day Activity"}
                     icon={<Activity className="text-green-400" />}
-                    trend="+2"
+                    trend={overview?.seatConfiguration ? `${overview.seatConfiguration.utilizationPercent}% utilized` : "+2"}
                     color="green"
                 />
                 <MetricCard
@@ -190,22 +200,22 @@ export const AdminMetricsDashboardView: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {helpMetrics?.byPlaybook?.length > 0 ? (
                                 helpMetrics.byPlaybook.map((playbook: any, idx: number) => (
-                                    <div key={idx} className="bg-navy-950/50 border border-white/5 rounded-xl p-5 hover:border-cyan-500/30 transition-all group">
+                                    <div key={idx} className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 rounded-xl p-5 hover:border-secondary-500/30 transition-all group">
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="text-sm font-bold text-white truncate group-hover:text-cyan-400 transition-colors">
+                                                <h3 className="text-sm font-bold text-navy-900 dark:text-white truncate group-hover:text-secondary-600 dark:group-hover:text-cyan-400 transition-colors">
                                                     {playbook.playbookKey.replace(/_/g, ' ')}
                                                 </h3>
                                                 <p className="text-[10px] text-slate-500 mt-0.5">{playbook.started} Attempts</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-lg font-black text-cyan-400">{playbook.completionRate}%</p>
+                                                <p className="text-lg font-black text-secondary-600 dark:text-cyan-400">{playbook.completionRate}%</p>
                                                 <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Success</p>
                                             </div>
                                         </div>
-                                        <div className="h-1.5 bg-navy-900 rounded-full overflow-hidden">
+                                        <div className="h-1.5 bg-slate-200 dark:bg-navy-900 rounded-full overflow-hidden">
                                             <div
-                                                className="h-full bg-gradient-to-r from-cyan-600 to-blue-500 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(6,182,212,0.5)]"
+                                                className="h-full bg-gradient-to-r from-secondary-600 to-primary-500 dark:from-cyan-600 dark:to-blue-500 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(6,182,212,0.5)]"
                                                 style={{ width: `${playbook.completionRate}%` }}
                                             />
                                         </div>
@@ -220,34 +230,34 @@ export const AdminMetricsDashboardView: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Left Column: Recent Activity & Status */}
+                {/* Right Column: Recent Activity & Status - DBR77 Compatible */}
                 <div className="space-y-8">
-                    <div className="bg-gradient-to-br from-blue-900/40 to-navy-900 border border-blue-500/20 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
-                        <div className="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all duration-700" />
+                    <div className="bg-gradient-to-br from-secondary-700 to-primary-700 dark:from-blue-900/40 dark:to-navy-900 border border-secondary-500/30 dark:border-blue-500/20 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
+                        <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 dark:bg-blue-500/10 rounded-full blur-3xl group-hover:bg-white/20 dark:group-hover:bg-blue-500/20 transition-all duration-700" />
 
                         <div className="relative z-10">
-                            <div className="flex items-center gap-2 text-blue-400 mb-4 font-bold text-xs uppercase tracking-widest">
+                            <div className="flex items-center gap-2 text-white/80 dark:text-blue-400 mb-4 font-bold text-xs uppercase tracking-widest">
                                 <CheckCircle2 size={16} />
                                 Conversion Status
                             </div>
                             <h3 className="text-2xl font-black text-white mb-2">
                                 {overview?.orgStatus === 'trial' ? 'Organization in Trial' : 'Enterprise Account'}
                             </h3>
-                            <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                            <p className="text-white/70 dark:text-slate-400 text-sm leading-relaxed mb-6">
                                 {overview?.orgStatus === 'trial'
                                     ? `Your trial expires in ${overview?.daysLeft || 0} days. Your engagement score is high, indicating a healthy adoption path.`
                                     : 'Your organization is fully licensed and performing at peak efficiency.'
                                 }
                             </p>
-                            <div className="flex items-center gap-4 pt-4 border-t border-white/10">
+                            <div className="flex items-center gap-4 pt-4 border-t border-white/20 dark:border-white/10">
                                 <div className="flex-1">
-                                    <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1 uppercase">
+                                    <div className="flex justify-between text-[10px] font-bold text-white/70 dark:text-slate-500 mb-1 uppercase">
                                         <span>Trial Progress</span>
                                         <span>{Math.round((30 - (overview?.daysLeft || 0)) / 30 * 100)}%</span>
                                     </div>
-                                    <div className="h-1.5 bg-navy-800 rounded-full overflow-hidden">
+                                    <div className="h-1.5 bg-white/20 dark:bg-navy-800 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-blue-500"
+                                            className="h-full bg-white dark:bg-blue-500"
                                             style={{ width: `${Math.round((30 - (overview?.daysLeft || 0)) / 30 * 100)}%` }}
                                         />
                                     </div>
@@ -256,15 +266,15 @@ export const AdminMetricsDashboardView: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="bg-navy-900 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
-                        <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                            <h3 className="font-bold text-white flex items-center gap-2 text-sm uppercase tracking-widest">
-                                <Activity size={16} className="text-green-400" />
+                    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-xl">
+                        <div className="p-6 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
+                            <h3 className="font-bold text-navy-900 dark:text-white flex items-center gap-2 text-sm uppercase tracking-widest">
+                                <Activity size={16} className="text-success-600 dark:text-green-400" />
                                 Metric Feed
                             </h3>
-                            <button className="text-[10px] font-bold text-blue-400 hover:text-blue-300 transition-colors">VIEW ALL</button>
+                            <button className="text-[10px] font-bold text-primary-600 dark:text-blue-400 hover:text-primary-700 dark:hover:text-blue-300 transition-colors">VIEW ALL</button>
                         </div>
-                        <div className="divide-y divide-white/5 max-h-[500px] overflow-y-auto">
+                        <div className="divide-y divide-slate-200 dark:divide-white/5 max-h-[500px] overflow-y-auto">
                             {recentEvents.length > 0 ? (
                                 recentEvents.map((event, idx) => (
                                     <EventRow key={idx} event={event} />
@@ -291,17 +301,22 @@ interface MetricCardProps {
     color: 'blue' | 'purple' | 'cyan' | 'green' | 'orange';
 }
 
+/**
+ * MetricCard - DBR77 Color System Compatible
+ * Light mode: white background, dark text
+ * Dark mode: navy background, light text
+ */
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, icon, trend, color }) => {
     const colorClasses = {
-        blue: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-        purple: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
-        cyan: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
-        green: 'text-green-400 bg-green-500/10 border-green-500/20',
-        orange: 'text-orange-400 bg-orange-500/10 border-orange-500/20'
+        blue: 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/30 dark:border-blue-500/20',
+        purple: 'text-primary-600 dark:text-purple-400 bg-primary-500/10 border-primary-500/30 dark:border-purple-500/20',
+        cyan: 'text-secondary-600 dark:text-cyan-400 bg-secondary-500/10 border-secondary-500/30 dark:border-cyan-500/20',
+        green: 'text-success-600 dark:text-green-400 bg-success-500/10 border-success-500/30 dark:border-green-500/20',
+        orange: 'text-primary-600 dark:text-orange-400 bg-primary-500/10 border-primary-500/30 dark:border-orange-500/20'
     };
 
     return (
-        <div className="bg-navy-900/80 border border-white/10 rounded-2xl p-6 shadow-lg backdrop-blur-sm group hover:border-white/20 transition-all hover:translate-y-[-2px]">
+        <div className="bg-white dark:bg-navy-900/80 border border-slate-200 dark:border-white/10 rounded-2xl p-6 shadow-sm dark:shadow-lg backdrop-blur-sm group hover:border-primary-500/30 dark:hover:border-white/20 transition-all hover:translate-y-[-2px]">
             <div className="flex justify-between items-start mb-4">
                 <div className={`p-3 rounded-xl border ${colorClasses[color]}`}>
                     {React.cloneElement(icon as React.ReactElement, { size: 24 } as any)}
@@ -313,9 +328,9 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, icon, t
                     <span className="text-[9px] text-slate-500 mt-1 uppercase font-bold tracking-tighter">v. Prev Month</span>
                 </div>
             </div>
-            <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest">{title}</h3>
+            <h3 className="text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">{title}</h3>
             <div className="flex items-baseline gap-2 mt-1">
-                <p className="text-3xl font-black text-white tracking-tighter">{value}</p>
+                <p className="text-3xl font-black text-navy-900 dark:text-white tracking-tighter">{value}</p>
                 <p className="text-[10px] text-slate-500 font-medium truncate">{subtitle}</p>
             </div>
         </div>
@@ -326,11 +341,11 @@ const FunnelStep: React.FC<{ label: string; value: number; percent: number; colo
     <div className="group">
         <div className="flex items-center gap-4 mb-2 px-2">
             <div className="w-24 text-right">
-                <p className="text-xs font-bold text-slate-300">{label}</p>
-                <p className="text-[10px] text-orange-400 font-black">{Math.round(percent)}% COV</p>
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{label}</p>
+                <p className="text-[10px] text-primary-600 dark:text-orange-400 font-black">{Math.round(percent)}% COV</p>
             </div>
             <div className="flex-1 h-12 relative flex items-center">
-                <div className="absolute inset-0 bg-white/5 rounded-xl border border-white/5" />
+                <div className="absolute inset-0 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5" />
                 <div
                     className={`h-full ${color} rounded-xl transition-all duration-1000 shadow-xl opacity-80 group-hover:opacity-100`}
                     style={{ width: `${percent}%` }}
@@ -362,12 +377,12 @@ const EventRow: React.FC<{ event: any }> = ({ event }) => {
     };
 
     return (
-        <div className="p-4 hover:bg-white/5 transition-colors flex items-center gap-4 group">
-            <div className="w-8 h-8 rounded-lg bg-navy-950 border border-white/10 flex items-center justify-center shrink-0 group-hover:border-white/20 transition-all">
+        <div className="p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-4 group">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-navy-950 border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 group-hover:border-primary-500/30 dark:group-hover:border-white/20 transition-all">
                 {getIcon()}
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white uppercase tracking-tight truncate">
+                <p className="text-xs font-bold text-navy-900 dark:text-white uppercase tracking-tight truncate">
                     {event.event_type.replace(/_/g, ' ')}
                 </p>
                 <p className="text-[10px] text-slate-500 mt-0.5 truncate">
@@ -375,8 +390,8 @@ const EventRow: React.FC<{ event: any }> = ({ event }) => {
                 </p>
             </div>
             <div className="text-right shrink-0">
-                <p className="text-[10px] font-bold text-slate-400">{new Date(event.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                <p className="text-[9px] text-slate-600 mt-0.5">{new Date(event.created_at).toLocaleDateString()}</p>
+                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400">{new Date(event.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                <p className="text-[9px] text-slate-500 dark:text-slate-600 mt-0.5">{new Date(event.created_at).toLocaleDateString()}</p>
             </div>
         </div>
     );

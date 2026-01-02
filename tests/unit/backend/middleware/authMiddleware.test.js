@@ -16,6 +16,10 @@ describe('AuthMiddleware (DI Refactored)', () => {
         next = vi.fn();
         vi.clearAllMocks();
 
+        // Mock db methods as spies
+        db.get = vi.fn();
+        db.all = vi.fn();
+
         // Inject dependencies directly
         verifyToken.setDependencies({
             jwt: jwt,

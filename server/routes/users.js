@@ -12,18 +12,18 @@ router.use(verifyToken);
 router.get('/', (req, res) => {
     // SuperAdmin sees all? Or we keep strict tenant separation even for him unless impersonating.
     // For now: Admin sees own org users.
-    
+
     const { canReview } = req.query;
-    
+
     // Build SQL based on filters - include is_owner for Owner badge display
-    let sql = 'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, license_plan_id, ai_config, is_owner FROM users WHERE organization_id = ?';
+    let sql = 'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, license_plan_id, ai_config, is_owner, phone, linkedin_id FROM users WHERE organization_id = ?';
     const params = [req.user.organizationId];
-    
+
     // If canReview=true, filter to users with review permissions (Admin, Manager, or specific role)
     if (canReview === 'true') {
         sql += ` AND (role IN ('ADMIN', 'MANAGER', 'REVIEWER', 'LEADER') OR status = 'ACTIVE')`;
     }
-    
+
     sql += ' ORDER BY is_owner DESC, first_name, last_name'; // Owner first
 
     db.all(sql, params, (err, rows) => {
@@ -40,9 +40,11 @@ router.get('/', (req, res) => {
             lastLogin: u.last_login,
             aiConfig: u.ai_config ? JSON.parse(u.ai_config) : {},
             licensePlanId: u.license_plan_id,
-            isOwner: u.is_owner === 1 || u.is_owner === true
+            isOwner: u.is_owner === 1 || u.is_owner === true,
+            phone: u.phone,
+            linkedinId: u.linkedin_id
         }));
-        
+
         // Return in format expected by modal
         res.json({ users, total: users.length });
     });
@@ -151,30 +153,30 @@ router.post('/', (req, res) => {
 // UPDATE USER (Protected: Cannot change Owner role without Transfer)
 router.put('/:id', (req, res) => {
     const { id } = req.params;
-    const { firstName, lastName, email, role, status, aiConfig, licensePlanId } = req.body;
+    const { firstName, lastName, email, role, status, aiConfig, licensePlanId, phone, linkedinId } = req.body;
     const organizationId = req.user.organizationId;
 
     // First check if user is Owner and if role change is attempted
-    db.get('SELECT id, is_owner, role FROM users WHERE id = ? AND organization_id = ?', 
-        [id, organizationId], 
+    db.get('SELECT id, is_owner, role FROM users WHERE id = ? AND organization_id = ?',
+        [id, organizationId],
         (err, user) => {
             if (err) return res.status(500).json({ error: err.message });
             if (!user) return res.status(404).json({ error: 'User not found or access denied' });
 
             // OWNER PROTECTION: Cannot change Owner's role or deactivate
             const isOwner = user.is_owner === 1 || user.is_owner === true || user.role === 'OWNER';
-            
+
             if (isOwner) {
                 // Block role changes for Owner
                 if (role !== undefined && role !== user.role && role !== 'OWNER') {
-                    return res.status(403).json({ 
+                    return res.status(403).json({
                         error: 'Cannot change Account Owner role. Use Transfer Ownership instead.',
                         code: 'OWNER_ROLE_PROTECTED'
                     });
                 }
                 // Block deactivation of Owner
                 if (status !== undefined && status !== 'active') {
-                    return res.status(403).json({ 
+                    return res.status(403).json({
                         error: 'Cannot deactivate Account Owner. Transfer ownership first.',
                         code: 'OWNER_STATUS_PROTECTED'
                     });
@@ -192,6 +194,8 @@ router.put('/:id', (req, res) => {
             if (status !== undefined) { fields.push('status = ?'); params.push(status); }
             if (aiConfig !== undefined) { fields.push('ai_config = ?'); params.push(JSON.stringify(aiConfig)); }
             if (licensePlanId !== undefined) { fields.push('license_plan_id = ?'); params.push(licensePlanId); }
+            if (phone !== undefined) { fields.push('phone = ?'); params.push(phone); }
+            if (linkedinId !== undefined) { fields.push('linkedin_id = ?'); params.push(linkedinId); }
 
             if (fields.length === 0) {
                 return res.json({ message: 'No changes provided' });
@@ -215,15 +219,15 @@ router.delete('/:id', (req, res) => {
     const organizationId = req.user.organizationId;
 
     // First check if user is Owner - Owners cannot be deleted
-    db.get('SELECT id, is_owner, role, first_name, last_name FROM users WHERE id = ? AND organization_id = ?', 
-        [id, organizationId], 
+    db.get('SELECT id, is_owner, role, first_name, last_name FROM users WHERE id = ? AND organization_id = ?',
+        [id, organizationId],
         (err, user) => {
             if (err) return res.status(500).json({ error: err.message });
             if (!user) return res.status(404).json({ error: 'User not found or access denied' });
 
             // OWNER PROTECTION: Cannot delete account owner
             if (user.is_owner === 1 || user.is_owner === true || user.role === 'OWNER') {
-                return res.status(403).json({ 
+                return res.status(403).json({
                     error: 'Cannot delete Account Owner. Transfer ownership first.',
                     code: 'OWNER_PROTECTED',
                     message: `${user.first_name} ${user.last_name} is the Account Owner and cannot be deleted. Use "Transfer Ownership" to assign ownership to another admin first.`

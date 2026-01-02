@@ -8,13 +8,19 @@ import React, { useState } from 'react';
 import { 
     User as UserIcon, 
     Image, 
-    Key, 
+    ShieldCheck, 
     Settings, 
     CreditCard, 
     Link2, 
-    Shield, 
     Activity,
-    Send
+    Send,
+    Mail,
+    Clock,
+    FileText,
+    Eye,
+    BookOpen,
+    Globe,
+    Circle
 } from 'lucide-react';
 import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
 import { ProfileSettings } from '../../components/settings/ProfileSettings';
@@ -24,6 +30,22 @@ import { ConnectedAccounts } from '../../components/settings/ConnectedAccounts';
 import { PermissionRequestSection } from '../../components/settings/PermissionRequestSection';
 import { ActivityLog } from '../../components/settings/ActivityLog';
 import { ProfileCompleteness } from '../../components/settings/ProfileCompleteness';
+import { ProfileStatusSettings } from '../../components/settings/ProfileStatusSettings';
+import { ProfileBioSettings } from '../../components/settings/ProfileBioSettings';
+import { ProfileSocialSettings } from '../../components/settings/ProfileSocialSettings';
+import { ProfileWorkHoursSettings } from '../../components/settings/ProfileWorkHoursSettings';
+import { ProfileCompletenessIndicator } from '../../components/settings/ProfileCompletenessIndicator';
+import { ProfessionalProfileSection } from '../../components/settings/ProfessionalProfileSection';
+import { ContactInformationSection } from '../../components/settings/ContactInformationSection';
+import { AvailabilityStatusSection } from '../../components/settings/AvailabilityStatusSection';
+import { PasswordSecuritySettings } from '../../components/settings/PasswordSecuritySettings';
+import { WorkingHoursSettings } from '../../components/settings/WorkingHoursSettings';
+import { EmailSignatureSettings } from '../../components/settings/EmailSignatureSettings';
+// New extended settings components
+import { BioAboutSection } from '../../components/settings/BioAboutSection';
+import { SocialLinksSection } from '../../components/settings/SocialLinksSection';
+import { ProfileVisibilitySettings } from '../../components/settings/ProfileVisibilitySettings';
+import { EmailCommunicationSettings } from '../../components/settings/EmailCommunicationSettings';
 import { useTranslation } from 'react-i18next';
 import { User } from '../../types';
 import { Api } from '../../services/api';
@@ -396,6 +418,7 @@ export const ProfileModule: React.FC<ProfileModuleProps> = ({
     const [activeTab, setActiveTab] = useState(initialTab || 'personal');
 
     const tabs: Tab[] = [
+        // Personal Information Group
         { 
             id: 'personal', 
             label: t('settings.tabs.personal', 'Personal Info'), 
@@ -407,14 +430,64 @@ export const ProfileModule: React.FC<ProfileModuleProps> = ({
             icon: <Image size={16} /> 
         },
         { 
+            id: 'bio-extended', 
+            label: t('settings.tabs.bioExtended', 'Bio & About'), 
+            icon: <BookOpen size={16} /> 
+        },
+        { 
+            id: 'social-extended', 
+            label: t('settings.tabs.socialExtended', 'Social & Links'), 
+            icon: <Globe size={16} /> 
+        },
+        // Privacy & Visibility Group
+        { 
+            id: 'visibility', 
+            label: t('settings.tabs.visibility', 'Privacy'), 
+            icon: <Eye size={16} /> 
+        },
+        // Communication Group
+        { 
+            id: 'email-comm', 
+            label: t('settings.tabs.emailComm', 'Email & Comm'), 
+            icon: <Mail size={16} /> 
+        },
+        { 
+            id: 'signature', 
+            label: t('settings.tabs.signature', 'Signature'), 
+            icon: <FileText size={16} /> 
+        },
+        // Availability & Schedule
+        { 
+            id: 'status', 
+            label: t('settings.tabs.status', 'Status'), 
+            icon: <Circle size={16} /> 
+        },
+        { 
+            id: 'availability', 
+            label: t('settings.tabs.availability', 'Availability'), 
+            icon: <Clock size={16} /> 
+        },
+        { 
+            id: 'schedule', 
+            label: t('settings.tabs.schedule', 'Schedule'), 
+            icon: <Clock size={16} /> 
+        },
+        // Professional Profile Group
+        { 
+            id: 'professional', 
+            label: t('settings.tabs.professional', 'Professional'), 
+            icon: <UserIcon size={16} /> 
+        },
+        { 
+            id: 'contact', 
+            label: t('settings.tabs.contact', 'Contact'), 
+            icon: <Mail size={16} /> 
+        },
+        // Connections & Activity
+        { 
             id: 'connected', 
             label: t('settings.tabs.connected', 'Connected'), 
             icon: <Link2 size={16} /> 
-        },
-        { 
-            id: 'permissions', 
-            label: t('settings.tabs.permissions', 'Requests'), 
-            icon: <Send size={16} /> 
         },
         { 
             id: 'activity', 
@@ -422,9 +495,15 @@ export const ProfileModule: React.FC<ProfileModuleProps> = ({
             icon: <Activity size={16} /> 
         },
         { 
-            id: 'password', 
-            label: t('settings.tabs.password', 'Password'), 
-            icon: <Key size={16} /> 
+            id: 'permissions', 
+            label: t('settings.tabs.permissions', 'Requests'), 
+            icon: <Send size={16} /> 
+        },
+        // Security & Account
+        { 
+            id: 'security', 
+            label: t('settings.tabs.security', 'Security'), 
+            icon: <ShieldCheck size={16} /> 
         },
         { 
             id: 'billing', 
@@ -443,11 +522,11 @@ export const ProfileModule: React.FC<ProfileModuleProps> = ({
             case 'personal':
                 return (
                     <div className="space-y-6">
-                        {/* Profile Completeness - Compact version at top */}
-                        <ProfileCompleteness 
+                        {/* Profile Completeness Indicator */}
+                        <ProfileCompletenessIndicator 
                             currentUser={currentUser} 
                             onNavigate={setActiveTab}
-                            compact={true}
+                            showDetails={true}
                         />
                         <ProfileSettings
                             currentUser={currentUser}
@@ -457,10 +536,76 @@ export const ProfileModule: React.FC<ProfileModuleProps> = ({
                         />
                     </div>
                 );
+            case 'status':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <ProfileStatusSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                    </div>
+                );
+            case 'bio':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <ProfileBioSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                    </div>
+                );
+            case 'social':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <ProfileSocialSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                    </div>
+                );
+            case 'work-hours':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <ProfileWorkHoursSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                    </div>
+                );
             case 'avatar':
                 return (
                     <div className="p-6 overflow-y-auto h-full">
                         <AvatarUploader currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                    </div>
+                );
+            case 'bio-extended':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <BioAboutSection currentUser={currentUser} />
+                    </div>
+                );
+            case 'social-extended':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <SocialLinksSection currentUser={currentUser} />
+                    </div>
+                );
+            case 'visibility':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <ProfileVisibilitySettings currentUser={currentUser} />
+                    </div>
+                );
+            case 'email-comm':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <EmailCommunicationSettings currentUser={currentUser} />
+                    </div>
+                );
+            case 'professional':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <ProfessionalProfileSection currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                    </div>
+                );
+            case 'contact':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <ContactInformationSection currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                    </div>
+                );
+            case 'availability':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <AvailabilityStatusSection currentUser={currentUser} onUpdateUser={onUpdateUser} />
                     </div>
                 );
             case 'connected':
@@ -481,10 +626,22 @@ export const ProfileModule: React.FC<ProfileModuleProps> = ({
                         <ActivityLog currentUser={currentUser} />
                     </div>
                 );
-            case 'password':
+            case 'schedule':
                 return (
                     <div className="p-6 overflow-y-auto h-full">
-                        <PasswordSettings currentUser={currentUser} />
+                        <WorkingHoursSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                    </div>
+                );
+            case 'signature':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <EmailSignatureSettings currentUser={currentUser} />
+                    </div>
+                );
+            case 'security':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <PasswordSecuritySettings currentUser={currentUser} />
                     </div>
                 );
             case 'billing':

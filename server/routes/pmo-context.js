@@ -302,7 +302,7 @@ router.get('/:projectId/task-labels', verifyToken, async (req, res) => {
                     t.blocked_reason,
                     t.assignee_id,
                     t.initiative_id,
-                    i.name as initiative_name,
+                    i.title as initiative_name,
                     i.status as initiative_status
                 FROM tasks t
                 LEFT JOIN initiatives i ON t.initiative_id = i.id

@@ -269,8 +269,17 @@ async function seedDBR77Complete() {
         )`);
 
         console.log('✅ Verified/Created assessment tables (workflows, versions, reports, reviews, comments)');
-        // 1. Find DBR77 organization
-        const org = await dbGet(`SELECT id FROM organizations WHERE name LIKE '%DBR77%' LIMIT 1`);
+        // 1. Find DBR77 organization (Prefer org-dbr77-test)
+        let org = await dbGet(`SELECT id FROM organizations WHERE id = 'org-dbr77-test'`);
+        if (!org) {
+            console.log('⚠️ org-dbr77-test not found by ID, trying name search...');
+            org = await dbGet(`SELECT id FROM organizations WHERE name = 'DBR77' LIMIT 1`);
+        }
+        if (!org) {
+            // Fallback for system org if completely missing
+            org = await dbGet(`SELECT id FROM organizations WHERE name LIKE '%DBR77%' LIMIT 1`);
+        }
+
         if (!org) {
             console.error('❌ DBR77 organization not found. Run seed_dbr77 first.');
             process.exit(1);
@@ -484,12 +493,12 @@ async function seedDBR77Complete() {
                 const priority = ['HIGH', 'MEDIUM', 'LOW'][initiativesCreated % 3];
 
                 await dbRun(`INSERT INTO initiatives 
-                             (id, organization_id, project_id, name, description, axis, status, priority,
+                             (id, organization_id, project_id, title, summary, axis, status, 
                               business_value, cost_capex, cost_opex, expected_roi, owner_business_id, created_at)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
                     [initiativeId, organizationId, proj.projectId,
                         `${template.name} - ${proj.name.split(' ')[0]}`,
-                        template.description, axis, status, priority,
+                        template.description, axis, status,
                         template.business_value, template.cost_capex, template.cost_opex,
                         template.expected_roi, piotrId]);
 

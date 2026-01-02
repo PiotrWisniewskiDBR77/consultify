@@ -121,7 +121,17 @@ export function AdminTable<T extends Record<string, any>>({
     );
 }
 
-// Status Badge component for use in tables
+/**
+ * Status Badge component for use in tables
+ * DBR77 Color System - See: docs/00_foundation/COLOR_SYSTEM_STANDARD.md
+ * 
+ * Variants:
+ * - success: Zielony (Active, Healthy)
+ * - warning: Fiolet primary (Pending) - BRAK żółtego/pomarańczowego!
+ * - error: Czerwony (Error, Failed)
+ * - info: Navy secondary (Info)
+ * - neutral: Szary (Inactive)
+ */
 type BadgeVariant = 'success' | 'warning' | 'error' | 'neutral' | 'info';
 
 interface StatusBadgeProps {
@@ -131,10 +141,10 @@ interface StatusBadgeProps {
 }
 
 const badgeConfig: Record<BadgeVariant, { bg: string; text: string; dot: string }> = {
-    success: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400' },
-    warning: { bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-400' },
-    error: { bg: 'bg-red-500/10', text: 'text-red-400', dot: 'bg-red-400' },
-    info: { bg: 'bg-blue-500/10', text: 'text-blue-400', dot: 'bg-blue-400' },
+    success: { bg: 'bg-success-500/10', text: 'text-success-400', dot: 'bg-success-400' },
+    warning: { bg: 'bg-primary-500/10', text: 'text-primary-400', dot: 'bg-primary-400' },  // Fiolet zamiast amber
+    error: { bg: 'bg-danger-500/10', text: 'text-danger-400', dot: 'bg-danger-400' },
+    info: { bg: 'bg-secondary-500/10', text: 'text-secondary-400', dot: 'bg-secondary-400' },  // Navy zamiast blue
     neutral: { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' },
 };
 

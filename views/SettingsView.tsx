@@ -42,12 +42,15 @@ import {
     Accessibility,
     Settings,
     ClipboardList,
+    Moon,
+    Sliders,
+    Zap,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 // Import settings components
 import { ProfileSettings } from '../components/settings/ProfileSettings';
-import { AvatarSettings } from '../components/settings/AvatarSettings';
+import { AvatarUploader } from '../components/settings/AvatarUploader';
 import { PasswordSettings } from '../components/settings/PasswordSettings';
 import { BillingSettings } from '../components/settings/BillingSettings';
 import { AccountManagementSettings } from '../components/settings/AccountManagementSettings';
@@ -56,10 +59,19 @@ import { AIMemorySettings } from '../components/settings/AIMemorySettings';
 import { ResponseStyleSettings } from '../components/settings/ResponseStyleSettings';
 import { ChatHistorySettings } from '../components/settings/ChatHistorySettings';
 import { VoiceSettings } from '../components/settings/VoiceSettings';
+import { AIModelSelectionSettings } from '../components/settings/AIModelSelectionSettings';
+import { AIParametersSettings } from '../components/settings/AIParametersSettings';
+import { AIPersonalitySettings } from '../components/settings/AIPersonalitySettings';
+import { AIAutoCompleteSettings } from '../components/settings/AIAutoCompleteSettings';
 import { NotificationSettings } from '../components/settings/NotificationSettings';
 import { EmailNotificationsSettings } from '../components/settings/EmailNotificationsSettings';
 import { PushNotificationsSettings } from '../components/settings/PushNotificationsSettings';
 import { NotificationScheduleSettings } from '../components/settings/NotificationScheduleSettings';
+import { SoundNotificationsSettings } from '../components/settings/SoundNotificationsSettings';
+import { NotificationGroupingSettings } from '../components/settings/NotificationGroupingSettings';
+import { NotificationDigestSettings } from '../components/settings/NotificationDigestSettings';
+import { QuietHoursSettings } from '../components/settings/QuietHoursSettings';
+import { DNDModeSettings } from '../components/settings/DNDModeSettings';
 import { MFASetup } from '../components/Profile/MFASetup';
 import { ActiveSessionsSettings } from '../components/settings/ActiveSessionsSettings';
 import { LoginHistorySettings } from '../components/settings/LoginHistorySettings';
@@ -69,12 +81,15 @@ import { ConnectedAppsSettings } from '../components/settings/ConnectedAppsSetti
 import { APIAccessSettings } from '../components/settings/APIAccessSettings';
 import { WebhooksSettings } from '../components/settings/WebhooksSettings';
 import { CalendarSyncSettings } from '../components/settings/CalendarSyncSettings';
+import { AIIntegrationsSettings } from '../components/settings/AIIntegrationsSettings';
 import { ThemeSettings } from '../components/settings/ThemeSettings';
 import { LanguageSettings } from '../components/settings/LanguageSettings';
 import { RegionalSettings } from '../components/settings/RegionalSettings';
 import { AccessibilitySettings } from '../components/settings/AccessibilitySettings';
 import { WorkPreferencesSettings } from '../components/settings/WorkPreferencesSettings';
 import { DashboardPreferencesSettings } from '../components/settings/DashboardPreferencesSettings';
+import { KeyboardShortcutsSettings } from '../components/settings/KeyboardShortcutsSettings';
+import { AppearanceSettings } from '../components/settings/AppearanceSettings';
 
 // Settings section type
 type SettingsSection = 'profile' | 'ai-preferences' | 'notifications' | 'security' | 'integrations' | 'appearance';
@@ -233,7 +248,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                             <ProfileSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
                         </TabsContent>
                         <TabsContent value="avatar" className="mt-6">
-                            <AvatarSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                            <AvatarUploader currentUser={currentUser} onUpdateUser={onUpdateUser} />
                         </TabsContent>
                         <TabsContent value="password" className="mt-6">
                             <PasswordSettings />
@@ -242,7 +257,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                             <BillingSettings currentUser={currentUser} />
                         </TabsContent>
                         <TabsContent value="account" className="mt-6">
-                            <AccountManagementSettings currentUser={currentUser} />
+                            <AccountManagementSettings />
                         </TabsContent>
                     </Tabs>
                 );
@@ -250,10 +265,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             case 'ai-preferences':
                 return (
                     <Tabs defaultValue="instructions" className="w-full">
-                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg">
+                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg flex-wrap">
                             <TabsTrigger value="instructions" className="flex items-center gap-2">
                                 <MessageSquare size={16} />
                                 {t('settings.ai.tabs.instructions', 'Instructions')}
+                            </TabsTrigger>
+                            <TabsTrigger value="model" className="flex items-center gap-2">
+                                <Brain size={16} />
+                                {t('settings.ai.tabs.model', 'Model')}
+                            </TabsTrigger>
+                            <TabsTrigger value="parameters" className="flex items-center gap-2">
+                                <Sliders size={16} />
+                                {t('settings.ai.tabs.parameters', 'Parameters')}
+                            </TabsTrigger>
+                            <TabsTrigger value="personality" className="flex items-center gap-2">
+                                <UserIcon size={16} />
+                                {t('settings.ai.tabs.personality', 'Personality')}
+                            </TabsTrigger>
+                            <TabsTrigger value="autocomplete" className="flex items-center gap-2">
+                                <Zap size={16} />
+                                {t('settings.ai.tabs.autocomplete', 'Auto-Complete')}
                             </TabsTrigger>
                             <TabsTrigger value="memory" className="flex items-center gap-2">
                                 <Brain size={16} />
@@ -273,19 +304,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                             </TabsTrigger>
                         </TabsList>
                         <TabsContent value="instructions" className="mt-6">
-                            <AIInstructionsSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                            <AIInstructionsSettings />
+                        </TabsContent>
+                        <TabsContent value="model" className="mt-6">
+                            <AIModelSelectionSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="parameters" className="mt-6">
+                            <AIParametersSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="personality" className="mt-6">
+                            <AIPersonalitySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="autocomplete" className="mt-6">
+                            <AIAutoCompleteSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
                         </TabsContent>
                         <TabsContent value="memory" className="mt-6">
-                            <AIMemorySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                            <AIMemorySettings />
                         </TabsContent>
                         <TabsContent value="style" className="mt-6">
-                            <ResponseStyleSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                            <ResponseStyleSettings />
                         </TabsContent>
                         <TabsContent value="history" className="mt-6">
-                            <ChatHistorySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                            <ChatHistorySettings />
                         </TabsContent>
                         <TabsContent value="voice" className="mt-6">
-                            <VoiceSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                            <VoiceSettings />
                         </TabsContent>
                     </Tabs>
                 );
@@ -293,7 +336,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             case 'notifications':
                 return (
                     <Tabs defaultValue="all" className="w-full">
-                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg">
+                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg flex-wrap">
                             <TabsTrigger value="all" className="flex items-center gap-2">
                                 <Bell size={16} />
                                 {t('settings.notifications.tabs.all', 'All')}
@@ -306,6 +349,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                                 <Smartphone size={16} />
                                 {t('settings.notifications.tabs.push', 'Push')}
                             </TabsTrigger>
+                            <TabsTrigger value="sounds" className="flex items-center gap-2">
+                                <Volume2 size={16} />
+                                {t('settings.notifications.tabs.sounds', 'Sounds')}
+                            </TabsTrigger>
+                            <TabsTrigger value="grouping" className="flex items-center gap-2">
+                                <LayoutGrid size={16} />
+                                {t('settings.notifications.tabs.grouping', 'Grouping')}
+                            </TabsTrigger>
+                            <TabsTrigger value="digest" className="flex items-center gap-2">
+                                <Mail size={16} />
+                                {t('settings.notifications.tabs.digest', 'Digest')}
+                            </TabsTrigger>
+                            <TabsTrigger value="quiet-hours" className="flex items-center gap-2">
+                                <Clock size={16} />
+                                {t('settings.notifications.tabs.quietHours', 'Quiet Hours')}
+                            </TabsTrigger>
+                            <TabsTrigger value="dnd" className="flex items-center gap-2">
+                                <Moon size={16} />
+                                {t('settings.notifications.tabs.dnd', 'DND')}
+                            </TabsTrigger>
                             <TabsTrigger value="schedule" className="flex items-center gap-2">
                                 <Clock size={16} />
                                 {t('settings.notifications.tabs.schedule', 'Schedule')}
@@ -315,13 +378,28 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                             <NotificationSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
                         </TabsContent>
                         <TabsContent value="email" className="mt-6">
-                            <EmailNotificationsSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                            <EmailNotificationsSettings />
                         </TabsContent>
                         <TabsContent value="push" className="mt-6">
-                            <PushNotificationsSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                            <PushNotificationsSettings />
+                        </TabsContent>
+                        <TabsContent value="sounds" className="mt-6">
+                            <SoundNotificationsSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="grouping" className="mt-6">
+                            <NotificationGroupingSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="digest" className="mt-6">
+                            <NotificationDigestSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="quiet-hours" className="mt-6">
+                            <QuietHoursSettings currentUser={currentUser} onUpdate={() => onUpdateUser({})} />
+                        </TabsContent>
+                        <TabsContent value="dnd" className="mt-6">
+                            <DNDModeSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
                         </TabsContent>
                         <TabsContent value="schedule" className="mt-6">
-                            <NotificationScheduleSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                            <NotificationScheduleSettings />
                         </TabsContent>
                     </Tabs>
                 );
@@ -375,10 +453,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             case 'integrations':
                 return (
                     <Tabs defaultValue="apps" className="w-full">
-                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg">
+                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg flex-wrap">
                             <TabsTrigger value="apps" className="flex items-center gap-2">
                                 <LayoutGrid size={16} />
                                 {t('settings.integrations.tabs.apps', 'Apps')}
+                            </TabsTrigger>
+                            <TabsTrigger value="ai" className="flex items-center gap-2">
+                                <Brain size={16} />
+                                {t('settings.integrations.tabs.ai', 'AI')}
                             </TabsTrigger>
                             <TabsTrigger value="api" className="flex items-center gap-2">
                                 <Key size={16} />
@@ -394,7 +476,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                             </TabsTrigger>
                         </TabsList>
                         <TabsContent value="apps" className="mt-6">
-                            <ConnectedAppsSettings currentUser={currentUser} />
+                            <ConnectedAppsSettings />
+                        </TabsContent>
+                        <TabsContent value="ai" className="mt-6">
+                            <AIIntegrationsSettings currentUser={currentUser} />
                         </TabsContent>
                         <TabsContent value="api" className="mt-6">
                             <APIAccessSettings currentUser={currentUser} />
@@ -403,22 +488,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                             <WebhooksSettings currentUser={currentUser} />
                         </TabsContent>
                         <TabsContent value="calendar" className="mt-6">
-                            <CalendarSyncSettings currentUser={currentUser} />
+                            <CalendarSyncSettings />
                         </TabsContent>
                     </Tabs>
                 );
 
             case 'appearance':
                 return (
-                    <Tabs defaultValue="theme" className="w-full">
+                    <Tabs defaultValue="general" className="w-full">
                         <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg flex-wrap">
+                            <TabsTrigger value="general" className="flex items-center gap-2">
+                                <Palette size={16} />
+                                {t('settings.appearance.tabs.general', 'General')}
+                            </TabsTrigger>
                             <TabsTrigger value="theme" className="flex items-center gap-2">
                                 <Sun size={16} />
                                 {t('settings.appearance.tabs.theme', 'Theme')}
-                            </TabsTrigger>
-                            <TabsTrigger value="language" className="flex items-center gap-2">
-                                <Globe size={16} />
-                                {t('settings.appearance.tabs.language', 'Language')}
                             </TabsTrigger>
                             <TabsTrigger value="regional" className="flex items-center gap-2">
                                 <Clock size={16} />
@@ -427,6 +512,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                             <TabsTrigger value="accessibility" className="flex items-center gap-2">
                                 <Accessibility size={16} />
                                 {t('settings.appearance.tabs.accessibility', 'Accessibility')}
+                            </TabsTrigger>
+                            <TabsTrigger value="shortcuts" className="flex items-center gap-2">
+                                <Settings size={16} />
+                                {t('settings.appearance.tabs.shortcuts', 'Shortcuts')}
                             </TabsTrigger>
                             <TabsTrigger value="work" className="flex items-center gap-2">
                                 <ClipboardList size={16} />
@@ -437,17 +526,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                                 {t('settings.appearance.tabs.dashboard', 'Dashboard')}
                             </TabsTrigger>
                         </TabsList>
-                        <TabsContent value="theme" className="mt-6">
-                            <ThemeSettings theme={theme} toggleTheme={toggleTheme} />
+                        <TabsContent value="general" className="mt-6">
+                            <AppearanceSettings
+                                currentUser={currentUser}
+                                onUpdateUser={onUpdateUser}
+                                theme={theme}
+                                toggleTheme={toggleTheme}
+                            />
                         </TabsContent>
-                        <TabsContent value="language" className="mt-6">
-                            <LanguageSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        <TabsContent value="theme" className="mt-6">
+                            <ThemeSettings />
                         </TabsContent>
                         <TabsContent value="regional" className="mt-6">
                             <RegionalSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
                         </TabsContent>
                         <TabsContent value="accessibility" className="mt-6">
                             <AccessibilitySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="shortcuts" className="mt-6">
+                            <KeyboardShortcutsSettings currentUser={currentUser} />
                         </TabsContent>
                         <TabsContent value="work" className="mt-6">
                             <WorkPreferencesSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />

@@ -743,6 +743,73 @@ function initDb() {
                                                             visibility TEXT DEFAULT 'admin' -- admin, public, beta
                                                         )`);
 
+        // ==========================================
+        // NEW LLM DELIVERY SYSTEM - Dynamic Tier Assignments
+        // ==========================================
+
+        // Model-to-Tier Assignments (many-to-many: one model can be in multiple tiers)
+        db.run(`CREATE TABLE IF NOT EXISTS model_tier_assignments (
+            id TEXT PRIMARY KEY,
+            provider_id TEXT NOT NULL,
+            tier TEXT NOT NULL CHECK(tier IN ('BUDGET', 'STANDARD', 'PREMIUM', 'REASONING')),
+            priority INTEGER DEFAULT 0, -- Lower = higher priority within tier
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(provider_id) REFERENCES llm_providers(id) ON DELETE CASCADE,
+            UNIQUE(provider_id, tier)
+        )`);
+
+        // Index for fast tier lookups
+        db.run(`CREATE INDEX IF NOT EXISTS idx_model_tier_active ON model_tier_assignments(tier, is_active, priority)`);
+
+        // Organization Provider Settings (which providers org admin has enabled)
+        db.run(`CREATE TABLE IF NOT EXISTS organization_provider_settings (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            provider_id TEXT NOT NULL,
+            is_enabled INTEGER DEFAULT 1,
+            custom_priority INTEGER, -- Org-specific priority override
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(provider_id) REFERENCES llm_providers(id) ON DELETE CASCADE,
+            UNIQUE(organization_id, provider_id)
+        )`);
+
+        // Index for org lookups
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_provider_settings ON organization_provider_settings(organization_id, is_enabled)`);
+
+        // Round-robin state tracking per tier per organization
+        db.run(`CREATE TABLE IF NOT EXISTS tier_round_robin_state (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT,
+            tier TEXT NOT NULL,
+            last_provider_id TEXT,
+            last_used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(organization_id, tier)
+        )`);
+
+        // Add tier column to llm_providers if not exists (for backwards compatibility)
+        db.run(`ALTER TABLE llm_providers ADD COLUMN tier TEXT DEFAULT 'STANDARD'`, (err) => {
+            // Ignore if exists
+        });
+
+        // Add priority column to llm_providers if not exists
+        db.run(`ALTER TABLE llm_providers ADD COLUMN priority INTEGER DEFAULT 0`, (err) => {
+            // Ignore if exists
+        });
+
+        // Add health_status column to llm_providers if not exists
+        db.run(`ALTER TABLE llm_providers ADD COLUMN health_status TEXT DEFAULT 'unknown'`, (err) => {
+            // Ignore if exists
+        });
+
+        // Add last_health_check column to llm_providers if not exists
+        db.run(`ALTER TABLE llm_providers ADD COLUMN last_health_check DATETIME`, (err) => {
+            // Ignore if exists
+        });
+
         // AI System Prompts (Governance Hub)
         db.run(`CREATE TABLE IF NOT EXISTS ai_system_prompts (
             id TEXT PRIMARY KEY,
@@ -929,6 +996,25 @@ function initDb() {
             UNIQUE(pmo_role_id, capability_id)
         )`);
 
+        // Workstreams (Logical grouping of initiatives)
+        // ISO 21500: Work Breakdown Structure
+        db.run(`CREATE TABLE IF NOT EXISTS workstreams (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            owner_id TEXT,
+            status TEXT NOT NULL DEFAULT 'ACTIVE',
+            color TEXT DEFAULT '#3B82F6',
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_workstreams_project ON workstreams(project_id)`);
+
         db.run(`CREATE TABLE IF NOT EXISTS project_members (
             id TEXT PRIMARY KEY,
             project_id TEXT NOT NULL,
@@ -948,6 +1034,11 @@ function initDb() {
             FOREIGN KEY(pmo_role_id) REFERENCES pmo_role_definitions(id) ON DELETE SET NULL,
             UNIQUE(project_id, user_id)
         )`);
+
+        // Extension: Workstream assignment for project members
+        db.run(`ALTER TABLE project_members ADD COLUMN workstream_id TEXT`, (err) => {
+            // Ignore if exists
+        });
 
         // AI Settings 3-Tier System
         db.run(`CREATE TABLE IF NOT EXISTS superadmin_ai_settings (
@@ -1763,8 +1854,18 @@ function initDb() {
             // Ignore if exists
         });
 
+        // Extension: Workstream assignment for initiatives
+        db.run(`ALTER TABLE initiatives ADD COLUMN workstream_id TEXT`, (err) => {
+            // Ignore if exists
+        });
+
         // Update tasks table with PMO fields
         db.run(`ALTER TABLE tasks ADD COLUMN blocker_type TEXT`, (err) => {
+            // Ignore if exists
+        });
+
+        // Extension: Workstream assignment for tasks
+        db.run(`ALTER TABLE tasks ADD COLUMN workstream_id TEXT`, (err) => {
             // Ignore if exists
         });
 
@@ -2452,6 +2553,10 @@ function initDb() {
                         url TEXT NOT NULL,
                         events TEXT NOT NULL, --JSON array of event types
             secret TEXT NOT NULL, --For signature verification
+            signature_secret TEXT, --Additional secret for HMAC verification
+            retry_config TEXT, --JSON: max_retries, backoff_strategy, retry_delays
+            filter_rules TEXT, --JSON: event filters and conditions
+            version TEXT DEFAULT '1.0', --Webhook version for compatibility
             is_active INTEGER DEFAULT 1,
                         created_by TEXT,
                         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -2459,6 +2564,32 @@ function initDb() {
                         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
                         FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
                     )`);
+
+        // Migrate existing webhooks table - add new columns if they don't exist
+        db.run(`ALTER TABLE webhooks ADD COLUMN signature_secret TEXT`, (err) => {
+            // Ignore duplicate column errors
+            if (err && !err.message.includes('duplicate column')) {
+                console.warn('[DB] Webhook signature_secret column error:', err.message);
+            }
+        });
+        db.run(`ALTER TABLE webhooks ADD COLUMN retry_config TEXT`, (err) => {
+            // Ignore duplicate column errors
+            if (err && !err.message.includes('duplicate column')) {
+                console.warn('[DB] Webhook retry_config column error:', err.message);
+            }
+        });
+        db.run(`ALTER TABLE webhooks ADD COLUMN filter_rules TEXT`, (err) => {
+            // Ignore duplicate column errors
+            if (err && !err.message.includes('duplicate column')) {
+                console.warn('[DB] Webhook filter_rules column error:', err.message);
+            }
+        });
+        db.run(`ALTER TABLE webhooks ADD COLUMN version TEXT DEFAULT '1.0'`, (err) => {
+            // Ignore duplicate column errors
+            if (err && !err.message.includes('duplicate column')) {
+                console.warn('[DB] Webhook version column error:', err.message);
+            }
+        });
 
         // AI Logs (Analytics)
         db.run(`CREATE TABLE IF NOT EXISTS ai_logs(
@@ -2558,7 +2689,8 @@ function initDb() {
                         organization_id TEXT NOT NULL,
                         email TEXT NOT NULL,
                         role TEXT DEFAULT 'USER',
-                        token TEXT NOT NULL UNIQUE,
+                        token TEXT UNIQUE, -- Moved to NULLABLE for hash-based security (Step 3)
+                        token_hash TEXT UNIQUE, -- Added to base for secure token storage
                         status TEXT DEFAULT 'pending', --pending, accepted, expired, revoked
             invited_by TEXT,
                         expires_at DATETIME,
@@ -2613,6 +2745,7 @@ function initDb() {
 
         // Indexes for invitation performance
         db.run(`CREATE INDEX IF NOT EXISTS idx_invitations_token ON invitations(token)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_invitations_email ON invitations(email)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_invitations_org_status ON invitations(organization_id, status)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_invitations_project ON invitations(project_id)`);
@@ -3069,6 +3202,42 @@ function initDb() {
         });
 
         // ==========================================
+        // GLOBAL KNOWLEDGE BRAIN ENHANCEMENTS
+        // ==========================================
+
+        // Extend knowledge_candidates table
+        const candidateEnhancementCols = [
+            { name: 'category', type: 'TEXT', default: 'NULL' },
+            { name: 'tags', type: 'TEXT', default: "'[]'" },
+            { name: 'related_project_ids', type: 'TEXT', default: "'[]'" },
+            { name: 'implementation_notes', type: 'TEXT', default: 'NULL' },
+            { name: 'impact_score', type: 'INTEGER', default: 'NULL' }
+        ];
+
+        candidateEnhancementCols.forEach(col => {
+            db.run(`ALTER TABLE knowledge_candidates ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`, (err) => {
+                // Ignore if exists
+            });
+        });
+
+        // Extend global_strategies table
+        const strategyEnhancementCols = [
+            { name: 'success_metrics', type: 'TEXT', default: "'[]'" },
+            { name: 'related_document_ids', type: 'TEXT', default: "'[]'" },
+            { name: 'related_idea_ids', type: 'TEXT', default: "'[]'" },
+            { name: 'related_initiative_ids', type: 'TEXT', default: "'[]'" },
+            { name: 'priority', type: 'TEXT', default: "'medium'" },
+            { name: 'target_date', type: 'DATETIME', default: 'NULL' },
+            { name: 'progress_percentage', type: 'INTEGER', default: '0' }
+        ];
+
+        strategyEnhancementCols.forEach(col => {
+            db.run(`ALTER TABLE global_strategies ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`, (err) => {
+                // Ignore if exists
+            });
+        });
+
+        // ==========================================
         // PHASE 4: ANALYTICS & BENCHMARKING
         // ==========================================
 
@@ -3282,9 +3451,35 @@ function initDb() {
                 is_default INTEGER DEFAULT 0,
                 usage_count INTEGER DEFAULT 0,
                 last_used_at DATETIME,
+                rate_limit INTEGER, --requests per minute/hour
+                quota_limit INTEGER, --total requests quota
+                quota_used INTEGER DEFAULT 0, --current usage
+                quota_reset_at DATETIME, --when quota resets
+                expires_at DATETIME, --key expiration date
+                ip_whitelist TEXT, --JSON array of allowed IPs
+                scopes TEXT, --JSON array of permission scopes
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             )`);
+
+        // Migrate existing user_api_keys table - add new columns if they don't exist
+        // SQLite doesn't support IF NOT EXISTS for columns, so we use error callback approach
+        const addColumnIfNotExists = (table, column, definition) => {
+            db.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`, (err) => {
+                // Ignore duplicate column errors
+                if (err && !err.message.includes('duplicate column')) {
+                    console.warn(`[DB] ${table} ${column} column error:`, err.message);
+                }
+            });
+        };
+        
+        addColumnIfNotExists('user_api_keys', 'rate_limit', 'INTEGER');
+        addColumnIfNotExists('user_api_keys', 'quota_limit', 'INTEGER');
+        addColumnIfNotExists('user_api_keys', 'quota_used', 'INTEGER DEFAULT 0');
+        addColumnIfNotExists('user_api_keys', 'quota_reset_at', 'DATETIME');
+        addColumnIfNotExists('user_api_keys', 'expires_at', 'DATETIME');
+        addColumnIfNotExists('user_api_keys', 'ip_whitelist', 'TEXT');
+        addColumnIfNotExists('user_api_keys', 'scopes', 'TEXT');
 
         // 1. SUBSCRIPTION PLANS (Superadmin-managed)
         db.run(`CREATE TABLE IF NOT EXISTS subscription_plans(
@@ -3384,6 +3579,10 @@ function initDb() {
             // Ignore if exists
         });
 
+        db.run(`ALTER TABLE users ADD COLUMN phone TEXT`, (err) => {
+            // Ignore if exists
+        });
+
         // Add features column to subscription_plans if not exists (for existing dbs)
         db.run(`ALTER TABLE subscription_plans ADD COLUMN features TEXT DEFAULT '{}'`, (err) => {
             // Ignore if exists
@@ -3425,6 +3624,222 @@ function initDb() {
         console.log('Created billing tables and seeded default subscription plans.');
 
         // ==========================================
+        // PHASE: PROFESSIONAL BILLING SYSTEM ENHANCEMENTS
+        // ==========================================
+
+        // 1. ORGANIZATION SEATS (Seat Management)
+        db.run(`CREATE TABLE IF NOT EXISTS organization_seats(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL UNIQUE,
+                base_seats_included INTEGER DEFAULT 0,
+                additional_seats_purchased INTEGER DEFAULT 0,
+                total_seats_available INTEGER DEFAULT 0,
+                seats_used INTEGER DEFAULT 0,
+                billing_model TEXT DEFAULT 'subscription' CHECK(billing_model IN('subscription', 'pay_as_you_go', 'hybrid')),
+                seat_price_monthly REAL DEFAULT 0,
+                auto_add_seats_on_invite INTEGER DEFAULT 0,
+                auto_add_seats_threshold INTEGER DEFAULT 80,
+                seat_pool_enabled INTEGER DEFAULT 1,
+                reserved_seats INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )`);
+
+        // 2. SEAT TRANSACTIONS (History of seat purchases/releases)
+        db.run(`CREATE TABLE IF NOT EXISTS seat_transactions(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                transaction_type TEXT NOT NULL CHECK(transaction_type IN('purchase', 'release', 'auto_add', 'manual_adjustment')),
+                seats_count INTEGER NOT NULL,
+                unit_price REAL DEFAULT 0,
+                total_amount REAL DEFAULT 0,
+                stripe_invoice_item_id TEXT,
+                billing_period_start DATETIME,
+                billing_period_end DATETIME,
+                triggered_by TEXT DEFAULT 'admin' CHECK(triggered_by IN('admin', 'auto', 'invite', 'webhook')),
+                triggered_by_user_id TEXT,
+                reason TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(triggered_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+            )`);
+
+        // 3. Extend SUBSCRIPTION_PLANS with seat-related fields
+        db.run(`ALTER TABLE subscription_plans ADD COLUMN seats_included INTEGER DEFAULT 0`, (err) => {
+            // Ignore if exists
+        });
+        db.run(`ALTER TABLE subscription_plans ADD COLUMN seat_price_monthly REAL DEFAULT 0`, (err) => {
+            // Ignore if exists
+        });
+        db.run(`ALTER TABLE subscription_plans ADD COLUMN billing_model TEXT DEFAULT 'subscription'`, (err) => {
+            // Ignore if exists
+        });
+        db.run(`ALTER TABLE subscription_plans ADD COLUMN allow_seat_pooling INTEGER DEFAULT 0`, (err) => {
+            // Ignore if exists
+        });
+        db.run(`ALTER TABLE subscription_plans ADD COLUMN max_seats INTEGER DEFAULT -1`, (err) => {
+            // Ignore if exists (-1 = unlimited)
+        });
+
+        // 4. USER BUDGETS (Budget management per user)
+        db.run(`CREATE TABLE IF NOT EXISTS user_budgets(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                monthly_token_budget INTEGER DEFAULT NULL,
+                monthly_storage_budget_gb REAL DEFAULT NULL,
+                monthly_cost_budget_usd REAL DEFAULT NULL,
+                tokens_used_this_month INTEGER DEFAULT 0,
+                storage_used_this_month_gb REAL DEFAULT 0,
+                cost_this_month_usd REAL DEFAULT 0,
+                budget_alert_80 INTEGER DEFAULT 1,
+                budget_alert_90 INTEGER DEFAULT 1,
+                budget_alert_100 INTEGER DEFAULT 1,
+                hard_limit_enabled INTEGER DEFAULT 0,
+                auto_upgrade_on_limit INTEGER DEFAULT 0,
+                last_reset_date DATE,
+                reset_day_of_month INTEGER DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                UNIQUE(organization_id, user_id)
+            )`);
+
+        // 5. PROJECT BUDGETS (Budget management per project)
+        db.run(`CREATE TABLE IF NOT EXISTS project_budgets(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                project_id TEXT NOT NULL,
+                monthly_token_budget INTEGER DEFAULT NULL,
+                monthly_storage_budget_gb REAL DEFAULT NULL,
+                monthly_cost_budget_usd REAL DEFAULT NULL,
+                tokens_used_this_month INTEGER DEFAULT 0,
+                storage_used_this_month_gb REAL DEFAULT 0,
+                cost_this_month_usd REAL DEFAULT 0,
+                budget_alert_80 INTEGER DEFAULT 1,
+                budget_alert_90 INTEGER DEFAULT 1,
+                budget_alert_100 INTEGER DEFAULT 1,
+                hard_limit_enabled INTEGER DEFAULT 0,
+                auto_upgrade_on_limit INTEGER DEFAULT 0,
+                last_reset_date DATE,
+                reset_day_of_month INTEGER DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                UNIQUE(organization_id, project_id)
+            )`);
+
+        // 6. Create billing_alerts table if it doesn't exist
+        db.run(`CREATE TABLE IF NOT EXISTS billing_alerts(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL UNIQUE,
+                token_threshold_80 INTEGER DEFAULT 1,
+                token_threshold_90 INTEGER DEFAULT 1,
+                token_threshold_100 INTEGER DEFAULT 1,
+                storage_threshold_80 INTEGER DEFAULT 1,
+                storage_threshold_90 INTEGER DEFAULT 1,
+                storage_threshold_100 INTEGER DEFAULT 1,
+                seat_threshold_80 INTEGER DEFAULT 1,
+                seat_threshold_90 INTEGER DEFAULT 1,
+                seat_threshold_100 INTEGER DEFAULT 1,
+                user_budget_alerts_enabled INTEGER DEFAULT 1,
+                project_budget_alerts_enabled INTEGER DEFAULT 1,
+                alert_channels TEXT DEFAULT '["email"]',
+                alert_frequency TEXT DEFAULT 'once' CHECK(alert_frequency IN('once', 'daily', 'weekly')),
+                admin_notification_threshold REAL DEFAULT 1000,
+                auto_upgrade_enabled INTEGER DEFAULT 0,
+                auto_upgrade_plan_id TEXT,
+                cost_cap_monthly REAL DEFAULT NULL,
+                email_notifications INTEGER DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(auto_upgrade_plan_id) REFERENCES subscription_plans(id)
+            )`);
+
+        // 7. ADMIN BILLING ALERTS (Advanced alerting system)
+        db.run(`CREATE TABLE IF NOT EXISTS admin_billing_alerts(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                alert_type TEXT NOT NULL CHECK(alert_type IN('cost_spike', 'usage_anomaly', 'budget_exceeded', 'seat_limit_reached')),
+                severity TEXT DEFAULT 'medium' CHECK(severity IN('low', 'medium', 'high', 'critical')),
+                cost_threshold_usd REAL DEFAULT NULL,
+                usage_threshold_percent REAL DEFAULT NULL,
+                seat_threshold_percent REAL DEFAULT NULL,
+                notify_admins INTEGER DEFAULT 1,
+                notify_billing_contact INTEGER DEFAULT 1,
+                notify_superadmin INTEGER DEFAULT 0,
+                email_enabled INTEGER DEFAULT 1,
+                slack_webhook_url TEXT DEFAULT NULL,
+                webhook_url TEXT DEFAULT NULL,
+                alert_frequency TEXT DEFAULT 'once' CHECK(alert_frequency IN('once', 'daily', 'weekly')),
+                cooldown_hours INTEGER DEFAULT 24,
+                is_active INTEGER DEFAULT 1,
+                last_triggered_at DATETIME DEFAULT NULL,
+                trigger_count INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )`);
+
+        // 8. SPENDING ALERTS (User-configurable alerts for SpendingAlertsView)
+        db.run(`CREATE TABLE IF NOT EXISTS spending_alerts(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                type TEXT NOT NULL CHECK(type IN ('AI_TOKENS', 'STORAGE', 'USERS', 'TOTAL_SPEND')),
+                threshold REAL NOT NULL,
+                threshold_type TEXT NOT NULL CHECK(threshold_type IN ('PERCENTAGE', 'ABSOLUTE')),
+                action TEXT NOT NULL CHECK(action IN ('NOTIFY', 'NOTIFY_AND_PAUSE', 'HARD_LIMIT')),
+                notify_emails TEXT NOT NULL DEFAULT '[]',
+                is_active INTEGER DEFAULT 1,
+                last_triggered_at DATETIME DEFAULT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_spending_alerts_org ON spending_alerts(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_spending_alerts_type ON spending_alerts(type)`);
+
+        // 9. PAY-AS-YOU-GO USAGE (PAYG tracking)
+        db.run(`CREATE TABLE IF NOT EXISTS pay_as_you_go_usage(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                user_id TEXT DEFAULT NULL,
+                project_id TEXT DEFAULT NULL,
+                usage_type TEXT NOT NULL CHECK(usage_type IN('tokens', 'storage', 'seats', 'api_calls')),
+                quantity REAL NOT NULL,
+                unit_price REAL NOT NULL,
+                total_cost REAL NOT NULL,
+                billing_period_start DATETIME NOT NULL,
+                billing_period_end DATETIME NOT NULL,
+                stripe_invoice_item_id TEXT DEFAULT NULL,
+                invoiced INTEGER DEFAULT 0,
+                metadata TEXT DEFAULT '{}',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
+                FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
+            )`);
+
+        // Create indexes for performance
+        db.run(`CREATE INDEX IF NOT EXISTS idx_seat_transactions_org ON seat_transactions(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_seat_transactions_type ON seat_transactions(transaction_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_budgets_org ON user_budgets(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_budgets_user ON user_budgets(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_project_budgets_org ON project_budgets(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_project_budgets_project ON project_budgets(project_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_admin_billing_alerts_org ON admin_billing_alerts(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_admin_billing_alerts_type ON admin_billing_alerts(alert_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_payg_usage_org ON pay_as_you_go_usage(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_payg_usage_period ON pay_as_you_go_usage(billing_period_start, billing_period_end)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_payg_usage_type ON pay_as_you_go_usage(usage_type)`);
+
+        console.log('Created professional billing system enhancement tables.');
+
+        // ==========================================
         // PHASE 5: ENTERPRISE STORAGE UPGRADE
         // ==========================================
 
@@ -3449,13 +3864,22 @@ function initDb() {
             { name: 'organization_id', type: 'TEXT', default: 'NULL' },
             { name: 'project_id', type: 'TEXT', default: 'NULL' },
             { name: 'file_size_bytes', type: 'INTEGER', default: '0' },
-            { name: 'deleted_at', type: 'DATETIME', default: 'NULL' } // Soft delete
+            { name: 'deleted_at', type: 'DATETIME', default: 'NULL' }, // Soft delete
+            { name: 'category', type: 'TEXT', default: 'NULL' }, // Category for documents
+            { name: 'tags', type: 'TEXT', default: "'[]'" }, // JSON array of tags
+            { name: 'version', type: 'INTEGER', default: '1' }, // Document versioning
+            { name: 'parent_doc_id', type: 'TEXT', default: 'NULL' } // Reference to previous version
         ];
 
         docStorageCols.forEach(col => {
             db.run(`ALTER TABLE knowledge_docs ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default} `, (err) => {
                 // Ignore if exists
             });
+        });
+
+        // Ensure project_id is NULL for global knowledge docs (organization-level only)
+        db.run(`UPDATE knowledge_docs SET project_id = NULL WHERE project_id IS NOT NULL`, (err) => {
+            // Ignore errors - this is a migration step
         });
 
         // 3. STORAGE AUDIT LOG (Physical File Reconciliation)
@@ -3718,6 +4142,159 @@ function initDb() {
                 sync_data TEXT, --JSON of synced data
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(integration_id) REFERENCES integration_configs(id)
+            )`);
+
+        // ==========================================
+        // INTEGRATION ANALYTICS & MONITORING
+        // ==========================================
+
+        // API Usage Logs - track all API calls per integration
+        db.run(`CREATE TABLE IF NOT EXISTS api_usage_logs(
+                id TEXT PRIMARY KEY,
+                user_id TEXT,
+                integration_id TEXT,
+                api_key_id TEXT,
+                endpoint TEXT,
+                method TEXT DEFAULT 'GET',
+                status_code INTEGER,
+                response_time_ms INTEGER,
+                tokens_used INTEGER DEFAULT 0,
+                cost REAL DEFAULT 0,
+                request_body TEXT, --JSON
+                response_body TEXT, --JSON (truncated)
+                error_message TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
+                FOREIGN KEY(integration_id) REFERENCES integration_configs(id) ON DELETE SET NULL,
+                FOREIGN KEY(api_key_id) REFERENCES user_api_keys(id) ON DELETE SET NULL
+            )`);
+
+        // Webhook Delivery Logs - track webhook deliveries
+        db.run(`CREATE TABLE IF NOT EXISTS webhook_delivery_logs(
+                id TEXT PRIMARY KEY,
+                webhook_id TEXT NOT NULL,
+                event_type TEXT NOT NULL,
+                status TEXT DEFAULT 'pending', --'success', 'failed', 'retrying', 'pending'
+                response_code INTEGER,
+                response_time_ms INTEGER,
+                retry_count INTEGER DEFAULT 0,
+                error_message TEXT,
+                payload TEXT, --JSON payload sent
+                response_body TEXT, --JSON response received
+                delivered_at DATETIME,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(webhook_id) REFERENCES webhooks(id) ON DELETE CASCADE
+            )`);
+
+        // Integration Health Checks - periodic health status
+        db.run(`CREATE TABLE IF NOT EXISTS integration_health_checks(
+                id TEXT PRIMARY KEY,
+                integration_id TEXT NOT NULL,
+                status TEXT DEFAULT 'healthy', --'healthy', 'degraded', 'down'
+                latency_ms INTEGER,
+                error_message TEXT,
+                check_type TEXT DEFAULT 'ping', --'ping', 'auth', 'api', 'sync'
+                checked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(integration_id) REFERENCES integration_configs(id) ON DELETE CASCADE
+            )`);
+
+        // Integration Analytics - aggregated daily/hourly stats
+        db.run(`CREATE TABLE IF NOT EXISTS integration_analytics(
+                id TEXT PRIMARY KEY,
+                integration_id TEXT NOT NULL,
+                period_type TEXT DEFAULT 'daily', --'hourly', 'daily', 'weekly', 'monthly'
+                period_start DATETIME NOT NULL,
+                period_end DATETIME NOT NULL,
+                total_requests INTEGER DEFAULT 0,
+                successful_requests INTEGER DEFAULT 0,
+                failed_requests INTEGER DEFAULT 0,
+                total_tokens INTEGER DEFAULT 0,
+                total_cost REAL DEFAULT 0,
+                avg_response_time_ms REAL DEFAULT 0,
+                error_count INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(integration_id) REFERENCES integration_configs(id) ON DELETE CASCADE,
+                UNIQUE(integration_id, period_type, period_start)
+            )`);
+
+        // ==========================================
+        // WORKFLOW AUTOMATIONS
+        // ==========================================
+
+        // Automation Workflows - workflow definitions
+        db.run(`CREATE TABLE IF NOT EXISTS automation_workflows(
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                organization_id TEXT,
+                name TEXT NOT NULL,
+                description TEXT,
+                trigger_type TEXT NOT NULL, --'event', 'schedule', 'webhook', 'manual'
+                trigger_config TEXT, --JSON: event filters, schedule cron, webhook config
+                actions TEXT NOT NULL, --JSON array of action definitions
+                conditions TEXT, --JSON: conditional logic (if/then/else)
+                is_active INTEGER DEFAULT 1,
+                last_executed_at DATETIME,
+                execution_count INTEGER DEFAULT 0,
+                success_count INTEGER DEFAULT 0,
+                failure_count INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )`);
+
+        // Automation Executions - execution history
+        db.run(`CREATE TABLE IF NOT EXISTS automation_executions(
+                id TEXT PRIMARY KEY,
+                workflow_id TEXT NOT NULL,
+                trigger_data TEXT, --JSON: data that triggered the workflow
+                status TEXT DEFAULT 'running', --'running', 'completed', 'failed', 'cancelled'
+                result TEXT, --JSON: execution result
+                error_message TEXT,
+                started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                completed_at DATETIME,
+                execution_time_ms INTEGER,
+                FOREIGN KEY(workflow_id) REFERENCES automation_workflows(id) ON DELETE CASCADE
+            )`);
+
+        // Automation Triggers - trigger configurations (normalized)
+        db.run(`CREATE TABLE IF NOT EXISTS automation_triggers(
+                id TEXT PRIMARY KEY,
+                workflow_id TEXT NOT NULL,
+                trigger_type TEXT NOT NULL, --'event', 'schedule', 'webhook'
+                event_type TEXT, --for event triggers: 'task.created', 'initiative.updated', etc.
+                schedule_cron TEXT, --for schedule triggers: cron expression
+                webhook_url TEXT, --for webhook triggers
+                filter_conditions TEXT, --JSON: additional filter conditions
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(workflow_id) REFERENCES automation_workflows(id) ON DELETE CASCADE
+            )`);
+
+        // Automation Actions - action configurations (normalized)
+        db.run(`CREATE TABLE IF NOT EXISTS automation_actions(
+                id TEXT PRIMARY KEY,
+                workflow_id TEXT NOT NULL,
+                action_type TEXT NOT NULL, --'create_task', 'update_field', 'send_notification', 'call_api', etc.
+                action_order INTEGER DEFAULT 0, --order of execution
+                target_integration_id TEXT, --which integration to use
+                action_config TEXT NOT NULL, --JSON: action-specific configuration
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(workflow_id) REFERENCES automation_workflows(id) ON DELETE CASCADE,
+                FOREIGN KEY(target_integration_id) REFERENCES integration_configs(id) ON DELETE SET NULL
+            )`);
+
+        // Data Mappings - field mappings between systems
+        db.run(`CREATE TABLE IF NOT EXISTS data_mappings(
+                id TEXT PRIMARY KEY,
+                workflow_id TEXT NOT NULL,
+                source_field TEXT NOT NULL, --field path in source system (e.g., 'task.title')
+                target_field TEXT NOT NULL, --field path in target system (e.g., 'issue.summary')
+                transformation TEXT, --JSONPath/JQ expression for transformation
+                default_value TEXT, --default if source field is empty
+                is_required INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(workflow_id) REFERENCES automation_workflows(id) ON DELETE CASCADE
             )`);
 
         // ==========================================
@@ -5342,6 +5919,36 @@ function initDb() {
             FOREIGN KEY(document_id) REFERENCES studio_documents(id) ON DELETE CASCADE
         )`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_studio_ai_sessions_document ON studio_ai_sessions(document_id)`);
+
+        // ==========================================
+        // SCHEDULED EVENTS (Organization Calendar)
+        // ==========================================
+        db.run(`CREATE TABLE IF NOT EXISTS scheduled_events(
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT,
+            event_type TEXT DEFAULT 'meeting', -- meeting, deadline, milestone, review, other
+            start_time DATETIME NOT NULL,
+            end_time DATETIME,
+            location TEXT,
+            is_all_day INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'SCHEDULED', -- SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+            project_id TEXT,
+            attendees TEXT DEFAULT '[]', -- JSON array of user IDs
+            reminder_minutes INTEGER DEFAULT 15,
+            recurrence_rule TEXT, -- iCal RRULE format for recurring events
+            created_by TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_scheduled_events_org ON scheduled_events(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_scheduled_events_start ON scheduled_events(start_time)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_scheduled_events_project ON scheduled_events(project_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_scheduled_events_status ON scheduled_events(status)`);
 
         // Seed Super Admin & Default Organization
         const superAdminOrgId = 'org-dbr77-system';

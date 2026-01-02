@@ -111,9 +111,54 @@ if (typeof process !== 'undefined' && process.env) {
     // Keep DB in-memory in tests (db chooses :memory: when NODE_ENV === 'test')
     process.env.SQLITE_PATH = process.env.SQLITE_PATH || ':memory:';
     // Stub API keys to prevent real calls if mocking is accidentally bypassed
-    process.env.GOOGLE_AI_API_KEY = 'test-google-key';
     process.env.GEMINI_API_KEY = 'test-gemini-key';
     process.env.OPENAI_API_KEY = 'sk-test-openai-key';
+
+    // --------------------------------------------------------
+    // Global Database Mock (SQLite-compatible)
+    // --------------------------------------------------------
+    // We define this on global so server/database.js picks it up.
+    // Using vi.fn() allows tests to spy on/override specific methods using .mockImplementation()
+    const mockDb = {
+        run: vi.fn().mockImplementation(function (sql, params, cb) {
+            const callback = typeof params === 'function' ? params : cb;
+            // Provide context (this.lastID, this.changes) for callbacks
+            if (callback) callback.call({ lastID: 1, changes: 1 }, null);
+            return this;
+        }),
+        get: vi.fn().mockImplementation(function (sql, params, cb) {
+            const callback = typeof params === 'function' ? params : cb;
+            if (callback) callback(null, null); // Default: no row found
+            return this;
+        }),
+        all: vi.fn().mockImplementation(function (sql, params, cb) {
+            const callback = typeof params === 'function' ? params : cb;
+            if (callback) callback(null, []); // Default: empty array
+            return this;
+        }),
+        exec: vi.fn().mockImplementation(function (sql, cb) {
+            if (cb) cb(null);
+            return this;
+        }),
+        serialize: vi.fn().mockImplementation(function (cb) {
+            if (cb) cb();
+            return this;
+        }),
+        on: vi.fn().mockReturnThis(),
+        close: vi.fn().mockImplementation(function (cb) {
+            if (cb) cb(null);
+        }),
+        // Async wrappers often used by services
+        getAsync: vi.fn().mockResolvedValue(null),
+        runAsync: vi.fn().mockResolvedValue({ lastID: 0, changes: 0 }),
+        allAsync: vi.fn().mockResolvedValue([]),
+        execAsync: vi.fn().mockResolvedValue(undefined),
+        // Polyfill for Postgres compatibility (Promise-based)
+        query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 })
+    };
+
+    // Assign to global for server/database.js to use
+    (global as any).__TEST_DB_MOCK__ = mockDb;
 }
 
 // Mock jsonwebtoken globally
@@ -128,595 +173,16 @@ vi.mock('jsonwebtoken', () => ({
     decode: vi.fn()
 }));
 
+// Mock Sentry to prevent native binding issues
+
+
 // Reset LLM API mocks before each test
 beforeEach(() => {
     mockLLMApi.reset();
 });
 
-// Ensure DB schema is initialized before any test starts hitting it.
-beforeAll(async () => {
-    if (process.env.MOCK_DB === 'true') return;
-    try {
-        const db = require('../server/database');
-        if (db?.initPromise) {
-            await db.initPromise;
-        }
+// REMOVED: Schema Initialization. Integration tests must use TestDatabaseFactory.create()
 
-        // Create audit_logs table if not exists (needed by AssessmentAuditLogger)
-        // This table is in assessment-module.sql migration
-        if (db?.run) {
-            // Helper to run SQL and ignore errors
-            const runSQL = (sql: string) => new Promise<void>((resolve) => {
-                db.run(sql, (err: Error | null) => {
-                    if (err && !err.message.includes('already exists')) {
-                        console.warn('[Test Setup] Table creation issue:', err?.message);
-                    }
-                    resolve();
-                });
-            });
-
-            // Create all required test tables
-            await runSQL(`CREATE TABLE IF NOT EXISTS audit_logs (
-                id TEXT PRIMARY KEY,
-                user_id TEXT,
-                organization_id TEXT,
-                action TEXT NOT NULL,
-                resource_type TEXT NOT NULL,
-                resource_id TEXT,
-                details TEXT DEFAULT '{}',
-                ip_address TEXT,
-                user_agent TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            await runSQL(`CREATE TABLE IF NOT EXISTS assessment_workflows (
-                id TEXT PRIMARY KEY,
-                assessment_id TEXT,
-                project_id TEXT,
-                organization_id TEXT,
-                status TEXT DEFAULT 'DRAFT',
-                current_version INTEGER DEFAULT 1,
-                created_by TEXT,
-                submitted_by TEXT,
-                approved_by TEXT,
-                rejected_by TEXT,
-                submitted_at DATETIME,
-                approved_at DATETIME,
-                rejected_at DATETIME,
-                approval_notes TEXT,
-                rejection_reason TEXT,
-                axis_issues TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            await runSQL(`CREATE TABLE IF NOT EXISTS assessment_reviews (
-                id TEXT PRIMARY KEY,
-                workflow_id TEXT,
-                reviewer_id TEXT,
-                reviewer_role TEXT,
-                status TEXT DEFAULT 'PENDING',
-                rating INTEGER,
-                comments TEXT,
-                axis_comments TEXT,
-                recommendation TEXT,
-                requested_at DATETIME,
-                due_date DATETIME,
-                completed_at DATETIME
-            )`);
-
-            await runSQL(`CREATE TABLE IF NOT EXISTS assessment_versions (
-                id TEXT PRIMARY KEY,
-                assessment_id TEXT,
-                version INTEGER,
-                assessment_data TEXT,
-                created_by TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            await runSQL(`CREATE TABLE IF NOT EXISTS assessment_axis_comments (
-                id TEXT PRIMARY KEY,
-                assessment_id TEXT,
-                axis_id TEXT,
-                user_id TEXT,
-                comment TEXT,
-                parent_comment_id TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            await runSQL(`DROP TABLE IF EXISTS rapid_lean_assessments`);
-            await runSQL(`CREATE TABLE IF NOT EXISTS rapid_lean_assessments (
-                id TEXT PRIMARY KEY,
-                organization_id TEXT NOT NULL,
-                project_id TEXT,
-                assessment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-                value_stream_score REAL DEFAULT 0,
-                waste_elimination_score REAL DEFAULT 0,
-                flow_pull_score REAL DEFAULT 0,
-                quality_source_score REAL DEFAULT 0,
-                continuous_improvement_score REAL DEFAULT 0,
-                visual_management_score REAL DEFAULT 0,
-                overall_score REAL DEFAULT 0,
-                industry_benchmark REAL DEFAULT 3.3,
-                ai_recommendations TEXT DEFAULT '[]',
-                top_gaps TEXT DEFAULT '[]',
-                questionnaire_responses TEXT DEFAULT '{}',
-                drd_mapping TEXT DEFAULT '{}',
-                observation_count INTEGER DEFAULT 0,
-                report_generated INTEGER DEFAULT 0,
-                created_by TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            await runSQL(`CREATE TABLE IF NOT EXISTS rapid_lean_observations (
-                id TEXT PRIMARY KEY,
-                assessment_id TEXT,
-                organization_id TEXT NOT NULL,
-                project_id TEXT,
-                template_id TEXT NOT NULL,
-                location TEXT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                answers TEXT DEFAULT '{}',
-                photos TEXT DEFAULT '[]',
-                notes TEXT,
-                created_by TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            await runSQL(`CREATE TABLE IF NOT EXISTS rapid_lean_reports (
-                id TEXT PRIMARY KEY,
-                assessment_id TEXT NOT NULL,
-                organization_id TEXT NOT NULL,
-                project_id TEXT,
-                report_type TEXT DEFAULT 'detailed',
-                format TEXT DEFAULT 'pdf',
-                file_url TEXT,
-                report_data TEXT DEFAULT '{}',
-                generated_by TEXT,
-                generated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            await runSQL(`DROP TABLE IF EXISTS assessments`);
-            await runSQL(`CREATE TABLE IF NOT EXISTS assessments (
-                id TEXT PRIMARY KEY,
-                organization_id TEXT,
-                name TEXT,
-                description TEXT,
-                status TEXT DEFAULT 'DRAFT',
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            await runSQL(`DROP TABLE IF EXISTS maturity_assessments`);
-            await runSQL(`CREATE TABLE IF NOT EXISTS maturity_assessments (
-                id TEXT PRIMARY KEY,
-                organization_id TEXT,
-                project_id TEXT,
-                name TEXT,
-                assessment_date DATE,
-                planning_score REAL,
-                decision_score REAL,
-                execution_score REAL,
-                monitoring_score REAL,
-                collaboration_score REAL,
-                axis_scores TEXT DEFAULT '[]',
-                completed_axes TEXT DEFAULT '[]',
-                overall_as_is REAL DEFAULT 0,
-                overall_to_be REAL DEFAULT 0,
-                overall_gap REAL DEFAULT 0,
-                overall_score REAL,
-                gap_analysis TEXT DEFAULT '{}',
-                gap_analysis_summary TEXT,
-                is_complete INTEGER DEFAULT 0,
-                assessment_status TEXT DEFAULT 'IN_PROGRESS',
-                finalized_at DATETIME,
-                is_approved INTEGER DEFAULT 0,
-                approved_at DATETIME,
-                approved_by TEXT,
-                updated_by TEXT,
-                created_by TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            await runSQL(`CREATE TABLE IF NOT EXISTS notifications (
-                id TEXT PRIMARY KEY,
-                user_id TEXT,
-                type TEXT,
-                title TEXT,
-                message TEXT,
-                data TEXT,
-                read INTEGER DEFAULT 0,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            await runSQL(`DROP TABLE IF EXISTS status_reports`);
-            await runSQL(`CREATE TABLE IF NOT EXISTS status_reports (
-                id TEXT PRIMARY KEY,
-                organization_id TEXT,
-                initiative_id TEXT,
-                project_id TEXT,
-                period_type TEXT DEFAULT 'WEEKLY',
-                period_start DATETIME,
-                period_end DATETIME,
-                period_label TEXT,
-                overall_status TEXT,
-                overall_trend TEXT,
-                sections_json TEXT,
-                executive_summary TEXT,
-                accomplishments TEXT,
-                next_steps TEXT,
-                escalations TEXT,
-                risks_and_issues TEXT,
-                recommendations TEXT,
-                progress_percent INTEGER,
-                budget_consumed_percent INTEGER,
-                tasks_completed INTEGER,
-                tasks_total INTEGER,
-                open_risks INTEGER,
-                open_issues INTEGER,
-                pending_decisions INTEGER,
-                generation_method TEXT,
-                status TEXT DEFAULT 'DRAFT',
-                summary TEXT,
-                blockers TEXT,
-                report_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-                created_by TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME,
-                approved_by TEXT,
-                approved_at DATETIME,
-                published_at DATETIME
-            )`);
-
-            await runSQL(`DROP TABLE IF EXISTS initiatives`);
-            await runSQL(`CREATE TABLE IF NOT EXISTS initiatives (
-                id TEXT PRIMARY KEY,
-                organization_id TEXT,
-                project_id TEXT,
-                name TEXT,
-                title TEXT,
-                description TEXT,
-                summary TEXT,
-                status TEXT DEFAULT 'DRAFT',
-                priority TEXT DEFAULT 'MEDIUM',
-                progress INTEGER DEFAULT 0,
-                blocked_reason TEXT,
-                start_date DATETIME,
-                end_date DATETIME,
-                owner_id TEXT,
-                owner_business_id TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            await runSQL(`DROP TABLE IF EXISTS initiative_budgets`);
-            await runSQL(`CREATE TABLE IF NOT EXISTS initiative_budgets (
-                id TEXT PRIMARY KEY,
-                initiative_id TEXT NOT NULL,
-                organization_id TEXT NOT NULL,
-                budget_type TEXT NOT NULL DEFAULT 'COMBINED',
-                planned_amount REAL DEFAULT 0,
-                approved_amount REAL DEFAULT 0,
-                currency TEXT DEFAULT 'PLN',
-                fiscal_year INTEGER,
-                contingency_percent REAL DEFAULT 10,
-                contingency_amount REAL DEFAULT 0,
-                notes TEXT,
-                status TEXT DEFAULT 'DRAFT',
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            await runSQL(`DROP TABLE IF EXISTS budget_line_items`);
-            await runSQL(`CREATE TABLE IF NOT EXISTS budget_line_items (
-                id TEXT PRIMARY KEY,
-                budget_id TEXT NOT NULL,
-                category TEXT,
-                subcategory TEXT,
-                description TEXT,
-                budget_type TEXT DEFAULT 'OPEX',
-                planned_amount REAL DEFAULT 0,
-                actual_amount REAL DEFAULT 0,
-                committed_amount REAL DEFAULT 0,
-                variance_amount REAL DEFAULT 0,
-                variance_percent REAL DEFAULT 0,
-                forecast_amount REAL DEFAULT 0,
-                sort_order INTEGER DEFAULT 0,
-                status TEXT DEFAULT 'PLANNED',
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            await runSQL(`CREATE TABLE IF NOT EXISTS users (
-                id TEXT PRIMARY KEY,
-                email TEXT UNIQUE,
-                password_hash TEXT,
-                name TEXT,
-                role TEXT DEFAULT 'user',
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            await runSQL(`DROP TABLE IF EXISTS decisions`);
-            await runSQL(`CREATE TABLE IF NOT EXISTS decisions (
-                id TEXT PRIMARY KEY,
-                project_id TEXT NOT NULL,
-                decision_type TEXT NOT NULL,
-                related_object_type TEXT NOT NULL,
-                related_object_id TEXT NOT NULL,
-                decision_owner_id TEXT NOT NULL,
-                requested_by_id TEXT,
-                status TEXT DEFAULT 'PENDING',
-                required INTEGER DEFAULT 1,
-                priority TEXT DEFAULT 'MEDIUM',
-                due_date DATETIME,
-                title TEXT NOT NULL,
-                description TEXT,
-                outcome TEXT,
-                rationale TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                decided_at DATETIME,
-                audit_trail TEXT DEFAULT '[]'
-            )`);
-
-            // AI Nudge tables
-            await runSQL(`CREATE TABLE IF NOT EXISTS ai_nudge_log (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                organization_id TEXT,
-                nudge_id TEXT NOT NULL,
-                shown_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                acted_upon INTEGER DEFAULT 0,
-                action TEXT,
-                acted_at DATETIME
-            )`);
-
-            await runSQL(`CREATE TABLE IF NOT EXISTS ai_nudge_dismissals (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                nudge_id TEXT NOT NULL,
-                dismissed_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            // AI Rate Limits table
-            await runSQL(`CREATE TABLE IF NOT EXISTS ai_rate_limits (
-                id TEXT PRIMARY KEY,
-                organization_id TEXT NOT NULL,
-                rule_name TEXT,
-                applies_to TEXT DEFAULT 'all',
-                limit_type TEXT DEFAULT 'per_day',
-                limit_value INTEGER DEFAULT 1000,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            // Budget Transactions table
-            await runSQL(`CREATE TABLE IF NOT EXISTS budget_transactions (
-                id TEXT PRIMARY KEY,
-                budget_id TEXT NOT NULL,
-                line_item_id TEXT,
-                transaction_type TEXT NOT NULL,
-                amount REAL NOT NULL,
-                currency TEXT DEFAULT 'PLN',
-                description TEXT,
-                vendor TEXT,
-                invoice_number TEXT,
-                transaction_date TEXT NOT NULL,
-                period_month INTEGER,
-                period_year INTEGER,
-                cost_center TEXT,
-                gl_account TEXT,
-                status TEXT DEFAULT 'PENDING',
-                created_by TEXT,
-                approved_by TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            // LLM Providers table
-            await runSQL(`DROP TABLE IF EXISTS llm_providers`);
-            await runSQL(`CREATE TABLE IF NOT EXISTS llm_providers (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                provider TEXT NOT NULL,
-                description TEXT,
-                api_key TEXT,
-                endpoint TEXT,
-                model_id TEXT,
-                cost_per_1k REAL DEFAULT 0,
-                input_cost_per_1k REAL DEFAULT 0,
-                output_cost_per_1k REAL DEFAULT 0,
-                markup_multiplier REAL DEFAULT 1.0,
-                is_active INTEGER DEFAULT 1,
-                is_default INTEGER DEFAULT 0,
-                visibility TEXT DEFAULT 'public',
-                priority INTEGER DEFAULT 0,
-                last_health_check TEXT,
-                health_status TEXT DEFAULT 'unknown',
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            // AI Learning tables
-            await runSQL(`DROP TABLE IF EXISTS ai_learning_interactions`);
-            await runSQL(`CREATE TABLE IF NOT EXISTS ai_learning_interactions (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                organization_id TEXT,
-                request_type TEXT NOT NULL,
-                prompt_hash TEXT,
-                response_quality REAL,
-                feedback_score REAL,
-                auto_feedback_score REAL,
-                auto_feedback_reason TEXT,
-                model TEXT,
-                latency_ms INTEGER,
-                token_count INTEGER,
-                prompt_signature TEXT,
-                response_signature TEXT,
-                metadata TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            await runSQL(`CREATE TABLE IF NOT EXISTS ai_learned_patterns (
-                id TEXT PRIMARY KEY,
-                organization_id TEXT NOT NULL,
-                request_type TEXT NOT NULL,
-                pattern_type TEXT,
-                pattern_key TEXT,
-                pattern_data TEXT,
-                successful_patterns TEXT,
-                failed_patterns TEXT,
-                sample_count INTEGER DEFAULT 0,
-                confidence REAL DEFAULT 0,
-                last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            // AI Nudge Suppressions table
-            await runSQL(`CREATE TABLE IF NOT EXISTS ai_nudge_suppressions (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                nudge_type TEXT NOT NULL,
-                suppressed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                expires_at DATETIME,
-                UNIQUE(user_id, nudge_type)
-            )`);
-
-            // AI A/B Experiments table
-            await runSQL(`CREATE TABLE IF NOT EXISTS ai_ab_experiments (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                description TEXT,
-                prompt_id TEXT NOT NULL,
-                variants TEXT NOT NULL,
-                traffic_split TEXT NOT NULL,
-                min_sample_size INTEGER DEFAULT 100,
-                confidence_level REAL DEFAULT 0.95,
-                primary_metric TEXT DEFAULT 'user_satisfaction',
-                status TEXT DEFAULT 'draft',
-                stop_reason TEXT,
-                created_by TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                started_at DATETIME,
-                ended_at DATETIME
-            )`);
-
-            // AI A/B Assignments table
-            await runSQL(`CREATE TABLE IF NOT EXISTS ai_ab_assignments (
-                id TEXT PRIMARY KEY,
-                experiment_id TEXT NOT NULL,
-                user_id TEXT NOT NULL,
-                variant_index INTEGER NOT NULL,
-                assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(experiment_id, user_id)
-            )`);
-
-            // AI A/B Outcomes table
-            await runSQL(`CREATE TABLE IF NOT EXISTS ai_ab_outcomes (
-                id TEXT PRIMARY KEY,
-                experiment_id TEXT NOT NULL,
-                user_id TEXT NOT NULL,
-                variant_index INTEGER NOT NULL,
-                metric TEXT NOT NULL,
-                value REAL NOT NULL,
-                recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            // AI System Prompts table (needed for A/B experiments)
-            await runSQL(`CREATE TABLE IF NOT EXISTS ai_system_prompts (
-                id TEXT PRIMARY KEY,
-                key TEXT UNIQUE NOT NULL,
-                description TEXT,
-                content TEXT NOT NULL,
-                context_config TEXT DEFAULT '{}',
-                is_active INTEGER DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            // Help Analytics table
-            await runSQL(`CREATE TABLE IF NOT EXISTS help_analytics (
-                id TEXT PRIMARY KEY,
-                user_id TEXT,
-                organization_id TEXT,
-                search_query TEXT,
-                results_count INTEGER DEFAULT 0,
-                clicked_result TEXT,
-                session_id TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            // Help Feedback table
-            await runSQL(`CREATE TABLE IF NOT EXISTS help_feedback (
-                id TEXT PRIMARY KEY,
-                user_id TEXT,
-                organization_id TEXT,
-                content_id TEXT,
-                content_type TEXT,
-                rating INTEGER,
-                helpful INTEGER DEFAULT 0,
-                comment TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            // Initiative Templates table
-            await runSQL(`CREATE TABLE IF NOT EXISTS initiative_templates (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                description TEXT,
-                category TEXT,
-                template_data TEXT,
-                default_duration_days INTEGER DEFAULT 90,
-                default_budget REAL DEFAULT 0,
-                is_active INTEGER DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            // Management Report Templates table
-            await runSQL(`CREATE TABLE IF NOT EXISTS management_report_templates (
-                id TEXT PRIMARY KEY,
-                organization_id TEXT,
-                name TEXT NOT NULL,
-                description TEXT,
-                template_type TEXT,
-                template_data TEXT,
-                sections TEXT,
-                is_active INTEGER DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            // Demo Templates table
-            await runSQL(`CREATE TABLE IF NOT EXISTS demo_templates (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                description TEXT,
-                seed_data_json TEXT,
-                template_type TEXT,
-                is_active INTEGER DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            // Action Decisions table
-            await runSQL(`CREATE TABLE IF NOT EXISTS action_decisions (
-                id TEXT PRIMARY KEY,
-                initiative_id TEXT,
-                action_id TEXT,
-                decision_type TEXT,
-                status TEXT DEFAULT 'PENDING',
-                decided_by TEXT,
-                decided_at DATETIME,
-                notes TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-        }
-    } catch (err) {
-        console.warn('[Test Setup] DB init wait skipped:', (err as Error)?.message || err);
-    }
-});
 
 if (typeof window !== 'undefined') {
     global.ResizeObserver = class ResizeObserver {
@@ -795,6 +261,23 @@ vi.mock('../server/services/rapidLeanReportService', () => {
         })
     };
 });
+
+// Inject Mock into AIAssessmentPartnerService to prevent real API calls
+// We use dynamic require to avoid import errors if the file has issue
+try {
+    const { aiAssessmentPartner } = require('../server/services/aiAssessmentPartnerService');
+    const { GoogleGenerativeAI } = require('./__mocks__/@google/generative-ai');
+
+    // Create a mock client instance
+    const mockClient = new GoogleGenerativeAI('test-key');
+
+    // Inject it
+    if (aiAssessmentPartner && typeof aiAssessmentPartner.injectAIClient === 'function') {
+        aiAssessmentPartner.injectAIClient(mockClient);
+    }
+} catch (err) {
+    console.warn('[Test Setup] Failed to inject AI mock:', (err as Error).message);
+}
 
 // Mock multer globally
 vi.mock('multer', () => {

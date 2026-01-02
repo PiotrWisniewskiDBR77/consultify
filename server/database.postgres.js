@@ -330,8 +330,14 @@ function initDb() {
                 id TEXT PRIMARY KEY,
                 organization_id TEXT,
                 name TEXT,
+                description TEXT,
+                goal TEXT,
                 status TEXT DEFAULT 'active',
                 owner_id TEXT,
+                initiative_count INTEGER DEFAULT 0,
+                assessment_count INTEGER DEFAULT 0,
+                member_count INTEGER DEFAULT 0,
+                document_count INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(organization_id) REFERENCES organizations(id)
             )`);
@@ -638,15 +644,29 @@ function initDb() {
                 organization_id TEXT NOT NULL,
                 email TEXT NOT NULL,
                 role TEXT DEFAULT 'USER',
-                token TEXT NOT NULL UNIQUE,
+                token TEXT UNIQUE, -- Made NULLABLE for hash-based security
+                token_hash TEXT UNIQUE, -- Added for secure storage
                 status TEXT DEFAULT 'pending',
                 invited_by TEXT,
                 expires_at TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 accepted_at TIMESTAMP,
+                invitation_type TEXT DEFAULT 'ORG',
+                project_id TEXT,
+                role_to_assign TEXT,
+                accepted_by_user_id TEXT,
+                metadata TEXT DEFAULT '{}',
+                resend_count INTEGER DEFAULT 0,
+                last_resent_at TIMESTAMP,
                 FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
                 FOREIGN KEY(invited_by) REFERENCES users(id) ON DELETE SET NULL
             )`);
+
+            await query(`CREATE INDEX IF NOT EXISTS idx_invitations_token ON invitations(token)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_invitations_email ON invitations(email)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_invitations_org_status ON invitations(organization_id, status)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_invitations_project ON invitations(project_id)`);
 
             // Access Requests
             await query(`CREATE TABLE IF NOT EXISTS access_requests (

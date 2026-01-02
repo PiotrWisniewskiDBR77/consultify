@@ -166,8 +166,8 @@ async function checkStaleInitiatives(userId, projectId) {
 
     try {
         const query = projectId 
-            ? `SELECT id, name, status, updated_at FROM initiatives WHERE project_id = $1 AND status != 'completed' AND updated_at < NOW() - INTERVAL '7 days' ORDER BY updated_at ASC LIMIT 1`
-            : `SELECT i.id, i.name, i.status, i.updated_at FROM initiatives i JOIN projects p ON i.project_id = p.id WHERE p.user_id = $1 AND i.status != 'completed' AND i.updated_at < NOW() - INTERVAL '7 days' ORDER BY i.updated_at ASC LIMIT 1`;
+            ? `SELECT id, title as name, status, updated_at FROM initiatives WHERE project_id = $1 AND status != 'completed' AND updated_at < NOW() - INTERVAL '7 days' ORDER BY updated_at ASC LIMIT 1`
+            : `SELECT i.id, i.title as name, i.status, i.updated_at FROM initiatives i JOIN projects p ON i.project_id = p.id WHERE p.user_id = $1 AND i.status != 'completed' AND i.updated_at < NOW() - INTERVAL '7 days' ORDER BY i.updated_at ASC LIMIT 1`;
 
         const result = await pool.query(query, [projectId || userId]);
 

@@ -73,69 +73,26 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
             });
             if (res.ok) {
                 const data = await res.json();
-                setInvoices(data.invoices || []);
+                // Transform backend format to frontend format
+                const invoices = (data.invoices || []).map((inv: any) => ({
+                    id: inv.id,
+                    number: inv.invoice_number || inv.number || `INV-${inv.id.slice(0, 8)}`,
+                    date: inv.invoice_date || inv.created_at || inv.date,
+                    dueDate: inv.due_date || inv.dueDate,
+                    amount: inv.total || inv.amount || 0,
+                    currency: inv.currency || 'USD',
+                    status: inv.status || 'pending',
+                    description: inv.description || `Invoice #${inv.invoice_number || inv.id.slice(0, 8)}`,
+                    pdfUrl: inv.pdf_url || inv.pdfUrl,
+                    items: inv.items || []
+                }));
+                setInvoices(invoices);
+            } else {
+                setInvoices([]);
             }
         } catch (error) {
-            // Mock data
-            setInvoices([
-                {
-                    id: 'inv_1',
-                    number: 'INV-2025-001',
-                    date: '2025-01-01',
-                    dueDate: '2025-01-15',
-                    amount: 299,
-                    currency: 'USD',
-                    status: 'paid',
-                    description: 'Professional Plan - January 2025',
-                    pdfUrl: '#',
-                    items: [
-                        { description: 'Professional Plan (Monthly)', quantity: 1, unitPrice: 299, amount: 299 }
-                    ]
-                },
-                {
-                    id: 'inv_2',
-                    number: 'INV-2024-012',
-                    date: '2024-12-01',
-                    dueDate: '2024-12-15',
-                    amount: 299,
-                    currency: 'USD',
-                    status: 'paid',
-                    description: 'Professional Plan - December 2024',
-                    pdfUrl: '#',
-                    items: [
-                        { description: 'Professional Plan (Monthly)', quantity: 1, unitPrice: 299, amount: 299 }
-                    ]
-                },
-                {
-                    id: 'inv_3',
-                    number: 'INV-2024-011',
-                    date: '2024-11-01',
-                    dueDate: '2024-11-15',
-                    amount: 299,
-                    currency: 'USD',
-                    status: 'paid',
-                    description: 'Professional Plan - November 2024',
-                    pdfUrl: '#',
-                    items: [
-                        { description: 'Professional Plan (Monthly)', quantity: 1, unitPrice: 299, amount: 299 }
-                    ]
-                },
-                {
-                    id: 'inv_4',
-                    number: 'INV-2024-010',
-                    date: '2024-10-01',
-                    dueDate: '2024-10-15',
-                    amount: 349,
-                    currency: 'USD',
-                    status: 'paid',
-                    description: 'Professional Plan + AI Token Pack',
-                    pdfUrl: '#',
-                    items: [
-                        { description: 'Professional Plan (Monthly)', quantity: 1, unitPrice: 299, amount: 299 },
-                        { description: 'AI Token Pack (100k tokens)', quantity: 1, unitPrice: 50, amount: 50 }
-                    ]
-                }
-            ]);
+            console.error('Failed to load invoices:', error);
+            setInvoices([]);
         }
         setLoading(false);
     }, []);

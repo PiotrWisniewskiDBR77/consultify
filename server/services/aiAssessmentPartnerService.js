@@ -5,6 +5,14 @@
  */
 
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const {
+    validateOrFallback,
+    GapAnalysisSchema,
+    EvidenceSchema,
+    InitiativeListSchema,
+    PrioritizedListSchema,
+    ROIEstimateSchema
+} = require('../utils/aiSchemaValidator');
 
 // AI THINKING_PARTNER Mode Configuration
 const AI_PARTNER_CONFIG = {
@@ -141,6 +149,9 @@ class AIAssessmentPartnerService {
     }
 
     initializeAI() {
+        // If client was injected securely, do not overwrite it with environment variables
+        if (this.genAI && this.model && this._injected) return;
+
         const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
         if (apiKey) {
             try {
@@ -154,6 +165,18 @@ class AIAssessmentPartnerService {
             this.model = null;
         }
     }
+
+    /**
+     * Dependency Injection for Testing
+     * Allows injecting a mock AI client to prevent real API calls
+     * @param {Object} mockClient - The mock GoogleGenerativeAI client
+     */
+    injectAIClient(mockClient) {
+        this.genAI = mockClient;
+        this.model = mockClient.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        this._injected = true;
+    }
+
 
     /**
      * Generate contextual guidance for assessment
@@ -186,6 +209,11 @@ class AIAssessmentPartnerService {
                 axisId,
                 guidance: this._getFallbackGuidance(axisId, currentScore, targetScore),
                 mode: 'FALLBACK',
+                context: {
+                    currentLevel: axis.levels[currentScore],
+                    targetLevel: axis.levels[targetScore],
+                    gap: targetScore - currentScore
+                },
                 error: error.message
             };
         }
@@ -309,7 +337,8 @@ class AIAssessmentPartnerService {
                 // Try to parse JSON from response
                 const jsonMatch = responseText.match(/\[[\s\S]*\]/);
                 if (jsonMatch) {
-                    aiRecommendations = JSON.parse(jsonMatch[0]);
+                    const parsed = JSON.parse(jsonMatch[0]);
+                    aiRecommendations = validateOrFallback(parsed, GapAnalysisSchema, []);
                 }
             } catch (error) {
                 console.error('[AIPartner] Error generating recommendations:', error);
@@ -626,7 +655,9 @@ class AIAssessmentPartnerService {
             if (!this.model) {
                 return {
                     suggestion: this._getFallbackJustification(axisId, score),
-                    mode: 'FALLBACK'
+                    mode: 'FALLBACK',
+                    axisId,
+                    score
                 };
             }
 
@@ -679,7 +710,9 @@ class AIAssessmentPartnerService {
             if (!this.model) {
                 return {
                     evidence: this._getFallbackEvidence(axisId, score),
-                    mode: 'FALLBACK'
+                    mode: 'FALLBACK',
+                    axisId,
+                    score
                 };
             }
 
@@ -688,7 +721,8 @@ class AIAssessmentPartnerService {
 
             // Parse JSON array from response
             const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-            const evidence = jsonMatch ? JSON.parse(jsonMatch[0]) : this._getFallbackEvidence(axisId, score);
+            const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : this._getFallbackEvidence(axisId, score);
+            const evidence = validateOrFallback(parsed, EvidenceSchema, this._getFallbackEvidence(axisId, score));
 
             return {
                 axisId,
@@ -827,7 +861,8 @@ class AIAssessmentPartnerService {
             if (!this.model) {
                 return {
                     completion: '',
-                    mode: 'FALLBACK'
+                    mode: 'FALLBACK',
+                    partialText
                 };
             }
 
@@ -975,7 +1010,9 @@ class AIAssessmentPartnerService {
             if (!this.model) {
                 return {
                     view: `Podsumowanie dla ${stakeholderRole} wymaga połączenia z AI.`,
-                    mode: 'FALLBACK'
+                    mode: 'FALLBACK',
+                    stakeholderRole,
+                    focusAreas: roleContext[stakeholderRole]
                 };
             }
 
@@ -1119,7 +1156,9 @@ class AIAssessmentPartnerService {
 
             // Parse JSON from response
             const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-            const initiatives = jsonMatch ? JSON.parse(jsonMatch[0]) : this._getFallbackInitiatives(sortedGaps).initiatives;
+            const fallback = this._getFallbackInitiatives(sortedGaps).initiatives;
+            const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : fallback;
+            const initiatives = validateOrFallback(parsed, InitiativeListSchema, fallback);
 
             return {
                 initiatives,
@@ -1182,11 +1221,15 @@ class AIAssessmentPartnerService {
             const responseText = result.response.text();
 
             const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-            const prioritizedList = jsonMatch ? JSON.parse(jsonMatch[0]) : initiatives.map((i, idx) => ({
+
+            const fallback = initiatives.map((i, idx) => ({
                 rank: idx + 1,
                 name: i.name,
                 priorityScore: 100 - idx * 10
             }));
+
+            const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : fallback;
+            const prioritizedList = validateOrFallback(parsed, PrioritizedListSchema, fallback);
 
             return {
                 prioritizedList,
@@ -1250,7 +1293,9 @@ class AIAssessmentPartnerService {
             const responseText = result.response.text();
 
             const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-            const roiEstimate = jsonMatch ? JSON.parse(jsonMatch[0]) : this._getFallbackROI(initiative).estimate;
+            const fallback = this._getFallbackROI(initiative).estimate;
+            const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : fallback;
+            const roiEstimate = validateOrFallback(parsed, ROIEstimateSchema, fallback);
 
             return {
                 initiative: initiative.name,
@@ -1314,6 +1359,8 @@ class AIAssessmentPartnerService {
                 averageTarget: avgTarget.toFixed(1),
                 overallGap: (avgTarget - avgActual).toFixed(1)
             },
+            topStrengths: topStrengths.map(s => s.name),
+            priorityGaps: topGaps.map(s => s.name),
             mode: 'FALLBACK'
         };
     }

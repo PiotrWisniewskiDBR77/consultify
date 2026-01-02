@@ -70,6 +70,8 @@ import { HelpSidePanel } from './components/Help/HelpSidePanel';
 import { FeedbackToggleButton } from './components/Feedback/FeedbackToggleButton';
 import { FeedbackSidePanel } from './components/Feedback/FeedbackSidePanel';
 import { UserProfileMenu } from './components/UserProfileMenu';
+// import { ProfileCompletionOverlay } from './components/shared/ProfileCompletionOverlay'; // REPLACED WITH NON-BLOCKING CHECK
+import { toast } from 'react-hot-toast';
 
 
 // Help system wrapper component - disabled, using direct HelpButton in layouts
@@ -276,6 +278,53 @@ const AppContent: React.FC = () => {
             setCurrentView(AppView.WELCOME);
         }
     }, [currentUser, currentView, setCurrentView]);
+
+    // Profile Completion reminder - non-blocking notification for targeted users
+    useEffect(() => {
+        if (currentUser?.email === 'piotr.wisniewski@dbr77.com') {
+            const isMissingInfo = !currentUser?.phone || !currentUser?.linkedinId;
+            if (isMissingInfo) {
+                const lastReminded = localStorage.getItem('profile_completion_last_reminded');
+                const now = Date.now();
+                // Remind at most once per 4 hours if missing
+                if (!lastReminded || (now - parseInt(lastReminded)) > 1000 * 60 * 60 * 4) {
+                    toast.custom((t) => (
+                        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white dark:bg-navy-800 shadow-lg rounded-xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 border border-violet-100 dark:border-violet-500/20`}>
+                            <div className="flex-1 w-0 p-4">
+                                <div className="flex items-start">
+                                    <div className="flex-shrink-0 pt-0.5">
+                                        <div className="h-10 w-10 rounded-full bg-violet-100 dark:bg-violet-500/10 flex items-center justify-center text-violet-600 dark:text-violet-400 font-bold overflow-hidden">
+                                            🛡️
+                                        </div>
+                                    </div>
+                                    <div className="ml-3 flex-1">
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                            Piotr, your profile is incomplete
+                                        </p>
+                                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                            Please add your phone and LinkedIn in Settings to ensure full security and networking features.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex border-l border-slate-200 dark:border-white/5">
+                                <button
+                                    onClick={() => {
+                                        toast.dismiss(t.id);
+                                        setCurrentView(AppView.SETTINGS_PROFILE);
+                                    }}
+                                    className="w-full border border-transparent rounded-none rounded-r-xl p-4 flex items-center justify-center text-xs font-bold text-violet-600 dark:text-violet-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                >
+                                    Update
+                                </button>
+                            </div>
+                        </div>
+                    ), { duration: 8000 });
+                    localStorage.setItem('profile_completion_last_reminded', now.toString());
+                }
+            }
+        }
+    }, [currentUser, setCurrentView]);
 
     // AI Chat is the primary entry point for authenticated users
     // Redirect from old USER_DASHBOARD to AI Chat on initial load
@@ -592,6 +641,7 @@ const AppContent: React.FC = () => {
         // --- MyWork (unified Dashboard + My Work) ---
         // All Dashboard views redirect to MyWork as the primary home
         if (
+            currentView === AppView.MY_WORK ||
             currentView === AppView.USER_DASHBOARD ||
             currentView === AppView.DASHBOARD ||
             currentView === AppView.DASHBOARD_OVERVIEW ||
@@ -1177,6 +1227,7 @@ const AppContent: React.FC = () => {
                         </AnimatePresence>
                     </TrialExpiredGate>
                 </main>
+                {/* Profile Completion check is now non-blocking and handled in AppContent useEffect */}
             </div >
         </ErrorBoundary >
     );

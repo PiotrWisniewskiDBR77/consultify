@@ -11,14 +11,13 @@ describe('AnalyticsService - Integration', () => {
         const { createRequire } = await import('module');
         const require = createRequire(import.meta.url);
 
-        // Ensure DB is initialized
+        // Ensure Mock DB is set
+        process.env.MOCK_DB = 'true';
+
+        // Ensure DB is initialized (will use mock from server/database.js)
         const db = require('../../../server/database.js');
-        await db.initPromise;
 
-        // Clear any mock flags
-        delete process.env.MOCK_DB;
-
-        // Import the real service (no mocks)
+        // Import the service
         const mod = await import('../../../server/services/analyticsService.js');
         AnalyticsService = mod.default;
     });

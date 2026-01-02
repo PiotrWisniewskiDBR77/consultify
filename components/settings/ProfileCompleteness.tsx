@@ -8,7 +8,7 @@
  * - Animated progress updates
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
     CheckCircle2, 
@@ -21,9 +21,14 @@ import {
     Image,
     Link2,
     ChevronRight,
-    Sparkles
+    Sparkles,
+    Award,
+    Loader2,
+    AlertCircle,
+    Lightbulb
 } from 'lucide-react';
 import { User } from '../../types';
+import { Api } from '../../services/api';
 
 interface ProfileCompletenessProps {
     currentUser: User;
@@ -120,15 +125,64 @@ const getCompletionLevel = (percentage: number): { label: string; color: string;
     return { label: 'Just Beginning', color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-500' };
 };
 
+interface Achievement {
+    achievement_type: string;
+    unlocked_at: string;
+    metadata?: any;
+}
+
+interface Suggestion {
+    type: string;
+    priority: 'high' | 'medium' | 'low';
+    message: string;
+    action?: string;
+    actionLabel?: string;
+}
+
 export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({ 
     currentUser, 
     onNavigate,
     compact = false 
 }) => {
     const { t } = useTranslation();
+    const [loading, setLoading] = useState(false);
+    const [achievements, setAchievements] = useState<Achievement[]>([]);
+    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+    const [apiData, setApiData] = useState<any>(null);
 
-    // Calculate completion
+    useEffect(() => {
+        loadCompletenessData();
+    }, [currentUser.id]);
+
+    const loadCompletenessData = async () => {
+        try {
+            setLoading(true);
+            const data = await Api.get('/api/user/profile-completeness');
+            if (data.success && data.data) {
+                setApiData(data.data);
+                setAchievements(data.data.achievements || []);
+                setSuggestions(data.data.suggestions || []);
+            }
+        } catch (error) {
+            console.error('Failed to load profile completeness:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Use API data if available, otherwise calculate locally
     const { percentage, completedItems, incompleteItems } = useMemo(() => {
+        if (apiData) {
+            // Use API data
+            const items = apiData.items || [];
+            return {
+                percentage: apiData.percentage || 0,
+                completedItems: items.filter((i: any) => i.isComplete),
+                incompleteItems: items.filter((i: any) => !i.isComplete)
+            };
+        }
+
+        // Fallback to local calculation
         let totalWeight = 0;
         let completedWeight = 0;
         const completed: CompletionItem[] = [];
@@ -149,9 +203,19 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
             completedItems: completed,
             incompleteItems: incomplete
         };
-    }, [currentUser]);
+    }, [currentUser, apiData]);
 
     const level = getCompletionLevel(percentage);
+
+    // Get milestone badges
+    const milestoneBadges = useMemo(() => {
+        const badges = [];
+        if (percentage >= 25) badges.push({ type: 'PROFILE_COMPLETE_25', label: '25% Complete', icon: Award });
+        if (percentage >= 50) badges.push({ type: 'PROFILE_COMPLETE_50', label: '50% Complete', icon: Award });
+        if (percentage >= 75) badges.push({ type: 'PROFILE_COMPLETE_75', label: '75% Complete', icon: Award });
+        if (percentage >= 100) badges.push({ type: 'PROFILE_COMPLETE_100', label: '100% Complete', icon: Sparkles });
+        return badges;
+    }, [percentage]);
 
     // Compact version for sidebar or card display
     if (compact) {
@@ -161,9 +225,19 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                         Profile Completion
                     </span>
-                    <span className={`text-sm font-bold ${level.color}`}>
-                        {percentage}%
-                    </span>
+                    <div className="flex items-center gap-2">
+                        {milestoneBadges.length > 0 && (
+                            <div className="flex gap-1">
+                                {milestoneBadges.map((badge, idx) => {
+                                    const Icon = badge.icon;
+                                    return <Icon key={idx} size={14} className="text-yellow-500" />;
+                                })}
+                            </div>
+                        )}
+                        <span className={`text-sm font-bold ${level.color}`}>
+                            {percentage}%
+                        </span>
+                    </div>
                 </div>
                 <div className="h-2 bg-white dark:bg-white/10 rounded-full overflow-hidden">
                     <div 
@@ -276,6 +350,67 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                     );
                 })}
             </div>
+
+            {/* Achievements Section */}
+            {achievements.length > 0 && (
+                <div className="px-6 py-4 bg-yellow-50 dark:bg-yellow-500/10 border-t border-yellow-100 dark:border-yellow-500/20">
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                        <Award size={16} className="text-yellow-500" />
+                        {t('settings.completeness.achievements', 'Achievements')}
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                        {achievements.map((achievement, idx) => (
+                            <span
+                                key={idx}
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 rounded text-xs font-medium"
+                            >
+                                <Award size={12} />
+                                {achievement.achievement_type.replace(/_/g, ' ')}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Role-based Suggestions */}
+            {suggestions.length > 0 && (
+                <div className="px-6 py-4 bg-blue-50 dark:bg-blue-500/10 border-t border-blue-100 dark:border-blue-500/20">
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                        <Lightbulb size={16} className="text-blue-500" />
+                        {t('settings.completeness.suggestions', 'Suggestions')}
+                    </h4>
+                    <div className="space-y-2">
+                        {suggestions.map((suggestion, idx) => (
+                            <div
+                                key={idx}
+                                className="flex items-start gap-2 p-2 bg-white dark:bg-navy-800 rounded-lg"
+                            >
+                                <AlertCircle 
+                                    size={16} 
+                                    className={`mt-0.5 ${
+                                        suggestion.priority === 'high' ? 'text-red-500' :
+                                        suggestion.priority === 'medium' ? 'text-yellow-500' : 'text-blue-500'
+                                    }`}
+                                />
+                                <div className="flex-1">
+                                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                                        {suggestion.message}
+                                    </p>
+                                    {suggestion.action && onNavigate && (
+                                        <button
+                                            onClick={() => onNavigate(suggestion.action!)}
+                                            className="mt-1 text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                                        >
+                                            {suggestion.actionLabel}
+                                            <ChevronRight size={12} />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Footer Message */}
             {percentage === 100 ? (

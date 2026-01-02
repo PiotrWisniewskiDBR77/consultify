@@ -6,7 +6,7 @@
  */
 
 const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+const defaultDb = require('../database');
 const { DIGITIZATION_AXES } = require('../data/digitizationEvaluationData');
 
 // Initiative templates for each axis
@@ -52,13 +52,27 @@ const INITIATIVE_TEMPLATES = {
     ]
 };
 
-const AIRecommendationService = {
+class AIRecommendationService {
+    constructor() {
+        this.db = defaultDb;
+        this.uuid = uuidv4;
+    }
+
+    /**
+     * Inject dependencies for testing
+     * @param {Object} deps 
+     */
+    setDependencies(deps) {
+        if (deps.db) this.db = deps.db;
+        if (deps.uuid) this.uuid = deps.uuid;
+    }
+
     /**
      * Generate recommendations for an analysis
      * @param {Object} analysis - Analysis with axisScores
      * @returns {Array} - List of recommendations
      */
-    generateRecommendations: async (analysis) => {
+    async generateRecommendations(analysis) {
         const recommendations = [];
 
         // Calculate gaps for each axis
@@ -98,17 +112,17 @@ const AIRecommendationService = {
             const selectedTemplates = relevantTemplates.slice(0, 2);
 
             for (const template of selectedTemplates) {
-                const priorityScore = calculatePriorityScore(axis.gap, template.effort, template.impact);
+                const priorityScore = this.calculatePriorityScore(axis.gap, template.effort, template.impact);
 
                 recommendations.push({
-                    id: uuidv4(),
+                    id: this.uuid(),
                     analysisId: analysis.id,
                     axisId: axis.axisId,
                     axisName: axis.axisName,
                     recommendationType: template.type,
                     title: template.title,
-                    description: generateDescription(template, axis),
-                    rationale: generateRationale(axis, template),
+                    description: this.generateDescription(template, axis),
+                    rationale: this.generateRationale(axis, template),
                     estimatedEffort: template.effort,
                     estimatedImpact: template.impact,
                     priorityScore,
@@ -123,14 +137,14 @@ const AIRecommendationService = {
         recommendations.sort((a, b) => b.priorityScore - a.priorityScore);
 
         return recommendations;
-    },
+    }
 
     /**
      * Get stored recommendations for an analysis
      */
-    getRecommendations: async (analysisId) => {
+    async getRecommendations(analysisId) {
         return new Promise((resolve, reject) => {
-            db.all(
+            this.db.all(
                 `SELECT * FROM digitization_ai_recommendations 
                  WHERE analysis_id = ? 
                  ORDER BY priority_score DESC`,
@@ -141,15 +155,15 @@ const AIRecommendationService = {
                 }
             );
         });
-    },
+    }
 
     /**
      * Save recommendations to database
      */
-    saveRecommendations: async (recommendations) => {
+    async saveRecommendations(recommendations) {
         for (const rec of recommendations) {
             await new Promise((resolve, reject) => {
-                db.run(
+                this.db.run(
                     `INSERT OR REPLACE INTO digitization_ai_recommendations (
                         id, analysis_id, axis_id, recommendation_type,
                         title, description, rationale,
@@ -175,16 +189,16 @@ const AIRecommendationService = {
                 );
             });
         }
-    },
+    }
 
     /**
      * Update recommendation status
      */
-    updateRecommendationStatus: async (recommendationId, status, userId) => {
+    async updateRecommendationStatus(recommendationId, status, userId) {
         const now = new Date().toISOString();
 
         await new Promise((resolve, reject) => {
-            db.run(
+            this.db.run(
                 `UPDATE digitization_ai_recommendations 
                  SET status = ?, accepted_by = ?, accepted_at = ?
                  WHERE id = ?`,
@@ -192,14 +206,14 @@ const AIRecommendationService = {
                 (err) => err ? reject(err) : resolve()
             );
         });
-    },
+    }
 
     /**
      * Link recommendation to initiative
      */
-    linkToInitiative: async (recommendationId, initiativeId) => {
+    async linkToInitiative(recommendationId, initiativeId) {
         await new Promise((resolve, reject) => {
-            db.run(
+            this.db.run(
                 `UPDATE digitization_ai_recommendations 
                  SET initiative_id = ?, status = 'implemented'
                  WHERE id = ?`,
@@ -207,14 +221,14 @@ const AIRecommendationService = {
                 (err) => err ? reject(err) : resolve()
             );
         });
-    },
+    }
 
     /**
      * Get quick win recommendations (low effort, medium+ impact)
      */
-    getQuickWins: async (analysisId) => {
+    async getQuickWins(analysisId) {
         return new Promise((resolve, reject) => {
-            db.all(
+            this.db.all(
                 `SELECT * FROM digitization_ai_recommendations 
                  WHERE analysis_id = ? 
                  AND estimated_effort = 'low'
@@ -230,49 +244,47 @@ const AIRecommendationService = {
             );
         });
     }
-};
 
-/**
- * Calculate priority score based on gap, effort, and impact
- */
-function calculatePriorityScore(gap, effort, impact) {
-    const effortScores = { low: 1.5, medium: 1, high: 0.7 };
-    const impactScores = { low: 0.5, medium: 1, high: 1.5 };
+    /**
+     * Calculate priority score based on gap, effort, and impact
+     */
+    calculatePriorityScore(gap, effort, impact) {
+        const effortScores = { low: 1.5, medium: 1, high: 0.7 };
+        const impactScores = { low: 0.5, medium: 1, high: 1.5 };
 
-    const base = gap * 10;
-    const modifier = (effortScores[effort] || 1) * (impactScores[impact] || 1);
+        const base = gap * 10;
+        const modifier = (effortScores[effort] || 1) * (impactScores[impact] || 1);
 
-    return Math.round(base * modifier * 10);
+        return Math.round(base * modifier * 10);
+    }
+
+    /**
+     * Generate detailed description for recommendation
+     */
+    generateDescription(template, axis) {
+        const descriptions = {
+            technology: `Implementacja rozwiązania technologicznego "${template.title}" w celu podniesienia poziomu dojrzałości cyfrowej w obszarze ${axis.axisName}.`,
+            process_change: `Zmiana procesowa "${template.title}" pozwoli na lepsze wykorzystanie potencjału cyfryzacji w obszarze ${axis.axisName}.`,
+            training: `Program szkoleniowy "${template.title}" podniesie kompetencje zespołu w zakresie ${axis.axisName}.`,
+            strategic: `Inicjatywa strategiczna "${template.title}" otworzy nowe możliwości biznesowe w obszarze ${axis.axisName}.`,
+            quick_win: `Szybka inicjatywa "${template.title}" przyniesie widoczne efekty przy minimalnym nakładzie pracy.`
+        };
+
+        return descriptions[template.type] || `Rekomendacja: ${template.title} dla obszaru ${axis.axisName}.`;
+    }
+
+    /**
+     * Generate rationale for recommendation
+     */
+    generateRationale(axis, template) {
+        const gapLevel = axis.gap > 2 ? 'znacząca' : axis.gap > 1 ? 'umiarkowana' : 'niewielka';
+
+        return `Analiza wykazała ${gapLevel} lukę (${axis.gap.toFixed(1)} poziomów) w obszarze "${axis.axisName}". ` +
+            `Obecny poziom ${axis.current.toFixed(1)} jest poniżej poziomu docelowego ${axis.target.toFixed(1)}. ` +
+            `Ta inicjatywa ma ${template.impact === 'high' ? 'wysoki' : template.impact === 'medium' ? 'średni' : 'niski'} wpływ ` +
+            `przy ${template.effort === 'low' ? 'niskim' : template.effort === 'medium' ? 'średnim' : 'wysokim'} nakładzie pracy.`;
+    }
 }
 
-/**
- * Generate detailed description for recommendation
- */
-function generateDescription(template, axis) {
-    const descriptions = {
-        technology: `Implementacja rozwiązania technologicznego "${template.title}" w celu podniesienia poziomu dojrzałości cyfrowej w obszarze ${axis.axisName}.`,
-        process_change: `Zmiana procesowa "${template.title}" pozwoli na lepsze wykorzystanie potencjału cyfryzacji w obszarze ${axis.axisName}.`,
-        training: `Program szkoleniowy "${template.title}" podniesie kompetencje zespołu w zakresie ${axis.axisName}.`,
-        strategic: `Inicjatywa strategiczna "${template.title}" otworzy nowe możliwości biznesowe w obszarze ${axis.axisName}.`,
-        quick_win: `Szybka inicjatywa "${template.title}" przyniesie widoczne efekty przy minimalnym nakładzie pracy.`
-    };
-
-    return descriptions[template.type] || `Rekomendacja: ${template.title} dla obszaru ${axis.axisName}.`;
-}
-
-/**
- * Generate rationale for recommendation
- */
-function generateRationale(axis, template) {
-    const gapLevel = axis.gap > 2 ? 'znacząca' : axis.gap > 1 ? 'umiarkowana' : 'niewielka';
-
-    return `Analiza wykazała ${gapLevel} lukę (${axis.gap.toFixed(1)} poziomów) w obszarze "${axis.axisName}". ` +
-        `Obecny poziom ${axis.current.toFixed(1)} jest poniżej poziomu docelowego ${axis.target.toFixed(1)}. ` +
-        `Ta inicjatywa ma ${template.impact === 'high' ? 'wysoki' : template.impact === 'medium' ? 'średni' : 'niski'} wpływ ` +
-        `przy ${template.effort === 'low' ? 'niskim' : template.effort === 'medium' ? 'średnim' : 'wysokim'} nakładzie pracy.`;
-}
-
-module.exports = AIRecommendationService;
-
-
-
+// Export singleton instance
+module.exports = new AIRecommendationService();
