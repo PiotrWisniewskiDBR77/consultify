@@ -89,6 +89,21 @@ export const AdminLLMView: React.FC = () => {
     const [logs, setLogs] = useState<any[]>([]);
     const [analytics, setAnalytics] = useState<any>(null);
 
+    // Load LLM status (new)
+    const loadLLMStatus = useCallback(async () => {
+        setLoadingStatus(true);
+        try {
+            const response = await fetch('/api/llm/status');
+            const data = await response.json();
+            if (data.success) {
+                setLLMStatus(data);
+            }
+        } catch (e) {
+            console.error('Failed to load LLM status:', e);
+        }
+        setLoadingStatus(false);
+    }, []);
+
     useEffect(() => {
         const initLLMData = async () => {
             try {
@@ -109,15 +124,9 @@ export const AdminLLMView: React.FC = () => {
             loadLLMStatus();
         };
         initLLMData();
-    }, []);
+    }, [loadLLMStatus]);
 
-    useEffect(() => {
-        if (activeTab === 'health') {
-            loadAnalytics();
-        }
-    }, [activeTab]);
-
-    const loadAnalytics = async () => {
+    const loadAnalytics = useCallback(async () => {
         try {
             const [stats, recentLogs] = await Promise.all([
                 Api.getLLMAnalytics(7),
@@ -129,7 +138,13 @@ export const AdminLLMView: React.FC = () => {
             console.error('Failed to load analytics', error);
             toast.error('Failed to load analytics data');
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        if (activeTab === 'health') {
+            loadAnalytics();
+        }
+    }, [activeTab, loadAnalytics]);
 
     const loadProviders = async () => {
         try {
@@ -150,21 +165,6 @@ export const AdminLLMView: React.FC = () => {
             console.error(e);
         }
     };
-
-    // Load LLM status (new)
-    const loadLLMStatus = useCallback(async () => {
-        setLoadingStatus(true);
-        try {
-            const response = await fetch('/api/llm/status');
-            const data = await response.json();
-            if (data.success) {
-                setLLMStatus(data);
-            }
-        } catch (e) {
-            console.error('Failed to load LLM status:', e);
-        }
-        setLoadingStatus(false);
-    }, []);
 
     // Refresh all provider health
     const refreshAllHealth = async () => {
@@ -188,12 +188,12 @@ export const AdminLLMView: React.FC = () => {
     const testSingleProvider = async (provider: string) => {
         setTestingProvider(provider);
         try {
-            const response = await fetch(`/ api / llm / status / test / ${provider} `, { method: 'POST' });
+            const response = await fetch(`/api/llm/status/test/${provider}`, { method: 'POST' });
             const data = await response.json();
             if (data.success && data.reachable) {
-                toast.success(`${provider} is healthy(${data.latency}ms)`);
+                toast.success(`${provider} is healthy (${data.latency}ms)`);
             } else {
-                toast.error(`${provider}: ${data.error || 'Connection failed'} `);
+                toast.error(`${provider}: ${data.error || 'Connection failed'}`);
             }
             await loadLLMStatus();
         } catch (e) {
@@ -222,30 +222,6 @@ export const AdminLLMView: React.FC = () => {
         }
     };
 
-    useEffect(() => {
-        const initLLMData = async () => {
-            try {
-                const data = await Api.getLLMProviders(true);
-                setProviders(data);
-                setLoading(false);
-            } catch (err) {
-                toast.error('Failed to load providers');
-                setLoading(false);
-            }
-            try {
-                const promptsData = await Api.aiGetSystemPrompts();
-                setPrompts(promptsData);
-            } catch (e) {
-                console.error(e);
-            }
-            // Load LLM status
-            loadLLMStatus();
-        };
-        initLLMData();
-    }, [loadLLMStatus]);
-
-
-
     const [testingConnection, setTestingConnection] = useState(false);
 
     const handleTestConnection = async (config: Partial<LLMProvider>) => {
@@ -255,7 +231,7 @@ export const AdminLLMView: React.FC = () => {
             if (result.success) {
                 toast.success(result.message);
             } else {
-                toast.error(`Connection Failed: ${result.message} `);
+                toast.error(`Connection Failed: ${result.message}`);
             }
         } catch (err) {
             toast.error('Test failed to execute');
@@ -324,26 +300,26 @@ export const AdminLLMView: React.FC = () => {
             <div className="flex gap-4 border-b border-white/5 pb-1">
                 <button
                     onClick={() => setActiveTab('providers')}
-                    className={`px - 4 py - 2 text - sm font - medium border - b - 2 transition - colors ${activeTab === 'providers' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'} `}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'providers' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'}`}
                 >
                     LLM Providers
                 </button>
                 <button
                     onClick={() => setActiveTab('health')}
-                    className={`px - 4 py - 2 text - sm font - medium border - b - 2 transition - colors flex items - center gap - 2 ${activeTab === 'health' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'} `}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'health' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'}`}
                 >
                     <Activity size={14} />
                     Health Dashboard
                     {llmStatus && (
-                        <span className={`ml - 1 px - 1.5 py - 0.5 rounded - full text - xs ${llmStatus.summary.healthy > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                            } `}>
+                        <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${llmStatus.summary.healthy > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                            }`}>
                             {llmStatus.summary.healthy}/{llmStatus.summary.configured}
                         </span>
                     )}
                 </button>
                 <button
                     onClick={() => setActiveTab('prompts')}
-                    className={`px - 4 py - 2 text - sm font - medium border - b - 2 transition - colors ${activeTab === 'prompts' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'} `}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'prompts' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'}`}
                 >
                     System Personas (Prompts)
                 </button>
@@ -395,7 +371,7 @@ export const AdminLLMView: React.FC = () => {
 
                         <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
                             <div className="flex justify-between items-start mb-2">
-                                <div className={`p - 2 rounded - lg ${analytics?.error_rate > 0.05 ? 'bg-red-500/20' : 'bg-purple-500/20'} `}>
+                                <div className={`p-2 rounded-lg ${analytics?.error_rate > 0.05 ? 'bg-red-500/20' : 'bg-purple-500/20'}`}>
                                     <AlertTriangle size={20} className={analytics?.error_rate > 0.05 ? 'text-red-400' : 'text-purple-400'} />
                                 </div>
                                 <span className="text-xs font-mono text-slate-500">ERROR RATE</span>
@@ -436,10 +412,10 @@ export const AdminLLMView: React.FC = () => {
                                     {logs.map((log: any) => (
                                         <tr key={log.id} className="hover:bg-white/5 transition-colors text-sm">
                                             <td className="px-4 py-3">
-                                                <span className={`inline - flex items - center px - 2 py - 0.5 rounded text - [10px] font - bold uppercase tracking - wide border ${log.status === 'success'
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${log.status === 'success'
                                                     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                                                     : 'bg-red-500/10 text-red-400 border-red-500/20'
-                                                    } `}>
+                                                    }`}>
                                                     {log.status}
                                                 </span>
                                             </td>
@@ -563,7 +539,7 @@ export const AdminLLMView: React.FC = () => {
                     {llmStatus?.providers.map((p) => (
                         <div
                             key={p.id || p.provider}
-                            className={`border rounded - xl p - 4 transition - all ${getStatusClass(p.healthStatus)} `}
+                            className={`border rounded-xl p-4 transition-all ${getStatusClass(p.healthStatus)}`}
                         >
                             <div className="flex justify-between items-start mb-3">
                                 <div>
@@ -577,7 +553,7 @@ export const AdminLLMView: React.FC = () => {
                             </div>
 
                             <div className="flex flex-wrap gap-1 mb-3">
-                                <span className={`px - 2 py - 0.5 rounded text - xs ${p.isDefault ? 'bg-purple-500/20 text-purple-300' : 'bg-slate-700/50 text-slate-400'} `}>
+                                <span className={`px-2 py-0.5 rounded text-xs ${p.isDefault ? 'bg-purple-500/20 text-purple-300' : 'bg-slate-700/50 text-slate-400'}`}>
                                     {p.isDefault ? '★ Default' : p.tier}
                                 </span>
                                 {p.supportsVision && <span className="px-2 py-0.5 rounded text-xs bg-blue-500/20 text-blue-300">Vision</span>}
@@ -642,10 +618,10 @@ export const AdminLLMView: React.FC = () => {
                                         {(chain as string[]).map((provider, idx) => (
                                             <React.Fragment key={provider}>
                                                 {idx > 0 && <ArrowRight size={12} className="text-slate-600" />}
-                                                <span className={`text - sm px - 2 py - 0.5 rounded ${llmStatus.providers.find(p => p.provider === provider)?.healthStatus === 'healthy'
+                                                <span className={`text-sm px-2 py-0.5 rounded ${llmStatus.providers.find(p => p.provider === provider)?.healthStatus === 'healthy'
                                                     ? 'bg-green-500/20 text-green-300'
                                                     : 'bg-slate-700/50 text-slate-400'
-                                                    } `}>
+                                                    }`}>
                                                     {provider}
                                                 </span>
                                             </React.Fragment>
@@ -657,290 +633,8 @@ export const AdminLLMView: React.FC = () => {
                     </div>
                 )}
             </div>
-            ) : activeTab === 'providers' ? (
-            <>
-
-                {/* Cloud Providers */}
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                            <Shield className="text-purple-500" />
-                            Organization Model Management
-                        </h2>
-                        <p className="text-slate-400 text-sm mt-1">Enable or disable specific AI models for your organization.</p>
-                    </div>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => setShowInactive(!showInactive)}
-                            className={`flex items - center gap - 2 px - 3 py - 2 rounded - lg border transition - colors text - sm font - medium ${showInactive ? 'bg-white/10 border-white/20 text-white' : 'border-white/10 text-slate-400 hover:text-white'} `}
-                        >
-                            {showInactive ? <Eye size={16} /> : <EyeOff size={16} />}
-                            {showInactive ? 'Hide Inactive' : 'Show Inactive'}
-                        </button>
-                        {/* Global Add Provider is disabled for Tenant Admin */}
-                    </div>
-                </div>
-
-                <div className="bg-navy-900 border border-white/5 rounded-xl overflow-auto custom-scrollbar">
-                    <table className="w-full text-left text-sm text-slate-300">
-                        <thead className="bg-navy-950 text-slate-400 uppercase text-xs font-semibold">
-                            <tr>
-                                <th className="px-6 py-4">Name & Description</th>
-                                <th className="px-6 py-4">Provider</th>
-                                <th className="px-6 py-4">Model ID</th>
-                                <th className="px-6 py-4">Org Access</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4 text-right">Verification</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                            {loading ? <tr><td colSpan={6} className="p-8 text-center">Loading...</td></tr> : providers
-                                .filter(p => showInactive || p.is_active)
-                                .map(p => (
-                                    <tr key={p.id} className="hover:bg-white/5 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="font-medium text-white">{p.name}</div>
-                                            {p.description && <div className="text-xs text-slate-500 mt-0.5">{p.description}</div>}
-                                        </td>
-                                        <td className="px-6 py-4 capitalize">{p.provider}</td>
-                                        <td className="px-6 py-4 font-mono text-xs">{p.model_id}</td>
-                                        <td className="px-6 py-4">
-                                            <button
-                                                onClick={async () => {
-                                                    const newStatus = !(p.is_enabled_for_org !== false); // Default is true if undefined
-                                                    try {
-                                                        await Api.toggleOrganizationLLM(p.id, newStatus);
-                                                        // Optimistic update
-                                                        setProviders(prev => prev.map(pro => pro.id === p.id ? { ...pro, is_enabled_for_org: newStatus } : pro));
-                                                        toast.success(newStatus ? 'Enabled for Organization' : 'Disabled for Organization');
-                                                    } catch (e) {
-                                                        toast.error('Failed to update status');
-                                                    }
-                                                }}
-                                                className={`relative inline - flex h - 6 w - 11 items - center rounded - full transition - colors focus: outline - none ${p.is_enabled_for_org !== false ? 'bg-purple-600' : 'bg-slate-700'} `}
-                                            >
-                                                <span className={`inline - block h - 4 w - 4 transform rounded - full bg - white transition - transform ${p.is_enabled_for_org !== false ? 'translate-x-6' : 'translate-x-1'} `} />
-                                            </button>
-                                            <span className="ml-2 text-xs text-slate-400">{p.is_enabled_for_org !== false ? 'Enabled' : 'Disabled'}</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {p.is_active ? <span className="text-green-400 flex items-center gap-1"><Check size={14} /> Global Active</span> : <span className="text-slate-500">Global Inactive</span>}
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleTestConnection(p)}
-                                                    title="Test Connection"
-                                                    disabled={testingConnection}
-                                                    className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-green-400 transition-colors"
-                                                >
-                                                    <Wifi size={16} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Modal */}
-                {showModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                        <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-xl font-bold text-white">{editingId ? 'Edit Provider' : 'Add Provider'}</h2>
-                                <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white"><X size={20} /></button>
-                            </div>
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs text-slate-400 mb-1">Display Name</label>
-                                        <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs text-slate-400 mb-1">Provider Type</label>
-                                        <select value={form.provider} onChange={e => setForm({ ...form, provider: e.target.value as any })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white">
-                                            <optgroup label="— Major Providers —">
-                                                <option value="openai">OpenAI (GPT-4)</option>
-                                                <option value="anthropic">Anthropic (Claude)</option>
-                                                <option value="google">Google Gemini</option>
-                                            </optgroup>
-                                            <optgroup label="— Open Source / Fast —">
-                                                <option value="mistral">Mistral AI</option>
-                                                <option value="groq">Groq (Ultra Fast)</option>
-                                                <option value="together">Together AI</option>
-                                                <option value="nvidia">NVIDIA NIM</option>
-                                            </optgroup>
-                                            <optgroup label="— Chinese Providers —">
-                                                <option value="deepseek">DeepSeek</option>
-                                                <option value="qwen">Alibaba Qwen</option>
-                                                <option value="ernie">Baidu ERNIE</option>
-                                                <option value="z_ai">Zhipu AI (GLM)</option>
-                                            </optgroup>
-                                            <optgroup label="— Search / Tools —">
-                                                <option value="tavily">Tavily Search</option>
-                                                <option value="google_search">Google Search</option>
-                                            </optgroup>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs text-slate-400 mb-1">API Key</label>
-                                    <div className="relative">
-                                        <input type="password" value={form.api_key} onChange={e => setForm({ ...form, api_key: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" placeholder="sk-..." />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs text-slate-400 mb-1">Model ID (e.g. gpt-4)</label>
-                                        <input required value={form.model_id} onChange={e => setForm({ ...form, model_id: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs text-slate-400 mb-1">Endpoint (Optional)</label>
-                                        <input value={form.endpoint} onChange={e => setForm({ ...form, endpoint: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" placeholder="https://api..." />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs text-slate-400 mb-1">Input Pricing ($/1k)</label>
-                                        <input type="number" step="0.000001" value={form.input_cost_per_1k || 0} onChange={e => setForm({ ...form, input_cost_per_1k: parseFloat(e.target.value) })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs text-slate-400 mb-1">Output Pricing ($/1k)</label>
-                                        <input type="number" step="0.000001" value={form.output_cost_per_1k || 0} onChange={e => setForm({ ...form, output_cost_per_1k: parseFloat(e.target.value) })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs text-slate-400 mb-1">Visibility</label>
-                                        <select value={form.visibility} onChange={e => setForm({ ...form, visibility: e.target.value as any })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white">
-                                            <option value="admin">Admin Only</option>
-                                            <option value="beta">Beta Users</option>
-                                            <option value="public">Public</option>
-                                        </select>
-                                    </div>
-                                    <div className="flex items-center pt-6">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input type="checkbox" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} className="w-4 h-4 rounded bg-navy-950 border-white/10" />
-                                            <span className="text-sm text-slate-300">Active</span>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 flex gap-3">
-                                    <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded">Cancel</button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleTestConnection(form)}
-                                        disabled={!form.provider || !form.api_key || testingConnection}
-                                        className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/50 rounded flex items-center gap-2"
-                                    >
-                                        <Wifi size={16} /> Test
-                                    </button>
-                                    <button type="submit" className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded">Save Provider</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
-            </>
-            ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                    {prompts.map(p => (
-                        <div
-                            key={p.key}
-                            onClick={() => setEditingPrompt(p)}
-                            className={`p - 4 rounded - xl border cursor - pointer transition - all ${editingPrompt?.key === p.key ? 'bg-purple-500/20 border-purple-500' : 'bg-navy-900 border-white/5 hover:border-white/20'} `}
-                        >
-                            <div className="flex justify-between items-center mb-2">
-                                <h3 className="font-bold text-white">{p.key}</h3>
-                                <span className="text-xs text-slate-400">{new Date(p.updated_at).toLocaleDateString()}</span>
-                            </div>
-                            <p className="text-xs text-slate-400 line-clamp-2">{p.description}</p>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="bg-navy-900 border border-white/10 rounded-xl p-6 h-fit">
-                    {editingPrompt ? (
-                        <form onSubmit={handleUpdatePrompt}>
-                            <h3 className="text-lg font-bold mb-4">Edit Persona: {editingPrompt.key}</h3>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-xs font-medium text-slate-400 mb-1">Description</label>
-                                    <input
-                                        value={editingPrompt.description}
-                                        onChange={e => setEditingPrompt({ ...editingPrompt, description: e.target.value })}
-                                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white text-sm"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-slate-400 mb-1">System Prompt</label>
-                                    <textarea
-                                        value={editingPrompt.content}
-                                        onChange={e => setEditingPrompt({ ...editingPrompt, content: e.target.value })}
-                                        className="w-full h-96 bg-navy-950 border border-white/10 rounded p-4 text-white font-mono text-sm leading-relaxed focus:border-purple-500 outline-none resize-none"
-                                    />
-                                </div>
-
-                                {/* Context Injection Controls */}
-                                <div className="bg-navy-950 border border-white/5 rounded-lg p-4">
-                                    <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                                        <Shield size={14} className="text-purple-400" />
-                                        Context Injection Governance
-                                    </h4>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {[
-                                            { id: 'include_project_context', label: 'Project Context (Goals, Risks)' },
-                                            { id: 'include_user_profile', label: 'User Profile (Role, Bio)' },
-                                            { id: 'include_assessment_data', label: 'Live Assessment Data' },
-                                            { id: 'include_kb_articles', label: 'Knowledge Base (RAG)' },
-                                            { id: 'include_task_history', label: 'Task History & Comments' }
-                                        ].map(opt => {
-                                            const config = typeof editingPrompt.context_config === 'string'
-                                                ? JSON.parse(editingPrompt.context_config || '{}')
-                                                : (editingPrompt.context_config || {});
-
-                                            return (
-                                                <label key={opt.id} className="flex items-center gap-2 cursor-pointer group">
-                                                    <div className={`w - 4 h - 4 rounded border flex items - center justify - center transition - colors ${config[opt.id] ? 'bg-purple-600 border-purple-600' : 'border-white/20 group-hover:border-white/40'} `}>
-                                                        {config[opt.id] && <Check size={10} className="text-white" />}
-                                                    </div>
-                                                    <input
-                                                        type="checkbox"
-                                                        className="hidden"
-                                                        checked={!!config[opt.id]}
-                                                        onChange={e => {
-                                                            const newConfig = { ...config, [opt.id]: e.target.checked };
-                                                            setEditingPrompt({ ...editingPrompt, context_config: newConfig });
-                                                        }}
-                                                    />
-                                                    <span className="text-xs text-slate-300 group-hover:text-white transition-colors">{opt.label}</span>
-                                                </label>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                                <div className="flex justify-end gap-2">
-                                    <button type="submit" className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium flex items-center gap-2">
-                                        <Save size={16} /> Save Persona
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    ) : (
-                        <div className="h-96 flex items-center justify-center text-slate-500">
-                            Select a persona to edit
-                        </div>
-                    )}
-                </div>
-            </div>
         </div>
     );
 };
+
+export default AdminLLMView;

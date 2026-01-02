@@ -8,7 +8,7 @@
  * - View invoice details
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -65,11 +65,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
     const [downloading, setDownloading] = useState<string | null>(null);
 
-    useEffect(() => {
-        loadInvoices();
-    }, [currentOrganization?.id]);
-
-    const loadInvoices = async () => {
+    const loadInvoices = useCallback(async () => {
         setLoading(true);
         try {
             const res = await fetch(`/api/billing/invoices`, {
@@ -142,7 +138,11 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
             ]);
         }
         setLoading(false);
-    };
+    }, []);
+
+    useEffect(() => {
+        loadInvoices();
+    }, [currentOrganization?.id, loadInvoices]);
 
     const handleDownload = async (invoice: Invoice) => {
         setDownloading(invoice.id);
@@ -151,7 +151,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
             const res = await fetch(`/api/billing/invoices/${invoice.id}/download`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
-            
+
             if (res.ok) {
                 const blob = await res.blob();
                 const url = window.URL.createObjectURL(blob);
@@ -220,7 +220,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
             const now = new Date();
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const startOfYear = new Date(now.getFullYear(), 0, 1);
-            
+
             if (dateRange === 'month' && invoiceDate < startOfMonth) return false;
             if (dateRange === 'year' && invoiceDate < startOfYear) return false;
         }

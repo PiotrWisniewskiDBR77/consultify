@@ -8,7 +8,7 @@
  * - Delete payment methods
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -54,47 +54,30 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
     const [cardCvc, setCardCvc] = useState('');
     const [cardName, setCardName] = useState('');
 
-    useEffect(() => {
-        loadPaymentMethods();
-    }, [currentOrganization?.id]);
-
-    const loadPaymentMethods = async () => {
+    const loadPaymentMethods = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/billing/payment-methods`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/billing/payment-methods?orgId=${currentOrganization?.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (res.ok) {
-                const data = await res.json();
+            if (response.ok) {
+                const data = await response.json();
                 setPaymentMethods(data.paymentMethods || []);
             }
         } catch (error) {
-            // Mock data for development
-            setPaymentMethods([
-                {
-                    id: 'pm_1',
-                    type: 'card',
-                    brand: 'visa',
-                    last4: '4242',
-                    expMonth: 12,
-                    expYear: 2026,
-                    isDefault: true,
-                    createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
-                },
-                {
-                    id: 'pm_2',
-                    type: 'card',
-                    brand: 'mastercard',
-                    last4: '5555',
-                    expMonth: 6,
-                    expYear: 2025,
-                    isDefault: false,
-                    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-                }
-            ]);
+            console.error('Failed to load payment methods:', error);
+            // setPaymentMethods(mockData); // Mock data if needed
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
-    };
+    }, [currentOrganization?.id]);
+
+    useEffect(() => {
+        if (currentOrganization?.id) {
+            loadPaymentMethods();
+        }
+    }, [currentOrganization?.id, loadPaymentMethods]);
 
     const handleAddPaymentMethod = async () => {
         if (!cardNumber || !cardExpiry || !cardCvc || !cardName) {
@@ -304,26 +287,23 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
                     {paymentMethods.map(method => (
                         <div
                             key={method.id}
-                            className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${
-                                isCardExpired(method)
-                                    ? 'border-red-200 dark:border-red-800'
-                                    : isCardExpiringSoon(method)
+                            className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${isCardExpired(method)
+                                ? 'border-red-200 dark:border-red-800'
+                                : isCardExpiringSoon(method)
                                     ? 'border-amber-200 dark:border-amber-800'
                                     : method.isDefault
-                                    ? 'border-violet-200 dark:border-violet-800'
-                                    : 'border-slate-200 dark:border-navy-700'
-                            }`}
+                                        ? 'border-violet-200 dark:border-violet-800'
+                                        : 'border-slate-200 dark:border-navy-700'
+                                }`}
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className={`p-3 rounded-lg ${
-                                        method.isDefault
-                                            ? 'bg-violet-100 dark:bg-violet-900/30'
-                                            : 'bg-slate-100 dark:bg-navy-700'
-                                    }`}>
-                                        <CreditCard className={`w-6 h-6 ${
-                                            method.isDefault ? 'text-violet-600' : 'text-slate-500'
-                                        }`} />
+                                    <div className={`p-3 rounded-lg ${method.isDefault
+                                        ? 'bg-violet-100 dark:bg-violet-900/30'
+                                        : 'bg-slate-100 dark:bg-navy-700'
+                                        }`}>
+                                        <CreditCard className={`w-6 h-6 ${method.isDefault ? 'text-violet-600' : 'text-slate-500'
+                                            }`} />
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">

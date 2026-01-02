@@ -495,6 +495,14 @@ const LearningSystemDashboard: React.FC = () => {
     });
     const [qualityTrends, setQualityTrends] = useState<QualityTrend[]>([]);
 
+    const generateMockTrends = (): QualityTrend[] => {
+        const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
+        return Array.from({ length: days }, (_, i) => ({
+            date: new Date(Date.now() - (days - i - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            score: 0.75 + Math.random() * 0.2
+        }));
+    };
+
     const loadLearningData = async () => {
         setLoading(true);
         try {
@@ -547,14 +555,6 @@ const LearningSystemDashboard: React.FC = () => {
     useEffect(() => {
         loadLearningData();
     }, [timeRange]);
-
-    const generateMockTrends = (): QualityTrend[] => {
-        const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
-        return Array.from({ length: days }, (_, i) => ({
-            date: new Date(Date.now() - (days - i - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            score: 0.75 + Math.random() * 0.2
-        }));
-    };
 
     const handleExport = () => {
         const data = {

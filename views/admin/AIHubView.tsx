@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Brain,
     Settings,
@@ -100,11 +100,7 @@ export const AIHubView: React.FC = () => {
     // Providers
     const [providers, setProviders] = useState<any[]>([]);
 
-    useEffect(() => {
-        loadInitialData();
-    }, []);
-
-    const loadInitialData = async () => {
+    const loadInitialData = useCallback(async () => {
         setLoading(true);
         try {
             // Load prompts
@@ -146,7 +142,11 @@ export const AIHubView: React.FC = () => {
             toast.error('Failed to load AI configuration');
         }
         setLoading(false);
-    };
+    }, []);
+
+    useEffect(() => {
+        loadInitialData();
+    }, [loadInitialData]);
 
     const selectCapability = (capabilityId: string) => {
         const cap = AI_CAPABILITIES.find(c => c.id === capabilityId);
@@ -275,8 +275,8 @@ PODEJŚCIE:
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id
-                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                            : 'text-slate-400 hover:text-white hover:bg-white/5'
                             }`}
                     >
                         <tab.icon size={16} />
@@ -303,8 +303,8 @@ PODEJŚCIE:
                                             key={cap.id}
                                             onClick={() => selectCapability(cap.id)}
                                             className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${selectedCapability === cap.id
-                                                    ? 'bg-white/10 border border-purple-500/50'
-                                                    : 'hover:bg-white/5 border border-transparent'
+                                                ? 'bg-white/10 border border-purple-500/50'
+                                                : 'hover:bg-white/5 border border-transparent'
                                                 }`}
                                         >
                                             <div className={`p-2 rounded-lg bg-gradient-to-br ${cap.color}`}>
@@ -504,8 +504,8 @@ PODEJŚCIE:
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-semibold text-white">Status Systemu AI</h3>
                                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${healthStatus?.status === 'OK'
-                                            ? 'bg-emerald-500/20 text-emerald-400'
-                                            : 'bg-amber-500/20 text-amber-400'
+                                        ? 'bg-emerald-500/20 text-emerald-400'
+                                        : 'bg-amber-500/20 text-amber-400'
                                         }`}>
                                         {healthStatus?.status || 'Unknown'}
                                     </span>
@@ -516,7 +516,7 @@ PODEJŚCIE:
                                         <div key={idx} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
                                             <span className="text-sm text-slate-300">{check.name}</span>
                                             <span className={`text-sm ${check.status === 'OK' ? 'text-emerald-400' :
-                                                    check.status === 'MISSING' ? 'text-amber-400' : 'text-slate-400'
+                                                check.status === 'MISSING' ? 'text-amber-400' : 'text-slate-400'
                                                 }`}>
                                                 {check.status || check.value}
                                             </span>

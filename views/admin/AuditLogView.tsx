@@ -8,7 +8,7 @@
  * - Real-time updates
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     History,
@@ -70,11 +70,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
     const [expandedLog, setExpandedLog] = useState<string | null>(null);
     const [exporting, setExporting] = useState(false);
 
-    useEffect(() => {
-        loadLogs();
-    }, [currentOrganization?.id, actionFilter, resourceFilter, dateRange]);
-
-    const loadLogs = async () => {
+    const loadLogs = useCallback(async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
@@ -183,7 +179,11 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
             ]);
         }
         setLoading(false);
-    };
+    }, [currentOrganization, actionFilter, resourceFilter, dateRange]);
+
+    useEffect(() => {
+        loadLogs();
+    }, [loadLogs]);
 
     const handleExport = async () => {
         setExporting(true);
@@ -252,7 +252,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
         if (diffMins < 60) return `${diffMins} min ago`;
         if (diffHours < 24) return `${diffHours} hours ago`;
         if (diffDays < 7) return `${diffDays} days ago`;
-        
+
         return date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
@@ -405,7 +405,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 {/* Expanded Details */}
                                 {expandedLog === log.id && log.details && (
                                     <div className="px-4 pb-4 ml-14">

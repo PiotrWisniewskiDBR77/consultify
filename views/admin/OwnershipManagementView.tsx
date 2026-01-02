@@ -9,7 +9,7 @@
  * - Organization deletion (30-day grace period)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -49,12 +49,12 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
     const [ownerUser, setOwnerUser] = useState<User | null>(null);
     const [admins, setAdmins] = useState<User[]>([]);
     const [pendingTransfer, setPendingTransfer] = useState<OwnershipTransferRequest | null>(null);
-    
+
     // Modal states
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showBillingModal, setShowBillingModal] = useState(false);
-    
+
     // Form states
     const [selectedAdminId, setSelectedAdminId] = useState('');
     const [transferReason, setTransferReason] = useState('');
@@ -63,13 +63,7 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
 
     const isOwner = currentUser?.id === ownership?.ownerUserId;
 
-    useEffect(() => {
-        if (currentOrganization?.id) {
-            loadOwnershipData();
-        }
-    }, [currentOrganization?.id]);
-
-    const loadOwnershipData = async () => {
+    const loadOwnershipData = useCallback(async () => {
         setLoading(true);
         try {
             // Load ownership info
@@ -116,7 +110,13 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
             setOwnerUser(currentUser || null);
         }
         setLoading(false);
-    };
+    }, [currentOrganization, currentUser, ownership?.ownerUserId]);
+
+    useEffect(() => {
+        if (currentOrganization?.id) {
+            loadOwnershipData();
+        }
+    }, [currentOrganization?.id, loadOwnershipData]);
 
     const handleTransferOwnership = async () => {
         if (!selectedAdminId) {

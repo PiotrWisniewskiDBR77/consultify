@@ -164,23 +164,6 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     // SAFE ACCESS: Handle potential missing config
     const frameworkConfig = FRAMEWORK_CONFIG[framework];
 
-    // Safety check - if framework is unknown, show error instead of crashing
-    if (!frameworkConfig) {
-        return (
-            <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950 p-8">
-                <div className="text-center max-w-md bg-white dark:bg-navy-900 p-8 rounded-xl shadow-lg border border-red-200 dark:border-red-900/30">
-                    <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-4 text-red-600 dark:text-red-400">
-                        <AlertCircle size={32} />
-                    </div>
-                    <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">Unknown Framework</h2>
-                    <p className="text-slate-500 dark:text-slate-400">
-                        The assessment framework "{framework}" is not recognized or configured.
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
     // Document tabs state - for reports and initiatives
     const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
     const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
@@ -778,6 +761,22 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                 return null;
         }
     };
+    // Safety check - if framework is unknown, show error instead of crashing
+    if (!frameworkConfig) {
+        return (
+            <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950 p-8">
+                <div className="text-center max-w-md bg-white dark:bg-navy-900 p-8 rounded-xl shadow-lg border border-red-200 dark:border-red-900/30">
+                    <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-4 text-red-600 dark:text-red-400">
+                        <AlertCircle size={32} />
+                    </div>
+                    <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">Unknown Framework</h2>
+                    <p className="text-slate-500 dark:text-slate-400">
+                        The assessment framework "{framework}" is not recognized or configured.
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-navy-900">

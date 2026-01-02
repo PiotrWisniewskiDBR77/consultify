@@ -9,7 +9,7 @@
  * - Set expiration dates
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -69,15 +69,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
         expiresIn: '90' // days
     });
 
-    useEffect(() => {
-        if (currentOrganization?.id) {
-            loadApiKeys();
-        } else {
-            setLoading(false);
-        }
-    }, [currentOrganization?.id]);
-
-    const loadApiKeys = async () => {
+    const loadApiKeys = useCallback(async () => {
         setLoading(true);
         try {
             const res = await fetch('/api/api-keys', {
@@ -110,7 +102,15 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
             setApiKeys([]);
         }
         setLoading(false);
-    };
+    }, [currentOrganization?.id]);
+
+    useEffect(() => {
+        if (currentOrganization?.id) {
+            loadApiKeys();
+        } else {
+            setLoading(false);
+        }
+    }, [currentOrganization?.id, loadApiKeys]);
 
     const handleCreateKey = async () => {
         if (!newKeyForm.name) {
@@ -150,7 +150,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
             });
 
             const data = await res.json();
-            
+
             if (res.ok && data.success) {
                 setNewKeyValue(data.key.apiKey); // The full key is only returned once!
                 setShowCreateModal(false);
@@ -179,7 +179,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
             });
 
             const data = await res.json();
-            
+
             if (res.ok && data.success) {
                 toast.success('API key revoked');
                 loadApiKeys();
@@ -307,21 +307,21 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                         <div
                             key={key.id}
                             className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${isKeyExpired(key)
-                                    ? 'border-red-200 dark:border-red-800'
-                                    : isKeyExpiringSoon(key)
-                                        ? 'border-amber-200 dark:border-amber-800'
-                                        : 'border-slate-200 dark:border-navy-700'
+                                ? 'border-red-200 dark:border-red-800'
+                                : isKeyExpiringSoon(key)
+                                    ? 'border-amber-200 dark:border-amber-800'
+                                    : 'border-slate-200 dark:border-navy-700'
                                 }`}
                         >
                             <div className="flex items-start justify-between">
                                 <div className="flex items-start gap-4">
                                     <div className={`p-3 rounded-lg ${isKeyExpired(key) || key.revokedAt
-                                            ? 'bg-red-100 dark:bg-red-900/30'
-                                            : 'bg-violet-100 dark:bg-violet-900/30'
+                                        ? 'bg-red-100 dark:bg-red-900/30'
+                                        : 'bg-violet-100 dark:bg-violet-900/30'
                                         }`}>
                                         <Key className={`w-5 h-5 ${isKeyExpired(key) || key.revokedAt
-                                                ? 'text-red-600 dark:text-red-400'
-                                                : 'text-violet-600 dark:text-violet-400'
+                                            ? 'text-red-600 dark:text-red-400'
+                                            : 'text-violet-600 dark:text-violet-400'
                                             }`} />
                                     </div>
                                     <div>
@@ -468,8 +468,8 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                                             <label
                                                 key={perm.id}
                                                 className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors ${newKeyForm.permissions.includes(perm.id)
-                                                        ? 'bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800'
-                                                        : 'bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 hover:border-slate-300'
+                                                    ? 'bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800'
+                                                    : 'bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 hover:border-slate-300'
                                                     }`}
                                             >
                                                 <input

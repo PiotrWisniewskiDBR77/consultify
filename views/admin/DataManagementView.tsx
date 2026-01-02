@@ -8,7 +8,7 @@
  * - GDPR compliance tools
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -71,11 +71,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
     const [autoDeleteInactive, setAutoDeleteInactive] = useState(false);
     const [inactivePeriod, setInactivePeriod] = useState('365');
 
-    useEffect(() => {
-        loadData();
-    }, [currentOrganization?.id]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
             const res = await fetch('/api/organization-data/stats', {
@@ -94,7 +90,11 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
             console.error('Failed to load data stats:', error);
         }
         setLoading(false);
-    };
+    }, []);
+
+    useEffect(() => {
+        loadData();
+    }, [currentOrganization?.id, loadData]);
 
     const handleExportCategory = async (categoryId: string) => {
         setExporting(categoryId);
@@ -164,7 +164,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                     activityRetentionDays: autoDeleteInactive ? parseInt(inactivePeriod) : 365
                 })
             });
-            
+
             if (res.ok) {
                 toast.success('Retention settings saved');
             } else {
@@ -239,11 +239,11 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                         GDPR Compliance
                     </p>
                     <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
-                        You can export all your organization data at any time. Data exports include all user information, 
+                        You can export all your organization data at any time. Data exports include all user information,
                         project data, and associated records in a machine-readable format (JSON/CSV).
                     </p>
                 </div>
-                        </div>
+            </div>
 
             {/* Data Summary */}
             <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
@@ -252,7 +252,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                     <span className="text-sm text-slate-500">
                         Total: <span className="font-semibold">{totalRecords.toLocaleString()}</span> records
                     </span>
-                    </div>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     {dataCategories.map(category => (
                         <div
@@ -304,8 +304,8 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                                         <Download size={14} />
                                     )}
                                     Export
-                        </button>
-                    </div>
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -381,7 +381,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                 <h3 className="font-medium text-red-800 dark:text-red-200 mb-4 flex items-center gap-2">
                     <AlertTriangle size={18} />
                     Danger Zone
-                        </h3>
+                </h3>
                 <div className="space-y-4">
                     <div className="p-4 bg-white dark:bg-navy-800 rounded-lg border border-red-200 dark:border-red-800">
                         <div className="flex items-start justify-between">
@@ -391,12 +391,12 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                                     Permanently delete this organization and all its data. This action cannot be undone.
                                 </p>
                             </div>
-                        <button
+                            <button
                                 onClick={() => setShowDeleteModal(true)}
                                 className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium"
-                        >
+                            >
                                 Delete
-                        </button>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -434,7 +434,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                                         <li>• Active subscriptions will be cancelled</li>
                                         <li>• This cannot be recovered</li>
                                     </ul>
-                        </div>
+                                </div>
 
                                 <div>
                                     <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
@@ -450,24 +450,24 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                                 </div>
                             </div>
                             <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
-                            <button
+                                <button
                                     onClick={() => { setShowDeleteModal(false); setDeleteConfirmation(''); }}
                                     className="px-4 py-2 text-slate-600 dark:text-slate-400"
-                            >
-                                Cancel
-                            </button>
-                            <button
+                                >
+                                    Cancel
+                                </button>
+                                <button
                                     onClick={handleDeleteOrganization}
                                     disabled={deleting || deleteConfirmation !== currentOrganization?.name}
                                     className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium disabled:opacity-50"
                                 >
                                     {deleting && <RefreshCw className="w-4 h-4 animate-spin" />}
                                     Delete Organization
-                            </button>
-                        </div>
+                                </button>
+                            </div>
                         </motion.div>
                     </motion.div>
-            )}
+                )}
             </AnimatePresence>
         </div>
     );
