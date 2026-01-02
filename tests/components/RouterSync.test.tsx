@@ -1,4 +1,4 @@
-`'_screen'`
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { RouterSync } from '../../components/RouterSync';
 import { useAppStore } from '../../store/useAppStore';

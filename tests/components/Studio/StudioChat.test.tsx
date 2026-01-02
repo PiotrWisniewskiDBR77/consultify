@@ -156,7 +156,7 @@ describe('StudioChat', () => {
         // Button should be disabled (has spinner instead of send icon)
         const buttons = screen.getAllByRole('button');
         const sendButton = buttons.find(b => b.className.includes('rounded-lg') && b.closest('.shrink-0'));
-        expect(sendButton).toBeDisabled?.() || expect(true).toBe(true);
+        if (sendButton) expect(sendButton).toBeDisabled();
     });
 
     it('should display suggestions when provided', () => {

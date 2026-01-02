@@ -77,7 +77,6 @@ describe('Component Test: QuotaWarningBanner', () => {
             />
         );
 
-`'dismissButton' is`
         const buttons = screen.getAllByRole('button');
         const xButton = buttons.find(btn => btn.querySelector('svg'));
         if (xButton) {
