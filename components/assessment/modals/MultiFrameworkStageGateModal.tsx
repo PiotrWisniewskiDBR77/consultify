@@ -249,7 +249,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
             }
             case 'LEAN': {
                 let score = 0;
-                let total = 3;
+                const total = 3;
                 if ((data.processes || []).length > 0) score++;
                 if ((data.workstations || []).length > 0) score++;
                 if (data.managementPractices && Object.keys(data.managementPractices).length > 0) score++;
@@ -287,7 +287,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
             const token = localStorage.getItem('token');
             
             let endpoint = '';
-            let body: any = { comment };
+            const body: any = { comment };
 
             if (targetStatus === 'IN_REVIEW') {
                 endpoint = `/api/assessment-workflow/${assessmentId}/submit-for-review?framework=${framework}`;
