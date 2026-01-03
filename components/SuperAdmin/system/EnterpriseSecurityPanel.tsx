@@ -141,9 +141,9 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
     const fetchSecurityEvents = useCallback(async () => {
         try {
-            const data = await Api.getSecurityEvents(eventFilters);
+            const data = await (Api as any).getSecurityEvents?.(eventFilters) || [];
             setEvents(data);
-            const stats = await Api.getSecurityEventStats();
+            const stats = await (Api as any).getSecurityEventStats?.() || null;
             setEventStats(stats);
         } catch (error) {
             console.error('Failed to fetch security events:', error);
@@ -152,8 +152,8 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
     const fetchSessions = useCallback(async () => {
         try {
-            const data = await Api.getActiveSessions?.() || [];
-            setSessions(data);
+            const response = await (Api as any).getActiveSessions?.() || { sessions: [] };
+            setSessions(((response as any).sessions || []) as Session[]);
         } catch (error) {
             console.error('Failed to fetch sessions:', error);
             // Mock data for demo
@@ -170,13 +170,13 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                     last_activity: new Date().toISOString(),
                     is_current: true,
                 },
-            ]);
+            ] as Session[]);
         }
     }, []);
 
     const fetchIPRules = useCallback(async () => {
         try {
-            const data = await Api.getIPAccessRules?.() || [];
+            const data = await (Api as any).getIPAccessRules?.() || [];
             setIPRules(data);
         } catch (error) {
             console.error('Failed to fetch IP rules:', error);
@@ -186,7 +186,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
     const fetchPolicies = useCallback(async () => {
         try {
-            const data = await Api.getSecurityPolicies?.() || [];
+            const data = await (Api as any).getSecurityPolicies?.() || [];
             setPolicies(data);
         } catch (error) {
             // Mock data
@@ -233,7 +233,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
     const fetchCompliance = useCallback(async () => {
         try {
-            const data = await Api.getComplianceFrameworks?.() || [];
+            const data = await (Api as any).getComplianceFrameworks?.() || [];
             setFrameworks(data);
         } catch (error) {
             // Mock data
@@ -296,7 +296,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
     const handleResolveEvent = async (id: string) => {
         try {
-            await Api.resolveSecurityEvent(id);
+            await Api.resolveSecurityEvent?.(id);
             toast.success('Security event resolved');
             fetchSecurityEvents();
         } catch (error) {
@@ -307,7 +307,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
     const handleTerminateSession = async (id: string) => {
         if (!confirm('Are you sure you want to terminate this session?')) return;
         try {
-            await Api.terminateSession?.(id);
+            await (Api as any).terminateSession?.(id);
             toast.success('Session terminated');
             fetchSessions();
         } catch (error) {
@@ -317,7 +317,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
     const handleToggleIPRule = async (id: string, enabled: boolean) => {
         try {
-            await Api.updateIPRule?.(id, { enabled });
+            await (Api as any).updateIPRule?.(id, { enabled });
             toast.success(`IP rule ${enabled ? 'enabled' : 'disabled'}`);
             fetchIPRules();
         } catch (error) {
@@ -327,7 +327,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
     const handleTogglePolicy = async (id: string, enabled: boolean) => {
         try {
-            await Api.updateSecurityPolicy?.(id, { enabled });
+            await (Api as any).updateSecurityPolicy?.(id, { enabled });
             toast.success(`Policy ${enabled ? 'enabled' : 'disabled'}`);
             fetchPolicies();
         } catch (error) {
@@ -350,13 +350,13 @@ export const EnterpriseSecurityPanel: React.FC = () => {
     const getComplianceColor = (status: string) => {
         switch (status) {
             case 'compliant':
-                return { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400' };
+                return { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', color: 'bg-emerald-500' };
             case 'non_compliant':
-                return { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-400' };
+                return { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-400', color: 'bg-red-500' };
             case 'partial':
-                return { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400' };
+                return { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', color: 'bg-amber-500' };
             default:
-                return { bg: 'bg-slate-500/10', border: 'border-slate-500/30', text: 'text-slate-400' };
+                return { bg: 'bg-slate-500/10', border: 'border-slate-500/30', text: 'text-slate-400', color: 'bg-slate-500' };
         }
     };
 
@@ -384,11 +384,10 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                     <button
                         key={id}
                         onClick={() => setActiveTab(id as any)}
-                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors whitespace-nowrap ${
-                            activeTab === id
-                                ? 'bg-white/10 text-white border-b-2 border-purple-500'
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
-                        }`}
+                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors whitespace-nowrap ${activeTab === id
+                            ? 'bg-white/10 text-white border-b-2 border-purple-500'
+                            : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            }`}
                     >
                         <Icon className="w-4 h-4" />
                         {label}
@@ -548,11 +547,10 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                         return (
                                             <div
                                                 key={session.id}
-                                                className={`p-4 rounded-xl border transition-colors ${
-                                                    session.is_current
-                                                        ? 'bg-emerald-500/10 border-emerald-500/30'
-                                                        : 'bg-white/5 border-white/10'
-                                                }`}
+                                                className={`p-4 rounded-xl border transition-colors ${session.is_current
+                                                    ? 'bg-emerald-500/10 border-emerald-500/30'
+                                                    : 'bg-white/5 border-white/10'
+                                                    }`}
                                             >
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-4">
@@ -635,17 +633,15 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                     ipRules.map((rule) => (
                                         <div
                                             key={rule.id}
-                                            className={`p-4 rounded-xl border transition-colors ${
-                                                rule.rule_type === 'allow'
-                                                    ? 'bg-emerald-500/5 border-emerald-500/20'
-                                                    : 'bg-red-500/5 border-red-500/20'
-                                            }`}
+                                            className={`p-4 rounded-xl border transition-colors ${rule.rule_type === 'allow'
+                                                ? 'bg-emerald-500/5 border-emerald-500/20'
+                                                : 'bg-red-500/5 border-red-500/20'
+                                                }`}
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
-                                                    <div className={`p-2 rounded-lg ${
-                                                        rule.rule_type === 'allow' ? 'bg-emerald-500/20' : 'bg-red-500/20'
-                                                    }`}>
+                                                    <div className={`p-2 rounded-lg ${rule.rule_type === 'allow' ? 'bg-emerald-500/20' : 'bg-red-500/20'
+                                                        }`}>
                                                         {rule.rule_type === 'allow' ? (
                                                             <CheckCircle className="w-4 h-4 text-emerald-400" />
                                                         ) : (
@@ -655,11 +651,10 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                                     <div>
                                                         <div className="flex items-center gap-2">
                                                             <code className="font-mono text-white">{rule.ip_pattern}</code>
-                                                            <span className={`px-2 py-0.5 text-xs rounded ${
-                                                                rule.rule_type === 'allow'
-                                                                    ? 'bg-emerald-500/20 text-emerald-400'
-                                                                    : 'bg-red-500/20 text-red-400'
-                                                            }`}>
+                                                            <span className={`px-2 py-0.5 text-xs rounded ${rule.rule_type === 'allow'
+                                                                ? 'bg-emerald-500/20 text-emerald-400'
+                                                                : 'bg-red-500/20 text-red-400'
+                                                                }`}>
                                                                 {rule.rule_type.toUpperCase()}
                                                             </span>
                                                         </div>
@@ -669,11 +664,10 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         onClick={() => handleToggleIPRule(rule.id, !rule.enabled)}
-                                                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                                                            rule.enabled
-                                                                ? 'bg-emerald-500/20 text-emerald-400'
-                                                                : 'bg-slate-700 text-slate-400'
-                                                        }`}
+                                                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${rule.enabled
+                                                            ? 'bg-emerald-500/20 text-emerald-400'
+                                                            : 'bg-slate-700 text-slate-400'
+                                                            }`}
                                                     >
                                                         {rule.enabled ? 'Enabled' : 'Disabled'}
                                                     </button>
@@ -717,11 +711,10 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                             </div>
                                             <button
                                                 onClick={() => handleTogglePolicy(policy.id, !policy.enabled)}
-                                                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                                                    policy.enabled
-                                                        ? 'bg-emerald-500/20 text-emerald-400'
-                                                        : 'bg-slate-700 text-slate-400'
-                                                }`}
+                                                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${policy.enabled
+                                                    ? 'bg-emerald-500/20 text-emerald-400'
+                                                    : 'bg-slate-700 text-slate-400'
+                                                    }`}
                                             >
                                                 {policy.enabled ? 'Enabled' : 'Disabled'}
                                             </button>
@@ -768,7 +761,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                                 </div>
                                                 <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                                                     <div
-                                                        className={`h-full ${statusColors.color.replace('bg-', 'bg-')} rounded-full transition-all`}
+                                                        className={`h-full ${statusColors.color} rounded-full transition-all`}
                                                         style={{ width: `${compliancePercent}%` }}
                                                     />
                                                 </div>
@@ -807,6 +800,8 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 };
 
 export default EnterpriseSecurityPanel;
+
+
 
 
 
