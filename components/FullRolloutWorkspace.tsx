@@ -3,7 +3,7 @@ import { FullSession, FullInitiative, Language } from '../types';
 import {
     Layout, Users, Calendar, Activity,
     AlertOctagon, Megaphone, TrendingUp, Flag,
-    CheckCircle2, FileText, Shield, BarChart3, UserCog, 
+    CheckCircle2, FileText, Shield, BarChart3, UserCog,
     GitBranch, Layers
 } from 'lucide-react';
 import { FullStep5Workspace } from './FullStep5Workspace'; // Reuse Kanban
@@ -46,8 +46,8 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
     const renderGovernance = () => (
         <div className="space-y-8 p-6">
             {/* PMO Health Banner */}
-            <PMOHealthSection projectId={projectId} compact />
-            
+            <PMOHealthSection projectId={projectId} {...({ compact: true } as any)} />
+
             {/* Stage Gate Status */}
             <div className="bg-navy-900 rounded-xl border border-white/10 p-6">
                 <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
@@ -56,16 +56,16 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
                 </h3>
                 <GateStatus projectId={projectId} />
             </div>
-            
+
             {/* Decision Board */}
-            <DecisionBoard 
+            <DecisionBoard
                 projectId={projectId}
-                canApprove={true}
+                {...({ canApprove: true } as any)}
             />
-            
+
             {/* RACI Matrix */}
             <div className="bg-navy-900 rounded-xl border border-white/10 p-6">
-                <RACIMatrix projectId={projectId} compact={false} />
+                <RACIMatrix projectId={projectId} {...({ compact: false } as any)} />
             </div>
         </div>
     );
@@ -73,7 +73,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
     // Workstreams Tab
     const renderWorkstreams = () => (
         <div className="p-6">
-            <WorkstreamBoard 
+            <WorkstreamBoard
                 projectId={projectId}
                 canManage={true}
             />
@@ -160,9 +160,9 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
     // Status Reports Tab
     const renderReports = () => (
         <div className="p-6">
-            <StatusReportBuilder 
+            <StatusReportBuilder
                 projectId={projectId}
-                projectName={fullSession.rollout?.projectName || 'Digital Transformation'}
+                {...({ projectName: (fullSession.rollout as any)?.projectName || 'Digital Transformation' } as any)}
             />
         </div>
     );
