@@ -34,7 +34,7 @@
     "@floating-ui/dom": "1.7.4",
     "@google/generative-ai": "^0.24.1",
     "@reactflow/node-resizer": "^2.2.14",
-    "@sentry/node": "^8.0.0",
+    "@sentry/node": "^10.32.1",
     "@sentry/profiling-node": "^8.0.0",
     "@sentry/react": "^10.32.1",
     "@tiptap/extension-color": "^3.14.0",
