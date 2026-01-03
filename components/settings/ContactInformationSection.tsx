@@ -45,14 +45,14 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    
+
     // State
     const [emails, setEmails] = useState<ContactEmail[]>([]);
     const [phones, setPhones] = useState<ContactPhone[]>([]);
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([]);
     const [preferredContactMethod, setPreferredContactMethod] = useState<'email' | 'phone' | 'in-app'>('email');
-    
+
     // Edit states
     const [editingEmail, setEditingEmail] = useState<string | null>(null);
     const [editingPhone, setEditingPhone] = useState<string | null>(null);
@@ -194,7 +194,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
             country: ''
         };
         setAddresses([...addresses, newAddress]);
-        setEditingAddress(newAddress.id);
+        setEditingAddress(newAddress.id ?? null);
     };
 
     const updateAddress = (id: string, updates: Partial<Address>) => {
@@ -220,7 +220,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
             email: ''
         };
         setEmergencyContacts([...emergencyContacts, newContact]);
-        setEditingEmergency(newContact.id);
+        setEditingEmergency(newContact.id ?? null);
     };
 
     const updateEmergencyContact = (id: string, updates: Partial<EmergencyContact>) => {
@@ -248,7 +248,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-contact-information" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -280,11 +280,10 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
                         <button
                             key={method}
                             onClick={() => setPreferredContactMethod(method)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
-                                preferredContactMethod === method
-                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                                    : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${preferredContactMethod === method
+                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
+                                : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
+                                }`}
                         >
                             {method === 'email' && <Mail size={18} />}
                             {method === 'phone' && <Phone size={18} />}
@@ -318,15 +317,15 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
                             key={email.id}
                             email={email}
                             isEditing={editingEmail === email.id}
-                            onEdit={() => setEditingEmail(email.id)}
+                            onEdit={() => setEditingEmail(email.id ?? null)}
                             onSave={() => setEditingEmail(null)}
                             onCancel={() => {
                                 setEditingEmail(null);
-                                if (!email.email) removeEmail(email.id);
+                                if (!email.email) removeEmail(email.id ?? '');
                             }}
-                            onUpdate={(updates) => updateEmail(email.id, updates)}
-                            onDelete={() => removeEmail(email.id)}
-                            onVerify={() => verifyEmail(email.id)}
+                            onUpdate={(updates) => updateEmail(email.id ?? '', updates)}
+                            onDelete={() => removeEmail(email.id ?? '')}
+                            onVerify={() => verifyEmail(email.id ?? '')}
                         />
                     ))}
                     {emails.length === 0 && (
@@ -358,15 +357,15 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
                             key={phone.id}
                             phone={phone}
                             isEditing={editingPhone === phone.id}
-                            onEdit={() => setEditingPhone(phone.id)}
+                            onEdit={() => setEditingPhone(phone.id ?? null)}
                             onSave={() => setEditingPhone(null)}
                             onCancel={() => {
                                 setEditingPhone(null);
-                                if (!phone.phone) removePhone(phone.id);
+                                if (!phone.phone) removePhone(phone.id ?? '');
                             }}
-                            onUpdate={(updates) => updatePhone(phone.id, updates)}
-                            onDelete={() => removePhone(phone.id)}
-                            onVerify={() => verifyPhone(phone.id)}
+                            onUpdate={(updates) => updatePhone(phone.id ?? '', updates)}
+                            onDelete={() => removePhone(phone.id ?? '')}
+                            onVerify={() => verifyPhone(phone.id ?? '')}
                         />
                     ))}
                     {phones.length === 0 && (
@@ -396,16 +395,16 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
                     {addresses.map((address) => (
                         <AddressCard
                             key={address.id}
-                            address={address}
+                            address={address as Address & { id: string; type?: string; isPrimary?: boolean }}
                             isEditing={editingAddress === address.id}
-                            onEdit={() => setEditingAddress(address.id)}
+                            onEdit={() => setEditingAddress(address.id ?? null)}
                             onSave={() => setEditingAddress(null)}
                             onCancel={() => {
                                 setEditingAddress(null);
-                                if (!address.street && !address.city) removeAddress(address.id);
+                                if (!address.street && !address.city) removeAddress(address.id ?? '');
                             }}
-                            onUpdate={(updates) => updateAddress(address.id, updates)}
-                            onDelete={() => removeAddress(address.id)}
+                            onUpdate={(updates) => updateAddress(address.id ?? '', updates)}
+                            onDelete={() => removeAddress(address.id ?? '')}
                         />
                     ))}
                     {addresses.length === 0 && (
@@ -435,16 +434,16 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
                     {emergencyContacts.map((contact) => (
                         <EmergencyContactCard
                             key={contact.id}
-                            contact={contact}
+                            contact={contact as EmergencyContact & { id: string }}
                             isEditing={editingEmergency === contact.id}
-                            onEdit={() => setEditingEmergency(contact.id)}
+                            onEdit={() => setEditingEmergency(contact.id ?? null)}
                             onSave={() => setEditingEmergency(null)}
                             onCancel={() => {
                                 setEditingEmergency(null);
-                                if (!contact.name) removeEmergencyContact(contact.id);
+                                if (!contact.name) removeEmergencyContact(contact.id ?? '');
                             }}
-                            onUpdate={(updates) => updateEmergencyContact(contact.id, updates)}
-                            onDelete={() => removeEmergencyContact(contact.id)}
+                            onUpdate={(updates) => updateEmergencyContact(contact.id ?? '', updates)}
+                            onDelete={() => removeEmergencyContact(contact.id ?? '')}
                         />
                     ))}
                     {emergencyContacts.length === 0 && (
@@ -645,20 +644,9 @@ const PhoneCard: React.FC<PhoneCardProps> = ({
                             {phone.countryCode} {phone.phone}
                         </span>
                         {phone.isPrimary && <Star size={14} className="text-yellow-500 fill-yellow-500" />}
-                        {phone.isVerified ? (
-                            <CheckCircle size={16} className="text-green-500" />
-                        ) : (
-                            <AlertCircle size={16} className="text-orange-500" />
-                        )}
                     </div>
                     <div className="flex gap-4 mt-1 text-xs text-slate-500">
                         <span className="capitalize">{phone.type}</span>
-                        {!phone.isVerified && (
-                            <button onClick={onVerify} className="text-blue-600 hover:underline flex items-center gap-1">
-                                <Send size={12} />
-                                {t('settings.contact.verify', 'Verify')}
-                            </button>
-                        )}
                     </div>
                 </div>
                 <button onClick={onEdit} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg">
@@ -696,7 +684,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <select
                         value={address.type || 'office'}
-                        onChange={(e) => onUpdate({ type: e.target.value as any })}
+                        onChange={(e) => onUpdate({ ...address, type: e.target.value } as any)}
                         className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg"
                     >
                         <option value="office">{t('settings.contact.type.office', 'Office')}</option>
@@ -756,7 +744,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
         );
     }
 
-    const formatted = address.formatted || 
+    const formatted = address.formatted ||
         [address.street, address.city, address.state, (address as any).postalCode || (address as any).postal_code, address.country]
             .filter(Boolean)
             .join(', ');
