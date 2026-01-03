@@ -39,3 +39,6 @@ CREATE TABLE IF NOT EXISTS trusted_devices (
 CREATE INDEX IF NOT EXISTS idx_trusted_devices_user ON trusted_devices(user_id);
 CREATE INDEX IF NOT EXISTS idx_active_sessions_trusted ON active_sessions(is_trusted);
 
+
+
+

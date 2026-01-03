@@ -377,3 +377,6 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
 
 export default EmailSignatureSettings;
 
+
+
+

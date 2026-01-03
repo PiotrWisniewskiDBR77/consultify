@@ -25,6 +25,7 @@ import {
     Search,
     AlertTriangle,
 } from 'lucide-react';
+import { Card } from '../../components/ui/BaseCard';
 import { api } from '../../services/api';
 
 interface Permission {
@@ -53,6 +54,7 @@ interface Role {
     isDefault: boolean;
     userCount: number;
     isSystem?: boolean;
+    display_name?: string;
     permissions?: RolePermission[];
 }
 
@@ -227,8 +229,8 @@ const CustomRolesBuilder: React.FC = () => {
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
             return perm.name.toLowerCase().includes(q) ||
-                   perm.displayName.toLowerCase().includes(q) ||
-                   perm.description?.toLowerCase().includes(q);
+                perm.displayName.toLowerCase().includes(q) ||
+                perm.description?.toLowerCase().includes(q);
         }
         return true;
     });
@@ -259,11 +261,10 @@ const CustomRolesBuilder: React.FC = () => {
                         <div
                             key={role.id}
                             onClick={() => setSelectedRole(role)}
-                            className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                                selectedRole?.id === role.id
-                                    ? 'bg-violet-500/10 border-violet-500/50'
-                                    : 'bg-gray-800/50 border-gray-700 hover:border-gray-600'
-                            }`}
+                            className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedRole?.id === role.id
+                                ? 'bg-violet-500/10 border-violet-500/50'
+                                : 'bg-gray-800/50 border-gray-700 hover:border-gray-600'
+                                }`}
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
@@ -383,11 +384,10 @@ const CustomRolesBuilder: React.FC = () => {
                                                         return (
                                                             <label
                                                                 key={perm.id}
-                                                                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                                                                    isAssigned
-                                                                        ? 'bg-violet-500/10 border border-violet-500/30'
-                                                                        : 'bg-gray-900/50 border border-gray-700 hover:border-gray-600'
-                                                                }`}
+                                                                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${isAssigned
+                                                                    ? 'bg-violet-500/10 border border-violet-500/30'
+                                                                    : 'bg-gray-900/50 border border-gray-700 hover:border-gray-600'
+                                                                    }`}
                                                             >
                                                                 <input
                                                                     type="checkbox"
@@ -459,12 +459,11 @@ const CustomRolesBuilder: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                     {['low', 'medium', 'high', 'critical'].map(level => (
-                        <span key={level} className={`px-2 py-1 text-xs rounded ${
-                            level === 'critical' ? 'bg-red-500/20 text-red-300' :
+                        <span key={level} className={`px-2 py-1 text-xs rounded ${level === 'critical' ? 'bg-red-500/20 text-red-300' :
                             level === 'high' ? 'bg-amber-500/20 text-amber-300' :
-                            level === 'medium' ? 'bg-blue-500/20 text-blue-300' :
-                            'bg-green-500/20 text-green-300'
-                        }`}>
+                                level === 'medium' ? 'bg-blue-500/20 text-blue-300' :
+                                    'bg-green-500/20 text-green-300'
+                            }`}>
                             {level}
                         </span>
                     ))}
@@ -479,12 +478,11 @@ const CustomRolesBuilder: React.FC = () => {
                             {permissionsByCategory[category].map(perm => (
                                 <div key={perm.id} className="flex items-center justify-between py-1">
                                     <span className="text-sm text-gray-300">{perm.displayName}</span>
-                                    <span className={`w-2 h-2 rounded-full ${
-                                        perm.riskLevel === 'critical' ? 'bg-red-400' :
+                                    <span className={`w-2 h-2 rounded-full ${perm.riskLevel === 'critical' ? 'bg-red-400' :
                                         perm.riskLevel === 'high' ? 'bg-amber-400' :
-                                        perm.riskLevel === 'medium' ? 'bg-blue-400' :
-                                        'bg-green-400'
-                                    }`} />
+                                            perm.riskLevel === 'medium' ? 'bg-blue-400' :
+                                                'bg-green-400'
+                                        }`} />
                                 </div>
                             ))}
                         </div>
@@ -561,11 +559,10 @@ const CustomRolesBuilder: React.FC = () => {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 pb-3 border-b-2 transition-colors ${
-                                    activeTab === tab.id
-                                        ? 'border-violet-500 text-white'
-                                        : 'border-transparent text-gray-400 hover:text-white'
-                                }`}
+                                className={`flex items-center gap-2 pb-3 border-b-2 transition-colors ${activeTab === tab.id
+                                    ? 'border-violet-500 text-white'
+                                    : 'border-transparent text-gray-400 hover:text-white'
+                                    }`}
                             >
                                 <Icon size={18} />
                                 {tab.label}
@@ -599,8 +596,8 @@ const CustomRolesBuilder: React.FC = () => {
                                 <input
                                     type="text"
                                     value={newRole.displayName}
-                                    onChange={(e) => setNewRole({ 
-                                        ...newRole, 
+                                    onChange={(e) => setNewRole({
+                                        ...newRole,
                                         displayName: e.target.value,
                                         name: e.target.value.toLowerCase().replace(/\s+/g, '_')
                                     })}
@@ -638,9 +635,8 @@ const CustomRolesBuilder: React.FC = () => {
                                         <button
                                             key={color}
                                             onClick={() => setNewRole({ ...newRole, color })}
-                                            className={`w-8 h-8 rounded-lg transition-all ${
-                                                newRole.color === color ? 'ring-2 ring-white ring-offset-2 ring-offset-gray-800' : ''
-                                            }`}
+                                            className={`w-8 h-8 rounded-lg transition-all ${newRole.color === color ? 'ring-2 ring-white ring-offset-2 ring-offset-gray-800' : ''
+                                                }`}
                                             style={{ backgroundColor: color }}
                                         />
                                     ))}
@@ -679,4 +675,7 @@ const CustomRolesBuilder: React.FC = () => {
 };
 
 export default CustomRolesBuilder;
+
+
+
 

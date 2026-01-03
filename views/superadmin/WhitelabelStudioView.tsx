@@ -181,7 +181,7 @@ export const WhitelabelStudioView: React.FC = () => {
         setSaving(true);
         setMessage(null);
         try {
-            // Use PATCH (upsert) to create or update
+            // Use standardized patch method
             await Api.patch(`/branding/${selectedOrg}`, branding);
             setMessage({ type: 'success', text: 'Branding saved successfully!' });
             await fetchData();
@@ -234,7 +234,7 @@ export const WhitelabelStudioView: React.FC = () => {
             formData.append('file', file);
             formData.append('type', type);
 
-            const result = await Api.upload(`/api/superadmin/branding/${selectedOrg}/logo`, formData);
+            const result = await Api.upload(`/superadmin/branding/${selectedOrg}/logo`, formData);
 
             // Update branding with new URL
             const urlField = type === 'light' ? 'logoLightUrl' :
@@ -661,8 +661,8 @@ export const WhitelabelStudioView: React.FC = () => {
                     <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-white/10">
                         <span className="text-sm text-slate-700 dark:text-slate-300">SSL Certificate</span>
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${branding.customDomainSslStatus === 'active' ? 'bg-emerald-500/10 text-emerald-600' :
-                                branding.customDomainSslStatus === 'failed' ? 'bg-red-500/10 text-red-600' :
-                                    'bg-amber-500/10 text-amber-600'
+                            branding.customDomainSslStatus === 'failed' ? 'bg-red-500/10 text-red-600' :
+                                'bg-amber-500/10 text-amber-600'
                             }`}>
                             {branding.customDomainSslStatus === 'active' ? 'Active' :
                                 branding.customDomainSslStatus === 'failed' ? 'Failed' : 'Pending'}
@@ -806,8 +806,8 @@ export const WhitelabelStudioView: React.FC = () => {
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as TabType)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                                ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                             }`}
                     >
                         {tab.icon}

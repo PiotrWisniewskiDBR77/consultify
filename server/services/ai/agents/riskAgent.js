@@ -56,7 +56,7 @@ Communication style:
         // Risk categories for classification
         this.riskCategories = [
             'strategic',
-            'operational', 
+            'operational',
             'financial',
             'technical',
             'compliance',
@@ -79,17 +79,17 @@ Communication style:
 
     async process(query, context) {
         const prompt = this.buildRiskPrompt(query, context);
-        
+
         try {
             const response = await llmService.generateResponse({
                 prompt,
                 maxTokens: this.maxTokens,
                 temperature: 0.6,
-                model: context.preferredModel || 'default'
+                model: await this.resolveModelConfig(context)
             });
 
             const analysis = this.parseResponse(response);
-            
+
             // Calculate risk scores if we have structured data
             if (analysis.risks?.length) {
                 analysis.riskMatrix = this.buildRiskMatrix(analysis.risks);
@@ -108,7 +108,7 @@ Communication style:
                 domain: this.domain,
                 ...analysis,
                 metadata: {
-                    model: context.preferredModel || 'default',
+                    model: await this.resolveModelConfig(context),
                     timestamp: new Date().toISOString()
                 }
             };
@@ -120,25 +120,25 @@ Communication style:
 
     buildRiskPrompt(query, context) {
         const basePrompt = this.buildPrompt(query, context);
-        
+
         let riskContext = '';
-        
+
         if (context.risks?.length) {
             riskContext += `\nKNOWN RISKS:
 ${context.risks.slice(0, 10).map(r => `- ${r.name}: ${r.category || 'Uncategorized'} (P: ${r.probability || 'Unknown'}, I: ${r.impact || 'Unknown'})`).join('\n')}`;
         }
-        
+
         if (context.initiatives?.length) {
-            const highRiskInitiatives = context.initiatives.filter(i => 
+            const highRiskInitiatives = context.initiatives.filter(i =>
                 i.risk === 'high' || i.complexity === 'high'
             );
-            
+
             if (highRiskInitiatives.length) {
                 riskContext += `\nHIGH-RISK INITIATIVES:
 ${highRiskInitiatives.map(i => `- ${i.name}: ${i.riskReason || 'Flagged as high risk'}`).join('\n')}`;
             }
         }
-        
+
         if (context.dependencies?.length) {
             riskContext += `\nCRITICAL DEPENDENCIES:
 ${context.dependencies.slice(0, 5).map(d => `- ${d.from} → ${d.to}: ${d.type || 'dependency'}`).join('\n')}`;
@@ -191,13 +191,13 @@ FORMAT YOUR RESPONSE AS:
 
     parseResponse(response) {
         const text = response.text || response;
-        
+
         const confidenceMatch = text.match(/Confidence:\s*(\d+)/i);
         const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) / 100 : 0.7;
 
         // Extract main insight
         const insightMatch = text.match(/## Risk Assessment Summary\s*([\s\S]*?)(?=##|$)/i);
-        const mainInsight = insightMatch 
+        const mainInsight = insightMatch
             ? insightMatch[1].trim().split('\n')[0]
             : 'Risk assessment completed';
 
@@ -235,24 +235,24 @@ FORMAT YOUR RESPONSE AS:
 
     extractRisksFromTable(text) {
         const risks = [];
-        
+
         // Try to find table rows
         const tableMatch = text.match(/## Critical Risks[\s\S]*?\|[\s\S]*?(?=##|$)/i);
         if (!tableMatch) return risks;
 
         const lines = tableMatch[0].split('\n');
-        
+
         for (const line of lines) {
             // Skip header and separator rows
             if (line.includes('Risk') && line.includes('Category')) continue;
             if (line.match(/^\|[-\s|]+\|$/)) continue;
-            
+
             // Parse table row
             const cells = line.split('|').map(c => c.trim()).filter(c => c);
             if (cells.length >= 5) {
                 const probability = parseInt(cells[2]) || 3;
                 const impact = parseInt(cells[3]) || 3;
-                
+
                 risks.push({
                     name: cells[0],
                     category: cells[1]?.toLowerCase(),
@@ -304,7 +304,7 @@ FORMAT YOUR RESPONSE AS:
         }
 
         const avgScore = weightedSum / totalWeight;
-        
+
         let level;
         if (avgScore >= 16) level = 'critical';
         else if (avgScore >= 12) level = 'high';
@@ -395,6 +395,9 @@ For each risk provide:
 }
 
 module.exports = { RiskAgent };
+
+
+
 
 
 

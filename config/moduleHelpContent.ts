@@ -14,6 +14,8 @@ export interface ModuleHelp {
     targetAudience: ('user' | 'admin' | 'superadmin')[];
     relatedModules: HelpModuleId[];
     translationKey: string;
+    name?: { en: string; pl: string };
+    description?: { en: string; pl: string };
 }
 
 export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
@@ -25,7 +27,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'LayoutDashboard',
         targetAudience: ['user', 'admin'],
         relatedModules: ['assessment', 'initiatives', 'mywork'],
-        translationKey: 'help.sidePanel.modules.dashboard'
+        translationKey: 'help.sidePanel.modules.dashboard',
+        name: { en: 'Dashboard', pl: 'Panel' },
+        description: { en: 'Overview of key metrics and navigation', pl: 'Przegląd najważniejszych wskaźników i nawigacji' }
     },
 
     // ==========================================
@@ -36,7 +40,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'CheckCircle2',
         targetAudience: ['user', 'admin'],
         relatedModules: ['initiatives', 'reports', 'organization'],
-        translationKey: 'help.sidePanel.modules.assessment'
+        translationKey: 'help.sidePanel.modules.assessment',
+        name: { en: 'Assessment', pl: 'Ocena' },
+        description: { en: 'Assess current state and identify gaps', pl: 'Ocena aktualnego stanu i identyfikacja luk' }
     },
 
     // ==========================================
@@ -47,7 +53,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'Lightbulb',
         targetAudience: ['user', 'admin'],
         relatedModules: ['assessment', 'roadmap', 'implementation'],
-        translationKey: 'help.sidePanel.modules.initiatives'
+        translationKey: 'help.sidePanel.modules.initiatives',
+        name: { en: 'Initiatives', pl: 'Inicjatywy' },
+        description: { en: 'Manage strategic initiatives and their progress', pl: 'Zarządzanie strategicznymi inicjatywami i ich postępem' }
     },
 
     // ==========================================
@@ -58,7 +66,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'Calendar',
         targetAudience: ['user', 'admin'],
         relatedModules: ['initiatives', 'implementation', 'reports'],
-        translationKey: 'help.sidePanel.modules.roadmap'
+        translationKey: 'help.sidePanel.modules.roadmap',
+        name: { en: 'Roadmap', pl: 'Plan' },
+        description: { en: 'Plan and schedule transformation steps', pl: 'Planowanie i harmonogramowanie kroków transformacji' }
     },
 
     // ==========================================
@@ -69,7 +79,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'Rocket',
         targetAudience: ['user', 'admin'],
         relatedModules: ['roadmap', 'reports', 'mywork'],
-        translationKey: 'help.sidePanel.modules.implementation'
+        translationKey: 'help.sidePanel.modules.implementation',
+        name: { en: 'Implementation', pl: 'Wdrożenie' },
+        description: { en: 'Execute initiatives and track results', pl: 'Wykonywanie inicjatyw i śledzenie wyników' }
     },
 
     // ==========================================
@@ -80,7 +92,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'FileText',
         targetAudience: ['user', 'admin'],
         relatedModules: ['assessment', 'implementation', 'dashboard'],
-        translationKey: 'help.sidePanel.modules.reports'
+        translationKey: 'help.sidePanel.modules.reports',
+        name: { en: 'Reports', pl: 'Raporty' },
+        description: { en: 'Generate and view transformation reports', pl: 'Generowanie i przegląd raportów transformacji' }
     },
 
     // ==========================================
@@ -91,7 +105,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'Briefcase',
         targetAudience: ['user'],
         relatedModules: ['dashboard', 'implementation'],
-        translationKey: 'help.sidePanel.modules.mywork'
+        translationKey: 'help.sidePanel.modules.mywork',
+        name: { en: 'My Work', pl: 'Moja Praca' },
+        description: { en: 'Personal workspace and tasks', pl: 'Osobista przestrzeń robocza i zadania' }
     },
 
     // ==========================================
@@ -102,7 +118,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'Building2',
         targetAudience: ['admin'],
         relatedModules: ['assessment', 'initiatives', 'dashboard'],
-        translationKey: 'help.sidePanel.modules.organization'
+        translationKey: 'help.sidePanel.modules.organization',
+        name: { en: 'Organization', pl: 'Organizacja' },
+        description: { en: 'Manage organization settings and users', pl: 'Zarządzanie ustawieniami organizacji i użytkownikami' }
     },
 
     // ==========================================
@@ -113,7 +131,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'Settings',
         targetAudience: ['user'],
         relatedModules: ['dashboard', 'mywork'],
-        translationKey: 'help.sidePanel.modules.settings'
+        translationKey: 'help.sidePanel.modules.settings',
+        name: { en: 'Settings', pl: 'Ustawienia' },
+        description: { en: 'Configure personal preferences', pl: 'Konfiguracja preferencji osobistych' }
     },
 
     // ==========================================
@@ -124,7 +144,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'Shield',
         targetAudience: ['admin'],
         relatedModules: ['superadmin', 'settings', 'organization'],
-        translationKey: 'help.sidePanel.modules.admin'
+        translationKey: 'help.sidePanel.modules.admin',
+        name: { en: 'Admin', pl: 'Administrator' },
+        description: { en: 'Administrative tools and controls', pl: 'Narzędzia i kontrolki administracyjne' }
     },
 
     // ==========================================
@@ -135,7 +157,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'Crown',
         targetAudience: ['superadmin'],
         relatedModules: ['admin'],
-        translationKey: 'help.sidePanel.modules.superadmin'
+        translationKey: 'help.sidePanel.modules.superadmin',
+        name: { en: 'Super Admin', pl: 'Super Administrator' },
+        description: { en: 'High‑level system management', pl: 'Zarządzanie na wysokim poziomie' }
     },
 
     // ==========================================
@@ -146,7 +170,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'Sparkles',
         targetAudience: ['user', 'admin'],
         relatedModules: ['assessment', 'initiatives', 'implementation'],
-        translationKey: 'help.sidePanel.modules.ai-tools'
+        translationKey: 'help.sidePanel.modules.ai-tools',
+        name: { en: 'AI Tools', pl: 'Narzędzia AI' },
+        description: { en: 'AI‑assisted functionalities', pl: 'Funkcje wspomagane AI' }
     },
 
     // ==========================================
@@ -157,7 +183,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'BookOpen',
         targetAudience: ['user'],
         relatedModules: ['assessment', 'ai-tools'],
-        translationKey: 'help.sidePanel.modules.knowledge'
+        translationKey: 'help.sidePanel.modules.knowledge',
+        name: { en: 'Knowledge', pl: 'Wiedza' },
+        description: { en: 'Access help articles and tutorials', pl: 'Dostęp do artykułów pomocy i tutoriali' }
     },
 
     // ==========================================
@@ -168,7 +196,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'Flag',
         targetAudience: ['user'],
         relatedModules: ['dashboard', 'settings'],
-        translationKey: 'help.sidePanel.modules.onboarding'
+        translationKey: 'help.sidePanel.modules.onboarding',
+        name: { en: 'Onboarding', pl: 'Wprowadzenie' },
+        description: { en: 'Guided start for new users', pl: 'Prowadzony start dla nowych użytkowników' }
     },
 
     // ==========================================
@@ -179,7 +209,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'Users',
         targetAudience: ['admin', 'superadmin'],
         relatedModules: ['ecosystem'],
-        translationKey: 'help.sidePanel.modules.consultant'
+        translationKey: 'help.sidePanel.modules.consultant',
+        name: { en: 'Consultant', pl: 'Konsultant' },
+        description: { en: 'Consultant management tools', pl: 'Narzędzia zarządzania konsultantami' }
     },
 
     // ==========================================
@@ -190,7 +222,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'Globe',
         targetAudience: ['admin'],
         relatedModules: ['consultant'],
-        translationKey: 'help.sidePanel.modules.ecosystem'
+        translationKey: 'help.sidePanel.modules.ecosystem',
+        name: { en: 'Ecosystem', pl: 'Ekosystem' },
+        description: { en: 'Ecosystem overview and settings', pl: 'Przegląd i ustawienia ekosystemu' }
     },
     // ==========================================
     // PLAYBOOK TEMPLATES MODULE (New)
@@ -200,7 +234,9 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
         icon: 'Layers',
         targetAudience: ['superadmin'],
         relatedModules: ['superadmin'],
-        translationKey: 'help.sidePanel.modules.playbookTemplates'
+        translationKey: 'help.sidePanel.modules.playbookTemplates',
+        name: { en: 'Playbook Templates', pl: 'Szablony Playbook' },
+        description: { en: 'Templates for creating playbooks', pl: 'Szablony do tworzenia playbooków' }
     }
 };
 

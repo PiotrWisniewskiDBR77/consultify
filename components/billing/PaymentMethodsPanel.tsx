@@ -266,3 +266,6 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
 export default PaymentMethodsPanel;
 
 
+
+
+

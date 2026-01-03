@@ -23,32 +23,50 @@ const CONFIG = {
     // Thresholds for pattern classification
     successThreshold: 0.75,      // Quality score >= 0.75 = success
     failureThreshold: 0.45,      // Quality score <= 0.45 = failure
-    
+
     // Learning parameters
     minSamplesForPatterns: 5,    // Minimum samples before extracting patterns
     minConfidenceForInjection: 0.4, // Minimum confidence to inject learned context
-    
+
     // Auto-extraction triggers
     extractionInterval: 50,      // Extract patterns every N interactions
     insightInterval: 50,         // Generate AI insights every N interactions
-    
+
     // Retention
     interactionRetentionDays: 90,
     patternRetentionDays: 365,
-    
+
     // Quality weights for auto-feedback
     qualityWeights: {
         qualityScore: 0.6,
         latencyPenalty: 0.1,      // Penalize slow responses
         lengthBonus: 0.1,         // Reward appropriate length
         structureBonus: 0.2       // Reward well-structured responses
-    }
+    },
+
+    // Consolidation parameters
+    minConfidenceForConsolidation: 0.5
+};
+
+const deps = {
+    db,
+    aiLogger,
+    crypto
 };
 
 class LearningSystem {
     constructor() {
         this.config = CONFIG;
         this.extractionCounters = new Map(); // Track per-org/capability extraction counts
+    }
+
+    // For testing: allow overriding dependencies
+    static setDependencies(newDeps = {}) {
+        Object.assign(deps, newDeps);
+    }
+
+    setDependencies(newDeps = {}) {
+        Object.assign(deps, newDeps);
     }
 
     // ========================================================================
@@ -75,7 +93,7 @@ class LearningSystem {
         } = interaction;
 
         try {
-            const id = crypto.randomUUID();
+            const id = deps.crypto.randomUUID();
             const promptHash = this.hashPrompt(prompt);
             const promptSignature = this.extractPromptSignature(prompt);
             const responseSignature = this.extractResponseSignature(response);
@@ -115,14 +133,14 @@ class LearningSystem {
             // Check if we should trigger pattern extraction
             await this._maybeExtractPatternsEnhanced(organizationId, requestType);
 
-            aiLogger.debug('LearningSystem', `Recorded interaction: ${id}`, {
+            deps.aiLogger.debug('LearningSystem', `Recorded interaction: ${id}`, {
                 autoFeedbackScore: autoFeedback.score,
                 qualityScore: qualityResult?.overallScore
             });
 
             return { id, autoFeedback };
         } catch (error) {
-            aiLogger.debug('LearningSystem', `Record failed: ${error.message}`);
+            deps.aiLogger.debug('LearningSystem', `Record failed: ${error.message}`);
             return null;
         }
     }
@@ -133,7 +151,7 @@ class LearningSystem {
     async recordInteraction(interaction) {
         return this.recordWithAutoFeedback({
             ...interaction,
-            qualityResult: interaction.metadata?.qualityScore 
+            qualityResult: interaction.metadata?.qualityScore
                 ? { overallScore: interaction.metadata.qualityScore }
                 : null
         });
@@ -308,12 +326,12 @@ class LearningSystem {
                 confidence
             });
 
-            aiLogger.info('LearningSystem', 
+            aiLogger.info('LearningSystem',
                 `Extracted patterns for ${organizationId}:${requestType}`, {
-                    successPatterns: successful?.length || 0,
-                    failurePatterns: failed?.length || 0,
-                    confidence
-                });
+                successPatterns: successful?.length || 0,
+                failurePatterns: failed?.length || 0,
+                confidence
+            });
 
             return { successful, failed, confidence };
         } catch (error) {
@@ -350,7 +368,7 @@ class LearningSystem {
             if (combinations && combinations.length > 0) {
                 for (const combo of combinations) {
                     const result = await this.extractPatternsForCapability(
-                        combo.organization_id, 
+                        combo.organization_id,
                         combo.request_type
                     );
                     recordsProcessed += combo.count;
@@ -574,7 +592,7 @@ class LearningSystem {
     async getLearningContextForPrompt(organizationId, capability) {
         try {
             const patterns = await this.getPatterns(organizationId, capability);
-            
+
             // Don't inject if confidence is too low
             if (patterns.confidence < this.config.minConfidenceForInjection) {
                 return null;
@@ -630,7 +648,7 @@ class LearningSystem {
      */
     async applyLearning(prompt, organizationId, requestType) {
         const context = await this.getLearningContextForPrompt(organizationId, requestType);
-        
+
         if (!context) {
             return prompt;
         }
@@ -669,8 +687,8 @@ class LearningSystem {
                     organization_id,
                     sample_count
                 FROM ai_learned_patterns
-                WHERE confidence_score >= 0.5
-            `);
+                WHERE confidence_score >= ?
+            `, [this.config.minConfidenceForConsolidation]);
 
             if (!allPatterns || allPatterns.length === 0) {
                 aiLogger.info('LearningSystem', 'No high-confidence patterns to consolidate');
@@ -689,10 +707,10 @@ class LearningSystem {
                 if (!byCapability[cap]) {
                     byCapability[cap] = { successful: [], failed: [], orgs: new Set(), totalSamples: 0 };
                 }
-                
+
                 const successPatterns = JSON.parse(p.successful_patterns || '[]');
                 const failPatterns = JSON.parse(p.failed_patterns || '[]');
-                
+
                 byCapability[cap].successful.push(...successPatterns);
                 byCapability[cap].failed.push(...failPatterns);
                 byCapability[cap].orgs.add(p.organization_id);
@@ -765,7 +783,7 @@ class LearningSystem {
      */
     async _createGlobalStrategy(data) {
         const id = `${data.type}:${data.capability}`;
-        
+
         await this._runQuery(`
             INSERT INTO ai_global_strategies 
             (id, strategy_type, capability, strategy_content, source_organizations,
@@ -1031,7 +1049,7 @@ class LearningSystem {
             .replace(/\s+/g, ' ')
             .replace(/[0-9]+/g, 'N')
             .trim();
-        
+
         let hash = 0;
         for (let i = 0; i < normalized.length; i++) {
             const char = normalized.charCodeAt(i);
@@ -1058,9 +1076,9 @@ class LearningSystem {
      */
     extractResponseSignature(response) {
         if (!response) return 'empty';
-        
+
         const indicators = [];
-        
+
         // Check for structure elements
         if (response.includes('##') || response.includes('**')) indicators.push('formatted');
         if (response.includes('1.') || response.includes('- ')) indicators.push('list');
@@ -1068,7 +1086,7 @@ class LearningSystem {
         if (response.length > 2000) indicators.push('detailed');
         else if (response.length < 300) indicators.push('concise');
         else indicators.push('balanced');
-        
+
         return indicators.join(',');
     }
 
@@ -1077,9 +1095,9 @@ class LearningSystem {
     // ========================================================================
 
     async _runQuery(sql, params = []) {
-        if (!db || !db.run) return null;
+        if (!deps.db || !deps.db.run) return null;
         return new Promise((resolve, reject) => {
-            db.run(sql, params, function(err) {
+            deps.db.run(sql, params, function (err) {
                 if (err) reject(err);
                 else resolve({ changes: this.changes, lastID: this.lastID });
             });
@@ -1087,9 +1105,9 @@ class LearningSystem {
     }
 
     async _getOne(sql, params = []) {
-        if (!db || !db.get) return null;
+        if (!deps.db || !deps.db.get) return null;
         return new Promise((resolve, reject) => {
-            db.get(sql, params, (err, row) => {
+            deps.db.get(sql, params, (err, row) => {
                 if (err) reject(err);
                 else resolve(row);
             });
@@ -1097,9 +1115,9 @@ class LearningSystem {
     }
 
     async _getAll(sql, params = []) {
-        if (!db || !db.all) return [];
+        if (!deps.db || !deps.db.all) return [];
         return new Promise((resolve, reject) => {
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });

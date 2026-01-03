@@ -249,10 +249,37 @@ const AIOrchestrator = {
     },
 
     /**
-     * Build prompt for LLM
+     * Build prompt for LLM with automatic token management
      */
-    _buildPrompt: (userMessage, responseContext) => {
-        const { role, context, policy, projectMemory, preferences } = responseContext;
+    _buildPrompt: (userMessage, responseContext, options = {}) => {
+        const { role, context, policy, preferences } = responseContext;
+        let { projectMemory } = responseContext;
+        
+        // Token control: Get model and apply trimming if needed
+        const modelName = options.modelName || policy?.preferredModel || 'gpt-4';
+        const conversationHistory = options.conversationHistory || [];
+        
+        // Analyze token usage and auto-trim if necessary
+        if (projectMemory || conversationHistory.length > 0) {
+            const trimResult = deps.AIMemoryManager.autoTrimContext({
+                systemPrompt: '', // Will be calculated after building
+                userMessage,
+                history: conversationHistory,
+                memory: projectMemory,
+                modelName
+            });
+            
+            if (trimResult.trimmed) {
+                projectMemory = trimResult.memory;
+                // Log trimming event for monitoring
+                console.log('[AIOrchestrator] Context trimmed:', {
+                    model: modelName,
+                    originalTokens: trimResult.originalAnalysis?.breakdown?.total,
+                    newTokens: trimResult.newAnalysis?.breakdown?.total,
+                    utilizationPercent: trimResult.newAnalysis?.status?.utilizationPercent
+                });
+            }
+        }
 
         // REGULATORY MODE: Inject compliance prompt FIRST if enabled
         let regulatoryPrefix = '';
@@ -287,6 +314,46 @@ CURRENT CONTEXT:
         if (context.execution.blockers.length > 0) {
             systemPrompt += `
 - ${context.execution.blockers.length} blocker(s) detected`;
+        }
+
+        // WORKSPACE CONTEXT ENHANCEMENT: Include detailed workspace awareness
+        // This helps AI understand what user is currently looking at
+        if (context.currentScreen || context.selectedObjectId || context.selectedObjectType) {
+            systemPrompt += `
+
+CURRENT WORKSPACE:
+- User is viewing: ${context.currentScreen || 'general dashboard'}`;
+            
+            if (context.selectedObjectId) {
+                systemPrompt += `
+- Selected object: ${context.selectedObjectType || 'unknown'} (ID: ${context.selectedObjectId})`;
+            }
+            
+            // Add contextual hints based on screen
+            const screenContextHints = {
+                'initiatives': 'Focus on initiative management, status updates, and deliverables.',
+                'roadmap': 'Focus on timeline, dependencies, and scheduling.',
+                'assessment': 'Focus on maturity levels, gaps, and recommendations.',
+                'tasks': 'Focus on task execution, assignments, and deadlines.',
+                'risks': 'Focus on risk assessment, mitigation strategies, and monitoring.',
+                'decisions': 'Focus on decision rationale, options analysis, and outcomes.',
+                'stakeholders': 'Focus on communication, engagement, and influence.',
+                'reports': 'Focus on metrics, KPIs, and executive summaries.',
+                'settings': 'Focus on configuration, preferences, and system management.',
+                'projects': 'Focus on project overview, health, and portfolio view.'
+            };
+            
+            const screenKey = Object.keys(screenContextHints).find(key => 
+                (context.currentScreen || '').toLowerCase().includes(key)
+            );
+            
+            if (screenKey) {
+                systemPrompt += `
+- Context hint: ${screenContextHints[screenKey]}`;
+            }
+            
+            systemPrompt += `
+- IMPORTANT: Reference this workspace context in your response when relevant.`;
         }
 
         if (projectMemory && projectMemory.memoryCount > 0) {
@@ -375,7 +442,38 @@ AI GOVERNANCE - OPERATOR MODE:
 USER MESSAGE: ${userMessage}`;
 
         // Prepend regulatory mode prompt if enabled
-        return regulatoryPrefix + systemPrompt;
+        const finalPrompt = regulatoryPrefix + systemPrompt;
+        
+        // Token usage analysis for monitoring
+        const tokenAnalysis = deps.AIMemoryManager.analyzeContextTokens(
+            finalPrompt,
+            userMessage,
+            conversationHistory,
+            projectMemory,
+            modelName
+        );
+        
+        // Warn if approaching limits
+        if (tokenAnalysis.status.utilizationPercent > 80) {
+            console.warn('[AIOrchestrator] High token utilization:', {
+                model: modelName,
+                utilization: `${tokenAnalysis.status.utilizationPercent}%`,
+                total: tokenAnalysis.breakdown.total,
+                limit: tokenAnalysis.limits.availableForContext
+            });
+        }
+        
+        // Attach token metadata to response context for tracking
+        if (responseContext) {
+            responseContext._tokenAnalysis = {
+                total: tokenAnalysis.breakdown.total,
+                utilization: tokenAnalysis.status.utilizationPercent,
+                model: modelName,
+                trimmed: projectMemory?._trimmed || false
+            };
+        }
+        
+        return finalPrompt;
     },
 
     /**

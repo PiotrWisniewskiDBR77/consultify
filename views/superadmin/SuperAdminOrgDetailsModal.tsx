@@ -2,16 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Api } from '../../services/api';
 import { X, Building, CreditCard, Users, FileText, CheckCircle, AlertCircle, Calendar, BarChart } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-
-interface Organization {
-    id: string;
-    name: string;
-    plan: 'free' | 'pro' | 'enterprise';
-    status: 'active' | 'blocked' | 'trial';
-    created_at: string;
-    user_count: number;
-    discount_percent?: number;
-}
+import { Organization } from '../../types';
 
 interface SuperAdminOrgDetailsModalProps {
     org: Organization;

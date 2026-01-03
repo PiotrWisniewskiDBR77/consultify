@@ -93,18 +93,10 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
             }
         } catch (error) {
             console.error('Failed to load ownership data:', error);
-            // Mock data for development
-            setOwnership({
-                id: 'owner-1',
-                organizationId: currentOrganization?.id || '',
-                ownerUserId: currentUser?.id || '',
-                billingEmail: currentUser?.email || '',
-                billingName: `${currentUser?.firstName} ${currentUser?.lastName}`,
-                status: 'ACTIVE',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            });
-            setOwnerUser(currentUser || null);
+            toast.error('Failed to load ownership information');
+            // Set empty state instead of mock data
+            setOwnership(null);
+            setOwnerUser(null);
         }
         setLoading(false);
     }, [currentOrganization, currentUser, ownership?.ownerUserId]);

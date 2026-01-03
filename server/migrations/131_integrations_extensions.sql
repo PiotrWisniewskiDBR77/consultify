@@ -29,3 +29,6 @@ ALTER TABLE webhooks ADD COLUMN retry_delay_seconds INTEGER DEFAULT 60;
 CREATE INDEX IF NOT EXISTS idx_integration_settings_user ON integration_settings(user_id);
 CREATE INDEX IF NOT EXISTS idx_integration_settings_health ON integration_settings(health_status);
 
+
+
+

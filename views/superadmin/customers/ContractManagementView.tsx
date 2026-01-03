@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '../../../components/SuperAdmin/Card';
+import { Card } from '../../../components/Admin/shared/Card';
 import {
     Plus,
     FileText,
@@ -608,4 +608,6 @@ const ContractManagementView: React.FC = () => {
 };
 
 export default ContractManagementView;
+
+
 

@@ -265,8 +265,8 @@ router.post('/invite', async (req, res) => {
 
         await run(`
             INSERT INTO invitations (id, email, organization_id, project_id, role, invitation_type, token, token_hash, invited_by, status, created_at, expires_at)
-            VALUES (?, ?, ?, ?, 'CONSULTANT', 'CONSULTANT', ?, ?, ?, 'pending', datetime('now'), datetime('now', '+30 days'))
-        `, [uuidv4(), email.toLowerCase(), orgId, projectId, inviteToken, tokenHash, req.user.id]);
+            VALUES (?, ?, ?, ?, 'CONSULTANT', 'CONSULTANT', NULL, ?, ?, 'pending', datetime('now'), datetime('now', '+30 days'))
+        `, [uuidv4(), email.toLowerCase(), orgId, projectId, tokenHash, req.user.id]);
 
         res.status(201).json({
             id: accessId,

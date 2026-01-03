@@ -98,45 +98,12 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
         };
       });
       setKeySettings(settings);
-    } catch (_error) {
-      // Mock data (fallback from original code)
-      const mockKeys: APIKey[] = [
-        {
-          id: '1',
-          name: 'Production Key',
-          prefix: 'ck_prod_',
-          createdAt: '2024-01-15',
-          lastUsed: '2 hours ago',
-          rateLimit: 1000,
-          quotaLimit: 100000,
-          quotaUsed: 45000,
-          quotaResetAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-          ipWhitelist: ['192.168.1.1', '10.0.0.1'],
-          scopes: ['read', 'write']
-        },
-        {
-          id: '2',
-          name: 'Development',
-          prefix: 'ck_dev_',
-          createdAt: '2024-02-20',
-          rateLimit: 100,
-          quotaLimit: 10000,
-          quotaUsed: 2500
-        },
-      ];
-      setKeys(mockKeys);
-      const settings: Record<string, any> = {};
-      mockKeys.forEach((key: APIKey) => {
-        settings[key.id] = {
-          rateLimit: key.rateLimit?.toString() || '',
-          quotaLimit: key.quotaLimit?.toString() || '',
-          expiresAt: key.expiresAt || '',
-          ipWhitelist: (key.ipWhitelist || []).join('\n'),
-          scopes: key.scopes || []
-        };
-      });
-      setKeySettings(settings);
+    } catch (error) {
+      console.error('Failed to load API keys:', error);
+      toast.error(t('settings.api.loadError', 'Failed to load API keys'));
+      // Set empty state instead of mock data
+      setKeys([]);
+      setKeySettings({});
     }
   };
 
@@ -145,19 +112,12 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
       const data = await Api.getApiKeyUsage(keyId);
       setKeyUsage(prev => ({ ...prev, [keyId]: data }));
     } catch (error) {
-      // Mock usage data
+      console.error('Failed to load API key usage:', error);
+      // Set empty usage data instead of mock
       setKeyUsage(prev => ({
         ...prev,
         [keyId]: {
-          requests: [
-            { date: '2024-01-01', count: 1200 },
-            { date: '2024-01-02', count: 1500 },
-            { date: '2024-01-03', count: 1800 },
-            { date: '2024-01-04', count: 1400 },
-            { date: '2024-01-05', count: 2000 },
-            { date: '2024-01-06', count: 1600 },
-            { date: '2024-01-07', count: 1900 }
-          ],
+          requests: [],
           period: '7d'
         }
       }));
@@ -173,15 +133,9 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
       setNewKey(data.key);
       setKeys(prev => [...prev, data.keyInfo]);
       toast.success(t('settings.api.keyCreated', 'API key created'));
-    } catch (_error) {
-      // Mock creation
-      setNewKey('ck_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxx');
-      setKeys(prev => [...prev, {
-        id: String(Date.now()),
-        name: newKeyName,
-        prefix: 'ck_live_',
-        createdAt: new Date().toISOString().split('T')[0]
-      }]);
+    } catch (error: any) {
+      console.error('Failed to create API key:', error);
+      toast.error(error.message || t('settings.api.createError', 'Failed to create API key'));
     }
 
     setNewKeyName('');

@@ -1,330 +1,205 @@
 // AI Playbook Service Unit Tests
 // Tests the AI playbook service for automated workflow execution
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vitest';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 
-const mockDb = {
-    all: vi.fn(),
-    get: vi.fn(),
-    run: vi.fn(),
-    close: vi.fn()
-};
-
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
+const { initTestDb, cleanTables, dbRun, db } = require('../../helpers/dbHelper.cjs');
 const AIPlaybookService = require('../../../server/ai/aiPlaybookService');
 
 describe('AIPlaybookService', () => {
-    let service;
 
-    beforeEach(() => {
-        vi.clearAllMocks();
-        service = AIPlaybookService;
+    beforeAll(async () => {
+        await initTestDb();
+        AIPlaybookService.setDependencies({ db });
+    });
+
+    beforeEach(async () => {
+        await cleanTables([
+            'ai_playbook_run_steps',
+            'ai_playbook_runs',
+            'ai_playbook_template_steps',
+            'ai_playbook_templates',
+            'organizations'
+        ]);
+
+        // Seed test org
+        await dbRun('INSERT INTO organizations (id, name) VALUES (?, ?)', ['org-123', 'Test Org']);
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
-    describe('createPlaybook', () => {
-        it('should create a new playbook', async () => {
-            const playbookData = {
+    describe('createTemplate', () => {
+        it('should create a new playbook template', async () => {
+            const templateData = {
                 key: 'test_playbook',
                 title: 'Test Playbook',
                 description: 'A test playbook',
                 triggerSignal: 'project_risk_high',
-                estimatedDurationMins: 30,
-                templateGraph: { nodes: [], edges: [] },
-                organizationId: 'org-123'
+                estimatedDurationMins: 30
             };
 
-            mockDb.run.mockImplementation((sql, params, callback) => {
-                callback.call(null, null, { lastID: 1 });
-            });
-
-            const result = await service.createPlaybook(playbookData);
+            const result = await AIPlaybookService.createTemplate(templateData);
 
             expect(result).toBeDefined();
-            expect(result.id).toBe(1);
-            expect(mockDb.run).toHaveBeenCalled();
+            expect(result.id).toMatch(/^apt-/);
+            expect(result.key).toBe(templateData.key);
+
+            const saved = await new Promise((resolve) => {
+                db.get('SELECT * FROM ai_playbook_templates WHERE id = ?', [result.id], (err, row) => {
+                    resolve(row);
+                });
+            });
+            expect(saved).toBeDefined();
+            expect(saved.title).toBe(templateData.title);
         });
 
         it('should validate required fields', async () => {
             const invalidData = {
                 title: 'Test Playbook'
-                // Missing required fields
+                // Missing key
             };
 
-            await expect(service.createPlaybook(invalidData)).rejects.toThrow('Missing required fields');
+            await expect(AIPlaybookService.createTemplate(invalidData)).rejects.toThrow('key and title are required');
+        });
+
+        it('should prevent duplicate keys', async () => {
+            const templateData = {
+                key: 'unique_key',
+                title: 'Unique Template'
+            };
+
+            await AIPlaybookService.createTemplate(templateData);
+            await expect(AIPlaybookService.createTemplate(templateData)).rejects.toThrow(/already exists/);
         });
     });
 
-    describe('getPlaybookById', () => {
-        it('should retrieve playbook by ID', async () => {
-            const mockPlaybook = {
-                id: 1,
-                key: 'test_playbook',
-                title: 'Test Playbook',
-                status: 'active'
-            };
-
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback.call(null, mockPlaybook);
+    describe('getTemplateById', () => {
+        it('should retrieve template by ID with steps', async () => {
+            const template = await AIPlaybookService.createTemplate({
+                key: 'test_get',
+                title: 'Get Test'
             });
 
-            const result = await service.getPlaybookById(1);
+            await AIPlaybookService.addTemplateStep({
+                templateId: template.id,
+                stepOrder: 1,
+                actionType: 'notification',
+                title: 'Step 1'
+            });
 
-            expect(result).toEqual(mockPlaybook);
-            expect(mockDb.get).toHaveBeenCalledWith(
-                expect.stringContaining('SELECT'),
-                [1],
-                expect.any(Function)
-            );
+            const result = await AIPlaybookService.getTemplateById(template.id);
+
+            expect(result).toBeDefined();
+            expect(result.id).toBe(template.id);
+            expect(result.steps).toHaveLength(1);
+            expect(result.steps[0].title).toBe('Step 1');
         });
 
-        it('should return null for non-existent playbook', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback.call(null, null);
-            });
-
-            const result = await service.getPlaybookById(999);
-
+        it('should return null for non-existent template', async () => {
+            const result = await AIPlaybookService.getTemplateById('non-existent');
             expect(result).toBeNull();
         });
     });
 
-    describe('updatePlaybook', () => {
-        it('should update playbook details', async () => {
-            const updateData = {
-                title: 'Updated Title',
-                description: 'Updated description'
+    describe('listTemplates', () => {
+        it('should list all active templates', async () => {
+            await AIPlaybookService.createTemplate({ key: 't1', title: 'Template 1' });
+            await AIPlaybookService.createTemplate({ key: 't2', title: 'Template 2' });
+
+            const results = await AIPlaybookService.listTemplates();
+            expect(results).toHaveLength(2);
+        });
+    });
+
+    describe('initiateRun', () => {
+        it('should initiate a new playbook run with steps', async () => {
+            const template = await AIPlaybookService.createTemplate({
+                key: 'run_test',
+                title: 'Run Test'
+            });
+
+            await AIPlaybookService.addTemplateStep({
+                templateId: template.id,
+                stepOrder: 1,
+                actionType: 'task',
+                title: 'Task Step',
+                payloadTemplate: { taskName: 'Do something' }
+            });
+
+            const runResult = await AIPlaybookService.initiateRun({
+                templateId: template.id,
+                organizationId: 'org-123',
+                initiatedBy: 'user-123'
+            });
+
+            expect(runResult.runId).toMatch(/^apr-/);
+            expect(runResult.status).toBe('PENDING');
+            expect(runResult.stepCount).toBe(1);
+
+            const run = await AIPlaybookService.getRun(runResult.runId);
+            expect(run.steps).toHaveLength(1);
+            expect(run.steps[0].title).toBe('Task Step');
+            expect(run.steps[0].resolvedPayload.taskName).toBe('Do something');
+        });
+    });
+
+    describe('versioning and draft', () => {
+        it('should create and update draft templates', async () => {
+            const draft = await AIPlaybookService.createDraftTemplate({
+                key: 'draft-1',
+                title: 'Draft Template'
+            });
+
+            expect(draft.status).toBe('DRAFT');
+
+            const updated = await AIPlaybookService.updateDraftTemplate(draft.id, {
+                title: 'Updated Draft'
+            });
+            expect(updated).toBe(true);
+
+            const refetched = await AIPlaybookService.getTemplateById(draft.id);
+            expect(refetched.title).toBe('Updated Draft');
+        });
+
+        it('should publish a draft template', async () => {
+            const draft = await AIPlaybookService.createDraftTemplate({
+                key: 'publish-test',
+                title: 'To Publish'
+            });
+
+            const published = await AIPlaybookService.publishTemplate(draft.id, 'user-admin');
+            expect(published.status).toBe('PUBLISHED');
+
+            const refetched = await AIPlaybookService.getTemplateById(draft.id);
+            expect(refetched.status).toBe('PUBLISHED');
+        });
+    });
+
+    describe('Payload Resolution', () => {
+        it('should resolve full-string placeholders in payload templates', () => {
+            const template = {
+                userName: '{{ user.name }}',
+                orgName: '{{ org.name }}',
+                data: {
+                    id: '{{ item.id }}'
+                }
             };
 
-            mockDb.run.mockImplementation((sql, params, callback) => {
-                callback.call(null, null);
-            });
-
-            const result = await service.updatePlaybook(1, updateData);
-
-            expect(result).toBe(true);
-            expect(mockDb.run).toHaveBeenCalled();
-        });
-    });
-
-    describe('deletePlaybook', () => {
-        it('should delete playbook', async () => {
-            mockDb.run.mockImplementation((sql, params, callback) => {
-                callback.call(null, null);
-            });
-
-            const result = await service.deletePlaybook(1);
-
-            expect(result).toBe(true);
-            expect(mockDb.run).toHaveBeenCalled();
-        });
-    });
-
-    describe('listPlaybooks', () => {
-        it('should list playbooks for organization', async () => {
-            const mockPlaybooks = [
-                { id: 1, title: 'Playbook 1', status: 'active' },
-                { id: 2, title: 'Playbook 2', status: 'draft' }
-            ];
-
-            mockDb.all.mockImplementation((sql, params, callback) => {
-                callback.call(null, mockPlaybooks);
-            });
-
-            const result = await service.listPlaybooks('org-123');
-
-            expect(result).toEqual(mockPlaybooks);
-            expect(mockDb.all).toHaveBeenCalled();
-        });
-
-        it('should filter by status', async () => {
-            const mockPlaybooks = [
-                { id: 1, title: 'Active Playbook', status: 'active' }
-            ];
-
-            mockDb.all.mockImplementation((sql, params, callback) => {
-                callback.call(null, mockPlaybooks);
-            });
-
-            const result = await service.listPlaybooks('org-123', 'active');
-
-            expect(result).toEqual(mockPlaybooks);
-            expect(mockDb.all).toHaveBeenCalledWith(
-                expect.stringContaining('status = ?'),
-                expect.any(Array),
-                expect.any(Function)
-            );
-        });
-    });
-
-    describe('validatePlaybookGraph', () => {
-        it('should validate correct graph structure', () => {
-            const validGraph = {
-                nodes: [
-                    { id: 'start', type: 'start' },
-                    { id: 'task1', type: 'action' },
-                    { id: 'end', type: 'end' }
-                ],
-                edges: [
-                    { source: 'start', target: 'task1' },
-                    { source: 'task1', target: 'end' }
-                ]
-            };
-
-            const result = service.validatePlaybookGraph(validGraph);
-
-            expect(result.isValid).toBe(true);
-            expect(result.errors).toHaveLength(0);
-        });
-
-        it('should reject invalid graph structure', () => {
-            const invalidGraph = {
-                nodes: [
-                    { id: 'task1', type: 'action' }
-                    // Missing start and end nodes
-                ],
-                edges: []
-            };
-
-            const result = service.validatePlaybookGraph(invalidGraph);
-
-            expect(result.isValid).toBe(false);
-            expect(result.errors).toContain('Graph must have start and end nodes');
-        });
-
-        it('should detect cycles', () => {
-            const cyclicGraph = {
-                nodes: [
-                    { id: 'start', type: 'start' },
-                    { id: 'task1', type: 'action' },
-                    { id: 'task2', type: 'action' },
-                    { id: 'end', type: 'end' }
-                ],
-                edges: [
-                    { source: 'start', target: 'task1' },
-                    { source: 'task1', target: 'task2' },
-                    { source: 'task2', target: 'task1' }, // Cycle
-                    { source: 'task2', target: 'end' }
-                ]
-            };
-
-            const result = service.validatePlaybookGraph(cyclicGraph);
-
-            expect(result.isValid).toBe(false);
-            expect(result.errors).toContain('Graph contains cycles');
-        });
-    });
-
-    describe('getPlaybooksByTrigger', () => {
-        it('should find playbooks by trigger signal', async () => {
-            const mockPlaybooks = [
-                { id: 1, triggerSignal: 'project_risk_high', status: 'active' }
-            ];
-
-            mockDb.all.mockImplementation((sql, params, callback) => {
-                callback.call(null, mockPlaybooks);
-            });
-
-            const result = await service.getPlaybooksByTrigger('project_risk_high', 'org-123');
-
-            expect(result).toEqual(mockPlaybooks);
-            expect(mockDb.all).toHaveBeenCalled();
-        });
-    });
-
-    describe('executePlaybook', () => {
-        it('should start playbook execution', async () => {
-            const playbookId = 1;
             const context = {
-                projectId: 'proj-123',
-                triggerData: { riskLevel: 'high' }
+                user: { name: 'Piotr' },
+                org: { name: 'Consultify' },
+                item: { id: 123 }
             };
 
-            mockDb.run.mockImplementation((sql, params, callback) => {
-                callback.call(null, null, { lastID: 100 });
-            });
+            const resolved = AIPlaybookService.resolvePayloadTemplate(template, context);
 
-            const result = await service.executePlaybook(playbookId, context, 'user-123');
-
-            expect(result).toBeDefined();
-            expect(result.executionId).toBe(100);
-            expect(result.status).toBe('running');
-        });
-
-        it('should validate playbook exists before execution', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback.call(null, null); // Playbook not found
-            });
-
-            await expect(service.executePlaybook(999, {}, 'user-123')).rejects.toThrow('Playbook not found');
-        });
-    });
-
-    describe('getExecutionStatus', () => {
-        it('should retrieve execution status', async () => {
-            const mockExecution = {
-                id: 100,
-                playbookId: 1,
-                status: 'running',
-                currentStep: 'task1',
-                progress: 50
-            };
-
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback.call(null, mockExecution);
-            });
-
-            const result = await service.getExecutionStatus(100);
-
-            expect(result).toEqual(mockExecution);
-        });
-    });
-
-    describe('Error Handling', () => {
-        it('should handle database errors gracefully', async () => {
-            mockDb.all.mockImplementation((sql, params, callback) => {
-                callback.call(null, new Error('Database connection failed'));
-            });
-
-            await expect(service.listPlaybooks('org-123')).rejects.toThrow('Database connection failed');
-        });
-
-        it('should validate input parameters', async () => {
-            await expect(service.createPlaybook(null)).rejects.toThrow('Invalid playbook data');
-            await expect(service.updatePlaybook(null, {})).rejects.toThrow('Invalid playbook ID');
-            await expect(service.getPlaybookById('invalid')).rejects.toThrow('Invalid playbook ID');
-        });
-    });
-
-    describe('Performance', () => {
-        it('should cache frequently accessed playbooks', async () => {
-            const mockPlaybook = { id: 1, title: 'Cached Playbook' };
-
-            mockDb.get
-                .mockImplementationOnce((sql, params, callback) => {
-                    callback.call(null, mockPlaybook);
-                })
-                .mockImplementationOnce((sql, params, callback) => {
-                    // Should not be called on second access (cached)
-                    callback.call(null, mockPlaybook);
-                });
-
-            // First call
-            await service.getPlaybookById(1);
-
-            // Second call - should use cache
-            await service.getPlaybookById(1);
-
-            // get should only be called once due to caching
-            expect(mockDb.get).toHaveBeenCalledTimes(1);
+            expect(resolved.userName).toBe('Piotr');
+            expect(resolved.orgName).toBe('Consultify');
+            expect(resolved.data.id).toBe(123);
         });
     });
 });

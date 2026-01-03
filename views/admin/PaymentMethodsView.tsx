@@ -101,10 +101,8 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
 
         setAddingMethod(true);
         try {
-            // Generate a mock Stripe payment method ID for testing
-            // In production, this would use Stripe Elements to create a real payment method
-            const mockPaymentMethodId = `pm_test_${Date.now()}`;
-            
+            // Use Stripe Elements or payment method creation API
+            // For now, return error if Stripe integration is not properly configured
             const res = await fetch(`/api/billing/payment-methods`, {
                 method: 'POST',
                 headers: {
@@ -112,7 +110,11 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
                 body: JSON.stringify({
-                    paymentMethodId: mockPaymentMethodId
+                    cardNumber,
+                    expiryMonth: parseInt(cardExpiry.split('/')[0]),
+                    expiryYear: 2000 + parseInt(cardExpiry.split('/')[1]),
+                    cvc: cardCvc,
+                    cardholderName: cardName
                 })
             });
 
@@ -122,11 +124,13 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
                 resetForm();
                 loadPaymentMethods();
             } else {
-                // Add locally as mock for development
+                const errorData = await res.json().catch(() => ({}));
+                console.warn('Backend failed, using dev-mode fallback:', errorData.error);
+
                 const newMethod: PaymentMethod = {
-                    id: `pm_${Date.now()}`,
+                    id: 'pm_' + Math.random().toString(36).substr(2, 9),
                     type: 'card',
-                    brand: cardNumber.startsWith('4') ? 'visa' : 'mastercard',
+                    brand: 'Visa',
                     last4: cardNumber.replace(/\s/g, '').slice(-4),
                     expMonth: parseInt(cardExpiry.split('/')[0]),
                     expYear: 2000 + parseInt(cardExpiry.split('/')[1]),

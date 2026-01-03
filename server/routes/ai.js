@@ -46,12 +46,20 @@ router.get('/context/:projectId', verifyToken, async (req, res) => {
 // ==================== CHAT ====================
 
 // POST /api/ai/chat/stream
+// Enhanced with connection monitoring, partial save, and reconnection support
 router.post('/chat/stream', verifyToken, async (req, res) => {
-    const { message, history, systemInstruction, context, roleName, language } = req.body;
+    const { message, history, systemInstruction, context, roleName, language, conversationId, resumeFromPartial } = req.body;
 
     if (!message) {
         return res.status(400).json({ error: 'message required' });
     }
+
+    // Generate stream session ID for partial save/resume
+    const streamSessionId = conversationId || `stream-${req.userId}-${Date.now()}`;
+    let accumulatedContent = '';
+    let lastSaveTime = Date.now();
+    let isClientConnected = true;
+    let streamAborted = false;
 
     // Build language instruction based on user's i18n setting
     const languageMap = {
@@ -76,9 +84,66 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Stream-Session-Id', streamSessionId);
     res.flushHeaders();
 
+    // CONNECTION MONITORING: Detect client disconnect
+    const connectionCleanup = () => {
+        isClientConnected = false;
+        streamAborted = true;
+        console.log(`[Stream] Client disconnected: ${streamSessionId}`);
+        
+        // Save partial response on disconnect
+        if (accumulatedContent.length > 0) {
+            savePartialResponse(streamSessionId, accumulatedContent, req.userId, req.organizationId)
+                .catch(err => console.error('[Stream] Failed to save partial:', err));
+        }
+    };
+
+    req.socket.on('close', connectionCleanup);
+    req.socket.on('error', connectionCleanup);
+    res.on('close', connectionCleanup);
+
+    // Helper: Save partial response to database
+    const savePartialResponse = async (sessionId, content, userId, orgId) => {
+        const db = require('../database');
+        const { v4: uuidv4 } = require('uuid');
+        
+        return new Promise((resolve, reject) => {
+            db.run(`
+                INSERT INTO ai_partial_responses (id, session_id, user_id, organization_id, content, updated_at)
+                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(session_id) DO UPDATE SET
+                    content = excluded.content,
+                    updated_at = CURRENT_TIMESTAMP
+            `, [uuidv4(), sessionId, userId, orgId, content], (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+    };
+
     try {
+        // RESUME FROM PARTIAL: Check if we should resume from saved partial
+        if (resumeFromPartial && conversationId) {
+            const db = require('../database');
+            const partial = await new Promise((resolve) => {
+                db.get(`SELECT content FROM ai_partial_responses WHERE session_id = ? AND user_id = ?`,
+                    [conversationId, req.userId], (err, row) => {
+                        resolve(row?.content || null);
+                    });
+            });
+            
+            if (partial) {
+                accumulatedContent = partial;
+                res.write(`data: ${JSON.stringify({ 
+                    type: 'resume', 
+                    text: partial,
+                    sessionId: streamSessionId 
+                })}\n\n`);
+            }
+        }
+
         const pipelineRequest = {
             type: 'chat',
             userId: req.userId,
@@ -98,6 +163,9 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
         };
 
         const response = await aiPipeline.process(pipelineRequest, (progress) => {
+            // Check if client still connected before writing
+            if (!isClientConnected || res.destroyed) return;
+            
             // Stream thinking steps to client
             res.write(`data: ${JSON.stringify({
                 type: 'thought',
@@ -107,21 +175,86 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
 
         if (response.stream) {
             for await (const chunk of response.stream) {
-                if (chunk) res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+                // Check connection before each write
+                if (!isClientConnected || res.destroyed || streamAborted) {
+                    console.log(`[Stream] Aborting stream - client disconnected: ${streamSessionId}`);
+                    break;
+                }
+                
+                if (chunk) {
+                    accumulatedContent += chunk;
+                    res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+                    
+                    // PARTIAL SAVE: Save every 2 seconds during stream
+                    if (Date.now() - lastSaveTime > 2000) {
+                        savePartialResponse(streamSessionId, accumulatedContent, req.userId, req.organizationId)
+                            .catch(err => console.warn('[Stream] Partial save failed:', err.message));
+                        lastSaveTime = Date.now();
+                    }
+                }
             }
-            res.write('data: [DONE]\n\n');
+            
+            // Stream completed successfully - cleanup partial
+            if (isClientConnected && !streamAborted) {
+                res.write('data: [DONE]\n\n');
+                
+                // Delete partial response on successful completion
+                const db = require('../database');
+                db.run(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId], () => {});
+            }
             res.end();
         } else {
-            res.write(`data: ${JSON.stringify({ text: response.content || '' })}\n\n`);
-            res.write('data: [DONE]\n\n');
+            if (isClientConnected && !res.destroyed) {
+                res.write(`data: ${JSON.stringify({ text: response.content || '' })}\n\n`);
+                res.write('data: [DONE]\n\n');
+            }
             res.end();
         }
 
     } catch (err) {
         console.error('Stream Error:', err);
-        res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
-        res.end();
+        
+        // Save partial on error
+        if (accumulatedContent.length > 0) {
+            savePartialResponse(streamSessionId, accumulatedContent, req.userId, req.organizationId)
+                .catch(e => console.warn('[Stream] Failed to save partial on error:', e.message));
+        }
+        
+        if (isClientConnected && !res.destroyed) {
+            res.write(`data: ${JSON.stringify({ 
+                error: err.message,
+                sessionId: streamSessionId,
+                canResume: accumulatedContent.length > 0
+            })}\n\n`);
+            res.end();
+        }
+    } finally {
+        // Cleanup listeners
+        req.socket.removeListener('close', connectionCleanup);
+        req.socket.removeListener('error', connectionCleanup);
+        res.removeListener('close', connectionCleanup);
     }
+});
+
+// GET /api/ai/stream/partial/:sessionId - Get partial response for resume
+router.get('/stream/partial/:sessionId', verifyToken, async (req, res) => {
+    const db = require('../database');
+    
+    db.get(`
+        SELECT content, updated_at 
+        FROM ai_partial_responses 
+        WHERE session_id = ? AND user_id = ?
+    `, [req.params.sessionId, req.userId], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: 'No partial response found' });
+        
+        res.json({
+            sessionId: req.params.sessionId,
+            content: row.content,
+            updatedAt: row.updated_at,
+            canResume: true
+        });
+    });
 });
 
 
@@ -1016,6 +1149,203 @@ router.post('/report', verifyToken, async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         console.error('[AI] Report error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ==================== MEMORY METRICS (Enterprise Dashboard) ====================
+
+/**
+ * GET /api/ai/memory/metrics
+ * Get memory metrics for dashboard visualization
+ */
+router.get('/memory/metrics', verifyToken, async (req, res) => {
+    try {
+        const AIMemoryMetricsService = require('../services/ai/aiMemoryMetricsService');
+        const { period = 7 } = req.query;
+        
+        const metrics = await AIMemoryMetricsService.getDashboardMetrics(
+            req.organizationId,
+            parseInt(period, 10)
+        );
+        
+        res.json({ success: true, ...metrics });
+    } catch (err) {
+        console.error('[AI] Memory metrics error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+/**
+ * GET /api/ai/memory/current
+ * Get current memory state for a project
+ */
+router.get('/memory/current', verifyToken, async (req, res) => {
+    try {
+        const AIMemoryMetricsService = require('../services/ai/aiMemoryMetricsService');
+        const { projectId } = req.query;
+        
+        const state = await AIMemoryMetricsService.getCurrentMemoryState(
+            projectId,
+            req.organizationId
+        );
+        
+        res.json({ success: true, ...state });
+    } catch (err) {
+        console.error('[AI] Current memory state error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+/**
+ * GET /api/ai/memory/latency
+ * Get memory operation latency percentiles
+ */
+router.get('/memory/latency', verifyToken, async (req, res) => {
+    try {
+        const AIMemoryMetricsService = require('../services/ai/aiMemoryMetricsService');
+        const { hours = 24 } = req.query;
+        
+        const latency = await AIMemoryMetricsService.getLatencyPercentiles(
+            req.organizationId,
+            parseInt(hours, 10)
+        );
+        
+        res.json({ success: true, ...latency });
+    } catch (err) {
+        console.error('[AI] Latency metrics error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ==================== PROACTIVE SUGGESTIONS ====================
+
+const ProactiveSuggestionsService = require('../services/ai/proactiveSuggestionsService');
+const ResponseQualityService = require('../services/ai/responseQualityService');
+
+// GET /api/ai/suggestions - Get proactive suggestions based on context
+router.get('/suggestions', verifyToken, async (req, res) => {
+    try {
+        const { projectId, screenContext } = req.query;
+        
+        const suggestions = await ProactiveSuggestionsService.generateSuggestions({
+            userId: req.userId,
+            organizationId: req.organizationId,
+            projectId: projectId || null,
+            screenContext: screenContext ? JSON.parse(screenContext) : null,
+            recentActions: [] // Could be populated from session or recent activity
+        });
+
+        res.json({ success: true, suggestions });
+    } catch (err) {
+        console.error('[AI] Proactive suggestions error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// POST /api/ai/suggestions/action - Record suggestion action (accepted/dismissed)
+router.post('/suggestions/action', verifyToken, async (req, res) => {
+    try {
+        const { suggestionId, action, feedback } = req.body;
+        
+        if (!suggestionId || !action) {
+            return res.status(400).json({ success: false, error: 'suggestionId and action required' });
+        }
+        
+        const validActions = ['accepted', 'dismissed', 'clicked'];
+        if (!validActions.includes(action)) {
+            return res.status(400).json({ success: false, error: 'Invalid action type' });
+        }
+
+        await ProactiveSuggestionsService.recordSuggestionAction(
+            suggestionId,
+            req.userId,
+            action,
+            feedback
+        );
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[AI] Suggestion action error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET /api/ai/suggestions/metrics - Get suggestion effectiveness metrics
+router.get('/suggestions/metrics', verifyToken, async (req, res) => {
+    try {
+        const { days = 30 } = req.query;
+        
+        const metrics = await ProactiveSuggestionsService.getSuggestionMetrics(
+            req.organizationId,
+            parseInt(days, 10)
+        );
+
+        res.json({ success: true, metrics });
+    } catch (err) {
+        console.error('[AI] Suggestion metrics error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ==================== RESPONSE QUALITY ====================
+
+// POST /api/ai/quality/calculate - Calculate quality metrics for a response
+router.post('/quality/calculate', verifyToken, async (req, res) => {
+    try {
+        const { query, response, context, sources } = req.body;
+        
+        if (!query || !response) {
+            return res.status(400).json({ success: false, error: 'query and response required' });
+        }
+
+        const metrics = await ResponseQualityService.calculateQuality({
+            query,
+            response,
+            context: {
+                ...context,
+                organizationId: req.organizationId
+            },
+            sources: sources || []
+        });
+
+        res.json({ success: true, metrics });
+    } catch (err) {
+        console.error('[AI] Quality calculation error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET /api/ai/quality/aggregate - Get aggregate quality metrics
+router.get('/quality/aggregate', verifyToken, async (req, res) => {
+    try {
+        const { days = 30 } = req.query;
+        
+        const metrics = await ResponseQualityService.getAggregateMetrics(
+            req.organizationId,
+            parseInt(days, 10)
+        );
+
+        res.json({ success: true, metrics });
+    } catch (err) {
+        console.error('[AI] Aggregate quality metrics error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET /api/ai/quality/trends - Get quality trends over time
+router.get('/quality/trends', verifyToken, async (req, res) => {
+    try {
+        const { days = 30 } = req.query;
+        
+        const trends = await ResponseQualityService.getQualityTrends(
+            req.organizationId,
+            parseInt(days, 10)
+        );
+
+        res.json({ success: true, trends });
+    } catch (err) {
+        console.error('[AI] Quality trends error:', err);
         res.status(500).json({ success: false, error: err.message });
     }
 });

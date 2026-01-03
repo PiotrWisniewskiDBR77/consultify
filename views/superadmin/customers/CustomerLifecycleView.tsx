@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '../../../components/SuperAdmin/Card';
+import { Card } from '../../../components/Admin/shared/Card';
 import {
     Plus,
     ArrowRight,
@@ -151,7 +151,7 @@ const CustomerLifecycleView: React.FC = () => {
         if (!newTransition.organizationId || !newTransition.toStageId) return;
 
         try {
-            await Api.transitionOrganization(newTransition);
+            await Api.transitionOrganizationLifecycle(newTransition);
             setShowTransitionModal(false);
             setNewTransition({ organizationId: '', fromStageId: '', toStageId: '', notes: '' });
             fetchData();
@@ -588,4 +588,6 @@ const CustomerLifecycleView: React.FC = () => {
 };
 
 export default CustomerLifecycleView;
+
+
 

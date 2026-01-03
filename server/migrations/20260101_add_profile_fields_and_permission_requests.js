@@ -123,3 +123,6 @@ if (require.main === module) {
 module.exports = { up, down, MIGRATION_NAME };
 
 
+
+
+

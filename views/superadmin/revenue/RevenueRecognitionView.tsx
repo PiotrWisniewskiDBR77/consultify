@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Api } from '../../../services/api';
-import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/BaseCard';
 
 interface RevenueRecognition {
   id: string;
@@ -64,7 +64,7 @@ export const RevenueRecognitionView: React.FC = () => {
         Api.getRevenueRecognitions(),
         Api.getRevenueRecognitionStats()
       ]);
-      setRecognitions(recognitionsRes.recognitions || []);
+      setRecognitions(recognitionsRes || []);
       setStats(statsRes);
     } catch (err: any) {
       setError(err.message || 'Failed to load revenue recognition data');
@@ -243,11 +243,10 @@ export const RevenueRecognitionView: React.FC = () => {
                 <div
                   key={recognition.id}
                   onClick={() => handleViewSchedule(recognition)}
-                  className={`p-4 rounded-lg border cursor-pointer transition-colors ${
-                    selectedRecognition?.id === recognition.id
-                      ? 'bg-indigo-900/30 border-indigo-500'
-                      : 'bg-gray-900/50 border-gray-700 hover:border-gray-600'
-                  }`}
+                  className={`p-4 rounded-lg border cursor-pointer transition-colors ${selectedRecognition?.id === recognition.id
+                    ? 'bg-indigo-900/30 border-indigo-500'
+                    : 'bg-gray-900/50 border-gray-700 hover:border-gray-600'
+                    }`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -268,7 +267,7 @@ export const RevenueRecognitionView: React.FC = () => {
                       <div className="text-xs text-gray-500">Total</div>
                     </div>
                   </div>
-                  
+
                   {/* Progress Bar */}
                   <div className="mt-3">
                     <div className="flex justify-between text-xs text-gray-400 mb-1">
@@ -288,7 +287,7 @@ export const RevenueRecognitionView: React.FC = () => {
                   </div>
                 </div>
               ))}
-              
+
               {recognitions.length === 0 && (
                 <div className="text-center py-8 text-gray-400">
                   No revenue recognition items found
@@ -317,26 +316,24 @@ export const RevenueRecognitionView: React.FC = () => {
                 <div className="text-sm text-gray-400 mb-4">
                   Schedule for {selectedRecognition.organization_name || selectedRecognition.organization_id}
                 </div>
-                
+
                 <div className="relative">
                   {/* Timeline line */}
                   <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-700" />
-                  
+
                   <div className="space-y-4">
                     {schedule.map((item, index) => (
                       <div key={index} className="relative pl-10">
                         {/* Timeline dot */}
-                        <div className={`absolute left-2 w-4 h-4 rounded-full border-2 ${
-                          item.recognized
-                            ? 'bg-green-500 border-green-500'
-                            : 'bg-gray-800 border-gray-600'
-                        }`} />
-                        
-                        <div className={`p-3 rounded-lg ${
-                          item.recognized
-                            ? 'bg-green-900/20 border border-green-800'
-                            : 'bg-gray-900/50 border border-gray-700'
-                        }`}>
+                        <div className={`absolute left-2 w-4 h-4 rounded-full border-2 ${item.recognized
+                          ? 'bg-green-500 border-green-500'
+                          : 'bg-gray-800 border-gray-600'
+                          }`} />
+
+                        <div className={`p-3 rounded-lg ${item.recognized
+                          ? 'bg-green-900/20 border border-green-800'
+                          : 'bg-gray-900/50 border border-gray-700'
+                          }`}>
                           <div className="flex justify-between items-center">
                             <span className="text-white font-medium">{item.period}</span>
                             <span className={`font-bold ${item.recognized ? 'text-green-400' : 'text-gray-400'}`}>
@@ -353,7 +350,7 @@ export const RevenueRecognitionView: React.FC = () => {
                     ))}
                   </div>
                 </div>
-                
+
                 {schedule.length === 0 && (
                   <div className="text-center py-8 text-gray-400">
                     No schedule available
@@ -472,4 +469,7 @@ export const RevenueRecognitionView: React.FC = () => {
 };
 
 export default RevenueRecognitionView;
+
+
+
 

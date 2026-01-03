@@ -6,36 +6,8 @@ const PublicReportView = React.lazy(() => import('./views/reports/PublicReportVi
 import { Sidebar } from './components/Sidebar';
 import { LoadingScreen } from './components/LoadingScreen';
 import { useTranslation } from 'react-i18next';
-import { ProductEntryPage } from './views/ProductEntryPage';
-import { AuthView } from './views/AuthView';
-import TrialEntryView from './views/TrialEntryView.tsx';
-import AffiliateDashboardView from './views/AffiliateDashboardView.tsx';
-import { FreeAssessmentView } from './views/FreeAssessmentView';
 // OPTIMIZED: Lazy load large views for code splitting
-const FullAssessmentView = React.lazy(() => import('./views/FullAssessmentView').then(m => ({ default: m.FullAssessmentView })));
-const FullInitiativesView = React.lazy(() => import('./views/FullInitiativesView').then(m => ({ default: m.FullInitiativesView })));
-const FullRoadmapView = React.lazy(() => import('./views/FullRoadmapView').then(m => ({ default: m.FullRoadmapView })));
-const FullROIView = React.lazy(() => import('./views/FullROIView').then(m => ({ default: m.FullROIView })));
-const EconomicsView = React.lazy(() => import('./views/EconomicsView').then(m => ({ default: m.EconomicsView })));
-const FullExecutionView = React.lazy(() => import('./views/FullExecutionView').then(m => ({ default: m.FullExecutionView })));
-const ImplementationView = React.lazy(() => import('./views/ImplementationView').then(m => ({ default: m.ImplementationView })));
-const FullRolloutView = React.lazy(() => import('./views/FullRolloutView').then(m => ({ default: m.FullRolloutView })));
-const FullReportsView = React.lazy(() => import('./views/FullReportsView').then(m => ({ default: m.FullReportsView })));
-const DRDAuditReportView = React.lazy(() => import('./views/DRDAuditReportView').then(m => ({ default: m.DRDAuditReportView })));
-const KpiOkrView = React.lazy(() => import('./views/KpiOkrView').then(m => ({ default: m.KpiOkrView })));
-const AdminView = React.lazy(() => import('./views/admin/AdminView').then(m => ({ default: m.AdminView })));
-const SettingsView = React.lazy(() => import('./views/SettingsView').then(m => ({ default: m.SettingsView })));
-const SuperAdminView = React.lazy(() => import('./views/superadmin/SuperAdminView').then(m => ({ default: m.SuperAdminView })));
-// export const UserDashboardView = React.lazy(() => import('./views/UserDashboardView').then(m => ({ default: m.UserDashboardView })));
-const Module1ContextView = React.lazy(() => import('./views/Module1ContextView').then(m => ({ default: m.Module1ContextView })));
-const ContextBuilderView = React.lazy(() => import('./views/ContextBuilder/ContextBuilderView').then(m => ({ default: m.ContextBuilderView })));
-const MyWorkView = React.lazy(() => import('./views/MyWorkView').then(m => ({ default: m.MyWorkView })));
-const ActionProposalView = React.lazy(() => import('./views/ActionProposalView').then(m => ({ default: m.ActionProposalView })));
-const StudioView = React.lazy(() => import('./views/StudioView').then(m => ({ default: m.StudioView })));
-// export const InitiativeManagementView = React.lazy(() => import('./views/InitiativeManagementView').then(m => ({ default: m.InitiativeManagementView })));
-const ProjectIntelligenceView = React.lazy(() => import('./views/ProjectIntelligenceView').then(m => ({ default: m.ProjectIntelligenceView })));
-const BenefitsRealizationView = React.lazy(() => import('./views/BenefitsRealizationView').then(m => ({ default: m.BenefitsRealizationView })));
-const PortfolioView = React.lazy(() => import('./views/PortfolioView'));
+import { ViewRenderer } from './ViewRenderer';
 import { AppView, SessionMode, AuthStep, User } from './types';
 import { Menu, ChevronRight, Loader2, Sparkles } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
@@ -72,20 +44,12 @@ import { FeedbackSidePanel } from './components/Feedback/FeedbackSidePanel';
 import { UserProfileMenu } from './components/UserProfileMenu';
 // import { ProfileCompletionOverlay } from './components/shared/ProfileCompletionOverlay'; // REPLACED WITH NON-BLOCKING CHECK
 import { toast } from 'react-hot-toast';
+import { AuthView } from './views/AuthView';
+import { ProductEntryPage } from './views/ProductEntryPage';
+import { FreeAssessmentView } from './views/FreeAssessmentView';
+import TrialEntryView from './views/TrialEntryView.tsx';
+import AffiliateDashboardView from './views/AffiliateDashboardView.tsx';
 
-
-// Help system wrapper component - disabled, using direct HelpButton in layouts
-// const HelpButtonWrapper = () => {
-//     const { isPanelOpen, openPanel, closePanel } = useHelpPanel();
-//     return (
-//         <>
-//             <HelpButton onClick={openPanel} />
-//             <HelpPanel isOpen={isPanelOpen} onClose={closePanel} />
-//         </>
-//     );
-// };
-
-// Invitation acceptance wrapper component
 const AcceptInvitationView = React.lazy(() => import('./views/AcceptInvitationView'));
 const InviteRouteWrapper = () => {
     const { token } = useParams<{ token: string }>();
@@ -116,18 +80,16 @@ const AssessmentHubDashboard = React.lazy(() => import('./components/assessment/
 const GenericReportsWorkspace = React.lazy(() => import('./components/assessment/GenericReportsWorkspace').then(module => ({ default: module.GenericReportsWorkspace })));
 const AssessmentModuleHub = React.lazy(() => import('./components/assessment/AssessmentModuleHub').then(module => ({ default: module.AssessmentModuleHub })));
 import { SplitLayout } from './components/SplitLayout';
+import { AnimationWrapper } from './components/shared/AnimationWrapper';
 
 const PageTransition: React.FC<{ children: React.ReactNode, id: string }> = ({ children, id }) => (
-    <motion.div
+    <AnimationWrapper
         key={id}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
+        variant="slideUp"
         className="h-full w-full"
     >
         {children}
-    </motion.div>
+    </AnimationWrapper>
 );
 
 const AppContent: React.FC = () => {
@@ -607,386 +569,6 @@ const AppContent: React.FC = () => {
 
     const breadcrumbs = getBreadcrumbs();
 
-    const renderContent = () => {
-        if (!currentUser) return null;
-
-        // --- SUPER ADMIN INTERCEPT ---
-        if (currentUser.role === 'SUPERADMIN') {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <SuperAdminView
-                        currentUser={currentUser}
-                        onNavigate={(view: AppView) => {
-                            if (view === AppView.WELCOME) {
-                                logout();
-                                setCurrentView(AppView.WELCOME);
-                            } else {
-                                setCurrentView(view);
-                            }
-                        }}
-                    />
-                </React.Suspense>
-            );
-        }
-
-        // --- AI Chat Welcome Screen ---
-        if (currentView === AppView.AI_CHAT) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <AIChatWelcomeView />
-                </React.Suspense>
-            );
-        }
-
-        // --- MyWork (unified Dashboard + My Work) ---
-        // All Dashboard views redirect to MyWork as the primary home
-        if (
-            currentView === AppView.MY_WORK ||
-            currentView === AppView.USER_DASHBOARD ||
-            currentView === AppView.DASHBOARD ||
-            currentView === AppView.DASHBOARD_OVERVIEW ||
-            currentView === AppView.DASHBOARD_SNAPSHOT
-        ) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <MyWorkView currentUser={currentUser} onNavigate={(view: string) => setCurrentView(view as AppView)} />
-                </React.Suspense>
-            );
-        }
-
-        // Project Intelligence Hub - AI knowledge capture
-        if (currentView === AppView.PROJECT_INTELLIGENCE) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <ProjectIntelligenceView />
-                </React.Suspense>
-            );
-        }
-
-        // Quick Assessment Views
-        if (
-            currentView === AppView.FREE_ASSESSMENT_CHAT ||
-            currentView === AppView.QUICK_STEP1_PROFILE ||
-            currentView === AppView.QUICK_STEP2_USER_CONTEXT ||
-            currentView === AppView.QUICK_STEP3_EXPECTATIONS
-        ) {
-            return (
-                <FreeAssessmentView />
-            );
-        }
-
-        // Trial Entry View (Phase C)
-        if (currentView === AppView.TRIAL_ENTRY) {
-            return (
-                <TrialEntryView onStartTrial={() => setCurrentView(AppView.AUTH)} />
-            );
-        }
-
-        // Full Transformation Views
-        if (currentView === AppView.FULL_STEP1_CONTEXT) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <Module1ContextView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} onNavigate={setCurrentView} />
-                </React.Suspense>
-            );
-        }
-        if (
-            currentView === AppView.CONTEXT_BUILDER ||
-            currentView === AppView.CONTEXT_BUILDER_PROFILE ||
-            currentView === AppView.CONTEXT_BUILDER_GOALS ||
-            currentView === AppView.CONTEXT_BUILDER_CHALLENGES ||
-            currentView === AppView.CONTEXT_BUILDER_MEGATRENDS ||
-            currentView === AppView.CONTEXT_BUILDER_STRATEGY
-        ) {
-            let initialTab = 1;
-            switch (currentView) {
-                case AppView.CONTEXT_BUILDER_PROFILE: initialTab = 1; break;
-                case AppView.CONTEXT_BUILDER_GOALS: initialTab = 2; break;
-                case AppView.CONTEXT_BUILDER_CHALLENGES: initialTab = 3; break;
-                case AppView.CONTEXT_BUILDER_MEGATRENDS: initialTab = 4; break;
-                case AppView.CONTEXT_BUILDER_STRATEGY: initialTab = 5; break;
-                default: initialTab = 1; break;
-            }
-            return <ContextBuilderView initialTab={initialTab} />;
-        }
-        // DRD Assessment (AssessmentModuleHub with 4 tabs)
-        if (currentView === AppView.ASSESSMENT_DRD) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <SplitLayout title="DRD Assessment">
-                        <AssessmentModuleHub framework="DRD" />
-                    </SplitLayout>
-                </React.Suspense>
-            );
-        }
-
-        if (currentView === AppView.FULL_STEP1_ASSESSMENT || currentView.startsWith('FULL_STEP1_')) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <FullAssessmentView />
-                </React.Suspense>
-            );
-        }
-        if (currentView === AppView.FULL_STEP2_INITIATIVES) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <FullInitiativesView />
-                </React.Suspense>
-            );
-        }
-        if (currentView === AppView.FULL_STEP3_ROADMAP) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <FullRoadmapView />
-                </React.Suspense>
-            );
-        }
-        if (currentView === AppView.FULL_STEP4_ROI) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <FullROIView />
-                </React.Suspense>
-            );
-        }
-        if (currentView === AppView.ECONOMICS) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <EconomicsView />
-                </React.Suspense>
-            );
-        }
-        if (currentView === AppView.FULL_STEP5_EXECUTION) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <FullExecutionView />
-                </React.Suspense>
-            );
-        }
-        if (currentView === AppView.IMPLEMENTATION) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <ImplementationView />
-                </React.Suspense>
-            );
-        }
-        if (currentView === AppView.FULL_ROLLOUT) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <FullRolloutView />
-                </React.Suspense>
-            );
-        }
-        if (currentView === AppView.FULL_STEP6_REPORTS) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <FullReportsView />
-                </React.Suspense>
-            );
-        }
-        if (currentView === AppView.DRD_AUDIT_REPORT) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <DRDAuditReportView />
-                </React.Suspense>
-            );
-        }
-        if (currentView === AppView.KPI_OKR_DASHBOARD) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <KpiOkrView />
-                </React.Suspense>
-            );
-        }
-
-        // Portfolio & Roadmap Module (unified Initiative Management + Roadmap)
-        if (currentView === AppView.PORTFOLIO_ROADMAP) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <PortfolioView />
-                </React.Suspense>
-            );
-        }
-
-        // Initiative Management Module (legacy - kept for backward compatibility)
-        if (currentView === AppView.INITIATIVE_MANAGEMENT) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <PortfolioView />
-                </React.Suspense>
-            );
-        }
-
-        // Benefits Realization Module
-        if (currentView === AppView.BENEFITS_REALIZATION) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <BenefitsRealizationView />
-                </React.Suspense>
-            );
-        }
-
-        // Consultant Views
-        if (currentView === AppView.CONSULTANT_PANEL) {
-            return (
-                <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Consultant Panel...</div>}>
-                    <ConsultantPanelView />
-                </React.Suspense>
-            );
-        }
-        if (currentView === AppView.CONSULTANT_INVITES) {
-            return (
-                <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Invite Tool...</div>}>
-                    <ConsultantInviteView />
-                </React.Suspense>
-            );
-        }
-
-        // Phase D: Organization Setup Wizard
-        if (currentView === AppView.ORG_SETUP_WIZARD) {
-            return (
-                <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Organization Setup...</div>}>
-                    <OrgSetupWizard />
-                </React.Suspense>
-            );
-        }
-
-        // Affiliate Dashboard (Phase G)
-        if (currentView === AppView.AFFILIATE_DASHBOARD) {
-            return (
-                <AffiliateDashboardView />
-            );
-        }
-
-        // Phase E: Onboarding Wizard
-        if (currentView === AppView.ONBOARDING_WIZARD) {
-            return (
-                <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />{t('common.loadingOnboarding')}</div>}>
-                    <OnboardingWizard />
-                </React.Suspense>
-            );
-        }
-
-        if (currentView === AppView.AI_ACTION_PROPOSALS) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <ActionProposalView />
-                </React.Suspense>
-            );
-        }
-
-        // Consultify Studio - Visual AI Workspace
-        if (currentView === AppView.STUDIO) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <StudioView />
-                </React.Suspense>
-            );
-        }
-
-        // Admin Views
-        if (currentView.startsWith('ADMIN')) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <AdminView currentUser={currentUser} onNavigate={setCurrentView} />
-                </React.Suspense>
-            );
-        }
-
-        // Settings Views
-        if (currentView.startsWith('SETTINGS')) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <SettingsView
-                        currentUser={currentUser}
-                        onUpdateUser={(updates: Partial<User>) => setCurrentUser(currentUser ? { ...currentUser, ...updates } : null)}
-                        theme={theme}
-                        toggleTheme={toggleTheme}
-                    />
-                </React.Suspense>
-            );
-        }
-
-        // Assessment Module Views - All frameworks use AssessmentModuleHub with 4 tabs
-
-        // SIRI Assessment
-        if (currentView === AppView.ASSESSMENT_SIRI) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <SplitLayout title="SIRI Assessment">
-                        <AssessmentModuleHub framework="SIRI" />
-                    </SplitLayout>
-                </React.Suspense>
-            );
-        }
-
-        // ADMA Assessment
-        if (currentView === AppView.ASSESSMENT_ADMA) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <SplitLayout title="ADMA Assessment">
-                        <AssessmentModuleHub framework="ADMA" />
-                    </SplitLayout>
-                </React.Suspense>
-            );
-        }
-
-        // CMMI Assessment
-        if (currentView === AppView.ASSESSMENT_CMMI) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <SplitLayout title="CMMI Assessment">
-                        <AssessmentModuleHub framework="CMMI" />
-                    </SplitLayout>
-                </React.Suspense>
-            );
-        }
-
-        // Lean 4.0 Assessment
-        if (currentView === AppView.ASSESSMENT_LEAN || currentView === AppView.ASSESSMENT_LEAN_EXTERNAL) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <SplitLayout title="Lean 4.0 Assessment">
-                        <AssessmentModuleHub framework="LEAN" />
-                    </SplitLayout>
-                </React.Suspense>
-            );
-        }
-
-        // Legacy: ASSESSMENT_DIGITAL_EXTERNAL - redirect to SIRI
-        if (currentView === AppView.ASSESSMENT_DIGITAL_EXTERNAL) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <ExternalDigitalWorkspace organizationId={currentUser?.organizationId || ''} />
-                </React.Suspense>
-            );
-        }
-
-        if (currentView === AppView.ASSESSMENT_SUMMARY || currentView === AppView.ASSESSMENT_OVERVIEW) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <AssessmentHubDashboard
-                        organizationId={currentUser?.organizationId || ''}
-                        projectId={'default'}
-                    />
-                </React.Suspense>
-            );
-        }
-
-        if (currentView === AppView.ASSESSMENT_AUDITS) {
-            return (
-                <React.Suspense fallback={<LoadingScreen />}>
-                    <GenericReportsWorkspace organizationId={currentUser?.organizationId || ''} />
-                </React.Suspense>
-            );
-        }
-
-        return (
-            <div className="w-full p-8 flex items-center justify-center text-slate-500 flex-col gap-4">
-                <div className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{currentView}</div>
-                <div>{t('common.underConstruction', 'Component Under Construction')}</div>
-            </div>
-        );
-    };
 
     // --- DEMO MODE LOGIC ---
     const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
@@ -1192,7 +774,17 @@ const AppContent: React.FC = () => {
                         <AnimatePresence mode="wait" initial={false}>
                             {currentUser?.role === 'SUPERADMIN' ? (
                                 <PageTransition id="superadmin">
-                                    {renderContent()}
+                                    <ViewRenderer
+                                        currentView={currentView}
+                                        currentUser={currentUser}
+                                        setCurrentView={setCurrentView}
+                                        setCurrentUser={setCurrentUser}
+                                        logout={logout}
+                                        fullSessionData={fullSessionData}
+                                        setFullSessionData={setFullSessionData}
+                                        theme={theme}
+                                        toggleTheme={toggleTheme}
+                                    />
                                 </PageTransition>
                             ) : (
                                 <div className="flex-1 overflow-hidden relative flex flex-col">
@@ -1219,7 +811,17 @@ const AppContent: React.FC = () => {
 
                                     {(currentView !== AppView.WELCOME && currentView !== AppView.AUTH) && (
                                         <PageTransition id={currentView}>
-                                            {renderContent()}
+                                            <ViewRenderer
+                                                currentView={currentView}
+                                                currentUser={currentUser}
+                                                setCurrentView={setCurrentView}
+                                                setCurrentUser={setCurrentUser}
+                                                logout={logout}
+                                                fullSessionData={fullSessionData}
+                                                setFullSessionData={setFullSessionData}
+                                                theme={theme}
+                                                toggleTheme={toggleTheme}
+                                            />
                                         </PageTransition>
                                     )}
                                 </div>

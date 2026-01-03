@@ -21,3 +21,6 @@ describe('OnboardingProgress Component', () => {
 
 
 
+
+
+

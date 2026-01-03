@@ -37,7 +37,7 @@ function dbAll(sql, params = []) {
 
 function dbRun(sql, params = []) {
     return new Promise((resolve, reject) => {
-        db.run(sql, params, function(err) {
+        db.run(sql, params, function (err) {
             if (err) reject(err);
             else resolve({ lastID: this.lastID, changes: this.changes });
         });
@@ -154,7 +154,7 @@ router.get('/invoices', authMiddleware, async (req, res) => {
         const offset = (parseInt(page) - 1) * parseInt(pageSize);
 
         const isSuperAdmin = req.user.role === 'SUPERADMIN';
-        
+
         let query = `
             SELECT i.*, o.name as organization_name
             FROM invoices i
@@ -197,7 +197,7 @@ router.get('/invoices', authMiddleware, async (req, res) => {
         }
         const total = await dbGet(countQuery, countParams);
 
-        res.json({ 
+        res.json({
             invoices: invoices.map(inv => ({
                 ...inv,
                 line_items: inv.line_items ? JSON.parse(inv.line_items) : [],
@@ -241,7 +241,7 @@ router.get('/invoices/:id', authMiddleware, async (req, res) => {
             return res.status(404).json({ error: 'Invoice not found' });
         }
 
-        res.json({ 
+        res.json({
             invoice: {
                 ...invoice,
                 line_items: invoice.line_items ? JSON.parse(invoice.line_items) : [],
@@ -316,7 +316,7 @@ router.put('/invoices/:id', authMiddleware, verifySuperAdmin, async (req, res) =
         if (status) {
             updates.push('status = ?');
             params.push(status);
-            
+
             if (status === 'paid') {
                 updates.push('paid_at = datetime("now")');
                 updates.push('amount_paid = total');
@@ -427,7 +427,7 @@ router.get('/subscriptions', authMiddleware, async (req, res) => {
 
         const subscriptions = await dbAll(query, params);
 
-        res.json({ 
+        res.json({
             subscriptions: subscriptions.map(sub => ({
                 ...sub,
                 metadata: sub.metadata ? JSON.parse(sub.metadata) : {}
@@ -643,7 +643,7 @@ router.post('/subscriptions/:id/cancel', authMiddleware, async (req, res) => {
 router.get('/plans', authMiddleware, async (req, res) => {
     try {
         const { includeInactive = 'false' } = req.query;
-        
+
         let query = `SELECT * FROM subscription_plans WHERE 1=1`;
         if (includeInactive !== 'true') {
             query += ` AND is_active = 1`;
@@ -652,7 +652,7 @@ router.get('/plans', authMiddleware, async (req, res) => {
 
         const plans = await dbAll(query);
 
-        res.json({ 
+        res.json({
             plans: plans.map(plan => ({
                 ...plan,
                 features: plan.features ? JSON.parse(plan.features) : [],
@@ -710,8 +710,8 @@ router.put('/plans/:id', authMiddleware, verifySuperAdmin, async (req, res) => {
         const updates = [];
         const params = [];
 
-        const fields = ['name', 'description', 'price_monthly', 'price_yearly', 'currency', 
-                       'trial_days', 'is_public', 'is_active', 'sort_order'];
+        const fields = ['name', 'description', 'price_monthly', 'price_yearly', 'currency',
+            'trial_days', 'is_public', 'is_active', 'sort_order'];
 
         for (const field of fields) {
             const key = field.replace(/_([a-z])/g, (_, c) => c.toUpperCase()); // Convert to camelCase
@@ -860,15 +860,42 @@ router.get('/usage', authMiddleware, async (req, res) => {
 
         const usage = await dbAll(query, params);
 
-        // Get totals
-        const totals = await dbAll(`
-            SELECT metric_name, SUM(quantity) as total
-            FROM usage_records
-            WHERE organization_id = ?
-            GROUP BY metric_name
+        // Get structured usage for SpendingAlertsView and AdminBillingManagement
+        const org = await dbGet(`
+            SELECT token_balance, plan, trial_tokens_used
+            FROM organizations 
+            WHERE id = ?
         `, [orgId]);
 
-        res.json({ usage, totals });
+        const seats = await dbGet(`
+            SELECT COUNT(*) as used, (SELECT COUNT(id) FROM organization_members WHERE organization_id = ?) as total
+            FROM organization_members 
+            WHERE organization_id = ? AND status = 'ACTIVE'
+        `, [orgId, orgId]);
+
+        // Mocking some limits for now if not defined in plan
+        const structuredUsage = {
+            tokens: {
+                used: org?.trial_tokens_used || 0,
+                limit: 1000000 // Default 1M for demo
+            },
+            storage: {
+                used_gb: 1.2,
+                limit_gb: 10
+            },
+            seats: {
+                used: seats?.used || 0,
+                total: 10 // Default 10 seats for demo
+            },
+            spend: {
+                current_period: 45.50,
+                budget: 100
+            }
+        };
+
+        const totals = await dbAll(`SELECT metric_name, SUM(quantity) as total FROM usage_records WHERE organization_id = ? GROUP BY metric_name`, [orgId]);
+
+        res.json({ usage, structuredUsage, totals });
     } catch (error) {
         console.error('[Billing] Get usage error:', error);
         res.status(500).json({ error: 'Failed to get usage' });
@@ -898,6 +925,138 @@ router.post('/usage', authMiddleware, async (req, res) => {
     } catch (error) {
         console.error('[Billing] Record usage error:', error);
         res.status(500).json({ error: 'Failed to record usage' });
+    }
+});
+
+// ==========================================
+// SPENDING ALERTS
+// ==========================================
+
+/**
+ * GET /api/billing/spending-alerts
+ * Get spending alerts for organization
+ */
+router.get('/spending-alerts', authMiddleware, async (req, res) => {
+    try {
+        const orgId = req.user.organizationId;
+        const alerts = await dbAll(`SELECT * FROM spending_alerts WHERE organization_id = ?`, [orgId]);
+
+        res.json(alerts.map(a => ({
+            ...a,
+            notifyEmails: JSON.parse(a.notify_emails || '[]'),
+            thresholdType: a.threshold_type,
+            isActive: !!a.is_active,
+            lastTriggeredAt: a.last_triggered_at
+        })));
+    } catch (error) {
+        console.error('[Billing] Get spending alerts error:', error);
+        res.status(500).json({ error: 'Failed to get spending alerts' });
+    }
+});
+
+/**
+ * POST /api/billing/spending-alerts
+ * Create spending alert
+ */
+router.post('/spending-alerts', authMiddleware, async (req, res) => {
+    try {
+        const orgId = req.user.organizationId;
+        const { type, threshold, thresholdType, action, notifyEmails, isActive = true } = req.body;
+
+        const id = uuidv4();
+        await dbRun(`
+            INSERT INTO spending_alerts (
+                id, organization_id, type, threshold, threshold_type, action, notify_emails, is_active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [id, orgId, type, threshold, thresholdType, action, JSON.stringify(notifyEmails || []), isActive ? 1 : 0]);
+
+        res.json({ success: true, id });
+    } catch (error) {
+        console.error('[Billing] Create spending alert error:', error);
+        res.status(500).json({ error: 'Failed to create spending alert' });
+    }
+});
+
+/**
+ * PUT /api/billing/spending-alerts/:id
+ * Update spending alert
+ */
+router.put('/spending-alerts/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const orgId = req.user.organizationId;
+        const { type, threshold, thresholdType, action, notifyEmails, isActive } = req.body;
+
+        await dbRun(`
+            UPDATE spending_alerts SET
+                type = ?, threshold = ?, threshold_type = ?, action = ?, 
+                notify_emails = ?, is_active = ?, updated_at = datetime('now')
+            WHERE id = ? AND organization_id = ?
+        `, [type, threshold, thresholdType, action, JSON.stringify(notifyEmails || []), isActive ? 1 : 0, id, orgId]);
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[Billing] Update spending alert error:', error);
+        res.status(500).json({ error: 'Failed to update spending alert' });
+    }
+});
+
+/**
+ * POST /api/billing/spending-alerts/:id/toggle
+ * Toggle spending alert
+ */
+router.post('/spending-alerts/:id/toggle', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const orgId = req.user.organizationId;
+
+        await dbRun(`
+            UPDATE spending_alerts 
+            SET is_active = 1 - is_active, updated_at = datetime('now')
+            WHERE id = ? AND organization_id = ?
+        `, [id, orgId]);
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[Billing] Toggle spending alert error:', error);
+        res.status(500).json({ error: 'Failed to toggle spending alert' });
+    }
+});
+
+/**
+ * DELETE /api/billing/spending-alerts/:id
+ * Delete spending alert
+ */
+router.delete('/spending-alerts/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const orgId = req.user.organizationId;
+
+        await dbRun(`DELETE FROM spending_alerts WHERE id = ? AND organization_id = ?`, [id, orgId]);
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[Billing] Delete spending alert error:', error);
+        res.status(500).json({ error: 'Failed to delete spending alert' });
+    }
+});
+
+// ==========================================
+// ADD-ONS
+// ==========================================
+
+/**
+ * GET /api/billing/addons
+ * List available add-ons
+ */
+router.get('/addons', authMiddleware, async (req, res) => {
+    try {
+        const sql = `SELECT * FROM billing_addons WHERE is_active = 1`;
+        const addons = await dbAll(sql, []);
+        res.json(addons);
+    } catch (error) {
+        console.error('[Billing] Get addons error:', error);
+        res.status(500).json({ error: 'Failed to get add-ons' });
     }
 });
 
@@ -979,14 +1138,14 @@ router.post('/admin/webhook-events/:id/retry', authMiddleware, verifySuperAdmin,
         if (!event) {
             return res.status(404).json({ error: 'Webhook event not found' });
         }
-        
+
         // Re-trigger the event
         const result = await billingWebhookService.triggerEvent(
             event.organization_id,
             event.event_type,
             event.payload?.data?.object || event.payload
         );
-        
+
         res.json({ success: true, result });
     } catch (error) {
         console.error('[Billing Admin] Retry webhook event error:', error);

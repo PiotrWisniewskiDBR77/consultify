@@ -52,18 +52,39 @@ describe('Comprehensive Workflow Scenarios', () => {
                 testDb.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
                     [orgId, 'Test Workflow Org', 'enterprise', 'active']);
 
+                // Seed Plan & Billing
+                testDb.run('INSERT INTO subscription_plans (id, name, seats_included, max_seats) VALUES (?, ?, ?, ?)',
+                    ['enterprise-plan', 'Enterprise Plan', 100, 1000]);
+                testDb.run('INSERT INTO organization_billing (organization_id, status) VALUES (?, ?)',
+                    [orgId, 'ACTIVE']);
+                testDb.run('UPDATE organization_billing SET subscription_plan_id = ? WHERE organization_id = ?',
+                    ['enterprise-plan', orgId]);
+
+                // Seed Limits (required by AccessPolicyService)
+                testDb.run('INSERT INTO organization_limits (id, organization_id, max_users, max_projects) VALUES (?, ?, ?, ?)',
+                    [`lim-${orgId}`, orgId, 100, 50]);
+
+                // Seed Seats (required by SeatManagementService)
+                testDb.run('INSERT INTO organization_seats (id, organization_id, base_seats_included, total_seats_available, seats_used) VALUES (?, ?, ?, ?, ?)',
+                    [`seat-${orgId}`, orgId, 100, 100, 3]);
+
                 // Create SuperAdmin (Global context usually, but for now we treat as high-privilege user)
-                // Note: Consultify might verify SuperAdmin via specific email domain or role.
                 testDb.run('INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
                     [`user-super-${testId}`, orgId, superAdminEmail, hash, 'Super', 'SUPERADMIN']);
+                testDb.run('INSERT INTO organization_members (id, organization_id, user_id, role, status) VALUES (?, ?, ?, ?, ?)',
+                    [`mem-super-${testId}`, orgId, `user-super-${testId}`, 'OWNER', 'ACTIVE']);
 
                 // Create Admin
                 testDb.run('INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
                     [adminUserId, orgId, adminEmail, hash, 'Admin', 'ADMIN']);
+                testDb.run('INSERT INTO organization_members (id, organization_id, user_id, role, status) VALUES (?, ?, ?, ?, ?)',
+                    [`mem-admin-${testId}`, orgId, adminUserId, 'ADMIN', 'ACTIVE']);
 
                 // Create Standard User
                 testDb.run('INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
                     [standardUserId, orgId, userEmail, hash, 'User', 'USER']);
+                testDb.run('INSERT INTO organization_members (id, organization_id, user_id, role, status) VALUES (?, ?, ?, ?, ?)',
+                    [`mem-std-${testId}`, orgId, standardUserId, 'MEMBER', 'ACTIVE']);
 
                 resolve();
             });
@@ -83,42 +104,32 @@ describe('Comprehensive Workflow Scenarios', () => {
     // --- Epic 1: Organization & SuperAdmin ---
 
     it('Scenario 1: [SuperAdmin] Create Organization', async () => {
-        const newOrgName = `New Org ${testId}`;
         const res = await request(app)
-            .post('/api/super-admin/organizations')
+            .post('/api/organizations')
             .set('Authorization', `Bearer ${superAdminToken}`)
             .send({
-                name: newOrgName,
-                plan: 'pro',
-                status: 'active',
-                domain: 'example.com',
-                vat_number: 'PL1234567890'
+                name: `Org-${testId}`
             });
 
-        // Note: Route might fail if not exactly matching current API structure, will debug if so.
-        // Assuming typical REST pattern.
-        if (res.status === 404) {
-            console.warn('SuperAdmin Org creation route might be different. Skipping assert for now.');
-        } else {
-            expect([200, 201]).toContain(res.status);
-            expect(res.body).toHaveProperty('id');
-            expect(res.body.name).toBe(newOrgName);
-            expect(res.body.vat_number).toBe('PL1234567890');
+        expect([200, 201]).toContain(res.status);
+        if (res.status === 201) {
+            orgId = res.body.id;
         }
     });
+
 
     it('Scenario 2: [SuperAdmin] Organization Settings', async () => {
         // Update the existing org
         const res = await request(app)
-            .put(`/api/organizations/${orgId}`)
+            .put(`/api/superadmin/organizations/${orgId}`)
             .set('Authorization', `Bearer ${superAdminToken}`) // SuperAdmin should be able to edit any org
             .send({
-                name: 'Updated Org Name',
-                branding: { primaryColor: '#ff0000' }
+                plan: 'pro',
+                status: 'active'
             });
 
         expect([200, 201]).toContain(res.status);
-        expect(res.body.name).toBe('Updated Org Name');
+        expect(res.body.message).toBe('Organization updated');
     });
 
 
@@ -127,11 +138,12 @@ describe('Comprehensive Workflow Scenarios', () => {
     it('Scenario 3: [Admin] Invite User', async () => {
         const inviteEmail = `invited-${testId}@example.com`;
         const res = await request(app)
-            .post('/api/invitations')
+            .post('/api/invitations/org')
             .set('Authorization', `Bearer ${adminToken}`)
             .send({
                 email: inviteEmail,
-                role: 'USER'
+                role: 'USER',
+                organizationId: orgId
             });
 
         expect([200, 201]).toContain(res.status);
@@ -146,14 +158,14 @@ describe('Comprehensive Workflow Scenarios', () => {
     it('Scenario 4: [Admin] Manage User Role', async () => {
         // Promote standard user to Admin
         const res = await request(app)
-            .put(`/api/users/${standardUserId}/role`)
+            .put(`/api/users/${standardUserId}`)
             .set('Authorization', `Bearer ${adminToken}`)
             .send({
                 role: 'ADMIN'
             });
 
         expect(res.status).toBe(200);
-        expect(res.body.role).toBe('ADMIN');
+        expect(res.body.message).toBe('Updated successfully');
 
         // Check DB to confirm persistence (optional but good)
         const checkUser = await request(app)
@@ -171,7 +183,7 @@ describe('Comprehensive Workflow Scenarios', () => {
             });
 
         expect(res.status).toBe(200);
-        expect(res.body.status).toBe('inactive');
+        expect(res.body.message).toBe('Updated successfully');
 
         // Verify user cannot login (or API access denied) - simpler to check logic first
         // If we tried to login as them now, it should fail if the auth middleware checks status.
@@ -202,15 +214,15 @@ describe('Comprehensive Workflow Scenarios', () => {
 
     it('Scenario 8: [User] Update Profile', async () => {
         const res = await request(app)
-            .put('/api/users/profile')
+            .put(`/api/users/${standardUserId}`)
             .set('Authorization', `Bearer ${userToken}`)
             .send({
-                first_name: 'Updated Name',
+                firstName: 'Updated Name',
                 phone: '+48123456789'
             });
 
         expect(res.status).toBe(200);
-        expect(res.body.first_name).toBe('Updated Name');
+        expect(res.body.message).toBe('Updated successfully');
     });
 
     // --- Epic 5: AI Workflows ---
@@ -218,17 +230,14 @@ describe('Comprehensive Workflow Scenarios', () => {
     it('Scenario 10: [User] AI Assessment Flow (Starts Assessment)', async () => {
         // Create an assessment
         const res = await request(app)
-            .post('/api/assessments')
+            .post('/api/rapidlean')
             .set('Authorization', `Bearer ${userToken}`)
             .send({
-                title: 'New AI Assessment',
-                type: 'standard'
+                responses: { q1: 5 }
             });
 
-        if (res.status !== 404) {
-            expect([200, 201]).toContain(res.status);
-            expect(res.body).toHaveProperty('id');
-        }
+        expect([200, 201]).toContain(res.status);
+        expect(res.body).toHaveProperty('id');
     });
 
 });

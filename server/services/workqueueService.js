@@ -9,6 +9,13 @@ const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 const auditLogger = require('../utils/auditLogger');
 
+// Dependency injection container
+const deps = {
+    db,
+    uuidv4,
+    auditLogger
+};
+
 // Default SLA duration: 48 hours
 const DEFAULT_SLA_HOURS = 48;
 
@@ -20,7 +27,12 @@ const ASSIGNMENT_STATUSES = {
 };
 
 const WorkqueueService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
     ASSIGNMENT_STATUSES,
+
     DEFAULT_SLA_HOURS,
 
     /**
@@ -36,11 +48,11 @@ const WorkqueueService = {
      */
     assignApproval: async ({ proposalId, assignedToUserId, orgId, slaDueAt, createdBy }) => {
         return new Promise((resolve, reject) => {
-            const id = uuidv4();
+            const id = deps.uuidv4();
             const dueAt = slaDueAt || new Date(Date.now() + DEFAULT_SLA_HOURS * 60 * 60 * 1000);
 
             // Check for existing active assignment
-            db.get(
+            deps.db.get(
                 `SELECT id FROM approval_assignments 
                  WHERE proposal_id = ? AND org_id = ? AND status IN ('PENDING', 'ACKED')`,
                 [proposalId, orgId],
@@ -52,7 +64,7 @@ const WorkqueueService = {
                         return reject(error);
                     }
 
-                    db.run(
+                    deps.db.run(
                         `INSERT INTO approval_assignments 
                          (id, org_id, proposal_id, assigned_to_user_id, status, sla_due_at, created_at)
                          VALUES (?, ?, ?, ?, 'PENDING', ?, CURRENT_TIMESTAMP)`,
@@ -60,7 +72,7 @@ const WorkqueueService = {
                         function (err) {
                             if (err) return reject(err);
 
-                            auditLogger.info('APPROVAL_ASSIGNED', {
+                            deps.auditLogger.info('APPROVAL_ASSIGNED', {
                                 assignment_id: id,
                                 proposal_id: proposalId,
                                 assigned_to: assignedToUserId,
@@ -94,7 +106,7 @@ const WorkqueueService = {
      */
     acknowledgeApproval: async (proposalId, userId, orgId) => {
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE approval_assignments 
                  SET status = 'ACKED', acked_at = CURRENT_TIMESTAMP
                  WHERE proposal_id = ? AND org_id = ? AND assigned_to_user_id = ? AND status = 'PENDING'`,
@@ -108,7 +120,7 @@ const WorkqueueService = {
                         return reject(error);
                     }
 
-                    auditLogger.info('APPROVAL_ACKNOWLEDGED', {
+                    deps.auditLogger.info('APPROVAL_ACKNOWLEDGED', {
                         proposal_id: proposalId,
                         user_id: userId,
                         org_id: orgId
@@ -130,7 +142,7 @@ const WorkqueueService = {
      */
     completeApproval: async (proposalId, userId, orgId) => {
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE approval_assignments 
                  SET status = 'DONE', completed_at = CURRENT_TIMESTAMP
                  WHERE proposal_id = ? AND org_id = ? AND assigned_to_user_id = ? AND status IN ('PENDING', 'ACKED')`,
@@ -144,7 +156,7 @@ const WorkqueueService = {
                         return reject(error);
                     }
 
-                    auditLogger.info('APPROVAL_COMPLETED', {
+                    deps.auditLogger.info('APPROVAL_COMPLETED', {
                         proposal_id: proposalId,
                         user_id: userId,
                         org_id: orgId
@@ -191,7 +203,7 @@ const WorkqueueService = {
             sql += ` ORDER BY aa.sla_due_at ASC LIMIT ? OFFSET ?`;
             params.push(limit, offset);
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
 
                 const result = (rows || []).map(row => ({
@@ -241,7 +253,7 @@ const WorkqueueService = {
             sql += ` ORDER BY aa.sla_due_at ASC LIMIT ? OFFSET ?`;
             params.push(limit, offset);
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
 
                 const result = (rows || []).map(row => ({
@@ -263,7 +275,7 @@ const WorkqueueService = {
      */
     getOverdueCount: async (orgId) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT COUNT(*) as count FROM approval_assignments 
                  WHERE org_id = ? AND status IN ('PENDING', 'ACKED') 
                  AND sla_due_at < datetime('now')`,
@@ -285,7 +297,7 @@ const WorkqueueService = {
      */
     getAssignmentByProposal: async (proposalId, orgId) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT * FROM approval_assignments 
                  WHERE proposal_id = ? AND org_id = ?
                  ORDER BY created_at DESC LIMIT 1`,

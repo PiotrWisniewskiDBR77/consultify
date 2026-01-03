@@ -144,3 +144,6 @@ export const TabsContent: React.FC<TabsContentProps> = ({
 export default Tabs;
 
 
+
+
+

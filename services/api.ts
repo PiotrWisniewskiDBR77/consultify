@@ -1,87 +1,17 @@
 import { User, SessionMode, FullSession, LLMProvider } from '../types';
 import { tokenService } from './tokenService';
-
-// Use relative path to allow Vite proxy to handle the request (avoiding CORS)
-// or use env var if provided.
-const API_URL = '/api';
-
-let correlationId = sessionStorage.getItem('correlationId');
-if (!correlationId) {
-    correlationId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    sessionStorage.setItem('correlationId', correlationId);
-}
-
-const getHeaders = () => {
-    const token = tokenService.getToken();
-    return {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
-        'X-Correlation-ID': correlationId as string
-    };
-};
-
-// Wrapper for fetch that handles 401 with automatic token refresh
-const fetchWithRetry = async (url: string, options: RequestInit = {}): Promise<Response> => {
-    const headers = { ...getHeaders(), ...(options.headers as Record<string, string> || {}) };
-    let res = await fetch(url, { ...options, headers });
-
-    // If 401, try to refresh token and retry once
-    if (res.status === 401) {
-        console.log('[Api] Got 401, attempting token refresh...');
-        const newToken = await tokenService.refreshToken();
-        if (newToken) {
-            headers['Authorization'] = `Bearer ${newToken}`;
-            res = await fetch(url, { ...options, headers });
-        } else {
-            // Token refresh failed, notify app
-            window.dispatchEvent(new CustomEvent('auth:token-expired'));
-        }
-    }
-
-    return res;
-};
-
-const handleResponse = async (res: Response, defaultError: string) => {
-    if (res.ok) {
-        // Some endpoints return 204 No Content
-        if (res.status === 204) return null;
-        return res.json();
-    }
-
-    const data = await res.json().catch(() => ({}));
-
-    // Check for Demo Block
-    if (res.status === 403 && (data.code === 'DEMO_BLOCKED' || data.errorCode === 'DEMO_ACTION_BLOCKED')) {
-        window.dispatchEvent(new CustomEvent('DEMO_ACTION_BLOCKED', {
-            detail: {
-                message: data.message || data.error,
-                action: data.action
-            }
-        }));
-        // Don't throw normal error for demo blocks, let UI handle event
-        return null;
-    }
-
-    // Check for AI Budget Freeze (Phase 8: Prestige)
-    if (res.status === 403 && data.code === 'AI_BUDGET_EXHAUSTED') {
-        const { useAppStore } = await import('../store/useAppStore');
-        const store = useAppStore.getState();
-        store.setAiFreezeStatus({
-            isFrozen: true,
-            reason: data.error,
-            scope: data.budgetStatus?.scope || 'Global'
-        });
-        throw new Error(data.error || 'AI Budget Exhausted');
-    }
-
-    throw new Error(data.error || data.message || defaultError);
-};
-
-const handleBlobResponse = async (res: Response, defaultError: string) => {
-    if (res.ok) return res.blob();
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || data.message || defaultError);
-};
+import {
+    API_URL,
+    getHeaders,
+    fetchWithRetry,
+    handleResponse,
+    handleBlobResponse,
+    API_URL as UTILS_API_URL
+} from './apiUtils';
+import { AuthService } from './modules/AuthService';
+import { ProjectService } from './modules/ProjectService';
+import { AIService } from './modules/AIService';
+import { AccessControlService } from './modules/AccessControlService';
 
 export const Api = {
     // GENERIC METHODS (Required for Studio and other tools)
@@ -93,6 +23,7 @@ export const Api = {
     post: async (url: string, data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}${url}`, {
             method: 'POST',
+            headers: getHeaders(), // Added headers for POST
             body: JSON.stringify(data)
         });
         return handleResponse(res, `POST ${url} failed`);
@@ -101,6 +32,7 @@ export const Api = {
     put: async (url: string, data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}${url}`, {
             method: 'PUT',
+            headers: getHeaders(), // Added headers for PUT
             body: JSON.stringify(data)
         });
         return handleResponse(res, `PUT ${url} failed`);
@@ -108,163 +40,47 @@ export const Api = {
 
     delete: async (url: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}${url}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getHeaders() // Added headers for DELETE
         });
         return handleResponse(res, `DELETE ${url} failed`);
     },
+
+    patch: async (url: string, data: any): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}${url}`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res, `PATCH ${url} failed`);
+    },
+
+    upload: async (url: string, formData: FormData): Promise<any> => {
+        const headers: any = { ...getHeaders() };
+        delete headers['Content-Type'];
+        const res = await fetch(`${API_URL}${url}`, {
+            method: 'POST',
+            headers,
+            body: formData
+        });
+        return handleResponse(res, `Upload to ${url} failed`);
+    },
+
     // --- AUTH ---
-    login: async (email: string, password: string): Promise<User> => {
-        console.log('Api.login called:', { email, url: `${API_URL}/auth/login` });
-        const res = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-        return handleResponse(res, 'Login failed').then(data => {
-            // Save both access token and refresh token
-            tokenService.saveTokens(data.token, data.refreshToken);
-            return data.user;
-        });
-    },
-
-    register: async (userData: any): Promise<User | any> => {
-        const res = await fetch(`${API_URL}/auth/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData)
-        });
-        const data = await handleResponse(res, 'Registration failed');
-        if (data.status === 'pending') return data;
-        tokenService.saveTokens(data.token, data.refreshToken);
-        return data.user;
-    },
-
-    /**
-     * Demo Login - Automatically logs in as demo@legolex.com
-     * Used for demo/trial access from landing page
-     */
-    demoLogin: async (): Promise<User & { isDemo: boolean }> => {
-        console.log('Api.demoLogin called');
-        const res = await fetch(`${API_URL}/auth/demo-login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-        const data = await handleResponse(res, 'Demo login failed');
-        tokenService.saveTokens(data.token, data.refreshToken);
-        // Store demo flag in session
-        sessionStorage.setItem('isDemo', 'true');
-        return { ...data.user, isDemo: true };
-    },
-
-    /**
-     * Check if current session is a demo session
-     */
-    isDemoSession: (): boolean => {
-        return sessionStorage.getItem('isDemo') === 'true';
-    },
-
-    /**
-     * Clear demo session flag
-     */
-    clearDemoSession: (): void => {
-        sessionStorage.removeItem('isDemo');
-    },
-
-    logout: async (): Promise<void> => {
-        try {
-            await fetch(`${API_URL}/auth/logout`, {
-                method: 'POST',
-                headers: getHeaders()
-            });
-        } catch (error) {
-            console.warn('Logout API call failed, clearing token anyway:', error);
-        }
-        tokenService.clearTokens();
-    },
-
-    getMe: async (): Promise<User | null> => {
-        const res = await fetch(`${API_URL}/auth/me`, { headers: getHeaders() });
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data.user;
-    },
-
-    // --- SECURITY & SESSIONS ---
-    changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
-        const res = await fetchWithRetry(`${API_URL}/auth/change-password`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ currentPassword, newPassword })
-        });
-        return handleResponse(res, 'Failed to change password');
-    },
-
-    getActiveSessions: async (): Promise<{ sessions: any[] }> => {
-        const res = await fetchWithRetry(`${API_URL}/auth/sessions`, {
-            headers: getHeaders()
-        });
-        return handleResponse(res, 'Failed to fetch sessions');
-    },
-
-    getLoginHistory: async (): Promise<any[]> => {
-        const res = await fetchWithRetry(`${API_URL}/auth/login-history`, {
-            headers: getHeaders()
-        });
-        const data = await handleResponse(res, 'Failed to fetch login history');
-        return data.data || [];
-    },
-
-    revokeSession: async (sessionId: string): Promise<void> => {
-        const res = await fetchWithRetry(`${API_URL}/auth/sessions/${sessionId}`, {
-            method: 'DELETE',
-            headers: getHeaders()
-        });
-        return handleResponse(res, 'Failed to revoke session');
-    },
-
-    revokeAllSessions: async (): Promise<void> => {
-        const res = await fetchWithRetry(`${API_URL}/auth/sessions/revoke-all`, {
-            method: 'POST',
-            headers: getHeaders()
-        });
-        return handleResponse(res, 'Failed to revoke all sessions');
-    },
-
-    // --- ACCESSIBILITY ---
-    getAccessibilitySettings: async (): Promise<any> => {
-        const res = await fetchWithRetry(`${API_URL}/settings/preferences/accessibility`, {
-            headers: getHeaders()
-        });
-        return handleResponse(res, 'Failed to fetch accessibility settings');
-    },
-
-    updateAccessibilitySettings: async (settings: any): Promise<void> => {
-        const res = await fetchWithRetry(`${API_URL}/settings/preferences/accessibility`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify({ preferences: settings })
-        });
-        await handleResponse(res, 'Failed to update accessibility settings');
-    },
-
-    // --- EMAIL VERIFICATION ---
-    resendVerificationEmail: async (): Promise<void> => {
-        const res = await fetchWithRetry(`${API_URL}/auth/resend-verification`, {
-            method: 'POST',
-            headers: getHeaders()
-        });
-        return handleResponse(res, 'Failed to send verification email');
-    },
-
-    verifyEmail: async (token: string): Promise<{ success: boolean }> => {
-        const res = await fetch(`${API_URL}/auth/verify-email`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token })
-        });
-        return handleResponse(res, 'Email verification failed');
-    },
-
+    login: AuthService.login,
+    register: AuthService.register,
+    demoLogin: AuthService.demoLogin,
+    isDemoSession: AuthService.isDemoSession,
+    clearDemoSession: AuthService.clearDemoSession,
+    logout: AuthService.logout,
+    getMe: AuthService.getMe,
+    validateAccessCode: AuthService.validateAccessCode,
+    acceptAccessCode: AuthService.acceptAccessCode,
+    changePassword: AuthService.changePassword,
+    getActiveSessions: AuthService.getActiveSessions,
+    getLoginHistory: AuthService.getLoginHistory,
+    revokeSession: AuthService.revokeSession,
+    revokeAllSessions: AuthService.revokeAllSessions,
     // --- TOKEN USAGE ANALYTICS ---
     getTokenUsageAnalytics: async (organizationId: string, timeRange: '7d' | '30d' | '90d' = '30d'): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/analytics/token-usage?orgId=${organizationId}&range=${timeRange}`, {
@@ -544,99 +360,8 @@ export const Api = {
     },
 
     // --- AI ---
-    // --- AI ---
-    chatWithAI: async (message: string, history: any[], systemInstruction?: string, roleName?: string, options?: any) => {
-        try {
-            const response = await fetch(`${API_URL}/ai/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message, history, systemInstruction, roleName, options })
-            });
-            const data = await response.json();
-            return data.text;
-        } catch (error) {
-            console.error('API Chat Error', error);
-            throw error;
-        }
-    },
-
-    chatWithAIStream: async (
-        message: string,
-        history: any[],
-        onChunk: (text: string) => void,
-        onDone: () => void,
-        systemInstruction?: string,
-        context?: any,
-        roleName?: string,
-        language?: string,
-        onThinking?: (thought: any) => void,
-        options?: any
-    ) => {
-        try {
-            const response = await fetch(`${API_URL}/ai/chat/stream`, {
-                method: 'POST',
-                headers: getHeaders(),
-                body: JSON.stringify({ message, history, systemInstruction, context, roleName, language, options })
-            });
-
-            if (!response.body) throw new Error('ReadableStream not supported');
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                buffer += decoder.decode(value, { stream: true });
-                const parts = buffer.split('\n\n');
-
-                // Keep the last part in the buffer as it might be incomplete
-                buffer = parts.pop() || '';
-
-                for (const part of parts) {
-                    if (part.startsWith('data: ')) {
-                        const dataStr = part.replace('data: ', '').trim();
-                        if (dataStr === '[DONE]') {
-                            onDone();
-                            return;
-                        }
-                        try {
-                            const data = JSON.parse(dataStr);
-
-                            // Handle Thought/Thinking Events
-                            if (data.type === 'thought' && onThinking) {
-                                onThinking(data);
-                                continue;
-                            }
-
-                            if (data.text) onChunk(data.text);
-                            if (data.error) {
-                                console.error('Stream error from server:', data.error);
-                                onChunk(`Error: ${data.error}`);
-                                if (data.code === 'AI_BUDGET_EXHAUSTED') {
-                                    const { useAppStore } = await import('../store/useAppStore');
-                                    useAppStore.getState().setAiFreezeStatus({
-                                        isFrozen: true,
-                                        reason: data.error,
-                                        scope: data.budgetStatus?.scope || 'Global'
-                                    });
-                                }
-                            }
-
-                        } catch (e) {
-                            console.error('Failed to parse SSE data:', e, dataStr);
-                        }
-                    }
-                }
-            }
-            onDone();
-        } catch (error) {
-            console.error('API Chat Stream Error', error);
-            throw error;
-        }
-    },
+    chatWithAI: AIService.chatWithAI,
+    chatWithAIStream: AIService.chatWithAIStream,
     // --- SETTINGS ---
     saveSetting: async (key: string, value: string): Promise<void> => {
         const res = await fetch(`${API_URL}/settings`, {
@@ -682,6 +407,7 @@ export const Api = {
         ai: { total_ai_calls: number; total_tokens: number; active_users: number };
         counts: { total_users: number; total_orgs: number; active_users_7d: number };
         live?: { total_active_connections: number };
+        activities: any[];
     }> => {
         const res = await fetch(`${API_URL}/superadmin/dashboard`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch dashboard');
@@ -834,294 +560,40 @@ export const Api = {
     },
 
     // --- PROJECTS ---
-    getProjects: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/projects`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch projects');
-        return res.json();
-    },
+    getProjects: ProjectService.getProjects,
+    createProject: ProjectService.createProject,
+    deleteProject: ProjectService.deleteProject,
+    getProjectDetails: ProjectService.getProjectDetails,
+    getAssessmentReports: ProjectService.getAssessmentReports,
+    generateAssessmentReport: ProjectService.generateAssessmentReport,
+    getAssessmentReport: ProjectService.getAssessmentReport,
+    updateProject: ProjectService.updateProject,
 
-    createProject: async (data: { name: string; ownerId?: string }): Promise<any> => {
-        const res = await fetch(`${API_URL}/projects`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(data)
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Failed to create project');
-        return json;
-    },
-
-    deleteProject: async (id: string): Promise<void> => {
-        const res = await fetch(`${API_URL}/projects/${id}`, {
-            method: 'DELETE',
-            headers: getHeaders()
-        });
-        if (!res.ok) throw new Error('Failed to delete project');
-    },
-
-    getProjectDetails: async (id: string): Promise<any> => {
-        const res = await fetch(`${API_URL}/projects/${id}`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch project details');
-        return res.json();
-    },
-
-    updateProject: async (id: string, data: any): Promise<any> => {
-        const res = await fetch(`${API_URL}/projects/${id}`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify(data)
-        });
-        if (!res.ok) throw new Error('Failed to update project');
-        return res.json();
-    },
-
-    // AI OBSERVATIONS
-    generateGlobalBrainObservations: async () => {
-        const response = await fetch(`${API_URL}/knowledge/observations/generate`, {
-            method: 'GET',
-            headers: getHeaders()
-        });
-        if (!response.ok) throw new Error('Failed to generate observations');
-        return response.json();
-    },
-
-    // --- LLM MANAGEMENT ---
-    getLLMProviders: async (adminContext = false): Promise<any[]> => {
-        const headers: Record<string, string> = { ...getHeaders() };
-        if (adminContext) {
-            const user = await Api.getMe();
-            headers['x-org-context'] = user?.organizationId || '';
-        }
-        const res = await fetch(`${API_URL}/llm/providers`, { headers });
-        if (!res.ok) throw new Error('Failed to fetch LLM providers');
-        return res.json();
-    },
-
-    // Analytics & Logs
-    getLLMAnalytics: async (days: number = 7): Promise<any> => {
-        const res = await fetch(`${API_URL}/llm/analytics?days=${days}`, {
-            headers: getHeaders()
-        });
-        if (!res.ok) throw new Error('Failed to fetch analytics');
-        return res.json();
-    },
-
-    getLLMLogs: async (limit: number = 50, offset: number = 0, onlyErrors: boolean = false): Promise<any> => {
-        const res = await fetch(`${API_URL}/llm/logs?limit=${limit}&offset=${offset}&errors=${onlyErrors}`, {
-            headers: getHeaders()
-        });
-        if (!res.ok) throw new Error('Failed to fetch logs');
-        return res.json();
-    },
-
-    toggleOrganizationLLM: async (providerId: string, enabled: boolean): Promise<any> => {
-        const res = await fetch(`${API_URL}/llm/providers/organization/toggle`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ providerId, enabled })
-        });
-        return handleResponse(res, 'Failed to toggle provider');
-    },
-
-    addLLMProvider: async (provider: any): Promise<void> => {
-        const res = await fetch(`${API_URL}/llm/providers`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(provider)
-        });
-        if (!res.ok) throw new Error('Failed to add provider');
-    },
-
-    updateLLMProvider: async (id: string, data: Partial<LLMProvider>) => {
-        const res = await fetch(`${API_URL}/llm/providers/${id}`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify(data)
-        });
-        if (!res.ok) throw new Error('Failed to update provider');
-        return res.json();
-    },
-
-    updateProviderTier: async (id: string, tier: string) => {
-        const res = await fetch(`${API_URL}/llm/providers/${id}/tier`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify({ tier })
-        });
-        if (!res.ok) throw new Error('Failed to update provider tier');
-        return res.json();
-    },
-
-    getRecommendedProvider: async (tier: string = 'STANDARD'): Promise<any> => {
-        const res = await fetch(`${API_URL}/llm/providers/recommended?tier=${tier}`, {
-            headers: getHeaders()
-        });
-        if (!res.ok) return null;
-        return res.json();
-    },
-
-    testLLMConnection: async (config: Partial<LLMProvider>): Promise<{ success: boolean; message: string; response?: string }> => {
-        const res = await fetch(`${API_URL}/llm/test`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(config)
-        });
-        const data = await res.json();
-        if (!res.ok) return { success: false, message: data.error || 'Connection failed' };
-        return data;
-    },
-
-    getOperationalCosts: async (startDate?: string, endDate?: string): Promise<{ items: any[]; totalCost: number }> => {
-        let url = `${API_URL}/billing/admin/costs`;
-        const params = new URLSearchParams();
-        if (startDate) params.append('startDate', startDate);
-        if (endDate) params.append('endDate', endDate);
-        if (params.toString()) url += `? ${params.toString()}`;
-
-        const res = await fetch(url, { headers: getHeaders() });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch costs');
-        return data.costs;
-    },
-
-    deleteLLMProvider: async (id: string): Promise<void> => {
-        const res = await fetch(`${API_URL}/llm/providers/${id}`, {
-            method: 'DELETE',
-            headers: getHeaders()
-        });
-        if (!res.ok) throw new Error('Failed to delete provider');
-    },
-
-    // --- AI GOVERNANCE ---
-    aiGetSystemPrompts: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/llm/prompts`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch system prompts');
-        return res.json();
-    },
-
-    aiUpdateSystemPrompt: async (key: string, data: any): Promise<void> => {
-        const res = await fetch(`${API_URL}/llm/prompts/${key}`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify(data)
-        });
-        if (!res.ok) throw new Error('Failed to update prompt');
-    },
-
-    aiSeedSystemPrompts: async (): Promise<void> => {
-        await fetch(`${API_URL}/llm/prompts/reset-defaults`, {
-            method: 'POST',
-            headers: getHeaders()
-        });
-    },
-
-    getPublicLLMProviders: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/llm/providers/public`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch public LLM providers');
-        return res.json();
-    },
-
-    testOllamaConnection: async (endpoint: string): Promise<{ success: boolean; message?: string; models?: any[]; error?: string }> => {
-        const res = await fetch(`${API_URL}/llm/test-ollama`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ endpoint })
-        });
-        return res.json();
-    },
-
-    getOllamaModels: async (endpoint: string): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/llm/ollama-models?endpoint=${encodeURIComponent(endpoint)}`, {
-            headers: getHeaders()
-        });
-        if (!res.ok) return [];
-        return res.json();
-    },
-
-    getOrganizationLLMConfig: async (orgId: string): Promise<{ activeProviderId: string | null; availableProviders: any[] }> => {
-        const res = await fetch(`${API_URL}/llm/organization-config/${orgId}`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch organization LLM config');
-        return res.json();
-    },
-
-    updateOrganizationLLMConfig: async (orgId: string, providerId: string | null): Promise<void> => {
-        const res = await fetch(`${API_URL}/llm/organization-config/${orgId}`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ providerId })
-        });
-        if (!res.ok) throw new Error('Failed to update organization LLM config');
-    },
-
-    // LLM Self-Diagnosis - auto-repair missing providers
-    diagnoseLLM: async (): Promise<{ status: string; checks: any[]; repairs: string[]; version: string }> => {
-        const res = await fetch(`${API_URL}/llm/diagnose`);
-        if (!res.ok) throw new Error('LLM diagnosis failed');
-        return res.json();
-    },
-
-    // LLM Provider Health Check - check connectivity and status of all providers
-    checkLLMProvidersHealth: async (): Promise<{
-        success: boolean;
-        providers: Record<string, { available: boolean; latency?: number; error?: string }>;
-        circuitBreakers: Array<{ name: string; state: string; failures: number }>;
-        lastCheck: number;
-    }> => {
-        const res = await fetch(`${API_URL}/llm/providers/health`);
-        if (!res.ok) throw new Error('Health check failed');
-        return res.json();
-    },
-
-    // Get recommended LLM provider based on current health
-    getRecommendedLLMProvider: async (tier: string = 'STANDARD'): Promise<{
-        success: boolean;
-        recommendation: {
-            provider: any;
-            health: { available: boolean; latency?: number };
-            recommended: boolean;
-        } | null;
-    }> => {
-        const res = await fetch(`${API_URL}/llm/providers/recommended?tier=${tier}`);
-        if (!res.ok) throw new Error('Failed to get recommendation');
-        return res.json();
-    },
-
-    // Test fallback chain
-    testLLMFallback: async (tier: string = 'STANDARD'): Promise<{
-        success: boolean;
-        tier: string;
-        fallbackChain: string[];
-        recommendedFallback: any;
-    }> => {
-        const res = await fetch(`${API_URL}/llm/test-fallback`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ tier })
-        });
-        if (!res.ok) throw new Error('Fallback test failed');
-        return res.json();
-    },
-
-    // User AI Usage - get user's token consumption
-    getUserAIUsage: async (): Promise<{
-        daily: number;
-        monthly: number;
-        dailyLimit: number;
-        monthlyLimit: number;
-        percentage: number;
-        recentUsage?: Array<{ date: string; tokens: number; requests: number }>;
-    }> => {
-        const res = await fetch(`${API_URL}/llm/user/usage`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch user AI usage');
-        return res.json();
-    },
-
-    // Get user's currently active AI model
-    getUserActiveModel: async (): Promise<{ activeModel: any; source: string }> => {
-        const res = await fetch(`${API_URL}/llm/user/active-model`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch active model');
-        return res.json();
-    },
+    // --- AI OBSERVATIONS & LLM MANAGEMENT ---
+    generateGlobalBrainObservations: AIService.generateGlobalBrainObservations,
+    getLLMProviders: AIService.getLLMProviders,
+    getLLMAnalytics: AIService.getLLMAnalytics,
+    getLLMLogs: AIService.getLLMLogs,
+    toggleOrganizationLLM: AIService.toggleOrganizationLLM,
+    addLLMProvider: AIService.addLLMProvider,
+    updateLLMProvider: AIService.updateLLMProvider,
+    updateProviderTier: AIService.updateProviderTier,
+    getRecommendedProvider: AIService.getRecommendedLLMProvider,
+    testLLMConnection: AIService.testLLMConnection,
+    deleteLLMProvider: AIService.deleteLLMProvider,
+    aiGetSystemPrompts: AIService.aiGetSystemPrompts,
+    aiUpdateSystemPrompt: AIService.aiUpdateSystemPrompt,
+    aiSeedSystemPrompts: AIService.aiSeedSystemPrompts,
+    getPublicLLMProviders: AIService.getPublicLLMProviders,
+    testOllamaConnection: AIService.testOllamaConnection,
+    getOllamaModels: AIService.getOllamaModels,
+    getOrganizationLLMConfig: AIService.getOrganizationLLMConfig,
+    updateOrganizationLLMConfig: AIService.updateOrganizationLLMConfig,
+    diagnoseLLM: AIService.diagnoseLLM,
+    checkLLMProvidersHealth: AIService.checkLLMProvidersHealth,
+    getRecommendedLLMProvider: AIService.getRecommendedLLMProvider,
+    getUserAIUsage: AIService.getUserAIUsage,
+    getUserActiveModel: AIService.getUserActiveModel,
 
     // --- KNOWLEDGE BASE ---
     getKnowledgeFiles: async (): Promise<{ docs: any[], availableFiles: string[] }> => {
@@ -1387,16 +859,8 @@ export const Api = {
         return response.json();
     },
 
-    // --- PROJECTS ---
-    suggestInitiativeTasks: async (initiativeId: string): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/initiatives/${initiativeId}/tasks/suggest`, {
-            method: 'POST',
-            headers: getHeaders()
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to suggest tasks');
-        return data;
-    },
+    // --- PROJECTS (Initiatives) ---
+    suggestInitiativeTasks: ProjectService.suggestInitiativeTasks,
 
 
 
@@ -1405,443 +869,56 @@ export const Api = {
     // ==========================================
 
     // LAYER 1: DIAGNOSIS
-    aiDiagnose: async (axis: string, input: string): Promise<any> => {
-        const res = await fetch(`${API_URL}/ai/diagnose`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ axis, input })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Diagnosis failed');
-        return data;
-    },
-
-    // LAYER 2: RECOMMENDATION
-    aiRecommend: async (diagnosisReport: any): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/ai/recommend`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ diagnosisReport })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Recommendation failed');
-        return data;
-    },
-
-    // LAYER 3: ROADMAP
-    aiRoadmap: async (initiatives: any[]): Promise<any> => {
-        const res = await fetch(`${API_URL}/ai/roadmap`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ initiatives })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Roadmap generation failed');
-        return data;
-    },
-
-    // LAYER 4: SIMULATION
-    aiSimulate: async (initiatives: any[], revenue: number = 10000000): Promise<any> => {
-        const res = await fetch(`${API_URL}/ai/simulate`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ initiatives, revenue })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Simulation failed');
-        return data;
-    },
-
-    // VALIDATION & VERIFICATION
-    aiValidate: async (initiative: any): Promise<any> => {
-        const res = await fetch(`${API_URL}/ai/validate`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ initiative })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Validation failed');
-        return data;
-    },
-
-    aiVerify: async (query: string): Promise<any> => {
-        const res = await fetch(`${API_URL}/ai/verify`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ query })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Verification failed');
-        return data;
-    },
-
-    // FEEDBACK & LEARNING
-    aiFeedback: async (feedback: { context: string; prompt: string; response: string; rating: number; correction?: string }): Promise<void> => {
-        const res = await fetch(`${API_URL}/ai/feedback`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(feedback)
-        });
-        if (!res.ok) throw new Error('Failed to save feedback');
-    },
+    // --- AI DIAGNOSTIC LAYERS ---
+    aiDiagnose: AIService.aiDiagnose,
+    aiRecommend: AIService.aiRecommend,
+    aiRoadmap: AIService.aiRoadmap,
+    aiSimulate: AIService.aiSimulate,
+    aiValidate: AIService.aiValidate,
+    aiVerify: AIService.aiVerify,
+    aiFeedback: AIService.aiFeedback,
+    aiDetailFeedback: AIService.aiDetailFeedback,
 
     // --- AI STRATEGIC BOARD ---
-    getAIIdeas: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/ai/ideas`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch AI ideas');
-        return res.json();
-    },
-
-    createAIIdea: async (idea: any): Promise<any> => {
-        const res = await fetch(`${API_URL}/ai/ideas`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(idea)
-        });
-        if (!res.ok) throw new Error('Failed to create AI idea');
-        return res.json();
-    },
-
-    updateAIIdea: async (id: string, updates: any): Promise<any> => {
-        const res = await fetch(`${API_URL}/ai/ideas/${id}`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify(updates)
-        });
-        if (!res.ok) throw new Error('Failed to update AI idea');
-        return res.json();
-    },
-
-    deleteAIIdea: async (id: string): Promise<void> => {
-        const res = await fetch(`${API_URL}/ai/ideas/${id}`, {
-            method: 'DELETE',
-            headers: getHeaders()
-        });
-        if (!res.ok) throw new Error('Failed to delete AI idea');
-    },
-
-    // --- AI OBSERVATIONS ---
-    getAIObservations: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/ai/observations`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch observations');
-        return res.json();
-    },
-
-    createAIObservation: async (observation: any): Promise<any> => {
-        const res = await fetch(`${API_URL}/ai/observations`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(observation)
-        });
-        if (!res.ok) throw new Error('Failed to create observation');
-        return res.json();
-    },
-
-    // --- AI REPORTS ---
-    getAIDeepReports: async (): Promise<any> => {
-        const res = await fetch(`${API_URL}/ai/reports/performance`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch AI reports');
-        return res.json();
-    },
-
-    // AI Detail Feedback (for inline rating buttons)
-    aiDetailFeedback: async (feedback: { action: string; rating: number; user_comment?: string; original_prompt?: string }): Promise<void> => {
-        const res = await fetch(`${API_URL}/ai/feedback`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({
-                context: feedback.action,
-                prompt: feedback.original_prompt || '',
-                response: '',
-                rating: feedback.rating,
-                correction: feedback.user_comment
-            })
-        });
-        if (!res.ok) throw new Error('Failed to save feedback');
-    },
+    // --- AI STRATEGIC BOARD & OBSERVATIONS ---
+    getAIIdeas: AIService.getAIIdeas,
+    createAIIdea: AIService.createAIIdea,
+    updateAIIdea: AIService.updateAIIdea,
+    deleteAIIdea: AIService.deleteAIIdea,
+    getAIObservations: AIService.getAIObservations,
+    createAIObservation: AIService.createAIObservation,
+    getAIDeepReports: AIService.getAIDeepReports,
 
     // ADMIN ANALYTICS & CONTROLS
-    aiGetStats: async (): Promise<any> => {
-        const res = await fetch(`${API_URL}/ai/stats`, { headers: getHeaders() });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch AI stats');
-        return data;
-    },
-
-    getIndustryBenchmarks: async (industry: string = 'General'): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/ai/benchmarks?industry=${industry}`, { headers: getHeaders() });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch benchmarks');
-        return data;
-    },
-
-
-
-    // --- AI LEARNING & KNOWLEDGE ---
-    aiExtractInsights: async (text: string, source: string = 'chat'): Promise<any> => {
-        const res = await fetch(`${API_URL}/ai/extract-insight`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ text, source })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to extract insights');
-        return data;
-    },
-
-    getKnowledgeCandidates: async (status: string = 'pending'): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/knowledge/candidates?status=${status}`, { headers: getHeaders() });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch candidates');
-        return data;
-    },
-
-    submitKnowledgeCandidate: async (content: string, reasoning: string, source: string, topic?: string): Promise<void> => {
-        const res = await fetch(`${API_URL}/knowledge/candidates`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ content, reasoning, source, relatedAxis: topic })
-        });
-        if (!res.ok) throw new Error('Failed to submit candidate');
-    },
-
-    updateCandidateStatus: async (id: string, status: string, adminComment?: string): Promise<void> => {
-        const res = await fetch(`${API_URL}/knowledge/candidates/${id}/status`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify({ status, adminComment })
-        });
-        if (!res.ok) throw new Error('Failed to update candidate status');
-    },
-
-    updateKnowledgeCandidate: async (id: string, updates: { category?: string; tags?: string[]; implementation_notes?: string; impact_score?: number; status?: string }): Promise<any> => {
-        const res = await fetch(`${API_URL}/knowledge/candidates/${id}`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify(updates)
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to update candidate');
-        return data;
-    },
-
-    linkIdeaToProject: async (ideaId: string, projectId: string, notes?: string): Promise<any> => {
-        const res = await fetch(`${API_URL}/knowledge/candidates/${ideaId}/link-project`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ project_id: projectId, notes })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to link idea to project');
-        return data;
-    },
-
-    getApprovedIdeas: async (filters?: { category?: string }): Promise<any[]> => {
-        const params = new URLSearchParams();
-        if (filters?.category) params.append('category', filters.category);
-        const url = `${API_URL}/knowledge/candidates/approved${params.toString() ? '?' + params.toString() : ''}`;
-        const res = await fetch(url, { headers: getHeaders() });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch approved ideas');
-        return data;
-    },
-
-    getIdeasByCategory: async (category: string): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/knowledge/candidates/by-category/${encodeURIComponent(category)}`, { headers: getHeaders() });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch ideas');
-        return data;
-    },
-
-    getIdeasByProject: async (projectId: string): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/knowledge/candidates/by-project/${projectId}`, { headers: getHeaders() });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch ideas');
-        return data;
-    },
-
-    getGlobalStrategies: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/knowledge/strategies`, { headers: getHeaders() });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch strategies');
-        return data;
-    },
-
-    createGlobalStrategy: async (title: string, description: string, options?: { success_metrics?: string[]; priority?: string; target_date?: string; progress_percentage?: number }): Promise<any> => {
-        const res = await fetch(`${API_URL}/knowledge/strategies`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ title, description, ...options })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to create strategy');
-        return data;
-    },
-
-    updateGlobalStrategy: async (id: string, updates: { title?: string; description?: string; success_metrics?: string[]; priority?: string; target_date?: string; progress_percentage?: number; is_active?: boolean }): Promise<any> => {
-        const res = await fetch(`${API_URL}/knowledge/strategies/${id}`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify(updates)
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to update strategy');
-        return data;
-    },
-
-    linkStrategyToDocument: async (strategyId: string, documentId: string): Promise<any> => {
-        const res = await fetch(`${API_URL}/knowledge/strategies/${strategyId}/link-document`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ document_id: documentId })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to link document to strategy');
-        return data;
-    },
-
-    linkStrategyToIdea: async (strategyId: string, ideaId: string): Promise<any> => {
-        const res = await fetch(`${API_URL}/knowledge/strategies/${strategyId}/link-idea`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ idea_id: ideaId })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to link idea to strategy');
-        return data;
-    },
-
-    unlinkStrategyFromDocument: async (strategyId: string, documentId: string): Promise<any> => {
-        const res = await fetch(`${API_URL}/knowledge/strategies/${strategyId}/unlink-document/${documentId}`, {
-            method: 'DELETE',
-            headers: getHeaders()
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to unlink document from strategy');
-        return data;
-    },
-
-    unlinkStrategyFromIdea: async (strategyId: string, ideaId: string): Promise<any> => {
-        const res = await fetch(`${API_URL}/knowledge/strategies/${strategyId}/unlink-idea/${ideaId}`, {
-            method: 'DELETE',
-            headers: getHeaders()
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to unlink idea from strategy');
-        return data;
-    },
-
-    updateStrategyProgress: async (strategyId: string, progressPercentage: number): Promise<any> => {
-        const res = await fetch(`${API_URL}/knowledge/strategies/${strategyId}/progress`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify({ progress_percentage: progressPercentage })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to update strategy progress');
-        return data;
-    },
-
-    getStrategyWithRelated: async (strategyId: string): Promise<any> => {
-        const res = await fetch(`${API_URL}/knowledge/strategies/${strategyId}/related`, { headers: getHeaders() });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch strategy');
-        return data;
-    },
-
-    getAllGlobalStrategies: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/knowledge/strategies?all=true`, { headers: getHeaders() });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch strategies');
-        return data;
-    },
-
-    toggleGlobalStrategy: async (id: string, isActive: boolean): Promise<any> => {
-        const res = await fetch(`${API_URL}/knowledge/strategies/${id}/toggle`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify({ isActive })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to toggle strategy');
-        return data;
-    },
-
-    getKnowledgeDocuments: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/knowledge/documents`, { headers: getHeaders() });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch docs');
-        return data;
-    },
-
-    uploadKnowledgeDocument: async (file: File, category?: string, tags?: string[]): Promise<any> => {
-        const formData = new FormData();
-        formData.append('file', file);
-        if (category) formData.append('category', category);
-        if (tags && tags.length > 0) {
-            formData.append('tags', JSON.stringify(tags));
-        }
-
-        // Content-Type header must NOT be set manually for FormData, browser sets it with boundary
-        const headers = getHeaders();
-        delete (headers as any)['Content-Type'];
-
-        const res = await fetch(`${API_URL}/knowledge/documents`, {
-            method: 'POST',
-            headers: headers,
-            body: formData
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to upload document');
-        return data;
-    },
-
-    updateKnowledgeDocument: async (id: string, updates: { category?: string; tags?: string[]; version?: number; parent_doc_id?: string }): Promise<any> => {
-        const res = await fetch(`${API_URL}/knowledge/documents/${id}`, {
-            method: 'PUT',
-            headers: getHeaders(),
-            body: JSON.stringify(updates)
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to update document');
-        return data;
-    },
-
-    getKnowledgeDocumentsByCategory: async (category: string): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/knowledge/documents?category=${encodeURIComponent(category)}`, { headers: getHeaders() });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch documents');
-        return data;
-    },
-
-    getKnowledgeDocumentsByStrategy: async (strategyId: string): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/knowledge/documents/by-strategy/${strategyId}`, { headers: getHeaders() });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch documents');
-        return data;
-    },
-
-    // --- GENERIC DOCUMENT UPLOAD (For Context Builder) ---
-    uploadDocument: async (file: File, context?: { tabName?: string, type?: string }): Promise<any> => {
-        const formData = new FormData();
-        formData.append('file', file);
-        if (context) {
-            formData.append('context', JSON.stringify(context));
-        }
-
-        const headers = getHeaders();
-        delete (headers as any)['Content-Type']; // Let browser set boundary
-
-        const res = await fetch(`${API_URL}/documents/upload`, {
-            method: 'POST',
-            headers: headers,
-            body: formData
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to upload document');
-        return data;
-    },
+    // --- AI LEARNING, KNOWLEDGE & STRATEGIES ---
+    aiGetStats: AIService.aiGetStats,
+    getIndustryBenchmarks: AIService.getIndustryBenchmarks,
+    aiExtractInsights: AIService.aiExtractInsights,
+    getKnowledgeCandidates: AIService.getKnowledgeCandidates,
+    submitKnowledgeCandidate: AIService.submitKnowledgeCandidate,
+    updateCandidateStatus: AIService.updateCandidateStatus,
+    updateKnowledgeCandidate: AIService.updateKnowledgeCandidate,
+    linkIdeaToProject: AIService.linkIdeaToProject,
+    getApprovedIdeas: AIService.getApprovedIdeas,
+    getIdeasByCategory: AIService.getIdeasByCategory,
+    getIdeasByProject: AIService.getIdeasByProject,
+    getGlobalStrategies: AIService.getGlobalStrategies,
+    createGlobalStrategy: AIService.createGlobalStrategy,
+    updateGlobalStrategy: AIService.updateGlobalStrategy,
+    linkStrategyToDocument: AIService.linkStrategyToDocument,
+    linkStrategyToIdea: AIService.linkStrategyToIdea,
+    unlinkStrategyFromDocument: AIService.unlinkStrategyFromDocument,
+    unlinkStrategyFromIdea: AIService.unlinkStrategyFromIdea,
+    updateStrategyProgress: AIService.updateStrategyProgress,
+    getStrategyWithRelated: AIService.getStrategyWithRelated,
+    getAllGlobalStrategies: AIService.getAllGlobalStrategies,
+    toggleGlobalStrategy: AIService.toggleGlobalStrategy,
+    getKnowledgeDocuments: AIService.getKnowledgeDocuments,
+    uploadKnowledgeDocument: AIService.uploadKnowledgeDocument,
+    updateKnowledgeDocument: AIService.updateKnowledgeDocument,
+    getKnowledgeDocumentsByCategory: AIService.getKnowledgeDocumentsByCategory,
+    getKnowledgeDocumentsByStrategy: AIService.getKnowledgeDocumentsByStrategy,
+    uploadDocument: AIService.uploadDocument,
     // --- FEEDBACK ---
     sendFeedback: async (data: { user_id: string; type: string; message: string; screenshot?: string; url?: string }): Promise<void> => {
         const res = await fetch(`${API_URL}/feedback`, {
@@ -1877,115 +954,22 @@ export const Api = {
     },
 
     // ==========================================
-    // ACCESS CONTROL
+    // ACCESS CONTROL & REGISTRATION
     // ==========================================
 
-    // Submit access request
-    requestAccess: async (data: {
-        email: string;
-        firstName: string;
-        lastName: string;
-        phone?: string;
-        organizationName: string;
-        requestType?: string;
-    }): Promise<{ success: boolean; requestId: string; message: string }> => {
-        const res = await fetch(`${API_URL}/access-control/requests`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Failed to submit access request');
-        return json;
-    },
-
-    // Verify access code (public)
-    verifyAccessCode: async (code: string): Promise<{
-        valid: boolean;
-        organizationName?: string;
-        role?: string;
-        reason?: string;
-    }> => {
-        const res = await fetch(`${API_URL}/access-control/codes/${code}/info`);
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Failed to verify code');
-        return json;
-    },
-
-    // Register with access code
-    registerWithCode: async (data: {
-        code: string;
-        email: string;
-        password: string;
-        firstName: string;
-        lastName: string;
-        phone?: string;
-    }): Promise<{ success: boolean; user: User; message: string }> => {
-        const res = await fetch(`${API_URL}/access-control/codes/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Registration failed');
-        return json;
-    },
+    requestAccess: AccessControlService.requestAccess,
+    verifyAccessCode: AccessControlService.verifyAccessCode,
+    registerWithCode: AccessControlService.registerWithCode,
 
     // --- ACCESS CONTROL (Super Admin) ---
-    getAccessRequests: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/superadmin/access-requests`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch access requests');
-        return res.json();
-    },
-
-    approveAccessRequest: async (id: string): Promise<void> => {
-        const res = await fetch(`${API_URL}/superadmin/access-requests/${id}/approve`, {
-            method: 'POST',
-            headers: getHeaders()
-        });
-        if (!res.ok) throw new Error('Failed to approve request');
-    },
-
-    rejectAccessRequest: async (id: string, reason: string): Promise<void> => {
-        const res = await fetch(`${API_URL}/superadmin/access-requests/${id}/reject`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ reason })
-        });
-        if (!res.ok) throw new Error('Failed to reject request');
-    },
-
-    getAccessCodes: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/superadmin/access-codes`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch access codes');
-        return res.json();
-    },
-
-    createAccessCode: async (data: { code?: string; role?: string; maxUses?: number; expiresAt?: string }): Promise<any> => {
-        const res = await fetch(`${API_URL}/superadmin/access-codes`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(data)
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Failed to create access code');
-        return json;
-    },
-
-    deactivateAccessCode: async (codeId: string): Promise<void> => {
-        const res = await fetch(`${API_URL}/superadmin/access-codes/${codeId}/deactivate`, {
-            method: 'POST',
-            headers: getHeaders()
-        });
-        if (!res.ok) throw new Error('Failed to deactivate access code');
-    },
-
-    // Usage Stats by Organization
-    getUsageByOrganization: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/superadmin/usage/by-organization`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch usage by organization');
-        return res.json();
-    },
+    getAccessRequests: AccessControlService.getAccessRequests,
+    approveAccessRequest: AccessControlService.approveAccessRequest,
+    rejectAccessRequest: AccessControlService.rejectAccessRequest,
+    getAccessCodes: AccessControlService.getAccessCodes,
+    createAccessCode: AccessControlService.createAccessCode,
+    generateAccessCode: (data: any) => AccessControlService.createAccessCode(data),
+    deactivateAccessCode: AccessControlService.deactivateAccessCode,
+    getUsageByOrganization: AccessControlService.getUsageByOrganization,
 
     // Invoices
     getSuperAdminInvoices: async (period: string = '30d'): Promise<{ invoices: any[]; total: number }> => {
@@ -2007,7 +991,7 @@ export const Api = {
     },
 
     // ==========================================
-    // BILLING & USAGE API
+    // USAGE & BILLING (Generic wrappers)
     // ==========================================
 
     // Generic HTTP methods for billing routes
@@ -2609,6 +1593,147 @@ export const Api = {
         return res.json();
     },
 
+    /**
+     * Get pending AI actions awaiting user approval
+     * Used for inline visibility in chat interface
+     */
+    getPendingAIActions: async (projectId?: string): Promise<{
+        id: string;
+        action_type: string;
+        status: string;
+        created_at: string;
+        payload: any;
+        draft_content?: any;
+    }[]> => {
+        const url = projectId
+            ? `${API_URL}/ai/actions/pending?projectId=${projectId}`
+            : `${API_URL}/ai/actions/pending`;
+        const res = await fetch(url, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch pending AI actions');
+        return res.json();
+    },
+
+    /**
+     * Approve a pending AI action
+     */
+    approveAIAction: async (actionId: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/ai/actions/${actionId}/approve`, {
+            method: 'PATCH',
+            headers: getHeaders()
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'Failed to approve action');
+        }
+        return res.json();
+    },
+
+    /**
+     * Reject a pending AI action
+     */
+    rejectAIAction: async (actionId: string, reason?: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/ai/actions/${actionId}/reject`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+            body: JSON.stringify({ reason })
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'Failed to reject action');
+        }
+        return res.json();
+    },
+
+    // ==========================================
+    // STEP 10: PROACTIVE SUGGESTIONS & QUALITY
+    // ==========================================
+    
+    /**
+     * Get proactive suggestions based on current context
+     */
+    getProactiveSuggestions: async (params: {
+        projectId?: string;
+        organizationId?: string;
+        screenContext?: { screenId: string; data?: any };
+    }): Promise<{ suggestions: any[] }> => {
+        const queryParams = new URLSearchParams();
+        if (params.projectId) queryParams.append('projectId', params.projectId);
+        if (params.screenContext) queryParams.append('screenContext', JSON.stringify(params.screenContext));
+        
+        const res = await fetch(`${API_URL}/ai/suggestions?${queryParams}`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch proactive suggestions');
+        return res.json();
+    },
+
+    /**
+     * Record suggestion action (accepted/dismissed)
+     */
+    recordSuggestionAction: async (suggestionId: string, action: 'accepted' | 'dismissed' | 'clicked', feedback?: string): Promise<void> => {
+        const res = await fetch(`${API_URL}/ai/suggestions/action`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ suggestionId, action, feedback })
+        });
+        if (!res.ok) throw new Error('Failed to record suggestion action');
+    },
+
+    /**
+     * Get suggestion effectiveness metrics
+     */
+    getSuggestionMetrics: async (days?: number): Promise<any> => {
+        const url = days ? `${API_URL}/ai/suggestions/metrics?days=${days}` : `${API_URL}/ai/suggestions/metrics`;
+        const res = await fetch(url, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch suggestion metrics');
+        return res.json();
+    },
+
+    /**
+     * Calculate response quality metrics
+     */
+    calculateResponseQuality: async (params: {
+        query: string;
+        response: string;
+        context?: any;
+        sources?: any[];
+    }): Promise<{
+        relevance: number;
+        groundedness: number;
+        completeness: number;
+        coherence: number;
+        overall: number;
+        qualityLevel: 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR';
+        recommendation?: string;
+    }> => {
+        const res = await fetch(`${API_URL}/ai/quality/calculate`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(params)
+        });
+        if (!res.ok) throw new Error('Failed to calculate response quality');
+        const data = await res.json();
+        return data.metrics;
+    },
+
+    /**
+     * Get aggregate quality metrics
+     */
+    getAggregateQualityMetrics: async (days?: number): Promise<any> => {
+        const url = days ? `${API_URL}/ai/quality/aggregate?days=${days}` : `${API_URL}/ai/quality/aggregate`;
+        const res = await fetch(url, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch aggregate quality metrics');
+        return res.json();
+    },
+
+    /**
+     * Get quality trends over time
+     */
+    getQualityTrends: async (days?: number): Promise<any> => {
+        const url = days ? `${API_URL}/ai/quality/trends?days=${days}` : `${API_URL}/ai/quality/trends`;
+        const res = await fetch(url, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch quality trends');
+        return res.json();
+    },
+
     // ==========================================
     // PHASE D: ORGANIZATION API
     // ==========================================
@@ -2715,6 +1840,31 @@ export const Api = {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to send invitation');
         return json;
+    },
+
+    getInvitations: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/invitations`, { headers: getHeaders() });
+        const json = await handleResponse(res, 'Failed to fetch invitations');
+        return json.invitations || json;
+    },
+
+    // --- ECOSYSTEM / AFFILIATE ---
+    getUserReferrals: async (): Promise<any> => {
+        const res = await fetch(`${API_URL}/referrals`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch referrals');
+    },
+
+    getEcosystemStats: async (): Promise<any> => {
+        const res = await fetch(`${API_URL}/analytics/ecosystem`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch ecosystem stats');
+    },
+
+    generateReferralCode: async (): Promise<any> => {
+        const res = await fetch(`${API_URL}/referrals/generate`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to generate referral code');
     },
 
     // ==========================================
@@ -2902,27 +2052,29 @@ export const Api = {
     /**
      * Export report as PDF
      */
-    exportReportPDF: async (reportId: string): Promise<Blob> => {
+    exportReportPDF: async (reportId: string): Promise<{ pdfUrl: string }> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/export/pdf`, {
             headers: getHeaders()
         });
         if (!res.ok) {
             throw new Error('Failed to export PDF');
         }
-        return res.blob();
+        const blob = await res.blob();
+        return { pdfUrl: URL.createObjectURL(blob) };
     },
 
     /**
      * Export report as Excel
      */
-    exportReportExcel: async (reportId: string): Promise<Blob> => {
+    exportReportExcel: async (reportId: string): Promise<{ excelUrl: string }> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/export/excel`, {
             headers: getHeaders()
         });
         if (!res.ok) {
             throw new Error('Failed to export Excel');
         }
-        return res.blob();
+        const blob = await res.blob();
+        return { excelUrl: URL.createObjectURL(blob) };
     },
 
     // ============================================
@@ -3080,8 +2232,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/economics/import`, {
             method: 'POST',
             headers: {
-                'Authorization': token ? `Bearer ${token}` : '',
-                'X-Correlation-ID': correlationId as string
+                'Authorization': token ? `Bearer ${token}` : ''
             },
             body: formData
         });
@@ -3288,8 +2439,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/economics/scores/${scoreId}/evidence/upload`, {
             method: 'POST',
             headers: {
-                'Authorization': token ? `Bearer ${token}` : '',
-                'X-Correlation-ID': correlationId as string
+                'Authorization': token ? `Bearer ${token}` : ''
                 // Note: Don't set Content-Type for FormData - browser sets it with boundary
             },
             body: formData
@@ -4400,6 +3550,13 @@ export const Api = {
         });
         return handleResponse(res, 'Failed to fetch security events');
     },
+    resolveSecurityEvent: async (id: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/superadmin/security-events/${id}/resolve`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        return handleResponse(res, 'Failed to resolve security event');
+    },
 
     // ==========================================
     // ENTERPRISE CUSTOMERS MODULE - Support
@@ -5053,10 +4210,10 @@ export const Api = {
         await handleResponse(res, 'Failed to resolve admin audit log');
     },
 
-    exportAdminAuditLogs: async (params?: { 
-        adminId?: string; 
-        actionType?: string; 
-        riskScoreMin?: number; 
+    exportAdminAuditLogs: async (params?: {
+        adminId?: string;
+        actionType?: string;
+        riskScoreMin?: number;
         status?: string;
         fromDate?: string;
         toDate?: string;
@@ -5070,9 +4227,9 @@ export const Api = {
         if (params?.fromDate) queryParams.append('fromDate', params.fromDate);
         if (params?.toDate) queryParams.append('toDate', params.toDate);
         if (params?.format) queryParams.append('format', params.format);
-        
+
         const res = await fetchWithRetry(`${API_URL}/superadmin/admin/audit-logs/export?${queryParams}`);
-        
+
         if (params?.format === 'csv') {
             if (!res.ok) throw new Error('Failed to export audit logs');
             return res.blob();
@@ -5690,6 +4847,37 @@ export const Api = {
         return handleResponse(res, 'Failed to evaluate predictive model');
     },
 
+    // Analytics Dashboard Aliases for Compatibility
+    getAnalyticsDashboards: async (): Promise<{ dashboards: any[] }> => {
+        const dashboards = await Api.getDashboards();
+        return { dashboards };
+    },
+
+    getAnalyticsDashboardData: async (id: string): Promise<any> => {
+        const data = await Api.getDashboardById(id);
+        return { data };
+    },
+
+    createAnalyticsDashboard: async (data: any): Promise<any> => {
+        return Api.createDashboard(data);
+    },
+
+    updateAnalyticsDashboard: async (id: string, data: any): Promise<void> => {
+        return Api.updateDashboard(id, data);
+    },
+
+    deleteAnalyticsDashboard: async (id: string): Promise<void> => {
+        return Api.deleteDashboard(id);
+    },
+
+    shareAnalyticsDashboard: async (id: string, userIds: string[]): Promise<void> => {
+        const res = await fetchWithRetry(`${API_URL}/superadmin/dashboards/${id}/share`, {
+            method: 'POST',
+            body: JSON.stringify({ userIds })
+        });
+        await handleResponse(res, 'Failed to share analytics dashboard');
+    },
+
     // =========================================
     // PHASE 4: CUSTOMER MANAGEMENT MODULE
     // =========================================
@@ -5909,12 +5097,30 @@ export const Api = {
     },
 
     // Subscription Changes
-    getSubscriptionChanges: async (params?: { organizationId?: string; status?: string }): Promise<any[]> => {
-        const queryParams = new URLSearchParams();
-        if (params?.organizationId) queryParams.append('organizationId', params.organizationId);
-        if (params?.status) queryParams.append('status', params.status);
+    getSubscriptionChanges: async (filters: any = {}): Promise<any> => {
+        const queryParams = new URLSearchParams(filters);
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/subscription-changes?${queryParams}`);
         return handleResponse(res, 'Failed to fetch subscription changes');
+    },
+
+    getSubscriptionChangeStats: async (): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/subscription-changes/stats`);
+        return handleResponse(res, 'Failed to fetch subscription change stats');
+    },
+
+    approveSubscriptionChange: async (id: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/subscription-changes/${id}/approve`, {
+            method: 'POST'
+        });
+        return handleResponse(res, 'Failed to approve subscription change');
+    },
+
+    rejectSubscriptionChange: async (id: string, reason: string): Promise<any> => {
+        const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/subscription-changes/${id}/reject`, {
+            method: 'POST',
+            body: JSON.stringify({ reason })
+        });
+        return handleResponse(res, 'Failed to reject subscription change');
     },
 
     createSubscriptionChange: async (data: any): Promise<any> => {
@@ -5925,20 +5131,6 @@ export const Api = {
         return handleResponse(res, 'Failed to create subscription change');
     },
 
-    approveSubscriptionChange: async (id: string): Promise<void> => {
-        const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/subscription-changes/${id}/approve`, {
-            method: 'POST'
-        });
-        await handleResponse(res, 'Failed to approve subscription change');
-    },
-
-    rejectSubscriptionChange: async (id: string): Promise<void> => {
-        const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/subscription-changes/${id}/reject`, {
-            method: 'POST'
-        });
-        await handleResponse(res, 'Failed to reject subscription change');
-    },
-
     calculateProration: async (data: { organizationId: string; fromPlanId: string; toPlanId: string; effectiveDate: string }): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/subscription-changes/calculate-proration`, {
             method: 'POST',
@@ -5947,10 +5139,6 @@ export const Api = {
         return handleResponse(res, 'Failed to calculate proration');
     },
 
-    getSubscriptionChangeStats: async (): Promise<any> => {
-        const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/subscription-changes/stats`);
-        return handleResponse(res, 'Failed to fetch subscription change stats');
-    },
 
     // Revenue Recognition
     getRevenueRecognitions: async (params?: { organizationId?: string; status?: string }): Promise<any[]> => {
@@ -5977,7 +5165,7 @@ export const Api = {
         await handleResponse(res, 'Failed to update revenue recognition');
     },
 
-    recognizeRevenue: async (id: string, amount: number): Promise<any> => {
+    recognizeRevenue: async (id: string, amount?: number): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/recognition/${id}/recognize`, {
             method: 'POST',
             body: JSON.stringify({ amount })
@@ -5994,6 +5182,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/recognition/stats`);
         return handleResponse(res, 'Failed to fetch revenue recognition stats');
     },
+
 
     // Revenue Forecasting
     getRevenueForecasts: async (forecastType?: string): Promise<any[]> => {

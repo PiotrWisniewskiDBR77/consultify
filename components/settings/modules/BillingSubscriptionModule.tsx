@@ -105,30 +105,31 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                 Api.get('/api/billing/payment-methods').catch(() => ({ data: [] }))
             ]);
 
-            // Mock data
-            setSubscription({
-                plan: 'pro',
-                status: 'active',
-                currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-                cancelAtPeriodEnd: false
-            });
+            // Use real API data
+            if (subRes.data) {
+                setSubscription(subRes.data);
+            } else {
+                setSubscription(null);
+            }
 
-            setUsage({
-                users: { used: 8, limit: 25 },
-                projects: { used: 12, limit: -1 },
-                storage: { used: 15.4, limit: 50, unit: 'GB' },
-                aiTokens: { used: 125000, limit: 500000 }
-            });
+            if (usageRes.data) {
+                setUsage(usageRes.data);
+            } else {
+                setUsage(null);
+            }
 
-            setInvoices([
-                { id: 'inv_1', date: '2025-12-01', amount: 29, status: 'paid', downloadUrl: '#' },
-                { id: 'inv_2', date: '2025-11-01', amount: 29, status: 'paid', downloadUrl: '#' },
-                { id: 'inv_3', date: '2025-10-01', amount: 29, status: 'paid', downloadUrl: '#' }
-            ]);
+            if (invoicesRes.data) {
+                setInvoices(invoicesRes.data);
+            } else {
+                setInvoices([]);
+            }
 
-            setPaymentMethods([
-                { id: 'pm_1', type: 'card', last4: '4242', brand: 'Visa', expiryMonth: 12, expiryYear: 2027, isDefault: true }
-            ]);
+            if (paymentRes.data) {
+                setPaymentMethods(paymentRes.data);
+            } else {
+                setPaymentMethods([]);
+            }
+
         } catch (error) {
             console.error('Error loading billing data:', error);
         } finally {
@@ -151,9 +152,8 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                 {!isUnlimited && (
                     <div className="h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                         <div
-                            className={`h-full rounded-full transition-all ${
-                                percentage > 90 ? 'bg-red-500' : percentage > 70 ? 'bg-amber-500' : 'bg-emerald-500'
-                            }`}
+                            className={`h-full rounded-full transition-all ${percentage > 90 ? 'bg-red-500' : percentage > 70 ? 'bg-amber-500' : 'bg-emerald-500'
+                                }`}
                             style={{ width: `${percentage}%` }}
                         />
                     </div>
@@ -175,7 +175,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-billing" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -202,11 +202,10 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                activeTab === tab.id
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
                                     ? 'bg-emerald-600 text-white'
                                     : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
-                            }`}
+                                }`}
                         >
                             <Icon size={16} />
                             {tab.label}
@@ -240,11 +239,10 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                         {plans.map(plan => (
                             <div
                                 key={plan.id}
-                                className={`p-4 rounded-xl border-2 ${
-                                    plan.id === subscription?.plan
+                                className={`p-4 rounded-xl border-2 ${plan.id === subscription?.plan
                                         ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
                                         : 'border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900'
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-center justify-between mb-3">
                                     <h4 className="font-semibold text-slate-900 dark:text-white">{plan.name}</h4>
@@ -280,7 +278,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             {activeTab === 'usage' && usage && (
                 <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 space-y-6">
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Current Usage</h3>
-                    
+
                     <div className="space-y-6">
                         <UsageBar used={usage.users.used} limit={usage.users.limit} label="Team Members" />
                         <UsageBar used={usage.projects.used} limit={usage.projects.limit} label="Projects" />
@@ -316,9 +314,8 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <span className="text-slate-900 dark:text-white font-medium">${invoice.amount}</span>
-                                    <span className={`px-2 py-0.5 text-xs rounded-full ${
-                                        invoice.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                                    }`}>
+                                    <span className={`px-2 py-0.5 text-xs rounded-full ${invoice.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                                        }`}>
                                         {invoice.status}
                                     </span>
                                     <button className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg">
@@ -347,11 +344,10 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                             {paymentMethods.map(method => (
                                 <div
                                     key={method.id}
-                                    className={`p-4 rounded-lg border-2 ${
-                                        method.isDefault
+                                    className={`p-4 rounded-lg border-2 ${method.isDefault
                                             ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
                                             : 'border-slate-200 dark:border-white/10'
-                                    }`}
+                                        }`}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">

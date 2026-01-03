@@ -13,6 +13,13 @@ const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 const queryHelpers = require('../utils/queryHelpers');
 
+// Dependency injection container
+const deps = {
+    db,
+    uuidv4,
+    queryHelpers
+};
+
 // Budget Categories
 const BUDGET_CATEGORIES = {
     PERSONNEL: 'PERSONNEL',
@@ -41,11 +48,16 @@ const ALERT_THRESHOLDS = {
 };
 
 const BudgetService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Create budget for initiative
      */
     createBudget: async (orgId, initiativeId, budgetData, userId) => {
-        const id = uuidv4();
+        const id = deps.uuidv4();
         const now = new Date().toISOString();
 
         const {
@@ -59,7 +71,7 @@ const BudgetService = {
 
         const contingencyAmount = plannedAmount * (contingencyPercent / 100);
 
-        await queryHelpers.queryRun(`
+        await deps.queryHelpers.queryRun(`
             INSERT INTO initiative_budgets (
                 id, organization_id, initiative_id, budget_type,
                 planned_amount, approved_amount, currency, fiscal_year,
@@ -87,7 +99,7 @@ const BudgetService = {
      * Get budget for initiative
      */
     getBudget: async (initiativeId, orgId) => {
-        const budget = await queryHelpers.queryOne(`
+        const budget = await deps.queryHelpers.queryOne(`
             SELECT b.*, i.title as initiative_name
             FROM initiative_budgets b
             JOIN initiatives i ON b.initiative_id = i.id
@@ -97,14 +109,14 @@ const BudgetService = {
         if (!budget) return null;
 
         // Get line items
-        const lineItems = await queryHelpers.queryAll(`
+        const lineItems = await deps.queryHelpers.queryAll(`
             SELECT * FROM budget_line_items
             WHERE budget_id = ?
             ORDER BY sort_order ASC
         `, [budget.id]);
 
         // Get recent transactions
-        const transactions = await queryHelpers.queryAll(`
+        const transactions = await deps.queryHelpers.queryAll(`
             SELECT t.*, u.first_name, u.last_name
             FROM budget_transactions t
             LEFT JOIN users u ON t.created_by = u.id
@@ -161,7 +173,7 @@ const BudgetService = {
      * Calculate budget totals
      */
     calculateTotals: async (budgetId) => {
-        const result = await queryHelpers.queryOne(`
+        const result = await deps.queryHelpers.queryOne(`
             SELECT 
                 SUM(planned_amount) as total_planned,
                 SUM(actual_amount) as total_actual,
@@ -171,7 +183,7 @@ const BudgetService = {
             WHERE budget_id = ?
         `, [budgetId]);
 
-        const budget = await queryHelpers.queryOne(`
+        const budget = await deps.queryHelpers.queryOne(`
             SELECT planned_amount, approved_amount, contingency_amount
             FROM initiative_budgets WHERE id = ?
         `, [budgetId]);
@@ -198,8 +210,8 @@ const BudgetService = {
             variancePercent,
             contingencyAmount: budget?.contingency_amount || 0,
             isOverBudget: totalActual > totalPlanned,
-            status: consumedPercent >= 100 ? 'OVERRUN' : 
-                    consumedPercent >= 95 ? 'CRITICAL' :
+            status: consumedPercent >= 100 ? 'OVERRUN' :
+                consumedPercent >= 95 ? 'CRITICAL' :
                     consumedPercent >= 80 ? 'WARNING' : 'ON_TRACK'
         };
     },
@@ -208,7 +220,7 @@ const BudgetService = {
      * Add line item to budget
      */
     addLineItem: async (budgetId, itemData) => {
-        const id = uuidv4();
+        const id = deps.uuidv4();
         const now = new Date().toISOString();
 
         const {
@@ -220,7 +232,7 @@ const BudgetService = {
             sortOrder = 0
         } = itemData;
 
-        await queryHelpers.queryRun(`
+        await deps.queryHelpers.queryRun(`
             INSERT INTO budget_line_items (
                 id, budget_id, category, subcategory, description,
                 budget_type, planned_amount, sort_order, created_at, updated_at
@@ -234,7 +246,7 @@ const BudgetService = {
      * Add transaction
      */
     addTransaction: async (budgetId, transactionData, userId) => {
-        const id = uuidv4();
+        const id = deps.uuidv4();
         const now = new Date().toISOString();
 
         const {
@@ -253,7 +265,7 @@ const BudgetService = {
         const periodMonth = txDate.getMonth() + 1;
         const periodYear = txDate.getFullYear();
 
-        await queryHelpers.queryRun(`
+        await deps.queryHelpers.queryRun(`
             INSERT INTO budget_transactions (
                 id, budget_id, line_item_id, transaction_type, amount,
                 description, vendor, invoice_number, transaction_date,
@@ -269,7 +281,7 @@ const BudgetService = {
 
         // Update line item actual if linked
         if (lineItemId && transactionType === 'EXPENSE') {
-            await queryHelpers.queryRun(`
+            await deps.queryHelpers.queryRun(`
                 UPDATE budget_line_items 
                 SET actual_amount = COALESCE(actual_amount, 0) + ?,
                     updated_at = ?
@@ -291,7 +303,7 @@ const BudgetService = {
         const threeMonthsAgo = new Date();
         threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
-        const transactions = await queryHelpers.queryAll(`
+        const transactions = await deps.queryHelpers.queryAll(`
             SELECT SUM(amount) as total, COUNT(*) as count,
                    strftime('%Y-%m', transaction_date) as month
             FROM budget_transactions
@@ -330,7 +342,7 @@ const BudgetService = {
      * Forecast at completion
      */
     forecastCompletion: async (budgetId) => {
-        const budget = await queryHelpers.queryOne(`
+        const budget = await deps.queryHelpers.queryOne(`
             SELECT * FROM initiative_budgets WHERE id = ?
         `, [budgetId]);
 
@@ -340,7 +352,7 @@ const BudgetService = {
         const burnRate = await BudgetService.calculateBurnRate(budgetId);
 
         // Get initiative timeline
-        const initiative = await queryHelpers.queryOne(`
+        const initiative = await deps.queryHelpers.queryOne(`
             SELECT planned_end_date, actual_end_date, progress
             FROM initiatives WHERE id = ?
         `, [budget.initiative_id]);
@@ -370,8 +382,8 @@ const BudgetService = {
         }
 
         const varianceAtCompletion = estimateAtCompletion - plannedBudget;
-        const costPerformanceIndex = actualSpent > 0 && progress > 0 
-            ? (plannedBudget * (progress / 100)) / actualSpent 
+        const costPerformanceIndex = actualSpent > 0 && progress > 0
+            ? (plannedBudget * (progress / 100)) / actualSpent
             : 1;
 
         return {
@@ -383,13 +395,13 @@ const BudgetService = {
             varianceAtCompletion: Math.round(varianceAtCompletion),
             costPerformanceIndex: Math.round(costPerformanceIndex * 100) / 100,
             isProjectedOverrun: estimateAtCompletion > plannedBudget,
-            projectedOverrunPercent: plannedBudget > 0 
-                ? Math.round((varianceAtCompletion / plannedBudget) * 100) 
+            projectedOverrunPercent: plannedBudget > 0
+                ? Math.round((varianceAtCompletion / plannedBudget) * 100)
                 : 0,
-            recommendation: costPerformanceIndex < 0.9 
-                ? 'REVIEW_SPENDING' 
-                : costPerformanceIndex < 1 
-                    ? 'MONITOR_CLOSELY' 
+            recommendation: costPerformanceIndex < 0.9
+                ? 'REVIEW_SPENDING'
+                : costPerformanceIndex < 1
+                    ? 'MONITOR_CLOSELY'
                     : 'ON_TRACK'
         };
     },
@@ -405,7 +417,7 @@ const BudgetService = {
         // Check threshold alerts
         if (totals.consumedPercent >= ALERT_THRESHOLDS.OVERRUN) {
             alerts.push({
-                id: uuidv4(),
+                id: deps.uuidv4(),
                 budgetId,
                 alertType: 'OVERRUN',
                 thresholdPercent: 100,
@@ -416,7 +428,7 @@ const BudgetService = {
             });
         } else if (totals.consumedPercent >= ALERT_THRESHOLDS.CRITICAL) {
             alerts.push({
-                id: uuidv4(),
+                id: deps.uuidv4(),
                 budgetId,
                 alertType: 'THRESHOLD_CRITICAL',
                 thresholdPercent: ALERT_THRESHOLDS.CRITICAL,
@@ -427,7 +439,7 @@ const BudgetService = {
             });
         } else if (totals.consumedPercent >= ALERT_THRESHOLDS.WARNING) {
             alerts.push({
-                id: uuidv4(),
+                id: deps.uuidv4(),
                 budgetId,
                 alertType: 'THRESHOLD_WARNING',
                 thresholdPercent: ALERT_THRESHOLDS.WARNING,
@@ -441,20 +453,20 @@ const BudgetService = {
         // Insert alerts
         for (const alert of alerts) {
             // Check if similar alert already exists (unacknowledged)
-            const existing = await queryHelpers.queryOne(`
+            const existing = await deps.queryHelpers.queryOne(`
                 SELECT id FROM budget_alerts 
                 WHERE budget_id = ? AND alert_type = ? AND is_acknowledged = 0
             `, [budgetId, alert.alertType]);
 
             if (!existing) {
-                await queryHelpers.queryRun(`
+                await deps.queryHelpers.queryRun(`
                     INSERT INTO budget_alerts (
                         id, budget_id, alert_type, threshold_percent, 
                         current_percent, message, severity, created_at
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 `, [
-                    alert.id, alert.budgetId, alert.alertType, 
-                    alert.thresholdPercent, alert.currentPercent, 
+                    alert.id, alert.budgetId, alert.alertType,
+                    alert.thresholdPercent, alert.currentPercent,
                     alert.message, alert.severity, alert.createdAt
                 ]);
             }
@@ -471,14 +483,14 @@ const BudgetService = {
             ? `SELECT * FROM budget_alerts WHERE budget_id = ? ORDER BY created_at DESC`
             : `SELECT * FROM budget_alerts WHERE budget_id = ? AND is_acknowledged = 0 ORDER BY created_at DESC`;
 
-        return await queryHelpers.queryAll(sql, [budgetId]);
+        return await deps.queryHelpers.queryAll(sql, [budgetId]);
     },
 
     /**
      * Acknowledge alert
      */
     acknowledgeAlert: async (alertId, userId) => {
-        await queryHelpers.queryRun(`
+        await deps.queryHelpers.queryRun(`
             UPDATE budget_alerts 
             SET is_acknowledged = 1, acknowledged_by = ?, acknowledged_at = ?
             WHERE id = ?
@@ -521,9 +533,9 @@ const BudgetService = {
             params.push(status);
         }
 
-        sql += ` GROUP BY b.id ORDER BY i.name`;
+        sql += ` GROUP BY b.id ORDER BY i.title`; // Changed i.name to i.title since initiatives has title
 
-        const budgets = await queryHelpers.queryAll(sql, params);
+        const budgets = await deps.queryHelpers.queryAll(sql, params);
 
         // Calculate portfolio totals
         const portfolioTotals = budgets.reduce((acc, b) => {
@@ -535,8 +547,8 @@ const BudgetService = {
         }, { totalPlanned: 0, totalApproved: 0, totalActual: 0, totalCommitted: 0 });
 
         const remaining = portfolioTotals.totalPlanned - portfolioTotals.totalActual;
-        const consumedPercent = portfolioTotals.totalPlanned > 0 
-            ? Math.round((portfolioTotals.totalActual / portfolioTotals.totalPlanned) * 100) 
+        const consumedPercent = portfolioTotals.totalPlanned > 0
+            ? Math.round((portfolioTotals.totalActual / portfolioTotals.totalPlanned) * 100)
             : 0;
 
         // Count initiatives by budget health
@@ -558,8 +570,8 @@ const BudgetService = {
                 plannedAmount: b.planned_amount,
                 actualAmount: b.total_actual,
                 committedAmount: b.total_committed,
-                consumedPercent: b.planned_amount > 0 
-                    ? Math.round((b.total_actual / b.planned_amount) * 100) 
+                consumedPercent: b.planned_amount > 0
+                    ? Math.round((b.total_actual / b.planned_amount) * 100)
                     : 0,
                 currency: b.currency
             })),
@@ -581,10 +593,10 @@ const BudgetService = {
         const forecast = await BudgetService.forecastCompletion(budgetId);
         const burnRate = await BudgetService.calculateBurnRate(budgetId);
 
-        const id = uuidv4();
+        const id = deps.uuidv4();
         const now = new Date().toISOString();
 
-        await queryHelpers.queryRun(`
+        await deps.queryHelpers.queryRun(`
             INSERT INTO budget_snapshots (
                 id, budget_id, snapshot_type, snapshot_date,
                 planned_total, actual_total, committed_total, forecast_total,
@@ -594,13 +606,14 @@ const BudgetService = {
         `, [
             id, budgetId, snapshotType, now,
             totals.totalPlanned, totals.totalActual, totals.totalCommitted, totals.totalForecast,
-            totals.varianceAmount, burnRate.monthlyBurnRate, 
+            totals.varianceAmount, burnRate.monthlyBurnRate,
             forecast?.estimateAtCompletion || 0, forecast?.estimateToComplete || 0,
             userId, now
         ]);
 
         return { id, snapshotType, createdAt: now };
     },
+
 
     BUDGET_CATEGORIES,
     BUDGET_TYPES,

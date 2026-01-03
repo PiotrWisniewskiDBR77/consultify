@@ -37,3 +37,6 @@ CREATE TABLE IF NOT EXISTS user_out_of_office (
 CREATE INDEX IF NOT EXISTS idx_user_ooo_user_id ON user_out_of_office(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_ooo_dates ON user_out_of_office(start_date, end_date);
 
+
+
+

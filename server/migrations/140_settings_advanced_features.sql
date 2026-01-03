@@ -93,3 +93,6 @@ BEGIN
     UPDATE user_settings_templates SET updated_at = datetime('now') WHERE id = NEW.id;
 END;
 
+
+
+

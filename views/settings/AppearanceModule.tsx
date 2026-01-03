@@ -16,7 +16,7 @@ import { QuietHoursSettings } from '../../components/settings/QuietHoursSettings
 import { PerformanceSettings } from '../../components/settings/PerformanceSettings';
 import { DataPrivacySettings } from '../../components/settings/DataPrivacySettings';
 import { useTranslation } from 'react-i18next';
-import { User } from '../../types';
+import { User, Language } from '../../types';
 
 // Accent color options
 const ACCENT_COLORS = [
@@ -71,24 +71,22 @@ const ThemeSettings: React.FC<{
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
                     {t('settings.theme.description', 'Choose your preferred appearance')}
                 </p>
-                
+
                 <div className="grid grid-cols-3 gap-4">
                     {themes.map((t_) => (
                         <button
                             key={t_.id}
                             onClick={() => toggleTheme(t_.id)}
-                            className={`p-6 rounded-xl border-2 transition-all ${
-                                theme === t_.id
-                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
-                                    : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-white/5'
-                            }`}
+                            className={`p-6 rounded-xl border-2 transition-all ${theme === t_.id
+                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
+                                : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-white/5'
+                                }`}
                         >
                             <div className="text-4xl mb-3">{t_.icon}</div>
-                            <p className={`font-medium ${
-                                theme === t_.id
-                                    ? 'text-purple-700 dark:text-purple-300'
-                                    : 'text-slate-900 dark:text-white'
-                            }`}>
+                            <p className={`font-medium ${theme === t_.id
+                                ? 'text-purple-700 dark:text-purple-300'
+                                : 'text-slate-900 dark:text-white'
+                                }`}>
                                 {t_.label}
                             </p>
                         </button>
@@ -104,15 +102,14 @@ const ThemeSettings: React.FC<{
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
                     {t('settings.theme.accentColorDescription', 'Customize the highlight color used throughout the app')}
                 </p>
-                
+
                 <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
                     {ACCENT_COLORS.map((color) => (
                         <button
                             key={color.id}
                             onClick={() => handleAccentColorChange(color.id)}
-                            className={`relative w-12 h-12 rounded-full transition-all transform hover:scale-110 ${
-                                accentColor === color.id ? 'ring-2 ring-offset-2 ring-slate-900 dark:ring-white' : ''
-                            }`}
+                            className={`relative w-12 h-12 rounded-full transition-all transform hover:scale-110 ${accentColor === color.id ? 'ring-2 ring-offset-2 ring-slate-900 dark:ring-white' : ''
+                                }`}
                             style={{ backgroundColor: color.value }}
                             title={color.label}
                         >
@@ -149,21 +146,21 @@ const ThemeSettings: React.FC<{
 };
 
 // Language Settings Component
-const LanguageSettings: React.FC<{ currentUser: User; onUpdateUser: (updates: Partial<User>) => void }> = ({ 
-    currentUser, 
-    onUpdateUser 
+const LanguageSettings: React.FC<{ currentUser: User; onUpdateUser: (updates: Partial<User>) => void }> = ({
+    currentUser,
+    onUpdateUser
 }) => {
     const { t, i18n } = useTranslation();
-    const [selectedLanguage, setSelectedLanguage] = useState(i18n.language || 'en');
+    const [selectedLanguage, setSelectedLanguage] = useState<Language>((i18n.language?.toUpperCase() as Language) || 'EN');
 
     const languages = [
-        { code: 'en', name: 'English', flag: '🇬🇧' },
-        { code: 'pl', name: 'Polski', flag: '🇵🇱' },
-    ];
+        { code: 'EN', name: 'English', flag: '🇬🇧' },
+        { code: 'PL', name: 'Polski', flag: '🇵🇱' },
+    ] as const;
 
-    const handleLanguageChange = (code: string) => {
+    const handleLanguageChange = (code: Language) => {
         setSelectedLanguage(code);
-        i18n.changeLanguage(code);
+        i18n.changeLanguage(code.toLowerCase());
         onUpdateUser({ preferredLanguage: code });
     };
 
@@ -183,18 +180,16 @@ const LanguageSettings: React.FC<{ currentUser: User; onUpdateUser: (updates: Pa
                     <button
                         key={lang.code}
                         onClick={() => handleLanguageChange(lang.code)}
-                        className={`w-full p-4 rounded-lg border-2 transition-all flex items-center gap-4 ${
-                            selectedLanguage === lang.code
-                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
-                                : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-white/5'
-                        }`}
+                        className={`w-full p-4 rounded-lg border-2 transition-all flex items-center gap-4 ${selectedLanguage === lang.code
+                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
+                            : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-white/5'
+                            }`}
                     >
                         <span className="text-2xl">{lang.flag}</span>
-                        <span className={`font-medium ${
-                            selectedLanguage === lang.code
-                                ? 'text-purple-700 dark:text-purple-300'
-                                : 'text-slate-900 dark:text-white'
-                        }`}>
+                        <span className={`font-medium ${selectedLanguage === lang.code
+                            ? 'text-purple-700 dark:text-purple-300'
+                            : 'text-slate-900 dark:text-white'
+                            }`}>
                             {lang.name}
                         </span>
                         {selectedLanguage === lang.code && (
@@ -207,7 +202,7 @@ const LanguageSettings: React.FC<{ currentUser: User; onUpdateUser: (updates: Pa
     );
 };
 
-export const AppearanceModule: React.FC<AppearanceModuleProps> = ({ 
+export const AppearanceModule: React.FC<AppearanceModuleProps> = ({
     initialTab,
     currentUser,
     onUpdateUser,
@@ -219,57 +214,57 @@ export const AppearanceModule: React.FC<AppearanceModuleProps> = ({
 
     const tabs: Tab[] = [
         // Appearance
-        { 
-            id: 'theme', 
-            label: t('settings.tabs.theme', 'Theme'), 
-            icon: <Palette size={16} /> 
+        {
+            id: 'theme',
+            label: t('settings.tabs.theme', 'Theme'),
+            icon: <Palette size={16} />
         },
-        { 
-            id: 'language', 
-            label: t('settings.tabs.language', 'Language'), 
-            icon: <Globe size={16} /> 
+        {
+            id: 'language',
+            label: t('settings.tabs.language', 'Language'),
+            icon: <Globe size={16} />
         },
-        { 
-            id: 'regional', 
-            label: t('settings.tabs.regional', 'Regional'), 
-            icon: <Clock size={16} /> 
+        {
+            id: 'regional',
+            label: t('settings.tabs.regional', 'Regional'),
+            icon: <Clock size={16} />
         },
-        { 
-            id: 'accessibility', 
-            label: t('settings.tabs.accessibility', 'Accessibility'), 
-            icon: <Accessibility size={16} /> 
+        {
+            id: 'accessibility',
+            label: t('settings.tabs.accessibility', 'Accessibility'),
+            icon: <Accessibility size={16} />
         },
         // Productivity
-        { 
-            id: 'shortcuts', 
-            label: t('settings.tabs.shortcuts', 'Shortcuts'), 
-            icon: <Keyboard size={16} /> 
+        {
+            id: 'shortcuts',
+            label: t('settings.tabs.shortcuts', 'Shortcuts'),
+            icon: <Keyboard size={16} />
         },
-        { 
-            id: 'work', 
-            label: t('settings.tabs.work', 'Work'), 
-            icon: <Briefcase size={16} /> 
+        {
+            id: 'work',
+            label: t('settings.tabs.work', 'Work'),
+            icon: <Briefcase size={16} />
         },
-        { 
-            id: 'dashboard', 
-            label: t('settings.tabs.dashboard', 'Dashboard'), 
-            icon: <LayoutDashboard size={16} /> 
+        {
+            id: 'dashboard',
+            label: t('settings.tabs.dashboard', 'Dashboard'),
+            icon: <LayoutDashboard size={16} />
         },
         // Focus & Privacy
-        { 
-            id: 'quiet-hours', 
-            label: t('settings.tabs.quietHours', 'Quiet Hours'), 
-            icon: <Moon size={16} /> 
+        {
+            id: 'quiet-hours',
+            label: t('settings.tabs.quietHours', 'Quiet Hours'),
+            icon: <Moon size={16} />
         },
-        { 
-            id: 'performance', 
-            label: t('settings.tabs.performance', 'Performance'), 
-            icon: <Zap size={16} /> 
+        {
+            id: 'performance',
+            label: t('settings.tabs.performance', 'Performance'),
+            icon: <Zap size={16} />
         },
-        { 
-            id: 'privacy', 
-            label: t('settings.tabs.privacy', 'Privacy'), 
-            icon: <Shield size={16} /> 
+        {
+            id: 'privacy',
+            label: t('settings.tabs.privacy', 'Privacy'),
+            icon: <Shield size={16} />
         },
     ];
 

@@ -32,3 +32,6 @@ CREATE TABLE IF NOT EXISTS user_appearance_preferences (
 -- Indeksy
 CREATE INDEX IF NOT EXISTS idx_appearance_prefs_user ON user_appearance_preferences(user_id);
 
+
+
+

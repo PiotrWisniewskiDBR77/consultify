@@ -43,3 +43,6 @@ CREATE TABLE IF NOT EXISTS workspace_defaults (
 INSERT OR IGNORE INTO migrations (name, applied_at) VALUES ('110_workspace_defaults', datetime('now'));
 
 
+
+
+

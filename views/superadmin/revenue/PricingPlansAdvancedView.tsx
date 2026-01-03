@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Api } from '../../../services/api';
-import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/BaseCard';
 
 interface PlanFeature {
   id: string;
@@ -66,7 +66,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
     try {
       setLoading(true);
       const response = await Api.getPricingPlansAdvanced();
-      setPlans(response.plans || []);
+      setPlans(response || []);
     } catch (err: any) {
       setError(err.message || 'Failed to load pricing plans');
     } finally {
@@ -156,7 +156,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
   };
 
   const togglePlanSelection = (planId: string) => {
-    setSelectedPlans(prev => 
+    setSelectedPlans(prev =>
       prev.includes(planId)
         ? prev.filter(id => id !== planId)
         : [...prev, planId]
@@ -541,4 +541,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
 };
 
 export default PricingPlansAdvancedView;
+
+
+
 

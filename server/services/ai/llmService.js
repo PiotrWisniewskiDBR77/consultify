@@ -285,6 +285,24 @@ class LLMService {
     }
 
     /**
+     * Backward-compatible alias for call() used by specialist agents
+     * @param {Object} params - { prompt, maxTokens, temperature, model, systemPrompt }
+     */
+    async generateResponse(params) {
+        const { prompt, maxTokens, temperature, model, systemPrompt } = params;
+
+        // Convert old-style params to new call() structure
+        return this.call({
+            type: 'text',
+            modelConfig: { id: model || 'default' },
+            systemPrompt: systemPrompt || 'You are a helpful assistant.',
+            messages: [{ role: 'user', content: prompt }],
+            maxTokens: maxTokens || this.maxTokens,
+            temperature: temperature || this.temperature
+        });
+    }
+
+    /**
      * Special handler for o1/reasoning models
      * - Injects system prompt into first user message
      * - No streaming
@@ -473,15 +491,28 @@ class LLMService {
         }
 
         try {
-            const result = await streamText({
-                model,
-                messages: formattedMessages,
-                tools: toolDefinitions,
-                maxSteps: maxIterations
-            });
+            // Streaming retry loop (for initialization failures)
+            let lastError;
+            for (let attempt = 0; attempt < 2; attempt++) {
+                try {
+                    const result = await streamText({
+                        model,
+                        messages: formattedMessages,
+                        tools: toolDefinitions,
+                        maxSteps: maxIterations,
+                        // Vercel AI SDK timeout
+                        abortSignal: AbortSignal.timeout(60000)
+                    });
 
-            circuitBreaker.recordSuccess(providerId);
-            return { stream: result.textStream };
+                    circuitBreaker.recordSuccess(providerId);
+                    return { stream: result.textStream };
+                } catch (error) {
+                    lastError = error;
+                    aiLogger.warn('LLMService', `Stream initialization failed (attempt ${attempt + 1}/2): ${error.message}`);
+                    if (attempt === 0) await new Promise(r => setTimeout(r, 1000));
+                }
+            }
+            throw lastError;
         } catch (error) {
             circuitBreaker.recordFailure(providerId, error);
             throw error;
@@ -506,10 +537,12 @@ class LLMService {
             async () => {
                 return await generateText({
                     model,
-                    messages: formattedMessages
+                    messages: formattedMessages,
+                    abortSignal: AbortSignal.timeout(60000)
                 });
             },
             {
+                timeout: 60000,
                 onRetry: (attempt, delay, error) => {
                     aiLogger.info('LLMService', `Retrying ${providerId} (attempt ${attempt})`, {
                         delay,
@@ -544,13 +577,25 @@ class LLMService {
         }
 
         try {
-            const result = await streamText({
-                model,
-                messages: formattedMessages
-            });
+            // Streaming retry loop
+            let lastError;
+            for (let attempt = 0; attempt < 2; attempt++) {
+                try {
+                    const result = await streamText({
+                        model,
+                        messages: formattedMessages,
+                        abortSignal: AbortSignal.timeout(60000)
+                    });
 
-            circuitBreaker.recordSuccess(providerId);
-            return { stream: result.textStream };
+                    circuitBreaker.recordSuccess(providerId);
+                    return { stream: result.textStream };
+                } catch (error) {
+                    lastError = error;
+                    aiLogger.warn('LLMService', `Stream initialization failed (attempt ${attempt + 1}/2): ${error.message}`);
+                    if (attempt === 0) await new Promise(r => setTimeout(r, 1000));
+                }
+            }
+            throw lastError;
         } catch (error) {
             circuitBreaker.recordFailure(providerId, error);
             throw error;
@@ -598,10 +643,12 @@ class LLMService {
                 return await generateObject({
                     model,
                     schema: zodSchema,
-                    messages: formattedMessages
+                    messages: formattedMessages,
+                    abortSignal: AbortSignal.timeout(60000)
                 });
             },
             {
+                timeout: 60000,
                 onRetry: (attempt, delay, error) => {
                     aiLogger.info('LLMService', `Retrying structured call to ${providerId} (attempt ${attempt})`);
                 }
@@ -666,9 +713,10 @@ class LLMService {
 }
 
 // Export schemas and circuit breaker for external use
-module.exports = {
-    LLMService,
-    MagicWandSchema,
-    AnalysisResultSchema,
-    circuitBreaker
-};
+const llmService = new LLMService();
+
+module.exports = llmService; // Default export is now the singleton instance
+module.exports.LLMService = LLMService;
+module.exports.MagicWandSchema = MagicWandSchema;
+module.exports.AnalysisResultSchema = AnalysisResultSchema;
+module.exports.circuitBreaker = circuitBreaker;

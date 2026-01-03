@@ -79,15 +79,15 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
 
   const loadUsageSummary = async () => {
     if (!currentOrganization?.id) return;
-    
+
     setLoading(!usage); // Only show full loading on initial load
     setRefreshing(!!usage);
-    
+
     try {
       const response = await fetch(`/api/billing/usage-summary?days=${timeRange}`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setUsage(data);
@@ -108,7 +108,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
       const response = await fetch(`/api/billing/export?type=usage&format=csv`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
-      
+
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -194,11 +194,10 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                  timeRange === range
-                    ? 'bg-white/[0.08] text-white'
-                    : 'text-slate-500 hover:text-slate-300'
-                }`}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${timeRange === range
+                  ? 'bg-white/[0.08] text-white'
+                  : 'text-slate-500 hover:text-slate-300'
+                  }`}
               >
                 {range}d
               </button>
@@ -230,10 +229,10 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
               <Cpu size={14} className="text-slate-500" />
               <span className="text-xs text-slate-500 uppercase tracking-wider">AI Tokens</span>
             </div>
-            {usage?.tokens.trend !== 0 && (
-              <span className={`flex items-center text-xs ${usage?.tokens.trend > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
-                {usage?.tokens.trend > 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                {Math.abs(usage?.tokens.trend || 0)}%
+            {usage?.tokens.trend !== undefined && usage.tokens.trend !== 0 && (
+              <span className={`flex items-center text-xs ${usage.tokens.trend > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                {usage.tokens.trend > 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                {Math.abs(usage.tokens.trend)}%
               </span>
             )}
           </div>
@@ -352,14 +351,14 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis 
-                  dataKey="date" 
+                <XAxis
+                  dataKey="date"
                   stroke="#64748b"
                   fontSize={11}
                   tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 />
-                <YAxis 
-                  stroke="#64748b" 
+                <YAxis
+                  stroke="#64748b"
                   fontSize={11}
                   tickFormatter={(value) => formatNumber(value)}
                 />
@@ -370,7 +369,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                     borderRadius: '8px',
                     color: '#fff'
                   }}
-                  formatter={(value: number) => [formatNumber(value), 'Tokens']}
+                  formatter={(value: number | undefined) => [formatNumber(value ?? 0), 'Tokens']}
                   labelFormatter={(label) => new Date(label).toLocaleDateString()}
                 />
                 <Area
@@ -425,7 +424,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                     borderRadius: '8px',
                     color: '#fff'
                   }}
-                  formatter={(value: number) => [formatNumber(value), 'Tokens']}
+                  formatter={(value: number | undefined) => [formatNumber(value ?? 0), 'Tokens']}
                 />
               </RechartsPieChart>
             </ResponsiveContainer>
@@ -445,18 +444,17 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
               <button
                 key={view}
                 onClick={() => setBreakdownView(view)}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-all capitalize ${
-                  breakdownView === view
-                    ? 'bg-white/[0.08] text-white'
-                    : 'text-slate-500 hover:text-slate-300'
-                }`}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-all capitalize ${breakdownView === view
+                  ? 'bg-white/[0.08] text-white'
+                  : 'text-slate-500 hover:text-slate-300'
+                  }`}
               >
                 {view}
               </button>
             ))}
           </div>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -481,7 +479,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                 currentBreakdown.map((item: any, index) => {
                   const maxTokens = Math.max(...currentBreakdown.map((i: any) => i.tokens));
                   const percentage = maxTokens > 0 ? (item.tokens / maxTokens) * 100 : 0;
-                  
+
                   return (
                     <tr key={item.id || item.feature || index} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
                       <td className="py-3 px-4">
@@ -518,11 +516,10 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
 
       {/* Projected Usage Alert */}
       {usage && usage.tokens.percentage >= 75 && (
-        <div className={`admin-card p-4 border ${
-          usage.tokens.percentage >= 90 
-            ? 'border-red-500/30 bg-red-500/5' 
-            : 'border-amber-500/30 bg-amber-500/5'
-        }`}>
+        <div className={`admin-card p-4 border ${usage.tokens.percentage >= 90
+          ? 'border-red-500/30 bg-red-500/5'
+          : 'border-amber-500/30 bg-amber-500/5'
+          }`}>
           <div className="flex items-start gap-3">
             <Zap className={usage.tokens.percentage >= 90 ? 'text-red-400' : 'text-amber-400'} size={20} />
             <div className="flex-1">
@@ -530,7 +527,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                 {usage.tokens.percentage >= 90 ? 'Usage Critical' : 'High Usage Warning'}
               </h4>
               <p className="text-sm text-slate-400 mt-1">
-                You've used {usage.tokens.percentage}% of your monthly token quota. 
+                You've used {usage.tokens.percentage}% of your monthly token quota.
                 {usage.projectedUsage > usage.tokens.limit && (
                   <> Based on current usage, you're projected to exceed your limit by {formatNumber(usage.projectedUsage - usage.tokens.limit)} tokens.</>
                 )}
@@ -547,4 +544,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
 };
 
 export default UsageDashboardView;
+
+
+
 

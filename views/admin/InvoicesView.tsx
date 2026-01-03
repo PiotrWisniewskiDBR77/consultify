@@ -120,8 +120,8 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
                 toast.success('Invoice downloaded');
             }
         } catch (error) {
-            // Mock download
-            toast.success(`Downloaded ${invoice.number}.pdf`);
+            console.error('Failed to download invoice:', error);
+            toast.error('Failed to download invoice');
         }
         setDownloading(null);
     };

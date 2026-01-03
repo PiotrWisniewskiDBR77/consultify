@@ -67,3 +67,6 @@ CREATE INDEX IF NOT EXISTS idx_login_history_org ON login_history(organization_i
 CREATE INDEX IF NOT EXISTS idx_login_history_created ON login_history(created_at DESC);
 
 
+
+
+

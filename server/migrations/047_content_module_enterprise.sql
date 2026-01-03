@@ -572,3 +572,6 @@ SELECT
 FROM content_analytics ca
 GROUP BY ca.content_id, ca.content_type;
 
+
+
+

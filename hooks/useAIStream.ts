@@ -75,6 +75,8 @@ interface UseAIStreamOptions {
     onStreamError?: (error: any) => void;
     onThinkingUpdate?: (steps: ThinkingStep[]) => void;
     onArtifactDetected?: (artifact: Artifact) => void;
+    /** Called when stream can be resumed (on disconnect) */
+    onCanResume?: (sessionId: string, partialContent: string) => void;
 }
 
 interface StreamState {
@@ -83,6 +85,13 @@ interface StreamState {
     thinkingSteps: ThinkingStep[];
     artifacts: Artifact[];
     progress: number; // 0-100 for UI progress indicator
+}
+
+interface PartialResponse {
+    sessionId: string;
+    content: string;
+    updatedAt: string;
+    canResume: boolean;
 }
 
 // ==================== HOOK ====================
@@ -102,11 +111,14 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
     const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
     const [streamArtifacts, setStreamArtifacts] = useState<Artifact[]>([]);
     const [streamProgress, setStreamProgress] = useState(0);
+    const [lastSessionId, setLastSessionId] = useState<string | null>(null);
+    const [canResume, setCanResume] = useState(false);
 
     // Refs for accumulation to avoid stale closures
     const contentRef = useRef('');
     const thinkingRef = useRef<ThinkingStep[]>([]);
     const artifactsRef = useRef<Artifact[]>([]);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     // Get current language
     const currentLanguage = localStorage.getItem('i18nextLng') || 'pl';
@@ -268,14 +280,79 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
     ]);
 
     /**
-     * Abort current stream (if supported)
+     * Abort current stream
      */
     const abortStream = useCallback(() => {
-        // TODO: Implement abort controller for streaming
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
         setIsBotTyping(false);
         setCurrentStreamContent('');
         setStreamProgress(0);
-    }, [setIsBotTyping, setCurrentStreamContent]);
+        
+        // Mark as resumable if we have content
+        if (contentRef.current.length > 0 && lastSessionId) {
+            setCanResume(true);
+            if (options.onCanResume) {
+                options.onCanResume(lastSessionId, contentRef.current);
+            }
+        }
+    }, [setIsBotTyping, setCurrentStreamContent, lastSessionId, options]);
+
+    /**
+     * Check if partial response exists for a session
+     */
+    const checkPartialResponse = useCallback(async (sessionId: string): Promise<PartialResponse | null> => {
+        try {
+            const response = await fetch(`/api/ai/stream/partial/${sessionId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            
+            if (response.ok) {
+                return await response.json();
+            }
+            return null;
+        } catch (error) {
+            console.warn('[useAIStream] Failed to check partial response:', error);
+            return null;
+        }
+    }, []);
+
+    /**
+     * Resume from a partial response
+     */
+    const resumeFromPartial = useCallback(async (
+        sessionId: string,
+        userMessage: string,
+        history: any[],
+        systemPrompt?: string,
+        context?: any,
+        focusMode?: FocusMode
+    ) => {
+        // First, check if we have a partial response
+        const partial = await checkPartialResponse(sessionId);
+        
+        if (partial && partial.canResume) {
+            // Initialize with partial content
+            contentRef.current = partial.content;
+            setCurrentStreamContent(partial.content);
+            
+            console.log('[useAIStream] Resuming from partial:', {
+                sessionId,
+                contentLength: partial.content.length
+            });
+        }
+        
+        // Continue the stream with resumeFromPartial flag
+        return startStream(userMessage, history, systemPrompt, {
+            ...context,
+            conversationId: sessionId,
+            resumeFromPartial: true
+        }, focusMode);
+    }, [checkPartialResponse, startStream, setCurrentStreamContent]);
 
     return {
         // Basic state
@@ -286,9 +363,15 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
         thinkingSteps,
         artifacts: streamArtifacts,
         progress: streamProgress,
+        
+        // Reconnection state
+        lastSessionId,
+        canResume,
 
         // Actions
         startStream,
-        abortStream
+        abortStream,
+        resumeFromPartial,
+        checkPartialResponse
     };
 };

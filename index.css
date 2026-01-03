@@ -12,61 +12,123 @@
    Inspired by Outlook's clear visibility
    ======================================== */
 :root {
+    /* ========================================
+       APPLE HIG DESIGN TOKENS
+       Premium, elegant, depth-focused design
+       ======================================== */
+    
+    /* HIG Typography Scale */
+    --hig-font-caption: 11px;
+    --hig-font-footnote: 13px;
+    --hig-font-subhead: 15px;
+    --hig-font-body: 17px;
+    --hig-font-headline: 17px;
+    --hig-font-title3: 20px;
+    --hig-font-title2: 22px;
+    --hig-font-title1: 28px;
+    --hig-font-large-title: 34px;
+    
+    /* HIG Spacing Scale */
+    --hig-space-xs: 4px;
+    --hig-space-sm: 8px;
+    --hig-space-md: 12px;
+    --hig-space-lg: 16px;
+    --hig-space-xl: 20px;
+    --hig-space-2xl: 24px;
+    --hig-space-3xl: 32px;
+    --hig-space-4xl: 40px;
+    --hig-space-5xl: 48px;
+    
+    /* HIG Border Radius */
+    --hig-radius-xs: 6px;
+    --hig-radius-sm: 8px;
+    --hig-radius-md: 12px;
+    --hig-radius-lg: 16px;
+    --hig-radius-xl: 20px;
+    --hig-radius-2xl: 24px;
+    --hig-radius-full: 9999px;
+    
+    /* HIG Animation Durations */
+    --hig-duration-fast: 100ms;
+    --hig-duration-normal: 200ms;
+    --hig-duration-slow: 300ms;
+    --hig-duration-slower: 400ms;
+    
+    /* HIG Easing Functions */
+    --hig-ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+    --hig-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --hig-ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --hig-ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+    
     /* Light Mode Primary Colors - Navy Blue Accents */
     --light-navy-900: #0F172A;
-    /* Deepest navy - headings */
     --light-navy-800: #1E293B;
-    /* Dark navy - primary text */
     --light-navy-700: #334155;
-    /* Navy - secondary text */
     --light-navy-600: #475569;
-    /* Muted navy - labels */
     --light-navy-500: #64748B;
-    /* Light navy - hints */
     --light-navy-400: #94A3B8;
-    /* Lightest navy - disabled */
 
     /* Light Mode Backgrounds */
     --light-bg-primary: #F8FAFC;
-    /* Main background - slightly warm */
     --light-bg-card: #FFFFFF;
-    /* Card background */
     --light-bg-elevated: #F1F5F9;
-    /* Elevated sections */
     --light-bg-hover: #E2E8F0;
-    /* Hover states */
 
-    /* Light Mode Borders - More visible */
+    /* Light Mode Borders */
     --light-border: #CBD5E1;
-    /* Default border - darker */
     --light-border-strong: #94A3B8;
-    /* Strong border */
     --light-border-subtle: #E2E8F0;
-    /* Subtle border */
 
     /* Navy Blue Accent for Light Mode */
     --light-accent-navy: #1E3A5F;
-    /* Deep navy blue accent */
     --light-accent-navy-hover: #0F2744;
-    /* Navy hover */
     --light-accent-navy-surface: rgba(30, 58, 95, 0.08);
-    /* Navy surface */
 
     /* Admin tokens - Dark mode defaults */
-    --admin-bg: #0a0f1e;
-    --admin-card: rgba(255, 255, 255, 0.03);
-    --admin-card-hover: rgba(255, 255, 255, 0.05);
-    --admin-border: rgba(255, 255, 255, 0.08);
-    --admin-border-strong: rgba(255, 255, 255, 0.12);
-    --admin-accent: #e53e3e;
-    --admin-accent-muted: rgba(229, 62, 62, 0.15);
-    --admin-accent-subtle: rgba(229, 62, 62, 0.08);
-    --admin-text-primary: #ffffff;
+    --admin-bg: #030712;
+    --admin-card: rgba(255, 255, 255, 0.02);
+    --admin-card-hover: rgba(255, 255, 255, 0.04);
+    --admin-border: rgba(255, 255, 255, 0.05);
+    --admin-border-strong: rgba(255, 255, 255, 0.1);
+    --admin-accent: #8b5cf6;
+    --admin-accent-muted: rgba(139, 92, 246, 0.15);
+    --admin-accent-subtle: rgba(139, 92, 246, 0.08);
+    --admin-text-primary: #f8fafc;
     --admin-text-secondary: #94a3b8;
     --admin-text-muted: #64748b;
     --admin-success: #10b981;
     --admin-warning: #f59e0b;
     --admin-error: #ef4444;
+    
+    /* HIG Light Mode Semantic Colors */
+    --hig-bg-primary: #FFFFFF;
+    --hig-bg-secondary: #F8FAFC;
+    --hig-bg-tertiary: #F1F5F9;
+    --hig-bg-elevated: #FFFFFF;
+    --hig-bg-overlay: rgba(0, 0, 0, 0.3);
+    --hig-text-primary: #0F172A;
+    --hig-text-secondary: #475569;
+    --hig-text-tertiary: #64748B;
+    --hig-text-quaternary: #94A3B8;
+    --hig-border-default: rgba(0, 0, 0, 0.06);
+    --hig-border-strong: rgba(0, 0, 0, 0.12);
+    --hig-separator: rgba(0, 0, 0, 0.08);
+}
+
+/* HIG Dark Mode Colors */
+html.dark {
+    --hig-bg-primary: #0A0F1E;
+    --hig-bg-secondary: #0F172A;
+    --hig-bg-tertiary: #1E293B;
+    --hig-bg-elevated: #151E32;
+    --hig-bg-overlay: rgba(0, 0, 0, 0.6);
+    --hig-text-primary: #F8FAFC;
+    --hig-text-secondary: #94A3B8;
+    --hig-text-tertiary: #64748B;
+    --hig-text-quaternary: #475569;
+    --hig-border-default: rgba(255, 255, 255, 0.06);
+    --hig-border-strong: rgba(255, 255, 255, 0.12);
+    --hig-separator: rgba(255, 255, 255, 0.08);
 }
 
 @layer utilities {
@@ -221,12 +283,285 @@
 }
 
 @layer components {
+    /* ========================================
+       APPLE HIG COMPONENT SYSTEM
+       Premium depth-based design language
+       ======================================== */
+    
+    /* HIG Card - Elevated surface with depth */
+    .hig-card {
+        @apply bg-white dark:bg-navy-800 rounded-hig-lg transition-all duration-hig-normal ease-hig;
+        box-shadow: var(--hig-shadow-md, 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06));
+    }
+    
+    .hig-card:hover {
+        box-shadow: var(--hig-shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.04), 0 4px 6px rgba(0, 0, 0, 0.05));
+        transform: translateY(-1px);
+    }
+    
+    html.dark .hig-card {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    html.dark .hig-card:hover {
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3), 0 4px 6px rgba(0, 0, 0, 0.25);
+    }
+    
+    /* HIG Card Variants */
+    .hig-card-filled {
+        @apply bg-slate-50 dark:bg-navy-900 rounded-hig-lg;
+    }
+    
+    .hig-card-glass {
+        @apply rounded-hig-lg backdrop-blur-hig;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06);
+    }
+    
+    html.dark .hig-card-glass {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.6) 100%);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* HIG Surface - Subtle elevation */
+    .hig-surface {
+        @apply bg-white dark:bg-navy-900 rounded-hig-md;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+    
+    html.dark .hig-surface {
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* HIG Input Base */
+    .hig-input {
+        @apply w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 rounded-hig-md text-navy-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all duration-hig-fast ease-hig;
+        border: 1px solid transparent;
+    }
+    
+    .hig-input:hover {
+        @apply bg-slate-100 dark:bg-navy-800;
+    }
+    
+    .hig-input:focus {
+        @apply bg-white dark:bg-navy-900 outline-none;
+        border-color: #7C3AED;
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+    }
+    
+    .hig-input-error {
+        border-color: #DC2626;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+    }
+    
+    /* HIG Button Base */
+    .hig-btn {
+        @apply inline-flex items-center justify-center font-medium rounded-hig-md transition-all duration-hig-fast ease-hig outline-none;
+        @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none;
+    }
+    
+    .hig-btn:active:not(:disabled) {
+        transform: scale(0.97);
+    }
+    
+    /* HIG Button Sizes */
+    .hig-btn-sm {
+        @apply px-3 py-1.5 text-sm gap-1.5;
+    }
+    
+    .hig-btn-md {
+        @apply px-4 py-2.5 text-sm gap-2;
+    }
+    
+    .hig-btn-lg {
+        @apply px-6 py-3 text-base gap-2.5;
+    }
+    
+    /* HIG Button Primary */
+    .hig-btn-primary {
+        @apply hig-btn text-white;
+        background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
+        box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
+    }
+    
+    .hig-btn-primary:hover:not(:disabled) {
+        background: linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%);
+        box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+    }
+    
+    .hig-btn-primary:focus-visible {
+        box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25), 0 0 0 3px rgba(124, 58, 237, 0.3);
+    }
+    
+    /* HIG Button Secondary */
+    .hig-btn-secondary {
+        @apply hig-btn bg-slate-100 dark:bg-navy-800 text-navy-900 dark:text-white;
+    }
+    
+    .hig-btn-secondary:hover:not(:disabled) {
+        @apply bg-slate-200 dark:bg-navy-700;
+    }
+    
+    .hig-btn-secondary:focus-visible {
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+    }
+    
+    /* HIG Button Ghost */
+    .hig-btn-ghost {
+        @apply hig-btn bg-transparent text-slate-600 dark:text-slate-400;
+    }
+    
+    .hig-btn-ghost:hover:not(:disabled) {
+        @apply bg-slate-100 dark:bg-white/5 text-navy-900 dark:text-white;
+    }
+    
+    /* HIG Button Danger */
+    .hig-btn-danger {
+        @apply hig-btn text-white;
+        background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%);
+        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.2);
+    }
+    
+    .hig-btn-danger:hover:not(:disabled) {
+        background: linear-gradient(135deg, #B91C1C 0%, #DC2626 100%);
+        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.3);
+    }
+    
+    /* HIG Badge */
+    .hig-badge {
+        @apply inline-flex items-center px-2 py-0.5 rounded-hig-full text-xs font-medium;
+    }
+    
+    .hig-badge-primary {
+        @apply hig-badge bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300;
+    }
+    
+    .hig-badge-success {
+        @apply hig-badge bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-300;
+    }
+    
+    .hig-badge-danger {
+        @apply hig-badge bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300;
+    }
+    
+    .hig-badge-neutral {
+        @apply hig-badge bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300;
+    }
+    
+    /* HIG Separator */
+    .hig-separator {
+        @apply h-px w-full bg-slate-200 dark:bg-white/10;
+    }
+    
+    .hig-separator-vertical {
+        @apply w-px h-full bg-slate-200 dark:bg-white/10;
+    }
+    
+    /* HIG Modal Overlay */
+    .hig-overlay {
+        @apply fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm;
+        animation: higFadeIn 0.15s ease-out forwards;
+    }
+    
+    /* HIG Modal Content */
+    .hig-modal {
+        @apply fixed bg-white dark:bg-navy-900 rounded-hig-xl overflow-hidden;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), 0 12px 24px rgba(0, 0, 0, 0.1);
+        animation: higScaleIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    
+    html.dark .hig-modal {
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 12px 24px rgba(0, 0, 0, 0.4);
+    }
+    
+    /* HIG Skeleton Loading */
+    .hig-skeleton {
+        @apply bg-slate-200 dark:bg-slate-700 rounded-hig-sm;
+        background-size: 200% 100%;
+        animation: higSkeleton 1.5s ease-in-out infinite;
+        background-image: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
+    }
+    
+    html.dark .hig-skeleton {
+        background-image: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+    }
+    
+    /* HIG Tooltip */
+    .hig-tooltip {
+        @apply px-3 py-2 bg-navy-900 dark:bg-slate-100 text-white dark:text-navy-900 text-sm rounded-hig-sm;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+        animation: higFadeIn 0.1s ease-out forwards;
+    }
+    
+    /* HIG Avatar */
+    .hig-avatar {
+        @apply inline-flex items-center justify-center rounded-full bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 font-medium overflow-hidden;
+    }
+    
+    .hig-avatar-sm {
+        @apply w-8 h-8 text-xs;
+    }
+    
+    .hig-avatar-md {
+        @apply w-10 h-10 text-sm;
+    }
+    
+    .hig-avatar-lg {
+        @apply w-12 h-12 text-base;
+    }
+    
+    .hig-avatar-xl {
+        @apply w-16 h-16 text-lg;
+    }
+    
+    /* HIG Tabs */
+    .hig-tabs {
+        @apply flex gap-1 p-1 bg-slate-100 dark:bg-navy-900 rounded-hig-lg;
+    }
+    
+    .hig-tab {
+        @apply px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 rounded-hig-md transition-all duration-hig-fast;
+    }
+    
+    .hig-tab:hover:not(.hig-tab-active) {
+        @apply text-navy-900 dark:text-white;
+    }
+    
+    .hig-tab-active {
+        @apply bg-white dark:bg-navy-800 text-navy-900 dark:text-white;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    
+    /* HIG Progress Bar */
+    .hig-progress {
+        @apply h-1.5 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden;
+    }
+    
+    .hig-progress-bar {
+        @apply h-full bg-primary-500 rounded-full transition-all duration-hig-slow ease-hig;
+    }
+    
+    /* HIG Spinner */
+    .hig-spinner {
+        @apply w-5 h-5 border-2 border-slate-200 dark:border-slate-700 border-t-primary-500 rounded-full;
+        animation: higSpin 0.8s linear infinite;
+    }
+    
+    .hig-spinner-sm {
+        @apply w-4 h-4;
+    }
+    
+    .hig-spinner-lg {
+        @apply w-8 h-8 border-3;
+    }
+    
+    /* Legacy glass components */
     .glass-panel {
         @apply bg-white/70 dark:bg-navy-900/60 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-sm dark:shadow-2xl;
     }
 
     .glass-card {
-        @apply bg-white/50 dark:bg-navy-800/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 transition-all duration-300 hover:border-brand/30 dark:hover:border-white/10 hover:shadow-glow;
+        @apply bg-white/40 dark:bg-navy-800/20 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 transition-all duration-500 hover:border-brand/40 dark:hover:border-white/10 hover:shadow-glow-lg hover:-translate-y-0.5;
     }
 
     /* ========================================

@@ -58,21 +58,22 @@ describe('ConnectorRegistry', () => {
         });
     });
 
-    describe('getCategories', () => {
+    describe('getAllCategories', () => {
         it('should return all categories', () => {
-            const categories = ConnectorRegistry.getCategories();
+            const categories = ConnectorRegistry.getAllCategories();
 
-            expect(Array.isArray(categories)).toBe(true);
-            expect(categories.length).toBeGreaterThan(0);
+            expect(typeof categories).toBe('object');
+            expect(Object.keys(categories).length).toBeGreaterThan(0);
         });
 
         it('should return categories with labels', () => {
-            const categories = ConnectorRegistry.getCategories();
+            const categories = ConnectorRegistry.getAllCategories();
 
-            categories.forEach(category => {
-                expect(category).toHaveProperty('key');
+            Object.entries(categories).forEach(([key, category]) => {
                 expect(category).toHaveProperty('label');
                 expect(category).toHaveProperty('description');
+                // The key is the object property name, not necessarily inside the object
+                expect(key).toBeDefined();
             });
         });
     });

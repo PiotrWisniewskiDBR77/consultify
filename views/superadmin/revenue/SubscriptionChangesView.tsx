@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Api } from '../../../services/api';
-import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/BaseCard';
 
 interface SubscriptionChange {
   id: string;
@@ -49,13 +49,13 @@ export const SubscriptionChangesView: React.FC = () => {
       const filters: any = {};
       if (statusFilter !== 'all') filters.status = statusFilter;
       if (typeFilter !== 'all') filters.change_type = typeFilter;
-      
+
       const [changesRes, statsRes] = await Promise.all([
         Api.getSubscriptionChanges(filters),
         Api.getSubscriptionChangeStats()
       ]);
-      
-      setChanges(changesRes.changes || []);
+
+      setChanges(changesRes || []);
       setStats(statsRes);
     } catch (err: any) {
       setError(err.message || 'Failed to load subscription changes');
@@ -297,4 +297,7 @@ export const SubscriptionChangesView: React.FC = () => {
 };
 
 export default SubscriptionChangesView;
+
+
+
 

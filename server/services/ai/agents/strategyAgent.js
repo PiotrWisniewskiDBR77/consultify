@@ -61,17 +61,17 @@ Communication style:
 
     async process(query, context) {
         const prompt = this.buildStrategyPrompt(query, context);
-        
+
         try {
             const response = await llmService.generateResponse({
                 prompt,
                 maxTokens: this.maxTokens,
                 temperature: this.temperature,
-                model: context.preferredModel || 'default'
+                model: await this.resolveModelConfig(context)
             });
 
             const analysis = this.parseResponse(response);
-            
+
             // Remember this interaction
             this.remember({
                 query,
@@ -97,10 +97,10 @@ Communication style:
 
     buildStrategyPrompt(query, context) {
         const basePrompt = this.buildPrompt(query, context);
-        
+
         // Add strategy-specific context
         let strategyContext = '';
-        
+
         if (context.assessment?.scores) {
             const scores = context.assessment.scores;
             strategyContext += `\nMATURITY ASSESSMENT:
@@ -108,18 +108,18 @@ Communication style:
 - Digital Capabilities: ${scores.digital || 'Not assessed'}
 - Innovation: ${scores.innovation || 'Not assessed'}`;
         }
-        
+
         if (context.initiatives?.length) {
             const strategicInitiatives = context.initiatives
                 .filter(i => i.category === 'strategic' || i.priority === 'high')
                 .slice(0, 5);
-            
+
             if (strategicInitiatives.length) {
                 strategyContext += `\nKEY STRATEGIC INITIATIVES:
 ${strategicInitiatives.map(i => `- ${i.name}: ${i.status || 'Unknown status'}`).join('\n')}`;
             }
         }
-        
+
         if (context.goals?.length) {
             strategyContext += `\nSTRATEGIC GOALS:
 ${context.goals.slice(0, 5).map(g => `- ${g.name}: ${g.progress || 0}% complete`).join('\n')}`;
@@ -154,14 +154,14 @@ FORMAT YOUR RESPONSE AS:
     parseResponse(response) {
         // Extract structured data from response
         const text = response.text || response;
-        
+
         // Simple parsing - in production, use more robust extraction
         const confidenceMatch = text.match(/Confidence:\s*(\d+)/i);
         const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) / 100 : 0.7;
 
         // Extract main insight (first substantial paragraph)
         const insightMatch = text.match(/## Strategic Assessment\s*([\s\S]*?)(?=##|$)/i);
-        const mainInsight = insightMatch 
+        const mainInsight = insightMatch
             ? insightMatch[1].trim().split('\n')[0]
             : 'Strategic analysis completed';
 
@@ -280,6 +280,9 @@ For each initiative provide:
 }
 
 module.exports = { StrategyAgent };
+
+
+
 
 
 

@@ -7,9 +7,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardWithHeader, Section } from '../../../components/Admin/shared/Card';
-import { 
+import {
     Monitor, Smartphone, Globe, Shield, ShieldCheck, ShieldX,
-    Clock, Trash2, LogOut, RefreshCw, Loader2, AlertTriangle
+    Clock, Trash2, LogOut, RefreshCw, Loader2, AlertTriangle, Users
 } from 'lucide-react';
 import { Api } from '../../../services/api';
 
@@ -83,7 +83,7 @@ const AdminSessionsView: React.FC = () => {
         if (!confirm('Are you sure you want to revoke all admin sessions? This will log out all admins.')) {
             return;
         }
-        
+
         try {
             setActionLoading('all');
             await Api.revokeAllAdminSessions(undefined, true);
@@ -134,7 +134,7 @@ const AdminSessionsView: React.FC = () => {
                         </div>
                     </div>
                 </Card>
-                
+
                 <Card variant="bordered" className="p-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-emerald-500/10 rounded-lg">
@@ -146,7 +146,7 @@ const AdminSessionsView: React.FC = () => {
                         </div>
                     </div>
                 </Card>
-                
+
                 <Card variant="bordered" className="p-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-violet-500/10 rounded-lg">
@@ -158,7 +158,7 @@ const AdminSessionsView: React.FC = () => {
                         </div>
                     </div>
                 </Card>
-                
+
                 <Card variant="bordered" className="p-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-amber-500/10 rounded-lg">
@@ -178,7 +178,7 @@ const AdminSessionsView: React.FC = () => {
                     <div className="flex items-center gap-2 text-red-400">
                         <AlertTriangle className="w-5 h-5" />
                         <span>{error}</span>
-                        <button 
+                        <button
                             onClick={() => setError(null)}
                             className="ml-auto text-sm hover:text-red-300"
                         >
@@ -215,8 +215,8 @@ const AdminSessionsView: React.FC = () => {
             </div>
 
             {/* Sessions Table */}
-            <CardWithHeader 
-                title="Admin Sessions" 
+            <CardWithHeader
+                title="Admin Sessions"
                 subtitle={`${sessions.length} active sessions`}
             >
                 <div className="overflow-x-auto">
@@ -241,8 +241,8 @@ const AdminSessionsView: React.FC = () => {
                                 </tr>
                             ) : (
                                 sessions.map((session) => (
-                                    <tr 
-                                        key={session.id} 
+                                    <tr
+                                        key={session.id}
                                         className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors"
                                     >
                                         <td className="py-3 px-4">
@@ -316,15 +316,8 @@ const AdminSessionsView: React.FC = () => {
     );
 };
 
-// Missing import
-const Users = ({ className }: { className?: string }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-);
-
 export default AdminSessionsView;
+
+
+
 

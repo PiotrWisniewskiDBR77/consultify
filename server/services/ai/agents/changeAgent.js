@@ -68,17 +68,17 @@ Communication style:
 
     async process(query, context) {
         const prompt = this.buildChangePrompt(query, context);
-        
+
         try {
             const response = await llmService.generateResponse({
                 prompt,
                 maxTokens: this.maxTokens,
                 temperature: 0.7,
-                model: context.preferredModel || 'default'
+                model: await this.resolveModelConfig(context)
             });
 
             const analysis = this.parseResponse(response);
-            
+
             // Add ADKAR assessment if relevant
             if (context.changeReadiness) {
                 analysis.adkarScores = this.assessADKAR(context.changeReadiness);
@@ -96,7 +96,7 @@ Communication style:
                 domain: this.domain,
                 ...analysis,
                 metadata: {
-                    model: context.preferredModel || 'default',
+                    model: await this.resolveModelConfig(context),
                     timestamp: new Date().toISOString()
                 }
             };
@@ -108,14 +108,14 @@ Communication style:
 
     buildChangePrompt(query, context) {
         const basePrompt = this.buildPrompt(query, context);
-        
+
         let changeContext = '';
-        
+
         if (context.stakeholders?.length) {
             changeContext += `\nKEY STAKEHOLDERS:
 ${context.stakeholders.slice(0, 5).map(s => `- ${s.name} (${s.role}): ${s.sentiment || 'Unknown'} sentiment`).join('\n')}`;
         }
-        
+
         if (context.changeReadiness) {
             const cr = context.changeReadiness;
             changeContext += `\nCHANGE READINESS:
@@ -125,7 +125,7 @@ ${context.stakeholders.slice(0, 5).map(s => `- ${s.name} (${s.role}): ${s.sentim
 - Ability: ${cr.ability || 0}/5
 - Reinforcement: ${cr.reinforcement || 0}/5`;
         }
-        
+
         if (context.initiatives?.length) {
             const impactedTeams = new Set();
             context.initiatives.forEach(i => {
@@ -133,7 +133,7 @@ ${context.stakeholders.slice(0, 5).map(s => `- ${s.name} (${s.role}): ${s.sentim
                     i.impactedTeams.forEach(t => impactedTeams.add(t));
                 }
             });
-            
+
             if (impactedTeams.size > 0) {
                 changeContext += `\nIMPACTED TEAMS: ${Array.from(impactedTeams).join(', ')}`;
             }
@@ -183,7 +183,7 @@ FORMAT YOUR RESPONSE AS:
 
     parseResponse(response) {
         const text = response.text || response;
-        
+
         const confidenceMatch = text.match(/Confidence:\s*(\d+)/i);
         const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) / 100 : 0.7;
 
@@ -192,13 +192,13 @@ FORMAT YOUR RESPONSE AS:
 
         // Extract main insight
         const insightMatch = text.match(/## Change Impact Assessment\s*([\s\S]*?)(?=##|$)/i);
-        const mainInsight = insightMatch 
+        const mainInsight = insightMatch
             ? insightMatch[1].trim().split('\n')[0]
             : 'Change management analysis completed';
 
         // Extract stakeholder strategy
         const stakeholderMatch = text.match(/## Stakeholder Strategy\s*([\s\S]*?)(?=##|$)/i);
-        const stakeholderStrategy = stakeholderMatch 
+        const stakeholderStrategy = stakeholderMatch
             ? stakeholderMatch[1].trim()
             : '';
 
@@ -235,7 +235,7 @@ FORMAT YOUR RESPONSE AS:
         };
 
         const components = ['awareness', 'desire', 'knowledge', 'ability', 'reinforcement'];
-        
+
         for (const component of components) {
             const regex = new RegExp(`${component}:\\s*(.*)`, 'i');
             const match = text.match(regex);
@@ -344,6 +344,9 @@ Provide:
 }
 
 module.exports = { ChangeAgent };
+
+
+
 
 
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '../../../components/SuperAdmin/Card';
+import { Card } from '../../../components/ui/BaseCard';
 import {
     Plus,
     FileText,
@@ -65,7 +65,7 @@ const SavedReportsView: React.FC = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showScheduleModal, setShowScheduleModal] = useState(false);
     const [filterType, setFilterType] = useState<string>('');
-    
+
     const [newReport, setNewReport] = useState({
         name: '',
         description: '',
@@ -260,11 +260,10 @@ const SavedReportsView: React.FC = () => {
                                         <div
                                             key={report.id}
                                             onClick={() => handleSelectReport(report)}
-                                            className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                                                selectedReport?.id === report.id
-                                                    ? 'bg-blue-600/20 border border-blue-500'
-                                                    : 'bg-gray-700/50 hover:bg-gray-700'
-                                            }`}
+                                            className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedReport?.id === report.id
+                                                ? 'bg-blue-600/20 border border-blue-500'
+                                                : 'bg-gray-700/50 hover:bg-gray-700'
+                                                }`}
                                         >
                                             <div className="flex items-start gap-3">
                                                 <div className="p-2 bg-gray-600 rounded-lg">
@@ -276,7 +275,9 @@ const SavedReportsView: React.FC = () => {
                                                             {report.name}
                                                         </span>
                                                         {report.schedule_json && (
-                                                            <Clock className="w-3 h-3 text-green-400" title="Scheduled" />
+                                                            <span title="Scheduled">
+                                                                <Clock className="w-3 h-3 text-green-400" />
+                                                            </span>
                                                         )}
                                                     </div>
                                                     <p className="text-gray-400 text-xs mt-1">
@@ -479,11 +480,10 @@ const SavedReportsView: React.FC = () => {
                                                         {formatDate(exec.executed_at)}
                                                     </span>
                                                 </div>
-                                                <span className={`text-xs px-2 py-1 rounded ${
-                                                    exec.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                                                <span className={`text-xs px-2 py-1 rounded ${exec.status === 'completed' ? 'bg-green-500/20 text-green-400' :
                                                     exec.status === 'failed' ? 'bg-red-500/20 text-red-400' :
-                                                    'bg-blue-500/20 text-blue-400'
-                                                }`}>
+                                                        'bg-blue-500/20 text-blue-400'
+                                                    }`}>
                                                     {exec.status}
                                                 </span>
                                             </div>
@@ -547,11 +547,10 @@ const SavedReportsView: React.FC = () => {
                                         <button
                                             key={rt.id}
                                             onClick={() => setNewReport({ ...newReport, reportType: rt.id })}
-                                            className={`p-3 rounded-lg flex items-center gap-2 transition-colors ${
-                                                newReport.reportType === rt.id
-                                                    ? 'bg-blue-600/20 border border-blue-500'
-                                                    : 'bg-gray-700 hover:bg-gray-600'
-                                            }`}
+                                            className={`p-3 rounded-lg flex items-center gap-2 transition-colors ${newReport.reportType === rt.id
+                                                ? 'bg-blue-600/20 border border-blue-500'
+                                                : 'bg-gray-700 hover:bg-gray-600'
+                                                }`}
                                         >
                                             <rt.icon className="w-4 h-4 text-blue-400" />
                                             <span className="text-sm text-white">{rt.label}</span>
@@ -645,4 +644,7 @@ const SavedReportsView: React.FC = () => {
 };
 
 export default SavedReportsView;
+
+
+
 

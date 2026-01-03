@@ -112,6 +112,35 @@ router.post('/:id/avatar', upload.single('avatar'), (req, res) => {
     });
 });
 
+// GET SINGLE USER
+router.get('/:id', (req, res) => {
+    const { id } = req.params;
+    const organizationId = req.user.organizationId;
+
+    const sql = 'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, license_plan_id, ai_config, is_owner, phone, linkedin_id FROM users WHERE id = ? AND organization_id = ?';
+
+    db.get(sql, [id, organizationId], (err, u) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!u) return res.status(404).json({ error: 'User not found' });
+
+        res.json({
+            id: u.id,
+            firstName: u.first_name,
+            lastName: u.last_name,
+            email: u.email,
+            role: u.role,
+            status: u.status,
+            avatarUrl: u.avatar_url,
+            lastLogin: u.last_login,
+            aiConfig: u.ai_config ? JSON.parse(u.ai_config) : {},
+            licensePlanId: u.license_plan_id,
+            isOwner: u.is_owner === 1 || u.is_owner === true,
+            phone: u.phone,
+            linkedinId: u.linkedin_id
+        });
+    });
+});
+
 // ADD USER (To Organization)
 router.post('/', (req, res) => {
     const { firstName, lastName, email, role, status, password } = req.body;

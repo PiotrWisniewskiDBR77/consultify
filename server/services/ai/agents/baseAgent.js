@@ -20,11 +20,14 @@ class BaseAgent {
         this.confidenceThreshold = config.confidenceThreshold || 0.7;
         this.maxTokens = config.maxTokens || 2000;
         this.temperature = config.temperature || 0.7;
-        
+
         // Debate protocol settings
         this.canInitiateDebate = config.canInitiateDebate !== false;
         this.debateWeight = config.debateWeight || 1.0;
-        
+
+        // Efficiency settings
+        this.costConscious = config.costConscious || false;
+
         // Memory for context across interactions
         this.shortTermMemory = [];
         this.maxMemoryItems = config.maxMemoryItems || 10;
@@ -39,23 +42,23 @@ class BaseAgent {
     async checkRelevance(query, context) {
         const keywords = this.getKeywords();
         const queryLower = query.toLowerCase();
-        
+
         let matchCount = 0;
         const matchedKeywords = [];
-        
+
         for (const keyword of keywords) {
             if (queryLower.includes(keyword.toLowerCase())) {
                 matchCount++;
                 matchedKeywords.push(keyword);
             }
         }
-        
+
         const confidence = Math.min(matchCount / Math.max(keywords.length * 0.3, 1), 1);
-        
+
         return {
             isRelevant: confidence >= 0.3,
             confidence,
-            reason: matchedKeywords.length > 0 
+            reason: matchedKeywords.length > 0
                 ? `Matched keywords: ${matchedKeywords.join(', ')}`
                 : 'No direct keyword matches'
         };
@@ -87,7 +90,7 @@ class BaseAgent {
      */
     buildPrompt(query, context) {
         const contextSummary = this.summarizeContext(context);
-        
+
         return `${this.systemPrompt}
 
 DOMAIN EXPERTISE: ${this.domain}
@@ -109,30 +112,45 @@ Respond in a structured, actionable format.`;
     }
 
     /**
+     * Resolve model configuration, respecting cost-conscious settings
+     */
+    async resolveModelConfig(context) {
+        if (context.preferredModel && context.preferredModel !== 'default') {
+            return context.preferredModel;
+        }
+
+        if (this.costConscious) {
+            return 'budget';
+        }
+
+        return 'default';
+    }
+
+    /**
      * Summarize context for prompt injection
      * Override for domain-specific context handling
      */
     summarizeContext(context) {
         const parts = [];
-        
+
         if (context.project) {
-            parts.push(`Project: ${context.project.name || 'Unknown'}`);
-            parts.push(`Status: ${context.project.status || 'Unknown'}`);
+            parts.push(`Project: ${context.project.name || 'Unknown'} `);
+            parts.push(`Status: ${context.project.status || 'Unknown'} `);
         }
-        
+
         if (context.organization) {
-            parts.push(`Organization: ${context.organization.name || 'Unknown'}`);
-            parts.push(`Industry: ${context.organization.industry || 'Unknown'}`);
+            parts.push(`Organization: ${context.organization.name || 'Unknown'} `);
+            parts.push(`Industry: ${context.organization.industry || 'Unknown'} `);
         }
-        
+
         if (context.assessment) {
-            parts.push(`Assessment Score: ${context.assessment.overallScore || 'Not assessed'}`);
+            parts.push(`Assessment Score: ${context.assessment.overallScore || 'Not assessed'} `);
         }
-        
+
         if (context.initiatives?.length) {
-            parts.push(`Active Initiatives: ${context.initiatives.length}`);
+            parts.push(`Active Initiatives: ${context.initiatives.length} `);
         }
-        
+
         return parts.join('\n') || 'No specific context available';
     }
 
@@ -145,15 +163,15 @@ Respond in a structured, actionable format.`;
      */
     async contributeToDebate(topic, otherPerspectives, context) {
         const myInitialView = await this.process(topic, context);
-        
+
         // Analyze other perspectives
         const agreements = [];
         const disagreements = [];
         const additions = [];
-        
+
         for (const perspective of otherPerspectives) {
             if (perspective.agentId === this.id) continue;
-            
+
             // Simple heuristic - in production, use LLM for nuanced analysis
             if (perspective.confidence > 0.8) {
                 agreements.push({
@@ -164,11 +182,11 @@ Respond in a structured, actionable format.`;
                 disagreements.push({
                     agentId: perspective.agentId,
                     point: perspective.mainInsight,
-                    concern: `Low confidence (${perspective.confidence}) suggests uncertainty`
+                    concern: `Low confidence(${perspective.confidence}) suggests uncertainty`
                 });
             }
         }
-        
+
         return {
             agentId: this.id,
             agentName: this.name,
@@ -191,7 +209,7 @@ Respond in a structured, actionable format.`;
             ...item,
             timestamp: new Date().toISOString()
         });
-        
+
         if (this.shortTermMemory.length > this.maxMemoryItems) {
             this.shortTermMemory.pop();
         }
@@ -228,6 +246,9 @@ Respond in a structured, actionable format.`;
 }
 
 module.exports = { BaseAgent };
+
+
+
 
 
 

@@ -379,3 +379,6 @@ Access is controlled by role-based permissions:
 - **Support** - Contact support@consultify.app
 - **Community** - Join our Slack channel
 
+
+
+

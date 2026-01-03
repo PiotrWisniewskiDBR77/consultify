@@ -82,3 +82,6 @@ ON consultant_access_codes(code);
 CREATE INDEX IF NOT EXISTS idx_consultant_access_codes_org 
 ON consultant_access_codes(organization_id);
 
+
+
+

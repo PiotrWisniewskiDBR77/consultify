@@ -36,9 +36,13 @@ export const SecurityEventsView: React.FC = () => {
     };
 
     const handleResolve = async (eventId: string) => {
-        // Note: This would need a resolve endpoint
-        toast.success('Event resolved');
-        fetchEvents();
+        try {
+            await Api.resolveSecurityEvent(eventId);
+            toast.success('Event resolved');
+            fetchEvents();
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to resolve event');
+        }
     };
 
     const getSeverityColor = (severity: string) => {
@@ -161,4 +165,7 @@ export const SecurityEventsView: React.FC = () => {
         </div>
     );
 };
+
+
+
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Api } from '../../../services/api';
-import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/BaseCard';
 
 interface PaymentMethod {
   id: string;
@@ -52,11 +52,11 @@ export const PaymentMethodsView: React.FC = () => {
       setLoading(true);
       const [methodsRes, failuresRes, statsRes] = await Promise.all([
         Api.getPaymentMethodsAdvanced(),
-        Api.getPaymentFailuresAdvanced(),
-        Api.getPaymentFailureStatsAdvanced()
+        Api.getPaymentFailures(),
+        Api.getPaymentFailureStats()
       ]);
-      setMethods(methodsRes.methods || []);
-      setFailures(failuresRes.failures || []);
+      setMethods(methodsRes || []);
+      setFailures(failuresRes || []);
       setStats(statsRes);
     } catch (err: any) {
       setError(err.message || 'Failed to load payment data');
@@ -67,7 +67,7 @@ export const PaymentMethodsView: React.FC = () => {
 
   const handleResolveFailure = async (id: string) => {
     try {
-      await Api.resolvePaymentFailureAdvanced(id);
+      await Api.retryPayment(id);
       fetchData();
     } catch (err: any) {
       setError(err.message || 'Failed to resolve payment failure');
@@ -193,21 +193,19 @@ export const PaymentMethodsView: React.FC = () => {
       <div className="flex gap-2 border-b border-gray-700">
         <button
           onClick={() => setActiveTab('methods')}
-          className={`px-4 py-2 -mb-px border-b-2 transition-colors ${
-            activeTab === 'methods'
-              ? 'border-indigo-500 text-white'
-              : 'border-transparent text-gray-400 hover:text-white'
-          }`}
+          className={`px-4 py-2 -mb-px border-b-2 transition-colors ${activeTab === 'methods'
+            ? 'border-indigo-500 text-white'
+            : 'border-transparent text-gray-400 hover:text-white'
+            }`}
         >
           Payment Methods ({methods.length})
         </button>
         <button
           onClick={() => setActiveTab('failures')}
-          className={`px-4 py-2 -mb-px border-b-2 transition-colors ${
-            activeTab === 'failures'
-              ? 'border-indigo-500 text-white'
-              : 'border-transparent text-gray-400 hover:text-white'
-          }`}
+          className={`px-4 py-2 -mb-px border-b-2 transition-colors ${activeTab === 'failures'
+            ? 'border-indigo-500 text-white'
+            : 'border-transparent text-gray-400 hover:text-white'
+            }`}
         >
           Payment Failures ({failures.filter(f => f.status === 'pending' || f.status === 'retrying').length})
         </button>
@@ -278,7 +276,7 @@ export const PaymentMethodsView: React.FC = () => {
                   </div>
                 );
               })}
-              
+
               {methods.length === 0 && (
                 <div className="text-center py-8 text-gray-400">
                   No payment methods found
@@ -300,11 +298,10 @@ export const PaymentMethodsView: React.FC = () => {
               {failures.map((failure) => (
                 <div
                   key={failure.id}
-                  className={`p-4 rounded-lg border ${
-                    failure.status === 'pending' || failure.status === 'retrying'
-                      ? 'bg-red-900/20 border-red-800'
-                      : 'bg-gray-900/50 border-gray-700'
-                  }`}
+                  className={`p-4 rounded-lg border ${failure.status === 'pending' || failure.status === 'retrying'
+                    ? 'bg-red-900/20 border-red-800'
+                    : 'bg-gray-900/50 border-gray-700'
+                    }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -345,7 +342,7 @@ export const PaymentMethodsView: React.FC = () => {
                   </div>
                 </div>
               ))}
-              
+
               {failures.length === 0 && (
                 <div className="text-center py-8 text-gray-400">
                   No payment failures recorded
@@ -360,4 +357,7 @@ export const PaymentMethodsView: React.FC = () => {
 };
 
 export default PaymentMethodsView;
+
+
+
 

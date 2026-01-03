@@ -9,6 +9,19 @@ const AIRoleGuard = require('./aiRoleGuard');
 const RegulatoryModeGuard = require('./regulatoryModeGuard');
 const ApprovalPatternService = require('./approvalPatternService');
 
+// Lazy-load NotificationService to avoid circular dependencies
+let NotificationService = null;
+const getNotificationService = () => {
+    if (!NotificationService) {
+        try {
+            NotificationService = require('./notificationService');
+        } catch (e) {
+            console.warn('[AIActionExecutor] NotificationService not available');
+        }
+    }
+    return NotificationService;
+};
+
 // Dependency injection container (for deterministic unit tests)
 const deps = {
     db,
@@ -16,7 +29,8 @@ const deps = {
     AIPolicyEngine,
     AIRoleGuard,
     RegulatoryModeGuard,
-    ApprovalPatternService
+    ApprovalPatternService,
+    getNotificationService
 };
 
 const ACTION_TYPES = {
@@ -170,6 +184,15 @@ const AIActionExecutor = {
                     if (autoDecided) {
                         result.autoApproved = true;
                         result.patternInfo = patternInfo;
+                    }
+                    
+                    // Send notification for pending actions
+                    if (requiresApproval && finalStatus === ACTION_STATUS.PENDING) {
+                        AIActionExecutor._sendPendingActionNotification(
+                            id, userId, organizationId, projectId, actionType, payload
+                        ).catch(err => {
+                            console.warn('[AIActionExecutor] Failed to send notification:', err.message);
+                        });
                     }
 
                     resolve(result);
@@ -560,6 +583,76 @@ const AIActionExecutor = {
         });
 
         return { initiativeId, name, created: true };
+    },
+
+    /**
+     * Send notification for pending AI action requiring approval
+     * @private
+     */
+    _sendPendingActionNotification: async (actionId, userId, organizationId, projectId, actionType, payload) => {
+        const NotificationSvc = deps.getNotificationService();
+        if (!NotificationSvc) return;
+
+        // Get action type description
+        const actionDescriptions = {
+            [ACTION_TYPES.CREATE_DRAFT_TASK]: 'create a new task',
+            [ACTION_TYPES.CREATE_DRAFT_INITIATIVE]: 'create a new initiative',
+            [ACTION_TYPES.SUGGEST_ROADMAP_CHANGE]: 'suggest a roadmap change',
+            [ACTION_TYPES.GENERATE_REPORT]: 'generate a report',
+            [ACTION_TYPES.PREPARE_DECISION_SUMMARY]: 'prepare a decision summary',
+            [ACTION_TYPES.ANALYZE_RISKS]: 'analyze risks'
+        };
+
+        const actionDesc = actionDescriptions[actionType] || actionType.toLowerCase().replace(/_/g, ' ');
+        const draftName = payload.content?.title || payload.content?.name || 'unnamed item';
+
+        try {
+            await NotificationSvc.create({
+                userId: userId,
+                organizationId: organizationId,
+                projectId: projectId,
+                type: 'AI_ACTION_PENDING',
+                severity: 'INFO',
+                title: 'AI Action Awaiting Your Approval',
+                message: `AI wants to ${actionDesc}: "${draftName}". Review and approve or reject this action.`,
+                relatedObjectType: 'ai_action',
+                relatedObjectId: actionId,
+                isActionable: true,
+                actionUrl: `/ai/actions/${actionId}`
+            });
+
+            console.log(`[AIActionExecutor] Notification sent for pending action: ${actionId}`);
+        } catch (err) {
+            console.warn('[AIActionExecutor] Failed to create notification:', err.message);
+        }
+    },
+
+    /**
+     * Send notification when AI action is auto-approved/rejected by pattern
+     * @private
+     */
+    _sendAutoDecisionNotification: async (actionId, userId, organizationId, decision, patternInfo) => {
+        const NotificationSvc = deps.getNotificationService();
+        if (!NotificationSvc) return;
+
+        const isApproval = decision === 'APPROVED';
+
+        try {
+            await NotificationSvc.create({
+                userId: userId,
+                organizationId: organizationId,
+                type: isApproval ? 'AI_ACTION_AUTO_APPROVED' : 'AI_ACTION_AUTO_REJECTED',
+                severity: 'INFO',
+                title: isApproval ? 'AI Action Auto-Approved' : 'AI Action Auto-Rejected',
+                message: isApproval 
+                    ? `An AI action was automatically approved based on your past preferences (${patternInfo.decisionCount} similar approvals).`
+                    : `An AI action was automatically rejected based on your past preferences (${patternInfo.decisionCount} similar rejections).`,
+                relatedObjectType: 'ai_action',
+                relatedObjectId: actionId
+            });
+        } catch (err) {
+            console.warn('[AIActionExecutor] Failed to create auto-decision notification:', err.message);
+        }
     },
 
     _logAudit: async (actionId, userId, decision, feedback = null) => {

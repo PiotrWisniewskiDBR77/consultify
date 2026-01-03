@@ -75,3 +75,6 @@ describe('HelpPanel Component', () => {
 
 
 
+
+
+

@@ -6,14 +6,20 @@
 // Dependency injection container (for deterministic unit tests)
 const deps = {
     db: require('../database'),
-    uuidv4: require('uuid').v4
+    uuidv4: require('uuid').v4,
+    stripe: null,
+    // Internal functions for deterministic testing
+    getPlanById: null,
+    getOrganizationBilling: null,
+    upsertOrgBilling: null,
+    getOrCreateStripeCustomer: null,
+    calculateSeatCost: null
 };
 
 // Stripe will be initialized when keys are configured
-let stripe = null;
 try {
     if (process.env.STRIPE_SECRET_KEY) {
-        stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        deps.stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     }
 } catch (e) {
     console.log('Stripe not initialized - API key not configured');
@@ -25,6 +31,13 @@ try {
 function setDependencies(newDeps = {}) {
     Object.assign(deps, newDeps);
 }
+
+// Initialize internal deps
+deps.getPlanById = getPlanById;
+deps.getOrganizationBilling = getOrganizationBilling;
+deps.upsertOrgBilling = upsertOrgBilling;
+deps.getOrCreateStripeCustomer = getOrCreateStripeCustomer;
+deps.calculateSeatCost = calculateSeatCost;
 
 /**
  * Get all subscription plans
@@ -193,7 +206,7 @@ function getOrganizationBilling(orgId) {
 /**
  * Create or update organization billing record
  */
-function upsertOrganizationBilling(orgId, billingData) {
+async function upsertOrgBilling(orgId, billingData) {
     const id = `billing-${deps.uuidv4()}`;
     return new Promise((resolve, reject) => {
         deps.db.run(
@@ -220,24 +233,23 @@ function upsertOrganizationBilling(orgId, billingData) {
  * Create Stripe customer if not exists
  */
 async function getOrCreateStripeCustomer(orgId, email, orgName) {
-    if (!stripe) {
+    if (!deps.stripe) {
         console.warn('Stripe not configured, returning mock customer');
         return { id: `mock_cus_${orgId}`, email };
     }
 
-    const billing = await getOrganizationBilling(orgId);
+    const billing = await deps.getOrganizationBilling(orgId);
 
     if (billing?.stripe_customer_id) {
-        return stripe.customers.retrieve(billing.stripe_customer_id);
+        return deps.stripe.customers.retrieve(billing.stripe_customer_id);
     }
 
-    const customer = await stripe.customers.create({
+    const customer = await deps.stripe.customers.create({
         email,
         name: orgName,
         metadata: { organization_id: orgId }
     });
-
-    await upsertOrganizationBilling(orgId, { stripe_customer_id: customer.id });
+    await deps.upsertOrgBilling(orgId, { stripe_customer_id: customer.id });
 
     return customer;
 }
@@ -246,34 +258,34 @@ async function getOrCreateStripeCustomer(orgId, email, orgName) {
  * Create subscription for organization
  */
 async function createSubscription(orgId, planId, paymentMethodId, email, orgName) {
-    const plan = await getPlanById(planId);
+    const plan = await deps.getPlanById(planId);
     if (!plan) throw new Error('Invalid plan');
 
-    if (!stripe) {
+    if (!deps.stripe) {
         // Simulate subscription for development/test environments (Stripe key missing)
-        await upsertOrganizationBilling(orgId, {
+        await deps.upsertOrgBilling(orgId, {
             subscription_plan_id: planId,
             status: 'active'
         });
         return { id: `mock_sub_${orgId}`, status: 'active', plan };
     }
 
-    const customer = await getOrCreateStripeCustomer(orgId, email, orgName);
+    const customer = await deps.getOrCreateStripeCustomer(orgId, email, orgName);
 
     // Attach payment method
-    await stripe.paymentMethods.attach(paymentMethodId, { customer: customer.id });
-    await stripe.customers.update(customer.id, {
+    await deps.stripe.paymentMethods.attach(paymentMethodId, { customer: customer.id });
+    await deps.stripe.customers.update(customer.id, {
         invoice_settings: { default_payment_method: paymentMethodId }
     });
 
     // Create subscription
-    const subscription = await stripe.subscriptions.create({
+    const subscription = await deps.stripe.subscriptions.create({
         customer: customer.id,
         items: [{ price: plan.stripe_price_id }],
         expand: ['latest_invoice.payment_intent']
     });
 
-    await upsertOrganizationBilling(orgId, {
+    await deps.upsertOrgBilling(orgId, {
         subscription_plan_id: planId,
         stripe_subscription_id: subscription.id,
         status: subscription.status,
@@ -288,21 +300,21 @@ async function createSubscription(orgId, planId, paymentMethodId, email, orgName
  * Cancel subscription
  */
 async function cancelSubscription(orgId) {
-    const billing = await getOrganizationBilling(orgId);
+    const billing = await deps.getOrganizationBilling(orgId);
     if (!billing?.stripe_subscription_id) {
         throw new Error('No active subscription');
     }
 
-    if (!stripe) {
-        await upsertOrganizationBilling(orgId, { status: 'canceled' });
+    if (!deps.stripe) {
+        await deps.upsertOrgBilling(orgId, { status: 'canceled' });
         return { status: 'canceled' };
     }
 
-    const subscription = await stripe.subscriptions.update(billing.stripe_subscription_id, {
+    const subscription = await deps.stripe.subscriptions.update(billing.stripe_subscription_id, {
         cancel_at_period_end: true
     });
 
-    await upsertOrganizationBilling(orgId, { status: 'canceling' });
+    await deps.upsertOrgBilling(orgId, { status: 'canceling' });
 
     return subscription;
 }
@@ -311,19 +323,19 @@ async function cancelSubscription(orgId) {
  * Change subscription plan
  */
 async function changePlan(orgId, newPlanId) {
-    const billing = await getOrganizationBilling(orgId);
-    const newPlan = await getPlanById(newPlanId);
+    const billing = await deps.getOrganizationBilling(orgId);
+    const newPlan = await deps.getPlanById(newPlanId);
 
     if (!newPlan) throw new Error('Invalid plan');
 
-    if (!stripe || !billing?.stripe_subscription_id) {
-        await upsertOrganizationBilling(orgId, { subscription_plan_id: newPlanId });
+    if (!deps.stripe || !billing?.stripe_subscription_id) {
+        await deps.upsertOrgBilling(orgId, { subscription_plan_id: newPlanId });
         return { status: 'updated', plan: newPlan };
     }
 
-    const subscription = await stripe.subscriptions.retrieve(billing.stripe_subscription_id);
+    const subscription = await deps.stripe.subscriptions.retrieve(billing.stripe_subscription_id);
 
-    await stripe.subscriptions.update(billing.stripe_subscription_id, {
+    await deps.stripe.subscriptions.update(billing.stripe_subscription_id, {
         items: [{
             id: subscription.items.data[0].id,
             price: newPlan.stripe_price_id
@@ -331,7 +343,7 @@ async function changePlan(orgId, newPlanId) {
         proration_behavior: 'create_prorations'
     });
 
-    await upsertOrganizationBilling(orgId, { subscription_plan_id: newPlanId });
+    await deps.upsertOrgBilling(orgId, { subscription_plan_id: newPlanId });
 
     return { status: 'updated', plan: newPlan };
 }
@@ -453,7 +465,7 @@ function getPaymentMethod(paymentMethodId) {
  */
 async function addPaymentMethod(orgId, stripePaymentMethodId) {
     const id = `pm-${deps.uuidv4()}`;
-    
+
     // Get Stripe payment method details
     let pmDetails = {
         type: 'card',
@@ -464,9 +476,9 @@ async function addPaymentMethod(orgId, stripePaymentMethodId) {
         holder_name: null
     };
 
-    if (stripe) {
+    if (deps.stripe) {
         try {
-            const pm = await stripe.paymentMethods.retrieve(stripePaymentMethodId);
+            const pm = await deps.stripe.paymentMethods.retrieve(stripePaymentMethodId);
             pmDetails = {
                 type: pm.type,
                 brand: pm.card?.brand || 'unknown',
@@ -477,9 +489,9 @@ async function addPaymentMethod(orgId, stripePaymentMethodId) {
             };
 
             // Attach to customer if we have one
-            const billing = await getOrganizationBilling(orgId);
+            const billing = await deps.getOrganizationBilling(orgId);
             if (billing?.stripe_customer_id) {
-                await stripe.paymentMethods.attach(stripePaymentMethodId, {
+                await deps.stripe.paymentMethods.attach(stripePaymentMethodId, {
                     customer: billing.stripe_customer_id
                 });
             }
@@ -496,8 +508,8 @@ async function addPaymentMethod(orgId, stripePaymentMethodId) {
         deps.db.run(
             `INSERT INTO payment_methods (id, organization_id, stripe_payment_method_id, type, brand, last4, exp_month, exp_year, holder_name, is_default)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [id, orgId, stripePaymentMethodId, pmDetails.type, pmDetails.brand, pmDetails.last4, 
-             pmDetails.exp_month, pmDetails.exp_year, pmDetails.holder_name, isDefault],
+            [id, orgId, stripePaymentMethodId, pmDetails.type, pmDetails.brand, pmDetails.last4,
+                pmDetails.exp_month, pmDetails.exp_year, pmDetails.holder_name, isDefault],
             function (err) {
                 if (err) reject(err);
                 else resolve({ id, organization_id: orgId, stripe_payment_method_id: stripePaymentMethodId, ...pmDetails, is_default: isDefault });
@@ -516,9 +528,9 @@ async function removePaymentMethod(paymentMethodId, orgId) {
     }
 
     // Detach from Stripe
-    if (stripe && pm.stripe_payment_method_id) {
+    if (deps.stripe && pm.stripe_payment_method_id) {
         try {
-            await stripe.paymentMethods.detach(pm.stripe_payment_method_id);
+            await deps.stripe.paymentMethods.detach(pm.stripe_payment_method_id);
         } catch (e) {
             console.warn('Could not detach payment method from Stripe:', e.message);
         }
@@ -546,11 +558,11 @@ async function setDefaultPaymentMethod(paymentMethodId, orgId) {
     }
 
     // Update Stripe customer default payment method
-    if (stripe && pm.stripe_payment_method_id) {
+    if (deps.stripe && pm.stripe_payment_method_id) {
         try {
-            const billing = await getOrganizationBilling(orgId);
+            const billing = await deps.getOrganizationBilling(orgId);
             if (billing?.stripe_customer_id) {
-                await stripe.customers.update(billing.stripe_customer_id, {
+                await deps.stripe.customers.update(billing.stripe_customer_id, {
                     invoice_settings: { default_payment_method: pm.stripe_payment_method_id }
                 });
             }
@@ -566,7 +578,7 @@ async function setDefaultPaymentMethod(paymentMethodId, orgId) {
             [orgId],
             (err) => {
                 if (err) return reject(err);
-                
+
                 // Then set the new default
                 deps.db.run(
                     'UPDATE payment_methods SET is_default = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
@@ -585,9 +597,9 @@ async function setDefaultPaymentMethod(paymentMethodId, orgId) {
  * Create a Stripe SetupIntent for adding a new payment method
  */
 async function createSetupIntent(orgId, email, orgName) {
-    if (!stripe) {
+    if (!deps.stripe) {
         // Return mock for development
-        return { 
+        return {
             clientSecret: 'mock_secret_' + deps.uuidv4(),
             id: 'mock_seti_' + deps.uuidv4()
         };
@@ -595,7 +607,7 @@ async function createSetupIntent(orgId, email, orgName) {
 
     const customer = await getOrCreateStripeCustomer(orgId, email, orgName);
 
-    const setupIntent = await stripe.setupIntents.create({
+    const setupIntent = await deps.stripe.setupIntents.create({
         customer: customer.id,
         payment_method_types: ['card'],
         metadata: { organization_id: orgId }
@@ -660,17 +672,17 @@ function updateBillingAlerts(orgId, alertSettings) {
              cost_cap_monthly = excluded.cost_cap_monthly,
              email_notifications = excluded.email_notifications,
              updated_at = CURRENT_TIMESTAMP`,
-            [id, orgId, 
-             alertSettings.token_threshold_80 ?? 1,
-             alertSettings.token_threshold_90 ?? 1,
-             alertSettings.token_threshold_100 ?? 1,
-             alertSettings.storage_threshold_80 ?? 1,
-             alertSettings.storage_threshold_90 ?? 1,
-             alertSettings.storage_threshold_100 ?? 1,
-             alertSettings.auto_upgrade_enabled ?? 0,
-             alertSettings.auto_upgrade_plan_id ?? null,
-             alertSettings.cost_cap_monthly ?? null,
-             alertSettings.email_notifications ?? 1],
+            [id, orgId,
+                alertSettings.token_threshold_80 ?? 1,
+                alertSettings.token_threshold_90 ?? 1,
+                alertSettings.token_threshold_100 ?? 1,
+                alertSettings.storage_threshold_80 ?? 1,
+                alertSettings.storage_threshold_90 ?? 1,
+                alertSettings.storage_threshold_100 ?? 1,
+                alertSettings.auto_upgrade_enabled ?? 0,
+                alertSettings.auto_upgrade_plan_id ?? null,
+                alertSettings.cost_cap_monthly ?? null,
+                alertSettings.email_notifications ?? 1],
             function (err) {
                 if (err) reject(err);
                 else resolve({ organization_id: orgId, ...alertSettings });
@@ -727,19 +739,19 @@ function updateTaxSettings(orgId, taxSettings) {
              po_number = excluded.po_number,
              updated_at = CURRENT_TIMESTAMP`,
             [id, orgId,
-             taxSettings.tax_id ?? null,
-             taxSettings.tax_id_type ?? null,
-             taxSettings.tax_exempt ?? 0,
-             taxSettings.billing_name ?? null,
-             taxSettings.billing_email ?? null,
-             taxSettings.billing_address_line1 ?? null,
-             taxSettings.billing_address_line2 ?? null,
-             taxSettings.billing_city ?? null,
-             taxSettings.billing_state ?? null,
-             taxSettings.billing_postal_code ?? null,
-             taxSettings.billing_country ?? null,
-             taxSettings.invoice_prefix ?? null,
-             taxSettings.po_number ?? null],
+                taxSettings.tax_id ?? null,
+                taxSettings.tax_id_type ?? null,
+                taxSettings.tax_exempt ?? 0,
+                taxSettings.billing_name ?? null,
+                taxSettings.billing_email ?? null,
+                taxSettings.billing_address_line1 ?? null,
+                taxSettings.billing_address_line2 ?? null,
+                taxSettings.billing_city ?? null,
+                taxSettings.billing_state ?? null,
+                taxSettings.billing_postal_code ?? null,
+                taxSettings.billing_country ?? null,
+                taxSettings.invoice_prefix ?? null,
+                taxSettings.po_number ?? null],
             function (err) {
                 if (err) reject(err);
                 else resolve({ organization_id: orgId, ...taxSettings });
@@ -767,7 +779,7 @@ async function validateDiscountCode(code, planId) {
             (err, row) => {
                 if (err) return reject(err);
                 if (!row) return resolve({ valid: false, error: 'Invalid or expired discount code' });
-                
+
                 // Check if applicable to this plan
                 if (row.applicable_plans) {
                     const applicablePlans = JSON.parse(row.applicable_plans);
@@ -854,7 +866,7 @@ function calculateSeatCost(orgId, quantity) {
  */
 function processSeatPurchase(orgId, quantity, paymentMethodId) {
     return new Promise((resolve, reject) => {
-        calculateSeatCost(orgId, quantity)
+        deps.calculateSeatCost(orgId, quantity)
             .then((cost) => {
                 // In a full implementation, this would create a Stripe invoice item
                 // For now, return the cost calculation
@@ -904,7 +916,7 @@ module.exports = {
     updatePlan,
     deletePlan,
     getOrganizationBilling,
-    upsertOrganizationBilling,
+    upsertOrganizationBilling: upsertOrgBilling,
     getOrCreateStripeCustomer,
     createSubscription,
     cancelSubscription,

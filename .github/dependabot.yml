@@ -1,0 +1,87 @@
+# Dependabot Configuration
+# Automatically keeps dependencies up to date
+
+version: 2
+updates:
+  # NPM dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Warsaw"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "piotrwisniewski"
+    labels:
+      - "dependencies"
+      - "security"
+    commit-message:
+      prefix: "chore(deps):"
+    groups:
+      # Group React ecosystem updates
+      react:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      # Group AI SDK updates
+      ai-sdk:
+        patterns:
+          - "@ai-sdk/*"
+          - "ai"
+          - "openai"
+          - "@google/generative-ai"
+          - "@anthropic-ai/*"
+      # Group testing updates
+      testing:
+        patterns:
+          - "vitest*"
+          - "@testing-library/*"
+          - "playwright*"
+          - "jest*"
+      # Group Tailwind/styling updates
+      styling:
+        patterns:
+          - "tailwindcss*"
+          - "postcss*"
+          - "autoprefixer"
+      # Group build tools
+      build:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+          - "typescript"
+          - "tslib"
+          - "esbuild*"
+    ignore:
+      # Ignore major version updates that might break things
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "ci"
+      - "dependencies"
+    commit-message:
+      prefix: "ci(deps):"
+
+  # Docker (if applicable)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "docker"
+      - "dependencies"
+    commit-message:
+      prefix: "chore(docker):"
+
+

@@ -10,10 +10,13 @@
  * - AI Budget Controls
  * - Compliance Center
  * - Advanced IAM (Admin Sessions, Audit Logs, Permissions, Workflows)
+ * - Security Incidents Management
+ * - Threat Intelligence & IP Reputation
+ * - Data Loss Prevention (DLP)
  */
 
 import React, { useState } from 'react';
-import { Key, ShieldCheck, KeyRound, FileCheck, Users, DollarSign, Shield, Link2, UserCog, History, GitBranch, AlertTriangle } from 'lucide-react';
+import { Key, ShieldCheck, KeyRound, FileCheck, Users, DollarSign, Shield, Link2, UserCog, History, GitBranch, AlertTriangle, Radar, ShieldAlert } from 'lucide-react';
 import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
 import { SSOConfigurationView } from './SSOConfigurationView';
 import { SecurityPoliciesView } from './SecurityPoliciesView';
@@ -27,6 +30,9 @@ import AdminSessionsView from './iam/AdminSessionsView';
 import AdminAuditLogsView from './iam/AdminAuditLogsView';
 import PermissionsMatrixView from './iam/PermissionsMatrixView';
 import ApprovalWorkflowsView from './iam/ApprovalWorkflowsView';
+import SecurityIncidentsView from './iam/SecurityIncidentsView';
+import ThreatIntelligenceView from './iam/ThreatIntelligenceView';
+import DLPView from './iam/DLPView';
 
 interface SecurityModuleProps {
     initialTab?: string;
@@ -45,6 +51,9 @@ export const SecurityModule: React.FC<SecurityModuleProps> = ({ initialTab }) =>
         { id: 'sessions', label: 'Admin Sessions', icon: <UserCog size={16} /> },
         { id: 'audit', label: 'Audit Logs', icon: <History size={16} /> },
         { id: 'workflows', label: 'Workflows', icon: <GitBranch size={16} /> },
+        { id: 'incidents', label: 'Incidents', icon: <AlertTriangle size={16} /> },
+        { id: 'threats', label: 'Threats', icon: <Radar size={16} /> },
+        { id: 'dlp', label: 'DLP', icon: <ShieldAlert size={16} /> },
         { id: 'ai-budgets', label: 'AI Budgets', icon: <DollarSign size={16} /> },
         { id: 'compliance', label: 'Compliance', icon: <FileCheck size={16} /> },
     ];
@@ -103,6 +112,24 @@ export const SecurityModule: React.FC<SecurityModuleProps> = ({ initialTab }) =>
                 return (
                     <div className="p-6 overflow-y-auto h-full">
                         <ApprovalWorkflowsView />
+                    </div>
+                );
+            case 'incidents':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <SecurityIncidentsView />
+                    </div>
+                );
+            case 'threats':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <ThreatIntelligenceView />
+                    </div>
+                );
+            case 'dlp':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <DLPView />
                     </div>
                 );
             case 'ai-budgets':

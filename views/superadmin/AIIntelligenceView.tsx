@@ -372,34 +372,7 @@ const PromptTemplateManager: React.FC = () => {
         t.code?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const defaultTemplates = [
-        {
-            code: 'STRATEGIC_ADVISOR',
-            name: 'Strategic Advisor',
-            category: 'consultant',
-            description: 'Harvard-level strategic consultant for digital transformation'
-        },
-        {
-            code: 'INITIATIVE_GENERATOR',
-            name: 'Initiative Generator',
-            category: 'pmo',
-            description: 'Generates actionable initiatives from assessment results'
-        },
-        {
-            code: 'RISK_ANALYZER',
-            name: 'Risk Analyzer',
-            category: 'pmo',
-            description: 'Analyzes project risks and suggests mitigations'
-        },
-        {
-            code: 'REPORT_WRITER',
-            name: 'Report Writer',
-            category: 'output',
-            description: 'Creates executive reports and presentations'
-        },
-    ];
-
-    const displayTemplates = templates.length > 0 ? filteredTemplates : defaultTemplates;
+    const displayTemplates = filteredTemplates;
 
     return (
         <div className="space-y-6">
@@ -495,13 +468,7 @@ const LearningSystemDashboard: React.FC = () => {
     });
     const [qualityTrends, setQualityTrends] = useState<QualityTrend[]>([]);
 
-    const generateMockTrends = (): QualityTrend[] => {
-        const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
-        return Array.from({ length: days }, (_, i) => ({
-            date: new Date(Date.now() - (days - i - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            score: 0.75 + Math.random() * 0.2
-        }));
-    };
+    // Removed generateMockTrends - using real API data only
 
     const loadLearningData = async () => {
         setLoading(true);
@@ -531,23 +498,23 @@ const LearningSystemDashboard: React.FC = () => {
             if (metricsRes.ok) {
                 const data = await metricsRes.json();
                 setMetrics(data.metrics || metrics);
-                setQualityTrends(data.qualityTrends || generateMockTrends());
+                setQualityTrends(data.qualityTrends || []);
             } else {
-                // Generate mock data for demo
-                setQualityTrends(generateMockTrends());
+                // Set empty state instead of mock data
+                setQualityTrends([]);
                 setMetrics({
-                    totalInteractions: 1250,
-                    successRate: 94.5,
-                    avgQualityScore: 0.87,
-                    avgResponseTime: 1.2,
-                    patternsLearned: patterns.length || 12,
-                    activeModels: 7
+                    totalInteractions: 0,
+                    successRate: 0,
+                    avgQualityScore: 0,
+                    avgResponseTime: 0,
+                    patternsLearned: patterns.length || 0,
+                    activeModels: 0
                 });
             }
         } catch (err) {
             console.error('Failed to load learning data:', err);
-            // Set demo data on error
-            setQualityTrends(generateMockTrends());
+            // Set empty state on error instead of mock data
+            setQualityTrends([]);
         }
         setLoading(false);
     };

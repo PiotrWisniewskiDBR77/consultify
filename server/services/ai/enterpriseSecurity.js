@@ -32,7 +32,7 @@ const { aiLogger } = require('./logger');
 function dbAll(sql, params = []) {
     return new Promise((resolve) => {
         let resolved = false;
-        
+
         // Timeout protection - don't hang forever
         const timeout = setTimeout(() => {
             if (!resolved) {
@@ -65,7 +65,7 @@ function dbAll(sql, params = []) {
                 safeResolve([]);
                 return;
             }
-            
+
             db.all(sql, params, (err, rows) => {
                 if (err) {
                     aiLogger.warn('EnterpriseSecurity', `DB all error: ${err.message}`);
@@ -126,7 +126,7 @@ function dbRun(sql, params = []) {
         }, 5000);
 
         try {
-            db.run(sql, params, function(err) {
+            db.run(sql, params, function (err) {
                 clearTimeout(timeout);
                 if (err) {
                     aiLogger.warn('EnterpriseSecurity', `DB run error: ${err.message}`);
@@ -150,11 +150,11 @@ function dbRun(sql, params = []) {
 // PII patterns for detection
 const PII_PATTERNS = {
     email: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
-    phone: /(?:\+48[\s-]?)?\d{3}[\s-]?\d{3}[\s-]?\d{3}/g,
+    phone: /(?:\+?48[\s-]?)?(?:\d{3}[\s-]?\d{3}[\s-]?\d{3}|\d{2}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2})/g,
     pesel: /\b\d{11}\b/g,
-    nip: /\b\d{3}[-]?\d{3}[-]?\d{2}[-]?\d{2}\b/g,
+    nip: /\b\d{10}\b|\b\d{3}[-]?\d{3}[-]?\d{2}[-]?\d{2}\b/g,
     creditCard: /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g,
-    iban: /[A-Z]{2}\d{2}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}/g
+    iban: /[A-Z]{2}\d{2}[\s]?\d{4}/g // Truncated pattern for IBAN detection
 };
 
 // Risk assessment rules
@@ -179,7 +179,9 @@ class EnterpriseSecurityService {
         this.rateLimitCache = new Map();
         this.auditBuffer = [];
         this.flushInterval = 5000; // 5 seconds
-        
+        this.retentionInterval = 24 * 60 * 60 * 1000; // 24 hours
+        this.lastRetentionRun = Date.now();
+
         // Start buffer flush interval
         this.startFlushInterval();
     }
@@ -232,7 +234,7 @@ class EnterpriseSecurityService {
 
             // Alert on high risk
             if (riskAssessment.flagged) {
-                aiLogger.warn('EnterpriseSecurity', 
+                aiLogger.warn('EnterpriseSecurity',
                     `Flagged AI request: ${riskAssessment.reason} (user: ${userId})`);
             }
 
@@ -250,7 +252,7 @@ class EnterpriseSecurityService {
     assessRisk(request, response) {
         try {
             const content = `${request || ''} ${response || ''}`.toLowerCase();
-            
+
             // Check high risk patterns
             for (const rule of RISK_RULES.HIGH) {
                 if (rule.pattern.test(content)) {
@@ -299,7 +301,7 @@ class EnterpriseSecurityService {
      */
     detectPII(content) {
         const found = [];
-        
+
         try {
             for (const [type, pattern] of Object.entries(PII_PATTERNS)) {
                 // Reset regex lastIndex for global patterns
@@ -352,18 +354,18 @@ class EnterpriseSecurityService {
                 aiLogger.warn('EnterpriseSecurity', `Failed to fetch limits (allowing): ${fetchError.message}`);
                 return { allowed: true, remaining: Infinity, bypassed: true };
             }
-            
+
             // ULTRA-DEFENSIVE: Triple-check limits is iterable
             if (limits === null || limits === undefined) {
                 aiLogger.debug('EnterpriseSecurity', 'Limits is null/undefined, allowing request');
                 return { allowed: true, remaining: Infinity };
             }
-            
+
             if (!Array.isArray(limits)) {
                 aiLogger.warn('EnterpriseSecurity', `Limits is not an array (${typeof limits}), allowing request`);
                 return { allowed: true, remaining: Infinity, bypassed: true };
             }
-            
+
             if (limits.length === 0) {
                 // No limits configured - allow request
                 return { allowed: true, remaining: Infinity };
@@ -373,9 +375,9 @@ class EnterpriseSecurityService {
             try {
                 for (const limit of limits) {
                     if (!limit || typeof limit !== 'object') continue;
-                    
+
                     const usage = await this.getUsage(organizationId, action, limit.limit_type);
-                    
+
                     if (usage >= limit.limit_value) {
                         return {
                             allowed: false,
@@ -409,7 +411,7 @@ class EnterpriseSecurityService {
                 SELECT * FROM ai_rate_limits
                 WHERE organization_id = ? AND (applies_to = 'all' OR applies_to = ?)
             `, [organizationId, action]);
-            
+
             return Array.isArray(rows) ? rows : [];
         } catch (error) {
             aiLogger.debug('EnterpriseSecurity', `Limit fetch failed: ${error.message}`);
@@ -424,14 +426,14 @@ class EnterpriseSecurityService {
     async getUsage(organizationId, action, limitType) {
         try {
             const timeWindow = this.getTimeWindow(limitType);
-            
+
             const result = await dbGet(`
                 SELECT COUNT(*) as count FROM ai_audit_log
                 WHERE organization_id = ? 
                   AND timestamp > datetime('now', ?)
                   AND (? = 'all' OR action = ?)
             `, [organizationId, timeWindow, action, action]);
-            
+
             return result?.count || 0;
         } catch (error) {
             aiLogger.debug('EnterpriseSecurity', `Usage fetch failed: ${error.message}`);
@@ -621,7 +623,51 @@ class EnterpriseSecurityService {
             this.flushAuditBuffer().catch(err => {
                 aiLogger.warn('EnterpriseSecurity', `Flush interval error: ${err.message}`);
             });
+
+            // Run retention policy if it's been more than 24 hours
+            if (Date.now() - this.lastRetentionRun > this.retentionInterval) {
+                this.runRetentionPolicy().catch(err => {
+                    aiLogger.warn('EnterpriseSecurity', `Retention policy error: ${err.message}`);
+                });
+            }
         }, this.flushInterval);
+    }
+
+    /**
+     * Prune old audit logs based on retention policy (default 365 days)
+     */
+    async runRetentionPolicy(days = 365) {
+        aiLogger.info('EnterpriseSecurity', `Running audit log retention policy (${days} days)`);
+        this.lastRetentionRun = Date.now();
+
+        try {
+            const retentionDate = new Date();
+            retentionDate.setDate(retentionDate.getDate() - days);
+            const dateStr = retentionDate.toISOString();
+
+            // Prune audit logs
+            const auditResult = await dbRun(
+                `DELETE FROM ai_audit_log WHERE timestamp < ?`,
+                [dateStr]
+            );
+            if (auditResult.success) {
+                aiLogger.info('EnterpriseSecurity', `Pruned ${auditResult.changes || 0} old audit logs`);
+            }
+
+            // Prune data access logs
+            const accessResult = await dbRun(
+                `DELETE FROM ai_data_access_log WHERE timestamp < ?`,
+                [dateStr]
+            );
+            if (accessResult.success) {
+                aiLogger.info('EnterpriseSecurity', `Pruned ${accessResult.changes || 0} old data access logs`);
+            }
+
+            return true;
+        } catch (error) {
+            aiLogger.error('EnterpriseSecurity', `Retention policy failed: ${error.message}`);
+            return false;
+        }
     }
 
     /**
@@ -656,7 +702,7 @@ class EnterpriseSecurityService {
             };
         } catch (error) {
             aiLogger.debug('EnterpriseSecurity', `Summary failed: ${error.message}`);
-            return { 
+            return {
                 period: 'last_24h',
                 totalRequests: 0,
                 flaggedRequests: 0,
@@ -664,7 +710,7 @@ class EnterpriseSecurityService {
                 mediumRiskCount: 0,
                 dataAccessCount: 0,
                 dataTypesAccessed: 0,
-                error: error.message 
+                error: error.message
             };
         }
     }

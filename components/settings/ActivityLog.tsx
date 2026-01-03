@@ -390,3 +390,6 @@ async function simulateActivityData(user: User): Promise<ActivityEntry[]> {
 export default ActivityLog;
 
 
+
+
+

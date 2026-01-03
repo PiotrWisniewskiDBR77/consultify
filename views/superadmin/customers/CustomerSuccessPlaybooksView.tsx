@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '../../../components/SuperAdmin/Card';
+import { Card } from '../../../components/Admin/shared/Card';
 import {
     Plus,
     Play,
@@ -622,4 +622,6 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
 };
 
 export default CustomerSuccessPlaybooksView;
+
+
 

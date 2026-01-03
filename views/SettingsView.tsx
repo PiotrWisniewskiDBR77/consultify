@@ -53,7 +53,7 @@ import { ProfileSettings } from '../components/settings/ProfileSettings';
 import { AvatarUploader } from '../components/settings/AvatarUploader';
 import { PasswordSettings } from '../components/settings/PasswordSettings';
 import { BillingSettings } from '../components/settings/BillingSettings';
-import { AccountManagementSettings } from '../components/settings/AccountManagementSettings';
+import AccountManagementSettings from '../components/settings/AccountManagementSettings';
 import { AIInstructionsSettings } from '../components/settings/AIInstructionsSettings';
 import { AIMemorySettings } from '../components/settings/AIMemorySettings';
 import { ResponseStyleSettings } from '../components/settings/ResponseStyleSettings';

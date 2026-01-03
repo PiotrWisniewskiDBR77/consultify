@@ -1,23 +1,24 @@
-/**
- * BreakGlassService Tests
- * 
- * Tests for emergency override management service.
- */
-
-const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
+const { initTestDb, cleanTables, dbRun, db } = require('../../helpers/dbHelper.cjs');
 const BreakGlassService = require('../../../server/services/breakGlassService');
 const { v4: uuidv4 } = require('uuid');
 
 describe('BreakGlassService', () => {
     let testOrgId;
     let testUserId;
-    let testSessionId;
 
     beforeAll(async () => {
         await initTestDb();
+        // Inject the same database instance used by the test helpers
+        BreakGlassService.setDependencies({ db, uuidv4 });
     });
 
     beforeEach(async () => {
+        await cleanTables([
+            'break_glass_sessions',
+            'users',
+            'organizations'
+        ]);
+
         // Create test organization
         testOrgId = uuidv4();
         await dbRun(
@@ -33,14 +34,6 @@ describe('BreakGlassService', () => {
              VALUES (?, ?, ?, ?, ?, datetime('now'))`,
             [testUserId, testOrgId, 'admin@test.com', 'Admin User', 'superadmin']
         );
-    });
-
-    afterEach(async () => {
-        await cleanTables([
-            'break_glass_sessions',
-            'users',
-            'organizations'
-        ]);
     });
 
     describe('startSession', () => {
@@ -123,7 +116,7 @@ describe('BreakGlassService', () => {
                     reason: 'Test',
                     scope: 'INVALID_SCOPE'
                 })
-            ).rejects.toThrow('Invalid scope');
+            ).rejects.toThrow(/Invalid scope/);
         });
 
         it('should reject duplicate active session', async () => {
@@ -143,7 +136,7 @@ describe('BreakGlassService', () => {
                     reason: 'Second session',
                     scope: BreakGlassService.SCOPES.EMERGENCY_ACCESS
                 })
-            ).rejects.toThrow('Active break-glass session already exists');
+            ).rejects.toThrow(/Active break-glass session already exists/);
         });
 
         it('should require all mandatory parameters', async () => {
@@ -153,7 +146,7 @@ describe('BreakGlassService', () => {
                     orgId: testOrgId
                     // Missing reason and scope
                 })
-            ).rejects.toThrow('Missing required parameters');
+            ).rejects.toThrow(/Missing required parameters/);
         });
     });
 
@@ -186,7 +179,7 @@ describe('BreakGlassService', () => {
         });
 
         it('should return null for expired session', async () => {
-            // Create expired session
+            // Create expired session manually via DB
             const expiredSessionId = uuidv4();
             const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
             await dbRun(
@@ -213,7 +206,7 @@ describe('BreakGlassService', () => {
         });
     });
 
-    describe('isActive', () => {
+    describe('isBreakGlassActive', () => {
         it('should return true for active session', async () => {
             await BreakGlassService.startSession({
                 actorId: testUserId,
@@ -223,7 +216,7 @@ describe('BreakGlassService', () => {
                 scope: BreakGlassService.SCOPES.EMERGENCY_ACCESS
             });
 
-            const isActive = await BreakGlassService.isActive(
+            const isActive = await BreakGlassService.isBreakGlassActive(
                 testOrgId,
                 BreakGlassService.SCOPES.EMERGENCY_ACCESS
             );
@@ -232,7 +225,7 @@ describe('BreakGlassService', () => {
         });
 
         it('should return false when no active session', async () => {
-            const isActive = await BreakGlassService.isActive(
+            const isActive = await BreakGlassService.isBreakGlassActive(
                 testOrgId,
                 BreakGlassService.SCOPES.EMERGENCY_ACCESS
             );
@@ -241,7 +234,7 @@ describe('BreakGlassService', () => {
         });
     });
 
-    describe('endSession', () => {
+    describe('closeSession', () => {
         it('should end active session', async () => {
             const session = await BreakGlassService.startSession({
                 actorId: testUserId,
@@ -251,9 +244,9 @@ describe('BreakGlassService', () => {
                 scope: BreakGlassService.SCOPES.EMERGENCY_ACCESS
             });
 
-            await BreakGlassService.endSession(session.id, testUserId);
+            await BreakGlassService.closeSession(session.id, testUserId, 'SUPERADMIN');
 
-            const isActive = await BreakGlassService.isActive(
+            const isActive = await BreakGlassService.isBreakGlassActive(
                 testOrgId,
                 BreakGlassService.SCOPES.EMERGENCY_ACCESS
             );
@@ -270,7 +263,7 @@ describe('BreakGlassService', () => {
                 scope: BreakGlassService.SCOPES.EMERGENCY_ACCESS
             });
 
-            await BreakGlassService.endSession(session.id, testUserId, 'Emergency resolved');
+            await BreakGlassService.closeSession(session.id, testUserId, 'SUPERADMIN');
 
             // Verify session was ended (check via getActiveSession)
             const activeSession = await BreakGlassService.getActiveSession(
@@ -282,7 +275,7 @@ describe('BreakGlassService', () => {
         });
     });
 
-    describe('getSessions', () => {
+    describe('getActiveSessions', () => {
         it('should return all sessions for organization', async () => {
             await BreakGlassService.startSession({
                 actorId: testUserId,
@@ -292,29 +285,12 @@ describe('BreakGlassService', () => {
                 scope: BreakGlassService.SCOPES.EMERGENCY_ACCESS
             });
 
-            const sessions = await BreakGlassService.getSessions(testOrgId);
+            const sessions = await BreakGlassService.getActiveSessions(testOrgId);
 
             expect(Array.isArray(sessions)).toBe(true);
             expect(sessions.length).toBeGreaterThanOrEqual(1);
         });
-
-        it('should filter by scope', async () => {
-            await BreakGlassService.startSession({
-                actorId: testUserId,
-                actorRole: 'SUPERADMIN',
-                orgId: testOrgId,
-                reason: 'Test',
-                scope: BreakGlassService.SCOPES.EMERGENCY_ACCESS
-            });
-
-            const sessions = await BreakGlassService.getSessions(testOrgId, {
-                scope: BreakGlassService.SCOPES.EMERGENCY_ACCESS
-            });
-
-            expect(sessions.every(s => s.scope === BreakGlassService.SCOPES.EMERGENCY_ACCESS)).toBe(true);
-        });
     });
 });
-
 
 

@@ -15,7 +15,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 let controller;
-let mockDb, mockActivityService, mockBillingService, mockUsageService, mockRealtimeService, mockStorageService, mockLegalService, mockLegalEventLogger, mockAttributionService, mockInvitationService, mockJwt, mockBcrypt, mockUuid;
+let mockDb, mockActivityService, mockBillingService, mockUsageService, mockRealtimeService, mockStorageService, mockLegalService, mockLegalEventLogger, mockAttributionService, mockInvitationService, mockJwt, mockBcrypt, mockUuid, mockRefreshTokenService;
 let mockReq, mockRes, mockNext;
 
 beforeEach(() => {
@@ -53,6 +53,7 @@ beforeEach(() => {
     mockJwt = { sign: vi.fn(), verify: vi.fn() };
     mockBcrypt = { hashSync: vi.fn(), compareSync: vi.fn() };
     mockUuid = { v4: vi.fn() };
+    mockRefreshTokenService = { generateTokenPair: vi.fn().mockResolvedValue({ accessToken: 'a', refreshToken: 'r', expiresIn: 1 }) };
 
     // 2. Register Mocks
     vi.doMock('../../../../server/database', () => mockDb);
@@ -68,6 +69,7 @@ beforeEach(() => {
     vi.doMock('bcryptjs', () => mockBcrypt);
     vi.doMock('uuid', () => mockUuid);
     vi.doMock('../../../../server/config', () => ({ JWT_SECRET: 'test-secret', billing: { type: 'stripe' } }));
+    vi.doMock('../../../../server/services/refreshTokenService', () => mockRefreshTokenService);
     vi.doMock('../../../../server/utils/errorHandler', () => ({
         AppError: class AppError extends Error {
             constructor(message, statusCode) {
@@ -104,7 +106,8 @@ beforeEach(() => {
         InvitationService: mockInvitationService,
         jwt: mockJwt,
         bcrypt: mockBcrypt,
-        uuid: mockUuid
+        uuid: mockUuid,
+        RefreshTokenService: mockRefreshTokenService
     });
 });
 
@@ -985,6 +988,175 @@ describe('SuperAdmin Controller', () => {
             });
         });
     });
+    describe('Invoices & Billing', () => {
+        it('should get invoice stats', async () => {
+            mockDb.get.mockImplementation((sql, params, cb) => {
+                cb(null, { total_revenue: 1000, paid_invoices: 5 });
+            });
+
+            await controller.getInvoiceStats(mockReq, mockRes, mockNext);
+
+            expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+                totalRevenue: 1000,
+                paidInvoices: 5
+            }));
+        });
+
+        it('should remind invoice', async () => {
+            mockReq.params.id = 'inv-123';
+            mockDb.get.mockImplementation((sql, params, cb) => {
+                cb(null, { id: 'inv-123' });
+            });
+            mockDb.run.mockImplementation((sql, params, cb) => {
+                cb(null);
+            });
+
+            await controller.remindInvoice(mockReq, mockRes, mockNext);
+
+            expect(mockRes.json).toHaveBeenCalledWith({ success: true, message: 'Reminder sent' });
+        });
+
+        it('should mark invoice as paid', async () => {
+            mockReq.params.id = 'inv-123';
+            mockDb.get.mockImplementation((sql, params, cb) => {
+                cb(null, { id: 'inv-123' });
+            });
+            mockDb.run.mockImplementation((sql, params, cb) => {
+                cb(null);
+            });
+
+            await controller.markInvoicePaid(mockReq, mockRes, mockNext);
+
+            expect(mockRes.json).toHaveBeenCalledWith({ success: true, message: 'Invoice marked as paid' });
+        });
+
+        it('should get invoice pdf placeholder', async () => {
+            mockReq.params.id = 'inv-123';
+            mockDb.get.mockImplementation((sql, params, cb) => {
+                cb(null, { id: 'inv-123' });
+            });
+
+            await controller.getInvoicePdf(mockReq, mockRes, mockNext);
+
+            expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+                pdf: expect.stringContaining('not implemented')
+            }));
+        });
+    });
+
+    describe('Branding', () => {
+        it('should upload branding logo placeholder', async () => {
+            mockReq.params.orgId = 'org-123';
+            await controller.uploadBrandingLogo(mockReq, mockRes, mockNext);
+            expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: true,
+                message: 'Logo uploaded'
+            }));
+        });
+    });
+
+    describe('API Keys', () => {
+        it('should get API keys', async () => {
+            mockDb.all.mockImplementation((sql, params, cb) => {
+                cb(null, [{ id: 'key-1' }]);
+            });
+
+            await controller.getApiKeys(mockReq, mockRes, mockNext);
+
+            expect(mockRes.json).toHaveBeenCalledWith([{ id: 'key-1' }]);
+        });
+
+        it('should create API key', async () => {
+            mockReq.body = { name: 'New Key' };
+            mockUuid.v4.mockReturnValue('new-uuid');
+            mockDb.run.mockImplementation((sql, params, cb) => {
+                cb(null);
+            });
+
+            await controller.createApiKey(mockReq, mockRes, mockNext);
+
+            expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+                id: 'new-uuid',
+                name: 'New Key'
+            }));
+        });
+
+        it('should delete API key', async () => {
+            mockReq.params.id = 'key-1';
+            mockDb.run.mockImplementation((sql, params, cb) => {
+                cb(null);
+            });
+
+            await controller.deleteApiKey(mockReq, mockRes, mockNext);
+
+            expect(mockRes.json).toHaveBeenCalledWith({ success: true });
+        });
+
+        it('should get API key usage', async () => {
+            mockReq.params.id = 'key-1';
+            mockDb.get.mockImplementation((sql, params, cb) => {
+                cb(null, { usage_count: 10, quota_used: 100 });
+            });
+
+            await controller.getApiKeyUsage(mockReq, mockRes, mockNext);
+
+            expect(mockRes.json).toHaveBeenCalledWith({ count: 10, tokens: 100 });
+        });
+    });
+
+    describe('Compliance', () => {
+        it('should get compliance frameworks', async () => {
+            await controller.getComplianceFrameworks(mockReq, mockRes, mockNext);
+            expect(mockRes.json).toHaveBeenCalledWith(expect.any(Array));
+        });
+
+        it('should get compliance status', async () => {
+            mockReq.params.frameworkId = 'gdpr';
+            await controller.getComplianceStatus(mockReq, mockRes, mockNext);
+            expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+                framework: 'gdpr',
+                status: 'compliant'
+            }));
+        });
+
+        it('should get DSAR requests', async () => {
+            mockDb.all.mockImplementation((sql, params, cb) => {
+                cb(null, [{ id: 'req-1' }]);
+            });
+            await controller.getDsarRequests(mockReq, mockRes, mockNext);
+            expect(mockRes.json).toHaveBeenCalledWith([{ id: 'req-1' }]);
+        });
+
+        it('should get compliance audits list', async () => {
+            await controller.getComplianceAudits(mockReq, mockRes, mockNext);
+            expect(mockRes.json).toHaveBeenCalledWith([]);
+        });
+    });
+
+    describe('Security Extras', () => {
+        it('should refresh token', async () => {
+            mockRefreshTokenService.generateTokenPair.mockResolvedValue({
+                accessToken: 'new-access',
+                refreshToken: 'new-refresh',
+                expiresIn: 3600
+            });
+
+            mockReq.user = { id: 'admin-1' };
+            mockDb.get.mockImplementation((sql, params, cb) => {
+                cb(null, { id: 'admin-1', email: 'admin@test.com', role: 'super_admin' });
+            });
+
+            await controller.refreshToken(mockReq, mockRes, mockNext);
+
+            expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+                token: 'new-access',
+                refreshToken: 'new-refresh'
+            }));
+        });
+    });
 });
+
+
+
 
 

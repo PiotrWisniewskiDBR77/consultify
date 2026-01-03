@@ -72,7 +72,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({ 
 
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [billingForm, setBillingForm] = useState<Partial<OrganizationOwnership>>({});
-  
+
   // Plan comparison states
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [availablePlans, setAvailablePlans] = useState<SubscriptionPlan[]>([]);
@@ -80,19 +80,30 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({ 
   const [planComparison, setPlanComparison] = useState<PlanComparison | null>(null);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [changingPlan, setChangingPlan] = useState(false);
-  
+
   // Add-ons states
   const [showAddonsModal, setShowAddonsModal] = useState(false);
   const [addons, setAddons] = useState<AddOn[]>([]);
   const [selectedAddon, setSelectedAddon] = useState<AddOn | null>(null);
   const [addonQuantity, setAddonQuantity] = useState(1);
   const [purchasingAddon, setPurchasingAddon] = useState(false);
+  const [usageData, setUsageData] = useState<any>(null);
 
   useEffect(() => {
     fetchBillingData();
     fetchInvoices();
     fetchOwnershipData();
+    loadUsageData();
   }, []);
+
+  const loadUsageData = async () => {
+    try {
+      const data = await Api.getUsage();
+      setUsageData(data.structuredUsage || null);
+    } catch (error) {
+      console.error('Failed to load usage data:', error);
+    }
+  };
 
   const fetchInvoices = async () => {
     setLoadingInvoices(true);
@@ -238,10 +249,10 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({ 
     try {
       // Get real billing data
       const billingData = await Api.getCurrentBilling().catch(() => null);
-      
+
       // Get real seat configuration
       const seatConfig = await Api.getSeatConfiguration().catch(() => null);
-      
+
       if (billingData || seatConfig) {
         setBilling({
           plan: billingData?.plan?.name || 'Professional',
@@ -252,24 +263,25 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({ 
           maxUsers: seatConfig?.total_seats_available || 0
         });
       } else {
-        // Fallback to mock if no data available
+        // No billing data available - set empty state
         setBilling({
-          plan: 'Professional',
-          status: 'active',
-          nextBilling: '2025-02-01',
-          amount: 299,
+          plan: 'No Plan',
+          status: 'inactive',
+          nextBilling: '--',
+          amount: 0,
           users: 0,
           maxUsers: 0
         });
       }
     } catch (error) {
       console.error('Failed to fetch billing data:', error);
-      // Fallback to mock data
+      toast.error('Failed to load billing information');
+      // Set empty state on error instead of mock data
       setBilling({
-        plan: 'Professional',
-        status: 'active',
-        nextBilling: '2025-02-01',
-        amount: 299,
+        plan: 'Error Loading',
+        status: 'unknown',
+        nextBilling: '--',
+        amount: 0,
         users: 0,
         maxUsers: 0
       });
@@ -377,19 +389,29 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({ 
             <div>
               <div className="flex justify-between text-sm mb-1.5">
                 <span className="text-slate-500">AI Tokens</span>
-                <span className="text-slate-300">75,000 / 100,000</span>
+                <span className="text-slate-300">
+                  {usageData?.tokens ? `${usageData.tokens.used.toLocaleString()} / ${usageData.tokens.limit.toLocaleString()}` : '--'}
+                </span>
               </div>
               <div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-1.5">
-                <div className="bg-slate-400 rounded-full h-1.5" style={{ width: '75%' }} />
+                <div
+                  className="bg-slate-400 rounded-full h-1.5 transition-all duration-500"
+                  style={{ width: usageData?.tokens ? `${Math.min(100, (usageData.tokens.used / usageData.tokens.limit) * 100)}%` : '0%' }}
+                />
               </div>
             </div>
             <div>
               <div className="flex justify-between text-sm mb-1.5">
                 <span className="text-slate-500">Storage</span>
-                <span className="text-slate-300">2.5 GB / 10 GB</span>
+                <span className="text-slate-300">
+                  {usageData?.storage ? `${usageData.storage.used_gb} GB / ${usageData.storage.limit_gb} GB` : '--'}
+                </span>
               </div>
               <div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-1.5">
-                <div className="bg-slate-500 rounded-full h-1.5" style={{ width: '25%' }} />
+                <div
+                  className="bg-slate-500 rounded-full h-1.5 transition-all duration-500"
+                  style={{ width: usageData?.storage ? `${Math.min(100, (usageData.storage.used_gb / usageData.storage.limit_gb) * 100)}%` : '0%' }}
+                />
               </div>
             </div>
           </div>
@@ -564,13 +586,12 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({ 
                       <div
                         key={plan.id}
                         onClick={() => handlePlanSelect(plan.id)}
-                        className={`relative p-5 rounded-xl border-2 cursor-pointer transition-all ${
-                          selectedPlanId === plan.id
-                            ? 'border-[var(--admin-accent)] bg-[var(--admin-accent)]/5'
-                            : billing?.plan === plan.name
+                        className={`relative p-5 rounded-xl border-2 cursor-pointer transition-all ${selectedPlanId === plan.id
+                          ? 'border-[var(--admin-accent)] bg-[var(--admin-accent)]/5'
+                          : billing?.plan === plan.name
                             ? 'border-slate-400 bg-slate-50 dark:bg-white/5'
                             : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
-                        }`}
+                          }`}
                       >
                         {billing?.plan === plan.name && (
                           <span className="absolute top-3 right-3 text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full">
@@ -611,9 +632,8 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({ 
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <p className="text-slate-500">Price difference</p>
-                        <p className={`font-medium ${
-                          planComparison.comparison.priceDifference > 0 ? 'text-amber-500' : 'text-emerald-500'
-                        }`}>
+                        <p className={`font-medium ${planComparison.comparison.priceDifference > 0 ? 'text-amber-500' : 'text-emerald-500'
+                          }`}>
                           {planComparison.comparison.priceDifference > 0 ? '+' : ''}
                           ${planComparison.comparison.priceDifference}/mo
                         </p>
@@ -694,14 +714,13 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({ 
                         className="p-4 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[var(--admin-accent)] cursor-pointer transition-all flex items-center justify-between group"
                       >
                         <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            addon.type === 'tokens' ? 'bg-purple-100 dark:bg-purple-900/30' :
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${addon.type === 'tokens' ? 'bg-purple-100 dark:bg-purple-900/30' :
                             addon.type === 'storage' ? 'bg-blue-100 dark:bg-blue-900/30' :
-                            'bg-green-100 dark:bg-green-900/30'
-                          }`}>
+                              'bg-green-100 dark:bg-green-900/30'
+                            }`}>
                             {addon.type === 'tokens' ? <Zap size={18} className="text-purple-600 dark:text-purple-400" /> :
-                             addon.type === 'storage' ? <Building2 size={18} className="text-blue-600 dark:text-blue-400" /> :
-                             <Users size={18} className="text-green-600 dark:text-green-400" />}
+                              addon.type === 'storage' ? <Building2 size={18} className="text-blue-600 dark:text-blue-400" /> :
+                                <Users size={18} className="text-green-600 dark:text-green-400" />}
                           </div>
                           <div>
                             <h4 className="font-medium text-navy-900 dark:text-white">{addon.name}</h4>
@@ -727,11 +746,11 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({ 
                     >
                       ← Back to add-ons
                     </button>
-                    
+
                     <div className="p-4 bg-slate-50 dark:bg-white/[0.02] rounded-xl border border-slate-200 dark:border-white/10">
                       <h4 className="font-semibold text-navy-900 dark:text-white">{selectedAddon.name}</h4>
                       <p className="text-sm text-slate-500 mt-1">{selectedAddon.description}</p>
-                      
+
                       <div className="mt-4 flex items-center gap-4">
                         <label className="text-sm text-slate-500">Quantity:</label>
                         <div className="flex items-center gap-2">
@@ -750,7 +769,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({ 
                           </button>
                         </div>
                       </div>
-                      
+
                       <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10 flex justify-between items-center">
                         <span className="text-slate-500">Total:</span>
                         <span className="text-xl font-bold text-navy-900 dark:text-white">
@@ -759,7 +778,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({ 
                         </span>
                       </div>
                     </div>
-                    
+
                     {selectedAddon.type === 'tokens' && (
                       <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-lg">
                         <AlertCircle size={16} className="text-amber-500 mt-0.5" />
@@ -773,8 +792,8 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({ 
               </div>
 
               <div className="p-6 border-t border-slate-200 dark:border-white/5 flex justify-end gap-3 bg-slate-50 dark:bg-white/[0.02]">
-                <button 
-                  onClick={() => { setShowAddonsModal(false); setSelectedAddon(null); }} 
+                <button
+                  onClick={() => { setShowAddonsModal(false); setSelectedAddon(null); }}
                   className="admin-btn admin-btn-subtle"
                 >
                   Cancel

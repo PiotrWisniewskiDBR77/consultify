@@ -37,7 +37,7 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
         try {
             const orgs = await Api.getOrganizations();
             const totalUsers = orgs.reduce((acc: number, org: any) => acc + (org.user_count || 0), 0);
-            
+
             setStats(prev => ({
                 ...prev,
                 totalOrgs: orgs.length,
@@ -53,7 +53,8 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
                     aiCalls: dashboardData?.ai?.total_ai_calls || 0,
                     tokens: dashboardData?.ai?.total_tokens || 0,
                     activeUsers7d: dashboardData?.counts?.active_users_7d || 0,
-                    liveUsers: dashboardData?.live?.total_active_connections || 0
+                    liveUsers: dashboardData?.live?.total_active_connections || 0,
+                    pendingRequests: dashboardData?.activity?.total || 0
                 }));
                 setActivities(dashboardData?.activities || []);
             } catch (err) {
@@ -122,6 +123,9 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
 };
 
 export default OverviewModule;
+
+
+
 
 
 

@@ -92,6 +92,7 @@ export const AIChatWelcomeView: React.FC = () => {
         // Persist AI response to conversation store (backend)
         try {
             await addMessage({
+                conversationId: activeConversationId!,
                 role: 'ai',
                 content: fullText,
                 messageType: 'text'
@@ -119,7 +120,7 @@ export const AIChatWelcomeView: React.FC = () => {
     const { pmoContext, globalContext, screenContext } = useAIContext();
 
     // Text-to-Speech for AI responses
-    const { speak, stop: stopSpeaking, isSpeaking, isSupported: ttsSupported } = useTextToSpeech();
+    const { speak, stop: stopSpeaking, state: ttsState, isSupported: ttsSupported } = useTextToSpeech();
 
     // Voice conversation for continuous mode
     const {
@@ -167,7 +168,7 @@ export const AIChatWelcomeView: React.FC = () => {
 
     // Get time-aware context
     const timeContext = useMemo(() => getTimeContext(), []);
-    const firstName = currentUser?.name?.split(' ')[0] || currentUser?.firstName || '';
+    const firstName = currentUser?.firstName || '';
 
     // Fetch AI memory context on mount
     useEffect(() => {
@@ -200,7 +201,6 @@ export const AIChatWelcomeView: React.FC = () => {
     useEffect(() => {
         if (!voiceModeEnabled || !ttsSupported || isStreaming) return;
 
-        // Get the last AI message content
         const lastMessage = activeChatMessages[activeChatMessages.length - 1];
         if (lastMessage?.role === 'ai' && lastMessage.content) {
             const contentToSpeak = cleanTextForSpeech(lastMessage.content);
@@ -304,6 +304,7 @@ export const AIChatWelcomeView: React.FC = () => {
         // Also persist to conversation store (backend)
         try {
             await addMessage({
+                conversationId: conversationId!,
                 role: 'user',
                 content: message.trim(),
                 messageType: 'text'
@@ -344,7 +345,7 @@ YOUR PERSONA:
 - Experience: Led 100+ transformation programs globally, €500M+ in value delivered
 - Style: Socratic questioning, hypothesis-driven, executive-level communication
 
-YOUR ROLE WITH ${currentUser?.name || 'the user'}:
+YOUR ROLE WITH ${currentUser?.firstName || 'the user'}:
 You are their personal strategic co-thinker, not just an assistant. You:
 1. ASK before assuming - use Socratic questions to understand deeply
 2. GUIDE through methodology - Discovery → Assessment → Initiatives → Roadmap → Execution
@@ -366,7 +367,7 @@ COMMUNICATION RULES:
 - For Polish speakers: Respond in Polish unless asked otherwise
 
 CONTEXT:
-- User: ${currentUser?.name || 'User'} (${currentUser?.role || 'Stakeholder'})
+- User: ${currentUser?.firstName || 'User'} (${currentUser?.role || 'Stakeholder'})
 - Organization: ${currentUser?.organizationName || 'Unknown'}
 - Project: ${selectedProject?.name || 'General'}
 

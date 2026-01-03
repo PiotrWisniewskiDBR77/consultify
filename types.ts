@@ -4161,7 +4161,7 @@ export interface DoNotDisturbHours {
  */
 export interface UserProfileExtended {
   userId: string;
-  
+
   // Bio & About
   shortBio?: string;
   longBio?: string;
@@ -4169,7 +4169,7 @@ export interface UserProfileExtended {
   certifications?: Certification[];
   yearsExperience?: number;
   education?: Education[];
-  
+
   // Professional Details
   department?: string;
   managerId?: string;
@@ -4178,22 +4178,22 @@ export interface UserProfileExtended {
   contractType?: ContractType;
   workingHours?: { start: string; end: string };
   workDays?: number[]; // 0-6, where 0 = Sunday
-  
+
   // Social Links (extended)
   socialLinks?: ExtendedSocialLinks;
-  
+
   // Contact Information (extended)
   contactInfo?: ExtendedContactInfo;
-  
+
   // Visibility Settings
   visibility?: ProfileVisibility;
-  
+
   // Email Preferences
   emailPreferences?: EmailPreferences;
-  
+
   // Profile Completion
   profileCompletion?: ProfileCompletion;
-  
+
   // Timestamps
   createdAt?: string;
   updatedAt?: string;
@@ -4298,7 +4298,7 @@ export interface ShortcutAction {
   isCustom?: boolean;
 }
 
-export type ShortcutCategory = 
+export type ShortcutCategory =
   | 'navigation'
   | 'editing'
   | 'task_management'
@@ -4363,7 +4363,7 @@ export interface AutomationRule {
   updatedAt: string;
 }
 
-export type AutomationTriggerType = 
+export type AutomationTriggerType =
   | 'task_created'
   | 'task_completed'
   | 'task_assigned'
@@ -4372,7 +4372,7 @@ export type AutomationTriggerType =
   | 'comment_added'
   | 'tag_added';
 
-export type AutomationActionType = 
+export type AutomationActionType =
   | 'notify'
   | 'assign'
   | 'move'
@@ -4647,11 +4647,14 @@ export interface UserAIProvider {
 export interface Organization {
   id: string;
   name: string;
-  plan: 'free' | 'pro' | 'enterprise';
-  status: 'active' | 'blocked' | 'trial';
-  createdAt: string;
-  validUntil?: string;
+  plan: 'free' | 'trial' | 'pro' | 'enterprise';
+  status: 'active' | 'blocked' | 'trial' | 'pending';
+  created_at: string; // Support snake_case for views
+  createdAt?: string; // Support camelCase for legacy
+  user_count: number;
   userCount?: number;
+  discount_percent?: number;
+  validUntil?: string;
 }
 
 // Project with extended fields
@@ -5088,14 +5091,14 @@ export interface ContentReviewChecklistItem {
 }
 
 /** Content analytics event type */
-export type ContentAnalyticsEventType = 
-  | 'VIEW' 
-  | 'EDIT' 
-  | 'USE' 
-  | 'EXPORT' 
-  | 'CLONE' 
-  | 'PUBLISH' 
-  | 'TEST_SEND' 
+export type ContentAnalyticsEventType =
+  | 'VIEW'
+  | 'EDIT'
+  | 'USE'
+  | 'EXPORT'
+  | 'CLONE'
+  | 'PUBLISH'
+  | 'TEST_SEND'
   | 'PREVIEW'
   | 'DEPRECATE'
   | 'RESTORE';
@@ -5256,12 +5259,12 @@ export interface ContentSearchResult {
 }
 
 /** Bulk action type */
-export type ContentBulkActionType = 
-  | 'PUBLISH' 
-  | 'DEPRECATE' 
-  | 'DELETE' 
-  | 'ADD_TAG' 
-  | 'REMOVE_TAG' 
+export type ContentBulkActionType =
+  | 'PUBLISH'
+  | 'DEPRECATE'
+  | 'DELETE'
+  | 'ADD_TAG'
+  | 'REMOVE_TAG'
   | 'CHANGE_CATEGORY';
 
 /** Bulk action request */

@@ -17,13 +17,13 @@ import ThreatIntelligenceView from './ThreatIntelligenceView';
 import DLPView from './DLPView';
 
 const tabs: Tab[] = [
-    { id: 'sessions', label: 'Admin Sessions', icon: Users },
-    { id: 'audit', label: 'Audit Logs', icon: Shield },
-    { id: 'permissions', label: 'Permissions', icon: Key },
-    { id: 'workflows', label: 'Approval Workflows', icon: GitBranch },
-    { id: 'incidents', label: 'Security Incidents', icon: AlertTriangle },
-    { id: 'threats', label: 'Threat Intelligence', icon: Globe },
-    { id: 'dlp', label: 'DLP', icon: FileText },
+    { id: 'sessions', label: 'Admin Sessions', icon: <Users size={16} /> },
+    { id: 'audit', label: 'Audit Logs', icon: <Shield size={16} /> },
+    { id: 'permissions', label: 'Permissions', icon: <Key size={16} /> },
+    { id: 'workflows', label: 'Approval Workflows', icon: <GitBranch size={16} /> },
+    { id: 'incidents', label: 'Security Incidents', icon: <AlertTriangle size={16} /> },
+    { id: 'threats', label: 'Threat Intelligence', icon: <Globe size={16} /> },
+    { id: 'dlp', label: 'DLP', icon: <FileText size={16} /> },
 ];
 
 const IAMModuleView: React.FC = () => {
@@ -51,16 +51,15 @@ const IAMModuleView: React.FC = () => {
     };
 
     return (
-        <div className="h-full flex flex-col">
-            <TabLayout
-                tabs={tabs}
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-            />
+        <TabLayout
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+        >
             <div className="flex-1 overflow-auto p-6">
                 {renderContent()}
             </div>
-        </div>
+        </TabLayout>
     );
 };
 

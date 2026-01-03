@@ -11,6 +11,7 @@ export interface Tab {
     id: string;
     label: string;
     icon?: React.ReactNode;
+    description?: string;
     badge?: number;
     disabled?: boolean;
 }
@@ -106,6 +107,9 @@ export const TabLayout: React.FC<TabLayoutProps> = ({
 };
 
 export default TabLayout;
+
+
+
 
 
 

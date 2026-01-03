@@ -3,12 +3,13 @@
  * Responsibility: Security, Rate Limiting, PII Scrubbing, Injection Guard
  */
 
-// PII Patterns for redaction
 const PII_PATTERNS = {
-    email: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/gi,
-    phone: /\b(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
-    ssn: /\b\d{3}-\d{2}-\d{4}\b/g,
-    creditCard: /\b(?:\d[ -]*?){13,16}\b/g
+    email: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
+    phone: /(?:\+?48[\s-]?)?(?:\d{3}[\s-]?\d{3}[\s-]?\d{3}|\d{2}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2})/g,
+    pesel: /\b\d{11}\b/g,
+    nip: /\b\d{10}\b|\b\d{3}[-]?\d{3}[-]?\d{2}[-]?\d{2}\b/g,
+    creditCard: /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g,
+    iban: /[A-Z]{2}\d{2}[\s]?\d{4}/g
 };
 
 // Dangerous prompt injection patterns
@@ -129,7 +130,7 @@ class AIGateway {
                 organizationId: request.organizationId,
                 resetIn: result.resetIn
             });
-            
+
             const error = new Error(result.reason);
             error.statusCode = 429;
             error.retryAfter = result.resetIn;
@@ -170,8 +171,10 @@ class AIGateway {
         let result = text;
         result = result.replace(PII_PATTERNS.email, '[REDACTED_EMAIL]');
         result = result.replace(PII_PATTERNS.phone, '[REDACTED_PHONE]');
-        result = result.replace(PII_PATTERNS.ssn, '[REDACTED_SSN]');
+        result = result.replace(PII_PATTERNS.pesel, '[REDACTED_PESEL]');
+        result = result.replace(PII_PATTERNS.nip, '[REDACTED_NIP]');
         result = result.replace(PII_PATTERNS.creditCard, '[REDACTED_CC]');
+        result = result.replace(PII_PATTERNS.iban, '[REDACTED_IBAN]');
 
         return result;
     }

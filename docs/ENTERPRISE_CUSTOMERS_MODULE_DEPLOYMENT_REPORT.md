@@ -351,3 +351,6 @@ Moduł jest gotowy do użycia dla funkcjonalności Security i podstawowych opera
 
 **Status:** ✅ **WDROŻONE** (Backend kompletny, Frontend częściowo)
 
+
+
+

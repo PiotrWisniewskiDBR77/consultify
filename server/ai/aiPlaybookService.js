@@ -1,6 +1,12 @@
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 
+// Dependency injection container
+const deps = {
+    db,
+    uuidv4
+};
+
 /**
  * AI Playbook Service
  * Step 10: Multi-Step Action Plans
@@ -8,6 +14,10 @@ const { v4: uuidv4 } = require('uuid');
  * Manages playbook templates, runs, and step execution.
  */
 const AIPlaybookService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
     RUN_STATUSES: {
         PENDING: 'PENDING',
         IN_PROGRESS: 'IN_PROGRESS',
@@ -42,10 +52,10 @@ const AIPlaybookService = {
     createTemplate: async ({ key, title, description, triggerSignal, estimatedDurationMins = 30 }) => {
         if (!key || !title) throw new Error('key and title are required');
 
-        const id = `apt-${uuidv4()}`;
+        const id = `apt-${deps.uuidv4()}`;
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO ai_playbook_templates (id, key, title, description, trigger_signal, estimated_duration_mins)
                  VALUES (?, ?, ?, ?, ?, ?)`,
                 [id, key, title, description, triggerSignal, estimatedDurationMins],
@@ -67,12 +77,12 @@ const AIPlaybookService = {
      */
     getTemplateByKey: async (key) => {
         return new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM ai_playbook_templates WHERE key = ?`, [key], async (err, template) => {
+            deps.db.get(`SELECT * FROM ai_playbook_templates WHERE key = ?`, [key], async (err, template) => {
                 if (err) return reject(err);
                 if (!template) return resolve(null);
 
                 // Fetch steps
-                db.all(
+                deps.db.all(
                     `SELECT * FROM ai_playbook_template_steps WHERE template_id = ? ORDER BY step_order ASC`,
                     [template.id],
                     (stepsErr, steps) => {
@@ -117,7 +127,7 @@ const AIPlaybookService = {
             : `SELECT * FROM ai_playbook_templates WHERE is_active = 1 ORDER BY title`;
 
         return new Promise((resolve, reject) => {
-            db.all(sql, [], (err, rows) => {
+            deps.db.all(sql, [], (err, rows) => {
                 if (err) return reject(err);
                 resolve((rows || []).map(t => ({
                     id: t.id,
@@ -136,11 +146,11 @@ const AIPlaybookService = {
      * Add step to template
      */
     addTemplateStep: async ({ templateId, stepOrder, actionType, title, description, payloadTemplate, isOptional = false, waitForPrevious = true }) => {
-        const id = `aps-${uuidv4()}`;
+        const id = `aps-${deps.uuidv4()}`;
         const payloadJson = JSON.stringify(payloadTemplate || {});
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO ai_playbook_template_steps 
                  (id, template_id, step_order, action_type, title, description, payload_template, is_optional, wait_for_previous)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -163,11 +173,11 @@ const AIPlaybookService = {
     createDraftTemplate: async ({ key, title, description, triggerSignal, templateGraph, estimatedDurationMins = 30 }) => {
         if (!key || !title) throw new Error('key and title are required');
 
-        const id = `apt-${uuidv4()}`;
+        const id = `apt-${deps.uuidv4()}`;
         const graphJson = typeof templateGraph === 'string' ? templateGraph : JSON.stringify(templateGraph || {});
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO ai_playbook_templates 
                  (id, key, title, description, trigger_signal, estimated_duration_mins, template_graph, version, status)
                  VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'DRAFT')`,
@@ -197,7 +207,7 @@ const AIPlaybookService = {
     updateDraftTemplate: async (id, updates) => {
         // First check if template is DRAFT
         const template = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM ai_playbook_templates WHERE id = ?`, [id], (err, row) => {
+            deps.db.get(`SELECT * FROM ai_playbook_templates WHERE id = ?`, [id], (err, row) => {
                 if (err) reject(err);
                 else resolve(row);
             });
@@ -241,7 +251,7 @@ const AIPlaybookService = {
         values.push(id);
 
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE ai_playbook_templates SET ${setClauses.join(', ')} WHERE id = ?`, values, function (err) {
+            deps.db.run(`UPDATE ai_playbook_templates SET ${setClauses.join(', ')} WHERE id = ?`, values, function (err) {
                 if (err) reject(err);
                 else resolve(this.changes > 0);
             });
@@ -254,7 +264,7 @@ const AIPlaybookService = {
     publishTemplate: async (id, userId) => {
         // Get current template
         const template = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM ai_playbook_templates WHERE id = ?`, [id], (err, row) => {
+            deps.db.get(`SELECT * FROM ai_playbook_templates WHERE id = ?`, [id], (err, row) => {
                 if (err) reject(err);
                 else resolve(row);
             });
@@ -270,7 +280,7 @@ const AIPlaybookService = {
         const now = new Date().toISOString();
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE ai_playbook_templates 
                  SET status = 'PUBLISHED', published_at = ?, published_by_user_id = ?
                  WHERE id = ?`,
@@ -295,7 +305,7 @@ const AIPlaybookService = {
      */
     deprecateTemplate: async (id) => {
         const template = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM ai_playbook_templates WHERE id = ?`, [id], (err, row) => {
+            deps.db.get(`SELECT * FROM ai_playbook_templates WHERE id = ?`, [id], (err, row) => {
                 if (err) reject(err);
                 else resolve(row);
             });
@@ -304,7 +314,7 @@ const AIPlaybookService = {
         if (!template) throw new Error(`Template ${id} not found`);
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE ai_playbook_templates SET status = 'DEPRECATED' WHERE id = ?`,
                 [id],
                 function (err) {
@@ -330,7 +340,7 @@ const AIPlaybookService = {
         const params = status ? [status] : [];
 
         return new Promise((resolve, reject) => {
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
                 resolve((rows || []).map(t => ({
                     id: t.id,
@@ -356,12 +366,12 @@ const AIPlaybookService = {
      */
     getTemplateById: async (id) => {
         return new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM ai_playbook_templates WHERE id = ?`, [id], async (err, template) => {
+            deps.db.get(`SELECT * FROM ai_playbook_templates WHERE id = ?`, [id], async (err, template) => {
                 if (err) return reject(err);
                 if (!template) return resolve(null);
 
                 // Fetch steps
-                db.all(
+                deps.db.all(
                     `SELECT * FROM ai_playbook_template_steps WHERE template_id = ? ORDER BY step_order ASC`,
                     [id],
                     (stepsErr, steps) => {
@@ -470,13 +480,13 @@ const AIPlaybookService = {
      * Initiate a playbook run
      */
     initiateRun: async ({ templateId, organizationId, initiatedBy, contextSnapshot = {} }) => {
-        const runId = `apr-${uuidv4()}`;
-        const correlationId = `corr-${uuidv4()}`;
+        const runId = `apr-${deps.uuidv4()}`;
+        const correlationId = `corr-${deps.uuidv4()}`;
         const contextJson = JSON.stringify(contextSnapshot);
 
         // Get template steps
         const template = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM ai_playbook_templates WHERE id = ?`, [templateId], (err, row) => {
+            deps.db.get(`SELECT * FROM ai_playbook_templates WHERE id = ?`, [templateId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row);
             });
@@ -485,7 +495,7 @@ const AIPlaybookService = {
         if (!template) throw new Error(`Template ${templateId} not found`);
 
         const steps = await new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM ai_playbook_template_steps WHERE template_id = ? ORDER BY step_order`, [templateId], (err, rows) => {
+            deps.db.all(`SELECT * FROM ai_playbook_template_steps WHERE template_id = ? ORDER BY step_order`, [templateId], (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -493,7 +503,7 @@ const AIPlaybookService = {
 
         // Create run
         await new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO ai_playbook_runs (id, template_id, organization_id, correlation_id, initiated_by, status, context_snapshot)
                  VALUES (?, ?, ?, ?, ?, ?, ?)`,
                 [runId, templateId, organizationId, correlationId, initiatedBy, 'PENDING', contextJson],
@@ -506,14 +516,14 @@ const AIPlaybookService = {
 
         // Create run steps
         for (const step of steps) {
-            const stepId = `aprs-${uuidv4()}`;
+            const stepId = `aprs-${deps.uuidv4()}`;
             const resolvedPayload = AIPlaybookService.resolvePayloadTemplate(
                 JSON.parse(step.payload_template || '{}'),
                 contextSnapshot
             );
 
             await new Promise((resolve, reject) => {
-                db.run(
+                deps.db.run(
                     `INSERT INTO ai_playbook_run_steps (id, run_id, template_step_id, status, resolved_payload)
                      VALUES (?, ?, ?, ?, ?)`,
                     [stepId, runId, step.id, 'PENDING', JSON.stringify(resolvedPayload)],
@@ -541,14 +551,14 @@ const AIPlaybookService = {
      */
     getRun: async (runId) => {
         return new Promise((resolve, reject) => {
-            db.get(`SELECT r.*, t.key as template_key, t.title as template_title
+            deps.db.get(`SELECT r.*, t.key as template_key, t.title as template_title
                     FROM ai_playbook_runs r
                     JOIN ai_playbook_templates t ON r.template_id = t.id
                     WHERE r.id = ?`, [runId], async (err, run) => {
                 if (err) return reject(err);
                 if (!run) return resolve(null);
 
-                db.all(
+                deps.db.all(
                     `SELECT rs.*, ts.step_order, ts.step_type, ts.action_type, ts.title, ts.is_optional, ts.next_step_id, ts.branch_rules
                      FROM ai_playbook_run_steps rs
                      JOIN ai_playbook_template_steps ts ON rs.template_step_id = ts.id
@@ -616,7 +626,7 @@ const AIPlaybookService = {
         values.push(runId);
 
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE ai_playbook_runs SET ${setClauses.join(', ')} WHERE id = ?`, values, function (err) {
+            deps.db.run(`UPDATE ai_playbook_runs SET ${setClauses.join(', ')} WHERE id = ?`, values, function (err) {
                 if (err) reject(err);
                 else resolve(this.changes > 0);
             });
@@ -642,7 +652,7 @@ const AIPlaybookService = {
         values.push(stepId);
 
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE ai_playbook_run_steps SET ${setClauses.join(', ')} WHERE id = ?`, values, function (err) {
+            deps.db.run(`UPDATE ai_playbook_run_steps SET ${setClauses.join(', ')} WHERE id = ?`, values, function (err) {
                 if (err) reject(err);
                 else resolve(this.changes > 0);
             });
@@ -715,7 +725,7 @@ const AIPlaybookService = {
         values.push(stepId);
 
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE ai_playbook_run_steps SET ${setClauses.join(', ')} WHERE id = ?`, values, function (err) {
+            deps.db.run(`UPDATE ai_playbook_run_steps SET ${setClauses.join(', ')} WHERE id = ?`, values, function (err) {
                 if (err) reject(err);
                 else resolve(this.changes > 0);
             });
@@ -731,7 +741,7 @@ const AIPlaybookService = {
      */
     getRunStepByTemplateStepId: async (runId, templateStepId) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT rs.*, ts.step_order, ts.step_type, ts.action_type, ts.title, ts.next_step_id, ts.branch_rules
                  FROM ai_playbook_run_steps rs
                  JOIN ai_playbook_template_steps ts ON rs.template_step_id = ts.id
@@ -789,7 +799,7 @@ const AIPlaybookService = {
 
         // Fallback: linear by step_order
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT rs.*, ts.step_order, ts.step_type, ts.action_type, ts.title
                  FROM ai_playbook_run_steps rs
                  JOIN ai_playbook_template_steps ts ON rs.template_step_id = ts.id
@@ -837,12 +847,12 @@ const AIPlaybookService = {
         changeType = 'UPDATE',
         statusAtVersion = 'DRAFT'
     }) => {
-        const id = `aptv-${uuidv4()}`;
+        const id = `aptv-${deps.uuidv4()}`;
         const now = new Date().toISOString();
         const graphJson = typeof templateGraph === 'string' ? templateGraph : JSON.stringify(templateGraph || {});
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO ai_playbook_template_versions (
                     id, template_id, version, title, description, trigger_signal,
                     template_graph, estimated_duration_mins, changed_by, change_notes,
@@ -853,7 +863,7 @@ const AIPlaybookService = {
                     graphJson, estimatedDurationMins, changedBy, changeNotes,
                     changeType, statusAtVersion, now
                 ],
-                function(err) {
+                function (err) {
                     if (err) return reject(err);
                     resolve({
                         id,
@@ -880,7 +890,7 @@ const AIPlaybookService = {
      */
     getTemplateVersionHistory: async (templateId) => {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT * FROM ai_playbook_template_versions 
                  WHERE template_id = ? 
                  ORDER BY version DESC`,
@@ -912,7 +922,7 @@ const AIPlaybookService = {
      */
     getTemplateVersion: async (templateId, version) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT * FROM ai_playbook_template_versions 
                  WHERE template_id = ? AND version = ?`,
                 [templateId, version],
@@ -944,17 +954,17 @@ const AIPlaybookService = {
      */
     restoreTemplateVersion: async (templateId, version, userId = null) => {
         const template = await AIPlaybookService.getTemplateById(templateId);
-        
+
         if (!template) {
             throw new Error(`Template ${templateId} not found`);
         }
-        
+
         if (template.status !== 'DRAFT') {
             throw new Error('Can only restore versions of DRAFT templates');
         }
 
         const versionToRestore = await AIPlaybookService.getTemplateVersion(templateId, version);
-        
+
         if (!versionToRestore) {
             throw new Error(`Version ${version} not found`);
         }
@@ -963,7 +973,7 @@ const AIPlaybookService = {
         const now = new Date().toISOString();
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE ai_playbook_templates SET 
                     title = ?, description = ?, trigger_signal = ?, template_graph = ?,
                     estimated_duration_mins = ?, version = ?, updated_at = ?
@@ -978,7 +988,7 @@ const AIPlaybookService = {
                     now,
                     templateId
                 ],
-                async function(err) {
+                async function (err) {
                     if (err) return reject(err);
 
                     // Create version record for restore
@@ -1008,7 +1018,7 @@ const AIPlaybookService = {
      */
     cloneTemplate: async (templateId, overrides = {}, userId = null) => {
         const template = await AIPlaybookService.getTemplateById(templateId);
-        
+
         if (!template) {
             throw new Error(`Template ${templateId} not found`);
         }
@@ -1064,17 +1074,17 @@ const AIPlaybookService = {
         sessionId = null,
         durationMs = null
     }) => {
-        const id = `ca-${uuidv4()}`;
+        const id = `ca-${deps.uuidv4()}`;
         const now = new Date().toISOString();
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO content_analytics (
                     id, content_id, content_type, event_type, user_id, organization_id,
                     metadata, session_id, duration_ms, created_at
                 ) VALUES (?, ?, 'PLAYBOOK_TEMPLATE', ?, ?, ?, ?, ?, ?, ?)`,
                 [id, contentId, eventType, userId, organizationId, JSON.stringify(metadata), sessionId, durationMs, now],
-                function(err) {
+                function (err) {
                     if (err) return reject(err);
                     resolve({
                         id,
@@ -1098,13 +1108,13 @@ const AIPlaybookService = {
      */
     getTemplateStats: async (templateId) => {
         const template = await AIPlaybookService.getTemplateById(templateId);
-        
+
         if (!template) {
             throw new Error(`Template ${templateId} not found`);
         }
 
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT 
                     COUNT(*) as total_runs,
                     SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed_runs,
@@ -1163,7 +1173,7 @@ const AIPlaybookService = {
         }
 
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT * FROM content_analytics 
                  WHERE ${conditions.join(' AND ')}
                  ORDER BY created_at DESC
@@ -1237,7 +1247,7 @@ const AIPlaybookService = {
         const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT * FROM ai_playbook_templates 
                  ${whereClause}
                  ORDER BY ${sortColumn} ${order}
@@ -1286,7 +1296,7 @@ const AIPlaybookService = {
                     await AIPlaybookService.deprecateTemplate(id);
                 } else if (updates.categoryId !== undefined) {
                     await new Promise((resolve, reject) => {
-                        db.run(
+                        deps.db.run(
                             'UPDATE ai_playbook_templates SET category_id = ?, updated_at = ? WHERE id = ?',
                             [updates.categoryId, new Date().toISOString(), id],
                             (err) => err ? reject(err) : resolve()
@@ -1294,7 +1304,7 @@ const AIPlaybookService = {
                     });
                 } else if (updates.isActive !== undefined) {
                     await new Promise((resolve, reject) => {
-                        db.run(
+                        deps.db.run(
                             'UPDATE ai_playbook_templates SET is_active = ?, updated_at = ? WHERE id = ?',
                             [updates.isActive ? 1 : 0, new Date().toISOString(), id],
                             (err) => err ? reject(err) : resolve()
@@ -1315,7 +1325,7 @@ const AIPlaybookService = {
      */
     getTemplateTags: async (templateId) => {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT ct.* FROM content_tags ct
                  JOIN content_tag_mappings ctm ON ct.id = ctm.tag_id
                  WHERE ctm.content_id = ? AND ctm.content_type = 'PLAYBOOK_TEMPLATE'`,
@@ -1342,19 +1352,19 @@ const AIPlaybookService = {
      * Add tag to playbook template
      */
     addTemplateTag: async (templateId, tagId, userId = null) => {
-        const id = `ctm-${uuidv4()}`;
+        const id = `ctm-${deps.uuidv4()}`;
         const now = new Date().toISOString();
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT OR IGNORE INTO content_tag_mappings (id, content_id, content_type, tag_id, created_at, created_by)
                  VALUES (?, ?, 'PLAYBOOK_TEMPLATE', ?, ?, ?)`,
                 [id, templateId, tagId, now, userId],
-                function(err) {
+                function (err) {
                     if (err) return reject(err);
-                    
+
                     if (this.changes > 0) {
-                        db.run(
+                        deps.db.run(
                             'UPDATE content_tags SET usage_count = usage_count + 1 WHERE id = ?',
                             [tagId],
                             () => resolve(true)
@@ -1372,15 +1382,15 @@ const AIPlaybookService = {
      */
     removeTemplateTag: async (templateId, tagId) => {
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `DELETE FROM content_tag_mappings 
                  WHERE content_id = ? AND content_type = 'PLAYBOOK_TEMPLATE' AND tag_id = ?`,
                 [templateId, tagId],
-                function(err) {
+                function (err) {
                     if (err) return reject(err);
-                    
+
                     if (this.changes > 0) {
-                        db.run(
+                        deps.db.run(
                             'UPDATE content_tags SET usage_count = MAX(0, usage_count - 1) WHERE id = ?',
                             [tagId],
                             () => resolve(true)
@@ -1399,10 +1409,10 @@ const AIPlaybookService = {
     incrementUsageCount: async (templateId) => {
         const now = new Date().toISOString();
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 'UPDATE ai_playbook_templates SET usage_count = COALESCE(usage_count, 0) + 1, last_used_at = ? WHERE id = ?',
                 [now, templateId],
-                function(err) {
+                function (err) {
                     if (err) return reject(err);
                     resolve(this.changes > 0);
                 }

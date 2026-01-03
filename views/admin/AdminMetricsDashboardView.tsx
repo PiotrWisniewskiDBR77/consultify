@@ -163,8 +163,10 @@ export const AdminMetricsDashboardView: React.FC = () => {
                             </div>
                             <FunnelStep
                                 label="Self-Service Users"
-                                value={overview?.selfServeUsers || 0}
-                                percent={75} // Mock
+                                value={overview?.selfServeUsers || overview?.activeUsers || 0}
+                                percent={teamMetrics?.invitations?.sent > 0 && overview?.activeUsers > 0
+                                    ? Math.round((overview.activeUsers / teamMetrics.invitations.sent) * 100)
+                                    : overview?.activeUsers > 0 ? 100 : 0}
                                 color="bg-green-600"
                             />
                         </div>

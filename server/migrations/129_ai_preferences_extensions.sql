@@ -22,3 +22,6 @@ ALTER TABLE ai_user_preferences ADD COLUMN code_review_enabled INTEGER DEFAULT 1
 CREATE INDEX IF NOT EXISTS idx_ai_user_prefs_model ON ai_user_preferences(model_selection);
 CREATE INDEX IF NOT EXISTS idx_ai_user_prefs_personality ON ai_user_preferences(personality_preset);
 
+
+
+

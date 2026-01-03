@@ -312,3 +312,6 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({
 
 export default BioAboutSection;
 
+
+
+

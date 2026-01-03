@@ -187,3 +187,6 @@ BEGIN
     WHERE user_id = NEW.user_id;
 END;
 
+
+
+

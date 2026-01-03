@@ -1,5 +1,6 @@
 const defaultJwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey_change_this_in_production';
+const config = require('../config');
+const JWT_SECRET = config.JWT_SECRET;
 
 // Dependencies object to allow injection
 const deps = {
@@ -48,6 +49,9 @@ const verifySuperAdmin = (req, res, next) => {
             return res.status(403).json({ error: 'Requires Super Admin privileges' });
         }
 
+        req.userId = decoded.id;
+        req.userRole = userRole;
+        req.organizationId = decoded.organizationId || decoded.organization_id;
         req.user = decoded;
         next();
     });

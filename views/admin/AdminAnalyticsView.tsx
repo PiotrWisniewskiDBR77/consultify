@@ -15,27 +15,7 @@ import {
 import { Api } from '../../services/api';
 import { useTranslation } from 'react-i18next';
 
-// Generate mock data for empty charts
-const generateMockUsageData = () => {
-    const data = [];
-    for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        data.push({
-            date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            tokens: Math.floor(Math.random() * 50000) + 10000,
-            cost: Math.random() * 5 + 1
-        });
-    }
-    return data;
-};
-
-const generateMockFailureData = () => [
-    { reason: 'Timeout', count: 12 },
-    { reason: 'Rate Limit', count: 8 },
-    { reason: 'Invalid Input', count: 5 },
-    { reason: 'API Error', count: 3 },
-];
+// Removed mock data generators - using real API data only
 
 export const AdminAnalyticsView: React.FC = () => {
     const { t } = useTranslation();
@@ -117,15 +97,15 @@ export const AdminAnalyticsView: React.FC = () => {
         return `$${value.toFixed(2)}`;
     };
 
-    // Use real data, fallback to mock only if completely empty
+    // Use real data only - show empty state if no data
     const usageData = stats?.usageTrend?.length > 0 
         ? stats.usageTrend.map((d: any) => ({
             date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
             tokens: d.tokens || 0,
             cost: d.cost || 0
         }))
-        : generateMockUsageData();
-    const failureData = stats?.topFailureModes?.length > 0 ? stats.topFailureModes : generateMockFailureData();
+        : [];
+    const failureData = stats?.topFailureModes?.length > 0 ? stats.topFailureModes : [];
 
     if (loading) {
         return (
@@ -311,35 +291,42 @@ export const AdminAnalyticsView: React.FC = () => {
                                 {t('admin.analytics.tokenUsageTrend', 'Token Usage Trend')}
                             </h3>
                             <div className="h-64">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={usageData}>
-                                        <defs>
-                                            <linearGradient id="tokenGradient" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#64748b" stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor="#64748b" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                                        <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-                                        <YAxis stroke="#64748b" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
-                                        <Tooltip
-                                            contentStyle={{
-                                                backgroundColor: '#0f172a',
-                                                border: '1px solid rgba(255,255,255,0.1)',
-                                                borderRadius: '8px',
-                                                color: '#fff'
-                                            }}
-                                            formatter={(value: any) => [value.toLocaleString(), 'Tokens']}
-                                        />
-                                        <Area
-                                            type="monotone"
-                                            dataKey="tokens"
-                                            stroke="#94a3b8"
-                                            strokeWidth={2}
-                                            fill="url(#tokenGradient)"
-                                        />
-                                    </AreaChart>
-                                </ResponsiveContainer>
+                                {usageData.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={usageData}>
+                                            <defs>
+                                                <linearGradient id="tokenGradient" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#64748b" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#64748b" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                                            <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
+                                            <YAxis stroke="#64748b" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
+                                            <Tooltip
+                                                contentStyle={{
+                                                    backgroundColor: '#0f172a',
+                                                    border: '1px solid rgba(255,255,255,0.1)',
+                                                    borderRadius: '8px',
+                                                    color: '#fff'
+                                                }}
+                                                formatter={(value: any) => [value.toLocaleString(), 'Tokens']}
+                                            />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="tokens"
+                                                stroke="#94a3b8"
+                                                strokeWidth={2}
+                                                fill="url(#tokenGradient)"
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                                        <Activity className="w-12 h-12 mb-2 opacity-50" />
+                                        <p className="text-sm">{t('admin.analytics.noUsageData', 'No usage data available')}</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

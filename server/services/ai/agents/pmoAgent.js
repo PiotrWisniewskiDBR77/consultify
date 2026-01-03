@@ -74,17 +74,17 @@ Communication style:
 
     async process(query, context) {
         const prompt = this.buildPMOPrompt(query, context);
-        
+
         try {
             const response = await llmService.generateResponse({
                 prompt,
                 maxTokens: this.maxTokens,
                 temperature: 0.6,
-                model: context.preferredModel || 'default'
+                model: await this.resolveModelConfig(context)
             });
 
             const analysis = this.parseResponse(response);
-            
+
             // Add health scoring if we have project data
             if (context.project || context.initiatives?.length) {
                 analysis.healthScore = this.calculateHealthScore(context);
@@ -102,7 +102,7 @@ Communication style:
                 domain: this.domain,
                 ...analysis,
                 metadata: {
-                    model: context.preferredModel || 'default',
+                    model: await this.resolveModelConfig(context),
                     timestamp: new Date().toISOString()
                 }
             };
@@ -114,9 +114,9 @@ Communication style:
 
     buildPMOPrompt(query, context) {
         const basePrompt = this.buildPrompt(query, context);
-        
+
         let pmoContext = '';
-        
+
         if (context.project) {
             const p = context.project;
             pmoContext += `\nCURRENT PROJECT:
@@ -127,7 +127,7 @@ Communication style:
 - Start: ${p.startDate || 'TBD'}
 - End: ${p.endDate || 'TBD'}`;
         }
-        
+
         if (context.initiatives?.length) {
             pmoContext += `\nPORTFOLIO OVERVIEW:
 - Total Initiatives: ${context.initiatives.length}
@@ -138,17 +138,17 @@ Communication style:
             const activeInitiatives = context.initiatives
                 .filter(i => i.status !== 'completed')
                 .slice(0, 5);
-            
+
             if (activeInitiatives.length) {
                 pmoContext += `\n\nACTIVE INITIATIVES:
 ${activeInitiatives.map(i => `- ${i.name}: ${i.status || 'Unknown'} | ${i.progress || 0}% | Due: ${i.dueDate || 'TBD'}`).join('\n')}`;
             }
         }
-        
+
         if (context.resources?.length) {
             const overloaded = context.resources.filter(r => r.utilization > 100);
             const underutilized = context.resources.filter(r => r.utilization < 50);
-            
+
             pmoContext += `\nRESOURCE STATUS:
 - Total Resources: ${context.resources.length}
 - Overloaded (>100%): ${overloaded.length}
@@ -160,7 +160,7 @@ ${activeInitiatives.map(i => `- ${i.name}: ${i.status || 'Unknown'} | ${i.progre
                 .filter(m => new Date(m.dueDate) > new Date())
                 .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
                 .slice(0, 5);
-            
+
             if (upcoming.length) {
                 pmoContext += `\nUPCOMING MILESTONES:
 ${upcoming.map(m => `- ${m.name}: ${m.dueDate} (${m.status || 'pending'})`).join('\n')}`;
@@ -220,13 +220,13 @@ FORMAT YOUR RESPONSE AS:
 
     parseResponse(response) {
         const text = response.text || response;
-        
+
         const confidenceMatch = text.match(/Confidence:\s*(\d+)/i);
         const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) / 100 : 0.7;
 
         // Extract main insight
         const insightMatch = text.match(/## Portfolio\/Project Status\s*([\s\S]*?)(?=##|$)/i);
-        const mainInsight = insightMatch 
+        const mainInsight = insightMatch
             ? insightMatch[1].trim().split('\n')[0]
             : 'Project status analysis completed';
 
@@ -273,11 +273,11 @@ FORMAT YOUR RESPONSE AS:
         };
 
         const areas = ['schedule', 'resources', 'scope', 'dependencies', 'budget'];
-        
+
         for (const area of areas) {
             const regex = new RegExp(`\\|\\s*${area}\\s*\\|\\s*([🟢🟡🔴])\\s*\\|\\s*([^|]*)\\|`, 'i');
             const match = text.match(regex);
-            
+
             if (match) {
                 const statusMap = { '🟢': 'green', '🟡': 'amber', '🔴': 'red' };
                 dashboard[area] = {
@@ -292,7 +292,7 @@ FORMAT YOUR RESPONSE AS:
 
     derivePortfolioStatus(dashboard) {
         const statuses = Object.values(dashboard).map(d => d.status);
-        
+
         if (statuses.includes('red')) return 'at_risk';
         if (statuses.filter(s => s === 'amber').length >= 2) return 'attention';
         if (statuses.every(s => s === 'green')) return 'healthy';
@@ -310,10 +310,10 @@ FORMAT YOUR RESPONSE AS:
         }
 
         // Check blocked initiatives
-        const blockedCount = context.initiatives?.filter(i => 
+        const blockedCount = context.initiatives?.filter(i =>
             i.status === 'blocked' || i.health === 'red'
         ).length || 0;
-        
+
         if (blockedCount > 0) {
             score -= Math.min(blockedCount * 10, 30);
             deductions.push(`${blockedCount} blocked initiatives`);
@@ -329,10 +329,10 @@ FORMAT YOUR RESPONSE AS:
         }
 
         // Check overdue milestones
-        const overdue = context.milestones?.filter(m => 
+        const overdue = context.milestones?.filter(m =>
             new Date(m.dueDate) < new Date() && m.status !== 'completed'
         ).length || 0;
-        
+
         if (overdue > 0) {
             score -= Math.min(overdue * 5, 20);
             deductions.push(`${overdue} overdue milestones`);
@@ -458,6 +458,9 @@ Provide:
 }
 
 module.exports = { PMOAgent };
+
+
+
 
 
 

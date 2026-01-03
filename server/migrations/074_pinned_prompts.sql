@@ -22,3 +22,6 @@ CREATE INDEX IF NOT EXISTS idx_pinned_prompts_usage ON pinned_prompts(user_id, u
 
 
 
+
+
+

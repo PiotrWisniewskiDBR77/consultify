@@ -18,7 +18,7 @@ interface Permission {
 
 interface PermissionMatrix {
     categories: Record<string, Permission[]>;
-    roles: string[];
+    roles: (string | { name: string })[];
     matrix: Record<string, Record<string, boolean>>;
 }
 
@@ -72,7 +72,7 @@ const PermissionsMatrixView: React.FC = () => {
         try {
             setToggling(toggleKey);
             await Api.toggleRolePermission(role, permissionKey, !currentValue);
-            
+
             // Update local state
             setMatrix(prev => {
                 if (!prev) return prev;
@@ -87,7 +87,7 @@ const PermissionsMatrixView: React.FC = () => {
                     }
                 };
             });
-            
+
             toast.success(`Permission ${!currentValue ? 'granted' : 'revoked'} for ${role}`);
         } catch (err: any) {
             toast.error(err.message || 'Failed to toggle permission');
@@ -187,7 +187,7 @@ const PermissionsMatrixView: React.FC = () => {
                         </div>
                     </div>
                 </Card>
-                
+
                 <Card variant="bordered" className="p-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-violet-500/10 rounded-lg">
@@ -199,7 +199,7 @@ const PermissionsMatrixView: React.FC = () => {
                         </div>
                     </div>
                 </Card>
-                
+
                 <Card variant="bordered" className="p-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-amber-500/10 rounded-lg">
@@ -211,7 +211,7 @@ const PermissionsMatrixView: React.FC = () => {
                         </div>
                     </div>
                 </Card>
-                
+
                 <Card variant="bordered" className="p-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-emerald-500/10 rounded-lg">
@@ -276,8 +276,7 @@ const PermissionsMatrixView: React.FC = () => {
                                 <tr className="border-b border-slate-700">
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Permission</th>
                                     {matrix.roles.map(role => {
-                                        const roleObj = typeof role === 'string' ? { name: role } : role;
-                                        const roleName = roleObj.name || role;
+                                        const roleName = typeof role === 'string' ? role : role.name;
                                         return (
                                             <th key={roleName} className="text-center py-3 px-4 text-sm font-medium text-slate-400">
                                                 <div>
@@ -310,8 +309,7 @@ const PermissionsMatrixView: React.FC = () => {
                                                     </div>
                                                 </td>
                                                 {matrix.roles.map(role => {
-                                                    const roleObj = typeof role === 'string' ? { name: role } : role;
-                                                    const roleName = roleObj.name || role;
+                                                    const roleName = typeof role === 'string' ? role : role.name;
                                                     const isEnabled = matrix.matrix[roleName]?.[perm.key];
                                                     const toggleKey = `${roleName}-${perm.key}`;
                                                     return (
@@ -319,11 +317,10 @@ const PermissionsMatrixView: React.FC = () => {
                                                             <button
                                                                 onClick={() => handleTogglePermission(roleName, perm.key, isEnabled)}
                                                                 disabled={toggling === toggleKey}
-                                                                className={`p-1 rounded-lg transition-all ${
-                                                                    isEnabled 
-                                                                        ? 'bg-emerald-500/20 hover:bg-emerald-500/30' 
-                                                                        : 'bg-slate-700/50 hover:bg-slate-700'
-                                                                }`}
+                                                                className={`p-1 rounded-lg transition-all ${isEnabled
+                                                                    ? 'bg-emerald-500/20 hover:bg-emerald-500/30'
+                                                                    : 'bg-slate-700/50 hover:bg-slate-700'
+                                                                    }`}
                                                                 title={`${isEnabled ? 'Revoke' : 'Grant'} ${perm.key} for ${roleName}`}
                                                             >
                                                                 {toggling === toggleKey ? (

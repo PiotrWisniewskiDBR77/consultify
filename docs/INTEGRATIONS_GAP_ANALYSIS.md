@@ -223,3 +223,6 @@
 - ✅ Cost tracking
 - ❌ Brakuje w Consultify
 
+
+
+

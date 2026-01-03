@@ -33,22 +33,20 @@ export const ActiveSessionsSettings: React.FC<ActiveSessionsSettingsProps> = ({ 
     fetchSessions();
   }, []);
 
-  const fetchSessions = async () => {
-    setLoading(true);
-    try {
-      const response = await Api.getActiveSessions();
-      setSessions(response.sessions || []);
-    } catch (error) {
-      console.error('Failed to fetch sessions:', error);
-      // Use mock data if API not available
-      setSessions([
-        { id: '1', deviceInfo: 'Desktop', device: 'Desktop', browser: 'Chrome 120', location: 'Warsaw, Poland', lastActive: 'Now', current: true },
-        { id: '2', deviceInfo: 'Mobile', device: 'Mobile', browser: 'Safari iOS', location: 'Krakow, Poland', lastActive: '2 hours ago', current: false },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchSessions = async () => {
+        setLoading(true);
+        try {
+            const response = await Api.getActiveSessions();
+            setSessions(response.sessions || []);
+        } catch (error) {
+            console.error('Failed to fetch sessions:', error);
+            toast.error(t('settings.security.sessionsError', 'Failed to load active sessions'));
+            // Set empty state instead of mock data
+            setSessions([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
   const terminateSession = async (sessionId: string) => {
     try {

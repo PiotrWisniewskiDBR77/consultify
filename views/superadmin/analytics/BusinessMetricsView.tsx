@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '../../../components/SuperAdmin/Card';
+import { Card } from '../../../components/ui/BaseCard';
 import {
     Plus,
     TrendingUp,
@@ -308,13 +308,12 @@ const BusinessMetricsView: React.FC = () => {
                         const typeInfo = getMetricTypeInfo(metric.metric_type);
                         const TypeIcon = typeInfo.icon;
                         const health = getHealthStatus(metric);
-                        
+
                         return (
                             <Card
                                 key={metric.id}
-                                className={`bg-gray-800 p-4 cursor-pointer transition-all hover:ring-1 hover:ring-blue-500 ${
-                                    selectedMetric?.id === metric.id ? 'ring-2 ring-blue-500' : ''
-                                }`}
+                                className={`bg-gray-800 p-4 cursor-pointer transition-all hover:ring-1 hover:ring-blue-500 ${selectedMetric?.id === metric.id ? 'ring-2 ring-blue-500' : ''
+                                    }`}
                                 onClick={() => handleSelectMetric(metric)}
                             >
                                 <div className="flex items-start justify-between mb-3">
@@ -327,15 +326,14 @@ const BusinessMetricsView: React.FC = () => {
                                             <span className="text-xs text-gray-400">{typeInfo.label}</span>
                                         </div>
                                     </div>
-                                    <div className={`px-2 py-1 rounded text-xs ${
-                                        health === 'good' ? 'bg-green-500/20 text-green-400' :
-                                        health === 'warning' ? 'bg-yellow-500/20 text-yellow-400' :
-                                        health === 'bad' ? 'bg-red-500/20 text-red-400' :
-                                        'bg-gray-500/20 text-gray-400'
-                                    }`}>
+                                    <div className={`px-2 py-1 rounded text-xs ${health === 'good' ? 'bg-green-500/20 text-green-400' :
+                                            health === 'warning' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                health === 'bad' ? 'bg-red-500/20 text-red-400' :
+                                                    'bg-gray-500/20 text-gray-400'
+                                        }`}>
                                         {health === 'good' ? 'On Track' :
-                                         health === 'warning' ? 'Warning' :
-                                         health === 'bad' ? 'Critical' : 'No Target'}
+                                            health === 'warning' ? 'Warning' :
+                                                health === 'bad' ? 'Critical' : 'No Target'}
                                     </div>
                                 </div>
 
@@ -356,10 +354,9 @@ const BusinessMetricsView: React.FC = () => {
                                     <div className="flex items-center gap-1">
                                         {getTrendIcon(metric.trend)}
                                         {metric.trend !== undefined && (
-                                            <span className={`text-sm ${
-                                                metric.trend > 0 ? 'text-green-400' :
-                                                metric.trend < 0 ? 'text-red-400' : 'text-gray-400'
-                                            }`}>
+                                            <span className={`text-sm ${metric.trend > 0 ? 'text-green-400' :
+                                                    metric.trend < 0 ? 'text-red-400' : 'text-gray-400'
+                                                }`}>
                                                 {metric.trend > 0 ? '+' : ''}{metric.trend?.toFixed(1)}%
                                             </span>
                                         )}
@@ -371,11 +368,10 @@ const BusinessMetricsView: React.FC = () => {
                                     <div className="mt-3">
                                         <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
                                             <div
-                                                className={`h-full rounded-full transition-all ${
-                                                    health === 'good' ? 'bg-green-500' :
-                                                    health === 'warning' ? 'bg-yellow-500' :
-                                                    'bg-red-500'
-                                                }`}
+                                                className={`h-full rounded-full transition-all ${health === 'good' ? 'bg-green-500' :
+                                                        health === 'warning' ? 'bg-yellow-500' :
+                                                            'bg-red-500'
+                                                    }`}
                                                 style={{
                                                     width: `${Math.min(100, (metric.current_value / metric.target_value) * 100)}%`
                                                 }}
@@ -518,11 +514,10 @@ const BusinessMetricsView: React.FC = () => {
                                         <button
                                             key={mt.id}
                                             onClick={() => setNewMetric({ ...newMetric, metricType: mt.id })}
-                                            className={`p-2 rounded-lg flex items-center gap-2 transition-colors ${
-                                                newMetric.metricType === mt.id
+                                            className={`p-2 rounded-lg flex items-center gap-2 transition-colors ${newMetric.metricType === mt.id
                                                     ? 'bg-blue-600/20 border border-blue-500'
                                                     : 'bg-gray-700 hover:bg-gray-600'
-                                            }`}
+                                                }`}
                                         >
                                             <mt.icon className="w-4 h-4 text-gray-400" />
                                             <span className="text-sm text-white">{mt.label}</span>
@@ -600,4 +595,7 @@ const BusinessMetricsView: React.FC = () => {
 };
 
 export default BusinessMetricsView;
+
+
+
 

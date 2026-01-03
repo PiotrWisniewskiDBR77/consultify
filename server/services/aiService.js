@@ -669,9 +669,12 @@ const AiService = {
         let systemPrompt = await getSystemPrompt(roleKey);
 
         // 1. Inject "Learned Best Practices" (Feedback)
+        // FIX: getLearningExamples returns a string, not array
+        // Previous bug: examples.length > 50 was checking string length incorrectly
         const examples = await deps.FeedbackService.getLearningExamples(contextType);
-        if (examples && examples.length > 50) {
+        if (examples && typeof examples === 'string' && examples.trim().length > 0) {
             systemPrompt += `\n\n### LEARNED BEST PRACTICES (FROM FEEDBACK):\n${examples}\n### END LEARNED PRACTICES\n`;
+            console.log('[AIService] Injected learning examples for context:', contextType);
         }
 
         // 2. Inject "Global Strategic Directions" (Admin Overrides)

@@ -38,3 +38,6 @@ CREATE TABLE IF NOT EXISTS user_notification_preferences_v3 (
 CREATE INDEX IF NOT EXISTS idx_notification_prefs_v3_user ON user_notification_preferences_v3(user_id);
 CREATE INDEX IF NOT EXISTS idx_notification_prefs_v3_dnd ON user_notification_preferences_v3(dnd_enabled, dnd_until);
 
+
+
+

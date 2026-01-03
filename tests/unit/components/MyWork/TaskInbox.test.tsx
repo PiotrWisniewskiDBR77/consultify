@@ -55,14 +55,22 @@ describe('TaskInbox', () => {
         (Api.getTasks as any).mockResolvedValue(mockTasks);
     });
 
+    const switchToListView = async () => {
+        await waitFor(() => expect(Api.getTasks).toHaveBeenCalled());
+        const viewBtns = screen.getAllByText(/PMO Priority/i);
+        fireEvent.click(viewBtns[0]); // Toggle view dropdown
+        const listOption = screen.getByText(/List View/i);
+        fireEvent.click(listOption);
+    };
+
     it('renders and fetches tasks', async () => {
         render(<TaskInbox onEditTask={mockOnEditTask} onCreateTask={mockOnCreateTask} />);
 
-        // Check loading state or directly wait for result
+        await switchToListView();
+
         await waitFor(() => {
             expect(screen.getByText('Task 1')).toBeTruthy();
             expect(screen.getByText('Task 2')).toBeTruthy();
-            expect(Api.getTasks).toHaveBeenCalled();
         });
     });
 
@@ -78,6 +86,7 @@ describe('TaskInbox', () => {
     it('filters tasks by Quick Filter (Overdue)', async () => {
         render(<TaskInbox onEditTask={mockOnEditTask} onCreateTask={mockOnCreateTask} />);
 
+        await switchToListView();
         await waitFor(() => expect(screen.getByText('Task 1')).toBeTruthy());
 
         // Open filter dropdown
@@ -96,6 +105,7 @@ describe('TaskInbox', () => {
     it('calls onEditTask when clicking a task', async () => {
         render(<TaskInbox onEditTask={mockOnEditTask} onCreateTask={mockOnCreateTask} />);
 
+        await switchToListView();
         await waitFor(() => expect(screen.getByText('Task 1')).toBeTruthy());
 
         fireEvent.click(screen.getByText('Task 1'));

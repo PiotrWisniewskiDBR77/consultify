@@ -38,6 +38,12 @@ Your role is to provide financial guidance on:
 - Financial risk assessment
 - Business case development
 
+NUMERICAL ANCHORING (CRITICAL):
+- Use the numbers provided in the 'FINANCIAL DATA' section as the SOLE SOURCE OF TRUTH.
+- Do NOT recalculate ROI, NPV, or Payback if they are already provided in the context.
+- Ensure your textual reasoning is strictly consistent with the provided JSON metrics.
+- If data is missing, state it clearly rather than estimating.
+
 Communication style:
 - Be quantitative and data-driven
 - Use financial terminology appropriately
@@ -63,17 +69,17 @@ Communication style:
 
     async process(query, context) {
         const prompt = this.buildFinancePrompt(query, context);
-        
+
         try {
             const response = await llmService.generateResponse({
                 prompt,
                 maxTokens: this.maxTokens,
                 temperature: 0.5, // Lower temperature for financial accuracy
-                model: context.preferredModel || 'default'
+                model: await this.resolveModelConfig(context)
             });
 
             const analysis = this.parseResponse(response);
-            
+
             // Add financial calculations if relevant
             if (context.economics) {
                 analysis.calculations = this.performCalculations(context.economics);
@@ -103,9 +109,9 @@ Communication style:
 
     buildFinancePrompt(query, context) {
         const basePrompt = this.buildPrompt(query, context);
-        
+
         let financeContext = '';
-        
+
         if (context.economics) {
             const eco = context.economics;
             financeContext += `\nFINANCIAL DATA:
@@ -115,18 +121,18 @@ Communication style:
 - Payback Period: ${eco.paybackMonths || 'Not calculated'} months
 - NPV: ${this.formatCurrency(eco.npv)}`;
         }
-        
+
         if (context.initiatives?.length) {
             const initiativesCosts = context.initiatives
                 .filter(i => i.estimatedCost)
                 .slice(0, 5);
-            
+
             if (initiativesCosts.length) {
                 financeContext += `\nINITIATIVE INVESTMENTS:
 ${initiativesCosts.map(i => `- ${i.name}: ${this.formatCurrency(i.estimatedCost)} (${i.expectedROI || 'TBD'}% ROI)`).join('\n')}`;
             }
         }
-        
+
         if (context.budget) {
             financeContext += `\nBUDGET ALLOCATION:
 - Total Budget: ${this.formatCurrency(context.budget.total)}
@@ -167,7 +173,7 @@ FORMAT YOUR RESPONSE AS:
 
     parseResponse(response) {
         const text = response.text || response;
-        
+
         const confidenceMatch = text.match(/Confidence:\s*(\d+)/i);
         const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) / 100 : 0.7;
 
@@ -177,7 +183,7 @@ FORMAT YOUR RESPONSE AS:
 
         // Extract main insight
         const insightMatch = text.match(/## Financial Assessment\s*([\s\S]*?)(?=##|$)/i);
-        const mainInsight = insightMatch 
+        const mainInsight = insightMatch
             ? insightMatch[1].trim().split('\n')[0]
             : 'Financial analysis completed';
 
@@ -199,16 +205,16 @@ FORMAT YOUR RESPONSE AS:
 
     extractMetrics(text) {
         const metrics = {};
-        
+
         const roiMatch = text.match(/ROI:\s*([\d.]+)%/i);
         if (roiMatch) metrics.roi = parseFloat(roiMatch[1]);
-        
+
         const npvMatch = text.match(/NPV:\s*\$?([\d,]+)/i);
         if (npvMatch) metrics.npv = parseFloat(npvMatch[1].replace(/,/g, ''));
-        
+
         const paybackMatch = text.match(/Payback:\s*([\d.]+)\s*months/i);
         if (paybackMatch) metrics.paybackMonths = parseFloat(paybackMatch[1]);
-        
+
         const riskMatch = text.match(/Risk Level:\s*(Low|Medium|High)/i);
         if (riskMatch) metrics.riskLevel = riskMatch[1].toLowerCase();
 
@@ -217,7 +223,7 @@ FORMAT YOUR RESPONSE AS:
 
     categorizeImpact(metrics) {
         if (!metrics.roi) return 'unknown';
-        
+
         if (metrics.roi >= 100) return 'transformational';
         if (metrics.roi >= 50) return 'high';
         if (metrics.roi >= 20) return 'medium';
@@ -227,28 +233,28 @@ FORMAT YOUR RESPONSE AS:
 
     performCalculations(economics) {
         const calculations = {};
-        
+
         // ROI Calculation
         if (economics.totalInvestment && economics.totalBenefits) {
             calculations.roi = ((economics.totalBenefits - economics.totalInvestment) / economics.totalInvestment) * 100;
         }
-        
+
         // Simple Payback
         if (economics.totalInvestment && economics.annualBenefits) {
             calculations.paybackYears = economics.totalInvestment / economics.annualBenefits;
             calculations.paybackMonths = calculations.paybackYears * 12;
         }
-        
+
         // NPV (simplified - assuming 10% discount rate, 5 year horizon)
         if (economics.annualBenefits && economics.totalInvestment) {
             const discountRate = 0.10;
             const years = 5;
             let npv = -economics.totalInvestment;
-            
+
             for (let year = 1; year <= years; year++) {
                 npv += economics.annualBenefits / Math.pow(1 + discountRate, year);
             }
-            
+
             calculations.npv = Math.round(npv);
         }
 
@@ -331,6 +337,9 @@ Provide:
 }
 
 module.exports = { FinanceAgent };
+
+
+
 
 
 

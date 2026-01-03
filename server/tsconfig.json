@@ -1,19 +1,14 @@
 {
   "compilerOptions": {
+    // Build settings
     "target": "ES2022",
-    "module": "CommonJS",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
-    "moduleResolution": "node",
     "outDir": "./dist",
-    "rootDir": "./",
-    "noEmit": false,
-    "skipLibCheck": true,
-    "types": ["node"],
-    "allowJs": true,
-    "checkJs": false,
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
+    "rootDir": "./src",
+    
+    // TypeScript strictness (Enterprise Standard)
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -21,28 +16,53 @@
     "strictBindCallApply": true,
     "strictPropertyInitialization": true,
     "noImplicitThis": true,
+    "useUnknownInCatchVariables": true,
     "alwaysStrict": true,
+    
+    // Code quality
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
+    
+    // Module interop
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    
+    // Output settings
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "inlineSources": true,
+    
+    // Performance
+    "skipLibCheck": true,
+    "incremental": true,
+    
+    // Decorators (for DI/ORM if needed)
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    
+    // Paths
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@services/*": ["./src/services/*"],
+      "@routes/*": ["./src/routes/*"],
+      "@middleware/*": ["./src/middleware/*"],
+      "@types/*": ["./src/types/*"],
+      "@utils/*": ["./src/utils/*"]
+    }
   },
   "include": [
-    "**/*.ts",
-    "**/*.js"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "**/*.test.js",
     "**/*.test.ts",
-    "**/__mocks__/**",
-    "routes/**",
-    "**/*.cjs"
+    "**/*.spec.ts"
   ]
 }
-

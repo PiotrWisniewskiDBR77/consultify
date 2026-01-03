@@ -1,11 +1,11 @@
 /**
  * CustomersModule - Customer Management
  * 
- * Tabs: Organizations | Users | Feedback | Bulk Ops
+ * Tabs: Organizations | Users | Lifecycle | Playbooks | Contracts | Security | Support & CS | Feedback | Analytics | Compliance | Automation | Communication | Bulk Ops
  */
 
 import React, { useState, useEffect } from 'react';
-import { Building2, Users, MessageSquare, Upload, Shield, HeadphonesIcon, BarChart3, FileCheck, Zap, Mail } from 'lucide-react';
+import { Building2, Users, MessageSquare, Upload, Shield, HeadphonesIcon, BarChart3, FileCheck, Zap, Mail, RefreshCw, BookOpen, FileText } from 'lucide-react';
 import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
 import { OrganizationsView } from './OrganizationsView';
 import { SuperAdminUserManagement } from './SuperAdminUserManagement';
@@ -13,6 +13,7 @@ import { SuperAdminFeedbackView } from './SuperAdminFeedbackView';
 import { BulkOperationsView } from '../admin/BulkOperationsView';
 import { SecurityModuleView } from './security/SecurityModuleView';
 import { SupportModuleView } from './support/SupportModuleView';
+import { CustomerLifecycleView, CustomerSuccessPlaybooksView, ContractManagementView } from './customers';
 import { Api } from '../../services/api';
 
 interface CustomersModuleProps {
@@ -51,6 +52,9 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({ initialTab }) 
     const tabs: Tab[] = [
         { id: 'organizations', label: 'Organizations', icon: <Building2 size={16} /> },
         { id: 'users', label: 'Users', icon: <Users size={16} /> },
+        { id: 'lifecycle', label: 'Lifecycle', icon: <RefreshCw size={16} /> },
+        { id: 'playbooks', label: 'Playbooks', icon: <BookOpen size={16} /> },
+        { id: 'contracts', label: 'Contracts', icon: <FileText size={16} /> },
         { id: 'security', label: 'Security', icon: <Shield size={16} /> },
         { id: 'support', label: 'Support & CS', icon: <HeadphonesIcon size={16} /> },
         { id: 'feedback', label: 'Feedback', icon: <MessageSquare size={16} />, badge: pendingFeedbackCount },
@@ -67,6 +71,24 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({ initialTab }) 
                 return <OrganizationsView />;
             case 'users':
                 return <SuperAdminUserManagement organizations={organizations} />;
+            case 'lifecycle':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <CustomerLifecycleView />
+                    </div>
+                );
+            case 'playbooks':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <CustomerSuccessPlaybooksView />
+                    </div>
+                );
+            case 'contracts':
+                return (
+                    <div className="p-6 overflow-y-auto h-full">
+                        <ContractManagementView />
+                    </div>
+                );
             case 'security':
                 return <SecurityModuleView />;
             case 'support':

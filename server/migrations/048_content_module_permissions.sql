@@ -180,3 +180,6 @@ CREATE INDEX IF NOT EXISTS idx_content_permissions_content ON content_permission
 CREATE INDEX IF NOT EXISTS idx_content_permissions_user ON content_permissions(user_id);
 CREATE INDEX IF NOT EXISTS idx_content_permissions_role ON content_permissions(role);
 
+
+
+

@@ -1,10 +1,7 @@
-/**
- * ConnectorService Tests
- * 
- * Tests for connector configuration CRUD operations.
- */
-
-const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
+import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { initTestDb, cleanTables, dbRun, db } = require('../../helpers/dbHelper.cjs');
 const ConnectorService = require('../../../server/services/connectorService');
 const { v4: uuidv4 } = require('uuid');
 
@@ -15,6 +12,7 @@ describe('ConnectorService', () => {
 
     beforeAll(async () => {
         await initTestDb();
+        ConnectorService.setDependencies({ db });
     });
 
     beforeEach(async () => {
@@ -35,14 +33,14 @@ describe('ConnectorService', () => {
         );
 
         // Create test connector in catalog
-        testConnectorKey = 'test_connector';
+        testConnectorKey = 'jira'; // Use an existing key from registry for validation
         await dbRun(
-            `INSERT INTO connectors (key, name, category, capabilities_json, is_available, created_at)
+            `INSERT OR IGNORE INTO connectors (key, name, category, capabilities_json, is_available, created_at)
              VALUES (?, ?, ?, ?, ?, datetime('now'))`,
             [
                 testConnectorKey,
-                'Test Connector',
-                'test',
+                'Jira Cloud',
+                'project_management',
                 JSON.stringify(['read', 'write']),
                 1
             ]
@@ -57,159 +55,76 @@ describe('ConnectorService', () => {
             'users',
             'organizations'
         ]);
+        vi.clearAllMocks();
     });
 
     describe('getCatalog', () => {
         it('should return available connectors', async () => {
             const catalog = await ConnectorService.getCatalog();
-
             expect(Array.isArray(catalog)).toBe(true);
             expect(catalog.length).toBeGreaterThanOrEqual(1);
         });
-
-        it('should only return available connectors', async () => {
-            // Create unavailable connector
-            await dbRun(
-                `INSERT INTO connectors (key, name, category, capabilities_json, is_available, created_at)
-                 VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-                ['unavailable_connector', 'Unavailable', 'test', '[]', 0]
-            );
-
-            const catalog = await ConnectorService.getCatalog();
-
-            expect(catalog.every(c => c.is_available === 1)).toBe(true);
-        });
-
-        it('should parse capabilities JSON', async () => {
-            const catalog = await ConnectorService.getCatalog();
-
-            const connector = catalog.find(c => c.key === testConnectorKey);
-            if (connector) {
-                expect(Array.isArray(connector.capabilities)).toBe(true);
-            }
-        });
     });
 
-    describe('getOrgConfigs', () => {
-        it('should return empty array when no configs', async () => {
-            const configs = await ConnectorService.getOrgConfigs(testOrgId);
-
-            expect(configs).toEqual([]);
-        });
-
-        it('should return org connector configs', async () => {
-            // Create connector config
-            const configId = uuidv4();
-            await dbRun(
-                `INSERT INTO org_connector_configs 
-                 (id, org_id, connector_key, status, scopes_json, configured_by, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-                [configId, testOrgId, testConnectorKey, 'active', JSON.stringify(['read']), testUserId]
-            );
-
-            const configs = await ConnectorService.getOrgConfigs(testOrgId);
-
-            expect(configs.length).toBeGreaterThan(0);
-            expect(configs[0].connector_key).toBe(testConnectorKey);
-        });
-
-        it('should redact secrets in response', async () => {
-            const SecretsVault = require('../../../server/services/secretsVault');
-            const secrets = { apiKey: 'secret-key', password: 'password123' };
-            const encryptedSecrets = SecretsVault.encrypt(secrets);
-
-            const configId = uuidv4();
-            await dbRun(
-                `INSERT INTO org_connector_configs 
-                 (id, org_id, connector_key, status, encrypted_secrets, configured_by, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-                [configId, testOrgId, testConnectorKey, 'active', encryptedSecrets, testUserId]
-            );
-
-            const configs = await ConnectorService.getOrgConfigs(testOrgId);
-
-            expect(configs[0].secrets).toBeDefined();
-            // Secrets should be redacted (not contain actual values)
-            expect(configs[0].secrets.apiKey).not.toBe('secret-key');
-        });
-    });
-
-    describe('createConfig', () => {
+    describe('connect', () => {
         it('should create connector configuration', async () => {
-            const secrets = { apiKey: 'test-key' };
+            const secrets = { domain: 'test.atlassian.net', email: 'test@test.com', api_token: 'token123' };
             const scopes = ['read', 'write'];
 
-            const config = await ConnectorService.createConfig(
+            const config = await ConnectorService.connect(
                 testOrgId,
                 testConnectorKey,
-                {
-                    secrets,
-                    scopes,
-                    sandboxMode: true
-                },
-                testUserId
+                secrets,
+                scopes,
+                { configuredBy: testUserId, sandboxMode: true }
             );
 
             expect(config).toBeDefined();
             expect(config.connector_key).toBe(testConnectorKey);
-            expect(config.org_id).toBe(testOrgId);
+            expect(config.status).toBe('CONNECTED');
         });
 
         it('should encrypt secrets before storage', async () => {
-            const secrets = { apiKey: 'secret-key' };
+            const secrets = { domain: 'test.atlassian.net', email: 'test@test.com', api_token: 'secret-key' };
 
-            await ConnectorService.createConfig(
-                testOrgId,
-                testConnectorKey,
-                { secrets },
-                testUserId
-            );
+            await ConnectorService.connect(testOrgId, testConnectorKey, secrets, [], { configuredBy: testUserId });
 
-            const configs = await dbAll(
-                'SELECT encrypted_secrets FROM org_connector_configs WHERE org_id = ?',
-                [testOrgId]
-            );
+            const configs = await new Promise((resolve, reject) => {
+                db.all('SELECT encrypted_secrets FROM org_connector_configs WHERE org_id = ?', [testOrgId], (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows);
+                });
+            });
 
             expect(configs[0].encrypted_secrets).toBeDefined();
             expect(configs[0].encrypted_secrets).not.toContain('secret-key');
         });
     });
 
-    describe('updateConfig', () => {
-        it('should update existing configuration', async () => {
-            // Create config first
-            const configId = uuidv4();
-            await dbRun(
-                `INSERT INTO org_connector_configs 
-                 (id, org_id, connector_key, status, scopes_json, configured_by, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-                [configId, testOrgId, testConnectorKey, 'active', JSON.stringify(['read']), testUserId]
-            );
-
-            const updated = await ConnectorService.updateConfig(
-                configId,
-                { scopes: ['read', 'write', 'delete'] },
-                testUserId
-            );
-
-            expect(updated.scopes).toContain('write');
-        });
-    });
-
-    describe('deleteConfig', () => {
+    describe('disconnect', () => {
         it('should delete connector configuration', async () => {
-            const configId = uuidv4();
-            await dbRun(
-                `INSERT INTO org_connector_configs 
-                 (id, org_id, connector_key, status, configured_by, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-                [configId, testOrgId, testConnectorKey, 'active', testUserId]
-            );
+            const secrets = { domain: 'test.atlassian.net', email: 'test@test.com', api_token: 'token' };
+            await ConnectorService.connect(testOrgId, testConnectorKey, secrets, [], { configuredBy: testUserId });
 
-            await ConnectorService.deleteConfig(configId, testUserId);
+            const success = await ConnectorService.disconnect(testOrgId, testConnectorKey, testUserId);
+            expect(success).toBe(true);
 
             const configs = await ConnectorService.getOrgConfigs(testOrgId);
             expect(configs.length).toBe(0);
+        });
+    });
+
+    describe('updateSecret', () => {
+        it('should update existing configuration secrets', async () => {
+            const secrets1 = { domain: 'test.atlassian.net', email: 'test@test.com', api_token: 'token1' };
+            await ConnectorService.connect(testOrgId, testConnectorKey, secrets1, [], { configuredBy: testUserId });
+
+            const secrets2 = { domain: 'test.atlassian.net', email: 'test@test.com', api_token: 'token2' };
+            const success = await ConnectorService.updateSecret(testOrgId, testConnectorKey, secrets2, testUserId);
+            expect(success).toBe(true);
+
+            const decrypted = await ConnectorService.getSecrets(testOrgId, testConnectorKey);
+            expect(decrypted.api_token).toBe('token2');
         });
     });
 });

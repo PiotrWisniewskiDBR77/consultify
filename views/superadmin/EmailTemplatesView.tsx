@@ -605,3 +605,6 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
 
 export default EmailTemplatesView;
 
+
+
+

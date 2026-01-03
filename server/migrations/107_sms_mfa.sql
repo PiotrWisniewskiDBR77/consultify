@@ -69,3 +69,6 @@ ALTER TABLE organizations ADD COLUMN sms_mfa_enabled INTEGER DEFAULT 0;
 ALTER TABLE organizations ADD COLUMN sms_mfa_required INTEGER DEFAULT 0; -- Require phone verification for MFA users
 
 
+
+
+

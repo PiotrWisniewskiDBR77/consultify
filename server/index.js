@@ -88,22 +88,114 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     }
 }
 
-// Security Headers (production-ready)
+// Security Headers (Enterprise SaaS Standard - OWASP Compliant)
 app.use(helmet({
+    // Content Security Policy
     contentSecurityPolicy: isProduction ? {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            imgSrc: ["'self'", "data:", "https://www.transparenttextures.com"],
-            connectSrc: ["'self'"],
-            fontSrc: ["'self'", "data:"],
+            scriptSrc: [
+                "'self'",
+                "'unsafe-inline'", // Required for React/Vite - consider removing with nonce-based CSP
+                "https://js.stripe.com", // Stripe payments
+            ],
+            styleSrc: [
+                "'self'",
+                "'unsafe-inline'", // Required for Tailwind dynamic styles
+                "https://fonts.googleapis.com"
+            ],
+            imgSrc: [
+                "'self'",
+                "data:",
+                "blob:",
+                "https://www.transparenttextures.com",
+                "https://*.stripe.com",
+                "https://www.gravatar.com",
+                "https://*.googleusercontent.com"
+            ],
+            connectSrc: [
+                "'self'",
+                "wss:", // WebSocket connections
+                "https://api.openai.com",
+                "https://generativelanguage.googleapis.com",
+                "https://api.anthropic.com",
+                "https://api.mistral.ai",
+                "https://api.stripe.com",
+                "https://*.sentry.io"
+            ],
+            fontSrc: [
+                "'self'",
+                "data:",
+                "https://fonts.gstatic.com"
+            ],
             objectSrc: ["'none'"],
-            mediaSrc: ["'self'"],
-            frameSrc: ["'none'"],
+            mediaSrc: ["'self'", "blob:"],
+            frameSrc: [
+                "'self'",
+                "https://js.stripe.com", // Stripe checkout
+                "https://hooks.stripe.com"
+            ],
+            workerSrc: ["'self'", "blob:"],
+            childSrc: ["'self'", "blob:"],
+            formAction: ["'self'"],
+            frameAncestors: ["'none'"], // Prevent clickjacking
+            baseUri: ["'self'"],
+            upgradeInsecureRequests: isProduction ? [] : null,
         },
+        reportOnly: false
     } : false, // Disable CSP in dev for hot reload
-    crossOriginEmbedderPolicy: false // Allow embedding
+    
+    // HTTP Strict Transport Security
+    hsts: {
+        maxAge: 31536000, // 1 year
+        includeSubDomains: true,
+        preload: true
+    },
+    
+    // Referrer Policy
+    referrerPolicy: {
+        policy: 'strict-origin-when-cross-origin'
+    },
+    
+    // X-Content-Type-Options
+    noSniff: true,
+    
+    // X-Frame-Options (redundant with CSP frame-ancestors but good for old browsers)
+    frameguard: {
+        action: 'deny'
+    },
+    
+    // X-XSS-Protection (legacy but doesn't hurt)
+    xssFilter: true,
+    
+    // X-DNS-Prefetch-Control
+    dnsPrefetchControl: {
+        allow: false
+    },
+    
+    // X-Download-Options (IE specific)
+    ieNoOpen: true,
+    
+    // X-Permitted-Cross-Domain-Policies
+    permittedCrossDomainPolicies: {
+        permittedPolicies: 'none'
+    },
+    
+    // Cross-Origin Embedder Policy
+    crossOriginEmbedderPolicy: false, // Allow embedding for now - can be stricter
+    
+    // Cross-Origin Opener Policy
+    crossOriginOpenerPolicy: {
+        policy: 'same-origin'
+    },
+    
+    // Cross-Origin Resource Policy
+    crossOriginResourcePolicy: {
+        policy: 'same-site'
+    },
+    
+    // Origin Agent Cluster
+    originAgentCluster: true
 }));
 
 // Compression

@@ -387,3 +387,6 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
 
 export default PerformanceSettings;
 
+
+
+

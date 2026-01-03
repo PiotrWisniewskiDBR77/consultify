@@ -288,3 +288,6 @@ class AIRecommendationService {
 
 // Export singleton instance
 module.exports = new AIRecommendationService();
+
+
+

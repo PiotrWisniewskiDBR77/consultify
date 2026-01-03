@@ -65,3 +65,6 @@ We have architected every interface to be deterministic and self-explanatory, ye
 - **Icons/Visuals:** Use clean, professional typography and geometric shapes. Avoid bright, saturated primary colors or cartoonish graphics. Use the "CEO-grade" palette: Deep blues, slate, and metallic accents.
 
 
+
+
+

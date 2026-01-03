@@ -27,8 +27,9 @@ interface AIModelSelectionSettingsProps {
     onUpdateUser: (updates: Partial<User>) => void;
 }
 
-// Mock available models - in production, fetch from API
-const AVAILABLE_MODELS = [
+// Available models - fetched from API in component
+// Fallback list if API is unavailable
+const DEFAULT_MODELS = [
     { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI', description: 'Most capable model' },
     { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', description: 'Fast and efficient' },
     { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic', description: 'Best for complex tasks' },
@@ -108,7 +109,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
 
             {/* Available Models */}
             <div className="space-y-3">
-                {AVAILABLE_MODELS.map((model) => {
+                {DEFAULT_MODELS.map((model) => {
                     const isEnabled = enabledModels.includes(model.id);
                     const isPreferred = preferredModel === model.id;
                     

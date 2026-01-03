@@ -36,6 +36,7 @@ import {
 import { toast } from 'react-hot-toast';
 import { useAppStore } from '../../store/useAppStore';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
 
 interface AuditLogEntry {
     id: string;
@@ -78,105 +79,22 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
             if (resourceFilter !== 'all') params.append('resource', resourceFilter);
             params.append('range', dateRange);
 
-            const res = await fetch(`/api/organizations/${currentOrganization?.id}/audit-logs?${params}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setLogs(data);
-            }
-        } catch (error) {
-            // Mock data
-            setLogs([
+            // Use Api.getAuditLogs instead of direct fetch
+            const data = await Api.getAuditLogs(
                 {
-                    id: 'log-1',
-                    timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-                    userId: 'user-1',
-                    userName: 'John Smith',
-                    userEmail: 'john@company.com',
-                    action: 'Updated project settings',
-                    actionType: 'UPDATE',
-                    resource: 'Project',
-                    resourceId: 'proj-1',
-                    resourceName: 'Digital Transformation',
-                    details: { field: 'status', oldValue: 'active', newValue: 'completed' },
-                    ipAddress: '192.168.1.100'
+                    organizationId: currentOrganization?.id
                 },
                 {
-                    id: 'log-2',
-                    timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-                    userId: 'user-2',
-                    userName: 'Jane Doe',
-                    userEmail: 'jane@company.com',
-                    action: 'Created new task',
-                    actionType: 'CREATE',
-                    resource: 'Task',
-                    resourceId: 'task-123',
-                    resourceName: 'Review Q1 Report',
-                    ipAddress: '192.168.1.101'
-                },
-                {
-                    id: 'log-3',
-                    timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-                    userId: 'user-1',
-                    userName: 'John Smith',
-                    userEmail: 'john@company.com',
-                    action: 'Logged in',
-                    actionType: 'LOGIN',
-                    resource: 'Session',
-                    details: { method: 'password', mfa: true },
-                    ipAddress: '192.168.1.100'
-                },
-                {
-                    id: 'log-4',
-                    timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-                    userId: 'user-3',
-                    userName: 'Admin User',
-                    userEmail: 'admin@company.com',
-                    action: 'Changed security settings',
-                    actionType: 'SECURITY',
-                    resource: 'Security',
-                    details: { setting: 'mfa_required', oldValue: false, newValue: true },
-                    ipAddress: '192.168.1.102'
-                },
-                {
-                    id: 'log-5',
-                    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-                    userId: 'user-2',
-                    userName: 'Jane Doe',
-                    userEmail: 'jane@company.com',
-                    action: 'Deleted decision',
-                    actionType: 'DELETE',
-                    resource: 'Decision',
-                    resourceId: 'dec-45',
-                    resourceName: 'Budget Allocation Q2',
-                    ipAddress: '192.168.1.101'
-                },
-                {
-                    id: 'log-6',
-                    timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-                    userId: 'user-1',
-                    userName: 'John Smith',
-                    userEmail: 'john@company.com',
-                    action: 'Exported user data',
-                    actionType: 'EXPORT',
-                    resource: 'Users',
-                    details: { format: 'CSV', count: 45 },
-                    ipAddress: '192.168.1.100'
-                },
-                {
-                    id: 'log-7',
-                    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-                    userId: 'user-3',
-                    userName: 'Admin User',
-                    userEmail: 'admin@company.com',
-                    action: 'Created API key',
-                    actionType: 'CREATE',
-                    resource: 'API Key',
-                    resourceName: 'Production Integration',
-                    ipAddress: '192.168.1.102'
+                    limit: 50,
+                    offset: 0
                 }
-            ]);
+            );
+            setLogs(data.events || data || []);
+        } catch (error) {
+            console.error('Failed to load audit logs:', error);
+            toast.error('Failed to load audit logs');
+            // Set empty state instead of mock data
+            setLogs([]);
         }
         setLoading(false);
     }, [currentOrganization, actionFilter, resourceFilter, dateRange]);

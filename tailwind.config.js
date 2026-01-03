@@ -146,28 +146,165 @@ export default {
                 display: ['Inter', 'sans-serif'], // Can swap for a more display-oriented font later
             },
             boxShadow: {
+                // Legacy shadows
                 'glow': '0 0 20px -5px rgba(124, 58, 237, 0.3)',
                 'glow-lg': '0 0 40px -10px rgba(124, 58, 237, 0.5)',
                 'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
                 'panel': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15)',
                 'inner-light': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
+                
+                // ========================================
+                // APPLE HIG DEPTH SYSTEM
+                // Replaces flat borders with subtle shadows
+                // ========================================
+                'hig-xs': '0 1px 2px rgba(0, 0, 0, 0.03), 0 1px 1px rgba(0, 0, 0, 0.04)',
+                'hig-sm': '0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+                'hig-md': '0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06)',
+                'hig-lg': '0 10px 15px rgba(0, 0, 0, 0.04), 0 4px 6px rgba(0, 0, 0, 0.05)',
+                'hig-xl': '0 20px 25px rgba(0, 0, 0, 0.06), 0 10px 10px rgba(0, 0, 0, 0.04)',
+                'hig-2xl': '0 25px 50px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.06)',
+                'hig-inner': 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
+                'hig-inner-lg': 'inset 0 2px 4px rgba(0, 0, 0, 0.06)',
+                // Dark mode optimized shadows (more visible)
+                'hig-dark-sm': '0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.3)',
+                'hig-dark-md': '0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.3)',
+                'hig-dark-lg': '0 10px 15px rgba(0, 0, 0, 0.3), 0 4px 6px rgba(0, 0, 0, 0.25)',
+                'hig-dark-xl': '0 20px 25px rgba(0, 0, 0, 0.35), 0 10px 10px rgba(0, 0, 0, 0.25)',
+                // Elevated card hover state
+                'hig-hover': '0 8px 16px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.06)',
+                'hig-hover-dark': '0 8px 16px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3)',
+                // Focus ring
+                'hig-focus': '0 0 0 3px rgba(124, 58, 237, 0.3)',
+                'hig-focus-danger': '0 0 0 3px rgba(220, 38, 38, 0.3)',
             },
             backgroundImage: {
+                // Legacy gradients
                 'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
                 'glass-gradient': 'linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
                 'glass-dark': 'linear-gradient(180deg, rgba(17, 24, 39, 0.7) 0%, rgba(17, 24, 39, 0.4) 100%)',
                 'shine': 'linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.1) 50%, transparent 75%)',
+                
+                // ========================================
+                // APPLE HIG GLASS / VIBRANCY EFFECTS
+                // ========================================
+                // Light mode glass
+                'hig-glass': 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)',
+                'hig-glass-subtle': 'linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.4) 100%)',
+                // Dark mode glass (vibrant)
+                'hig-glass-dark': 'linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.6) 100%)',
+                'hig-glass-dark-subtle': 'linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(15, 23, 42, 0.4) 100%)',
+                // Elevated surfaces (subtle gradient for depth)
+                'hig-elevated': 'linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(248, 250, 252, 1) 100%)',
+                'hig-elevated-dark': 'linear-gradient(180deg, rgba(21, 30, 50, 1) 0%, rgba(11, 17, 33, 1) 100%)',
+                // Skeleton loading gradient
+                'hig-skeleton': 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%)',
+                'hig-skeleton-dark': 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%)',
+                // Accent gradients (for premium CTAs)
+                'hig-primary': 'linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%)',
+                'hig-primary-hover': 'linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%)',
+            },
+            // ========================================
+            // APPLE HIG SPACING SCALE
+            // Consistent spacing for premium feel
+            // ========================================
+            spacing: {
+                'hig-xs': '4px',
+                'hig-sm': '8px',
+                'hig-md': '12px',
+                'hig-lg': '16px',
+                'hig-xl': '20px',
+                'hig-2xl': '24px',
+                'hig-3xl': '32px',
+                'hig-4xl': '40px',
+                'hig-5xl': '48px',
+            },
+            // ========================================
+            // APPLE HIG FONT SIZES
+            // Typography scale matching Apple's system
+            // ========================================
+            fontSize: {
+                'hig-caption': ['11px', { lineHeight: '13px', letterSpacing: '0.07px' }],
+                'hig-footnote': ['13px', { lineHeight: '18px', letterSpacing: '-0.08px' }],
+                'hig-subhead': ['15px', { lineHeight: '20px', letterSpacing: '-0.24px' }],
+                'hig-body': ['17px', { lineHeight: '22px', letterSpacing: '-0.43px' }],
+                'hig-headline': ['17px', { lineHeight: '22px', fontWeight: '600', letterSpacing: '-0.43px' }],
+                'hig-title3': ['20px', { lineHeight: '24px', fontWeight: '400', letterSpacing: '0.38px' }],
+                'hig-title2': ['22px', { lineHeight: '28px', fontWeight: '400', letterSpacing: '0.35px' }],
+                'hig-title1': ['28px', { lineHeight: '34px', fontWeight: '400', letterSpacing: '0.36px' }],
+                'hig-large-title': ['34px', { lineHeight: '41px', fontWeight: '400', letterSpacing: '0.37px' }],
             },
             backdropBlur: {
                 'xs': '2px',
+                // ========================================
+                // APPLE HIG VIBRANCY / GLASS EFFECTS
+                // ========================================
+                'hig': '20px',
+                'hig-light': '12px',
+                'hig-heavy': '40px',
+                'hig-ultra': '60px',
+            },
+            // ========================================
+            // APPLE HIG BORDER RADIUS
+            // Consistent rounded corners system
+            // ========================================
+            borderRadius: {
+                'hig-xs': '6px',
+                'hig-sm': '8px',
+                'hig-md': '12px',
+                'hig-lg': '16px',
+                'hig-xl': '20px',
+                'hig-2xl': '24px',
+                'hig-3xl': '28px',
+                'hig-full': '9999px',
+            },
+            // ========================================
+            // APPLE HIG ANIMATION CURVES
+            // ========================================
+            transitionTimingFunction: {
+                'hig': 'cubic-bezier(0.4, 0, 0.2, 1)',
+                'hig-spring': 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                'hig-bounce': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+                'hig-smooth': 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+                'hig-decel': 'cubic-bezier(0, 0, 0.2, 1)',
+                'hig-accel': 'cubic-bezier(0.4, 0, 1, 1)',
+            },
+            transitionDuration: {
+                'hig-fast': '100ms',
+                'hig-normal': '200ms',
+                'hig-slow': '300ms',
+                'hig-slower': '400ms',
             },
             animation: {
+                // Legacy animations
                 'fade-in': 'fadeIn 0.5s ease-out forwards',
                 'slide-up': 'slideUp 0.5s ease-out forwards',
                 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                 'shimmer': 'shimmer 2s linear infinite',
+                
+                // ========================================
+                // APPLE HIG ANIMATIONS
+                // ========================================
+                // Entrance animations
+                'hig-fade-in': 'higFadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                'hig-fade-out': 'higFadeOut 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                'hig-slide-up': 'higSlideUp 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                'hig-slide-down': 'higSlideDown 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                'hig-slide-left': 'higSlideLeft 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                'hig-slide-right': 'higSlideRight 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                // Scale animations (for modals, cards)
+                'hig-scale-in': 'higScaleIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                'hig-scale-out': 'higScaleOut 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                // Button press feedback
+                'hig-press': 'higPress 0.1s ease-out forwards',
+                // Skeleton loading
+                'hig-skeleton': 'higSkeleton 1.5s ease-in-out infinite',
+                // Spinner
+                'hig-spin': 'higSpin 0.8s linear infinite',
+                // Bounce for notifications
+                'hig-bounce-in': 'higBounceIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards',
             },
             keyframes: {
+                // Legacy keyframes
                 fadeIn: {
                     '0%': { opacity: '0' },
                     '100%': { opacity: '1' },
@@ -178,7 +315,62 @@ export default {
                 },
                 shimmer: {
                     '100%': { transform: 'translateX(100%)' },
-                }
+                },
+                
+                // ========================================
+                // APPLE HIG KEYFRAMES
+                // ========================================
+                higFadeIn: {
+                    '0%': { opacity: '0' },
+                    '100%': { opacity: '1' },
+                },
+                higFadeOut: {
+                    '0%': { opacity: '1' },
+                    '100%': { opacity: '0' },
+                },
+                higSlideUp: {
+                    '0%': { opacity: '0', transform: 'translateY(8px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
+                },
+                higSlideDown: {
+                    '0%': { opacity: '0', transform: 'translateY(-8px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
+                },
+                higSlideLeft: {
+                    '0%': { opacity: '0', transform: 'translateX(16px)' },
+                    '100%': { opacity: '1', transform: 'translateX(0)' },
+                },
+                higSlideRight: {
+                    '0%': { opacity: '0', transform: 'translateX(-16px)' },
+                    '100%': { opacity: '1', transform: 'translateX(0)' },
+                },
+                higScaleIn: {
+                    '0%': { opacity: '0', transform: 'scale(0.95)' },
+                    '100%': { opacity: '1', transform: 'scale(1)' },
+                },
+                higScaleOut: {
+                    '0%': { opacity: '1', transform: 'scale(1)' },
+                    '100%': { opacity: '0', transform: 'scale(0.95)' },
+                },
+                higPress: {
+                    '0%': { transform: 'scale(1)' },
+                    '50%': { transform: 'scale(0.97)' },
+                    '100%': { transform: 'scale(1)' },
+                },
+                higSkeleton: {
+                    '0%': { backgroundPosition: '-200% 0' },
+                    '100%': { backgroundPosition: '200% 0' },
+                },
+                higSpin: {
+                    '0%': { transform: 'rotate(0deg)' },
+                    '100%': { transform: 'rotate(360deg)' },
+                },
+                higBounceIn: {
+                    '0%': { opacity: '0', transform: 'scale(0.3)' },
+                    '50%': { transform: 'scale(1.05)' },
+                    '70%': { transform: 'scale(0.9)' },
+                    '100%': { opacity: '1', transform: 'scale(1)' },
+                },
             },
         },
     },

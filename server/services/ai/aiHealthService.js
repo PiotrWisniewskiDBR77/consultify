@@ -423,6 +423,208 @@ class AIHealthService {
     }
 
     /**
+     * Calculate percentile from sorted array of numbers
+     * @param {number[]} sortedArr - Sorted array of latencies
+     * @param {number} percentile - Percentile (0-100)
+     * @returns {number} Percentile value
+     */
+    calculatePercentile(sortedArr, percentile) {
+        if (sortedArr.length === 0) return 0;
+        const index = Math.ceil((percentile / 100) * sortedArr.length) - 1;
+        return sortedArr[Math.max(0, index)];
+    }
+
+    /**
+     * Get detailed latency metrics including P50, P95, P99
+     * @param {number} sampleSize - Number of recent requests to analyze
+     * @returns {Promise<Object>} Latency metrics
+     */
+    async getLatencyMetrics(sampleSize = 1000) {
+        const logs = await new Promise((resolve) => {
+            db.all(
+                `SELECT latency_ms, success, action, timestamp 
+                 FROM ai_audit_logs 
+                 WHERE latency_ms IS NOT NULL AND latency_ms > 0
+                 ORDER BY timestamp DESC 
+                 LIMIT ?`,
+                [sampleSize],
+                (err, rows) => resolve(rows || [])
+            );
+        });
+
+        if (logs.length === 0) {
+            return {
+                sampleSize: 0,
+                p50: 0,
+                p75: 0,
+                p90: 0,
+                p95: 0,
+                p99: 0,
+                avg: 0,
+                min: 0,
+                max: 0,
+                successRate: 0,
+                byAction: {}
+            };
+        }
+
+        // Sort latencies
+        const latencies = logs.map(l => l.latency_ms).sort((a, b) => a - b);
+        const successCount = logs.filter(l => l.success === 1).length;
+
+        // Calculate percentiles
+        const metrics = {
+            sampleSize: logs.length,
+            p50: this.calculatePercentile(latencies, 50),
+            p75: this.calculatePercentile(latencies, 75),
+            p90: this.calculatePercentile(latencies, 90),
+            p95: this.calculatePercentile(latencies, 95),
+            p99: this.calculatePercentile(latencies, 99),
+            avg: Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length),
+            min: latencies[0],
+            max: latencies[latencies.length - 1],
+            successRate: (successCount / logs.length) * 100
+        };
+
+        // Calculate metrics by action type
+        const actionGroups = {};
+        logs.forEach(log => {
+            const action = log.action || 'unknown';
+            if (!actionGroups[action]) actionGroups[action] = [];
+            actionGroups[action].push(log.latency_ms);
+        });
+
+        metrics.byAction = {};
+        for (const [action, latencyArr] of Object.entries(actionGroups)) {
+            const sorted = latencyArr.sort((a, b) => a - b);
+            metrics.byAction[action] = {
+                count: sorted.length,
+                avg: Math.round(sorted.reduce((a, b) => a + b, 0) / sorted.length),
+                p50: this.calculatePercentile(sorted, 50),
+                p95: this.calculatePercentile(sorted, 95),
+                p99: this.calculatePercentile(sorted, 99)
+            };
+        }
+
+        return metrics;
+    }
+
+    /**
+     * Record latency metric to database (for historical tracking)
+     * @param {Object} metric - Metric data
+     */
+    async recordLatencySnapshot() {
+        const metrics = await this.getLatencyMetrics(100); // Last 100 for snapshot
+        
+        return new Promise((resolve, reject) => {
+            db.run(
+                `INSERT INTO ai_latency_metrics 
+                 (id, timestamp, sample_size, p50, p75, p90, p95, p99, avg_ms, min_ms, max_ms, success_rate) 
+                 VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    require('uuid').v4(),
+                    metrics.sampleSize,
+                    metrics.p50,
+                    metrics.p75,
+                    metrics.p90,
+                    metrics.p95,
+                    metrics.p99,
+                    metrics.avg,
+                    metrics.min,
+                    metrics.max,
+                    metrics.successRate
+                ],
+                (err) => {
+                    if (err) {
+                        // Table might not exist - that's OK
+                        if (err.message.includes('no such table')) {
+                            return resolve({ recorded: false, reason: 'table_not_exists' });
+                        }
+                        return reject(err);
+                    }
+                    resolve({ recorded: true, metrics });
+                }
+            );
+        });
+    }
+
+    /**
+     * Get historical latency trends
+     * @param {number} days - Number of days to retrieve
+     * @returns {Promise<Array>} Historical metrics
+     */
+    async getLatencyHistory(days = 7) {
+        return new Promise((resolve) => {
+            db.all(
+                `SELECT * FROM ai_latency_metrics 
+                 WHERE timestamp > datetime('now', '-' || ? || ' days')
+                 ORDER BY timestamp ASC`,
+                [days],
+                (err, rows) => {
+                    if (err || !rows) return resolve([]);
+                    resolve(rows);
+                }
+            );
+        });
+    }
+
+    /**
+     * Check if latency is within acceptable thresholds
+     * @returns {Promise<Object>} Health status with recommendations
+     */
+    async checkLatencyHealth() {
+        const metrics = await this.getLatencyMetrics(100);
+        
+        // Thresholds (in milliseconds)
+        const thresholds = {
+            p50: { warning: 2000, critical: 5000 },
+            p95: { warning: 5000, critical: 10000 },
+            p99: { warning: 10000, critical: 20000 }
+        };
+
+        const status = {
+            healthy: true,
+            warnings: [],
+            critical: [],
+            metrics
+        };
+
+        // Check P50
+        if (metrics.p50 > thresholds.p50.critical) {
+            status.critical.push(`P50 latency (${metrics.p50}ms) exceeds critical threshold (${thresholds.p50.critical}ms)`);
+            status.healthy = false;
+        } else if (metrics.p50 > thresholds.p50.warning) {
+            status.warnings.push(`P50 latency (${metrics.p50}ms) exceeds warning threshold (${thresholds.p50.warning}ms)`);
+        }
+
+        // Check P95
+        if (metrics.p95 > thresholds.p95.critical) {
+            status.critical.push(`P95 latency (${metrics.p95}ms) exceeds critical threshold (${thresholds.p95.critical}ms)`);
+            status.healthy = false;
+        } else if (metrics.p95 > thresholds.p95.warning) {
+            status.warnings.push(`P95 latency (${metrics.p95}ms) exceeds warning threshold (${thresholds.p95.warning}ms)`);
+        }
+
+        // Check P99
+        if (metrics.p99 > thresholds.p99.critical) {
+            status.critical.push(`P99 latency (${metrics.p99}ms) exceeds critical threshold (${thresholds.p99.critical}ms)`);
+            status.healthy = false;
+        } else if (metrics.p99 > thresholds.p99.warning) {
+            status.warnings.push(`P99 latency (${metrics.p99}ms) exceeds warning threshold (${thresholds.p99.warning}ms)`);
+        }
+
+        // Check success rate
+        if (metrics.successRate < 95) {
+            status.critical.push(`Success rate (${metrics.successRate.toFixed(1)}%) below 95% threshold`);
+            status.healthy = false;
+        } else if (metrics.successRate < 99) {
+            status.warnings.push(`Success rate (${metrics.successRate.toFixed(1)}%) below 99% target`);
+        }
+
+        return status;
+    }
+
+    /**
      * Get system-wide AI status including all subsystems
      */
     async getStatus() {
@@ -437,6 +639,9 @@ class AIHealthService {
 
         const successCount = logs.filter(l => l.success === 1).length;
         const avgLatency = logs.length > 0 ? logs.reduce((sum, l) => sum + (l.latency_ms || 0), 0) / logs.length : 0;
+
+        // Get detailed latency metrics (P95/P99)
+        const latencyMetrics = await this.getLatencyMetrics(100);
 
         // Get circuit breaker status
         const circuitStatus = circuitBreaker ? circuitBreaker.getStatus() : {};
@@ -467,7 +672,17 @@ class AIHealthService {
             metrics: {
                 uptime50: logs.length > 0 ? (successCount / logs.length) * 100 : 100,
                 avgLatencyMs: Math.round(avgLatency),
-                totalRequests: logs.length
+                totalRequests: logs.length,
+                // Enhanced latency metrics (P95/P99)
+                latency: {
+                    p50: latencyMetrics.p50,
+                    p75: latencyMetrics.p75,
+                    p90: latencyMetrics.p90,
+                    p95: latencyMetrics.p95,
+                    p99: latencyMetrics.p99,
+                    avg: latencyMetrics.avg,
+                    sampleSize: latencyMetrics.sampleSize
+                }
             },
             subsystems: {
                 circuitBreaker: {

@@ -69,3 +69,6 @@ CREATE INDEX IF NOT EXISTS idx_user_api_keys_user ON user_api_keys(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_api_keys_hash ON user_api_keys(key_hash);
 
 
+
+
+

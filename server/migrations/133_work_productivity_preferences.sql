@@ -60,3 +60,6 @@ CREATE INDEX IF NOT EXISTS idx_work_prefs_user ON user_work_preferences(user_id)
 CREATE INDEX IF NOT EXISTS idx_productivity_prefs_user ON user_productivity_preferences(user_id);
 CREATE INDEX IF NOT EXISTS idx_collaboration_prefs_user ON user_collaboration_preferences(user_id);
 
+
+
+

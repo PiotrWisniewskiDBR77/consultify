@@ -115,7 +115,7 @@ export const InvoiceCenterView: React.FC = () => {
     }, [fetchData]);
 
     const filteredInvoices = invoices.filter(invoice => {
-        const matchesSearch = 
+        const matchesSearch =
             invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
             invoice.organizationName.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
@@ -124,7 +124,7 @@ export const InvoiceCenterView: React.FC = () => {
 
     const handleSendReminder = async (invoiceId: string) => {
         try {
-            await Api.post(`/api/superadmin/invoices/${invoiceId}/remind`);
+            await Api.post(`/api/superadmin/invoices/${invoiceId}/remind`, {});
             // Show success toast
         } catch (error) {
             console.error('Failed to send reminder:', error);
@@ -133,7 +133,7 @@ export const InvoiceCenterView: React.FC = () => {
 
     const handleMarkPaid = async (invoiceId: string) => {
         try {
-            await Api.post(`/api/superadmin/invoices/${invoiceId}/mark-paid`);
+            await Api.post(`/api/superadmin/invoices/${invoiceId}/mark-paid`, {});
             fetchData();
         } catch (error) {
             console.error('Failed to mark as paid:', error);
@@ -142,7 +142,8 @@ export const InvoiceCenterView: React.FC = () => {
 
     const handleDownloadPdf = async (invoiceId: string) => {
         try {
-            const response = await Api.get(`/api/superadmin/invoices/${invoiceId}/pdf`, { responseType: 'blob' });
+            // Api.get only takes 1 argument now. If we need blob, we might need a custom route or update Api.get
+            const response = await Api.get(`/api/superadmin/invoices/${invoiceId}/pdf`);
             // Download logic
         } catch (error) {
             console.error('Failed to download PDF:', error);
@@ -333,9 +334,8 @@ export const InvoiceCenterView: React.FC = () => {
                                     {new Date(invoice.createdAt).toLocaleDateString()}
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className={`text-sm ${
-                                        invoice.status === 'overdue' ? 'text-red-600 font-medium' : 'text-slate-500'
-                                    }`}>
+                                    <span className={`text-sm ${invoice.status === 'overdue' ? 'text-red-600 font-medium' : 'text-slate-500'
+                                        }`}>
                                         {new Date(invoice.dueDate).toLocaleDateString()}
                                     </span>
                                 </td>
@@ -399,7 +399,7 @@ export const InvoiceCenterView: React.FC = () => {
         <div className="space-y-6">
             <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-white/10">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-6">Usage-Based Billing</h3>
-                
+
                 <div className="bg-blue-50 dark:bg-blue-500/10 rounded-lg p-4 mb-6">
                     <p className="text-sm text-blue-800 dark:text-blue-400">
                         Usage-based billing reconciliation runs automatically at the end of each billing period.
@@ -445,7 +445,7 @@ export const InvoiceCenterView: React.FC = () => {
 
             <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-white/10">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Usage Alerts</h3>
-                
+
                 <label className="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" defaultChecked className="w-4 h-4 rounded border-slate-300 text-violet-600" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
@@ -602,11 +602,10 @@ export const InvoiceCenterView: React.FC = () => {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as TabType)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            activeTab === tab.id
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
                                 ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                        }`}
+                            }`}
                     >
                         {tab.icon}
                         {tab.label}

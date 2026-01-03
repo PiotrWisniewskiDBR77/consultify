@@ -9,11 +9,11 @@ import { Users, Mail, Briefcase, UserCog, Crown, UsersRound, Shield } from 'luci
 import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
 import { AdminUserManagement } from './AdminUserManagement';
 import { InvitationsManagement } from './InvitationsManagement';
-import { LicenseManagementPanel } from '../../components/admin/LicenseManagementPanel';
+import { LicenseManagementPanel } from '../../components/Admin/LicenseManagementPanel';
 import { WorkModeSettings } from '../../components/Admin/WorkModeSettings';
 import { AdminSettingsConsultants } from './AdminSettingsConsultants';
 import { UserGroupsView } from './UserGroupsView';
-import { RolesManagementPanel } from '../../components/admin/RolesManagementPanel';
+import { RolesManagementPanel } from '../../components/Admin/RolesManagementPanel';
 import { useTranslation } from 'react-i18next';
 import { Api } from '../../services/api';
 import { User } from '../../types';
@@ -23,7 +23,7 @@ interface TeamModuleProps {
     initialUsers?: User[];
 }
 
-export const TeamModule: React.FC<TeamModuleProps> = ({ 
+export const TeamModule: React.FC<TeamModuleProps> = ({
     initialTab,
     initialUsers = []
 }) => {
@@ -46,41 +46,41 @@ export const TeamModule: React.FC<TeamModuleProps> = ({
     }, [activeTab]);
 
     const tabs: Tab[] = [
-        { 
-            id: 'users', 
-            label: t('admin.tabs.users', 'Users'), 
-            icon: <Users size={16} /> 
+        {
+            id: 'users',
+            label: t('admin.tabs.users', 'Users'),
+            icon: <Users size={16} />
         },
-        { 
-            id: 'invitations', 
-            label: t('admin.tabs.invitations', 'Invitations'), 
+        {
+            id: 'invitations',
+            label: t('admin.tabs.invitations', 'Invitations'),
             icon: <Mail size={16} />,
             badge: pendingInvitesCount
         },
-        { 
-            id: 'groups', 
-            label: t('admin.tabs.groups', 'Groups'), 
-            icon: <UsersRound size={16} /> 
+        {
+            id: 'groups',
+            label: t('admin.tabs.groups', 'Groups'),
+            icon: <UsersRound size={16} />
         },
-        { 
-            id: 'roles', 
-            label: t('admin.tabs.roles', 'Roles'), 
-            icon: <Shield size={16} /> 
+        {
+            id: 'roles',
+            label: t('admin.tabs.roles', 'Roles'),
+            icon: <Shield size={16} />
         },
-        { 
-            id: 'licenses', 
-            label: t('admin.tabs.licenses', 'Licenses'), 
-            icon: <Crown size={16} /> 
+        {
+            id: 'licenses',
+            label: t('admin.tabs.licenses', 'Licenses'),
+            icon: <Crown size={16} />
         },
-        { 
-            id: 'work-mode', 
-            label: t('admin.tabs.workMode', 'Work Mode'), 
-            icon: <Briefcase size={16} /> 
+        {
+            id: 'work-mode',
+            label: t('admin.tabs.workMode', 'Work Mode'),
+            icon: <Briefcase size={16} />
         },
-        { 
-            id: 'consultants', 
-            label: t('admin.tabs.consultants', 'Consultants'), 
-            icon: <UserCog size={16} /> 
+        {
+            id: 'consultants',
+            label: t('admin.tabs.consultants', 'Consultants'),
+            icon: <UserCog size={16} />
         },
     ];
 
@@ -143,4 +143,3 @@ export const TeamModule: React.FC<TeamModuleProps> = ({
 };
 
 export default TeamModule;
-

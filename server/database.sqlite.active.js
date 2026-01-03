@@ -3204,15 +3204,16 @@ function initDb() {
         });
 
         // Notification Preferences Table
-        db.run(`CREATE TABLE IF NOT EXISTS notification_preferences(
-            user_id TEXT PRIMARY KEY,
-            channels TEXT DEFAULT '{"inApp":true,"email":true}', --JSON
-            digest TEXT DEFAULT 'daily', --daily, weekly, off
-            triggers TEXT DEFAULT '{"overdue":true,"assigned":true,"blocked":true,"mentioned":true}', --JSON
-            quiet_hours TEXT DEFAULT '{"enabled":false,"start":"22:00","end":"08:00"}', --JSON
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`);
+        // REMOVED LEGACY DEFINITION - Conflicted with Enterprise Module definition at line 6978
+        // db.run(`CREATE TABLE IF NOT EXISTS notification_preferences(
+        //     user_id TEXT PRIMARY KEY,
+        //     channels TEXT DEFAULT '{"inApp":true,"email":true}', --JSON
+        //     digest TEXT DEFAULT 'daily', --daily, weekly, off
+        //     triggers TEXT DEFAULT '{"overdue":true,"assigned":true,"blocked":true,"mentioned":true}', --JSON
+        //     quiet_hours TEXT DEFAULT '{"enabled":false,"start":"22:00","end":"08:00"}', --JSON
+        //     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        //     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        // )`);
 
         // ==========================================
         // PHASE 2: DRD STRATEGY EXECUTION ENGINE
@@ -3853,6 +3854,35 @@ function initDb() {
             )`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_spending_alerts_org ON spending_alerts(organization_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_spending_alerts_type ON spending_alerts(type)`);
+
+        // 8.5. BILLING ADDONS
+        db.run(`CREATE TABLE IF NOT EXISTS billing_addons(
+                id TEXT PRIMARY KEY,
+                type TEXT NOT NULL CHECK(type IN ('tokens', 'storage', 'seats')),
+                name TEXT NOT NULL,
+                description TEXT,
+                amount REAL NOT NULL,
+                price REAL NOT NULL,
+                currency TEXT DEFAULT 'USD',
+                recurring INTEGER DEFAULT 0,
+                is_active INTEGER DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`);
+
+        // Seed default addons if table is empty
+        db.get(`SELECT COUNT(*) as count FROM billing_addons`, (err, row) => {
+            if (!err && row && row.count === 0) {
+                const defaultAddons = [
+                    ['addon_tokens_100k', 'tokens', '100k AI Tokens', 'One-time addition of 100,000 AI tokens', 100000, 29, 'USD', 0],
+                    ['addon_tokens_500k', 'tokens', '500k AI Tokens', 'One-time addition of 500,000 AI tokens', 500000, 99, 'USD', 0],
+                    ['addon_storage_10gb', 'storage', '10GB Extra Storage', 'Add 10GB of permanent file storage', 10, 15, 'USD', 1],
+                    ['addon_seats_5', 'seats', '5 Extra Seats', 'Add 5 user licenses to your organization', 5, 45, 'USD', 1]
+                ];
+                const stmt = db.prepare(`INSERT INTO billing_addons(id, type, name, description, amount, price, currency, recurring) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`);
+                defaultAddons.forEach(addon => stmt.run(addon));
+                stmt.finalize();
+            }
+        });
 
         // 9. PAY-AS-YOU-GO USAGE (PAYG tracking)
         db.run(`CREATE TABLE IF NOT EXISTS pay_as_you_go_usage(

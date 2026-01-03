@@ -384,3 +384,6 @@ const JiraUserIntegration = {
 module.exports = JiraUserIntegration;
 
 
+
+
+

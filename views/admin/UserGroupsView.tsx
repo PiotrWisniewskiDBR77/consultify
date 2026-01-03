@@ -118,53 +118,10 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
             setUsers(usersData);
         } catch (error) {
             console.error('Failed to load data:', error);
-            // Mock data for development
-            setGroups([
-                {
-                    id: 'group-1',
-                    organizationId: currentOrganization?.id || '',
-                    name: 'Project Managers',
-                    description: 'All project managers in the organization',
-                    color: 'violet',
-                    leaderId: 'user-1',
-                    memberIds: ['user-1', 'user-2', 'user-3'],
-                    permissions: [
-                        { resource: 'projects', actions: ['read', 'create', 'update', 'manage'], scope: 'all' },
-                        { resource: 'tasks', actions: ['read', 'create', 'update', 'delete'], scope: 'all' }
-                    ],
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                },
-                {
-                    id: 'group-2',
-                    organizationId: currentOrganization?.id || '',
-                    name: 'Development Team',
-                    description: 'Software development team',
-                    color: 'blue',
-                    memberIds: ['user-4', 'user-5'],
-                    permissions: [
-                        { resource: 'tasks', actions: ['read', 'update'], scope: 'group' },
-                        { resource: 'knowledge', actions: ['read'], scope: 'all' }
-                    ],
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                },
-                {
-                    id: 'group-3',
-                    organizationId: currentOrganization?.id || '',
-                    name: 'Stakeholders',
-                    description: 'External stakeholders with view access',
-                    color: 'amber',
-                    memberIds: ['user-6'],
-                    permissions: [
-                        { resource: 'projects', actions: ['read'], scope: 'all' },
-                        { resource: 'analytics', actions: ['read'], scope: 'all' }
-                    ],
-                    isDefault: false,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                }
-            ]);
+            toast.error('Failed to load user groups');
+            // Set empty state instead of mock data
+            setGroups([]);
+            setUsers([]);
         }
         setLoading(false);
     };
@@ -206,7 +163,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
             const url = editingGroup
                 ? `/api/organizations/${currentOrganization?.id}/groups/${editingGroup.id}`
                 : `/api/organizations/${currentOrganization?.id}/groups`;
-            
+
             const res = await fetch(url, {
                 method: editingGroup ? 'PUT' : 'POST',
                 headers: {
@@ -221,36 +178,15 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                 setShowCreateModal(false);
                 loadData();
             } else {
-                throw new Error('Failed to save');
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to save group');
             }
-        } catch (error) {
-            // Mock success for development
-            toast.success(editingGroup ? 'Group updated' : 'Group created');
-            setShowCreateModal(false);
-            
-            if (editingGroup) {
-                setGroups(prev => prev.map(g => 
-                    g.id === editingGroup.id 
-                        ? { ...g, ...formData, updatedAt: new Date().toISOString() }
-                        : g
-                ));
-            } else {
-                const newGroup: UserGroup = {
-                    id: `group-${Date.now()}`,
-                    organizationId: currentOrganization?.id || '',
-                    name: formData.name,
-                    description: formData.description,
-                    color: formData.color,
-                    leaderId: formData.leaderId,
-                    memberIds: [],
-                    permissions: formData.permissions,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                };
-                setGroups(prev => [...prev, newGroup]);
-            }
+        } catch (error: any) {
+            console.error('Failed to save group:', error);
+            toast.error(error.message || 'Failed to save group');
+        } finally {
+            setSaving(false);
         }
-        setSaving(false);
     };
 
     const handleDeleteGroup = async (groupId: string) => {
@@ -259,16 +195,21 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
         }
 
         try {
-            await fetch(`/api/organizations/${currentOrganization?.id}/groups/${groupId}`, {
+            const res = await fetch(`/api/organizations/${currentOrganization?.id}/groups/${groupId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
-            toast.success('Group deleted');
-            setGroups(prev => prev.filter(g => g.id !== groupId));
-        } catch (error) {
-            // Mock for development
-            toast.success('Group deleted');
-            setGroups(prev => prev.filter(g => g.id !== groupId));
+
+            if (res.ok) {
+                toast.success('Group deleted');
+                setGroups(prev => prev.filter(g => g.id !== groupId));
+            } else {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to delete group');
+            }
+        } catch (error: any) {
+            console.error('Failed to delete group:', error);
+            toast.error(error.message || 'Failed to delete group');
         }
     };
 
@@ -310,20 +251,20 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
     const togglePermission = (resource: string, action: string) => {
         setFormData(prev => {
             const existingPerm = prev.permissions.find(p => p.resource === resource);
-            
+
             if (existingPerm) {
                 const hasAction = existingPerm.actions.includes(action as any);
                 const newActions = hasAction
                     ? existingPerm.actions.filter(a => a !== action)
                     : [...existingPerm.actions, action as any];
-                
+
                 if (newActions.length === 0) {
                     return {
                         ...prev,
                         permissions: prev.permissions.filter(p => p.resource !== resource)
                     };
                 }
-                
+
                 return {
                     ...prev,
                     permissions: prev.permissions.map(p =>
@@ -401,8 +342,8 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                         Teams connect to Projects
                     </p>
                     <p className="mt-1 text-blue-600 dark:text-blue-400">
-                        Create teams here (e.g., "Frontend Team", "PMO Office", "QA"). When adding members to a project, 
-                        you can select entire teams instead of individual users. All team members are added with their 
+                        Create teams here (e.g., "Frontend Team", "PMO Office", "QA"). When adding members to a project,
+                        you can select entire teams instead of individual users. All team members are added with their
                         default project role.
                     </p>
                 </div>
@@ -530,11 +471,10 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                                                 return (
                                                                     <div
                                                                         key={memberId}
-                                                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
-                                                                            isLeader
-                                                                                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200'
-                                                                                : 'bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
-                                                                        }`}
+                                                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${isLeader
+                                                                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200'
+                                                                            : 'bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
+                                                                            }`}
                                                                     >
                                                                         {isLeader && <Crown size={12} />}
                                                                         <span className="text-sm">
@@ -633,9 +573,8 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                                     key={color.id}
                                                     type="button"
                                                     onClick={() => setFormData({ ...formData, color: color.id })}
-                                                    className={`w-8 h-8 rounded-lg ${color.bg} ${
-                                                        formData.color === color.id ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                                                    }`}
+                                                    className={`w-8 h-8 rounded-lg ${color.bg} ${formData.color === color.id ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                                                        }`}
                                                 />
                                             ))}
                                         </div>
@@ -710,11 +649,10 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => togglePermission(resource.id, action)}
-                                                                    className={`w-6 h-6 rounded ${
-                                                                        hasPermission(resource.id, action)
-                                                                            ? 'bg-violet-600 text-white'
-                                                                            : 'bg-slate-200 dark:bg-navy-700 text-slate-400'
-                                                                    }`}
+                                                                    className={`w-6 h-6 rounded ${hasPermission(resource.id, action)
+                                                                        ? 'bg-violet-600 text-white'
+                                                                        : 'bg-slate-200 dark:bg-navy-700 text-slate-400'
+                                                                        }`}
                                                                 >
                                                                     {hasPermission(resource.id, action) && <Check size={14} className="mx-auto" />}
                                                                 </button>
@@ -779,11 +717,10 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                             <div
                                                 key={user.id}
                                                 onClick={() => toggleMember(user.id)}
-                                                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-                                                    isMember
-                                                        ? 'bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800'
-                                                        : 'bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 hover:border-slate-300'
-                                                }`}
+                                                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${isMember
+                                                    ? 'bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800'
+                                                    : 'bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 hover:border-slate-300'
+                                                    }`}
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-sm font-medium">
@@ -801,11 +738,10 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                                         <span className="text-xs text-slate-500">{user.email}</span>
                                                     </div>
                                                 </div>
-                                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                                                    isMember
-                                                        ? 'bg-violet-600 border-violet-600'
-                                                        : 'border-slate-300 dark:border-navy-600'
-                                                }`}>
+                                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${isMember
+                                                    ? 'bg-violet-600 border-violet-600'
+                                                    : 'border-slate-300 dark:border-navy-600'
+                                                    }`}>
                                                     {isMember && <Check size={14} className="text-white" />}
                                                 </div>
                                             </div>

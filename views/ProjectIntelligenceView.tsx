@@ -13,6 +13,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Project } from '../types';
 import {
     Brain,
     MessageSquare,
@@ -95,17 +96,31 @@ const CATEGORY_ORDER: InsightCategory[] = [
 ];
 
 export const ProjectIntelligenceView: React.FC = () => {
-    const { currentProjectId, projects, isChatCollapsed, toggleChatCollapse } = useAppStore();
+    const { currentProjectId, isChatCollapsed, toggleChatCollapse } = useAppStore();
     const [activeTab, setActiveTab] = useState<TabType>('interview');
     const [insights, setInsights] = useState<ProjectInsight[]>([]);
     const [sessions, setSessions] = useState<InterviewSession[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<InsightCategory | 'all'>('all');
     const [selectedInsight, setSelectedInsight] = useState<ProjectInsight | null>(null);
+    const [projects, setProjects] = useState<Project[]>([]);
     const [isSeeding, setIsSeeding] = useState(false);
 
     // Get current project name
     const currentProject = projects?.find(p => p.id === currentProjectId);
+
+    // Load projects
+    useEffect(() => {
+        const fetchProjects = async () => {
+            try {
+                const data = await Api.getProjects();
+                setProjects(Array.isArray(data) ? data : (data as any).projects || []);
+            } catch (e) {
+                console.error('Failed to load projects:', e);
+            }
+        };
+        fetchProjects();
+    }, []);
 
     // Expand chat panel on mount if collapsed
     useEffect(() => {
@@ -117,7 +132,7 @@ export const ProjectIntelligenceView: React.FC = () => {
     // Fetch data when project changes
     const fetchData = useCallback(async () => {
         if (!currentProjectId) return;
-        
+
         setIsLoading(true);
         try {
             const [insightsRes, sessionsRes] = await Promise.all([
@@ -144,10 +159,10 @@ export const ProjectIntelligenceView: React.FC = () => {
             toast.error('Please select a project first');
             return;
         }
-        
+
         setIsSeeding(true);
         try {
-            await Api.post(`/intelligence/projects/${currentProjectId}/seed`);
+            await Api.post(`/intelligence/projects/${currentProjectId}/seed`, {});
             toast.success('Demo data created successfully');
             fetchData();
         } catch (error) {
@@ -162,7 +177,7 @@ export const ProjectIntelligenceView: React.FC = () => {
     const handleConfirmInsight = async (insight: ProjectInsight) => {
         try {
             await Api.patch(`/intelligence/insights/${insight.id}`, { status: 'confirmed' });
-            setInsights(prev => prev.map(i => 
+            setInsights(prev => prev.map(i =>
                 i.id === insight.id ? { ...i, status: 'confirmed' } : i
             ));
             toast.success('Insight confirmed');
@@ -183,8 +198,8 @@ export const ProjectIntelligenceView: React.FC = () => {
     };
 
     // Filter insights by category
-    const filteredInsights = selectedCategory === 'all' 
-        ? insights 
+    const filteredInsights = selectedCategory === 'all'
+        ? insights
         : insights.filter(i => i.category === selectedCategory);
 
     // Group insights by category for stats
@@ -213,7 +228,7 @@ export const ProjectIntelligenceView: React.FC = () => {
                         Select a Project
                     </h2>
                     <p className="text-slate-500 dark:text-slate-400 text-center max-w-md mb-6">
-                        Choose a project from the sidebar to start capturing project intelligence. 
+                        Choose a project from the sidebar to start capturing project intelligence.
                         The AI will help you organize knowledge about objectives, stakeholders, risks, and more.
                     </p>
                     <div className="flex items-center gap-2 text-sm text-slate-400">
@@ -248,7 +263,7 @@ export const ProjectIntelligenceView: React.FC = () => {
                                 AI-powered knowledge capture for {currentProject?.name || 'your project'}
                             </p>
                         </div>
-                        
+
                         <div className="flex items-center gap-3">
                             {insights.length === 0 && (
                                 <button
@@ -277,22 +292,20 @@ export const ProjectIntelligenceView: React.FC = () => {
                     <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-950 rounded-lg p-1 w-fit">
                         <button
                             onClick={() => setActiveTab('interview')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                                activeTab === 'interview'
-                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'interview'
+                                ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                }`}
                         >
                             <MessageSquare size={16} />
                             Interview
                         </button>
                         <button
                             onClick={() => setActiveTab('knowledge')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                                activeTab === 'knowledge'
-                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'knowledge'
+                                ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                }`}
                         >
                             <Database size={16} />
                             Knowledge Base
@@ -304,11 +317,10 @@ export const ProjectIntelligenceView: React.FC = () => {
                         </button>
                         <button
                             onClick={() => setActiveTab('sessions')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                                activeTab === 'sessions'
-                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'sessions'
+                                ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                }`}
                         >
                             <History size={16} />
                             Sessions
@@ -328,7 +340,7 @@ export const ProjectIntelligenceView: React.FC = () => {
                             <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
                         </div>
                     ) : activeTab === 'interview' ? (
-                        <InterviewTabContent 
+                        <InterviewTabContent
                             projectId={currentProjectId}
                             onInsightCreated={fetchData}
                         />
@@ -344,7 +356,7 @@ export const ProjectIntelligenceView: React.FC = () => {
                             onSelectInsight={setSelectedInsight}
                         />
                     ) : (
-                        <SessionsTabContent 
+                        <SessionsTabContent
                             sessions={sessions}
                             onSessionSelect={(session) => console.log('Session selected:', session)}
                         />
@@ -375,8 +387,8 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({ projectId, on
                             Start an AI Interview
                         </h3>
                         <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">
-                            Use the chat panel on the left to have a conversation with the AI. 
-                            As you discuss your project, the AI will automatically detect and extract 
+                            Use the chat panel on the left to have a conversation with the AI.
+                            As you discuss your project, the AI will automatically detect and extract
                             key insights like objectives, risks, stakeholders, and decisions.
                         </p>
                         <div className="flex flex-wrap gap-2">
@@ -384,7 +396,7 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({ projectId, on
                                 const config = CATEGORY_CONFIG[cat];
                                 const IconComponent = config.icon;
                                 return (
-                                    <span 
+                                    <span
                                         key={cat}
                                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bgColor} ${config.color}`}
                                     >
@@ -407,7 +419,7 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({ projectId, on
                     const config = CATEGORY_CONFIG[category];
                     const IconComponent = config.icon;
                     return (
-                        <div 
+                        <div
                             key={category}
                             className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-4 hover:shadow-md transition-shadow"
                         >
@@ -430,7 +442,7 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({ projectId, on
                 <Info size={18} className="text-slate-400 shrink-0 mt-0.5" />
                 <div>
                     <p className="text-sm text-slate-600 dark:text-slate-300">
-                        All captured insights are aligned with <strong>ISO 21500</strong>, <strong>PMBOK 7</strong>, 
+                        All captured insights are aligned with <strong>ISO 21500</strong>, <strong>PMBOK 7</strong>,
                         and <strong>PRINCE2</strong> standards for full PMO compliance and auditability.
                     </p>
                 </div>
@@ -471,7 +483,7 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
                     No insights captured yet
                 </p>
                 <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
-                    Start a conversation with the AI to capture project knowledge. 
+                    Start a conversation with the AI to capture project knowledge.
                     Insights will appear here as they are detected.
                 </p>
             </div>
@@ -484,14 +496,13 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
             <div className="lg:col-span-1">
                 <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-4">
                     <h3 className="font-semibold text-navy-900 dark:text-white mb-4">Categories</h3>
-                    
+
                     <button
                         onClick={() => onCategorySelect('all')}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg mb-2 transition-colors ${
-                            selectedCategory === 'all'
-                                ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
-                                : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'
-                        }`}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg mb-2 transition-colors ${selectedCategory === 'all'
+                            ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                            : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'
+                            }`}
                     >
                         <span className="text-sm font-medium">All Insights</span>
                         <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
@@ -504,16 +515,15 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
                             const config = CATEGORY_CONFIG[cat];
                             const IconComponent = config.icon;
                             const count = stats[cat];
-                            
+
                             return (
                                 <button
                                     key={cat}
                                     onClick={() => onCategorySelect(cat)}
-                                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                                        selectedCategory === cat
-                                            ? `${config.bgColor} ${config.color}`
-                                            : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'
-                                    }`}
+                                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${selectedCategory === cat
+                                        ? `${config.bgColor} ${config.color}`
+                                        : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'
+                                        }`}
                                 >
                                     <IconComponent size={16} />
                                     <span className="text-sm font-medium flex-1 text-left">{config.label}</span>
@@ -555,60 +565,57 @@ interface InsightCardProps {
     onDelete: () => void;
 }
 
-const InsightCard: React.FC<InsightCardProps> = ({ 
-    insight, 
-    isSelected, 
-    onSelect, 
-    onConfirm, 
-    onDelete 
+const InsightCard: React.FC<InsightCardProps> = ({
+    insight,
+    isSelected,
+    onSelect,
+    onConfirm,
+    onDelete
 }) => {
     const config = CATEGORY_CONFIG[insight.category];
-    
+
     return (
-        <div 
-            className={`bg-white dark:bg-navy-900 rounded-xl border ${
-                isSelected 
-                    ? 'border-purple-300 dark:border-purple-700 ring-1 ring-purple-200 dark:ring-purple-800' 
-                    : 'border-slate-200 dark:border-white/10'
-            } p-4 hover:shadow-md transition-all cursor-pointer`}
+        <div
+            className={`bg-white dark:bg-navy-900 rounded-xl border ${isSelected
+                ? 'border-purple-300 dark:border-purple-700 ring-1 ring-purple-200 dark:ring-purple-800'
+                : 'border-slate-200 dark:border-white/10'
+                } p-4 hover:shadow-md transition-all cursor-pointer`}
             onClick={onSelect}
         >
             <div className="flex items-start gap-4">
                 <CategoryIcon category={insight.category} size={18} />
-                
+
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                             {getCategoryLabel(insight.category)}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                            insight.status === 'confirmed' 
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                        }`}>
-                            {insight.status}
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${insight.status === 'confirmed'
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                            }`}>
+                            {String(insight.status)}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            insight.confidence === 'high'
-                                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
-                                : insight.confidence === 'medium'
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${insight.confidence === 'high'
+                            ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
+                            : insight.confidence === 'medium'
                                 ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400'
                                 : 'bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                        }`}>
-                            {insight.confidence} confidence
+                            }`}>
+                            {String(insight.confidence)} confidence
                         </span>
                     </div>
-                    
+
                     <h4 className="font-semibold text-navy-900 dark:text-white mb-2">
                         {insight.title}
                     </h4>
-                    
-                    {insight.content.description && (
+
+                    {(insight.content as any).description && (
                         <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                            {String(insight.content.description)}
+                            {String((insight.content as any).description || '')}
                         </p>
                     )}
-                    
+
                     {insight.pmo_domain && (
                         <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
                             <Target size={12} />
@@ -616,7 +623,7 @@ const InsightCard: React.FC<InsightCardProps> = ({
                         </div>
                     )}
                 </div>
-                
+
                 <div className="flex items-center gap-1 shrink-0">
                     {insight.status === 'draft' && (
                         <button
@@ -680,24 +687,23 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
                                 Started {new Date(session.started_at).toLocaleDateString()}
                             </p>
                         </div>
-                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${
-                            session.status === 'completed'
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                : session.status === 'active'
+                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${session.status === 'completed'
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                            : session.status === 'active'
                                 ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
                                 : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                        }`}>
+                            }`}>
                             {session.status}
                         </span>
                     </div>
-                    
+
                     {/* Progress */}
                     <div className="mt-4 flex items-center gap-2">
                         <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                            <div 
+                            <div
                                 className="h-full bg-gradient-to-r from-purple-500 to-emerald-500 rounded-full"
-                                style={{ 
-                                    width: `${(session.progress.completed.length / 8) * 100}%` 
+                                style={{
+                                    width: `${(session.progress.completed.length / 8) * 100}%`
                                 }}
                             />
                         </div>

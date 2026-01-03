@@ -76,47 +76,6 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
             const response = await Api.get('/api/user/integrations/health');
             if (response.success && response.data) {
                 setIntegrations(response.data);
-            } else {
-                // Mock data for demonstration
-                setIntegrations([
-                    {
-                        id: 'github',
-                        name: 'GitHub',
-                        icon: '🐙',
-                        status: 'healthy',
-                        lastSync: new Date(Date.now() - 3600000).toISOString(),
-                        nextSync: new Date(Date.now() + 3600000).toISOString(),
-                        syncFrequency: '1 hour',
-                        errorCount: 0,
-                        usageStats: { requestsToday: 45, requestsThisMonth: 1250, dataTransferred: '12.5 MB' },
-                        enabled: true
-                    },
-                    {
-                        id: 'slack',
-                        name: 'Slack',
-                        icon: '💬',
-                        status: 'healthy',
-                        lastSync: new Date(Date.now() - 300000).toISOString(),
-                        nextSync: new Date(Date.now() + 300000).toISOString(),
-                        syncFrequency: 'Real-time',
-                        errorCount: 0,
-                        usageStats: { requestsToday: 120, requestsThisMonth: 3500, dataTransferred: '8.2 MB' },
-                        enabled: true
-                    },
-                    {
-                        id: 'jira',
-                        name: 'Jira',
-                        icon: '🎫',
-                        status: 'warning',
-                        lastSync: new Date(Date.now() - 7200000).toISOString(),
-                        nextSync: new Date(Date.now() + 1800000).toISOString(),
-                        syncFrequency: '30 minutes',
-                        errorCount: 2,
-                        lastError: 'Rate limit exceeded. Retrying in 15 minutes.',
-                        usageStats: { requestsToday: 89, requestsThisMonth: 2100, dataTransferred: '5.1 MB' },
-                        enabled: true
-                    }
-                ]);
             }
         } catch (error) {
             console.error('Error loading integration health:', error);
@@ -128,7 +87,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
     const syncIntegration = async (integrationId: string) => {
         setSyncing(integrationId);
         try {
-            await Api.post(`/api/integrations/${integrationId}/sync`);
+            await Api.post(`/api/integrations/${integrationId}/sync`, {});
             toast.success('Sync initiated');
             loadHealthData();
         } catch (error) {
@@ -155,12 +114,12 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
 
     const bulkDisconnect = async () => {
         if (selectedIntegrations.length === 0) return;
-        
+
         if (!window.confirm(`Disconnect ${selectedIntegrations.length} integration(s)?`)) return;
 
         try {
             await Promise.all(selectedIntegrations.map(id =>
-                Api.post(`/api/integrations/${id}/disconnect`)
+                Api.post(`/api/integrations/${id}/disconnect`, {})
             ));
             setIntegrations(integrations.filter(i => !selectedIntegrations.includes(i.id)));
             setSelectedIntegrations([]);
@@ -207,7 +166,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
     return (
         <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-integration-health" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -290,11 +249,10 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => toggleIntegration(integration.id)}
-                                        className={`p-2 rounded-lg transition-colors ${
-                                            integration.enabled
-                                                ? 'text-green-600 hover:bg-green-100 dark:hover:bg-green-500/20'
-                                                : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
-                                        }`}
+                                        className={`p-2 rounded-lg transition-colors ${integration.enabled
+                                            ? 'text-green-600 hover:bg-green-100 dark:hover:bg-green-500/20'
+                                            : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                            }`}
                                         title={integration.enabled ? 'Pause' : 'Enable'}
                                     >
                                         {integration.enabled ? <Pause size={18} /> : <Play size={18} />}

@@ -25,16 +25,7 @@ import {
 import { toast } from 'react-hot-toast';
 import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
 import { InfoButton } from '../../components/shared/InfoButton';
-
-interface Organization {
-    id: string;
-    name: string;
-    plan: 'free' | 'trial' | 'pro' | 'enterprise';
-    status: 'active' | 'blocked' | 'pending';
-    created_at: string;
-    user_count: number;
-    discount_percent?: number;
-}
+import { Organization } from '../../types';
 
 interface AccessRequest {
     id: string;

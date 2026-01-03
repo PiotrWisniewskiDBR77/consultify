@@ -12,14 +12,27 @@ const secretsVault = require('./secretsVault');
 const connectorRegistry = require('./connectorRegistry');
 const auditLogger = require('../utils/auditLogger');
 
+// Dependency injection container
+const deps = {
+    db,
+    uuidv4,
+    secretsVault,
+    connectorRegistry,
+    auditLogger
+};
+
 const ConnectorService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
     /**
      * Get catalog of all available connectors.
      * @returns {Promise<Object[]>} Array of connector definitions
      */
     getCatalog: async () => {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT key, name, category, capabilities_json, icon_url, documentation_url, is_available 
                  FROM connectors WHERE is_available = 1 ORDER BY category, name`,
                 [],
@@ -45,7 +58,7 @@ const ConnectorService = {
      */
     getOrgConfigs: async (orgId) => {
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT occ.*, c.name, c.category, c.capabilities_json,
                         ch.last_check_at, ch.last_ok_at, ch.last_error_code, ch.consecutive_failures
                  FROM org_connector_configs occ
@@ -62,8 +75,8 @@ const ConnectorService = {
                         let redactedSecrets = {};
                         if (row.encrypted_secrets) {
                             try {
-                                const secrets = secretsVault.decrypt(row.encrypted_secrets);
-                                redactedSecrets = secretsVault.redact(secrets);
+                                const secrets = deps.secretsVault.decrypt(row.encrypted_secrets);
+                                redactedSecrets = deps.secretsVault.redact(secrets);
                             } catch {
                                 redactedSecrets = { error: 'decryption_failed' };
                             }
@@ -111,25 +124,25 @@ const ConnectorService = {
         const { configuredBy, sandboxMode = false } = options;
 
         // Validate connector exists
-        const connector = connectorRegistry.getConnector(connectorKey);
+        const connector = deps.connectorRegistry.getConnector(connectorKey);
         if (!connector) {
             throw new Error(`Unknown connector: ${connectorKey}`);
         }
 
         // Validate required credentials
-        const validation = connectorRegistry.validateCredentials(connectorKey, secrets);
+        const validation = deps.connectorRegistry.validateCredentials(connectorKey, secrets);
         if (!validation.valid) {
             throw new Error(`Missing required credentials: ${validation.missing.join(', ')}`);
         }
 
         // Encrypt secrets
-        const encryptedSecrets = secretsVault.encrypt(secrets);
+        const encryptedSecrets = deps.secretsVault.encrypt(secrets);
 
-        const id = `conn-${uuidv4()}`;
+        const id = `conn-${deps.uuidv4()}`;
         const now = new Date().toISOString();
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO org_connector_configs 
                  (id, org_id, connector_key, status, encrypted_secrets, scopes_json, sandbox_mode, configured_by, created_at, updated_at)
                  VALUES (?, ?, ?, 'CONNECTED', ?, ?, ?, ?, ?, ?)
@@ -145,7 +158,7 @@ const ConnectorService = {
                     if (err) return reject(err);
 
                     // Log audit event
-                    auditLogger.info('CONNECTOR_CONNECTED', {
+                    deps.auditLogger.info('CONNECTOR_CONNECTED', {
                         org_id: orgId,
                         connector_key: connectorKey,
                         configured_by: configuredBy,
@@ -158,7 +171,7 @@ const ConnectorService = {
                         status: 'CONNECTED',
                         scopes,
                         sandbox_mode: sandboxMode,
-                        secrets: secretsVault.redact(secrets),
+                        secrets: deps.secretsVault.redact(secrets),
                         created_at: now
                     });
                 }
@@ -175,7 +188,7 @@ const ConnectorService = {
      */
     disconnect: async (orgId, connectorKey, disconnectedBy) => {
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `DELETE FROM org_connector_configs WHERE org_id = ? AND connector_key = ?`,
                 [orgId, connectorKey],
                 function (err) {
@@ -186,12 +199,12 @@ const ConnectorService = {
                     }
 
                     // Also delete health record
-                    db.run(
+                    deps.db.run(
                         `DELETE FROM connector_health WHERE org_id = ? AND connector_key = ?`,
                         [orgId, connectorKey]
                     );
 
-                    auditLogger.info('CONNECTOR_DISCONNECTED', {
+                    deps.auditLogger.info('CONNECTOR_DISCONNECTED', {
                         org_id: orgId,
                         connector_key: connectorKey,
                         disconnected_by: disconnectedBy
@@ -213,22 +226,22 @@ const ConnectorService = {
      */
     updateSecret: async (orgId, connectorKey, secrets, updatedBy) => {
         // Validate connector exists
-        const connector = connectorRegistry.getConnector(connectorKey);
+        const connector = deps.connectorRegistry.getConnector(connectorKey);
         if (!connector) {
             throw new Error(`Unknown connector: ${connectorKey}`);
         }
 
         // Validate required credentials
-        const validation = connectorRegistry.validateCredentials(connectorKey, secrets);
+        const validation = deps.connectorRegistry.validateCredentials(connectorKey, secrets);
         if (!validation.valid) {
             throw new Error(`Missing required credentials: ${validation.missing.join(', ')}`);
         }
 
-        const encryptedSecrets = secretsVault.encrypt(secrets);
+        const encryptedSecrets = deps.secretsVault.encrypt(secrets);
         const now = new Date().toISOString();
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE org_connector_configs 
                  SET encrypted_secrets = ?, updated_at = ?, configured_by = ?
                  WHERE org_id = ? AND connector_key = ?`,
@@ -240,7 +253,7 @@ const ConnectorService = {
                         return resolve(false);
                     }
 
-                    auditLogger.info('CONNECTOR_SECRET_ROTATED', {
+                    deps.auditLogger.info('CONNECTOR_SECRET_ROTATED', {
                         org_id: orgId,
                         connector_key: connectorKey,
                         updated_by: updatedBy
@@ -261,7 +274,7 @@ const ConnectorService = {
      */
     getSecrets: async (orgId, connectorKey) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT encrypted_secrets, status FROM org_connector_configs 
                  WHERE org_id = ? AND connector_key = ?`,
                 [orgId, connectorKey],
@@ -271,7 +284,7 @@ const ConnectorService = {
                     if (row.status !== 'CONNECTED') return resolve(null);
 
                     try {
-                        const secrets = secretsVault.decrypt(row.encrypted_secrets);
+                        const secrets = deps.secretsVault.decrypt(row.encrypted_secrets);
                         resolve(secrets);
                     } catch (e) {
                         reject(new Error('Failed to decrypt secrets'));
@@ -289,7 +302,7 @@ const ConnectorService = {
      */
     getConfig: async (orgId, connectorKey) => {
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT * FROM org_connector_configs WHERE org_id = ? AND connector_key = ?`,
                 [orgId, connectorKey],
                 (err, row) => {

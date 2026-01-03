@@ -228,3 +228,6 @@ Testy zostały utworzone i są gotowe do użycia. Podstawowe funkcjonalności s�
 2. Poprawa istniejących testów
 3. Dodanie performance i visual regression tests
 
+
+
+

@@ -13,6 +13,26 @@ const { promptAssistant } = require('../services/ai/promptAssistant');
 const { promptTemplateService } = require('../services/ai/promptTemplateService');
 const { promptBlockLibrary, BLOCK_CATEGORIES } = require('../services/ai/promptBlockLibrary');
 const { variableResolver } = require('../services/ai/variableResolver');
+const db = require('../database');
+
+// Database helpers
+function dbGet(sql, params = []) {
+    return new Promise((resolve, reject) => {
+        db.get(sql, params, (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+        });
+    });
+}
+
+function dbAll(sql, params = []) {
+    return new Promise((resolve, reject) => {
+        db.all(sql, params, (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+        });
+    });
+}
 
 // ============================================================================
 // Chat Endpoint - Interactive prompt engineering assistant
@@ -42,9 +62,9 @@ router.post('/chat', verifyToken, requireRole(['super_admin']), async (req, res)
         });
     } catch (error) {
         console.error('[Prompt Assistant API] Chat error:', error);
-        res.status(500).json({ 
-            error: 'Failed to process message', 
-            details: error.message 
+        res.status(500).json({
+            error: 'Failed to process message',
+            details: error.message
         });
     }
 });
@@ -57,7 +77,7 @@ router.delete('/chat/history', verifyToken, requireRole(['super_admin']), async 
     try {
         const { conversationId } = req.body;
         promptAssistant.clearHistory(req.user.id, conversationId);
-        
+
         res.json({ success: true, message: 'History cleared' });
     } catch (error) {
         console.error('[Prompt Assistant API] Clear history error:', error);
@@ -89,9 +109,9 @@ router.post('/analyze', verifyToken, requireRole(['super_admin', 'admin']), asyn
         });
     } catch (error) {
         console.error('[Prompt Assistant API] Analysis error:', error);
-        res.status(500).json({ 
-            error: 'Failed to analyze prompt', 
-            details: error.message 
+        res.status(500).json({
+            error: 'Failed to analyze prompt',
+            details: error.message
         });
     }
 });
@@ -116,9 +136,9 @@ router.post('/improve', verifyToken, requireRole(['super_admin']), async (req, r
         });
     } catch (error) {
         console.error('[Prompt Assistant API] Improve error:', error);
-        res.status(500).json({ 
-            error: 'Failed to improve prompt', 
-            details: error.message 
+        res.status(500).json({
+            error: 'Failed to improve prompt',
+            details: error.message
         });
     }
 });
@@ -152,9 +172,9 @@ router.post('/test', verifyToken, requireRole(['super_admin', 'admin']), async (
         });
     } catch (error) {
         console.error('[Prompt Assistant API] Test error:', error);
-        res.status(500).json({ 
-            error: 'Failed to test prompt', 
-            details: error.message 
+        res.status(500).json({
+            error: 'Failed to test prompt',
+            details: error.message
         });
     }
 });
@@ -179,9 +199,9 @@ router.post('/preview', verifyToken, requireRole(['super_admin', 'admin']), asyn
         });
     } catch (error) {
         console.error('[Prompt Assistant API] Preview error:', error);
-        res.status(500).json({ 
-            error: 'Failed to preview template', 
-            details: error.message 
+        res.status(500).json({
+            error: 'Failed to preview template',
+            details: error.message
         });
     }
 });
@@ -197,7 +217,7 @@ router.post('/preview', verifyToken, requireRole(['super_admin', 'admin']), asyn
 router.get('/blocks', verifyToken, requireRole(['super_admin', 'admin']), async (req, res) => {
     try {
         const { category } = req.query;
-        
+
         let blocks;
         if (category) {
             blocks = await promptBlockLibrary.getBlocksByCategory(category);
@@ -288,17 +308,17 @@ router.post('/blocks', verifyToken, requireRole(['super_admin']), async (req, re
         const { code, category, name, semantic, variables, example } = req.body;
 
         if (!code || !category || !name || !semantic) {
-            return res.status(400).json({ 
-                error: 'code, category, name, and semantic are required' 
+            return res.status(400).json({
+                error: 'code, category, name, and semantic are required'
             });
         }
 
         // Validate block
         const validation = promptBlockLibrary.validateBlock({ semantic, variables });
         if (!validation.valid) {
-            return res.status(400).json({ 
-                error: 'Block validation failed', 
-                issues: validation.issues 
+            return res.status(400).json({
+                error: 'Block validation failed',
+                issues: validation.issues
             });
         }
 
@@ -312,9 +332,9 @@ router.post('/blocks', verifyToken, requireRole(['super_admin']), async (req, re
         });
     } catch (error) {
         console.error('[Prompt Assistant API] Create block error:', error);
-        res.status(500).json({ 
-            error: 'Failed to create block', 
-            details: error.message 
+        res.status(500).json({
+            error: 'Failed to create block',
+            details: error.message
         });
     }
 });
@@ -332,9 +352,9 @@ router.put('/blocks/:code', verifyToken, requireRole(['super_admin']), async (re
         if (semantic) {
             const validation = promptBlockLibrary.validateBlock({ semantic, variables: variables || [] });
             if (!validation.valid) {
-                return res.status(400).json({ 
-                    error: 'Block validation failed', 
-                    issues: validation.issues 
+                return res.status(400).json({
+                    error: 'Block validation failed',
+                    issues: validation.issues
                 });
             }
         }
@@ -347,9 +367,9 @@ router.put('/blocks/:code', verifyToken, requireRole(['super_admin']), async (re
         });
     } catch (error) {
         console.error('[Prompt Assistant API] Update block error:', error);
-        res.status(500).json({ 
-            error: 'Failed to update block', 
-            details: error.message 
+        res.status(500).json({
+            error: 'Failed to update block',
+            details: error.message
         });
     }
 });
@@ -365,7 +385,7 @@ router.put('/blocks/:code', verifyToken, requireRole(['super_admin']), async (re
 router.get('/templates', verifyToken, requireRole(['super_admin', 'admin']), async (req, res) => {
     try {
         const { category } = req.query;
-        
+
         let templates;
         if (category) {
             templates = await promptTemplateService.getTemplatesByCategory(category);
@@ -415,8 +435,8 @@ router.post('/templates', verifyToken, requireRole(['super_admin']), async (req,
         const { code, name, category, description, blocks, variableSchema, config } = req.body;
 
         if (!code || !name || !category) {
-            return res.status(400).json({ 
-                error: 'code, name, and category are required' 
+            return res.status(400).json({
+                error: 'code, name, and category are required'
             });
         }
 
@@ -430,9 +450,9 @@ router.post('/templates', verifyToken, requireRole(['super_admin']), async (req,
         });
     } catch (error) {
         console.error('[Prompt Assistant API] Create template error:', error);
-        res.status(500).json({ 
-            error: 'Failed to create template', 
-            details: error.message 
+        res.status(500).json({
+            error: 'Failed to create template',
+            details: error.message
         });
     }
 });
@@ -456,9 +476,9 @@ router.put('/templates/:code', verifyToken, requireRole(['super_admin']), async 
         });
     } catch (error) {
         console.error('[Prompt Assistant API] Update template error:', error);
-        res.status(500).json({ 
-            error: 'Failed to update template', 
-            details: error.message 
+        res.status(500).json({
+            error: 'Failed to update template',
+            details: error.message
         });
     }
 });
@@ -480,9 +500,9 @@ router.post('/templates/:code/validate', verifyToken, requireRole(['super_admin'
         });
     } catch (error) {
         console.error('[Prompt Assistant API] Validate template error:', error);
-        res.status(500).json({ 
-            error: 'Failed to validate template', 
-            details: error.message 
+        res.status(500).json({
+            error: 'Failed to validate template',
+            details: error.message
         });
     }
 });
@@ -534,9 +554,9 @@ router.post('/variables/resolve', verifyToken, requireRole(['super_admin']), asy
         });
     } catch (error) {
         console.error('[Prompt Assistant API] Resolve variables error:', error);
-        res.status(500).json({ 
-            error: 'Failed to resolve variables', 
-            details: error.message 
+        res.status(500).json({
+            error: 'Failed to resolve variables',
+            details: error.message
         });
     }
 });
@@ -554,30 +574,30 @@ router.get('/stats', verifyToken, requireRole(['super_admin']), async (req, res)
         // Get counts from services
         const templates = await promptTemplateService.getAllTemplates();
         const allBlocks = await promptBlockLibrary.getAllBlocks();
-        
+
         // Count active blocks
         const blocks = Object.values(allBlocks);
         const activeBlocks = blocks.filter(b => b.isActive !== false).length;
-        
-        // Get feedback count (would be from DB in production)
-        const feedbackItems = 0; // Placeholder - would come from DB
-        const avgRating = 4.2; // Placeholder - would come from DB
+
+        // Get real feedback counts and stats from DB
+        const feedbackStats = await dbGet(`
+            SELECT 
+                COUNT(*) as count,
+                AVG(rating) as avg_rating
+            FROM ai_feedback
+        `);
 
         res.json({
             totalPrompts: Array.isArray(templates) ? templates.length : 0,
             activeBlocks,
-            feedbackItems,
-            avgRating,
-            languagesCovered: 6 // en, pl, de, fr, es, cn
+            feedbackItems: feedbackStats?.count || 0,
+            avgRating: feedbackStats?.avg_rating ? parseFloat(feedbackStats.avg_rating.toFixed(1)) : 0,
+            languagesCovered: 6 // en, pl, de, fr, es, cn (based on implementation)
         });
     } catch (error) {
         console.error('[Prompt Assistant API] Stats error:', error);
-        res.json({
-            totalPrompts: 0,
-            activeBlocks: 0,
-            feedbackItems: 0,
-            avgRating: 0,
-            languagesCovered: 6
+        res.status(500).json({
+            error: 'Failed to fetch AI stats'
         });
     }
 });

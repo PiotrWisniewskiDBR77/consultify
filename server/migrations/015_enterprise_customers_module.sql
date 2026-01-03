@@ -751,3 +751,6 @@ CREATE TABLE IF NOT EXISTS notification_preferences (
 CREATE INDEX IF NOT EXISTS idx_notification_prefs_user ON notification_preferences(user_id);
 CREATE INDEX IF NOT EXISTS idx_notification_prefs_org ON notification_preferences(organization_id);
 
+
+
+

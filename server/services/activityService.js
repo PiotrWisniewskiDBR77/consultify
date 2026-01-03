@@ -9,64 +9,84 @@ const { v4: uuidv4 } = require('uuid');
 const requestStore = require('../utils/requestStore');
 const siemService = require('./siemService');
 
+// Dependency injection container
+const deps = {
+    db,
+    requestStore,
+    siemService,
+    uuidv4
+};
+
 const ActivityService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Log an activity
      * @param {Object} params - Activity parameters
+     * @returns {Promise<void>}
      */
     log: (params) => {
-        const correlationId = requestStore.getCorrelationId();
-        const {
-            organizationId,
-            userId,
-            action,
-            entityType,
-            entityId,
-            entityName,
-            oldValue,
-            newValue,
-            ipAddress,
-            userAgent
-        } = params;
+        return new Promise((resolve, reject) => {
+            const correlationId = deps.requestStore.getCorrelationId ? deps.requestStore.getCorrelationId() : null;
+            const {
+                organizationId,
+                userId,
+                action,
+                entityType,
+                entityId,
+                entityName,
+                oldValue,
+                newValue,
+                ipAddress,
+                userAgent
+            } = params;
 
-        const sql = `
-            INSERT INTO activity_logs 
-            (id, organization_id, user_id, action, entity_type, entity_id, entity_name, old_value, new_value, ip_address, user_agent, correlation_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
+            const sql = `
+                INSERT INTO activity_logs 
+                (id, organization_id, user_id, action, entity_type, entity_id, entity_name, old_value, new_value, ip_address, user_agent, correlation_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
 
-        const activityId = uuidv4();
+            const activityId = deps.uuidv4();
 
-        db.run(sql, [
-            activityId,
-            organizationId,
-            userId || null,
-            action,
-            entityType,
-            entityId || null,
-            entityName || null,
-            oldValue ? JSON.stringify(oldValue) : null,
-            newValue ? JSON.stringify(newValue) : null,
-            ipAddress || null,
-            userAgent || null,
-            correlationId
-        ], (err) => {
-            if (err && process.env.NODE_ENV !== 'production') {
-                console.warn('[ActivityService] Failed to log activity:', err.message);
-            }
+            deps.db.run(sql, [
+                activityId,
+                organizationId,
+                userId || null,
+                action,
+                entityType,
+                entityId || null,
+                entityName || null,
+                oldValue ? JSON.stringify(oldValue) : null,
+                newValue ? JSON.stringify(newValue) : null,
+                ipAddress || null,
+                userAgent || null,
+                correlationId
+            ], (err) => {
+                if (err) {
+                    if (process.env.NODE_ENV !== 'production') {
+                        console.warn('[ActivityService] Failed to log activity:', err.message);
+                    }
+                    // resolve anyway to prevent crashing caller
+                    return resolve();
+                }
+
+                // Prestige Layer: Stream to external SIEM
+                deps.siemService.stream({
+                    id: activityId,
+                    organizationId,
+                    userId,
+                    action,
+                    entityType,
+                    entityId,
+                    correlationId,
+                    metadata: { ipAddress, userAgent }
+                }).catch(() => { }).finally(resolve);
+            });
         });
-
-        // Prestige Layer: Stream to external SIEM
-        siemService.stream({
-            id: activityId,
-            organizationId,
-            userId,
-            action,
-            entityType,
-            entityId,
-            correlationId,
-            metadata: { ipAddress, userAgent }
-        }).catch(() => { });
     },
 
     /**
@@ -89,7 +109,7 @@ const ActivityService = {
                 LIMIT ?
             `;
 
-            db.all(sql, [limit], (err, rows) => {
+            deps.db.all(sql, [limit], (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -116,7 +136,7 @@ const ActivityService = {
                 LIMIT ?
             `;
 
-            db.all(sql, [organizationId, limit], (err, rows) => {
+            deps.db.all(sql, [organizationId, limit], (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -138,7 +158,7 @@ const ActivityService = {
                 FROM activity_logs
             `;
 
-            db.get(sql, [], (err, row) => {
+            deps.db.get(sql, [], (err, row) => {
                 if (err) return reject(err);
                 resolve(row || { total: 0, last_hour: 0, last_24h: 0, last_7d: 0 });
             });

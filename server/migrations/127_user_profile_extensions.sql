@@ -35,3 +35,6 @@ CREATE INDEX IF NOT EXISTS idx_user_activity_status_status ON user_activity_stat
 CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
 CREATE INDEX IF NOT EXISTS idx_users_profile_visibility ON users(profile_visibility);
 
+
+
+

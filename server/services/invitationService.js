@@ -321,8 +321,8 @@ const InvitationService = {
             deps.db.run(
                 `INSERT INTO invitations 
                  (id, organization_id, email, role, role_to_assign, token, token_hash, status, invited_by, expires_at, invitation_type, metadata) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, 'ORG', ?)`,
-                [id, organizationId, email.toLowerCase(), role, role, token, tokenHash, invitedByUserId, expiresAt, JSON.stringify(metadata)],
+                 VALUES (?, ?, ?, ?, ?, NULL, ?, 'pending', ?, ?, 'ORG', ?)`,
+                [id, organizationId, email.toLowerCase(), role, role, tokenHash, invitedByUserId, expiresAt, JSON.stringify(metadata)],
                 async function (err) {
                     if (err) return reject(err);
 
@@ -427,8 +427,8 @@ const InvitationService = {
             deps.db.run(
                 `INSERT INTO invitations 
                  (id, organization_id, project_id, email, role, role_to_assign, token, token_hash, status, invited_by, expires_at, invitation_type, metadata) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, 'PROJECT', ?)`,
-                [id, organizationId, projectId, email.toLowerCase(), orgRole, orgRole, token, tokenHash, invitedByUserId, expiresAt, JSON.stringify(invitationMetadata)],
+                 VALUES (?, ?, ?, ?, ?, ?, NULL, ?, 'pending', ?, ?, 'PROJECT', ?)`,
+                [id, organizationId, projectId, email.toLowerCase(), orgRole, orgRole, tokenHash, invitedByUserId, expiresAt, JSON.stringify(invitationMetadata)],
                 async function (err) {
                     if (err) return reject(err);
 

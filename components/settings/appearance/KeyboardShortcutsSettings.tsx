@@ -408,3 +408,6 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
 
 export default KeyboardShortcutsSettings;
 
+
+
+

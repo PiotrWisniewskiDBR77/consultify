@@ -1,177 +1,194 @@
-/**
- * LearningSystem Unit Tests
- * 
- * Tests for AI pattern extraction and learning service.
- */
-
-const { learningSystem, LearningSystem } = require('../../../server/services/ai/learningSystem');
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { initTestDb, cleanTables, dbRun, db } = require('../../helpers/dbHelper.cjs');
+const { LearningSystem } = require('../../../server/services/ai/learningSystem');
+const crypto = require('crypto');
 
 describe('LearningSystem', () => {
-    describe('recordInteraction()', () => {
-        it('should record interaction successfully', async () => {
-            await expect(
-                learningSystem.recordInteraction({
-                    userId: 'test-user',
-                    organizationId: 'test-org',
-                    requestType: 'chat',
-                    prompt: 'How can I improve my project management?',
-                    response: 'Here are some recommendations...',
-                    metadata: {
-                        qualityScore: 0.85,
-                        model: 'gpt-4o'
-                    }
-                })
-            ).resolves.not.toThrow();
-        });
+    let service;
+    const testOrgId = 'test-org-123';
+    const testUserId = 'test-user-456';
+    const mockLogger = {
+        debug: vi.fn(),
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn()
+    };
 
-        it('should handle missing optional fields', async () => {
-            await expect(
-                learningSystem.recordInteraction({
-                    userId: 'test-user',
-                    requestType: 'chat',
-                    prompt: 'Test prompt'
-                })
-            ).resolves.not.toThrow();
+    beforeAll(async () => {
+        await initTestDb();
+        LearningSystem.setDependencies({
+            db,
+            aiLogger: mockLogger,
+            crypto
         });
     });
 
-    describe('extractPatterns()', () => {
-        it('should extract patterns from interactions', async () => {
-            const service = new LearningSystem();
-            
-            // Record multiple similar interactions
-            const interactions = [
-                { userId: 'u1', requestType: 'recommendation', prompt: 'improve efficiency' },
-                { userId: 'u2', requestType: 'recommendation', prompt: 'boost efficiency' },
-                { userId: 'u3', requestType: 'recommendation', prompt: 'increase efficiency' }
-            ];
-            
-            for (const interaction of interactions) {
-                await service.recordInteraction(interaction);
+    beforeEach(async () => {
+        await cleanTables([
+            'ai_learning_interactions',
+            'ai_learned_patterns',
+            'ai_learning_jobs',
+            'ai_global_strategies'
+        ]);
+        service = new LearningSystem();
+        // Lower thresholds for testing
+        service.config.minSamplesForPatterns = 1;
+        service.config.minConfidenceForInjection = 0.01;
+        service.config.minConfidenceForConsolidation = 0.01;
+        vi.clearAllMocks();
+    });
+
+    describe('recordWithAutoFeedback', () => {
+        it('should record interaction and return auto-feedback', async () => {
+            const interaction = {
+                userId: testUserId,
+                organizationId: testOrgId,
+                requestType: 'chat',
+                prompt: 'Test prompt',
+                response: 'Test response',
+                qualityResult: { overallScore: 0.9, warnings: [] },
+                latency: 500,
+                tokenCount: 50
+            };
+
+            const result = await service.recordWithAutoFeedback(interaction);
+
+            expect(result).toBeDefined();
+            expect(result.id).toBeDefined();
+            expect(result.autoFeedback.score).toBeGreaterThan(0.8);
+
+            // Verify DB record
+            const row = await new Promise((resolve, reject) => {
+                db.get('SELECT * FROM ai_learning_interactions WHERE id = ?', [result.id], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row);
+                });
+            });
+
+            expect(row).toBeDefined();
+            expect(row.organization_id).toBe(testOrgId);
+            expect(row.prompt_hash).toBeDefined();
+        });
+
+        it('should handle missing quality data with neutral score', async () => {
+            const result = await service.recordWithAutoFeedback({
+                userId: testUserId,
+                prompt: 'Short prompt',
+                response: 'Short response'
+            });
+
+            expect(result.autoFeedback.score).toBeDefined();
+            expect(result.autoFeedback.reason).toContain('NO_QUALITY_DATA');
+        });
+    });
+
+    describe('extractPatternsForCapability', () => {
+        it('should extract patterns when enough data is present', async () => {
+            // Seed 5 high-quality interactions to meet minSamplesForPatterns
+            for (let i = 0; i < 6; i++) {
+                await service.recordWithAutoFeedback({
+                    userId: testUserId,
+                    organizationId: testOrgId,
+                    requestType: 'analysis',
+                    prompt: 'How to analyze project risk?',
+                    response: 'Risk analysis involves identifying potential issues...',
+                    qualityResult: { overallScore: 0.9, warnings: [] }
+                });
             }
-            
-            const patterns = await service.extractPatterns('test-org');
-            
+
+            const patterns = await service.extractPatternsForCapability(testOrgId, 'analysis');
+
             expect(patterns).toBeDefined();
-            expect(patterns).toBeInstanceOf(Array);
+            expect(patterns.successful.length).toBeGreaterThan(0);
+            expect(patterns.confidence).toBeGreaterThan(0);
         });
 
-        it('should identify common request types', async () => {
-            const service = new LearningSystem();
-            
-            // Record interactions with different types
-            await service.recordInteraction({ requestType: 'chat', prompt: 'test 1' });
-            await service.recordInteraction({ requestType: 'chat', prompt: 'test 2' });
-            await service.recordInteraction({ requestType: 'report', prompt: 'test 3' });
-            
-            const patterns = await service.extractPatterns();
-            
-            expect(patterns).toBeDefined();
+        it('should return null if not enough data', async () => {
+            const patterns = await service.extractPatternsForCapability(testOrgId, 'sparse_type');
+            expect(patterns).toBeNull();
         });
     });
 
-    describe('getPromptSuggestions()', () => {
-        it('should return prompt suggestions based on context', async () => {
-            const service = new LearningSystem();
-            
-            const suggestions = await service.getPromptSuggestions({
-                capability: 'recommendation',
-                context: {
-                    screen: 'assessment'
+    describe('getPatterns', () => {
+        it('should retrieve stored patterns', async () => {
+            // Manually store a pattern
+            const data = {
+                successful: [{ prompt_signature: 'sig1', avg_score: 0.9 }],
+                failed: [],
+                sampleCount: 10,
+                confidence: 0.8
+            };
+            await service.storePatterns(testOrgId, 'chat', data);
+
+            const patterns = await service.getPatterns(testOrgId, 'chat');
+
+            expect(patterns.successful.length).toBe(1);
+            expect(patterns.confidence).toBe(0.8);
+            expect(patterns.sampleCount).toBe(10);
+        });
+    });
+
+    describe('getLearningContextForPrompt', () => {
+        it('should return context when confidence threshold is met', async () => {
+            // Seed data and extract
+            for (let i = 0; i < 6; i++) {
+                await service.recordWithAutoFeedback({
+                    userId: testUserId,
+                    organizationId: testOrgId,
+                    requestType: 'chat',
+                    prompt: 'Hello',
+                    response: 'Hi there, how can I help?',
+                    qualityResult: { overallScore: 0.9, warnings: [] }
+                });
+            }
+            await service.extractPatternsForCapability(testOrgId, 'chat');
+
+            const context = await service.getLearningContextForPrompt(testOrgId, 'chat');
+
+            expect(context).toBeDefined();
+            expect(context.content).toContain('EFFECTIVE RESPONSE PATTERNS');
+        });
+
+        it('should return null if confidence is low', async () => {
+            const context = await service.getLearningContextForPrompt(testOrgId, 'new_cap');
+            expect(context).toBeNull();
+        });
+    });
+
+    describe('consolidateLearnings', () => {
+        it('should create global strategies from high-confidence patterns', async () => {
+            // Seed multiple orgs with high confidence patterns
+            const orgs = ['org-a', 'org-b', 'org-c'];
+            for (const org of orgs) {
+                for (let i = 0; i < 10; i++) {
+                    await service.recordWithAutoFeedback({
+                        userId: testUserId,
+                        organizationId: org,
+                        requestType: 'global_test',
+                        prompt: 'Global prompt',
+                        response: 'Global response',
+                        qualityResult: { overallScore: 0.9, warnings: [] }
+                    });
                 }
+                await service.extractPatternsForCapability(org, 'global_test');
+            }
+
+            const result = await service.consolidateLearnings();
+
+            expect(result.strategiesCreated).toBeGreaterThan(0);
+
+            // Verify global strategy record
+            const strategy = await new Promise((resolve, reject) => {
+                db.get('SELECT * FROM ai_global_strategies WHERE capability = ?', ['global_test'], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row);
+                });
             });
-            
-            expect(suggestions).toBeDefined();
-            expect(suggestions).toBeInstanceOf(Array);
-        });
 
-        it('should return empty array for unknown context', async () => {
-            const service = new LearningSystem();
-            
-            const suggestions = await service.getPromptSuggestions({
-                capability: 'unknown_capability',
-                context: {}
-            });
-            
-            expect(suggestions).toBeInstanceOf(Array);
-        });
-    });
-
-    describe('getInsights()', () => {
-        it('should generate insights from user data', async () => {
-            const service = new LearningSystem();
-            
-            // Record some interactions first
-            await service.recordInteraction({
-                userId: 'insights-user',
-                requestType: 'analysis',
-                prompt: 'Analyze our digital maturity',
-                metadata: { qualityScore: 0.9 }
-            });
-            
-            const insights = await service.getInsights('insights-user');
-            
-            expect(insights).toBeDefined();
-            expect(insights).toHaveProperty('usage');
-            expect(insights).toHaveProperty('preferences');
-        });
-
-        it('should return default insights for new users', async () => {
-            const service = new LearningSystem();
-            
-            const insights = await service.getInsights('brand-new-user-' + Date.now());
-            
-            expect(insights).toBeDefined();
-            expect(insights).toHaveProperty('usage');
-        });
-    });
-
-    describe('learn()', () => {
-        it('should process feedback and update models', async () => {
-            const service = new LearningSystem();
-            
-            await expect(
-                service.learn({
-                    interactionId: 'test-interaction',
-                    feedback: 'positive',
-                    rating: 5,
-                    comment: 'Very helpful response'
-                })
-            ).resolves.not.toThrow();
-        });
-
-        it('should handle negative feedback', async () => {
-            const service = new LearningSystem();
-            
-            await expect(
-                service.learn({
-                    interactionId: 'test-interaction-neg',
-                    feedback: 'negative',
-                    rating: 2,
-                    comment: 'Not relevant to my question'
-                })
-            ).resolves.not.toThrow();
-        });
-    });
-
-    describe('getOrganizationLearnings()', () => {
-        it('should aggregate learnings for organization', async () => {
-            const service = new LearningSystem();
-            const orgId = 'test-org-' + Date.now();
-            
-            // Record some interactions for the org
-            await service.recordInteraction({
-                organizationId: orgId,
-                requestType: 'initiative',
-                prompt: 'Generate initiatives'
-            });
-            
-            const learnings = await service.getOrganizationLearnings(orgId);
-            
-            expect(learnings).toBeDefined();
-            expect(learnings).toHaveProperty('patterns');
-            expect(learnings).toHaveProperty('preferences');
+            expect(strategy).toBeDefined();
+            expect(strategy.strategy_type).toBe('SUCCESS_PATTERN');
         });
     });
 });
-

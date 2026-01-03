@@ -426,3 +426,6 @@ ALTER TABLE invoices ADD COLUMN sent_at TEXT;
 ALTER TABLE invoices ADD COLUMN reminder_sent_at TEXT;
 ALTER TABLE invoices ADD COLUMN auto_advance INTEGER DEFAULT 1; -- Auto-finalize and send
 
+
+
+

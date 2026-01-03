@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Api } from '../../../services/api';
-import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/BaseCard';
 
 interface RevenueForecast {
   id: string;
@@ -49,7 +49,7 @@ export const RevenueForecastView: React.FC = () => {
         Api.getRevenueForecasts(),
         Api.getRevenueForecastStats()
       ]);
-      setForecasts(forecastsRes.forecasts || []);
+      setForecasts(forecastsRes || []);
       setStats(statsRes);
     } catch (err: any) {
       setError(err.message || 'Failed to load revenue forecasts');
@@ -61,7 +61,10 @@ export const RevenueForecastView: React.FC = () => {
   const handleGenerateForecast = async () => {
     try {
       setGenerating(true);
-      await Api.generateRevenueForecast(generateParams);
+      await Api.generateRevenueForecast({
+        forecastType: generateParams.forecast_type,
+        periodMonths: generateParams.periods
+      });
       await fetchData();
       setShowGenerateModal(false);
     } catch (err: any) {
@@ -204,7 +207,7 @@ export const RevenueForecastView: React.FC = () => {
                   <div
                     key={forecast.id}
                     className="w-12 bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-t-lg transition-all duration-300"
-                    style={{ 
+                    style={{
                       height: `${Math.min(100, (forecast.forecasted_amount / (Math.max(...forecasts.map(f => f.forecasted_amount)) || 1)) * 100)}%`,
                       opacity: 0.6 + (index * 0.05)
                     }}
@@ -262,10 +265,9 @@ export const RevenueForecastView: React.FC = () => {
                       <div className="flex items-center justify-center gap-2">
                         <div className="w-16 bg-gray-700 rounded-full h-2">
                           <div
-                            className={`h-2 rounded-full ${
-                              forecast.confidence_level >= 0.8 ? 'bg-green-500' :
-                              forecast.confidence_level >= 0.6 ? 'bg-yellow-500' : 'bg-red-500'
-                            }`}
+                            className={`h-2 rounded-full ${forecast.confidence_level >= 0.8 ? 'bg-green-500' :
+                                forecast.confidence_level >= 0.6 ? 'bg-yellow-500' : 'bg-red-500'
+                              }`}
                             style={{ width: `${forecast.confidence_level * 100}%` }}
                           />
                         </div>
@@ -341,7 +343,7 @@ export const RevenueForecastView: React.FC = () => {
                   max="24"
                 />
               </div>
-              
+
               {/* Method Description */}
               <div className="p-3 bg-gray-900/50 rounded-lg text-sm text-gray-400">
                 {generateParams.method === 'linear' && (
@@ -384,4 +386,7 @@ export const RevenueForecastView: React.FC = () => {
 };
 
 export default RevenueForecastView;
+
+
+
 

@@ -81,36 +81,36 @@ const PRIORITY_OPTIONS = [
 export const PortfolioView: React.FC = () => {
     const { t } = useTranslation();
     const { currentProjectId } = useAppStore();
-    
+
     // View state
     const [viewMode, setViewMode] = useState<PortfolioViewMode>('kanban');
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    
+
     // Data state
     const [initiatives, setInitiatives] = useState<PortfolioInitiative[]>([]);
     const [stats, setStats] = useState<PortfolioStats | null>(null);
     const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
-    
+
     // Filter state
     const [filters, setFilters] = useState<PortfolioFilters>({});
     const [showFilters, setShowFilters] = useState(false);
-    
+
     // Side panel state
     const [selectedInitiative, setSelectedInitiative] = useState<PortfolioInitiative | null>(null);
     const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
-    
+
     // ============================================
     // DATA FETCHING
     // ============================================
-    
+
     const fetchData = useCallback(async (showRefreshIndicator = false) => {
         if (showRefreshIndicator) {
             setIsRefreshing(true);
         } else {
             setIsLoading(true);
         }
-        
+
         try {
             const params = new URLSearchParams();
             if (filters.projectId) params.append('projectId', filters.projectId);
@@ -119,11 +119,11 @@ export const PortfolioView: React.FC = () => {
             if (filters.owner) params.append('owner', filters.owner);
             if (filters.quarter) params.append('quarter', filters.quarter);
             if (filters.search) params.append('search', filters.search);
-            
+
             const response = await Api.get(`/initiatives/portfolio?${params.toString()}`);
             setInitiatives(response.initiatives || []);
             setStats(response.stats || null);
-            
+
             // Extract unique projects
             const uniqueProjects = new Map<string, string>();
             (response.initiatives || []).forEach((init: PortfolioInitiative) => {
@@ -132,7 +132,7 @@ export const PortfolioView: React.FC = () => {
                 }
             });
             setProjects(Array.from(uniqueProjects, ([id, name]) => ({ id, name })));
-            
+
         } catch (error) {
             console.error('[PortfolioView] Fetch error:', error);
             toast.error('Failed to load portfolio data');
@@ -141,29 +141,29 @@ export const PortfolioView: React.FC = () => {
             setIsRefreshing(false);
         }
     }, [filters]);
-    
+
     useEffect(() => {
         fetchData();
     }, [fetchData]);
-    
+
     // ============================================
     // HANDLERS
     // ============================================
-    
+
     const handleInitiativeClick = useCallback((initiative: PortfolioInitiative) => {
         setSelectedInitiative(initiative);
         setIsSidePanelOpen(true);
     }, []);
-    
+
     const handleCloseSidePanel = useCallback(() => {
         setIsSidePanelOpen(false);
         setTimeout(() => setSelectedInitiative(null), 300);
     }, []);
-    
+
     const handleStatusChange = useCallback(async (initiativeId: string, newStatus: InitiativeStatus) => {
         try {
             await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
-            setInitiatives(prev => prev.map(i => 
+            setInitiatives(prev => prev.map(i =>
                 i.id === initiativeId ? { ...i, status: newStatus } : i
             ));
             toast.success('Status updated');
@@ -171,44 +171,44 @@ export const PortfolioView: React.FC = () => {
             toast.error(error.response?.data?.error || 'Failed to update status');
         }
     }, []);
-    
+
     const handleQuickUpdate = useCallback(async (initiativeId: string, updates: Partial<PortfolioInitiative>) => {
         try {
             await Api.patch(`/initiatives/${initiativeId}/quick-update`, updates);
-            setInitiatives(prev => prev.map(i => 
+            setInitiatives(prev => prev.map(i =>
                 i.id === initiativeId ? { ...i, ...updates } : i
             ));
         } catch (error: any) {
             toast.error('Failed to update');
         }
     }, []);
-    
+
     const handleFilterChange = useCallback((key: keyof PortfolioFilters, value: any) => {
         setFilters(prev => ({ ...prev, [key]: value }));
     }, []);
-    
+
     const clearFilters = useCallback(() => {
         setFilters({});
     }, []);
-    
+
     const hasActiveFilters = useMemo(() => {
-        return filters.projectId || filters.status?.length || filters.priority?.length || 
-               filters.owner || filters.quarter || filters.search;
+        return filters.projectId || filters.status?.length || filters.priority?.length ||
+            filters.owner || filters.quarter || filters.search;
     }, [filters]);
-    
+
     // ============================================
     // RENDER HELPERS
     // ============================================
-    
+
     const formatCurrency = (amount: number) => {
         if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
         if (amount >= 1000) return `$${(amount / 1000).toFixed(0)}K`;
         return `$${amount}`;
     };
-    
+
     const renderStats = () => {
         if (!stats) return null;
-        
+
         return (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {/* Total */}
@@ -219,7 +219,7 @@ export const PortfolioView: React.FC = () => {
                     </div>
                     <div className="text-2xl font-bold text-navy-900 dark:text-white">{stats.total}</div>
                 </div>
-                
+
                 {/* In Progress */}
                 <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-white/10">
                     <div className="flex items-center gap-2 mb-1">
@@ -230,7 +230,7 @@ export const PortfolioView: React.FC = () => {
                         {stats.byStatus.EXECUTING || 0}
                     </div>
                 </div>
-                
+
                 {/* Approved */}
                 <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-white/10">
                     <div className="flex items-center gap-2 mb-1">
@@ -241,7 +241,7 @@ export const PortfolioView: React.FC = () => {
                         {stats.byStatus.APPROVED || 0}
                     </div>
                 </div>
-                
+
                 {/* Review */}
                 <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-white/10">
                     <div className="flex items-center gap-2 mb-1">
@@ -252,7 +252,7 @@ export const PortfolioView: React.FC = () => {
                         {stats.byStatus.REVIEW || 0}
                     </div>
                 </div>
-                
+
                 {/* Blocked */}
                 <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-white/10">
                     <div className="flex items-center gap-2 mb-1">
@@ -263,7 +263,7 @@ export const PortfolioView: React.FC = () => {
                         {stats.blockedCount || 0}
                     </div>
                 </div>
-                
+
                 {/* Total Budget */}
                 <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-white/10">
                     <div className="flex items-center gap-2 mb-1">
@@ -277,7 +277,7 @@ export const PortfolioView: React.FC = () => {
             </div>
         );
     };
-    
+
     const renderFilters = () => (
         <div className={`overflow-hidden transition-all duration-300 ${showFilters ? 'max-h-32 opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
             <div className="flex flex-wrap items-center gap-3 p-4 bg-slate-50 dark:bg-navy-900/50 rounded-lg">
@@ -294,7 +294,7 @@ export const PortfolioView: React.FC = () => {
                         ))}
                     </select>
                 )}
-                
+
                 {/* Status Filter */}
                 <select
                     value={filters.status?.[0] || ''}
@@ -306,7 +306,7 @@ export const PortfolioView: React.FC = () => {
                         <option key={s.value} value={s.value}>{s.label}</option>
                     ))}
                 </select>
-                
+
                 {/* Priority Filter */}
                 <select
                     value={filters.priority?.[0] || ''}
@@ -318,7 +318,7 @@ export const PortfolioView: React.FC = () => {
                         <option key={p.value} value={p.value}>{p.label}</option>
                     ))}
                 </select>
-                
+
                 {/* Clear Filters */}
                 {hasActiveFilters && (
                     <button
@@ -332,7 +332,7 @@ export const PortfolioView: React.FC = () => {
             </div>
         </div>
     );
-    
+
     const renderContent = () => {
         if (isLoading) {
             return (
@@ -341,7 +341,7 @@ export const PortfolioView: React.FC = () => {
                 </div>
             );
         }
-        
+
         if (initiatives.length === 0) {
             return (
                 <div className="flex flex-col items-center justify-center h-96 text-center">
@@ -361,7 +361,7 @@ export const PortfolioView: React.FC = () => {
                 </div>
             );
         }
-        
+
         switch (viewMode) {
             case 'list':
                 return (
@@ -385,7 +385,7 @@ export const PortfolioView: React.FC = () => {
                     <PortfolioTimelineView
                         initiatives={initiatives}
                         onInitiativeClick={handleInitiativeClick}
-                        projectId={filters.projectId || currentProjectId}
+                        projectId={filters.projectId || currentProjectId || undefined}
                     />
                 );
             case 'matrix':
@@ -399,11 +399,11 @@ export const PortfolioView: React.FC = () => {
                 return null;
         }
     };
-    
+
     // ============================================
     // MAIN RENDER
     // ============================================
-    
+
     return (
         <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950 overflow-hidden">
             {/* Header */}
@@ -419,7 +419,7 @@ export const PortfolioView: React.FC = () => {
                             {t('portfolio.subtitle', 'Manage initiatives from idea to execution')}
                         </p>
                     </div>
-                    
+
                     {/* Actions */}
                     <div className="flex items-center gap-2">
                         <button
@@ -438,7 +438,7 @@ export const PortfolioView: React.FC = () => {
                         </button>
                     </div>
                 </div>
-                
+
                 {/* Controls Row */}
                 <div className="flex items-center justify-between">
                     {/* View Mode Toggle */}
@@ -447,18 +447,17 @@ export const PortfolioView: React.FC = () => {
                             <button
                                 key={mode.id}
                                 onClick={() => setViewMode(mode.id)}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                                    viewMode === mode.id
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === mode.id
                                         ? 'bg-white dark:bg-navy-800 text-purple-600 dark:text-purple-400 shadow-sm'
                                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                }`}
+                                    }`}
                             >
                                 {mode.icon}
                                 <span className="hidden sm:inline">{mode.label}</span>
                             </button>
                         ))}
                     </div>
-                    
+
                     {/* Search & Filter */}
                     <div className="flex items-center gap-3">
                         <div className="relative">
@@ -471,14 +470,13 @@ export const PortfolioView: React.FC = () => {
                                 className="w-64 pl-9 pr-4 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
                         </div>
-                        
+
                         <button
                             onClick={() => setShowFilters(!showFilters)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                                showFilters || hasActiveFilters
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${showFilters || hasActiveFilters
                                     ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
                                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
-                            }`}
+                                }`}
                         >
                             <Filter size={16} />
                             Filters
@@ -489,23 +487,23 @@ export const PortfolioView: React.FC = () => {
                         </button>
                     </div>
                 </div>
-                
+
                 {/* Expandable Filters */}
                 {renderFilters()}
             </div>
-            
+
             {/* Stats Row */}
             <div className="shrink-0 px-6 py-4">
                 {renderStats()}
             </div>
-            
+
             {/* Main Content */}
             <div className="flex-1 overflow-hidden px-6 pb-6">
                 <div className="h-full bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
                     {renderContent()}
                 </div>
             </div>
-            
+
             {/* Side Panel */}
             <InitiativeSidePanel
                 initiative={selectedInitiative}

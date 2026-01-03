@@ -31,6 +31,7 @@ import { toast } from 'react-hot-toast';
 import { useAppStore } from '../../store/useAppStore';
 import { SpendingAlert } from '../../types';
 import { InfoButton } from '../../components/shared/InfoButton';
+import Api from '../../services/api';
 
 // Alert types
 const ALERT_TYPES = [
@@ -53,6 +54,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingAlert, setEditingAlert] = useState<SpendingAlert | null>(null);
     const [saving, setSaving] = useState(false);
+    const [usageData, setUsageData] = useState<any>(null);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -64,10 +66,21 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
         isActive: true
     });
 
-    // Load alerts on mount
+    // Load alerts and usage data on mount
     useEffect(() => {
         loadAlerts();
+        loadUsageData();
     }, []);
+
+    const loadUsageData = async () => {
+        try {
+            const usage = await Api.getUsage();
+            setUsageData(usage.structuredUsage || null);
+        } catch (error) {
+            console.error('Failed to load usage data:', error);
+            setUsageData(null);
+        }
+    };
 
     const loadAlerts = async () => {
         setLoading(true);
@@ -254,7 +267,28 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                 {ALERT_TYPES.map(type => {
                     const Icon = type.icon;
                     const hasAlert = alerts.some(a => a.type === type.id && a.isActive);
-                    const mockUsage = type.id === 'AI_TOKENS' ? 75 : type.id === 'STORAGE' ? 25 : type.id === 'USERS' ? 48 : 60;
+
+                    // Calculate real usage percentage from usageData
+                    let usagePercent = 0;
+                    if (usageData) {
+                        if (type.id === 'AI_TOKENS') {
+                            const used = usageData.tokens?.used || 0;
+                            const limit = usageData.tokens?.limit || 1;
+                            usagePercent = limit > 0 ? Math.round((used / limit) * 100) : 0;
+                        } else if (type.id === 'STORAGE') {
+                            const used = usageData.storage?.used_gb || 0;
+                            const limit = usageData.storage?.limit_gb || 1;
+                            usagePercent = limit > 0 ? Math.round((used / limit) * 100) : 0;
+                        } else if (type.id === 'USERS') {
+                            const used = usageData.seats?.used || 0;
+                            const limit = usageData.seats?.total || 1;
+                            usagePercent = limit > 0 ? Math.round((used / limit) * 100) : 0;
+                        } else if (type.id === 'TOTAL_SPEND') {
+                            const spent = usageData.spend?.current_period || 0;
+                            const budget = usageData.spend?.budget || 1;
+                            usagePercent = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+                        }
+                    }
 
                     return (
                         <div
@@ -271,14 +305,16 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                                 )}
                             </div>
                             <div className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                                {mockUsage}%
+                                {usageData ? `${usagePercent}%` : '--'}
                             </div>
                             <div className="w-full bg-slate-200 dark:bg-navy-700 rounded-full h-2">
-                                <div
-                                    className={`h-2 rounded-full ${mockUsage > 80 ? 'bg-red-500' : mockUsage > 60 ? 'bg-amber-500' : 'bg-green-500'
-                                        }`}
-                                    style={{ width: `${mockUsage}%` }}
-                                />
+                                {usageData && (
+                                    <div
+                                        className={`h-2 rounded-full ${usagePercent > 80 ? 'bg-red-500' : usagePercent > 60 ? 'bg-amber-500' : 'bg-green-500'
+                                            }`}
+                                        style={{ width: `${Math.min(usagePercent, 100)}%` }}
+                                    />
+                                )}
                             </div>
                         </div>
                     );
@@ -308,15 +344,15 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                             <div
                                 key={alert.id}
                                 className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${alert.isActive
-                                        ? 'border-slate-200 dark:border-navy-700'
-                                        : 'border-slate-200 dark:border-navy-700 opacity-60'
+                                    ? 'border-slate-200 dark:border-navy-700'
+                                    : 'border-slate-200 dark:border-navy-700 opacity-60'
                                     }`}
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <div className={`p-3 rounded-lg ${alert.isActive
-                                                ? 'bg-violet-100 dark:bg-violet-900/30'
-                                                : 'bg-slate-100 dark:bg-navy-700'
+                                            ? 'bg-violet-100 dark:bg-violet-900/30'
+                                            : 'bg-slate-100 dark:bg-navy-700'
                                             }`}>
                                             <Icon className={
                                                 alert.isActive ? 'text-violet-600' : 'text-slate-400'

@@ -124,35 +124,19 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                 Api.get('/api/user/automations/logs').catch(() => ({ data: [] }))
             ]);
 
-            // Mock data
-            setRules([
-                {
-                    id: 'r1',
-                    name: 'Auto-archive completed tasks',
-                    description: 'Archive tasks 7 days after completion',
-                    enabled: true,
-                    trigger: { type: 'task_completed', conditions: { delay: '7d' } },
-                    actions: [{ type: 'archive_task', params: {} }],
-                    lastRun: new Date(Date.now() - 3600000).toISOString(),
-                    runCount: 45
-                },
-                {
-                    id: 'r2',
-                    name: 'Due date reminder',
-                    description: 'Notify me 1 day before due date',
-                    enabled: true,
-                    trigger: { type: 'due_date_approaching', conditions: { before: '1d' } },
-                    actions: [{ type: 'send_notification', params: { message: 'Task due tomorrow!' } }],
-                    lastRun: new Date(Date.now() - 86400000).toISOString(),
-                    runCount: 128
-                }
-            ]);
+            // Set empty state if API fails
+            if (rulesRes.data && rulesRes.data.length > 0) {
+                setRules(rulesRes.data);
+            } else {
+                setRules([]);
+            }
 
-            setLogs([
-                { id: 'l1', ruleId: 'r1', ruleName: 'Auto-archive completed tasks', status: 'success', timestamp: new Date().toISOString(), details: 'Archived 3 tasks' },
-                { id: 'l2', ruleId: 'r2', ruleName: 'Due date reminder', status: 'success', timestamp: new Date(Date.now() - 3600000).toISOString(), details: 'Sent notification' },
-                { id: 'l3', ruleId: 'r1', ruleName: 'Auto-archive completed tasks', status: 'failed', timestamp: new Date(Date.now() - 7200000).toISOString(), details: 'Permission denied' }
-            ]);
+            if (logsRes.data && logsRes.data.length > 0) {
+                setLogs(logsRes.data);
+            } else {
+                setLogs([]);
+            }
+
         } catch (error) {
             console.error('Error loading automations:', error);
         } finally {
@@ -210,7 +194,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-personal-automation" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -259,11 +243,10 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                activeTab === tab.id
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
                                     ? 'bg-amber-600 text-white'
                                     : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
-                            }`}
+                                }`}
                         >
                             <Icon size={16} />
                             {tab.label}
@@ -278,11 +261,10 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                     {rules.map(rule => (
                         <div
                             key={rule.id}
-                            className={`p-4 rounded-xl border-2 transition-all ${
-                                rule.enabled
+                            className={`p-4 rounded-xl border-2 transition-all ${rule.enabled
                                     ? 'border-amber-500/50 bg-amber-50 dark:bg-amber-500/5'
                                     : 'border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 opacity-60'
-                            }`}
+                                }`}
                         >
                             <div className="flex items-start justify-between mb-3">
                                 <div>
@@ -292,11 +274,10 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => toggleRule(rule.id)}
-                                        className={`p-2 rounded-lg transition-colors ${
-                                            rule.enabled
+                                        className={`p-2 rounded-lg transition-colors ${rule.enabled
                                                 ? 'text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-500/20'
                                                 : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
-                                        }`}
+                                            }`}
                                     >
                                         {rule.enabled ? <Pause size={18} /> : <Play size={18} />}
                                     </button>
@@ -314,7 +295,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <div className="flex items-center gap-2 text-sm">
                                 <span className="px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-slate-600 dark:text-slate-400">
                                     {triggerTypes.find(t => t.id === rule.trigger.type)?.label || rule.trigger.type}

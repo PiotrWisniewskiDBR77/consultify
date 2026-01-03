@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '../../../components/SuperAdmin/Card';
+import { Card } from '../../../components/ui/BaseCard';
 import {
     Plus,
     Brain,
@@ -245,16 +245,15 @@ const PredictiveAnalyticsView: React.FC = () => {
                                     const typeInfo = getModelTypeInfo(model.model_type);
                                     const TypeIcon = typeInfo.icon;
                                     const accuracyColor = getAccuracyColor(model.accuracy_score);
-                                    
+
                                     return (
                                         <div
                                             key={model.id}
                                             onClick={() => handleSelectModel(model)}
-                                            className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                                                selectedModel?.id === model.id
+                                            className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedModel?.id === model.id
                                                     ? 'bg-blue-600/20 border border-blue-500'
                                                     : 'bg-gray-700/50 hover:bg-gray-700'
-                                            }`}
+                                                }`}
                                         >
                                             <div className="flex items-start gap-3">
                                                 <div className="p-2 bg-purple-500/20 rounded-lg">
@@ -425,7 +424,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                                             } catch {
                                                 result = {};
                                             }
-                                            
+
                                             return (
                                                 <div
                                                     key={pred.id}
@@ -508,11 +507,10 @@ const PredictiveAnalyticsView: React.FC = () => {
                                         <button
                                             key={mt.id}
                                             onClick={() => setNewModel({ ...newModel, modelType: mt.id })}
-                                            className={`p-3 rounded-lg text-left transition-colors ${
-                                                newModel.modelType === mt.id
+                                            className={`p-3 rounded-lg text-left transition-colors ${newModel.modelType === mt.id
                                                     ? 'bg-purple-600/20 border border-purple-500'
                                                     : 'bg-gray-700 hover:bg-gray-600'
-                                            }`}
+                                                }`}
                                         >
                                             <div className="flex items-center gap-2">
                                                 <mt.icon className="w-4 h-4 text-purple-400" />
@@ -591,4 +589,7 @@ const PredictiveAnalyticsView: React.FC = () => {
 };
 
 export default PredictiveAnalyticsView;
+
+
+
 
