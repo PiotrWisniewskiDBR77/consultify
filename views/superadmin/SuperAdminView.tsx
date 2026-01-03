@@ -1,10 +1,12 @@
 /**
  * SuperAdminView - Main Super Admin Panel
  * 
- * Restructured with 8 modules:
+ * Restructured with modular AI Platform (Variant A - 3 Modules):
  * - Overview (Dashboard, Metrics, Signals)
  * - Customers (Organizations, Users, Feedback, Bulk Ops)
- * - AI Platform (LLM, Intelligence, Knowledge, Costs, Health)
+ * - AI Infrastructure (LLM Providers, Tiers, Settings, Health)
+ * - AI Development (Prompts, Intelligence, Experiments, Knowledge)
+ * - AI Operations (Mission Control, Performance, Costs, SLA, Analytics)
  * - System (Health, Audit Log, Feature Flags, Integrations)
  * - Content (Playbooks, Email Templates)
  * - Revenue (Billing, Invoices, Usage)
@@ -23,12 +25,16 @@ import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
 // Module imports
 import { OverviewModule } from './OverviewModule';
 import { CustomersModule } from './CustomersModule';
-import { AIPlatformModule } from './AIPlatformModule';
+import { AIPlatformModule } from './AIPlatformModule'; // Legacy - kept for backward compatibility
+import { AIInfrastructureModule } from './AIInfrastructureModule';
+import { AIDevelopmentModule } from './AIDevelopmentModule';
+import { AIOperationsModule } from './AIOperationsModule';
 import { SystemModule } from './SystemModule';
 import { ContentModule } from './ContentModule';
 import { RevenueModule } from './RevenueModule';
 import { SecurityModule } from './SecurityModule';
 import { ConfigurationModule } from './ConfigurationModule';
+import { AnalyticsModuleView } from './analytics';
 
 // Floating Widgets
 import { HelpSidePanel } from '../../components/Help/HelpSidePanel';
@@ -72,7 +78,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         setActiveSection(section as SuperAdminSection);
     };
 
-    // Render content based on currentView (8 modules)
+    // Render content based on currentView (Modular AI Platform - Variant A)
     const renderContent = () => {
         switch (currentView) {
             case AppView.SUPERADMIN_OVERVIEW:
@@ -81,8 +87,19 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             case AppView.SUPERADMIN_CUSTOMERS:
                 return <CustomersModule />;
 
+            // NEW: AI Platform - 3 Modular Structure (Variant A)
+            case AppView.SUPERADMIN_AI_INFRASTRUCTURE:
+                return <AIInfrastructureModule />;
+
+            case AppView.SUPERADMIN_AI_DEVELOPMENT:
+                return <AIDevelopmentModule />;
+
+            case AppView.SUPERADMIN_AI_OPERATIONS:
+                return <AIOperationsModule />;
+
+            // Legacy AI Platform - redirects to AI Infrastructure
             case AppView.SUPERADMIN_AI_PLATFORM:
-                return <AIPlatformModule />;
+                return <AIInfrastructureModule />;
 
             case AppView.SUPERADMIN_SYSTEM:
                 return <SystemModule />;
@@ -99,6 +116,9 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             case AppView.SUPERADMIN_CONFIGURATION:
                 return <ConfigurationModule />;
 
+            case AppView.SUPERADMIN_ANALYTICS:
+                return <AnalyticsModuleView />;
+
             // Legacy view redirects - redirect to appropriate module with initial tab
             case AppView.SUPERADMIN_DASHBOARD:
                 return <OverviewModule onNavigateToSection={handleNavigateToSection} />;
@@ -114,15 +134,17 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                                 'bulk-ops'
                 } />;
 
+            // Legacy AI views - redirect to appropriate new module
             case AppView.SUPERADMIN_LLM_MANAGEMENT:
+            case AppView.SUPERADMIN_AI_CONFIG:
+                return <AIInfrastructureModule initialTab={
+                    currentView === AppView.SUPERADMIN_LLM_MANAGEMENT ? 'llm-config' : 'settings'
+                } />;
+
             case AppView.SUPERADMIN_AI_INTELLIGENCE:
             case AppView.SUPERADMIN_KNOWLEDGE:
-            case AppView.SUPERADMIN_AI_CONFIG:
-                return <AIPlatformModule initialTab={
-                    currentView === AppView.SUPERADMIN_LLM_MANAGEMENT ? 'llm-config' :
-                        currentView === AppView.SUPERADMIN_AI_INTELLIGENCE ? 'intelligence' :
-                            currentView === AppView.SUPERADMIN_KNOWLEDGE ? 'knowledge' :
-                                'llm-config'
+                return <AIDevelopmentModule initialTab={
+                    currentView === AppView.SUPERADMIN_AI_INTELLIGENCE ? 'intelligence' : 'knowledge'
                 } />;
 
             case AppView.SUPERADMIN_BILLING:

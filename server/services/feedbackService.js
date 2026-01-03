@@ -101,6 +101,196 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
             }
         }
         return { status: 'completed', contextsAnalyzed: contexts.length };
+    },
+
+    /**
+     * Enhanced Feedback System - Feedback Items
+     */
+    
+    /**
+     * Get feedback items with filters
+     */
+    getFeedbackItems: (filters = {}) => {
+        return new Promise((resolve, reject) => {
+            let query = `SELECT f.*, 
+                        u.email as user_email, u.first_name, u.last_name,
+                        o.name as organization_name
+                        FROM feedback_items f
+                        LEFT JOIN users u ON f.user_id = u.id
+                        LEFT JOIN organizations o ON f.organization_id = o.id
+                        WHERE 1=1`;
+            const params = [];
+
+            if (filters.organizationId) {
+                query += ' AND f.organization_id = ?';
+                params.push(filters.organizationId);
+            }
+            if (filters.userId) {
+                query += ' AND f.user_id = ?';
+                params.push(filters.userId);
+            }
+            if (filters.feedbackType) {
+                query += ' AND f.feedback_type = ?';
+                params.push(filters.feedbackType);
+            }
+            if (filters.status) {
+                query += ' AND f.status = ?';
+                params.push(filters.status);
+            }
+
+            query += ' ORDER BY f.created_at DESC LIMIT ?';
+            params.push(filters.limit || 50);
+
+            db.all(query, params, (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows || []);
+            });
+        });
+    },
+
+    /**
+     * Create feedback item
+     */
+    createFeedbackItem: (feedbackData) => {
+        return new Promise((resolve, reject) => {
+            const id = uuidv4();
+            db.run(
+                `INSERT INTO feedback_items 
+                 (id, organization_id, user_id, feedback_type, category, title, description,
+                  priority, screenshots_json, attachments_json, metadata_json)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    id,
+                    feedbackData.organizationId || null,
+                    feedbackData.userId,
+                    feedbackData.feedbackType,
+                    feedbackData.category || null,
+                    feedbackData.title,
+                    feedbackData.description,
+                    feedbackData.priority || 'medium',
+                    JSON.stringify(feedbackData.screenshots || []),
+                    JSON.stringify(feedbackData.attachments || []),
+                    JSON.stringify(feedbackData.metadata || {})
+                ],
+                function (err) {
+                    if (err) return reject(err);
+                    resolve({ id, ...feedbackData });
+                }
+            );
+        });
+    },
+
+    /**
+     * Vote on feedback
+     */
+    voteFeedback: (feedbackId, userId, voteType = 'upvote') => {
+        return new Promise((resolve, reject) => {
+            const id = uuidv4();
+            db.run(
+                `INSERT INTO feedback_votes (id, feedback_id, user_id, vote_type)
+                 VALUES (?, ?, ?, ?)`,
+                [id, feedbackId, userId, voteType],
+                function (err) {
+                    if (err) {
+                        if (err.message.includes('UNIQUE constraint')) {
+                            return reject(new Error('User already voted'));
+                        }
+                        return reject(err);
+                    }
+                    
+                    // Update votes count
+                    db.run(
+                        `UPDATE feedback_items SET votes_count = votes_count + 1 WHERE id = ?`,
+                        [feedbackId]
+                    );
+                    
+                    resolve({ id, feedbackId, userId, voteType });
+                }
+            );
+        });
+    },
+
+    /**
+     * Add comment to feedback
+     */
+    addFeedbackComment: (feedbackId, userId, commentText, isInternal = false) => {
+        return new Promise((resolve, reject) => {
+            const id = uuidv4();
+            db.run(
+                `INSERT INTO feedback_comments (id, feedback_id, user_id, comment_text, is_internal)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [id, feedbackId, userId, commentText, isInternal ? 1 : 0],
+                function (err) {
+                    if (err) return reject(err);
+                    resolve({ id, feedbackId, userId, commentText, isInternal });
+                }
+            );
+        });
+    },
+
+    /**
+     * Get feature roadmap
+     */
+    getFeatureRoadmap: (status = null) => {
+        return new Promise((resolve, reject) => {
+            let query = 'SELECT * FROM feature_roadmap WHERE 1=1';
+            const params = [];
+
+            if (status) {
+                query += ' AND status = ?';
+                params.push(status);
+            }
+
+            query += ' ORDER BY priority DESC, votes_count DESC, created_at DESC';
+
+            db.all(query, params, (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows || []);
+            });
+        });
+    },
+
+    /**
+     * Update feature roadmap item
+     */
+    updateFeatureRoadmap: (itemId, updates) => {
+        return new Promise((resolve, reject) => {
+            const fields = [];
+            const values = [];
+
+            if (updates.status) {
+                fields.push('status = ?');
+                values.push(updates.status);
+            }
+            if (updates.priority) {
+                fields.push('priority = ?');
+                values.push(updates.priority);
+            }
+            if (updates.targetReleaseDate !== undefined) {
+                fields.push('target_release_date = ?');
+                values.push(updates.targetReleaseDate);
+            }
+            if (updates.relatedFeedbackIds) {
+                fields.push('related_feedback_ids_json = ?');
+                values.push(JSON.stringify(updates.relatedFeedbackIds));
+            }
+
+            if (fields.length === 0) {
+                return resolve({ updated: false });
+            }
+
+            fields.push('updated_at = datetime("now")');
+            values.push(itemId);
+
+            db.run(
+                `UPDATE feature_roadmap SET ${fields.join(', ')} WHERE id = ?`,
+                values,
+                function (err) {
+                    if (err) return reject(err);
+                    resolve({ updated: this.changes > 0 });
+                }
+            );
+        });
     }
 };
 

@@ -30,7 +30,7 @@ import {
     Eye,
     Loader2
 } from 'lucide-react';
-import api from '../../services/api';
+import { Api } from '../../services/api';
 import { useTranslation } from 'react-i18next';
 
 interface AuditLogEntry {
@@ -102,40 +102,46 @@ export function AuditLogViewer() {
         setError(null);
 
         try {
-            const params = new URLSearchParams({
-                page: page.toString(),
-                limit: pageSize.toString(),
-                ...(filters.riskLevel !== 'ALL' && { riskLevel: filters.riskLevel }),
-                ...(filters.flaggedOnly && { flagged: 'true' }),
-                ...(filters.startDate && { startDate: filters.startDate }),
-                ...(filters.endDate && { endDate: filters.endDate }),
-                ...(filters.userId && { userId: filters.userId }),
-                ...(filters.action && { action: filters.action }),
-                ...(filters.search && { search: filters.search })
-            });
+            const apiFilters: any = {
+                riskLevel: filters.riskLevel,
+                startDate: filters.startDate,
+                endDate: filters.endDate,
+                userId: filters.userId,
+                actionType: filters.action,
+                search: filters.search
+            };
 
-            const response = await api.get(`/ai-security/audit-logs?${params.toString()}`);
+            const pagination = {
+                page,
+                pageSize
+            };
 
-            if (response.data.success) {
-                setLogs(response.data.logs || []);
-                setTotalPages(Math.ceil((response.data.total || 0) / pageSize));
-            } else {
-                throw new Error(response.data.error || 'Failed to fetch logs');
-            }
+            const response = await Api.getAuditLogs(apiFilters, pagination);
+
+            setLogs(response.logs || []);
+            setTotalPages(response.pagination?.totalPages || 1);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch audit logs');
             setLogs([]);
         } finally {
             setLoading(false);
         }
-    }, [page, filters]);
+    }, [page, filters, pageSize]);
 
     const fetchStats = useCallback(async () => {
         try {
-            const response = await api.get('/ai-security/summary');
-            if (response.data.success || response.data.period) {
-                setStats(response.data);
-            }
+            const filters: any = {};
+            if (filters.startDate) filters.startDate = filters.startDate;
+            if (filters.endDate) filters.endDate = filters.endDate;
+            const statsData = await Api.getAuditLogStats(filters);
+            setStats({
+                total_requests: statsData.total || 0,
+                flagged_requests: 0, // TODO: Add flagged count to stats
+                high_risk: statsData.high_risk || 0,
+                medium_risk: statsData.medium_risk || 0,
+                low_risk: statsData.low_risk || 0,
+                period: 'Last 30 days'
+            });
         } catch (err) {
             console.error('Failed to fetch stats:', err);
         }
@@ -149,24 +155,15 @@ export function AuditLogViewer() {
     const handleExportCSV = async () => {
         setExporting(true);
         try {
-            const params = new URLSearchParams({
-                format: 'csv',
-                ...(filters.riskLevel !== 'ALL' && { riskLevel: filters.riskLevel }),
-                ...(filters.flaggedOnly && { flagged: 'true' }),
-                ...(filters.startDate && { startDate: filters.startDate }),
-                ...(filters.endDate && { endDate: filters.endDate })
-            });
+            const exportFilters: any = {
+                riskLevel: filters.riskLevel !== 'ALL' ? filters.riskLevel : undefined,
+                startDate: filters.startDate,
+                endDate: filters.endDate,
+                userId: filters.userId,
+                actionType: filters.action
+            };
 
-            const token = localStorage.getItem('token');
-            const response = await fetch(`/api/ai-security/audit-logs/export?${params.toString()}`, {
-                headers: {
-                    'Authorization': token ? `Bearer ${token}` : ''
-                }
-            });
-
-            if (!response.ok) throw new Error('Export failed');
-
-            const blob = await response.blob();
+            const blob = await Api.exportAuditLogs(exportFilters);
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
@@ -175,8 +172,10 @@ export function AuditLogViewer() {
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
+            toast.success('Audit log exported successfully');
         } catch (err) {
             console.error('Export failed:', err);
+            toast.error('Failed to export audit log');
         } finally {
             setExporting(false);
         }

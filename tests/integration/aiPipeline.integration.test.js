@@ -10,10 +10,6 @@ import { TestDatabaseFactory } from '../utils/TestDatabaseFactory.js';
 
 // Mock LLM service module not needed for DI, strictly speaking, 
 // but we keep a basic mock to prevent import errors if any.
-vi.mock('../../server/services/ai/llmService.js', () => ({
-    LLMService: vi.fn()
-}));
-
 describe('AIPipeline Integration', () => {
     let AIPipeline;
     let qualityChecker;
@@ -31,13 +27,35 @@ describe('AIPipeline Integration', () => {
         // 2. Reset modules
         vi.resetModules();
 
-        // 3. Dynamic imports to ensure fresh modules with mock DB
+        // 3. Setup fresh mocks for this isolated context
+        vi.doMock('../../server/services/ai/llmService.js', () => ({
+            LLMService: vi.fn()
+        }));
+
+        vi.doMock('../../server/services/ai/embeddingService.js', () => ({
+            embeddingService: {
+                generateEmbedding: vi.fn().mockResolvedValue([0.1, 0.2, 0.3]),
+                storeChunk: vi.fn().mockResolvedValue({ id: 'mock-chunk-id' }),
+                search: vi.fn().mockResolvedValue([]),
+                ensureTable: vi.fn().mockResolvedValue(),
+            },
+            EmbeddingService: class {
+                generateEmbedding() { return Promise.resolve([0.1, 0.2, 0.3]); }
+            }
+        }));
+
+        vi.doMock('../../server/services/ai/ragService.js', () => ({
+            ragService: {
+                searchRelevantChunks: vi.fn().mockResolvedValue([]),
+                indexDocument: vi.fn().mockResolvedValue(true),
+            }
+        }));
+
+        // 4. Dynamic imports to ensure fresh modules with mock DB
         const dbModule = await import('../../server/database.js');
         db = dbModule.default;
 
         // Import services AFTER DB init and module reset
-        // Note: Ideally, these services should also be refactored to DI to accept the DB,
-        // but for now we rely on them picking up the global mock DB via './database' import.
         const pipelineModule = await import('../../server/services/ai/aiPipeline.js');
         AIPipeline = pipelineModule.AIPipeline;
 
@@ -68,9 +86,13 @@ describe('AIPipeline Integration', () => {
             resolveModelConfig: vi.fn().mockImplementation(config => Promise.resolve(config))
         };
 
-        // Inject the mock via constructor
+        // Inject the mock via constructor - explicitly injecting ALL dependencies to ensure spies work
         pipeline = new AIPipeline({
-            llmService: mockLLMService
+            llmService: mockLLMService,
+            enterpriseSecurity: enterpriseSecurity,
+            qualityChecker: qualityChecker,
+            performanceOptimizer: performanceOptimizer,
+            learningSystem: learningSystem
         });
 
         if (performanceOptimizer?.reset) {
@@ -127,7 +149,7 @@ describe('AIPipeline Integration', () => {
 
             await pipeline.process(request);
 
-            const stats = performanceOptimizer.getStats();
+            const stats = performanceOptimizer.getSummary();
             expect(stats.totalRequests).toBeGreaterThanOrEqual(1);
         });
     });
@@ -198,7 +220,7 @@ describe('AIPipeline Integration', () => {
 
     describe('Learning System Integration', () => {
         it('should record interaction for learning', async () => {
-            const recordSpy = vi.spyOn(learningSystem, 'recordInteraction');
+            const recordSpy = vi.spyOn(learningSystem, 'recordWithAutoFeedback');
 
             const request = {
                 userId: 'test-user-learn',
@@ -228,7 +250,11 @@ describe('AIPipeline Integration', () => {
                 resolveModelConfig: vi.fn().mockImplementation(config => Promise.resolve(config))
             };
             const failingPipeline = new AIPipeline({
-                llmService: failingMockLLM
+                llmService: failingMockLLM,
+                enterpriseSecurity: enterpriseSecurity,
+                performanceOptimizer: performanceOptimizer,
+                learningSystem: learningSystem,
+                qualityChecker: qualityChecker
             });
 
             const request = {
@@ -254,7 +280,11 @@ describe('AIPipeline Integration', () => {
                 resolveModelConfig: vi.fn().mockImplementation(config => Promise.resolve(config))
             };
             const failingPipeline = new AIPipeline({
-                llmService: failingMockLLM
+                llmService: failingMockLLM,
+                enterpriseSecurity: enterpriseSecurity,
+                performanceOptimizer: performanceOptimizer,
+                learningSystem: learningSystem,
+                qualityChecker: qualityChecker
             });
 
             const request = {
@@ -335,21 +365,20 @@ describe('AIPipeline Integration', () => {
             expect(callCount).toBeGreaterThan(1);
         });
     });
-});
+    describe('Enterprise Services Initialization', () => {
+        it('should have all required services available', () => {
+            expect(qualityChecker).toBeDefined();
+            expect(enterpriseSecurity).toBeDefined();
+            expect(performanceOptimizer).toBeDefined();
+            expect(learningSystem).toBeDefined();
+        });
 
-describe('Enterprise Services Initialization', () => {
-    it('should have all required services available', () => {
-        expect(qualityChecker).toBeDefined();
-        expect(enterpriseSecurity).toBeDefined();
-        expect(performanceOptimizer).toBeDefined();
-        expect(learningSystem).toBeDefined();
-    });
-
-    it('should have correct service methods', () => {
-        expect(typeof qualityChecker.check).toBe('function');
-        expect(typeof enterpriseSecurity.checkRateLimit).toBe('function');
-        expect(typeof enterpriseSecurity.logAudit).toBe('function');
-        expect(typeof performanceOptimizer.recordMetrics).toBe('function');
-        expect(typeof learningSystem.recordInteraction).toBe('function');
+        it('should have correct service methods', () => {
+            expect(typeof qualityChecker.check).toBe('function');
+            expect(typeof enterpriseSecurity.checkRateLimit).toBe('function');
+            expect(typeof enterpriseSecurity.logAudit).toBe('function');
+            expect(typeof performanceOptimizer.recordMetrics).toBe('function');
+            expect(typeof learningSystem.recordInteraction).toBe('function');
+        });
     });
 });

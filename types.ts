@@ -153,15 +153,20 @@ export enum AppView {
   // Ecosystem (Phase G)
   AFFILIATE_DASHBOARD = 'AFFILIATE_DASHBOARD',
 
-  // SuperAdmin Module Views (New 8-module structure)
+  // SuperAdmin Module Views (New modular structure)
   SUPERADMIN_OVERVIEW = 'SUPERADMIN_OVERVIEW',
   SUPERADMIN_CUSTOMERS = 'SUPERADMIN_CUSTOMERS',
-  SUPERADMIN_AI_PLATFORM = 'SUPERADMIN_AI_PLATFORM',
+  SUPERADMIN_AI_PLATFORM = 'SUPERADMIN_AI_PLATFORM', // Legacy - kept for backward compatibility
+  // AI Platform - Variant A (3 Modules)
+  SUPERADMIN_AI_INFRASTRUCTURE = 'SUPERADMIN_AI_INFRASTRUCTURE', // LLM Providers, Tiers, Settings, Health
+  SUPERADMIN_AI_DEVELOPMENT = 'SUPERADMIN_AI_DEVELOPMENT',       // Prompts, Intelligence, Experiments, Knowledge
+  SUPERADMIN_AI_OPERATIONS = 'SUPERADMIN_AI_OPERATIONS',         // Mission Control, Performance, Costs, SLA, Analytics
   SUPERADMIN_SYSTEM = 'SUPERADMIN_SYSTEM',
   SUPERADMIN_CONTENT = 'SUPERADMIN_CONTENT',
   SUPERADMIN_REVENUE = 'SUPERADMIN_REVENUE',
   SUPERADMIN_SECURITY = 'SUPERADMIN_SECURITY',
   SUPERADMIN_CONFIGURATION = 'SUPERADMIN_CONFIGURATION',
+  SUPERADMIN_ANALYTICS = 'SUPERADMIN_ANALYTICS', // Custom Dashboards, Reports, Metrics, Predictive
 
   // SuperAdmin Legacy Views (kept for backward compatibility - used as tab identifiers)
   SUPERADMIN_DASHBOARD = 'SUPERADMIN_DASHBOARD',
@@ -4882,6 +4887,453 @@ export interface PlaybookTemplateExport {
     templateGraph: TemplateGraph | null;
     steps?: PlaybookTemplateStep[];
   };
+}
+
+// ==========================================
+// CONTENT MODULE ENTERPRISE TYPES
+// Email templates, categories, tags, comments, reviews, analytics
+// ==========================================
+
+/** Email template status */
+export type EmailTemplateStatus = 'DRAFT' | 'PUBLISHED' | 'DEPRECATED';
+
+/** Email template with versioning */
+export interface EmailTemplate {
+  id: string;
+  organizationId?: string;
+  templateKey: string;
+  name: string;
+  description?: string;
+  subject: string;
+  htmlContent: string;
+  textContent?: string;
+  availableVariables: string[];
+  variablesSchema?: Record<string, unknown>;
+  version: number;
+  status: EmailTemplateStatus;
+  categoryId?: string;
+  languageCode: string;
+  parentTemplateId?: string;
+  publishedAt?: string;
+  publishedBy?: string;
+  usageCount: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+  // Populated relations
+  category?: ContentCategory;
+  tags?: ContentTag[];
+}
+
+/** Email template version (audit trail) */
+export interface EmailTemplateVersion {
+  id: string;
+  templateId: string;
+  version: number;
+  templateKey?: string;
+  name: string;
+  subject: string;
+  htmlContent: string;
+  textContent?: string;
+  variablesSchema?: string;
+  changedBy?: string;
+  changeNotes?: string;
+  changeType: 'CREATE' | 'UPDATE' | 'PUBLISH' | 'RESTORE';
+  statusAtVersion?: EmailTemplateStatus;
+  createdAt: string;
+}
+
+/** Email send tracking record */
+export interface EmailSend {
+  id: string;
+  templateId: string;
+  organizationId?: string;
+  recipientEmail: string;
+  recipientUserId?: string;
+  subject: string;
+  status: 'PENDING' | 'SENT' | 'DELIVERED' | 'OPENED' | 'CLICKED' | 'BOUNCED' | 'FAILED';
+  sentAt?: string;
+  deliveredAt?: string;
+  openedAt?: string;
+  clickedAt?: string;
+  bouncedAt?: string;
+  failedAt?: string;
+  errorMessage?: string;
+  retryCount: number;
+  openCount: number;
+  clickCount: number;
+  firstClickUrl?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
+/** Content category (for playbooks and emails) */
+export interface ContentCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  contentType: 'PLAYBOOK' | 'EMAIL' | 'ALL';
+  parentId?: string;
+  sortOrder: number;
+  color: string;
+  icon: string;
+  organizationId?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+  // Populated relations
+  parent?: ContentCategory;
+  children?: ContentCategory[];
+}
+
+/** Content tag */
+export interface ContentTag {
+  id: string;
+  name: string;
+  slug: string;
+  contentType: 'PLAYBOOK' | 'EMAIL' | 'ALL';
+  color: string;
+  organizationId?: string;
+  usageCount: number;
+  isActive: boolean;
+  createdAt: string;
+  createdBy?: string;
+}
+
+/** Content tag mapping */
+export interface ContentTagMapping {
+  id: string;
+  contentId: string;
+  contentType: 'PLAYBOOK_TEMPLATE' | 'EMAIL_TEMPLATE';
+  tagId: string;
+  createdAt: string;
+  createdBy?: string;
+  // Populated relations
+  tag?: ContentTag;
+}
+
+/** Content comment */
+export interface ContentComment {
+  id: string;
+  contentId: string;
+  contentType: 'PLAYBOOK_TEMPLATE' | 'EMAIL_TEMPLATE';
+  userId: string;
+  commentText: string;
+  parentCommentId?: string;
+  threadId?: string;
+  positionRef?: string;
+  isResolved: boolean;
+  resolvedBy?: string;
+  resolvedAt?: string;
+  mentionedUserIds: string[];
+  isEdited: boolean;
+  editedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  // Populated relations
+  user?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatar?: string;
+  };
+  replies?: ContentComment[];
+}
+
+/** Content review status */
+export type ContentReviewStatus = 'PENDING' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'CHANGES_REQUESTED';
+
+/** Content review priority */
+export type ContentReviewPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+
+/** Content review */
+export interface ContentReview {
+  id: string;
+  contentId: string;
+  contentType: 'PLAYBOOK_TEMPLATE' | 'EMAIL_TEMPLATE';
+  requestedBy: string;
+  requestedAt: string;
+  reviewerId: string;
+  status: ContentReviewStatus;
+  reviewNotes?: string;
+  checklistItems: ContentReviewChecklistItem[];
+  reviewedAt?: string;
+  versionAtReview?: number;
+  priority: ContentReviewPriority;
+  dueDate?: string;
+  createdAt: string;
+  updatedAt: string;
+  // Populated relations
+  requester?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  reviewer?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+}
+
+/** Content review checklist item */
+export interface ContentReviewChecklistItem {
+  id: string;
+  label: string;
+  checked: boolean;
+  note?: string;
+}
+
+/** Content analytics event type */
+export type ContentAnalyticsEventType = 
+  | 'VIEW' 
+  | 'EDIT' 
+  | 'USE' 
+  | 'EXPORT' 
+  | 'CLONE' 
+  | 'PUBLISH' 
+  | 'TEST_SEND' 
+  | 'PREVIEW'
+  | 'DEPRECATE'
+  | 'RESTORE';
+
+/** Content analytics event */
+export interface ContentAnalyticsEvent {
+  id: string;
+  contentId: string;
+  contentType: 'PLAYBOOK_TEMPLATE' | 'EMAIL_TEMPLATE';
+  eventType: ContentAnalyticsEventType;
+  userId?: string;
+  organizationId?: string;
+  metadata?: Record<string, unknown>;
+  sessionId?: string;
+  durationMs?: number;
+  createdAt: string;
+}
+
+/** Content favorite */
+export interface ContentFavorite {
+  id: string;
+  userId: string;
+  contentId: string;
+  contentType: 'PLAYBOOK_TEMPLATE' | 'EMAIL_TEMPLATE';
+  notes?: string;
+  folderName: string;
+  createdAt: string;
+}
+
+/** Content permission type */
+export type ContentPermissionType = 'VIEW' | 'EDIT' | 'DELETE' | 'PUBLISH' | 'REVIEW' | 'ADMIN';
+
+/** Content permission grant type */
+export type ContentPermissionGrantType = 'GRANT' | 'DENY';
+
+/** Content permission */
+export interface ContentPermission {
+  id: string;
+  contentId: string;
+  contentType: 'PLAYBOOK_TEMPLATE' | 'EMAIL_TEMPLATE' | 'CATEGORY';
+  userId?: string;
+  role?: string;
+  permission: ContentPermissionType;
+  grantType: ContentPermissionGrantType;
+  organizationId?: string;
+  grantedBy?: string;
+  expiresAt?: string;
+  createdAt: string;
+}
+
+/** Playbook template version (for version history) */
+export interface PlaybookTemplateVersionHistory {
+  id: string;
+  templateId: string;
+  version: number;
+  title: string;
+  description?: string;
+  triggerSignal?: string;
+  templateGraph?: string;
+  estimatedDurationMins?: number;
+  changedBy?: string;
+  changeNotes?: string;
+  changeType: 'CREATE' | 'UPDATE' | 'PUBLISH' | 'RESTORE';
+  statusAtVersion?: TemplateStatus;
+  createdAt: string;
+}
+
+/** Extended Playbook Template with enterprise features */
+export interface PlaybookTemplateEnterprise extends PlaybookTemplateVersion {
+  categoryId?: string;
+  organizationId?: string;
+  usageCount: number;
+  lastUsedAt?: string;
+  avgExecutionTimeMins?: number;
+  successRate?: number;
+  updatedAt: string;
+  // Populated relations
+  category?: ContentCategory;
+  tags?: ContentTag[];
+  versions?: PlaybookTemplateVersionHistory[];
+  comments?: ContentComment[];
+  reviews?: ContentReview[];
+}
+
+/** Content analytics aggregated stats */
+export interface ContentAnalyticsStats {
+  contentId: string;
+  contentType: 'PLAYBOOK_TEMPLATE' | 'EMAIL_TEMPLATE';
+  totalEvents: number;
+  uniqueUsers: number;
+  uniqueOrgs: number;
+  views: number;
+  edits: number;
+  uses: number;
+  exports: number;
+  clones: number;
+  firstInteraction?: string;
+  lastInteraction?: string;
+}
+
+/** Email template stats */
+export interface EmailTemplateStats {
+  id: string;
+  templateKey: string;
+  name: string;
+  status: EmailTemplateStatus;
+  version: number;
+  usageCount: number;
+  totalSends: number;
+  deliveredCount: number;
+  openedCount: number;
+  clickedCount: number;
+  bouncedCount: number;
+  openRate: number;
+  clickRate: number;
+}
+
+/** Playbook template stats */
+export interface PlaybookTemplateStats {
+  id: string;
+  key: string;
+  title: string;
+  status: TemplateStatus;
+  version: number;
+  usageCount: number;
+  successRate?: number;
+  avgExecutionTimeMins?: number;
+  totalRuns: number;
+  completedRuns: number;
+  failedRuns: number;
+  cancelledRuns: number;
+}
+
+/** Content search filters */
+export interface ContentSearchFilters {
+  query?: string;
+  contentTypes?: ('PLAYBOOK_TEMPLATE' | 'EMAIL_TEMPLATE')[];
+  statuses?: string[];
+  categoryIds?: string[];
+  tagIds?: string[];
+  createdBy?: string;
+  organizationId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  sortBy?: 'name' | 'createdAt' | 'updatedAt' | 'usageCount';
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+/** Content search result */
+export interface ContentSearchResult {
+  items: (PlaybookTemplateEnterprise | EmailTemplate)[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+/** Bulk action type */
+export type ContentBulkActionType = 
+  | 'PUBLISH' 
+  | 'DEPRECATE' 
+  | 'DELETE' 
+  | 'ADD_TAG' 
+  | 'REMOVE_TAG' 
+  | 'CHANGE_CATEGORY';
+
+/** Bulk action request */
+export interface ContentBulkActionRequest {
+  action: ContentBulkActionType;
+  contentIds: string[];
+  contentType: 'PLAYBOOK_TEMPLATE' | 'EMAIL_TEMPLATE';
+  payload?: Record<string, unknown>;
+}
+
+/** Bulk action result */
+export interface ContentBulkActionResult {
+  success: boolean;
+  processed: number;
+  failed: number;
+  errors: Array<{
+    contentId: string;
+    error: string;
+  }>;
+}
+
+/** Email test send request */
+export interface EmailTestSendRequest {
+  templateId: string;
+  recipientEmails: string[];
+  testData?: Record<string, unknown>;
+}
+
+/** Email preview request */
+export interface EmailPreviewRequest {
+  templateId?: string;
+  subject?: string;
+  htmlContent?: string;
+  testData?: Record<string, unknown>;
+}
+
+/** Email preview response */
+export interface EmailPreviewResponse {
+  subject: string;
+  html: string;
+  text?: string;
+  warnings?: string[];
+}
+
+/** Content analytics dashboard data */
+export interface ContentAnalyticsDashboard {
+  totalPlaybookTemplates: number;
+  totalEmailTemplates: number;
+  totalCategories: number;
+  totalTags: number;
+  publishedPlaybooks: number;
+  publishedEmails: number;
+  totalPlaybookRuns: number;
+  totalEmailsSent: number;
+  avgPlaybookSuccessRate: number;
+  avgEmailOpenRate: number;
+  avgEmailClickRate: number;
+  topPlaybooks: PlaybookTemplateStats[];
+  topEmails: EmailTemplateStats[];
+  recentActivity: ContentAnalyticsEvent[];
+  usageByCategory: Array<{
+    categoryId: string;
+    categoryName: string;
+    playbookCount: number;
+    emailCount: number;
+    usageCount: number;
+  }>;
+  usageOverTime: Array<{
+    date: string;
+    playbookUses: number;
+    emailSends: number;
+  }>;
 }
 
 // Document Library

@@ -262,22 +262,27 @@ vi.mock('../server/services/rapidLeanReportService', () => {
     };
 });
 
-// Inject Mock into AIAssessmentPartnerService to prevent real API calls
-// We use dynamic require to avoid import errors if the file has issue
-try {
-    const { aiAssessmentPartner } = require('../server/services/aiAssessmentPartnerService');
-    const { GoogleGenerativeAI } = require('./__mocks__/@google/generative-ai');
+// REMOVED dependency injection via require() as it fails in ESM environment.
+// The global vi.mock('@google/generative-ai') above should suffice for most cases.
+// Individual tests should mock the service using vi.mock() if they need specifically injected behavior.
 
-    // Create a mock client instance
-    const mockClient = new GoogleGenerativeAI('test-key');
+// Mock global fetch to handle relative URLs in JSDOM and prevents network calls
+global.fetch = vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+    const url = typeof input === 'string' ? input : String(input);
 
-    // Inject it
-    if (aiAssessmentPartner && typeof aiAssessmentPartner.injectAIClient === 'function') {
-        aiAssessmentPartner.injectAIClient(mockClient);
-    }
-} catch (err) {
-    console.warn('[Test Setup] Failed to inject AI mock:', (err as Error).message);
-}
+    // Log for debugging if needed
+    // console.log('[Mock Fetch]', url);
+
+    return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({ data: [] }),
+        text: async () => '',
+        blob: async () => new Blob(),
+        arrayBuffer: async () => new ArrayBuffer(0),
+        headers: new Headers(),
+    } as Response);
+});
 
 // Mock multer globally
 vi.mock('multer', () => {

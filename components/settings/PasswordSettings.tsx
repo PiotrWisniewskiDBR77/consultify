@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Key, Eye, EyeOff, Check, X } from 'lucide-react';
+import { Api } from '../../services/api';
 import toast from 'react-hot-toast';
 
 interface PasswordSettingsProps {
@@ -36,24 +37,11 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
 
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/change-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ currentPassword, newPassword })
-      });
-
-      if (response.ok) {
-        toast.success(t('settings.password.success', 'Password changed successfully'));
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-      } else {
-        const data = await response.json();
-        toast.error(data.message || t('settings.password.error', 'Failed to change password'));
-      }
+      await Api.changePassword(currentPassword, newPassword);
+      toast.success(t('settings.password.success', 'Password changed successfully'));
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
     } catch (_error) {
       toast.error(t('settings.password.error', 'Failed to change password'));
     } finally {
@@ -75,11 +63,12 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
 
       <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          <label htmlFor="current-password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             {t('settings.password.current', 'Current Password')}
           </label>
           <div className="relative">
             <input
+              id="current-password"
               type={showPasswords ? 'text' : 'password'}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
@@ -89,11 +78,12 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          <label htmlFor="new-password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             {t('settings.password.new', 'New Password')}
           </label>
           <div className="relative">
             <input
+              id="new-password"
               type={showPasswords ? 'text' : 'password'}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -121,10 +111,11 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
         )}
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          <label htmlFor="confirm-password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             {t('settings.password.confirm', 'Confirm New Password')}
           </label>
           <input
+            id="confirm-password"
             type={showPasswords ? 'text' : 'password'}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}

@@ -782,6 +782,344 @@ const SSOService = {
     },
 
     // ==========================================
+    // AZURE AD (Microsoft Entra ID) SUPPORT
+    // ==========================================
+    
+    /**
+     * Create Azure AD configuration
+     */
+    async createAzureADConfig(organizationId, { tenantId, clientId, clientSecret, allowedDomains = [] }, createdBy = null) {
+        const existing = await dbGet(
+            `SELECT id FROM sso_configurations WHERE organization_id = ? AND provider_type = 'azure_ad'`,
+            [organizationId]
+        );
+
+        if (existing) {
+            throw new Error('Azure AD configuration already exists. Use updateAzureADConfig instead.');
+        }
+
+        const id = uuidv4();
+        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        
+        // Azure AD endpoints - use v2.0 endpoints
+        const authorizationUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize`;
+        const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
+        const userinfoUrl = 'https://graph.microsoft.com/v1.0/me';
+        
+        await dbRun(
+            `INSERT INTO sso_configurations 
+             (id, organization_id, provider_type, provider_name, tenant_id,
+              client_id, client_secret_encrypted,
+              authorization_url, token_url, userinfo_url,
+              attribute_mapping, allow_password_login, auto_provision_users, default_role,
+              scim_enabled, created_by)
+             VALUES (?, ?, 'azure_ad', 'Microsoft Entra ID', ?, ?, ?, ?, ?, ?, ?, 1, 1, 'member', 0, ?)`,
+            [
+                id, organizationId, tenantId,
+                clientId, clientSecret ? encrypt(clientSecret) : null,
+                authorizationUrl, tokenUrl, userinfoUrl,
+                JSON.stringify({ 
+                    email: 'mail', 
+                    firstName: 'givenName', 
+                    lastName: 'surname', 
+                    displayName: 'displayName',
+                    allowedDomains 
+                }),
+                createdBy
+            ]
+        );
+
+        AuditService.logSystemEvent('AZURE_AD_SSO_CONFIG_CREATED', 'sso_configuration', id, organizationId, {
+            tenantId,
+            allowedDomains,
+        });
+
+        return { 
+            id, 
+            redirectUri: `${baseUrl}/api/sso/azure-ad/callback`
+        };
+    },
+    
+    /**
+     * Update Azure AD configuration
+     */
+    async updateAzureADConfig(organizationId, updates, updatedBy = null) {
+        const current = await this.getAzureADConfiguration(organizationId);
+        if (!current) {
+            throw new Error('Azure AD SSO configuration not found');
+        }
+
+        const fields = [];
+        const params = [];
+
+        if (updates.tenantId !== undefined) {
+            fields.push('tenant_id = ?');
+            params.push(updates.tenantId);
+            // Update endpoints with new tenant
+            fields.push('authorization_url = ?');
+            params.push(`https://login.microsoftonline.com/${updates.tenantId}/oauth2/v2.0/authorize`);
+            fields.push('token_url = ?');
+            params.push(`https://login.microsoftonline.com/${updates.tenantId}/oauth2/v2.0/token`);
+        }
+
+        if (updates.clientId !== undefined) {
+            fields.push('client_id = ?');
+            params.push(updates.clientId);
+        }
+        
+        if (updates.clientSecret !== undefined) {
+            fields.push('client_secret_encrypted = ?');
+            params.push(updates.clientSecret ? encrypt(updates.clientSecret) : null);
+        }
+        
+        if (updates.allowedDomains !== undefined) {
+            const mapping = JSON.parse(current.attributeMapping || '{}');
+            mapping.allowedDomains = updates.allowedDomains;
+            fields.push('attribute_mapping = ?');
+            params.push(JSON.stringify(mapping));
+        }
+        
+        if (updates.enforceSso !== undefined) {
+            fields.push('enforce_sso = ?');
+            params.push(updates.enforceSso ? 1 : 0);
+        }
+        
+        if (updates.allowPasswordLogin !== undefined) {
+            fields.push('allow_password_login = ?');
+            params.push(updates.allowPasswordLogin ? 1 : 0);
+        }
+        
+        if (updates.autoProvisionUsers !== undefined) {
+            fields.push('auto_provision_users = ?');
+            params.push(updates.autoProvisionUsers ? 1 : 0);
+        }
+        
+        if (updates.defaultRole !== undefined) {
+            fields.push('default_role = ?');
+            params.push(updates.defaultRole);
+        }
+
+        if (updates.scimEnabled !== undefined) {
+            fields.push('scim_enabled = ?');
+            params.push(updates.scimEnabled ? 1 : 0);
+        }
+
+        fields.push('updated_at = datetime("now")');
+        params.push(current.id);
+
+        await dbRun(
+            `UPDATE sso_configurations SET ${fields.join(', ')} WHERE id = ?`,
+            params
+        );
+
+        return { success: true };
+    },
+    
+    /**
+     * Get Azure AD configuration
+     */
+    async getAzureADConfiguration(organizationId, includeSecrets = false) {
+        const config = await dbGet(
+            `SELECT * FROM sso_configurations WHERE organization_id = ? AND provider_type = 'azure_ad'`,
+            [organizationId]
+        );
+
+        if (!config) return null;
+
+        const result = {
+            id: config.id,
+            organizationId: config.organization_id,
+            providerType: config.provider_type,
+            providerName: config.provider_name,
+            tenantId: config.tenant_id,
+            isActive: !!config.is_active,
+            isVerified: !!config.is_verified,
+            enforceSso: !!config.enforce_sso,
+            allowPasswordLogin: !!config.allow_password_login,
+            autoProvisionUsers: !!config.auto_provision_users,
+            defaultRole: config.default_role,
+            scimEnabled: !!config.scim_enabled,
+            attributeMapping: JSON.parse(config.attribute_mapping || '{}'),
+            createdAt: config.created_at,
+            updatedAt: config.updated_at,
+        };
+
+        if (includeSecrets) {
+            result.clientId = config.client_id;
+            result.clientSecret = config.client_secret_encrypted ? decrypt(config.client_secret_encrypted) : null;
+        }
+
+        return result;
+    },
+    
+    /**
+     * Generate Azure AD OAuth URL
+     */
+    async getAzureADAuthUrl(organizationId) {
+        const config = await this.getAzureADConfiguration(organizationId, true);
+        if (!config) {
+            throw new Error('Azure AD SSO not configured');
+        }
+
+        const state = Buffer.from(JSON.stringify({ organizationId, provider: 'azure_ad' })).toString('base64url');
+        const redirectUri = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/api/sso/azure-ad/callback`;
+        
+        const params = new URLSearchParams({
+            client_id: config.clientId,
+            redirect_uri: redirectUri,
+            response_type: 'code',
+            scope: 'openid email profile User.Read',
+            state,
+            response_mode: 'query',
+            prompt: 'select_account',
+        });
+
+        return `https://login.microsoftonline.com/${config.tenantId}/oauth2/v2.0/authorize?${params.toString()}`;
+    },
+    
+    /**
+     * Process Azure AD callback
+     */
+    async processAzureADCallback(organizationId, code, requestInfo = {}) {
+        const config = await this.getAzureADConfiguration(organizationId, true);
+        if (!config || !config.isActive) {
+            throw new Error('Azure AD SSO not configured or not active');
+        }
+
+        const attemptId = uuidv4();
+
+        try {
+            const redirectUri = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/api/sso/azure-ad/callback`;
+            
+            // Exchange code for tokens
+            const tokenResponse = await fetch(`https://login.microsoftonline.com/${config.tenantId}/oauth2/v2.0/token`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    code,
+                    client_id: config.clientId,
+                    client_secret: config.clientSecret,
+                    redirect_uri: redirectUri,
+                    grant_type: 'authorization_code',
+                    scope: 'openid email profile User.Read',
+                }).toString(),
+            });
+
+            const tokens = await tokenResponse.json();
+            
+            if (tokens.error) {
+                throw new Error(tokens.error_description || tokens.error);
+            }
+
+            // Get user info from Microsoft Graph
+            const userInfoResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
+                headers: { Authorization: `Bearer ${tokens.access_token}` },
+            });
+
+            const userInfo = await userInfoResponse.json();
+            
+            // Use userPrincipalName or mail for email
+            const email = userInfo.mail || userInfo.userPrincipalName;
+            
+            if (!email) {
+                throw new Error('No email found in Azure AD response');
+            }
+            
+            // Validate domain if restricted
+            const mapping = config.attributeMapping || {};
+            if (mapping.allowedDomains && mapping.allowedDomains.length > 0) {
+                const emailDomain = email.split('@')[1];
+                if (!mapping.allowedDomains.includes(emailDomain)) {
+                    throw new Error(`Domain ${emailDomain} is not allowed for this organization`);
+                }
+            }
+
+            // Find or create user
+            let user = await dbGet(`SELECT * FROM users WHERE email = ?`, [email]);
+            let userCreated = false;
+
+            if (!user) {
+                if (!config.autoProvisionUsers) {
+                    throw new Error('User not found and auto-provisioning disabled');
+                }
+
+                const userId = uuidv4();
+                await dbRun(
+                    `INSERT INTO users (id, organization_id, email, first_name, last_name, display_name, role, status, sso_only, microsoft_id)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, 'active', 1, ?)`,
+                    [userId, organizationId, email, userInfo.givenName, userInfo.surname, userInfo.displayName, config.defaultRole, userInfo.id]
+                );
+
+                user = await dbGet(`SELECT * FROM users WHERE id = ?`, [userId]);
+                userCreated = true;
+            } else if (user.organization_id !== organizationId) {
+                throw new Error('User belongs to different organization');
+            } else {
+                // Update microsoft_id if not set
+                if (!user.microsoft_id && userInfo.id) {
+                    await dbRun(`UPDATE users SET microsoft_id = ? WHERE id = ?`, [userInfo.id, user.id]);
+                }
+            }
+
+            // Create SSO session
+            const sessionId = uuidv4();
+            const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
+
+            await dbRun(
+                `INSERT INTO sso_sessions (id, user_id, organization_id, sso_config_id, name_id, expires_at, ip_address, user_agent)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [sessionId, user.id, organizationId, config.id, email, expiresAt, requestInfo.ip, requestInfo.userAgent]
+            );
+
+            // Update last login on config
+            await dbRun(`UPDATE sso_configurations SET last_login_at = datetime('now') WHERE id = ?`, [config.id]);
+
+            // Log successful attempt
+            await this._logAttempt({
+                id: attemptId,
+                organizationId,
+                ssoConfigId: config.id,
+                status: 'success',
+                nameId: email,
+                userId: user.id,
+                userCreated,
+                ...requestInfo,
+            });
+
+            AuditService.logSystemEvent('AZURE_AD_SSO_LOGIN', 'user', user.id, organizationId, {
+                userCreated,
+                microsoftId: userInfo.id,
+            });
+
+            return {
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    displayName: user.display_name,
+                    role: user.role,
+                    organizationId: user.organization_id,
+                },
+                sessionId,
+                expiresAt,
+            };
+
+        } catch (error) {
+            await this._logAttempt({
+                id: attemptId,
+                organizationId,
+                ssoConfigId: config?.id,
+                status: 'failed',
+                errorMessage: error.message,
+                ...requestInfo,
+            });
+
+            throw error;
+        }
+    },
+
+    // ==========================================
     // PRIVATE METHODS
     // ==========================================
 

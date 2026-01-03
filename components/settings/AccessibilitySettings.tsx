@@ -12,11 +12,11 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../../types';
 import { useTranslation } from 'react-i18next';
-import { 
-    Accessibility, 
-    Type, 
-    Contrast, 
-    Sparkles, 
+import {
+    Accessibility,
+    Type,
+    Contrast,
+    Sparkles,
     Keyboard,
     Volume2,
     Save,
@@ -106,7 +106,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
 
     const loadPreferences = async () => {
         try {
-            const data = await Api.get('/settings/preferences/accessibility');
+            const data = await Api.getAccessibilitySettings();
             if (data.preferences) {
                 setPreferences({ ...DEFAULT_PREFERENCES, ...data.preferences });
             }
@@ -120,12 +120,13 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
     const handleSave = async () => {
         setSaving(true);
         try {
-            await Api.put('/settings/preferences/accessibility', { preferences });
+            await Api.updateAccessibilitySettings(preferences);
             toast.success(t('settings.accessibility.saved', 'Accessibility preferences saved'));
-            
+
             // Apply preferences to document
             applyAccessibilityPreferences(preferences);
         } catch (error) {
+            console.error('Failed to save accessibility preferences:', error);
             toast.error(t('settings.accessibility.error', 'Failed to save preferences'));
         } finally {
             setSaving(false);
@@ -134,34 +135,34 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
 
     const applyAccessibilityPreferences = (prefs: AccessibilityPreferences) => {
         const root = document.documentElement;
-        
+
         // Font size
         const fontSizeMap = { 'small': '14px', 'medium': '16px', 'large': '18px', 'extra-large': '20px' };
         root.style.setProperty('--base-font-size', fontSizeMap[prefs.fontSize]);
-        
+
         // High contrast
         root.classList.toggle('high-contrast', prefs.highContrastMode);
-        
+
         // Reduce motion
         root.classList.toggle('reduce-motion', prefs.reduceMotion);
-        
+
         // Underline links
         root.classList.toggle('underline-links', prefs.underlineLinks);
-        
+
         // Color blind mode
         root.classList.remove('colorblind-protanopia', 'colorblind-deuteranopia', 'colorblind-tritanopia');
         if (prefs.colorBlindMode !== 'none') {
             root.classList.add(`colorblind-${prefs.colorBlindMode}`);
         }
-        
+
         // Line height
         const lineHeightMap = { 'default': '1.5', 'relaxed': '1.75', 'loose': '2' };
         root.style.setProperty('--line-height-base', lineHeightMap[prefs.lineHeight]);
-        
+
         // Letter spacing
         const letterSpacingMap = { 'default': '0', 'wide': '0.025em', 'wider': '0.05em' };
         root.style.setProperty('--letter-spacing-base', letterSpacingMap[prefs.letterSpacing]);
-        
+
         // Font family
         const fontFamilyMap: Record<string, string> = {
             'system': 'system-ui, -apple-system, sans-serif',
@@ -203,7 +204,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-profile" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -234,7 +235,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                     {t('settings.accessibility.fontSizeDescription', 'Adjust the base font size for all text in the application')}
                 </p>
-                
+
                 <div className="grid grid-cols-4 gap-4">
                     {fontSizeOptions.map(option => {
                         const isSelected = preferences.fontSize === option.value;
@@ -242,11 +243,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                             <button
                                 key={option.value}
                                 onClick={() => updatePreference('fontSize', option.value as AccessibilityPreferences['fontSize'])}
-                                className={`p-4 rounded-xl border-2 transition-all text-center ${
-                                    isSelected
+                                className={`p-4 rounded-xl border-2 transition-all text-center ${isSelected
                                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
                                         : 'border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50'
-                                }`}
+                                    }`}
                             >
                                 <div className={`font-medium ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}
                                     style={{ fontSize: option.preview }}
@@ -268,7 +268,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     <Eye size={20} className="text-green-500" />
                     {t('settings.accessibility.visualTitle', 'Visual Settings')}
                 </h3>
-                
+
                 <div className="space-y-6">
                     {/* High Contrast */}
                     <div className="flex items-center justify-between">
@@ -283,9 +283,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                         </div>
                         <button
                             onClick={() => updatePreference('highContrastMode', !preferences.highContrastMode)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                preferences.highContrastMode ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
-                            }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.highContrastMode ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                                }`}
                         >
                             <span className={`${preferences.highContrastMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                         </button>
@@ -304,9 +303,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                         </div>
                         <button
                             onClick={() => updatePreference('reduceMotion', !preferences.reduceMotion)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                preferences.reduceMotion ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
-                            }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.reduceMotion ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                                }`}
                         >
                             <span className={`${preferences.reduceMotion ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                         </button>
@@ -324,9 +322,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                         </div>
                         <button
                             onClick={() => updatePreference('underlineLinks', !preferences.underlineLinks)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                preferences.underlineLinks ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
-                            }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.underlineLinks ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                                }`}
                         >
                             <span className={`${preferences.underlineLinks ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                         </button>
@@ -361,7 +358,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     <Keyboard size={20} className="text-indigo-500" />
                     {t('settings.accessibility.navigationTitle', 'Navigation & Input')}
                 </h3>
-                
+
                 <div className="space-y-6">
                     {/* Keyboard Shortcuts */}
                     <div className="flex items-center justify-between">
@@ -375,9 +372,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                         </div>
                         <button
                             onClick={() => updatePreference('showKeyboardShortcuts', !preferences.showKeyboardShortcuts)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                preferences.showKeyboardShortcuts ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
-                            }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.showKeyboardShortcuts ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                                }`}
                         >
                             <span className={`${preferences.showKeyboardShortcuts ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                         </button>
@@ -395,9 +391,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                         </div>
                         <button
                             onClick={() => updatePreference('focusHighlight', !preferences.focusHighlight)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                preferences.focusHighlight ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
-                            }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.focusHighlight ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                                }`}
                         >
                             <span className={`${preferences.focusHighlight ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                         </button>
@@ -417,21 +412,19 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                         <div className="flex bg-slate-100 dark:bg-navy-950 p-1 rounded-lg">
                             <button
                                 onClick={() => updatePreference('cursorSize', 'default')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                                    preferences.cursorSize === 'default'
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${preferences.cursorSize === 'default'
                                         ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
                                         : 'text-slate-500 hover:text-slate-700'
-                                }`}
+                                    }`}
                             >
                                 {t('settings.accessibility.cursor.default', 'Default')}
                             </button>
                             <button
                                 onClick={() => updatePreference('cursorSize', 'large')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                                    preferences.cursorSize === 'large'
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${preferences.cursorSize === 'large'
                                         ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
                                         : 'text-slate-500 hover:text-slate-700'
-                                }`}
+                                    }`}
                             >
                                 {t('settings.accessibility.cursor.large', 'Large')}
                             </button>
@@ -446,7 +439,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     <Volume2 size={20} className="text-red-500" />
                     {t('settings.accessibility.screenReaderTitle', 'Screen Reader')}
                 </h3>
-                
+
                 <div className="flex items-center justify-between">
                     <div>
                         <label className="block font-medium text-slate-700 dark:text-slate-300">
@@ -458,9 +451,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     </div>
                     <button
                         onClick={() => updatePreference('screenReaderOptimized', !preferences.screenReaderOptimized)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            preferences.screenReaderOptimized ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
-                        }`}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.screenReaderOptimized ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                            }`}
                     >
                         <span className={`${preferences.screenReaderOptimized ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                     </button>
@@ -476,7 +468,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                     {t('settings.accessibility.colorVisionDescription', 'Adjust colors for different types of color blindness')}
                 </p>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {COLOR_BLIND_OPTIONS.map(option => {
                         const isSelected = preferences.colorBlindMode === option.value;
@@ -484,11 +476,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                             <button
                                 key={option.value}
                                 onClick={() => updatePreference('colorBlindMode', option.value as AccessibilityPreferences['colorBlindMode'])}
-                                className={`p-4 rounded-xl border-2 transition-all text-left ${
-                                    isSelected
+                                className={`p-4 rounded-xl border-2 transition-all text-left ${isSelected
                                         ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-500/10'
                                         : 'border-slate-200 dark:border-white/10 hover:border-cyan-300 dark:hover:border-cyan-500/50'
-                                }`}
+                                    }`}
                             >
                                 <div className={`font-medium ${isSelected ? 'text-cyan-700 dark:text-cyan-400' : 'text-slate-700 dark:text-slate-300'}`}>
                                     {option.label}
@@ -511,7 +502,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                     {t('settings.accessibility.fontFamilyDescription', 'Choose a font that works best for you')}
                 </p>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {FONT_FAMILY_OPTIONS.map(option => {
                         const isSelected = preferences.fontFamily === option.value;
@@ -519,11 +510,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                             <button
                                 key={option.value}
                                 onClick={() => updatePreference('fontFamily', option.value)}
-                                className={`p-3 rounded-lg border-2 transition-all text-left ${
-                                    isSelected
+                                className={`p-3 rounded-lg border-2 transition-all text-left ${isSelected
                                         ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/10'
                                         : 'border-slate-200 dark:border-white/10 hover:border-orange-300'
-                                }`}
+                                    }`}
                             >
                                 <div className={`font-medium ${option.preview} ${isSelected ? 'text-orange-700 dark:text-orange-400' : 'text-slate-700 dark:text-slate-300'}`}>
                                     {option.label}
@@ -540,7 +530,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     <Type size={20} className="text-pink-500" />
                     {t('settings.accessibility.readabilityTitle', 'Readability')}
                 </h3>
-                
+
                 <div className="space-y-6">
                     {/* Line Height */}
                     <div className="flex items-center justify-between">
@@ -557,11 +547,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                                 <button
                                     key={value}
                                     onClick={() => updatePreference('lineHeight', value)}
-                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                                        preferences.lineHeight === value
+                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${preferences.lineHeight === value
                                             ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
                                             : 'text-slate-500 hover:text-slate-700'
-                                    }`}
+                                        }`}
                                 >
                                     {t(`settings.accessibility.lineHeight.${value}`, value.charAt(0).toUpperCase() + value.slice(1))}
                                 </button>
@@ -584,11 +573,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                                 <button
                                     key={value}
                                     onClick={() => updatePreference('letterSpacing', value)}
-                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                                        preferences.letterSpacing === value
+                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${preferences.letterSpacing === value
                                             ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
                                             : 'text-slate-500 hover:text-slate-700'
-                                    }`}
+                                        }`}
                                 >
                                     {t(`settings.accessibility.letterSpacing.${value}`, value.charAt(0).toUpperCase() + value.slice(1))}
                                 </button>
@@ -609,21 +597,19 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                         <div className="flex bg-slate-100 dark:bg-navy-950 p-1 rounded-lg">
                             <button
                                 onClick={() => updatePreference('caretWidth', 'default')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                                    preferences.caretWidth === 'default'
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${preferences.caretWidth === 'default'
                                         ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
                                         : 'text-slate-500 hover:text-slate-700'
-                                }`}
+                                    }`}
                             >
                                 {t('settings.accessibility.caretWidth.default', 'Default')}
                             </button>
                             <button
                                 onClick={() => updatePreference('caretWidth', 'thick')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                                    preferences.caretWidth === 'thick'
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${preferences.caretWidth === 'thick'
                                         ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
                                         : 'text-slate-500 hover:text-slate-700'
-                                }`}
+                                    }`}
                             >
                                 {t('settings.accessibility.caretWidth.thick', 'Thick')}
                             </button>
@@ -638,7 +624,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     <Volume2 size={20} className="text-violet-500" />
                     {t('settings.accessibility.voiceSpeechTitle', 'Voice & Speech')}
                 </h3>
-                
+
                 <div className="space-y-6">
                     {/* Text to Speech */}
                     <div className="flex items-center justify-between">
@@ -652,9 +638,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                         </div>
                         <button
                             onClick={() => updatePreference('textToSpeechEnabled', !preferences.textToSpeechEnabled)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                preferences.textToSpeechEnabled ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
-                            }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.textToSpeechEnabled ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                                }`}
                         >
                             <span className={`${preferences.textToSpeechEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                         </button>
@@ -672,9 +657,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                         </div>
                         <button
                             onClick={() => updatePreference('speechToTextEnabled', !preferences.speechToTextEnabled)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                preferences.speechToTextEnabled ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
-                            }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.speechToTextEnabled ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                                }`}
                         >
                             <span className={`${preferences.speechToTextEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                         </button>
@@ -692,9 +676,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                         </div>
                         <button
                             onClick={() => updatePreference('voiceCommandsEnabled', !preferences.voiceCommandsEnabled)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                preferences.voiceCommandsEnabled ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
-                            }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.voiceCommandsEnabled ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                                }`}
                         >
                             <span className={`${preferences.voiceCommandsEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                         </button>
@@ -711,7 +694,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                     {t('settings.accessibility.focusStyleDescription', 'Choose how focused elements are highlighted when using keyboard navigation')}
                 </p>
-                
+
                 <div className="grid grid-cols-3 gap-4">
                     {(['default', 'high-contrast', 'animated'] as const).map(style => {
                         const isSelected = preferences.focusIndicatorStyle === style;
@@ -724,11 +707,10 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                             <button
                                 key={style}
                                 onClick={() => updatePreference('focusIndicatorStyle', style)}
-                                className={`p-4 rounded-xl border-2 transition-all text-center ${
-                                    isSelected
+                                className={`p-4 rounded-xl border-2 transition-all text-center ${isSelected
                                         ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10'
                                         : 'border-slate-200 dark:border-white/10 hover:border-teal-300'
-                                }`}
+                                    }`}
                             >
                                 <div className={`font-medium ${isSelected ? 'text-teal-700 dark:text-teal-400' : 'text-slate-700 dark:text-slate-300'}`}>
                                     {labels[style]}

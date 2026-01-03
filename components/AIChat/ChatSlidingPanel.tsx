@@ -32,16 +32,16 @@ export const ChatSlidingPanel: React.FC<ChatSlidingPanelProps> = ({
 }) => {
     const { t } = useTranslation();
     const { isChatSlidingPanelOpen, setChatSlidingPanelOpen } = useAppStore();
-    const { 
-        conversations, 
-        groupedConversations, 
-        isLoading: isLoadingConversations, 
+    const {
+        conversations,
+        groupedConversations,
+        isLoading: isLoadingConversations,
         fetchConversations,
         setSearchQuery,
         searchQuery
     } = useConversationStore();
     const { projects, fetchProjects } = useChatProjectStore();
-    
+
     const [activeTab, setActiveTab] = useState<ChatTab>('chats');
     const [localSearchQuery, setLocalSearchQuery] = useState('');
     const panelRef = useRef<HTMLDivElement>(null);
@@ -61,7 +61,7 @@ export const ChatSlidingPanel: React.FC<ChatSlidingPanelProps> = ({
                 // Check if click is on the sidebar toggle button (don't close in that case)
                 const target = e.target as HTMLElement;
                 if (target.closest('[data-chat-toggle]')) return;
-                
+
                 setChatSlidingPanelOpen(false);
             }
         };
@@ -112,7 +112,7 @@ export const ChatSlidingPanel: React.FC<ChatSlidingPanelProps> = ({
         }
 
         const query = localSearchQuery.toLowerCase();
-        const filtered = conversations.filter(c => 
+        const filtered = conversations.filter(c =>
             c.title.toLowerCase().includes(query) ||
             c.lastMessagePreview?.toLowerCase().includes(query)
         );
@@ -127,7 +127,7 @@ export const ChatSlidingPanel: React.FC<ChatSlidingPanelProps> = ({
         <>
             {/* Backdrop overlay for mobile */}
             {isChatSlidingPanelOpen && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 lg:hidden"
                     onClick={() => setChatSlidingPanelOpen(false)}
                 />
@@ -137,7 +137,7 @@ export const ChatSlidingPanel: React.FC<ChatSlidingPanelProps> = ({
             <div
                 ref={panelRef}
                 className={`
-                    fixed top-0 left-[56px] bottom-0 w-[280px] z-40
+                    absolute top-0 left-0 h-full w-[280px] z-40
                     bg-white dark:bg-navy-900
                     border-r border-slate-200 dark:border-navy-800
                     shadow-xl

@@ -191,6 +191,202 @@ router.get('/google/callback', async (req, res) => {
     }
 });
 
+// ==========================================
+// AZURE AD (Microsoft Entra ID) ROUTES
+// ==========================================
+
+/**
+ * POST /api/sso/superadmin/azure-ad/config
+ * Create Azure AD SSO config for any organization (SuperAdmin only)
+ */
+router.post('/superadmin/azure-ad/config', authMiddleware, verifySuperAdmin, async (req, res) => {
+    try {
+        const { organizationId, tenantId, clientId, clientSecret, allowedDomains } = req.body;
+        
+        if (!organizationId || !tenantId || !clientId) {
+            return res.status(400).json({ error: 'organizationId, tenantId, and clientId are required' });
+        }
+        
+        const result = await SSOService.createAzureADConfig(
+            organizationId, 
+            { tenantId, clientId, clientSecret, allowedDomains },
+            req.user.id
+        );
+        
+        res.json({ success: true, ...result });
+    } catch (error) {
+        console.error('[SSO] Create Azure AD config error:', error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+/**
+ * PUT /api/sso/superadmin/azure-ad/config/:orgId
+ * Update Azure AD SSO config for any organization (SuperAdmin only)
+ */
+router.put('/superadmin/azure-ad/config/:orgId', authMiddleware, verifySuperAdmin, async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        await SSOService.updateAzureADConfig(orgId, req.body, req.user.id);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[SSO] Update Azure AD config error:', error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/sso/superadmin/azure-ad/config/:orgId
+ * Get Azure AD config for specific org (SuperAdmin only)
+ */
+router.get('/superadmin/azure-ad/config/:orgId', authMiddleware, verifySuperAdmin, async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const azureConfig = await SSOService.getAzureADConfiguration(orgId);
+        
+        if (!azureConfig) {
+            return res.json({ configured: false });
+        }
+        
+        res.json({ configured: true, config: azureConfig });
+    } catch (error) {
+        console.error('[SSO] Get Azure AD config error:', error);
+        res.status(500).json({ error: 'Failed to get Azure AD configuration' });
+    }
+});
+
+/**
+ * GET /api/sso/azure-ad/login/:organizationId
+ * Initiate Azure AD SSO login
+ */
+router.get('/azure-ad/login/:organizationId', async (req, res) => {
+    try {
+        const { organizationId } = req.params;
+        const authUrl = await SSOService.getAzureADAuthUrl(organizationId);
+        res.redirect(authUrl);
+    } catch (error) {
+        console.error('[SSO] Azure AD login error:', error);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        res.redirect(`${frontendUrl}/sso/error?message=${encodeURIComponent(error.message)}`);
+    }
+});
+
+/**
+ * GET /api/sso/azure-ad/callback
+ * Azure AD OAuth callback handler
+ */
+router.get('/azure-ad/callback', async (req, res) => {
+    try {
+        const { code, state, error: oauthError, error_description } = req.query;
+        
+        if (oauthError) {
+            throw new Error(error_description || oauthError);
+        }
+        
+        if (!code || !state) {
+            throw new Error('Missing authorization code or state');
+        }
+        
+        // Decode state to get organizationId (using base64url for Azure)
+        let stateData;
+        try {
+            stateData = JSON.parse(Buffer.from(state, 'base64url').toString());
+        } catch {
+            // Try regular base64 as fallback
+            stateData = JSON.parse(Buffer.from(state, 'base64').toString());
+        }
+        const { organizationId } = stateData;
+        
+        const result = await SSOService.processAzureADCallback(organizationId, code, {
+            ip: req.ip,
+            userAgent: req.get('user-agent'),
+        });
+        
+        // Generate JWT token
+        const token = jwt.sign({
+            id: result.user.id,
+            email: result.user.email,
+            role: result.user.role,
+            organizationId: result.user.organizationId,
+            ssoSessionId: result.sessionId,
+        }, config.JWT_SECRET, { expiresIn: '8h' });
+        
+        // Redirect to frontend with token
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        res.redirect(`${frontendUrl}/sso/callback?token=${token}&provider=azure-ad`);
+        
+    } catch (error) {
+        console.error('[SSO] Azure AD callback error:', error);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        res.redirect(`${frontendUrl}/sso/error?message=${encodeURIComponent(error.message)}&provider=azure-ad`);
+    }
+});
+
+/**
+ * GET /api/sso/azure-ad/config
+ * Get Azure AD config for current organization
+ */
+router.get('/azure-ad/config', authMiddleware, requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }), async (req, res) => {
+    try {
+        const orgId = req.org?.id || req.user.organizationId;
+        const azureConfig = await SSOService.getAzureADConfiguration(orgId);
+        
+        if (!azureConfig) {
+            return res.json({ configured: false });
+        }
+        
+        res.json({ configured: true, config: azureConfig });
+    } catch (error) {
+        console.error('[SSO] Get Azure AD config error:', error);
+        res.status(500).json({ error: 'Failed to get Azure AD configuration' });
+    }
+});
+
+/**
+ * POST /api/sso/azure-ad/config
+ * Create Azure AD config for current organization
+ */
+router.post('/azure-ad/config', authMiddleware, requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }), async (req, res) => {
+    try {
+        const orgId = req.org?.id || req.user.organizationId;
+        const { tenantId, clientId, clientSecret, allowedDomains } = req.body;
+        
+        if (!tenantId || !clientId) {
+            return res.status(400).json({ error: 'tenantId and clientId are required' });
+        }
+        
+        const result = await SSOService.createAzureADConfig(
+            orgId, 
+            { tenantId, clientId, clientSecret, allowedDomains },
+            req.user.id
+        );
+        
+        res.json({ success: true, ...result });
+    } catch (error) {
+        console.error('[SSO] Create Azure AD config error:', error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+/**
+ * PUT /api/sso/azure-ad/config
+ * Update Azure AD config for current organization
+ */
+router.put('/azure-ad/config', authMiddleware, requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }), async (req, res) => {
+    try {
+        const orgId = req.org?.id || req.user.organizationId;
+        await SSOService.updateAzureADConfig(orgId, req.body, req.user.id);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[SSO] Update Azure AD config error:', error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// ==========================================
+// GENERAL CONFIG ROUTES
+// ==========================================
+
 /**
  * GET /api/sso/config
  * Get SSO configuration for current organization

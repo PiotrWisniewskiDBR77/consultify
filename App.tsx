@@ -1127,7 +1127,7 @@ const AppContent: React.FC = () => {
                 >
                     {/* Top Bar for Session Views */}
                     {isSessionView && (
-                        <div className="flex flex-col z-50 shrink-0">
+                        <div className="flex flex-col z-30 shrink-0">
                             {/* AI Freeze Banner */}
                             <AIFreezeBanner />
 

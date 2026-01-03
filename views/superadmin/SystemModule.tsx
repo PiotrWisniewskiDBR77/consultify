@@ -1,16 +1,44 @@
 /**
- * SystemModule - System Administration
+ * SystemModule - Enterprise System Administration
  * 
- * Tabs: Health | Audit Log | Feature Flags | Integrations
+ * Full enterprise system administration module with:
+ * - Health Monitoring with real-time metrics and alerting
+ * - Comprehensive Audit Logging with compliance support
+ * - Feature Flags with A/B testing and targeting
+ * - Integrations Hub with webhooks and connectors
+ * - Security & Compliance management
+ * - Configuration Management
+ * - Analytics & Reporting
+ * - Backup & Disaster Recovery
+ * - API Key Management
  */
 
 import React, { useState, useEffect } from 'react';
-import { Activity, Shield, Flag, Webhook, RefreshCw, Loader2 } from 'lucide-react';
+import { Activity, Shield, Flag, Webhook, RefreshCw, Loader2, Settings, BarChart3, HardDrive, Key } from 'lucide-react';
 import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
 import { SystemHealth } from '../../components/SystemHealth';
 import { AuditLogViewer } from '../../components/Admin/AuditLogViewer';
 import { FeatureFlagsPanel } from '../../components/SuperAdmin/FeatureFlagsPanel';
 import { IntegrationsPanel } from '../../components/SuperAdmin/IntegrationsPanel';
+import { SecurityPanel } from '../../components/SuperAdmin/SecurityPanel';
+import { ConfigurationPanel } from '../../components/SuperAdmin/ConfigurationPanel';
+import { AnalyticsPanel } from '../../components/SuperAdmin/AnalyticsPanel';
+import { BackupPanel } from '../../components/SuperAdmin/BackupPanel';
+import { ApiManagementPanel } from '../../components/SuperAdmin/ApiManagementPanel';
+
+// Enterprise System Components
+import { 
+    EnterpriseHealthMonitor,
+    EnterpriseAuditLog,
+    EnterpriseSecurityPanel,
+    EnterpriseApiManagement,
+    EnterpriseBackupPanel,
+    EnterpriseFeatureFlags,
+    EnterpriseIntegrationsHub,
+    EnterpriseConfigurationPanel,
+    EnterpriseAnalyticsPanel
+} from '../../components/SuperAdmin/system';
+
 import { Api } from '../../services/api';
 
 interface SystemModuleProps {
@@ -200,22 +228,42 @@ export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
         { id: 'audit-log', label: 'Audit Log', icon: <Shield size={16} /> },
         { id: 'feature-flags', label: 'Feature Flags', icon: <Flag size={16} /> },
         { id: 'integrations', label: 'Integrations', icon: <Webhook size={16} /> },
+        { id: 'security', label: 'Security', icon: <Shield size={16} /> },
+        { id: 'configuration', label: 'Configuration', icon: <Settings size={16} /> },
+        { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={16} /> },
+        { id: 'backup', label: 'Backup', icon: <HardDrive size={16} /> },
+        { id: 'api-keys', label: 'API Keys', icon: <Key size={16} /> },
     ];
 
     const renderContent = () => {
         switch (activeTab) {
             case 'health':
-                return <SystemHealthView />;
+                // Use enterprise health monitor for comprehensive monitoring
+                return <EnterpriseHealthMonitor />;
             case 'audit-log':
-                return (
-                    <div className="p-6 overflow-y-auto h-full">
-                        <AuditLogViewer />
-                    </div>
-                );
+                // Use enterprise audit log with compliance and export features
+                return <EnterpriseAuditLog />;
             case 'feature-flags':
-                return <FeatureFlagsPanel />;
+                // Use enterprise feature flags with A/B testing and targeting
+                return <EnterpriseFeatureFlags />;
             case 'integrations':
-                return <IntegrationsPanel />;
+                // Use enterprise integrations hub with connectors catalog and webhooks
+                return <EnterpriseIntegrationsHub />;
+            case 'security':
+                // Use enterprise security panel with sessions, IP rules, compliance
+                return <EnterpriseSecurityPanel />;
+            case 'configuration':
+                // Use enterprise configuration with categories, versioning, environments
+                return <EnterpriseConfigurationPanel />;
+            case 'analytics':
+                // Use enterprise analytics with dashboards, custom reports, scheduling
+                return <EnterpriseAnalyticsPanel />;
+            case 'backup':
+                // Use enterprise backup panel with DR testing
+                return <EnterpriseBackupPanel />;
+            case 'api-keys':
+                // Use enterprise API management with docs and usage analytics
+                return <EnterpriseApiManagement />;
             default:
                 return null;
         }

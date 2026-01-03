@@ -1,38 +1,26 @@
-/**
- * AccountManagementSettings - Account management (export, delete)
- */
-
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Download, Trash2, AlertTriangle } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
+import { Api } from '../../services/api';
 
-interface AccountManagementSettingsProps {
-  className?: string;
-}
-
-export const AccountManagementSettings: React.FC<AccountManagementSettingsProps> = ({ className = '' }) => {
+const AccountManagementSettings: React.FC<{ className?: string }> = ({ className }) => {
   const { t } = useTranslation();
+  const [exporting, setExporting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
-  const [exporting, setExporting] = useState(false);
 
   const handleExportData = async () => {
     setExporting(true);
     try {
-      const response = await fetch('/api/user/export-data', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'consultify-data-export.json';
-        a.click();
-        URL.revokeObjectURL(url);
-        toast.success(t('settings.account.exportSuccess', 'Data exported successfully'));
-      }
+      const blob = await Api.exportUserData();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'consultify-data-export.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(t('settings.account.exportSuccess', 'Data exported successfully'));
     } catch (_error) {
       toast.error(t('settings.account.exportError', 'Failed to export data'));
     } finally {
@@ -43,14 +31,9 @@ export const AccountManagementSettings: React.FC<AccountManagementSettingsProps>
   const handleDeleteAccount = async () => {
     if (deleteConfirmText !== 'DELETE') return;
     try {
-      const response = await fetch('/api/user/delete-account', {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (response.ok) {
-        localStorage.clear();
-        window.location.href = '/';
-      }
+      await Api.deleteAccount(deleteConfirmText);
+      localStorage.clear();
+      window.location.href = '/';
     } catch (_error) {
       toast.error(t('settings.account.deleteError', 'Failed to delete account'));
     }
@@ -96,7 +79,7 @@ export const AccountManagementSettings: React.FC<AccountManagementSettingsProps>
             <p className="text-sm text-red-700 dark:text-red-300/70 mt-1">
               {t('settings.account.deleteDesc', 'Permanently delete your account and all associated data. This action cannot be undone.')}
             </p>
-            
+
             {!showDeleteConfirm ? (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
@@ -146,5 +129,3 @@ export const AccountManagementSettings: React.FC<AccountManagementSettingsProps>
 };
 
 export default AccountManagementSettings;
-
-

@@ -242,7 +242,7 @@ function initDb() {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
-        // Activity Logs (Audit Trail)
+        // Activity Logs (Audit Trail) - Extended for Enterprise System Module
         db.run(`CREATE TABLE IF NOT EXISTS activity_logs (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
@@ -259,6 +259,36 @@ function initDb() {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
+
+        // Extended Audit Logs Table (Enterprise System Module)
+        db.run(`CREATE TABLE IF NOT EXISTS audit_logs (
+            id TEXT PRIMARY KEY,
+            timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            user_id TEXT,
+            user_email TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            action_type TEXT NOT NULL,
+            resource_type TEXT,
+            resource_id TEXT,
+            before_data TEXT, -- JSON
+            after_data TEXT, -- JSON
+            risk_level TEXT, -- LOW, MEDIUM, HIGH, CRITICAL
+            compliance_tags TEXT, -- JSON array
+            request_id TEXT,
+            organization_id TEXT,
+            metadata TEXT, -- JSON
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Add indexes for audit_logs
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp DESC)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_action_type ON audit_logs(action_type)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_resource ON audit_logs(resource_type, resource_id)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_risk_level ON audit_logs(risk_level)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_org_id ON audit_logs(organization_id)`, (err) => {});
 
         // User Token Quota (Add columns to users - we'll use ALTER TABLE to add if not exists)
         db.run(`ALTER TABLE users ADD COLUMN token_limit INTEGER DEFAULT 100000`, (err) => {
@@ -902,6 +932,207 @@ function initDb() {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
+
+        // ==========================================
+        // PHASE: SYSTEM MODULE - ENTERPRISE TABLES
+        // ==========================================
+
+        // Feature Flags Table
+        db.run(`CREATE TABLE IF NOT EXISTS feature_flags (
+            id TEXT PRIMARY KEY,
+            flag_key TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            enabled INTEGER DEFAULT 0,
+            flag_type TEXT NOT NULL, -- boolean, percentage, targeting, ab_test
+            targeting_rules TEXT, -- JSON
+            rollout_percentage INTEGER DEFAULT 0,
+            environment TEXT NOT NULL DEFAULT 'production', -- development, staging, production
+            organization_id TEXT, -- NULL for global flags
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_by TEXT,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Feature Flag History Table
+        db.run(`CREATE TABLE IF NOT EXISTS feature_flag_history (
+            id TEXT PRIMARY KEY,
+            feature_flag_id TEXT NOT NULL,
+            change_type TEXT NOT NULL, -- created, updated, enabled, disabled
+            old_value TEXT, -- JSON
+            new_value TEXT, -- JSON
+            changed_by TEXT,
+            changed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(feature_flag_id) REFERENCES feature_flags(id) ON DELETE CASCADE,
+            FOREIGN KEY(changed_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Webhook Deliveries Table
+        db.run(`CREATE TABLE IF NOT EXISTS webhook_deliveries (
+            id TEXT PRIMARY KEY,
+            webhook_id TEXT NOT NULL,
+            event_type TEXT NOT NULL,
+            payload TEXT NOT NULL, -- JSON
+            status TEXT NOT NULL, -- pending, success, failed, retrying
+            response_code INTEGER,
+            response_body TEXT,
+            attempts INTEGER DEFAULT 0,
+            delivered_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(webhook_id) REFERENCES webhooks(id) ON DELETE CASCADE
+        )`);
+
+        // Add indexes for webhook_deliveries
+        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_webhook_id ON webhook_deliveries(webhook_id)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_status ON webhook_deliveries(status)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_created_at ON webhook_deliveries(created_at DESC)`, (err) => {});
+
+        // Extend existing webhooks table with missing columns
+        db.run(`ALTER TABLE webhooks ADD COLUMN retry_policy TEXT`, (err) => {
+            // Ignore error if column already exists
+        });
+        db.run(`ALTER TABLE webhooks ADD COLUMN headers TEXT`, (err) => {
+            // Ignore error if column already exists
+        });
+        db.run(`ALTER TABLE webhooks ADD COLUMN payload_template TEXT`, (err) => {
+            // Ignore error if column already exists
+        });
+
+        // Integrations Table
+        db.run(`CREATE TABLE IF NOT EXISTS integrations (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            type TEXT NOT NULL, -- slack, jira, google_workspace, microsoft_365, github, etc.
+            name TEXT NOT NULL,
+            config TEXT NOT NULL, -- JSON
+            auth_config TEXT NOT NULL, -- JSON
+            enabled INTEGER DEFAULT 1,
+            sync_config TEXT, -- JSON
+            last_sync_at DATETIME,
+            last_sync_status TEXT, -- success, failed, partial
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // Integration Sync Logs Table
+        db.run(`CREATE TABLE IF NOT EXISTS integration_sync_logs (
+            id TEXT PRIMARY KEY,
+            integration_id TEXT NOT NULL,
+            sync_type TEXT NOT NULL, -- full, incremental
+            status TEXT NOT NULL, -- success, failed, partial
+            records_processed INTEGER DEFAULT 0,
+            errors TEXT, -- JSON
+            started_at DATETIME NOT NULL,
+            completed_at DATETIME,
+            FOREIGN KEY(integration_id) REFERENCES integrations(id) ON DELETE CASCADE
+        )`);
+
+        // System Metrics Table
+        db.run(`CREATE TABLE IF NOT EXISTS system_metrics (
+            id TEXT PRIMARY KEY,
+            metric_name TEXT NOT NULL,
+            metric_value REAL NOT NULL,
+            metric_type TEXT NOT NULL, -- gauge, counter, histogram
+            tags TEXT, -- JSON
+            timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Add indexes for system_metrics
+        db.run(`CREATE INDEX IF NOT EXISTS idx_system_metrics_name_time ON system_metrics(metric_name, timestamp DESC)`, (err) => {});
+
+        // Security Events Table
+        db.run(`CREATE TABLE IF NOT EXISTS security_events (
+            id TEXT PRIMARY KEY,
+            event_type TEXT NOT NULL,
+            severity TEXT NOT NULL, -- low, medium, high, critical
+            user_id TEXT,
+            ip_address TEXT,
+            details TEXT, -- JSON
+            resolved INTEGER DEFAULT 0,
+            resolved_at DATETIME,
+            resolved_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(resolved_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Compliance Records Table
+        db.run(`CREATE TABLE IF NOT EXISTS compliance_records (
+            id TEXT PRIMARY KEY,
+            framework TEXT NOT NULL, -- GDPR, SOC2, ISO27001, HIPAA, PCI_DSS
+            control_id TEXT,
+            control_name TEXT,
+            status TEXT NOT NULL, -- compliant, non_compliant, not_applicable
+            evidence TEXT, -- JSON
+            last_verified_at DATETIME,
+            verified_by TEXT,
+            notes TEXT,
+            FOREIGN KEY(verified_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // System Configuration Table
+        db.run(`CREATE TABLE IF NOT EXISTS system_config (
+            id TEXT PRIMARY KEY,
+            config_key TEXT UNIQUE NOT NULL,
+            config_value TEXT NOT NULL, -- JSON
+            config_type TEXT NOT NULL, -- string, number, boolean, json
+            environment TEXT, -- development, staging, production, NULL for all
+            description TEXT,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_by TEXT,
+            FOREIGN KEY(updated_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // API Keys Table
+        db.run(`CREATE TABLE IF NOT EXISTS api_keys (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT,
+            user_id TEXT,
+            key_hash TEXT UNIQUE NOT NULL,
+            key_prefix TEXT NOT NULL,
+            name TEXT,
+            permissions TEXT, -- JSON
+            rate_limit INTEGER,
+            expires_at DATETIME,
+            last_used_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            revoked_at DATETIME,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Backup Records Table
+        db.run(`CREATE TABLE IF NOT EXISTS backup_records (
+            id TEXT PRIMARY KEY,
+            backup_type TEXT NOT NULL, -- full, incremental
+            status TEXT NOT NULL, -- in_progress, completed, failed
+            size_bytes INTEGER,
+            storage_location TEXT,
+            started_at DATETIME NOT NULL,
+            completed_at DATETIME,
+            verified_at DATETIME,
+            metadata TEXT -- JSON
+        )`);
+
+        // Migrate existing activity_logs to audit_logs (one-time migration)
+        db.run(`INSERT OR IGNORE INTO audit_logs (
+            id, timestamp, user_id, organization_id, action_type, resource_type, resource_id,
+            before_data, after_data, ip_address, user_agent, risk_level
+        )
+        SELECT 
+            id, created_at, user_id, organization_id, action, entity_type, entity_id,
+            old_value, new_value, ip_address, user_agent, 'LOW'
+        FROM activity_logs
+        WHERE NOT EXISTS (SELECT 1 FROM audit_logs WHERE audit_logs.id = activity_logs.id)`, (err) => {
+            if (err) {
+                console.log('[Migration] Activity logs migration note:', err.message);
+            } else {
+                console.log('[Migration] Migrated activity_logs to audit_logs');
+            }
+        });
 
         // Seed Default Billing Margins
         const defaultMargins = [

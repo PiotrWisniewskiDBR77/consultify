@@ -37,15 +37,15 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 }) => {
     const getTrendConfig = () => {
         if (!trend) return null;
-        
+
         const direction = trend.direction ?? (trend.value > 0 ? 'up' : trend.value < 0 ? 'down' : 'neutral');
-        
+
         const configs = {
             up: { icon: TrendingUp, color: 'text-emerald-400', prefix: '+' },
             down: { icon: TrendingDown, color: 'text-red-400', prefix: '' },
             neutral: { icon: Minus, color: 'text-slate-500', prefix: '' },
         };
-        
+
         return configs[direction];
     };
 
@@ -60,14 +60,14 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                     {label}
                 </span>
             </div>
-            
+
             {/* Value */}
             <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-semibold text-slate-50 tabular-nums leading-tight">
+                <span className="text-2xl font-semibold text-slate-900 dark:text-slate-50 tabular-nums leading-tight">
                     {typeof value === 'number' ? value.toLocaleString() : value}
                 </span>
             </div>
-            
+
             {/* Subtitle or Trend */}
             {(subtitle || trend) && (
                 <div className="flex items-center gap-2">
@@ -98,14 +98,14 @@ export const MetricCardCompact: React.FC<MetricCardProps> = ({
     className = ''
 }) => {
     return (
-        <div className={`bg-slate-800/50 border border-white/[0.06] rounded-lg p-3 ${className}`}>
+        <div className={`bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg p-3 ${className}`}>
             <div className="flex items-center gap-2 mb-1">
                 {Icon && <Icon size={12} className="text-slate-500" />}
                 <span className="text-[10px] text-slate-500 uppercase tracking-wider font-medium">
                     {label}
                 </span>
             </div>
-            <p className="text-xl font-semibold text-white tabular-nums">{value}</p>
+            <p className="text-xl font-semibold text-slate-900 dark:text-white tabular-nums">{value}</p>
             {subtitle && <p className="text-[10px] text-slate-500 mt-0.5">{subtitle}</p>}
         </div>
     );
@@ -120,10 +120,10 @@ export const MetricCardWithCard: React.FC<MetricCardWithCardProps> = ({
     variant = 'default',
     ...props
 }) => {
-    const wrapperClass = variant === 'bordered' 
-        ? 'border border-white/[0.06] rounded-xl p-4'
-        : 'bg-slate-800/50 rounded-xl p-4';
-    
+    const wrapperClass = variant === 'bordered'
+        ? 'border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 bg-white dark:bg-transparent'
+        : 'bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-transparent';
+
     return (
         <div className={wrapperClass}>
             <MetricCard {...props} />

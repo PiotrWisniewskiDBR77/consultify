@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
+import {
   Webhook, Plus, Trash2, Play, CheckCircle, XCircle, Settings,
   RefreshCw, Shield, Filter, Code, Clock, AlertTriangle, Loader2,
   ChevronDown, ChevronUp, Eye, EyeOff
@@ -75,7 +75,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
   const [showSettings, setShowSettings] = useState<string | null>(null);
   const [deliveries, setDeliveries] = useState<Record<string, DeliveryLog[]>>({});
   const [testingWebhook, setTestingWebhook] = useState<string | null>(null);
-  
+
   // Form state
   const [newWebhook, setNewWebhook] = useState({
     name: '',
@@ -110,42 +110,37 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
   const fetchWebhooks = async () => {
     try {
-      const response = await fetch('/api/webhooks/subscriptions', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      const subscriptions = await Api.getWebhooks();
+      const formatted = (subscriptions || []).map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        url: s.targetUrl,
+        events: s.eventTypes || [],
+        active: s.isActive,
+        lastTriggered: s.updatedAt,
+        lastStatus: 'success' as 'success' | 'failed' | undefined,
+        signatureSecret: s.secretKey,
+        retryConfig: s.retryConfig ? (typeof s.retryConfig === 'string' ? JSON.parse(s.retryConfig) : s.retryConfig) : undefined,
+        filterRules: s.filterRules ? (typeof s.filterRules === 'string' ? JSON.parse(s.filterRules) : s.filterRules) : undefined,
+        version: s.version || '1.0'
+      }));
+      setWebhooks(formatted);
+
+      // Initialize settings
+      const settings: Record<string, any> = {};
+      formatted.forEach((w: WebhookConfig) => {
+        settings[w.id] = {
+          signatureSecret: w.signatureSecret || '',
+          retryConfig: w.retryConfig || {
+            maxRetries: 3,
+            backoffStrategy: 'exponential',
+            retryDelays: [1000, 2000, 5000]
+          },
+          filterRules: w.filterRules || {},
+          version: w.version || '1.0'
+        };
       });
-      if (response.ok) {
-        const data = await response.json();
-        const formatted = (data.subscriptions || []).map((s: any) => ({
-          id: s.id,
-          name: s.name,
-          url: s.targetUrl,
-          events: s.eventTypes || [],
-          active: s.isActive,
-          lastTriggered: s.updatedAt,
-          lastStatus: 'success',
-          signatureSecret: s.secretKey,
-          retryConfig: s.retryConfig ? JSON.parse(s.retryConfig) : undefined,
-          filterRules: s.filterRules ? JSON.parse(s.filterRules) : undefined,
-          version: s.version || '1.0'
-        }));
-        setWebhooks(formatted);
-        
-        // Initialize settings
-        const settings: Record<string, any> = {};
-        formatted.forEach((w: WebhookConfig) => {
-          settings[w.id] = {
-            signatureSecret: w.signatureSecret || '',
-            retryConfig: w.retryConfig || {
-              maxRetries: 3,
-              backoffStrategy: 'exponential',
-              retryDelays: [1000, 2000, 5000]
-            },
-            filterRules: w.filterRules || {},
-            version: w.version || '1.0'
-          };
-        });
-        setWebhookSettings(settings);
-      }
+      setWebhookSettings(settings);
     } catch (error) {
       console.error('Failed to fetch webhooks:', error);
       setWebhooks([]);
@@ -154,13 +149,8 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
   const fetchDeliveries = async (webhookId: string) => {
     try {
-      const response = await fetch(`/api/webhooks/subscriptions/${webhookId}/deliveries?limit=50`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setDeliveries(prev => ({ ...prev, [webhookId]: data.deliveries || [] }));
-      }
+      const deliveries = await Api.getWebhookDeliveries(webhookId, 50);
+      setDeliveries(prev => ({ ...prev, [webhookId]: deliveries || [] }));
     } catch (error) {
       console.error('Failed to fetch deliveries:', error);
     }
@@ -171,44 +161,33 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
       toast.error(t('settings.webhooks.fillRequired', 'Please fill all required fields'));
       return;
     }
-    
+
     try {
-      const response = await fetch('/api/webhooks/subscriptions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          name: newWebhook.name || `Webhook ${Date.now()}`,
-          targetUrl: newWebhook.url,
-          eventTypes: newWebhook.events,
-          signatureSecret: newWebhook.signatureSecret || undefined,
-          retryConfig: JSON.stringify(newWebhook.retryConfig),
-          filterRules: JSON.stringify(newWebhook.filterRules),
-          version: '1.0'
-        })
+      await Api.createWebhook({
+        name: newWebhook.name || `Webhook ${Date.now()}`,
+        targetUrl: newWebhook.url,
+        eventTypes: newWebhook.events,
+        signatureSecret: newWebhook.signatureSecret || undefined,
+        retryConfig: JSON.stringify(newWebhook.retryConfig),
+        filterRules: JSON.stringify(newWebhook.filterRules),
+        version: '1.0'
       });
-      
-      if (response.ok) {
-        toast.success(t('settings.webhooks.created', 'Webhook created'));
-        setShowNew(false);
-        setNewWebhook({
-          name: '',
-          url: '',
-          events: [],
-          signatureSecret: '',
-          retryConfig: {
-            maxRetries: 3,
-            backoffStrategy: 'exponential',
-            retryDelays: [1000, 2000, 5000]
-          },
-          filterRules: {}
-        });
-        fetchWebhooks();
-      } else {
-        toast.error(t('settings.webhooks.createError', 'Failed to create webhook'));
-      }
+
+      toast.success(t('settings.webhooks.created', 'Webhook created'));
+      setShowNew(false);
+      setNewWebhook({
+        name: '',
+        url: '',
+        events: [],
+        signatureSecret: '',
+        retryConfig: {
+          maxRetries: 3,
+          backoffStrategy: 'exponential',
+          retryDelays: [1000, 2000, 5000]
+        },
+        filterRules: {}
+      });
+      fetchWebhooks();
     } catch (error) {
       toast.error(t('settings.webhooks.createError', 'Failed to create webhook'));
     }
@@ -216,12 +195,9 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
   const deleteWebhook = async (webhookId: string) => {
     if (!confirm(t('settings.webhooks.deleteConfirm', 'Delete this webhook?'))) return;
-    
+
     try {
-      await fetch(`/api/webhooks/subscriptions/${webhookId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      await Api.deleteWebhook(webhookId);
       setWebhooks(prev => prev.filter(w => w.id !== webhookId));
       toast.success(t('settings.webhooks.deleted', 'Webhook deleted'));
     } catch (error) {
@@ -232,25 +208,13 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
   const testWebhook = async (webhookId: string) => {
     setTestingWebhook(webhookId);
     try {
-      const response = await fetch(`/api/webhooks/subscriptions/${webhookId}/test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          eventType: 'test.event',
-          payload: { test: true, timestamp: new Date().toISOString() }
-        })
+      await Api.testWebhook(webhookId, {
+        eventType: 'test.event',
+        payload: { test: true, timestamp: new Date().toISOString() }
       });
-      
-      if (response.ok) {
-        const data = await response.json();
-        toast.success(t('settings.webhooks.testSent', 'Test event sent'));
-        setTimeout(() => fetchDeliveries(webhookId), 1000);
-      } else {
-        toast.error(t('settings.webhooks.testError', 'Failed to send test event'));
-      }
+
+      toast.success(t('settings.webhooks.testSent', 'Test event sent'));
+      setTimeout(() => fetchDeliveries(webhookId), 1000);
     } catch (error) {
       toast.error(t('settings.webhooks.testError', 'Failed to send test event'));
     } finally {
@@ -260,21 +224,10 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
   const retryDelivery = async (webhookId: string, deliveryId: string) => {
     try {
-      const response = await fetch(`/api/webhooks/subscriptions/${webhookId}/retry`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ deliveryId })
-      });
-      
-      if (response.ok) {
-        toast.success(t('settings.webhooks.retryStarted', 'Retry started'));
-        setTimeout(() => fetchDeliveries(webhookId), 1000);
-      } else {
-        toast.error(t('settings.webhooks.retryError', 'Failed to retry'));
-      }
+      await Api.retryWebhookDelivery(webhookId, deliveryId);
+
+      toast.success(t('settings.webhooks.retryStarted', 'Retry started'));
+      setTimeout(() => fetchDeliveries(webhookId), 1000);
     } catch (error) {
       toast.error(t('settings.webhooks.retryError', 'Failed to retry'));
     }
@@ -285,27 +238,16 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
     if (!settings) return;
 
     try {
-      const response = await fetch(`/api/webhooks/subscriptions/${webhookId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          signatureSecret: settings.signatureSecret || undefined,
-          retryConfig: JSON.stringify(settings.retryConfig),
-          filterRules: JSON.stringify(settings.filterRules),
-          version: settings.version
-        })
+      await Api.updateWebhook(webhookId, {
+        signatureSecret: settings.signatureSecret || undefined,
+        retryConfig: JSON.stringify(settings.retryConfig),
+        filterRules: JSON.stringify(settings.filterRules),
+        version: settings.version
       });
-      
-      if (response.ok) {
-        toast.success(t('settings.webhooks.settingsSaved', 'Settings saved'));
-        setShowSettings(null);
-        fetchWebhooks();
-      } else {
-        toast.error(t('settings.webhooks.saveError', 'Failed to save settings'));
-      }
+
+      toast.success(t('settings.webhooks.settingsSaved', 'Settings saved'));
+      setShowSettings(null);
+      fetchWebhooks();
     } catch (error) {
       toast.error(t('settings.webhooks.saveError', 'Failed to save settings'));
     }
@@ -347,7 +289,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
           <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
             {t('settings.webhooks.createNew', 'Create New Webhook')}
           </h4>
-          
+
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               {t('settings.webhooks.name', 'Name')} <span className="text-red-500">*</span>
@@ -373,7 +315,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
               className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white font-mono text-sm"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               {t('settings.webhooks.events', 'Events')} <span className="text-red-500">*</span>
@@ -383,11 +325,10 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                 <button
                   key={event}
                   onClick={() => toggleEvent(event)}
-                  className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                    newWebhook.events.includes(event)
-                      ? 'bg-brand text-white'
-                      : 'bg-white dark:bg-navy-700 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300'
-                  }`}
+                  className={`px-3 py-1 text-sm rounded-full transition-colors ${newWebhook.events.includes(event)
+                    ? 'bg-brand text-white'
+                    : 'bg-white dark:bg-navy-700 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300'
+                    }`}
                 >
                   {event}
                 </button>
@@ -512,11 +453,10 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                       </button>
                       <button
                         onClick={() => setShowWebhookSettings(showWebhookSettings ? null : webhook.id)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          showWebhookSettings
-                            ? 'bg-brand text-white'
-                            : 'text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
-                        }`}
+                        className={`p-2 rounded-lg transition-colors ${showWebhookSettings
+                          ? 'bg-brand text-white'
+                          : 'text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
+                          }`}
                         title={t('common.settings', 'Settings')}
                       >
                         <Settings size={16} />
@@ -661,7 +601,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                               ...prev,
                               [webhook.id]: { ...prev[webhook.id], filterRules: parsed }
                             }));
-                          } catch {}
+                          } catch { }
                         }}
                         rows={4}
                         className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg font-mono"
@@ -710,13 +650,12 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                         {webhookDeliveries.map((delivery) => (
                           <div
                             key={delivery.id}
-                            className={`p-3 rounded-lg border ${
-                              delivery.status === 'success'
-                                ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
-                                : delivery.status === 'failed'
-                                  ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
-                                  : 'bg-slate-50 dark:bg-navy-800/50 border-slate-200 dark:border-white/10'
-                            }`}
+                            className={`p-3 rounded-lg border ${delivery.status === 'success'
+                              ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
+                              : delivery.status === 'failed'
+                                ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
+                                : 'bg-slate-50 dark:bg-navy-800/50 border-slate-200 dark:border-white/10'
+                              }`}
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex-1">

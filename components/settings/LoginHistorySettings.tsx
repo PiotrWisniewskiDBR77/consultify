@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { History, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Api } from '../../services/api';
 
 interface LoginEvent {
   id: string;
@@ -31,13 +32,8 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/login-history', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        setHistory(result.data || []);
-      }
+      const historyData = await Api.getLoginHistory();
+      setHistory(historyData);
     } catch (error) {
       console.error('Failed to fetch login history:', error);
       // Use mock data if API not available
@@ -53,9 +49,9 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'success': return <CheckCircle className="text-green-500" size={18} />;
-      case 'failed': return <XCircle className="text-red-500" size={18} />;
-      case 'suspicious': return <AlertTriangle className="text-amber-500" size={18} />;
+      case 'success': return <CheckCircle className="text-green-500" size={18} aria-label="Successful" />;
+      case 'failed': return <XCircle className="text-red-500" size={18} aria-label="Failed" />;
+      case 'suspicious': return <AlertTriangle className="text-amber-500" size={18} aria-label="Suspicious" />;
       default: return null;
     }
   };

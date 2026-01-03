@@ -46,14 +46,14 @@ describe('SuperAdminDashboard', () => {
 
     it('should render dashboard with title', () => {
         render(<SuperAdminDashboard {...defaultProps} />);
-        
+
         expect(screen.getByText('Dashboard')).toBeInTheDocument();
         expect(screen.getByText('System overview and quick actions')).toBeInTheDocument();
     });
 
     it('should display stats cards', () => {
         render(<SuperAdminDashboard {...defaultProps} />);
-        
+
         expect(screen.getByText('10')).toBeInTheDocument(); // totalOrgs
         expect(screen.getByText('50')).toBeInTheDocument(); // totalUsers
         expect(screen.getByText('5')).toBeInTheDocument(); // liveUsers
@@ -61,42 +61,46 @@ describe('SuperAdminDashboard', () => {
 
     it('should show quick action buttons', () => {
         render(<SuperAdminDashboard {...defaultProps} />);
-        
-        expect(screen.getByText('Organizations')).toBeInTheDocument();
+
+        // Use getAllByText because Organizations appears in both stats and buttons
+        expect(screen.getAllByText('Organizations').length).toBeGreaterThan(0);
         expect(screen.getByText('Invite User')).toBeInTheDocument();
         expect(screen.getByText('Revenue')).toBeInTheDocument();
     });
 
     it('should call onNavigateToOrganizations when Organizations button clicked', () => {
         render(<SuperAdminDashboard {...defaultProps} />);
-        
-        const orgButton = screen.getByText('Organizations').closest('button');
+
+        // Find the specific button using the label text
+        const buttons = screen.getAllByRole('button');
+        const orgButton = buttons.find(btn => btn.textContent?.includes('Organizations'));
+
         fireEvent.click(orgButton!);
-        
+
         expect(defaultProps.onNavigateToOrganizations).toHaveBeenCalledTimes(1);
     });
 
     it('should call onNavigateToUsers when Invite User button clicked', () => {
         render(<SuperAdminDashboard {...defaultProps} />);
-        
+
         const userButton = screen.getByText('Invite User').closest('button');
         fireEvent.click(userButton!);
-        
+
         expect(defaultProps.onNavigateToUsers).toHaveBeenCalledTimes(1);
     });
 
     it('should call onNavigateToBilling when Revenue button clicked', () => {
         render(<SuperAdminDashboard {...defaultProps} />);
-        
+
         const billingButton = screen.getByText('Revenue').closest('button');
         fireEvent.click(billingButton!);
-        
+
         expect(defaultProps.onNavigateToBilling).toHaveBeenCalledTimes(1);
     });
 
     it('should show pending requests badge when pendingRequests > 0', () => {
         render(<SuperAdminDashboard {...defaultProps} />);
-        
+
         expect(screen.getByText('3')).toBeInTheDocument(); // pendingRequests badge
         expect(screen.getByText('Pending')).toBeInTheDocument();
     });
@@ -106,22 +110,22 @@ describe('SuperAdminDashboard', () => {
             ...defaultProps,
             stats: { ...mockStats, pendingRequests: 0 }
         };
-        
+
         render(<SuperAdminDashboard {...propsWithoutPending} />);
-        
+
         expect(screen.queryByText('Pending')).not.toBeInTheDocument();
     });
 
     it('should display activities', () => {
         render(<SuperAdminDashboard {...defaultProps} />);
-        
+
         expect(screen.getByText('John Doe')).toBeInTheDocument();
         expect(screen.getByText('created')).toBeInTheDocument();
     });
 
     it('should show loading state', () => {
         render(<SuperAdminDashboard {...defaultProps} loading={true} />);
-        
+
         // Component should still render but might show loading indicators
         expect(screen.getByText('Dashboard')).toBeInTheDocument();
     });
@@ -131,25 +135,23 @@ describe('SuperAdminDashboard', () => {
             ...defaultProps,
             activities: []
         };
-        
+
         render(<SuperAdminDashboard {...propsWithEmptyActivities} />);
-        
+
         expect(screen.getByText('Dashboard')).toBeInTheDocument();
     });
 
     it('should format revenue correctly', () => {
         render(<SuperAdminDashboard {...defaultProps} />);
-        
+
         // Revenue should be displayed (formatting depends on implementation)
         expect(screen.getByText('Dashboard')).toBeInTheDocument();
     });
 
     it('should display AI metrics', () => {
         render(<SuperAdminDashboard {...defaultProps} />);
-        
+
         // AI calls and tokens should be displayed
         expect(screen.getByText('Dashboard')).toBeInTheDocument();
     });
 });
-
-

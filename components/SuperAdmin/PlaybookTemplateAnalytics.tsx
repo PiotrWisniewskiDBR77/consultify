@@ -1,0 +1,313 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+    BarChart2,
+    TrendingUp,
+    TrendingDown,
+    Clock,
+    Play,
+    CheckCircle2,
+    XCircle,
+    AlertCircle,
+    Activity,
+    Users,
+    Eye,
+    Edit,
+    Copy,
+    Download,
+    RefreshCw,
+    Calendar
+} from 'lucide-react';
+import type { PlaybookTemplateStats, ContentAnalyticsEvent } from '../../types';
+
+interface PlaybookTemplateAnalyticsProps {
+    templateId: string;
+}
+
+export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps> = ({
+    templateId
+}) => {
+    const token = localStorage.getItem('token');
+
+    const [stats, setStats] = useState<PlaybookTemplateStats | null>(null);
+    const [events, setEvents] = useState<ContentAnalyticsEvent[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [dateRange, setDateRange] = useState('30d');
+
+    const loadAnalytics = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/content/playbooks/templates/${templateId}/analytics`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setStats(data.stats);
+                setEvents(data.events || []);
+            }
+        } catch (err) {
+            console.error('Failed to load analytics:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, [token, templateId]);
+
+    useEffect(() => {
+        loadAnalytics();
+    }, [loadAnalytics]);
+
+    const getEventIcon = (eventType: string) => {
+        const icons: Record<string, React.ReactNode> = {
+            VIEW: <Eye size={14} className="text-blue-400" />,
+            EDIT: <Edit size={14} className="text-amber-400" />,
+            USE: <Play size={14} className="text-emerald-400" />,
+            EXPORT: <Download size={14} className="text-purple-400" />,
+            CLONE: <Copy size={14} className="text-pink-400" />,
+            PUBLISH: <CheckCircle2 size={14} className="text-emerald-400" />,
+            DEPRECATE: <AlertCircle size={14} className="text-slate-400" />,
+            RESTORE: <RefreshCw size={14} className="text-amber-400" />
+        };
+        return icons[eventType] || <Activity size={14} className="text-slate-400" />;
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <RefreshCw className="w-6 h-6 text-slate-400 animate-spin" />
+            </div>
+        );
+    }
+
+    if (!stats) {
+        return (
+            <div className="text-center py-8">
+                <BarChart2 className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                <p className="text-slate-400">No analytics data available</p>
+            </div>
+        );
+    }
+
+    const totalRuns = stats.totalRuns || 0;
+    const completedRuns = stats.completedRuns || 0;
+    const failedRuns = stats.failedRuns || 0;
+    const cancelledRuns = stats.cancelledRuns || 0;
+    const inProgressRuns = totalRuns - completedRuns - failedRuns - cancelledRuns;
+
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <BarChart2 className="w-5 h-5 text-violet-400" />
+                    <h3 className="font-semibold text-white">Analytics</h3>
+                </div>
+                <select
+                    value={dateRange}
+                    onChange={(e) => setDateRange(e.target.value)}
+                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                >
+                    <option value="7d">Last 7 days</option>
+                    <option value="30d">Last 30 days</option>
+                    <option value="90d">Last 90 days</option>
+                    <option value="all">All time</option>
+                </select>
+            </div>
+
+            {/* Key Metrics */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {/* Total Runs */}
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Play size={16} className="text-blue-400" />
+                        <span className="text-sm text-slate-400">Total Runs</span>
+                    </div>
+                    <div className="text-2xl font-bold text-white">{totalRuns}</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                        Playbook executions
+                    </div>
+                </div>
+
+                {/* Success Rate */}
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        {stats.successRate && stats.successRate >= 70 ? (
+                            <TrendingUp size={16} className="text-emerald-400" />
+                        ) : (
+                            <TrendingDown size={16} className="text-red-400" />
+                        )}
+                        <span className="text-sm text-slate-400">Success Rate</span>
+                    </div>
+                    <div className={`text-2xl font-bold ${
+                        stats.successRate && stats.successRate >= 70
+                            ? 'text-emerald-400'
+                            : stats.successRate && stats.successRate >= 40
+                            ? 'text-amber-400'
+                            : 'text-red-400'
+                    }`}>
+                        {stats.successRate !== null ? `${stats.successRate}%` : 'N/A'}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">
+                        Completed successfully
+                    </div>
+                </div>
+
+                {/* Avg Duration */}
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Clock size={16} className="text-amber-400" />
+                        <span className="text-sm text-slate-400">Avg. Duration</span>
+                    </div>
+                    <div className="text-2xl font-bold text-white">
+                        {stats.avgExecutionTimeMins
+                            ? `${stats.avgExecutionTimeMins}m`
+                            : 'N/A'}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">
+                        Average execution time
+                    </div>
+                </div>
+
+                {/* Usage Count */}
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Users size={16} className="text-violet-400" />
+                        <span className="text-sm text-slate-400">Usage Count</span>
+                    </div>
+                    <div className="text-2xl font-bold text-white">{stats.usageCount}</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                        Times template used
+                    </div>
+                </div>
+            </div>
+
+            {/* Run Status Breakdown */}
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+                <h4 className="font-medium text-white mb-4">Run Status Breakdown</h4>
+                
+                {totalRuns === 0 ? (
+                    <div className="text-center py-4 text-slate-400">
+                        No runs recorded yet
+                    </div>
+                ) : (
+                    <>
+                        {/* Progress bar */}
+                        <div className="flex h-4 rounded-full overflow-hidden bg-slate-900 mb-4">
+                            {completedRuns > 0 && (
+                                <div
+                                    className="bg-emerald-500"
+                                    style={{ width: `${(completedRuns / totalRuns) * 100}%` }}
+                                    title={`Completed: ${completedRuns}`}
+                                />
+                            )}
+                            {inProgressRuns > 0 && (
+                                <div
+                                    className="bg-blue-500"
+                                    style={{ width: `${(inProgressRuns / totalRuns) * 100}%` }}
+                                    title={`In Progress: ${inProgressRuns}`}
+                                />
+                            )}
+                            {failedRuns > 0 && (
+                                <div
+                                    className="bg-red-500"
+                                    style={{ width: `${(failedRuns / totalRuns) * 100}%` }}
+                                    title={`Failed: ${failedRuns}`}
+                                />
+                            )}
+                            {cancelledRuns > 0 && (
+                                <div
+                                    className="bg-slate-500"
+                                    style={{ width: `${(cancelledRuns / totalRuns) * 100}%` }}
+                                    title={`Cancelled: ${cancelledRuns}`}
+                                />
+                            )}
+                        </div>
+
+                        {/* Legend */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                                <span className="text-sm text-slate-300">
+                                    Completed ({completedRuns})
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-blue-500" />
+                                <span className="text-sm text-slate-300">
+                                    In Progress ({inProgressRuns})
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-red-500" />
+                                <span className="text-sm text-slate-300">
+                                    Failed ({failedRuns})
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-slate-500" />
+                                <span className="text-sm text-slate-300">
+                                    Cancelled ({cancelledRuns})
+                                </span>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
+
+            {/* Recent Activity */}
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+                <h4 className="font-medium text-white mb-4">Recent Activity</h4>
+                
+                {events.length === 0 ? (
+                    <div className="text-center py-4 text-slate-400">
+                        No recent activity
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {events.slice(0, 10).map((event) => (
+                            <div
+                                key={event.id}
+                                className="flex items-center justify-between py-2 border-b border-slate-700/30 last:border-0"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center">
+                                        {getEventIcon(event.eventType)}
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-medium text-white">
+                                            {event.eventType.replace('_', ' ')}
+                                        </div>
+                                        <div className="text-xs text-slate-500">
+                                            {event.userId ? `User ID: ${event.userId.slice(0, 8)}...` : 'System'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-xs text-slate-500">
+                                    {new Date(event.createdAt).toLocaleString()}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="bg-slate-800/30 rounded-lg p-3">
+                    <div className="text-lg font-semibold text-white">{stats.version}</div>
+                    <div className="text-xs text-slate-400">Current Version</div>
+                </div>
+                <div className="bg-slate-800/30 rounded-lg p-3">
+                    <div className="text-lg font-semibold text-white">{stats.status}</div>
+                    <div className="text-xs text-slate-400">Status</div>
+                </div>
+                <div className="bg-slate-800/30 rounded-lg p-3">
+                    <div className="text-lg font-semibold text-white">{events.length}</div>
+                    <div className="text-xs text-slate-400">Total Events</div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default PlaybookTemplateAnalytics;
+

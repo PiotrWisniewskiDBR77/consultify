@@ -355,6 +355,21 @@ app.use('/api/integrations/calendar', calendarIntegrationsRoutes);
 const mcpRoutes = require('./routes/mcp');
 app.use('/api/mcp', mcpRoutes);
 app.use('/api/superadmin', superAdminRoutes);
+// System Module Routes
+const auditLogRoutes = require('./routes/auditLog');
+const featureFlagsRoutes = require('./routes/featureFlags');
+const integrationsRoutes = require('./routes/integrations');
+const systemConfigRoutes = require('./routes/systemConfig');
+const systemHealthRoutes = require('./routes/systemHealth');
+const apiKeysRoutes = require('./routes/apiKeys');
+const backupRoutes = require('./routes/backup');
+app.use('/api/audit-logs', auditLogRoutes);
+app.use('/api/feature-flags', featureFlagsRoutes);
+app.use('/api/integrations', integrationsRoutes);
+app.use('/api/system-config', systemConfigRoutes);
+app.use('/api/system-health', systemHealthRoutes);
+app.use('/api/api-keys', apiKeysRoutes);
+app.use('/api/backups', backupRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
 // Media Ingestion (Multimodal Content Processing)
@@ -399,9 +414,7 @@ app.use('/api/security', securityRoutes);
 const gdprRoutes = require('./routes/gdpr');
 app.use('/api/gdpr', gdprRoutes);
 
-// API Keys Management (External Integrations)
-const apiKeysRoutes = require('./routes/api-keys');
-app.use('/api/api-keys', apiKeysRoutes);
+// API Keys Management (External Integrations) - already registered above at line 371
 
 // Enterprise AI Consulting - Organization Profiles
 const organizationProfilesRoutes = require('./routes/organization-profiles');
@@ -445,6 +458,31 @@ const trialRoutes = require('./routes/trial');
 app.use('/api/trial', trialRoutes);
 const ssoRoutes = require('./routes/sso');
 app.use('/api/sso', ssoRoutes);
+
+// SCIM 2.0 Provisioning Routes (Enterprise)
+const scimRoutes = require('./routes/scim');
+app.use('/api/scim/v2', scimRoutes);
+app.use('/api/scim/admin', scimRoutes);
+
+// WebAuthn/Passkeys Authentication Routes
+const webauthnRoutes = require('./routes/webauthn');
+app.use('/api/auth/webauthn', webauthnRoutes);
+
+// AI Budget Controls Routes
+const aiBudgetsRoutes = require('./routes/ai-budgets');
+app.use('/api/ai-budgets', aiBudgetsRoutes);
+
+// AI Modular Platform Routes (Variant A - 3 Modules)
+const aiInfrastructureRoutes = require('./routes/ai-infrastructure');
+const aiDevelopmentRoutes = require('./routes/ai-development');
+const aiOperationsRoutes = require('./routes/ai-operations');
+app.use('/api/ai-infrastructure', aiInfrastructureRoutes);
+app.use('/api/ai-development', aiDevelopmentRoutes);
+app.use('/api/ai-operations', aiOperationsRoutes);
+
+// RBAC - Custom Roles Routes
+const rbacRoutes = require('./routes/rbac');
+app.use('/api/rbac', rbacRoutes);
 
 // Security Policies Routes
 const securityPoliciesRoutes = require('./routes/securityPolicies');
@@ -684,6 +722,10 @@ app.use('/api/ai/actions', actionDecisionRoutes);
 const aiPlaybooksRoutes = require('./routes/aiPlaybooks');
 app.use('/api/ai/playbooks', aiPlaybooksRoutes);
 
+// Content Module Enterprise (Email Templates, Playbook Extensions, Categories, Tags, etc.)
+const contentRoutes = require('./routes/content');
+app.use('/api/content', contentRoutes);
+
 // Step 15: AI Explainability Ledger & Evidence Pack
 const aiExplainRoutes = require('./routes/aiExplain');
 app.use('/api/ai/explain', aiExplainRoutes);
@@ -763,8 +805,9 @@ app.use('/api/features', featureFlagRoutes);
 const webhookSubRoutes = require('./routes/webhookSubscriptions');
 app.use('/api/webhooks/subscriptions', webhookSubRoutes);
 
-const systemHealthRoutes = require('./routes/systemHealth');
-app.use('/api/system/health', systemHealthRoutes);
+// System Health Routes - already registered above at line 370
+// Additional path for legacy compatibility
+// Note: systemHealthRoutes already declared above
 
 // Consultify Studio - Visual AI Workspace
 const studioRoutes = require('./routes/studio');

@@ -41,10 +41,8 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
 
   const fetchCalendars = async () => {
     try {
-      const data = await Api.get('/api/integrations/calendar');
-      if (data?.calendars) {
-        setCalendars(data.calendars);
-      }
+      const calendars = await Api.getCalendars();
+      setCalendars(calendars);
     } catch (error) {
       console.error('Failed to fetch calendars:', error);
       // Fallback to defaults
@@ -60,10 +58,10 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
 
   const fetchSettings = async () => {
     try {
-      const data = await Api.get('/api/integrations/calendar/settings');
-      if (data?.settings) {
-        setSyncTasks(data.settings.syncTasks);
-        setSyncMeetings(data.settings.syncMeetings);
+      const settings = await Api.getCalendarSettings();
+      if (settings) {
+        setSyncTasks(settings.syncTasks);
+        setSyncMeetings(settings.syncMeetings);
       }
     } catch (error) {
       // Use defaults
@@ -72,7 +70,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
 
   const connectCalendar = async (calendarId: string) => {
     try {
-      const data = await Api.post(`/api/integrations/calendar/${calendarId}/connect`, {});
+      const data = await Api.connectCalendar(calendarId);
       if (data?.authUrl) {
         window.location.href = data.authUrl;
       }
@@ -83,10 +81,10 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
 
   const disconnectCalendar = async (calendarId: string) => {
     if (!confirm(t('settings.integrations.disconnectConfirm', 'Disconnect this calendar?'))) return;
-    
+
     try {
-      await Api.delete(`/api/integrations/calendar/${calendarId}`);
-      setCalendars(prev => prev.map(c => 
+      await Api.disconnectCalendar(calendarId);
+      setCalendars(prev => prev.map(c =>
         c.id === calendarId ? { ...c, connected: false, connection: null } : c
       ));
       toast.success(t('settings.integrations.disconnected', 'Calendar disconnected'));
@@ -98,7 +96,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
   const handleSaveSettings = async (tasks: boolean, meetings: boolean) => {
     setSavingSettings(true);
     try {
-      await Api.put('/api/integrations/calendar/settings', {
+      await Api.updateCalendarSettings({
         syncTasks: tasks,
         syncMeetings: meetings
       });
@@ -146,11 +144,10 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
         {calendars.map((cal) => (
           <div
             key={cal.id}
-            className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
-              cal.connected 
+            className={`flex items-center justify-between p-4 rounded-lg transition-colors ${cal.connected
                 ? 'bg-green-50/50 dark:bg-green-900/10 border border-green-200 dark:border-green-900/30'
                 : 'bg-slate-50 dark:bg-navy-800/50'
-            }`}
+              }`}
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{cal.icon}</span>
@@ -195,7 +192,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
         <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">
           {t('settings.integrations.syncOptions', 'Sync Options')}
         </h4>
-        
+
         <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg">
           <div>
             <p className="font-medium text-slate-900 dark:text-white">

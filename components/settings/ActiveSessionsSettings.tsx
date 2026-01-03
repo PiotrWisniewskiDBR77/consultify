@@ -52,14 +52,21 @@ export const ActiveSessionsSettings: React.FC<ActiveSessionsSettingsProps> = ({ 
 
   const terminateSession = async (sessionId: string) => {
     try {
-      await fetch(`/api/auth/sessions/${sessionId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      await Api.revokeSession(sessionId);
       setSessions(prev => prev.filter(s => s.id !== sessionId));
       toast.success(t('settings.security.sessionTerminated', 'Session terminated'));
     } catch (_error) {
       toast.error(t('settings.security.sessionError', 'Failed to terminate session'));
+    }
+  };
+
+  const handleRevokeAll = async () => {
+    try {
+      await Api.revokeAllSessions();
+      setSessions(prev => prev.filter(s => s.current)); // Keep current session
+      toast.success(t('settings.security.allSessionsRevoked', 'All other sessions revoked'));
+    } catch (error) {
+      toast.error(t('settings.security.revokeAllError', 'Failed to revoke all sessions'));
     }
   };
 
@@ -131,6 +138,17 @@ export const ActiveSessionsSettings: React.FC<ActiveSessionsSettingsProps> = ({ 
           );
         })}
       </div>
+
+      {sessions.length > 1 && (
+        <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-navy-700">
+          <button
+            onClick={handleRevokeAll}
+            className="px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-sm font-medium"
+          >
+            {t('settings.security.signOutAll', 'Sign Out All Devices')}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

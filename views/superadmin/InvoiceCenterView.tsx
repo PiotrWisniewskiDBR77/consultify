@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { Api } from '../../services/api';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { CreditNotesPanel, TaxSettingsPanel, InvoiceTemplateEditor } from '../../components/billing';
 
 interface Invoice {
     id: string;
@@ -70,7 +71,7 @@ interface BillingStats {
     monthlyGrowth: number;
 }
 
-type TabType = 'invoices' | 'credits' | 'tax' | 'usage';
+type TabType = 'invoices' | 'credits' | 'tax' | 'usage' | 'templates';
 type DateFilter = '7d' | '30d' | '90d' | '1y' | 'all';
 
 export const InvoiceCenterView: React.FC = () => {
@@ -383,81 +384,15 @@ export const InvoiceCenterView: React.FC = () => {
     );
 
     const renderCreditsTab = () => (
-        <div className="space-y-6">
-            <div className="flex items-center justify-end">
-                <button className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2">
-                    <Plus size={18} />
-                    Issue Credit Note
-                </button>
-            </div>
-
-            <div className="bg-white dark:bg-navy-800 rounded-xl p-12 border border-slate-200 dark:border-white/10 text-center">
-                <CreditCard size={40} className="mx-auto mb-3 text-slate-300" />
-                <p className="text-slate-500 font-medium">No credit notes</p>
-                <p className="text-sm text-slate-400">Credit notes will appear here when issued</p>
-            </div>
-        </div>
+        <CreditNotesPanel isAdmin={true} />
     );
 
     const renderTaxTab = () => (
-        <div className="space-y-6">
-            <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-white/10">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-6">Tax Configuration</h3>
-                
-                <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Default Tax Rate (%)
-                            </label>
-                            <input
-                                type="number"
-                                defaultValue={0}
-                                min={0}
-                                max={100}
-                                step={0.01}
-                                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Tax ID / VAT Number
-                            </label>
-                            <input
-                                type="text"
-                                placeholder="Enter tax ID"
-                                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg"
-                            />
-                        </div>
-                    </div>
+        <TaxSettingsPanel isAdmin={true} />
+    );
 
-                    <div>
-                        <label className="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-violet-600" />
-                            <span className="text-sm text-slate-700 dark:text-slate-300">
-                                Enable Stripe Tax for automatic tax calculation
-                            </span>
-                        </label>
-                    </div>
-
-                    <div className="flex justify-end">
-                        <button className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium">
-                            Save Tax Settings
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-white/10">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Tax Rates by Country</h3>
-                <p className="text-slate-500 text-sm">Configure country-specific tax rates for accurate billing.</p>
-                
-                <button className="mt-4 px-4 py-2 bg-slate-100 dark:bg-navy-700 hover:bg-slate-200 dark:hover:bg-navy-600 rounded-lg text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                    <Plus size={16} />
-                    Add Tax Rate
-                </button>
-            </div>
-        </div>
+    const renderTemplatesTab = () => (
+        <InvoiceTemplateEditor />
     );
 
     const renderUsageTab = () => (
@@ -656,12 +591,13 @@ export const InvoiceCenterView: React.FC = () => {
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-900 p-1 rounded-lg w-fit">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-900 p-1 rounded-lg w-fit overflow-x-auto">
                 {[
                     { id: 'invoices', label: 'Invoices', icon: <Receipt size={16} /> },
                     { id: 'credits', label: 'Credit Notes', icon: <CreditCard size={16} /> },
                     { id: 'tax', label: 'Tax Settings', icon: <FileText size={16} /> },
                     { id: 'usage', label: 'Usage Billing', icon: <TrendingUp size={16} /> },
+                    { id: 'templates', label: 'Templates', icon: <FileText size={16} /> },
                 ].map((tab) => (
                     <button
                         key={tab.id}
@@ -689,6 +625,7 @@ export const InvoiceCenterView: React.FC = () => {
                     {activeTab === 'credits' && renderCreditsTab()}
                     {activeTab === 'tax' && renderTaxTab()}
                     {activeTab === 'usage' && renderUsageTab()}
+                    {activeTab === 'templates' && renderTemplatesTab()}
                 </>
             )}
 

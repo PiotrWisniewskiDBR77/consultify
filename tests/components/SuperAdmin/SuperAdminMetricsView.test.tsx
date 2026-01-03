@@ -31,10 +31,10 @@ describe('SuperAdminMetricsView', () => {
     });
 
     it('should render loading state initially', () => {
-        vi.mocked(Api.getMetricsFunnels).mockImplementation(() => new Promise(() => {}));
-        
+        vi.mocked(Api.getMetricsFunnels).mockImplementation(() => new Promise(() => { }));
+
         render(<SuperAdminMetricsView />);
-        
+
         expect(screen.getByText('Loading conversion intelligence...')).toBeInTheDocument();
     });
 
@@ -57,12 +57,12 @@ describe('SuperAdminMetricsView', () => {
         };
 
         const mockAttribution = {
-            sources: [{ source: 'google', count: 100 }]
+            channels: [{ source: 'google', trials: 100, conversions: 10, conversionRate: 10 }]
         };
 
         const mockPartners = {
             leaderboard: [
-                { name: 'Partner 1', conversions: 50 }
+                { partnerName: 'Partner 1', conversions: 50, totalRevenue: 5000, partnerType: 'Affiliate', orgCount: 5 }
             ]
         };
 
@@ -169,9 +169,9 @@ describe('SuperAdminMetricsView', () => {
 
     it('should display attribution data', async () => {
         const mockAttribution = {
-            sources: [
-                { source: 'google', count: 100, percentage: 50 },
-                { source: 'direct', count: 50, percentage: 25 }
+            channels: [
+                { source: 'google', trials: 100, conversions: 50, conversionRate: 50 },
+                { source: 'direct', trials: 50, conversions: 12, conversionRate: 24 }
             ]
         };
 
@@ -191,8 +191,8 @@ describe('SuperAdminMetricsView', () => {
     it('should display partner leaderboard', async () => {
         const mockPartners = {
             leaderboard: [
-                { name: 'Partner 1', conversions: 50, revenue: 1000 },
-                { name: 'Partner 2', conversions: 30, revenue: 600 }
+                { partnerName: 'Partner 1', conversions: 50, totalRevenue: 1000, partnerType: 'Affiliate', orgCount: 5 },
+                { partnerName: 'Partner 2', conversions: 30, totalRevenue: 600, partnerType: 'Referral', orgCount: 3 }
             ]
         };
 

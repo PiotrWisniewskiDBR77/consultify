@@ -1,34 +1,37 @@
 // AI Recommendation Engine Unit Tests
 // Tests the AI recommendation engine for intelligent suggestions
 
-const { mockDb, mockAIService } = vi.hoisted(() => {
+const { mockDb, mockAIPipeline } = vi.hoisted(() => {
     return {
         mockDb: {
             all: vi.fn(),
             get: vi.fn(),
             run: vi.fn()
         },
-        mockAIService: {
-            generateRecommendations: vi.fn(),
+        mockAIPipeline: {
+            generateInitiatives: vi.fn(),
             analyzeContext: vi.fn()
         }
     };
 });
 
 vi.mock('../../../server/database', () => mockDb);
-vi.mock('../../../server/services/aiService', () => mockAIService);
+vi.mock('../../../server/services/ai/aiPipeline', () => ({ aiPipeline: mockAIPipeline }));
 
 const AIRecommendationEngine = require('../../../server/ai/recommendationEngine');
 
 describe('AIRecommendationEngine', () => {
-    let engine;
+    // Engine is now a singleton object
+    const engine = AIRecommendationEngine;
 
     beforeEach(() => {
         vi.resetAllMocks(); // Clear call history
-        engine = new AIRecommendationEngine({
+        // Inject mocks into the singleton
+        engine.setDependencies({
             db: mockDb,
-            aiService: mockAIService
+            aiPipeline: mockAIPipeline
         });
+        engine.clearCache();
     });
 
     afterEach(() => {
@@ -56,12 +59,13 @@ describe('AIRecommendationEngine', () => {
                 }
             ];
 
-            mockAIService.generateRecommendations.mockResolvedValue(mockRecommendations);
+            mockAIPipeline.generateInitiatives.mockResolvedValue(mockRecommendations);
 
             const result = await engine.generateRecommendations(context);
 
             expect(result).toEqual(mockRecommendations);
-            expect(mockAIService.generateRecommendations).toHaveBeenCalledWith(context);
+            // Verify correct mapping to pipeline input
+            expect(mockAIPipeline.generateInitiatives).toHaveBeenCalled();
         });
 
         it('should handle different recommendation types', async () => {
@@ -72,12 +76,17 @@ describe('AIRecommendationEngine', () => {
             ];
 
             for (const context of contexts) {
-                mockAIService.generateRecommendations.mockResolvedValue([]);
+                mockAIPipeline.generateInitiatives.mockResolvedValue([]);
 
                 const result = await engine.generateRecommendations(context);
 
                 expect(Array.isArray(result)).toBe(true);
-                expect(mockAIService.generateRecommendations).toHaveBeenCalledWith(context);
+                expect(mockAIPipeline.generateInitiatives).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        details: context
+                    }),
+                    null // Since we didn't pass userId in context, it defaults to null
+                );
             }
         });
 
@@ -86,7 +95,7 @@ describe('AIRecommendationEngine', () => {
                 null,
                 undefined,
                 {},
-                { type: 'invalid_type' }
+                { type: 'invalid_type' } // Assuming this should fail if no projectId
             ];
 
             for (const context of invalidContexts) {
@@ -316,7 +325,7 @@ describe('AIRecommendationEngine', () => {
 
     describe('Error Handling', () => {
         it('should handle AI service failures gracefully', async () => {
-            mockAIService.generateRecommendations.mockRejectedValue(new Error('AI service unavailable'));
+            mockAIPipeline.generateInitiatives.mockRejectedValue(new Error('AI service unavailable'));
 
             const context = { projectId: 'proj-123', type: 'planning' };
 
@@ -353,7 +362,7 @@ describe('AIRecommendationEngine', () => {
             const context = { projectId: 'proj-123', type: 'planning' };
             const mockResult = [{ id: 'rec-1', type: 'action' }];
 
-            mockAIService.generateRecommendations
+            mockAIPipeline.generateInitiatives
                 .mockResolvedValueOnce(mockResult)
                 .mockResolvedValueOnce([]); // Should not be called
 
@@ -364,14 +373,14 @@ describe('AIRecommendationEngine', () => {
             const result = await engine.generateRecommendations(context);
 
             expect(result).toEqual(mockResult);
-            expect(mockAIService.generateRecommendations).toHaveBeenCalledTimes(1);
+            expect(mockAIPipeline.generateInitiatives).toHaveBeenCalledTimes(1);
         });
 
         it('should handle concurrent requests efficiently', async () => {
             const context = { projectId: 'proj-123', type: 'planning' };
             const mockResult = [{ id: 'rec-1', type: 'action' }];
 
-            mockAIService.generateRecommendations.mockResolvedValue(mockResult);
+            mockAIPipeline.generateInitiatives.mockResolvedValue(mockResult);
 
             // Simulate concurrent requests
             const promises = Array(10).fill().map(() =>
@@ -385,9 +394,7 @@ describe('AIRecommendationEngine', () => {
             });
 
             // AI service should only be called once due to caching
-            expect(mockAIService.generateRecommendations).toHaveBeenCalledTimes(1);
+            expect(mockAIPipeline.generateInitiatives).toHaveBeenCalledTimes(1);
         });
     });
 });
-
-

@@ -3,12 +3,23 @@
  * 
  * Zustand store for managing AI Chat conversation history.
  * Handles conversation CRUD, message management, and UI state.
+ * 
+ * Extended for Unified AI Chat System:
+ * - displayMode: Manages full/split/collapsed chat modes
+ * - workspaceContext: Tracks what's displayed in split-screen workspace
  */
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Api } from '../services/api';
-import { ChatMessage } from '../types';
+import { ChatMessage, AppView } from '../types';
+import { 
+    WorkspaceContext, 
+    ChatDisplayMode, 
+    WorkspaceType,
+    createWorkspaceContext,
+    getDefaultWorkspaceType 
+} from '../types/workspace';
 
 // ==================== TYPES ====================
 
@@ -141,6 +152,16 @@ interface ConversationState {
     // Derived data (computed)
     groupedConversations: Record<ConversationGroup, Conversation[]>;
     
+    // ==================== UNIFIED CHAT SYSTEM ====================
+    // Display mode for chat interface (full-screen vs split-screen)
+    displayMode: ChatDisplayMode;
+    
+    // Context about what's displayed in workspace (for split mode)
+    workspaceContext: WorkspaceContext | null;
+    
+    // Previous view for "back" functionality
+    previousView: AppView | null;
+    
     // Actions - Fetch
     fetchConversations: (options?: { archived?: boolean; projectId?: string }) => Promise<void>;
     fetchConversation: (id: string) => Promise<void>;
@@ -180,6 +201,42 @@ interface ConversationState {
     // Helpers
     searchConversations: (query: string) => Conversation[];
     getConversationsByProject: (projectId: string) => Conversation[];
+    
+    // ==================== UNIFIED CHAT ACTIONS ====================
+    /**
+     * Set the display mode (full/split/collapsed)
+     */
+    setDisplayMode: (mode: ChatDisplayMode) => void;
+    
+    /**
+     * Set workspace context for split mode
+     */
+    setWorkspaceContext: (context: WorkspaceContext | null) => void;
+    
+    /**
+     * Update workspace context with view info (convenience method)
+     */
+    updateWorkspaceFromView: (view: AppView, entityId?: string, entityData?: Record<string, unknown>) => void;
+    
+    /**
+     * Expand chat to full screen mode
+     */
+    expandToFullScreen: () => void;
+    
+    /**
+     * Collapse to split screen with given workspace context
+     */
+    collapseToSplit: (workspaceContext?: Partial<WorkspaceContext>) => void;
+    
+    /**
+     * Store previous view for navigation back
+     */
+    setPreviousView: (view: AppView | null) => void;
+    
+    /**
+     * Check if we're in a split-screen view
+     */
+    isSplitMode: () => boolean;
 }
 
 // ==================== STORE IMPLEMENTATION ====================
@@ -204,6 +261,11 @@ export const useConversationStore = create<ConversationState>()(
                 older: [],
                 archived: []
             },
+            
+            // Unified Chat System state
+            displayMode: 'full' as ChatDisplayMode,
+            workspaceContext: null,
+            previousView: null,
 
             // ==================== FETCH ====================
 
@@ -534,6 +596,74 @@ export const useConversationStore = create<ConversationState>()(
             getConversationsByProject: (projectId) => {
                 const { conversations } = get();
                 return conversations.filter(c => c.projectId === projectId);
+            },
+
+            // ==================== UNIFIED CHAT ACTIONS ====================
+
+            setDisplayMode: (mode: ChatDisplayMode) => {
+                console.log('[ConversationStore] setDisplayMode:', mode);
+                set({ displayMode: mode });
+            },
+
+            setWorkspaceContext: (context: WorkspaceContext | null) => {
+                console.log('[ConversationStore] setWorkspaceContext:', context?.type, context?.entityId);
+                set({ workspaceContext: context });
+            },
+
+            updateWorkspaceFromView: (view: AppView, entityId?: string, entityData?: Record<string, unknown>) => {
+                const workspaceType = getDefaultWorkspaceType(view);
+                const context = createWorkspaceContext(view, workspaceType, {
+                    entityId,
+                    entityData
+                });
+                set({ 
+                    workspaceContext: context,
+                    displayMode: 'split'
+                });
+                console.log('[ConversationStore] updateWorkspaceFromView:', view, workspaceType);
+            },
+
+            expandToFullScreen: () => {
+                const { workspaceContext } = get();
+                console.log('[ConversationStore] expandToFullScreen from:', workspaceContext?.view);
+                set({ 
+                    displayMode: 'full',
+                    previousView: workspaceContext?.view || null
+                });
+            },
+
+            collapseToSplit: (partialContext?: Partial<WorkspaceContext>) => {
+                const current = get().workspaceContext;
+                let newContext: WorkspaceContext | null = null;
+                
+                if (partialContext) {
+                    newContext = {
+                        view: partialContext.view || current?.view || AppView.MY_WORK,
+                        type: partialContext.type || current?.type || 'empty',
+                        timestamp: new Date(),
+                        entityId: partialContext.entityId || current?.entityId,
+                        entityName: partialContext.entityName || current?.entityName,
+                        entityData: partialContext.entityData || current?.entityData,
+                        projectId: partialContext.projectId || current?.projectId,
+                        projectName: partialContext.projectName || current?.projectName
+                    };
+                } else if (current) {
+                    newContext = { ...current, timestamp: new Date() };
+                }
+                
+                console.log('[ConversationStore] collapseToSplit:', newContext?.view);
+                set({ 
+                    displayMode: 'split',
+                    workspaceContext: newContext
+                });
+            },
+
+            setPreviousView: (view: AppView | null) => {
+                set({ previousView: view });
+            },
+
+            isSplitMode: () => {
+                return get().displayMode === 'split';
             }
         }),
         {
@@ -541,7 +671,8 @@ export const useConversationStore = create<ConversationState>()(
             storage: createJSONStorage(() => localStorage),
             partialize: (state) => ({
                 isSidebarOpen: state.isSidebarOpen,
-                showArchived: state.showArchived
+                showArchived: state.showArchived,
+                displayMode: state.displayMode
             })
         }
     )

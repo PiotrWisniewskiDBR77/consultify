@@ -27,6 +27,9 @@ vi.mock('../../services/api', () => ({
         getProjects: vi.fn().mockResolvedValue([]),
         getInvitations: vi.fn().mockResolvedValue([]),
         getFeedback: vi.fn().mockResolvedValue([]),
+        getUserPlans: vi.fn().mockResolvedValue([]),
+        aiGetSystemPrompts: vi.fn().mockResolvedValue([]),
+        get: vi.fn().mockResolvedValue({}),
     },
 }));
 

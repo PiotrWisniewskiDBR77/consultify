@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
+import {
   Key, Plus, Copy, Trash2, Eye, EyeOff, Settings, RefreshCw,
   TrendingUp, Shield, Calendar, Loader2, BarChart3, RotateCw
 } from 'lucide-react';
@@ -84,33 +84,28 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
 
   const fetchKeys = async () => {
     try {
-      const response = await fetch('/api/user/api-keys', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      const data = await Api.getUserApiKeys();
+      setKeys(data);
+      // Initialize settings for each key
+      const settings: Record<string, any> = {};
+      data.forEach((key: APIKey) => {
+        settings[key.id] = {
+          rateLimit: key.rateLimit?.toString() || '',
+          quotaLimit: key.quotaLimit?.toString() || '',
+          expiresAt: key.expiresAt || '',
+          ipWhitelist: (key.ipWhitelist || []).join('\n'),
+          scopes: key.scopes || []
+        };
       });
-      if (response.ok) {
-        const data = await response.json();
-        setKeys(data);
-        // Initialize settings for each key
-        const settings: Record<string, any> = {};
-        data.forEach((key: APIKey) => {
-          settings[key.id] = {
-            rateLimit: key.rateLimit?.toString() || '',
-            quotaLimit: key.quotaLimit?.toString() || '',
-            expiresAt: key.expiresAt || '',
-            ipWhitelist: (key.ipWhitelist || []).join('\n'),
-            scopes: key.scopes || []
-          };
-        });
-        setKeySettings(settings);
-      }
+      setKeySettings(settings);
     } catch (_error) {
-      // Mock data
+      // Mock data (fallback from original code)
       const mockKeys: APIKey[] = [
-        { 
-          id: '1', 
-          name: 'Production Key', 
-          prefix: 'ck_prod_', 
-          createdAt: '2024-01-15', 
+        {
+          id: '1',
+          name: 'Production Key',
+          prefix: 'ck_prod_',
+          createdAt: '2024-01-15',
           lastUsed: '2 hours ago',
           rateLimit: 1000,
           quotaLimit: 100000,
@@ -120,10 +115,10 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
           ipWhitelist: ['192.168.1.1', '10.0.0.1'],
           scopes: ['read', 'write']
         },
-        { 
-          id: '2', 
-          name: 'Development', 
-          prefix: 'ck_dev_', 
+        {
+          id: '2',
+          name: 'Development',
+          prefix: 'ck_dev_',
           createdAt: '2024-02-20',
           rateLimit: 100,
           quotaLimit: 10000,
@@ -147,13 +142,8 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
 
   const fetchKeyUsage = async (keyId: string) => {
     try {
-      const response = await fetch(`/api/user/api-keys/${keyId}/usage`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setKeyUsage(prev => ({ ...prev, [keyId]: data }));
-      }
+      const data = await Api.getApiKeyUsage(keyId);
+      setKeyUsage(prev => ({ ...prev, [keyId]: data }));
     } catch (error) {
       // Mock usage data
       setKeyUsage(prev => ({
@@ -176,23 +166,13 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
 
   const createKey = async () => {
     if (!newKeyName.trim()) return;
-    
+
     try {
-      const response = await fetch('/api/user/api-keys', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ name: newKeyName })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setNewKey(data.key);
-        setKeys(prev => [...prev, data.keyInfo]);
-        toast.success(t('settings.api.keyCreated', 'API key created'));
-      }
+      const data = await Api.createUserApiKey(newKeyName);
+
+      setNewKey(data.key);
+      setKeys(prev => [...prev, data.keyInfo]);
+      toast.success(t('settings.api.keyCreated', 'API key created'));
     } catch (_error) {
       // Mock creation
       setNewKey('ck_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxx');
@@ -203,19 +183,16 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
         createdAt: new Date().toISOString().split('T')[0]
       }]);
     }
-    
+
     setNewKeyName('');
     setShowNew(false);
   };
 
   const deleteKey = async (keyId: string) => {
     if (!confirm(t('settings.api.deleteConfirm', 'Are you sure you want to delete this API key?'))) return;
-    
+
     try {
-      await fetch(`/api/user/api-keys/${keyId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      await Api.deleteUserApiKey(keyId);
       setKeys(prev => prev.filter(k => k.id !== keyId));
       toast.success(t('settings.api.keyDeleted', 'API key deleted'));
     } catch (_error) {
@@ -235,19 +212,11 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
 
     setRotatingKey(keyId);
     try {
-      const response = await fetch(`/api/user/api-keys/${keyId}/rotate`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setNewKey(data.newKey);
-        toast.success(t('settings.api.keyRotated', 'API key rotated successfully'));
-        fetchKeys();
-      }
+      const data = await Api.rotateApiKey(keyId);
+
+      setNewKey(data.newKey);
+      toast.success(t('settings.api.keyRotated', 'API key rotated successfully'));
+      fetchKeys();
     } catch (error) {
       toast.error(t('settings.api.rotateError', 'Failed to rotate key'));
     } finally {
@@ -260,21 +229,14 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
     if (!settings) return;
 
     try {
-      await fetch(`/api/user/api-keys/${keyId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          rateLimit: settings.rateLimit ? parseInt(settings.rateLimit) : null,
-          quotaLimit: settings.quotaLimit ? parseInt(settings.quotaLimit) : null,
-          expiresAt: settings.expiresAt || null,
-          ipWhitelist: settings.ipWhitelist.split('\n').filter(ip => ip.trim()),
-          scopes: settings.scopes
-        })
+      await Api.updateApiKey(keyId, {
+        rateLimit: settings.rateLimit ? parseInt(settings.rateLimit) : null,
+        quotaLimit: settings.quotaLimit ? parseInt(settings.quotaLimit) : null,
+        expiresAt: settings.expiresAt || null,
+        ipWhitelist: settings.ipWhitelist.split('\n').filter(ip => ip.trim()),
+        scopes: settings.scopes
       });
-      
+
       toast.success(t('settings.api.settingsSaved', 'Settings saved'));
       setShowSettings(null);
       fetchKeys();
@@ -401,9 +363,8 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
           return (
             <div
               key={key.id}
-              className={`p-4 bg-white dark:bg-navy-900 rounded-lg border transition-all ${
-                isSelected ? 'border-brand' : 'border-slate-200 dark:border-white/10'
-              }`}
+              className={`p-4 bg-white dark:bg-navy-900 rounded-lg border transition-all ${isSelected ? 'border-brand' : 'border-slate-200 dark:border-white/10'
+                }`}
             >
               {/* Key Header */}
               <div className="flex items-start justify-between mb-3">
@@ -433,22 +394,20 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setSelectedKey(isSelected ? null : key.id)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      isSelected
-                        ? 'bg-brand text-white'
-                        : 'text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
-                    }`}
+                    className={`p-2 rounded-lg transition-colors ${isSelected
+                      ? 'bg-brand text-white'
+                      : 'text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
+                      }`}
                     title={t('settings.api.viewUsage', 'View usage')}
                   >
                     <BarChart3 size={16} />
                   </button>
                   <button
                     onClick={() => setShowSettings(showKeySettings ? null : key.id)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      showKeySettings
-                        ? 'bg-brand text-white'
-                        : 'text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
-                    }`}
+                    className={`p-2 rounded-lg transition-colors ${showKeySettings
+                      ? 'bg-brand text-white'
+                      : 'text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
+                      }`}
                     title={t('common.settings', 'Settings')}
                   >
                     <Settings size={16} />
@@ -488,13 +447,12 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                   </div>
                   <div className="w-full bg-slate-200 dark:bg-navy-700 rounded-full h-2">
                     <div
-                      className={`h-2 rounded-full transition-all ${
-                        quotaPercent >= 90
-                          ? 'bg-red-500'
-                          : quotaPercent >= 70
-                            ? 'bg-amber-500'
-                            : 'bg-green-500'
-                      }`}
+                      className={`h-2 rounded-full transition-all ${quotaPercent >= 90
+                        ? 'bg-red-500'
+                        : quotaPercent >= 70
+                          ? 'bg-amber-500'
+                          : 'bg-green-500'
+                        }`}
                       style={{ width: `${quotaPercent}%` }}
                     />
                   </div>

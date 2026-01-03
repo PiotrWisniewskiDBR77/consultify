@@ -36,10 +36,10 @@ export const SignalNode: React.FC<SignalNodeProps> = ({
             onClick={onClick}
             className={`
                 relative flex items-center justify-center p-2.5 rounded-xl transition-all duration-300
-                group border bg-navy-950/50 
+                group border bg-white dark:bg-navy-950/50 
                 ${active
-                    ? `border-${colorClass.split('-')[1]}-500/30 bg-white/5`
-                    : 'border-transparent hover:bg-white/5 hover:border-white/5'
+                    ? `border-${colorClass.split('-')[1]}-500/30 bg-slate-50 dark:bg-white/5`
+                    : 'border-transparent hover:bg-slate-50 dark:hover:bg-white/5 hover:border-slate-100 dark:hover:border-white/5'
                 }
             `}
             title={`${count} ${label}`}
@@ -57,7 +57,7 @@ export const SignalNode: React.FC<SignalNodeProps> = ({
             {/* Main Icon */}
             <Icon
                 size={22}
-                className={`transition-colors duration-300 ${count > 0 ? colorClass : 'text-slate-400 group-hover:text-slate-200'}`}
+                className={`transition-colors duration-300 ${count > 0 ? colorClass : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200'}`}
                 strokeWidth={isCritical && count > 0 ? 2.5 : 2}
             />
 
@@ -69,9 +69,9 @@ export const SignalNode: React.FC<SignalNodeProps> = ({
                     flex items-center justify-center 
                     text-[10px] font-bold 
                     rounded-full 
-                    bg-navy-900 border border-white/10 
-                    text-white
-                    shadow-lg shadow-black/50
+                    bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 
+                    text-slate-900 dark:text-white
+                    shadow-sm dark:shadow-lg dark:shadow-black/50
                     z-10
                 `}>
                     <span className={colorClass}>{count > 99 ? '99+' : count}</span>
@@ -79,7 +79,7 @@ export const SignalNode: React.FC<SignalNodeProps> = ({
             )}
 
             {/* Hover Tooltip */}
-            <div className="absolute top-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-navy-900 border border-white/10 px-3 py-1.5 rounded-lg text-xs text-slate-200 whitespace-nowrap z-50 shadow-xl">
+            <div className="absolute top-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 px-3 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-200 whitespace-nowrap z-50 shadow-xl">
                 <span className="font-semibold mr-1">{count}</span> {label}
             </div>
         </button>

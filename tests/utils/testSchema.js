@@ -445,22 +445,17 @@ export const TEST_SCHEMA = [
         id TEXT PRIMARY KEY,
         experiment_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
-        variant_index INTEGER NOT NULL,
-        metric TEXT NOT NULL,
-        value REAL NOT NULL,
-        recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        has_screen_context INTEGER,
+        screen_context_hash TEXT,
+        success INTEGER,
+        error_message TEXT,
+        tokens_used INTEGER,
+        cost_usd REAL
     )`,
-    `CREATE TABLE IF NOT EXISTS ai_system_prompts (
-        id TEXT PRIMARY KEY,
-        key TEXT UNIQUE NOT NULL,
-        description TEXT,
-        content TEXT NOT NULL,
-        context_config TEXT DEFAULT '{}',
-        is_active INTEGER DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`,
-    `CREATE TABLE IF NOT EXISTS help_analytics (
+
+    // AI Policies definitions are added at the end of the file
+    // Removing the malformed db.run block here
+    `CREATE TABLE IF NOT EXISTS help_analytics(
         id TEXT PRIMARY KEY,
         user_id TEXT,
         organization_id TEXT,
@@ -470,7 +465,7 @@ export const TEST_SCHEMA = [
         session_id TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS help_feedback (
+    `CREATE TABLE IF NOT EXISTS help_feedback(
         id TEXT PRIMARY KEY,
         user_id TEXT,
         organization_id TEXT,
@@ -481,7 +476,7 @@ export const TEST_SCHEMA = [
         comment TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS initiative_templates (
+    `CREATE TABLE IF NOT EXISTS initiative_templates(
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         description TEXT,
@@ -493,7 +488,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS management_report_templates (
+    `CREATE TABLE IF NOT EXISTS management_report_templates(
         id TEXT PRIMARY KEY,
         organization_id TEXT,
         name TEXT NOT NULL,
@@ -505,7 +500,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS demo_templates (
+    `CREATE TABLE IF NOT EXISTS demo_templates(
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         description TEXT,
@@ -514,7 +509,7 @@ export const TEST_SCHEMA = [
         is_active INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS action_decisions (
+    `CREATE TABLE IF NOT EXISTS action_decisions(
         id TEXT PRIMARY KEY,
         initiative_id TEXT,
         action_id TEXT,
@@ -526,7 +521,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
     // Tables from auth.test.js that might be missing in setup.ts schemas
-    `CREATE TABLE IF NOT EXISTS organizations (
+    `CREATE TABLE IF NOT EXISTS organizations(
         id TEXT PRIMARY KEY,
         name TEXT,
         plan TEXT DEFAULT 'free',
@@ -535,7 +530,7 @@ export const TEST_SCHEMA = [
         mfa_grace_period_days INTEGER,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS mfa_attempts (
+    `CREATE TABLE IF NOT EXISTS mfa_attempts(
         id TEXT PRIMARY KEY,
         user_id TEXT,
         attempt_type TEXT,
@@ -544,7 +539,7 @@ export const TEST_SCHEMA = [
         user_agent TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS trusted_devices (
+    `CREATE TABLE IF NOT EXISTS trusted_devices(
         id TEXT PRIMARY KEY,
         user_id TEXT,
         device_fingerprint TEXT,
@@ -553,7 +548,7 @@ export const TEST_SCHEMA = [
         expires_at DATETIME,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS refresh_tokens (
+    `CREATE TABLE IF NOT EXISTS refresh_tokens(
         id TEXT PRIMARY KEY,
         user_id TEXT,
         token_hash TEXT,
@@ -566,14 +561,14 @@ export const TEST_SCHEMA = [
         revoked_at DATETIME,
         revoked_reason TEXT
     )`,
-    `CREATE TABLE IF NOT EXISTS revoked_tokens (
+    `CREATE TABLE IF NOT EXISTS revoked_tokens(
         jti TEXT PRIMARY KEY,
         user_id TEXT,
         expires_at DATETIME,
         reason TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS access_requests (
+    `CREATE TABLE IF NOT EXISTS access_requests(
         id TEXT PRIMARY KEY,
         email TEXT,
         first_name TEXT,
@@ -583,7 +578,7 @@ export const TEST_SCHEMA = [
         status TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS access_codes (
+    `CREATE TABLE IF NOT EXISTS access_codes(
         id TEXT PRIMARY KEY,
         code TEXT UNIQUE,
         description TEXT,
@@ -593,13 +588,13 @@ export const TEST_SCHEMA = [
         expires_at DATETIME,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS access_code_usage (
+    `CREATE TABLE IF NOT EXISTS access_code_usage(
         id TEXT PRIMARY KEY,
         code_id TEXT,
         user_id TEXT,
         used_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS activity_logs (
+    `CREATE TABLE IF NOT EXISTS activity_logs(
         id TEXT PRIMARY KEY,
         organization_id TEXT,
         user_id TEXT,
@@ -614,7 +609,7 @@ export const TEST_SCHEMA = [
         correlation_id TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS projects (
+    `CREATE TABLE IF NOT EXISTS projects(
         id TEXT PRIMARY KEY,
         organization_id TEXT,
         name TEXT,
@@ -628,21 +623,21 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS project_members (
+    `CREATE TABLE IF NOT EXISTS project_members(
         id TEXT PRIMARY KEY,
         project_id TEXT,
         user_id TEXT,
         role TEXT DEFAULT 'MEMBER',
         joined_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS multi_framework_assessments (
+    `CREATE TABLE IF NOT EXISTS multi_framework_assessments(
         id TEXT PRIMARY KEY,
         project_id TEXT,
         name TEXT,
         status TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS knowledge_docs (
+    `CREATE TABLE IF NOT EXISTS knowledge_docs(
         id TEXT PRIMARY KEY,
         project_id TEXT,
         title TEXT,
@@ -650,13 +645,13 @@ export const TEST_SCHEMA = [
         deleted_at DATETIME,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS workstreams (
+    `CREATE TABLE IF NOT EXISTS workstreams(
         id TEXT PRIMARY KEY,
         project_id TEXT,
         name TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS project_notification_settings (
+    `CREATE TABLE IF NOT EXISTS project_notification_settings(
         id TEXT PRIMARY KEY,
         project_id TEXT,
         task_overdue_enabled INTEGER DEFAULT 1,
@@ -668,6 +663,199 @@ export const TEST_SCHEMA = [
         escalation_days INTEGER DEFAULT 3,
         email_notifications INTEGER DEFAULT 0,
         in_app_notifications INTEGER DEFAULT 1,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    // ==========================================
+    // AI CORE LAYER — ENTERPRISE PMO BRAIN
+    // ==========================================
+    `CREATE TABLE IF NOT EXISTS superadmin_ai_settings(
+        id TEXT PRIMARY KEY DEFAULT 'global',
+        default_provider TEXT,
+        fallback_chain TEXT DEFAULT '[]',
+        circuit_breaker_config TEXT DEFAULT '{"failureThreshold": 5, "cooldownSeconds": 60}',
+        global_token_limit INTEGER DEFAULT 10000000,
+        global_rate_limit TEXT DEFAULT '{"requestsPerMinute": 60, "requestsPerHour": 1000}',
+        max_context_window_size INTEGER DEFAULT 128000,
+        max_tokens_per_request INTEGER DEFAULT 8192,
+        pii_detection_sensitivity TEXT DEFAULT 'medium',
+        require_encryption INTEGER DEFAULT 1,
+        data_residency TEXT DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_by TEXT
+    )`,
+    `CREATE TABLE IF NOT EXISTS organization_ai_settings(
+        organization_id TEXT PRIMARY KEY,
+        policy_level TEXT DEFAULT 'ADVISORY',
+        max_policy_level TEXT DEFAULT 'ASSISTED',
+        default_proactivity_mode TEXT DEFAULT 'BALANCED',
+        active_roles TEXT DEFAULT '["ADVISOR"]',
+        default_role TEXT DEFAULT 'ADVISOR',
+        enabled_model_ids TEXT DEFAULT '[]',
+        max_ai_calls_per_day INTEGER DEFAULT 100,
+        max_tokens_per_month INTEGER DEFAULT 500000,
+        monthly_budget_usd REAL DEFAULT 0,
+        hard_limit_usd REAL DEFAULT 0,
+        freeze_on_limit INTEGER DEFAULT 0,
+        web_search_enabled INTEGER DEFAULT 1,
+        artifacts_enabled INTEGER DEFAULT 1,
+        thinking_steps_enabled INTEGER DEFAULT 1,
+        focus_modes_enabled INTEGER DEFAULT 1,
+        voice_enabled INTEGER DEFAULT 0,
+        audit_all_requests INTEGER DEFAULT 0,
+        audit_policy_changes INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_by TEXT
+    )`,
+    `CREATE TABLE IF NOT EXISTS user_ai_settings(
+        user_id TEXT PRIMARY KEY,
+        response_style TEXT DEFAULT 'balanced',
+        writing_tone TEXT DEFAULT 'professional',
+        preferred_language TEXT DEFAULT 'auto',
+        code_explanations INTEGER DEFAULT 1,
+        show_sources INTEGER DEFAULT 1,
+        proactivity_mode TEXT DEFAULT 'BALANCED',
+        model_temperature REAL DEFAULT 0.7,
+        max_tokens INTEGER DEFAULT 4096,
+        top_p REAL DEFAULT 1.0,
+        frequency_penalty REAL DEFAULT 0.0,
+        presence_penalty REAL DEFAULT 0.0,
+        system_instructions TEXT DEFAULT '',
+        visible_model_ids TEXT DEFAULT '[]',
+        preferred_model_id TEXT DEFAULT NULL,
+        enable_pii_redaction INTEGER DEFAULT 0,
+        data_retention_policy TEXT DEFAULT 'standard',
+        share_usage_analytics INTEGER DEFAULT 1,
+        context_retention TEXT DEFAULT 'session',
+        auto_suggestions INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS ai_settings_audit(
+        id TEXT PRIMARY KEY,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        level TEXT NOT NULL,
+        actor_id TEXT NOT NULL,
+        actor_role TEXT NOT NULL,
+        target_id TEXT NOT NULL,
+        setting_key TEXT NOT NULL,
+        old_value TEXT,
+        new_value TEXT,
+        ip_address TEXT,
+        user_agent TEXT
+    )`,
+    `INSERT OR IGNORE INTO superadmin_ai_settings(id) VALUES('global')`,
+    `CREATE TABLE IF NOT EXISTS llm_providers(
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        provider TEXT,
+        api_key TEXT,
+        endpoint TEXT,
+        model_id TEXT,
+        cost_per_1k REAL DEFAULT 0,
+        is_active INTEGER DEFAULT 1,
+        is_default INTEGER DEFAULT 0,
+        visibility TEXT DEFAULT 'admin',
+        tier TEXT DEFAULT 'STANDARD',
+        priority INTEGER DEFAULT 0,
+        health_status TEXT DEFAULT 'unknown',
+        last_health_check DATETIME
+    )`,
+    `CREATE TABLE IF NOT EXISTS model_tier_assignments(
+        id TEXT PRIMARY KEY,
+        provider_id TEXT NOT NULL,
+        tier TEXT NOT NULL,
+        priority INTEGER DEFAULT 0,
+        is_active INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS organization_provider_settings(
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        provider_id TEXT NOT NULL,
+        is_enabled INTEGER DEFAULT 1,
+        custom_priority INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS tier_round_robin_state(
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        tier TEXT NOT NULL,
+        last_provider_id TEXT,
+        last_used_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS conversation_history(
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        user_id TEXT,
+        role TEXT NOT NULL CHECK(role IN('user', 'assistant', 'system')),
+        content TEXT NOT NULL,
+        tokens INTEGER,
+        metadata TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS ai_project_memory(
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        memory_type TEXT NOT NULL,
+        content TEXT NOT NULL,
+        recorded_by TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS ai_organization_memory(
+        organization_id TEXT PRIMARY KEY,
+        governance_style TEXT DEFAULT 'BALANCED',
+        ai_strictness TEXT DEFAULT 'STANDARD',
+        recurring_patterns TEXT DEFAULT '[]',
+        pmo_maturity TEXT DEFAULT 'BASIC',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS ai_audit_logs(
+        id TEXT PRIMARY KEY,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        user_id TEXT NOT NULL,
+        organization_id TEXT NOT NULL,
+        project_id TEXT,
+        capability TEXT,
+        action_type TEXT,
+        action_description TEXT,
+        context_snapshot TEXT,
+        data_sources_used TEXT DEFAULT '[]',
+        ai_role TEXT,
+        policy_level TEXT,
+        confidence_level REAL,
+        ai_suggestion TEXT,
+        user_decision TEXT,
+        user_feedback TEXT,
+        regulatory_mode INTEGER DEFAULT 0,
+        reasoning_summary TEXT,
+        data_used_json TEXT,
+        constraints_applied_json TEXT,
+        correlation_id TEXT,
+        model TEXT,
+        latency_ms INTEGER,
+        has_screen_context INTEGER,
+        screen_context_hash TEXT,
+        success INTEGER,
+        error_message TEXT,
+        tokens_used INTEGER,
+        cost_usd REAL
+    )`,
+    `CREATE TABLE IF NOT EXISTS ai_policies(
+        organization_id TEXT PRIMARY KEY,
+        policy_level TEXT DEFAULT 'ADVISORY',
+        internet_enabled INTEGER DEFAULT 0,
+        audit_required INTEGER DEFAULT 1,
+        active_roles TEXT DEFAULT '["ADVISOR","PMO_MANAGER","EXECUTOR","EDUCATOR"]',
+        max_policy_level TEXT DEFAULT 'ASSISTED',
+        default_ai_role TEXT DEFAULT 'ADVISOR',
+        proactive_notifications INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`
 ];

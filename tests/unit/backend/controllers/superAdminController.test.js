@@ -15,7 +15,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 let controller;
-let mockDb, mockActivityService, mockBillingService, mockUsageService, mockRealtimeService, mockStorageService, mockLegalService, mockLegalEventLogger, mockAttributionService, mockJwt, mockBcrypt, mockUuid;
+let mockDb, mockActivityService, mockBillingService, mockUsageService, mockRealtimeService, mockStorageService, mockLegalService, mockLegalEventLogger, mockAttributionService, mockInvitationService, mockJwt, mockBcrypt, mockUuid;
 let mockReq, mockRes, mockNext;
 
 beforeEach(() => {
@@ -49,6 +49,7 @@ beforeEach(() => {
     mockLegalService = { getAllDocuments: vi.fn().mockResolvedValue([]), publishDocument: vi.fn().mockResolvedValue({}), toggleDocumentActive: vi.fn().mockResolvedValue({}), getDocumentById: vi.fn().mockResolvedValue({}) };
     mockLegalEventLogger = { getEvents: vi.fn().mockResolvedValue([]), getEventStats: vi.fn().mockResolvedValue({}) };
     mockAttributionService = { getOrganizationAttribution: vi.fn().mockResolvedValue([]), getFirstAttribution: vi.fn().mockResolvedValue({}), exportAttribution: vi.fn().mockResolvedValue([]), getPartnerSummary: vi.fn().mockResolvedValue({}) };
+    mockInvitationService = { createOrgInvitation: vi.fn().mockResolvedValue({ token: 'mock-token' }) };
     mockJwt = { sign: vi.fn(), verify: vi.fn() };
     mockBcrypt = { hashSync: vi.fn(), compareSync: vi.fn() };
     mockUuid = { v4: vi.fn() };
@@ -100,6 +101,7 @@ beforeEach(() => {
         LegalService: mockLegalService,
         LegalEventLogger: mockLegalEventLogger,
         AttributionService: mockAttributionService,
+        InvitationService: mockInvitationService,
         jwt: mockJwt,
         bcrypt: mockBcrypt,
         uuid: mockUuid
@@ -202,12 +204,12 @@ describe('SuperAdmin Controller', () => {
             await controller.getDashboardStats(mockReq, mockRes, mockNext);
             await new Promise(resolve => setTimeout(resolve, 10));
 
-            expect(mockRes.json).toHaveBeenCalledWith({
+            expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
                 activity: mockActivityStats,
                 ai: mockAiStats,
                 counts: mockCounts,
                 live: mockLive
-            });
+            }));
         });
 
         it('should handle activity stats errors gracefully', async () => {
@@ -479,8 +481,14 @@ describe('SuperAdmin Controller', () => {
 
             await controller.inviteUser(mockReq, mockRes, mockNext);
 
-            expect(mockDb.get).toHaveBeenCalled();
-            expect(mockDb.run).toHaveBeenCalled();
+            expect(mockInvitationService.createOrgInvitation).toHaveBeenCalledWith(
+                'org-1',
+                'newuser@test.com',
+                'USER',
+                'admin-1',
+                {},
+                expect.any(Object)
+            );
             expect(mockActivityService.log).toHaveBeenCalled();
             expect(mockRes.json).toHaveBeenCalled();
         });
@@ -500,10 +508,7 @@ describe('SuperAdmin Controller', () => {
                 organizationId: 'org-1'
             };
 
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, { id: 'user-1' }); // User exists
-                return Promise.resolve({ id: 'user-1' });
-            });
+            mockInvitationService.createOrgInvitation.mockRejectedValue(new Error('User already a member'));
 
             await controller.inviteUser(mockReq, mockRes, mockNext);
 

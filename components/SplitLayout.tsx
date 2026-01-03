@@ -1,15 +1,18 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { ChatPanel } from './ChatPanel';
+import { UnifiedChatPanel } from './AIChat/UnifiedChatPanel';
 import { useAppStore } from '../store/useAppStore';
+import { useConversationStore } from '../store/useConversationStore';
 import { usePMOContextAutoFetch } from '../store/usePMOStore';
 import { useArtifactsStore } from '../store/useArtifactsStore';
-import { ChatMessage, ChatOption, Artifact, FocusMode } from '../types';
+import { ChatMessage, ChatOption, Artifact, FocusMode, AppView } from '../types';
 import { useAIStream } from '../hooks/useAIStream';
 import { useAIContext } from '../contexts/AIContext';
 import { useDeviceType } from '../hooks/useDeviceType';
-import { X, Sparkles, MessageSquare, FileCode, ChevronRight, ChevronLeft } from 'lucide-react';
+import { X, Sparkles, MessageSquare, FileCode, ChevronRight, ChevronLeft, Maximize2 } from 'lucide-react';
 import { ArtifactsPanel } from './AIChat/Artifacts/ArtifactsPanel';
 import { FocusModeSelector } from './AIChat/Input/FocusModeSelector';
+import { createWorkspaceContext, getDefaultWorkspaceType } from '../types/workspace';
 
 interface SplitLayoutProps {
     children: React.ReactNode;
@@ -18,17 +21,24 @@ interface SplitLayoutProps {
     isFullScreen?: boolean; // Escape hatch for tools needing full width
     onSendMessage?: (text: string) => void; // Optional override
     hideSidebar?: boolean;
+    /** Use the new UnifiedChatPanel instead of legacy ChatPanel */
+    useUnifiedChat?: boolean;
+    /** Current view for workspace context (optional) */
+    currentView?: AppView;
+    /** Entity ID for workspace context (optional) */
+    contextEntityId?: string;
 }
 
 export const SplitLayout: React.FC<SplitLayoutProps> = ({
     children,
-
     title,
-
     subtitle,
     isFullScreen = false,
     onSendMessage,
-    hideSidebar = false
+    hideSidebar = false,
+    useUnifiedChat = true, // Default to unified chat panel
+    currentView,
+    contextEntityId
 }) => {
     const {
         activeChatMessages,
@@ -39,8 +49,16 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
         isChatCollapsed,
         toggleChatCollapse,
         chatPanelWidth,
-        setChatPanelWidth
+        setChatPanelWidth,
+        currentView: appCurrentView,
+        returnToFullChat
     } = useAppStore();
+    
+    const {
+        setDisplayMode,
+        expandToFullScreen,
+        setWorkspaceContext
+    } = useConversationStore();
 
     // Artifacts store for World-Class Chat 2025
     const {
@@ -57,6 +75,32 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
 
     // Focus mode state
     const [focusMode, setFocusMode] = useState<FocusMode>('all');
+    
+    // Compute workspace context for AI awareness
+    const workspaceContext = useMemo(() => {
+        const view = currentView || appCurrentView;
+        if (!view) return null;
+        
+        const type = getDefaultWorkspaceType(view);
+        return createWorkspaceContext(view, type, {
+            entityId: contextEntityId,
+            projectId: currentProjectId || undefined
+        });
+    }, [currentView, appCurrentView, contextEntityId, currentProjectId]);
+    
+    // Update conversation store with workspace context when it changes
+    React.useEffect(() => {
+        if (workspaceContext) {
+            setWorkspaceContext(workspaceContext);
+            setDisplayMode('split');
+        }
+    }, [workspaceContext, setWorkspaceContext, setDisplayMode]);
+    
+    // Handle expanding to full screen chat
+    const handleExpandToFullChat = useCallback(() => {
+        expandToFullScreen();
+        returnToFullChat();
+    }, [expandToFullScreen, returnToFullChat]);
 
     // CRIT-03: Auto-fetch PMO context when project changes
     usePMOContextAutoFetch(currentProjectId);
@@ -178,33 +222,48 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                     style={{ width: chatPanelWidth }}
                     className="shrink-0 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex flex-col hidden lg:flex h-full transition-none relative"
                 >
-                    <div className="absolute top-2 right-2 z-10">
-                        <button
-                            onClick={() => toggleChatCollapse()}
-                            className="p-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-500"
-                            title="Collapse AI Panel"
-                        >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                        </button>
-                    </div>
+                    {/* Collapse button - only for legacy chat panel */}
+                    {!useUnifiedChat && (
+                        <div className="absolute top-2 right-2 z-10">
+                            <button
+                                onClick={() => toggleChatCollapse()}
+                                className="p-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-500"
+                                title="Collapse AI Panel"
+                            >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                        </div>
+                    )}
 
-                    <ChatPanel
-                        messages={
-                            isStreaming
-                                ? [...activeChatMessages, {
-                                    id: 'streaming-ai',
-                                    role: 'ai',
-                                    content: streamedContent,
-                                    timestamp: new Date()
-                                } as ChatMessage]
-                                : activeChatMessages
-                        }
-                        onSendMessage={handleSendMessage}
-                        onOptionSelect={handleOptionSelect}
-                        isTyping={isBotTyping}
-                        title={title}
-                        subtitle={subtitle}
-                    />
+                    {useUnifiedChat ? (
+                        <UnifiedChatPanel
+                            mode="split"
+                            workspaceContext={workspaceContext}
+                            showModeToggle={true}
+                            onModeToggle={handleExpandToFullChat}
+                            showHistoryTrigger={true}
+                            showFocusMode={true}
+                            title={typeof title === 'string' ? title : undefined}
+                        />
+                    ) : (
+                        <ChatPanel
+                            messages={
+                                isStreaming
+                                    ? [...activeChatMessages, {
+                                        id: 'streaming-ai',
+                                        role: 'ai',
+                                        content: streamedContent,
+                                        timestamp: new Date()
+                                    } as ChatMessage]
+                                    : activeChatMessages
+                            }
+                            onSendMessage={handleSendMessage}
+                            onOptionSelect={handleOptionSelect}
+                            isTyping={isBotTyping}
+                            title={title}
+                            subtitle={subtitle}
+                        />
+                    )}
                 </div>
             )}
             {/* Desktop Collapsed Trigger */}
@@ -273,21 +332,32 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                         
                         {/* Chat Panel */}
                         <div className="flex-1 overflow-hidden">
-                            <ChatPanel
-                                messages={
-                                    isStreaming
-                                        ? [...activeChatMessages, {
-                                            id: 'streaming-ai',
-                                            role: 'ai',
-                                            content: streamedContent,
-                                            timestamp: new Date()
-                                        } as ChatMessage]
-                                        : activeChatMessages
-                                }
-                                onSendMessage={handleSendMessage}
-                                onOptionSelect={handleOptionSelect}
-                                isTyping={isBotTyping}
-                            />
+                            {useUnifiedChat ? (
+                                <UnifiedChatPanel
+                                    mode="split"
+                                    workspaceContext={workspaceContext}
+                                    showModeToggle={true}
+                                    onModeToggle={handleExpandToFullChat}
+                                    showHistoryTrigger={true}
+                                    showFocusMode={false} // Compact on mobile
+                                />
+                            ) : (
+                                <ChatPanel
+                                    messages={
+                                        isStreaming
+                                            ? [...activeChatMessages, {
+                                                id: 'streaming-ai',
+                                                role: 'ai',
+                                                content: streamedContent,
+                                                timestamp: new Date()
+                                            } as ChatMessage]
+                                            : activeChatMessages
+                                    }
+                                    onSendMessage={handleSendMessage}
+                                    onOptionSelect={handleOptionSelect}
+                                    isTyping={isBotTyping}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>
@@ -296,8 +366,8 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
             {/* Center Panel: Workspace */}
             <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
 
-                {/* Focus Mode Selector - World-Class Chat 2025 */}
-                {!hideSidebar && !isChatCollapsed && (
+                {/* Focus Mode Selector - Only for legacy ChatPanel (UnifiedChatPanel has built-in) */}
+                {!useUnifiedChat && !hideSidebar && !isChatCollapsed && (
                     <div className="hidden lg:flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950">
                         <FocusModeSelector 
                             value={focusMode} 
@@ -321,6 +391,26 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                                 {isArtifactsPanelOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
                             </button>
                         )}
+                    </div>
+                )}
+                
+                {/* Artifacts toggle for UnifiedChatPanel */}
+                {useUnifiedChat && !hideSidebar && !isChatCollapsed && artifacts.length > 0 && (
+                    <div className="hidden lg:flex items-center justify-end px-4 py-2 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950">
+                        <button
+                            onClick={() => toggleArtifactsPanel()}
+                            className={`
+                                flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                                ${isArtifactsPanelOpen 
+                                    ? 'bg-brand text-white' 
+                                    : 'bg-brand/10 text-brand hover:bg-brand/20'
+                                }
+                            `}
+                        >
+                            <FileCode size={16} />
+                            <span>{artifacts.length} Artifacts</span>
+                            {isArtifactsPanelOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                        </button>
                     </div>
                 )}
 

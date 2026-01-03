@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl, enUS } from 'date-fns/locale';
+import { Api } from '../../services/api';
 
 interface FeedbackItem {
     id: string;
@@ -33,13 +34,8 @@ export const SuperAdminFeedbackView: React.FC = () => {
 
     const fetchFeedback = async () => {
         try {
-            const response = await fetch('/api/feedback', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setFeedback(data);
-            }
+            const data = await Api.getFeedback();
+            setFeedback(data);
         } catch (error) {
             console.error('Error fetching feedback:', error);
         } finally {
@@ -53,20 +49,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
 
     const updateStatus = async (id: string, newStatus: 'READ' | 'RESOLVED') => {
         try {
-            const response = await fetch(`/api/feedback/${id}/status`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ status: newStatus })
-            });
-
-            if (response.ok) {
-                setFeedback(prev => prev.map(item =>
-                    item.id === id ? { ...item, status: newStatus } : item
-                ));
-            }
+            await Api.updateFeedbackStatus(id, newStatus);
+            setFeedback(prev => prev.map(item =>
+                item.id === id ? { ...item, status: newStatus } : item
+            ));
         } catch (error) {
             console.error('Error updating status:', error);
         }
@@ -137,8 +123,8 @@ export const SuperAdminFeedbackView: React.FC = () => {
                                     <div className="flex-1 space-y-3">
                                         <div className="flex items-center gap-3">
                                             <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 ${item.type === 'BUG'
-                                                    ? 'bg-red-900/40 text-red-400 border border-red-900'
-                                                    : 'bg-amber-900/40 text-amber-400 border border-amber-900'
+                                                ? 'bg-red-900/40 text-red-400 border border-red-900'
+                                                : 'bg-amber-900/40 text-amber-400 border border-amber-900'
                                                 }`}>
                                                 {item.type === 'BUG' ? <Bug size={12} /> : <Lightbulb size={12} />}
                                                 {item.type}
@@ -172,8 +158,8 @@ export const SuperAdminFeedbackView: React.FC = () => {
                                             </button>
                                         )}
                                         <div className={`px-3 py-1.5 rounded-lg text-xs font-bold text-center border ${item.status === 'NEW' ? 'bg-blue-600/10 text-blue-400 border-blue-600/20' :
-                                                item.status === 'RESOLVED' ? 'bg-slate-700/50 text-slate-400 border-slate-700' :
-                                                    'bg-slate-700/50 text-slate-400 border-slate-700'
+                                            item.status === 'RESOLVED' ? 'bg-slate-700/50 text-slate-400 border-slate-700' :
+                                                'bg-slate-700/50 text-slate-400 border-slate-700'
                                             }`}>
                                             {item.status}
                                         </div>

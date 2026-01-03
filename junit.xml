@@ -1,814 +1,177 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="13" failures="9" errors="0" time="4.7971775">
-    <testsuite name="tests/integration/aiPipeline.integration.test.js" timestamp="2026-01-02T18:57:02.500Z" hostname="MacBook-Pro-Piotr.local" tests="13" failures="9" errors="0" skipped="0" time="4.7971775">
-        <testcase classname="tests/integration/aiPipeline.integration.test.js" name="AIPipeline Integration &gt; Full Pipeline Flow &gt; should process request through all stages" time="0.797698625">
-            <system-out>
-[2026-01-02T18:56:58.040Z] [INFO] [AI:PerformanceOptimizer] Metrics reset
-
-[2026-01-02T18:56:58.041Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;recommendation&quot;,&quot;traceId&quot;:&quot;trace_1767380218041_s1r10u7n4&quot;}
-
-[2026-01-02T18:56:58.043Z] [DEBUG] [AI:Cache] get: MISS
-
-[2026-01-02T18:56:58.419Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
-
-[2026-01-02T18:56:58.647Z] [DEBUG] [AI:MemoryManager] Retrieved 0 chunks in 228ms
-
-[2026-01-02T18:56:58.647Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
-
-[2026-01-02T18:56:58.832Z] [INFO] [AI:Pipeline] Response mode: standard (default)
-
-[2026-01-02T18:56:58.832Z] [INFO] [AI:ModelRouter] Selecting model for tier: STANDARD, org: test-org-integration
-
-[2026-01-02T18:56:58.834Z] [INFO] [AI:ModelRouter] Using env fallback for openai
-
-[2026-01-02T18:56:58.834Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gpt-4o&quot;,&quot;toolsEnabled&quot;:false,&quot;streaming&quot;:false}
-[2026-01-02T18:56:58.835Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gpt-4o&quot;}
-
-[2026-01-02T18:56:58.835Z] [DEBUG] [AI:QualityChecker] Check PASSED: score=0.86
-
-[2026-01-02T18:56:58.835Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767380218041_s1r10u7n4&quot;,&quot;model&quot;:&quot;gpt-4o&quot;,&quot;tokens&quot;:700,&quot;cost&quot;:0.00325}
-[2026-01-02T18:56:58.836Z] [INFO] [AI:LLMConfigService] Initializing...
-
-[2026-01-02T18:56:58.836Z] [DEBUG] [AI:Cache] set: HIT
-
-[2026-01-02T18:56:58.837Z] [DEBUG] [AI:PerformanceOptimizer] Recorded: 794ms, 700 tokens
-[2026-01-02T18:56:58.837Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767380218041_s1r10u7n4&quot;,&quot;duration&quot;:796,&quot;status&quot;:&quot;success&quot;}
-[2026-01-02T18:56:58.837Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:794,&quot;tokensUsed&quot;:700,&quot;costUsd&quot;:0.00325,&quot;qualityScore&quot;:0.86,&quot;traceId&quot;:&quot;trace_1767380218041_s1r10u7n4&quot;}
-
-            </system-out>
+<testsuites name="vitest tests" tests="82" failures="0" errors="0" time="2.202609333">
+    <testsuite name="tests/unit/settingsModules.test.tsx" timestamp="2026-01-02T23:55:47.496Z" hostname="MacBook-Pro-Piotr.local" tests="82" failures="0" errors="0" skipped="0" time="2.202609333">
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SettingsSidebar &gt; Rendering &gt; renders all 6 module items" time="0.022496625">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SettingsSidebar &gt; Rendering &gt; displays user email" time="0.004804458">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SettingsSidebar &gt; Rendering &gt; displays user name when provided" time="0.004904708">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SettingsSidebar &gt; Rendering &gt; renders back to app button" time="0.004606084">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SettingsSidebar &gt; Navigation &gt; calls onSectionChange when clicking Profile module" time="0.007245833">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SettingsSidebar &gt; Navigation &gt; calls onSectionChange when clicking AI Preferences module" time="0.004138125">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SettingsSidebar &gt; Navigation &gt; calls onSectionChange when clicking Security module" time="0.004331375">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SettingsSidebar &gt; Navigation &gt; calls onBackToApp when clicking back button" time="0.004283875">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SettingsSidebar &gt; Active State &gt; highlights Profile when active" time="0.004162416">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SettingsSidebar &gt; Active State &gt; highlights Security when active" time="0.004007666">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SettingsSidebar &gt; Active State &gt; highlights Appearance when active" time="0.003473125">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="settingsSectionToAppView mapping &gt; maps profile to SETTINGS_PROFILE_MODULE" time="0.000129666">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="settingsSectionToAppView mapping &gt; maps ai-preferences to SETTINGS_AI_MODULE" time="0.000045375">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="settingsSectionToAppView mapping &gt; maps notifications to SETTINGS_NOTIFICATIONS_MODULE" time="0.000105292">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="settingsSectionToAppView mapping &gt; maps security to SETTINGS_SECURITY_MODULE" time="0.0000765">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="settingsSectionToAppView mapping &gt; maps integrations to SETTINGS_INTEGRATIONS_MODULE" time="0.000047458">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="settingsSectionToAppView mapping &gt; maps appearance to SETTINGS_APPEARANCE_MODULE" time="0.000034125">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="appViewToSettingsSection mapping &gt; maps SETTINGS_PROFILE_MODULE to profile" time="0.000047375">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="appViewToSettingsSection mapping &gt; maps SETTINGS_AI_MODULE to ai-preferences" time="0.000029375">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="appViewToSettingsSection mapping &gt; maps SETTINGS_NOTIFICATIONS_MODULE to notifications" time="0.000029125">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="appViewToSettingsSection mapping &gt; maps SETTINGS_SECURITY_MODULE to security" time="0.000027458">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="appViewToSettingsSection mapping &gt; maps SETTINGS_INTEGRATIONS_MODULE to integrations" time="0.00002725">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="appViewToSettingsSection mapping &gt; maps SETTINGS_APPEARANCE_MODULE to appearance" time="0.000025375">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="appViewToSettingsSection mapping &gt; maps legacy SETTINGS_PROFILE to profile" time="0.000026208">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="appViewToSettingsSection mapping &gt; maps legacy SETTINGS_AI to ai-preferences" time="0.000025666">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="appViewToSettingsSection mapping &gt; maps legacy SETTINGS_SECURITY to security" time="0.000025875">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="appViewToSettingsSection mapping &gt; maps legacy SETTINGS_PRIVACY to security" time="0.0000245">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="ProfileModule &gt; Tab Rendering &gt; renders with Personal Info tab by default" time="0.057709916">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="ProfileModule &gt; Tab Rendering &gt; renders all 5 tabs" time="0.032680833">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="ProfileModule &gt; Tab Rendering &gt; renders module title and subtitle" time="0.025695166">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="ProfileModule &gt; Tab Navigation &gt; switches to Avatar tab when clicked" time="0.142721">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="ProfileModule &gt; Tab Navigation &gt; switches to Security tab when clicked" time="0.11286775">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="ProfileModule &gt; Tab Navigation &gt; switches to Account tab when clicked" time="0.106003375">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="ProfileModule &gt; Initial Tab &gt; respects initialTab prop" time="0.009942333">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AIPreferencesModule &gt; Tab Rendering &gt; renders with Instructions tab by default" time="0.022438459">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AIPreferencesModule &gt; Tab Rendering &gt; renders all 5 tabs" time="0.022859375">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AIPreferencesModule &gt; Memory Tab &gt; switches to Memory tab when clicked" time="0.100438292">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AIPreferencesModule &gt; Memory Tab &gt; renders memory enable toggle" time="0.094550209">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AIPreferencesModule &gt; Memory Tab &gt; renders clear memory button" time="0.08664">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AIPreferencesModule &gt; Response Style Tab &gt; switches to Response Style tab when clicked" time="0.088465917">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AIPreferencesModule &gt; Response Style Tab &gt; renders length options" time="0.084452292">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AIPreferencesModule &gt; Response Style Tab &gt; renders tone options" time="0.091055416">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AIPreferencesModule &gt; Chat History Tab &gt; switches to Chat History tab when clicked" time="0.093069375">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AIPreferencesModule &gt; Chat History Tab &gt; renders save history toggle" time="0.096868625">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="NotificationsModule &gt; Tab Rendering &gt; renders with All tab by default" time="0.008952834">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="NotificationsModule &gt; Tab Rendering &gt; renders all 4 tabs" time="0.00904825">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="NotificationsModule &gt; Schedule Tab &gt; switches to Schedule tab when clicked" time="0.06011525">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="NotificationsModule &gt; Schedule Tab &gt; renders weekend notifications toggle" time="0.056798083">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SecurityPrivacyModule &gt; Tab Rendering &gt; renders with MFA tab by default" time="0.011359666">
             <system-err>
-[2026-01-02T18:56:58.041Z] [WARN] [AI:Pipeline] Failed to load effective settings: SQLITE_ERROR: no such table: superadmin_ai_settings
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[RagService] searchRelevantChunks error: Embedding API error: 401
-
-[2026-01-02T18:56:58.421Z] [ERROR] [AI:PersistentSessionStore] Error fetching context: SQLITE_ERROR: no such table: conversation_history
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:56:58.627Z] [ERROR] [AI:OrgMemoryStore] Search error: Embedding API error: 401
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:56:58.647Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: Embedding API error: 401
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[RagService] searchRelevantChunks error: Embedding API error: 401
-
-[2026-01-02T18:56:58.831Z] [ERROR] [AI:KnowledgeIndexer] Keyword search error: SQLITE_ERROR: no such table: knowledge_chunks
-
-[2026-01-02T18:56:58.832Z] [ERROR] [AI:ModelRouter] Failed to get models for tier STANDARD: SQLITE_ERROR: no such table: model_tier_assignments
-
-[2026-01-02T18:56:58.834Z] [WARN] [AI:ModelRouter] Using static fallback: gpt-4o for tier STANDARD
-
-[AIPipeline] Audit log failed: SQLITE_ERROR: no such table: ai_audit_logs
+[InfoButton] No documentation found for cardId: security-dashboard
 
             </system-err>
         </testcase>
-        <testcase classname="tests/integration/aiPipeline.integration.test.js" name="AIPipeline Integration &gt; Full Pipeline Flow &gt; should include quality score in response metadata" time="0.343321083">
-            <system-out>
-[2026-01-02T18:56:58.838Z] [INFO] [AI:PerformanceOptimizer] Metrics reset
-
-[2026-01-02T18:56:58.838Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;analysis&quot;,&quot;traceId&quot;:&quot;trace_1767380218838_6j3kalwxp&quot;}
-
-[2026-01-02T18:56:58.838Z] [DEBUG] [AI:LearningSystem] Recorded interaction: 11320d44-a915-49c5-ba90-95f473c468f6 {&quot;autoFeedbackScore&quot;:0.84,&quot;qualityScore&quot;:0.86}
-
-[2026-01-02T18:56:58.839Z] [INFO] [AI:LLMConfigService] Syncing database with environment definitions...
-
-[2026-01-02T18:56:58.840Z] [INFO] [AI:LLMConfigService] Created provider openai (Active: true)
-
-[2026-01-02T18:56:58.840Z] [INFO] [AI:LLMConfigService] Created provider google (Active: true)
-
-[2026-01-02T18:56:58.840Z] [INFO] [AI:LLMConfigService] Created provider deepseek (Active: false)
-
-[2026-01-02T18:56:58.840Z] [DEBUG] [AI:Cache] get: MISS
-
-[2026-01-02T18:56:58.841Z] [INFO] [AI:LLMConfigService] Created provider anthropic (Active: false)
-
-[2026-01-02T18:56:58.841Z] [INFO] [AI:LLMConfigService] Created provider nvidia (Active: false)
-
-[2026-01-02T18:56:58.841Z] [INFO] [AI:LLMConfigService] Created provider cohere (Active: false)
-
-[2026-01-02T18:56:58.841Z] [INFO] [AI:LLMConfigService] Created provider qwen (Active: false)
-
-[2026-01-02T18:56:58.841Z] [INFO] [AI:LLMConfigService] Created provider zai (Active: false)
-
-[2026-01-02T18:56:58.842Z] [INFO] [AI:LLMConfigService] Created provider ollama (Active: false)
-
-[2026-01-02T18:56:58.843Z] [INFO] [AI:LLMConfigService] LLM Config Service initialized with analytics storage
-
-[2026-01-02T18:56:59.018Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
-
-[2026-01-02T18:56:59.179Z] [DEBUG] [AI:MemoryManager] Retrieved 0 chunks in 161ms
-
-[2026-01-02T18:56:59.179Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
-[2026-01-02T18:56:59.179Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
-
-[2026-01-02T18:56:59.179Z] [INFO] [AI:Pipeline] Response mode: deepStudy (auto-detected)
-
-[2026-01-02T18:56:59.180Z] [INFO] [AI:ModelRouter] Selecting model for tier: STANDARD, org: test-org-quality
-
-[2026-01-02T18:56:59.180Z] [INFO] [AI:ModelRouter] Selected google from config service for STANDARD
-
-[2026-01-02T18:56:59.180Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;toolsEnabled&quot;:false,&quot;streaming&quot;:false}
-[2026-01-02T18:56:59.180Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gemini-2.0-flash&quot;}
-
-[2026-01-02T18:56:59.180Z] [DEBUG] [AI:QualityChecker] Check PASSED: score=0.78
-
-[2026-01-02T18:56:59.180Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767380218838_6j3kalwxp&quot;,&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;tokens&quot;:700,&quot;cost&quot;:0.00013}
-
-[2026-01-02T18:56:59.180Z] [DEBUG] [AI:Cache] set: HIT
-
-[2026-01-02T18:56:59.181Z] [DEBUG] [AI:PerformanceOptimizer] Recorded: 342ms, 700 tokens
-[2026-01-02T18:56:59.181Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767380218838_6j3kalwxp&quot;,&quot;duration&quot;:343,&quot;status&quot;:&quot;success&quot;}
-[2026-01-02T18:56:59.181Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:342,&quot;tokensUsed&quot;:700,&quot;costUsd&quot;:0.00013,&quot;qualityScore&quot;:0.78,&quot;traceId&quot;:&quot;trace_1767380218838_6j3kalwxp&quot;}
-
-            </system-out>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SecurityPrivacyModule &gt; Tab Rendering &gt; renders all 5 tabs" time="0.011282583">
             <system-err>
-[2026-01-02T18:56:58.838Z] [ERROR] [AI:PersistentSessionStore] Error saving message: SQLITE_ERROR: no such table: conversation_history
-
-[2026-01-02T18:56:58.838Z] [WARN] [AI:Pipeline] Memory recording failed: SQLITE_ERROR: no such table: conversation_history
-
-[2026-01-02T18:56:58.838Z] [WARN] [AI:Pipeline] Failed to load effective settings: SQLITE_ERROR: no such table: superadmin_ai_settings
-
-[2026-01-02T18:56:58.840Z] [WARN] [AI:LLMConfigService] Using deprecated env var GEMINI_API_KEY for google. Please use GOOGLE_API_KEY
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[RagService] searchRelevantChunks error: Embedding API error: 401
-
-[2026-01-02T18:56:59.018Z] [ERROR] [AI:PersistentSessionStore] Error fetching context: SQLITE_ERROR: no such table: conversation_history
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:56:59.179Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: Embedding API error: 401
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:56:59.179Z] [ERROR] [AI:OrgMemoryStore] Search error: Embedding API error: 401
-
-[2026-01-02T18:56:59.180Z] [ERROR] [AI:ModelRouter] Failed to get models for tier STANDARD: SQLITE_ERROR: no such table: model_tier_assignments
-
-[AIPipeline] Audit log failed: SQLITE_ERROR: no such table: ai_audit_logs
+[InfoButton] No documentation found for cardId: security-dashboard
 
             </system-err>
         </testcase>
-        <testcase classname="tests/integration/aiPipeline.integration.test.js" name="AIPipeline Integration &gt; Full Pipeline Flow &gt; should record metrics in performance optimizer" time="0.293602166">
-            <system-out>
-[2026-01-02T18:56:59.181Z] [INFO] [AI:PerformanceOptimizer] Metrics reset
-
-[2026-01-02T18:56:59.181Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767380219181_ikh5fl8e5&quot;}
-
-[2026-01-02T18:56:59.181Z] [DEBUG] [AI:LearningSystem] Recorded interaction: 9c0636b4-9626-43db-bf2e-5d02b7243a4a {&quot;autoFeedbackScore&quot;:0.79,&quot;qualityScore&quot;:0.78}
-
-[2026-01-02T18:56:59.182Z] [DEBUG] [AI:Cache] get: MISS
-
-[2026-01-02T18:56:59.312Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
-
-[2026-01-02T18:56:59.465Z] [DEBUG] [AI:MemoryManager] Retrieved 0 chunks in 153ms
-
-[2026-01-02T18:56:59.465Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
-[2026-01-02T18:56:59.465Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
-
-[2026-01-02T18:56:59.466Z] [INFO] [AI:Pipeline] Response mode: standard (default)
-
-[2026-01-02T18:56:59.466Z] [INFO] [AI:ModelRouter] Selecting model for tier: BUDGET, org: test-org-perf
-
-[2026-01-02T18:56:59.466Z] [INFO] [AI:ModelRouter] Selected google from config service for BUDGET
-
-[2026-01-02T18:56:59.471Z] [DEBUG] [AI:MCP] Handler registered for: get_project_details
-[2026-01-02T18:56:59.471Z] [DEBUG] [AI:MCP] Handler registered for: search_knowledge_base
-[2026-01-02T18:56:59.471Z] [DEBUG] [AI:MCP] Handler registered for: calculate_roi_draft
-[2026-01-02T18:56:59.471Z] [DEBUG] [AI:MCP] Handler registered for: create_initiative
-[2026-01-02T18:56:59.471Z] [DEBUG] [AI:MCP] Handler registered for: update_assessment_score
-[MCP] Registered tools: get_project_details, search_knowledge_base, calculate_roi_draft, create_initiative, update_assessment_score
-[2026-01-02T18:56:59.472Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;toolsEnabled&quot;:true,&quot;streaming&quot;:false}
-[2026-01-02T18:56:59.472Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gemini-2.0-flash&quot;}
-
-[2026-01-02T18:56:59.472Z] [DEBUG] [AI:QualityChecker] Check PASSED: score=0.78
-
-[2026-01-02T18:56:59.473Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767380219181_ikh5fl8e5&quot;,&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;tokens&quot;:700,&quot;cost&quot;:0.00013}
-
-[2026-01-02T18:56:59.473Z] [DEBUG] [AI:Cache] set: HIT
-
-[2026-01-02T18:56:59.473Z] [DEBUG] [AI:PerformanceOptimizer] Recorded: 291ms, 700 tokens
-[2026-01-02T18:56:59.473Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767380219181_ikh5fl8e5&quot;,&quot;duration&quot;:292,&quot;status&quot;:&quot;success&quot;}
-[2026-01-02T18:56:59.473Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:291,&quot;tokensUsed&quot;:700,&quot;costUsd&quot;:0.00013,&quot;qualityScore&quot;:0.78,&quot;traceId&quot;:&quot;trace_1767380219181_ikh5fl8e5&quot;}
-
-            </system-out>
-            <system-err>
-[2026-01-02T18:56:59.181Z] [ERROR] [AI:PersistentSessionStore] Error saving message: SQLITE_ERROR: no such table: conversation_history
-
-[2026-01-02T18:56:59.181Z] [WARN] [AI:Pipeline] Memory recording failed: SQLITE_ERROR: no such table: conversation_history
-
-[2026-01-02T18:56:59.181Z] [WARN] [AI:Pipeline] Failed to load effective settings: SQLITE_ERROR: no such table: superadmin_ai_settings
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[RagService] searchRelevantChunks error: Embedding API error: 401
-
-[2026-01-02T18:56:59.313Z] [ERROR] [AI:PersistentSessionStore] Error fetching context: SQLITE_ERROR: no such table: conversation_history
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:56:59.465Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: Embedding API error: 401
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:56:59.465Z] [ERROR] [AI:OrgMemoryStore] Search error: Embedding API error: 401
-
-[2026-01-02T18:56:59.466Z] [ERROR] [AI:ModelRouter] Failed to get models for tier BUDGET: SQLITE_ERROR: no such table: model_tier_assignments
-
-[AIPipeline] Audit log failed: SQLITE_ERROR: no such table: ai_audit_logs
-
-            </system-err>
-            <failure message="performanceOptimizer.getStats is not a function" type="TypeError">
-TypeError: performanceOptimizer.getStats is not a function
- ❯ tests/integration/aiPipeline.integration.test.js:130:48
-            </failure>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SecurityPrivacyModule &gt; Sessions Tab &gt; switches to Sessions tab when clicked" time="0.030935875">
         </testcase>
-        <testcase classname="tests/integration/aiPipeline.integration.test.js" name="AIPipeline Integration &gt; Rate Limiting &gt; should check rate limits before processing" time="0.387084291">
-            <system-out>
-[2026-01-02T18:56:59.475Z] [INFO] [AI:PerformanceOptimizer] Metrics reset
-
-[2026-01-02T18:56:59.475Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767380219475_u6f7gnpvh&quot;}
-
-[2026-01-02T18:56:59.475Z] [DEBUG] [AI:LearningSystem] Recorded interaction: f9ea3aec-9ca8-4215-a031-5af81c863381 {&quot;autoFeedbackScore&quot;:0.79,&quot;qualityScore&quot;:0.78}
-
-[2026-01-02T18:56:59.476Z] [DEBUG] [AI:Cache] get: MISS
-
-[2026-01-02T18:56:59.677Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
-
-[2026-01-02T18:56:59.860Z] [DEBUG] [AI:MemoryManager] Retrieved 0 chunks in 183ms
-
-[2026-01-02T18:56:59.860Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
-[2026-01-02T18:56:59.860Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
-
-[2026-01-02T18:56:59.860Z] [INFO] [AI:Pipeline] Response mode: standard (default)
-
-[2026-01-02T18:56:59.860Z] [INFO] [AI:ModelRouter] Selecting model for tier: BUDGET, org: test-org-rate
-
-[2026-01-02T18:56:59.860Z] [INFO] [AI:ModelRouter] Selected google from config service for BUDGET
-
-[2026-01-02T18:56:59.861Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;toolsEnabled&quot;:true,&quot;streaming&quot;:false}
-[2026-01-02T18:56:59.861Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gemini-2.0-flash&quot;}
-
-[2026-01-02T18:56:59.861Z] [DEBUG] [AI:QualityChecker] Check PASSED: score=0.78
-
-[2026-01-02T18:56:59.861Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767380219475_u6f7gnpvh&quot;,&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;tokens&quot;:700,&quot;cost&quot;:0.00013}
-
-[2026-01-02T18:56:59.861Z] [DEBUG] [AI:Cache] set: HIT
-
-[2026-01-02T18:56:59.861Z] [DEBUG] [AI:PerformanceOptimizer] Recorded: 386ms, 700 tokens
-[2026-01-02T18:56:59.861Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767380219475_u6f7gnpvh&quot;,&quot;duration&quot;:386,&quot;status&quot;:&quot;success&quot;}
-[2026-01-02T18:56:59.861Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:386,&quot;tokensUsed&quot;:700,&quot;costUsd&quot;:0.00013,&quot;qualityScore&quot;:0.78,&quot;traceId&quot;:&quot;trace_1767380219475_u6f7gnpvh&quot;}
-
-            </system-out>
-            <system-err>
-[2026-01-02T18:56:59.475Z] [ERROR] [AI:PersistentSessionStore] Error saving message: SQLITE_ERROR: no such table: conversation_history
-
-[2026-01-02T18:56:59.475Z] [WARN] [AI:Pipeline] Memory recording failed: SQLITE_ERROR: no such table: conversation_history
-
-[2026-01-02T18:56:59.475Z] [WARN] [AI:Pipeline] Failed to load effective settings: SQLITE_ERROR: no such table: superadmin_ai_settings
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[RagService] searchRelevantChunks error: Embedding API error: 401
-
-[2026-01-02T18:56:59.677Z] [ERROR] [AI:PersistentSessionStore] Error fetching context: SQLITE_ERROR: no such table: conversation_history
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:56:59.860Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: Embedding API error: 401
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:56:59.860Z] [ERROR] [AI:OrgMemoryStore] Search error: Embedding API error: 401
-
-[2026-01-02T18:56:59.860Z] [ERROR] [AI:ModelRouter] Failed to get models for tier BUDGET: SQLITE_ERROR: no such table: model_tier_assignments
-
-[AIPipeline] Audit log failed: SQLITE_ERROR: no such table: ai_audit_logs
-
-            </system-err>
-            <failure message="expected &quot;checkRateLimit&quot; to be called with arguments: [ &apos;test-org-rate&apos;, &apos;chat&apos; ][90m
-
-Number of calls: [1m0[22m
-[39m" type="AssertionError">
-AssertionError: expected &quot;checkRateLimit&quot; to be called with arguments: [ &apos;test-org-rate&apos;, &apos;chat&apos; ]
-
-Number of calls: 0
-
- ❯ tests/integration/aiPipeline.integration.test.js:148:39
-            </failure>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SecurityPrivacyModule &gt; Sessions Tab &gt; renders sign out all button" time="0.035766458">
         </testcase>
-        <testcase classname="tests/integration/aiPipeline.integration.test.js" name="AIPipeline Integration &gt; Quality Checking &gt; should validate response quality" time="0.341682875">
-            <system-out>
-[2026-01-02T18:56:59.862Z] [INFO] [AI:PerformanceOptimizer] Metrics reset
-
-[2026-01-02T18:56:59.862Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;recommendation&quot;,&quot;traceId&quot;:&quot;trace_1767380219862_q8zdwnciu&quot;}
-
-[2026-01-02T18:56:59.862Z] [DEBUG] [AI:LearningSystem] Recorded interaction: d6906e4b-c052-4300-847c-7925af3d1de0 {&quot;autoFeedbackScore&quot;:0.79,&quot;qualityScore&quot;:0.78}
-
-[2026-01-02T18:56:59.863Z] [DEBUG] [AI:Cache] get: MISS
-
-[2026-01-02T18:57:00.010Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
-
-[2026-01-02T18:57:00.202Z] [DEBUG] [AI:MemoryManager] Retrieved 0 chunks in 192ms
-
-[2026-01-02T18:57:00.202Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
-[2026-01-02T18:57:00.202Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
-
-[2026-01-02T18:57:00.203Z] [INFO] [AI:Pipeline] Response mode: standard (default)
-
-[2026-01-02T18:57:00.203Z] [INFO] [AI:ModelRouter] Selecting model for tier: STANDARD, org: test-org-qc
-
-[2026-01-02T18:57:00.203Z] [INFO] [AI:ModelRouter] Selected google from config service for STANDARD
-
-[2026-01-02T18:57:00.203Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;toolsEnabled&quot;:false,&quot;streaming&quot;:false}
-[2026-01-02T18:57:00.203Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gemini-2.0-flash&quot;}
-
-[2026-01-02T18:57:00.203Z] [DEBUG] [AI:QualityChecker] Check PASSED: score=0.92
-
-[2026-01-02T18:57:00.203Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767380219862_q8zdwnciu&quot;,&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;tokens&quot;:700,&quot;cost&quot;:0.00013}
-
-[2026-01-02T18:57:00.203Z] [DEBUG] [AI:Cache] set: HIT
-
-[2026-01-02T18:57:00.203Z] [DEBUG] [AI:PerformanceOptimizer] Recorded: 341ms, 700 tokens
-[2026-01-02T18:57:00.203Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767380219862_q8zdwnciu&quot;,&quot;duration&quot;:341,&quot;status&quot;:&quot;success&quot;}
-[2026-01-02T18:57:00.203Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:341,&quot;tokensUsed&quot;:700,&quot;costUsd&quot;:0.00013,&quot;qualityScore&quot;:0.92,&quot;traceId&quot;:&quot;trace_1767380219862_q8zdwnciu&quot;}
-
-            </system-out>
-            <system-err>
-[2026-01-02T18:56:59.862Z] [ERROR] [AI:PersistentSessionStore] Error saving message: SQLITE_ERROR: no such table: conversation_history
-
-[2026-01-02T18:56:59.862Z] [WARN] [AI:Pipeline] Memory recording failed: SQLITE_ERROR: no such table: conversation_history
-
-[2026-01-02T18:56:59.862Z] [WARN] [AI:Pipeline] Failed to load effective settings: SQLITE_ERROR: no such table: superadmin_ai_settings
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[RagService] searchRelevantChunks error: Embedding API error: 401
-
-[2026-01-02T18:57:00.011Z] [ERROR] [AI:PersistentSessionStore] Error fetching context: SQLITE_ERROR: no such table: conversation_history
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:57:00.202Z] [ERROR] [AI:OrgMemoryStore] Search error: Embedding API error: 401
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:57:00.202Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: Embedding API error: 401
-
-[2026-01-02T18:57:00.203Z] [ERROR] [AI:ModelRouter] Failed to get models for tier STANDARD: SQLITE_ERROR: no such table: model_tier_assignments
-
-[AIPipeline] Audit log failed: SQLITE_ERROR: no such table: ai_audit_logs
-
-            </system-err>
-            <failure message="expected &quot;check&quot; to be called at least once" type="AssertionError">
-AssertionError: expected &quot;check&quot; to be called at least once
- ❯ tests/integration/aiPipeline.integration.test.js:170:30
-            </failure>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SecurityPrivacyModule &gt; Sessions Tab &gt; marks current session" time="0.031020292">
         </testcase>
-        <testcase classname="tests/integration/aiPipeline.integration.test.js" name="AIPipeline Integration &gt; Audit Logging &gt; should log audit entry via enterprise security" time="0.295956875">
-            <system-out>
-[2026-01-02T18:57:00.204Z] [INFO] [AI:PerformanceOptimizer] Metrics reset
-
-[2026-01-02T18:57:00.204Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767380220204_qui77ewxe&quot;}
-
-[2026-01-02T18:57:00.204Z] [DEBUG] [AI:LearningSystem] Recorded interaction: 3e6a6d00-4f59-4d38-b53a-727dbfb28e62 {&quot;autoFeedbackScore&quot;:0.87,&quot;qualityScore&quot;:0.92}
-
-[2026-01-02T18:57:00.204Z] [DEBUG] [AI:Cache] get: MISS
-
-[2026-01-02T18:57:00.345Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
-
-[2026-01-02T18:57:00.498Z] [DEBUG] [AI:MemoryManager] Retrieved 0 chunks in 153ms
-
-[2026-01-02T18:57:00.498Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
-[2026-01-02T18:57:00.498Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
-
-[2026-01-02T18:57:00.498Z] [INFO] [AI:Pipeline] Response mode: standard (default)
-
-[2026-01-02T18:57:00.498Z] [INFO] [AI:ModelRouter] Selecting model for tier: BUDGET, org: test-org-audit
-
-[2026-01-02T18:57:00.499Z] [INFO] [AI:ModelRouter] Selected google from config service for BUDGET
-
-[2026-01-02T18:57:00.499Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;toolsEnabled&quot;:true,&quot;streaming&quot;:false}
-[2026-01-02T18:57:00.499Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gemini-2.0-flash&quot;}
-
-[2026-01-02T18:57:00.499Z] [DEBUG] [AI:QualityChecker] Check PASSED: score=0.78
-
-[2026-01-02T18:57:00.499Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767380220204_qui77ewxe&quot;,&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;tokens&quot;:700,&quot;cost&quot;:0.00013}
-
-[2026-01-02T18:57:00.499Z] [DEBUG] [AI:Cache] set: HIT
-
-[2026-01-02T18:57:00.499Z] [DEBUG] [AI:PerformanceOptimizer] Recorded: 295ms, 700 tokens
-[2026-01-02T18:57:00.499Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767380220204_qui77ewxe&quot;,&quot;duration&quot;:295,&quot;status&quot;:&quot;success&quot;}
-[2026-01-02T18:57:00.499Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:295,&quot;tokensUsed&quot;:700,&quot;costUsd&quot;:0.00013,&quot;qualityScore&quot;:0.78,&quot;traceId&quot;:&quot;trace_1767380220204_qui77ewxe&quot;}
-
-            </system-out>
-            <system-err>
-[2026-01-02T18:57:00.204Z] [ERROR] [AI:PersistentSessionStore] Error saving message: SQLITE_ERROR: no such table: conversation_history
-
-[2026-01-02T18:57:00.204Z] [WARN] [AI:Pipeline] Memory recording failed: SQLITE_ERROR: no such table: conversation_history
-
-[2026-01-02T18:57:00.204Z] [WARN] [AI:Pipeline] Failed to load effective settings: SQLITE_ERROR: no such table: superadmin_ai_settings
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[RagService] searchRelevantChunks error: Embedding API error: 401
-
-[2026-01-02T18:57:00.345Z] [ERROR] [AI:PersistentSessionStore] Error fetching context: SQLITE_ERROR: no such table: conversation_history
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:57:00.489Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: Embedding API error: 401
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:57:00.498Z] [ERROR] [AI:OrgMemoryStore] Search error: Embedding API error: 401
-
-[2026-01-02T18:57:00.498Z] [ERROR] [AI:ModelRouter] Failed to get models for tier BUDGET: SQLITE_ERROR: no such table: model_tier_assignments
-
-[AIPipeline] Audit log failed: SQLITE_ERROR: no such table: ai_audit_logs
-
-            </system-err>
-            <failure message="expected &quot;logAudit&quot; to be called at least once" type="AssertionError">
-AssertionError: expected &quot;logAudit&quot; to be called at least once
- ❯ tests/integration/aiPipeline.integration.test.js:189:33
-            </failure>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SecurityPrivacyModule &gt; Login History Tab &gt; switches to Login History tab when clicked" time="0.032191167">
         </testcase>
-        <testcase classname="tests/integration/aiPipeline.integration.test.js" name="AIPipeline Integration &gt; Learning System Integration &gt; should record interaction for learning" time="0.478992958">
-            <system-out>
-[2026-01-02T18:57:00.500Z] [INFO] [AI:PerformanceOptimizer] Metrics reset
-
-[2026-01-02T18:57:00.500Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;analysis&quot;,&quot;traceId&quot;:&quot;trace_1767380220500_onf3rr9xi&quot;}
-
-[2026-01-02T18:57:00.500Z] [DEBUG] [AI:LearningSystem] Recorded interaction: 5feab368-2003-4e72-adf8-c2dea143832f {&quot;autoFeedbackScore&quot;:0.79,&quot;qualityScore&quot;:0.78}
-
-[2026-01-02T18:57:00.500Z] [DEBUG] [AI:Cache] get: MISS
-
-[2026-01-02T18:57:00.727Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
-
-[2026-01-02T18:57:00.877Z] [DEBUG] [AI:MemoryManager] Retrieved 0 chunks in 150ms
-
-[2026-01-02T18:57:00.877Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
-[2026-01-02T18:57:00.877Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
-
-[2026-01-02T18:57:00.877Z] [INFO] [AI:Pipeline] Response mode: standard (default)
-
-[2026-01-02T18:57:00.877Z] [INFO] [AI:ModelRouter] Selecting model for tier: STANDARD, org: test-org-learn
-
-[2026-01-02T18:57:00.878Z] [INFO] [AI:ModelRouter] Selected google from config service for STANDARD
-
-[2026-01-02T18:57:00.878Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;toolsEnabled&quot;:false,&quot;streaming&quot;:false}
-[2026-01-02T18:57:00.878Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gemini-2.0-flash&quot;}
-
-[2026-01-02T18:57:00.878Z] [DEBUG] [AI:QualityChecker] Check PASSED: score=0.78
-
-[2026-01-02T18:57:00.878Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767380220500_onf3rr9xi&quot;,&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;tokens&quot;:700,&quot;cost&quot;:0.00013}
-
-[2026-01-02T18:57:00.878Z] [DEBUG] [AI:Cache] set: HIT
-
-[2026-01-02T18:57:00.878Z] [DEBUG] [AI:PerformanceOptimizer] Recorded: 378ms, 700 tokens
-[2026-01-02T18:57:00.878Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767380220500_onf3rr9xi&quot;,&quot;duration&quot;:378,&quot;status&quot;:&quot;success&quot;}
-[2026-01-02T18:57:00.878Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:378,&quot;tokensUsed&quot;:700,&quot;costUsd&quot;:0.00013,&quot;qualityScore&quot;:0.78,&quot;traceId&quot;:&quot;trace_1767380220500_onf3rr9xi&quot;}
-
-[2026-01-02T18:57:00.878Z] [DEBUG] [AI:LearningSystem] Recorded interaction: 3e9c42c4-5dd3-4a4f-b24a-2522eb762448 {&quot;autoFeedbackScore&quot;:0.79,&quot;qualityScore&quot;:0.78}
-
-            </system-out>
-            <system-err>
-[2026-01-02T18:57:00.500Z] [ERROR] [AI:PersistentSessionStore] Error saving message: SQLITE_ERROR: no such table: conversation_history
-
-[2026-01-02T18:57:00.500Z] [WARN] [AI:Pipeline] Memory recording failed: SQLITE_ERROR: no such table: conversation_history
-
-[2026-01-02T18:57:00.500Z] [WARN] [AI:Pipeline] Failed to load effective settings: SQLITE_ERROR: no such table: superadmin_ai_settings
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[RagService] searchRelevantChunks error: Embedding API error: 401
-
-[2026-01-02T18:57:00.727Z] [ERROR] [AI:PersistentSessionStore] Error fetching context: SQLITE_ERROR: no such table: conversation_history
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:57:00.877Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: Embedding API error: 401
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:57:00.877Z] [ERROR] [AI:OrgMemoryStore] Search error: Embedding API error: 401
-
-[2026-01-02T18:57:00.877Z] [ERROR] [AI:ModelRouter] Failed to get models for tier STANDARD: SQLITE_ERROR: no such table: model_tier_assignments
-
-[AIPipeline] Audit log failed: SQLITE_ERROR: no such table: ai_audit_logs
-
-[2026-01-02T18:57:00.878Z] [ERROR] [AI:PersistentSessionStore] Error saving message: SQLITE_ERROR: no such table: conversation_history
-
-[2026-01-02T18:57:00.878Z] [WARN] [AI:Pipeline] Memory recording failed: SQLITE_ERROR: no such table: conversation_history
-
-            </system-err>
-            <failure message="expected &quot;recordInteraction&quot; to be called at least once" type="AssertionError">
-AssertionError: expected &quot;recordInteraction&quot; to be called at least once
- ❯ tests/integration/aiPipeline.integration.test.js:215:31
-            </failure>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SecurityPrivacyModule &gt; Login History Tab &gt; renders login entries with status" time="0.034340125">
         </testcase>
-        <testcase classname="tests/integration/aiPipeline.integration.test.js" name="AIPipeline Integration &gt; Error Handling &gt; should log errors via enterprise security" time="0.4359355">
-            <system-out>
-[2026-01-02T18:57:00.979Z] [INFO] [AI:PerformanceOptimizer] Metrics reset
-
-[2026-01-02T18:57:00.979Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767380220979_rlfeoaq8q&quot;}
-
-[2026-01-02T18:57:00.980Z] [DEBUG] [AI:Cache] get: MISS
-
-[2026-01-02T18:57:01.157Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
-
-[2026-01-02T18:57:01.413Z] [DEBUG] [AI:MemoryManager] Retrieved 0 chunks in 256ms
-
-[2026-01-02T18:57:01.413Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
-[2026-01-02T18:57:01.413Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
-
-[2026-01-02T18:57:01.413Z] [INFO] [AI:Pipeline] Response mode: standard (default)
-
-[2026-01-02T18:57:01.413Z] [INFO] [AI:ModelRouter] Selecting model for tier: BUDGET, org: test-org-error
-
-[2026-01-02T18:57:01.413Z] [INFO] [AI:ModelRouter] Selected google from config service for BUDGET
-
-[2026-01-02T18:57:01.413Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;toolsEnabled&quot;:true,&quot;streaming&quot;:false}
-[2026-01-02T18:57:01.413Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gemini-2.0-flash&quot;}
-
-[2026-01-02T18:57:01.413Z] [INFO] [AI:Pipeline] Switching to fallback: gpt-4o-mini
-[2026-01-02T18:57:01.413Z] [INFO] [AI:Pipeline] LLM attempt 2/3 {&quot;model&quot;:&quot;gpt-4o&quot;}
-
-[2026-01-02T18:57:01.414Z] [INFO] [AI:Pipeline] Switching to fallback: gpt-4o-mini
-[2026-01-02T18:57:01.414Z] [INFO] [AI:Pipeline] LLM attempt 3/3 {&quot;model&quot;:&quot;gpt-4o&quot;}
-
-[2026-01-02T18:57:01.414Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767380220979_rlfeoaq8q&quot;,&quot;duration&quot;:435,&quot;status&quot;:&quot;error&quot;}
-[2026-01-02T18:57:01.414Z] [DEBUG] [AI:PerformanceOptimizer] Recorded: 435ms, 0 tokens
-
-            </system-out>
-            <system-err>
-[2026-01-02T18:57:00.979Z] [WARN] [AI:Pipeline] Failed to load effective settings: SQLITE_ERROR: no such table: superadmin_ai_settings
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[RagService] searchRelevantChunks error: Embedding API error: 401
-
-[2026-01-02T18:57:01.158Z] [ERROR] [AI:PersistentSessionStore] Error fetching context: SQLITE_ERROR: no such table: conversation_history
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:57:01.376Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: Embedding API error: 401
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:57:01.412Z] [ERROR] [AI:OrgMemoryStore] Search error: Embedding API error: 401
-
-[2026-01-02T18:57:01.413Z] [ERROR] [AI:ModelRouter] Failed to get models for tier BUDGET: SQLITE_ERROR: no such table: model_tier_assignments
-
-[2026-01-02T18:57:01.413Z] [WARN] [AI:Pipeline] Attempt 1 failed: LLM failure {&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;excludeModels&quot;:[&quot;gemini-2.0-flash&quot;]}
-
-[2026-01-02T18:57:01.414Z] [WARN] [AI:Pipeline] Attempt 2 failed: LLM failure {&quot;model&quot;:&quot;gpt-4o&quot;,&quot;excludeModels&quot;:[&quot;gemini-2.0-flash&quot;,&quot;gpt-4o&quot;]}
-
-[2026-01-02T18:57:01.414Z] [WARN] [AI:Pipeline] Attempt 3 failed: LLM failure {&quot;model&quot;:&quot;gpt-4o&quot;,&quot;excludeModels&quot;:[&quot;gemini-2.0-flash&quot;,&quot;gpt-4o&quot;,&quot;gpt-4o&quot;]}
-
-[2026-01-02T18:57:01.414Z] [ERROR] [AI:Pipeline] All providers failed after fallback attempts: LLM failure
-[2026-01-02T18:57:01.414Z] [ERROR] [AI:Observability] Error recorded {&quot;traceId&quot;:&quot;trace_1767380220979_rlfeoaq8q&quot;,&quot;error&quot;:&quot;LLM failure&quot;,&quot;capability&quot;:&quot;chat&quot;,&quot;model&quot;:&quot;gemini-2.0-flash&quot;}
-
-[AIPipeline] Audit log failed: SQLITE_ERROR: no such table: ai_audit_logs
-
-[2026-01-02T18:57:01.414Z] [ERROR] [AI:Pipeline] Process failed {&quot;error&quot;:&quot;LLM failure&quot;,&quot;traceId&quot;:&quot;trace_1767380220979_rlfeoaq8q&quot;}
-
-            </system-err>
-            <failure message="expected &quot;logAudit&quot; to be called at least once" type="AssertionError">
-AssertionError: expected &quot;logAudit&quot; to be called at least once
- ❯ tests/integration/aiPipeline.integration.test.js:244:33
-            </failure>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SecurityPrivacyModule &gt; Data Controls Tab &gt; switches to Data Controls tab when clicked" time="0.033838375">
         </testcase>
-        <testcase classname="tests/integration/aiPipeline.integration.test.js" name="AIPipeline Integration &gt; Error Handling &gt; should record error metrics" time="0.35697225">
-            <system-out>
-[2026-01-02T18:57:01.415Z] [INFO] [AI:PerformanceOptimizer] Metrics reset
-
-[2026-01-02T18:57:01.415Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767380221415_0jznyn2ej&quot;}
-
-[2026-01-02T18:57:01.416Z] [DEBUG] [AI:Cache] get: MISS
-
-[2026-01-02T18:57:01.587Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
-
-[2026-01-02T18:57:01.770Z] [DEBUG] [AI:MemoryManager] Retrieved 0 chunks in 183ms
-
-[2026-01-02T18:57:01.770Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
-[2026-01-02T18:57:01.770Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
-
-[2026-01-02T18:57:01.770Z] [INFO] [AI:Pipeline] Response mode: standard (default)
-
-[2026-01-02T18:57:01.770Z] [INFO] [AI:ModelRouter] Selecting model for tier: BUDGET, org: test-org-error-metrics
-
-[2026-01-02T18:57:01.770Z] [INFO] [AI:ModelRouter] Selected google from config service for BUDGET
-
-[2026-01-02T18:57:01.770Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;toolsEnabled&quot;:true,&quot;streaming&quot;:false}
-[2026-01-02T18:57:01.770Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gemini-2.0-flash&quot;}
-
-[2026-01-02T18:57:01.770Z] [INFO] [AI:Pipeline] Switching to fallback: gpt-4o-mini
-[2026-01-02T18:57:01.770Z] [INFO] [AI:Pipeline] LLM attempt 2/3 {&quot;model&quot;:&quot;gpt-4o&quot;}
-
-[2026-01-02T18:57:01.770Z] [INFO] [AI:Pipeline] Switching to fallback: gpt-4o-mini
-[2026-01-02T18:57:01.770Z] [INFO] [AI:Pipeline] LLM attempt 3/3 {&quot;model&quot;:&quot;gpt-4o&quot;}
-
-[2026-01-02T18:57:01.771Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767380221415_0jznyn2ej&quot;,&quot;duration&quot;:356,&quot;status&quot;:&quot;error&quot;}
-[2026-01-02T18:57:01.771Z] [DEBUG] [AI:PerformanceOptimizer] Recorded: 356ms, 0 tokens
-
-            </system-out>
-            <system-err>
-[2026-01-02T18:57:01.415Z] [WARN] [AI:Pipeline] Failed to load effective settings: SQLITE_ERROR: no such table: superadmin_ai_settings
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[RagService] searchRelevantChunks error: Embedding API error: 401
-
-[2026-01-02T18:57:01.587Z] [ERROR] [AI:PersistentSessionStore] Error fetching context: SQLITE_ERROR: no such table: conversation_history
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:57:01.769Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: Embedding API error: 401
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:57:01.769Z] [ERROR] [AI:OrgMemoryStore] Search error: Embedding API error: 401
-
-[2026-01-02T18:57:01.770Z] [ERROR] [AI:ModelRouter] Failed to get models for tier BUDGET: SQLITE_ERROR: no such table: model_tier_assignments
-
-[2026-01-02T18:57:01.770Z] [WARN] [AI:Pipeline] Attempt 1 failed: LLM failure {&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;excludeModels&quot;:[&quot;gemini-2.0-flash&quot;]}
-
-[2026-01-02T18:57:01.770Z] [WARN] [AI:Pipeline] Attempt 2 failed: LLM failure {&quot;model&quot;:&quot;gpt-4o&quot;,&quot;excludeModels&quot;:[&quot;gemini-2.0-flash&quot;,&quot;gpt-4o&quot;]}
-
-[2026-01-02T18:57:01.770Z] [WARN] [AI:Pipeline] Attempt 3 failed: LLM failure {&quot;model&quot;:&quot;gpt-4o&quot;,&quot;excludeModels&quot;:[&quot;gemini-2.0-flash&quot;,&quot;gpt-4o&quot;,&quot;gpt-4o&quot;]}
-
-[2026-01-02T18:57:01.771Z] [ERROR] [AI:Pipeline] All providers failed after fallback attempts: LLM failure
-[2026-01-02T18:57:01.771Z] [ERROR] [AI:Observability] Error recorded {&quot;traceId&quot;:&quot;trace_1767380221415_0jznyn2ej&quot;,&quot;error&quot;:&quot;LLM failure&quot;,&quot;capability&quot;:&quot;chat&quot;,&quot;model&quot;:&quot;gemini-2.0-flash&quot;}
-
-[AIPipeline] Audit log failed: SQLITE_ERROR: no such table: ai_audit_logs
-
-[2026-01-02T18:57:01.771Z] [ERROR] [AI:Pipeline] Process failed {&quot;error&quot;:&quot;LLM failure&quot;,&quot;traceId&quot;:&quot;trace_1767380221415_0jznyn2ej&quot;}
-
-            </system-err>
-            <failure message="expected &quot;recordMetrics&quot; to be called with arguments: [ Any&lt;String&gt;, …(1) ][90m
-
-Number of calls: [1m0[22m
-[39m" type="AssertionError">
-AssertionError: expected &quot;recordMetrics&quot; to be called with arguments: [ Any&lt;String&gt;, …(1) ]
-
-Number of calls: 0
-
- ❯ tests/integration/aiPipeline.integration.test.js:269:38
-            </failure>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SecurityPrivacyModule &gt; Data Controls Tab &gt; renders training opt-out toggle" time="0.036620417">
         </testcase>
-        <testcase classname="tests/integration/aiPipeline.integration.test.js" name="AIPipeline Integration &gt; Cache Integration &gt; should handle cached responses" time="0.296689875">
-            <system-out>
-[2026-01-02T18:57:01.772Z] [INFO] [AI:PerformanceOptimizer] Metrics reset
-
-[2026-01-02T18:57:01.772Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767380221772_q3johqg0s&quot;}
-
-[2026-01-02T18:57:01.772Z] [DEBUG] [AI:Cache] get: MISS
-
-[2026-01-02T18:57:01.916Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
-
-[2026-01-02T18:57:02.066Z] [DEBUG] [AI:MemoryManager] Retrieved 0 chunks in 150ms
-
-[2026-01-02T18:57:02.066Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
-[2026-01-02T18:57:02.066Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
-
-[2026-01-02T18:57:02.066Z] [INFO] [AI:Pipeline] Response mode: standard (default)
-
-[2026-01-02T18:57:02.067Z] [INFO] [AI:ModelRouter] Selecting model for tier: BUDGET, org: test-org-cache
-
-[2026-01-02T18:57:02.067Z] [INFO] [AI:ModelRouter] Selected google from config service for BUDGET
-
-[2026-01-02T18:57:02.067Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;toolsEnabled&quot;:true,&quot;streaming&quot;:false}
-[2026-01-02T18:57:02.067Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gemini-2.0-flash&quot;}
-
-[2026-01-02T18:57:02.067Z] [DEBUG] [AI:QualityChecker] Check PASSED: score=0.88
-
-[2026-01-02T18:57:02.067Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767380221772_q3johqg0s&quot;,&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;tokens&quot;:700,&quot;cost&quot;:0.00013}
-
-[2026-01-02T18:57:02.067Z] [DEBUG] [AI:Cache] set: HIT
-
-[2026-01-02T18:57:02.068Z] [DEBUG] [AI:PerformanceOptimizer] Recorded: 295ms, 700 tokens
-[2026-01-02T18:57:02.068Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767380221772_q3johqg0s&quot;,&quot;duration&quot;:296,&quot;status&quot;:&quot;success&quot;}
-[2026-01-02T18:57:02.068Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:295,&quot;tokensUsed&quot;:700,&quot;costUsd&quot;:0.00013,&quot;qualityScore&quot;:0.88,&quot;traceId&quot;:&quot;trace_1767380221772_q3johqg0s&quot;}
-
-[2026-01-02T18:57:02.068Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767380222068_jqhz601pf&quot;}
-
-[2026-01-02T18:57:02.068Z] [DEBUG] [AI:LearningSystem] Recorded interaction: bf53c1a2-1b9d-42d5-9480-e8e3a62feeec {&quot;autoFeedbackScore&quot;:0.85,&quot;qualityScore&quot;:0.88}
-
-[2026-01-02T18:57:02.068Z] [DEBUG] [AI:Cache] get: HIT
-[2026-01-02T18:57:02.068Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767380222068_jqhz601pf&quot;,&quot;duration&quot;:0,&quot;status&quot;:&quot;cache_hit&quot;}
-
-            </system-out>
-            <system-err>
-[2026-01-02T18:57:01.772Z] [WARN] [AI:Pipeline] Failed to load effective settings: SQLITE_ERROR: no such table: superadmin_ai_settings
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[RagService] searchRelevantChunks error: Embedding API error: 401
-
-[2026-01-02T18:57:01.916Z] [ERROR] [AI:PersistentSessionStore] Error fetching context: SQLITE_ERROR: no such table: conversation_history
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:57:02.066Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: Embedding API error: 401
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:57:02.066Z] [ERROR] [AI:OrgMemoryStore] Search error: Embedding API error: 401
-
-[2026-01-02T18:57:02.067Z] [ERROR] [AI:ModelRouter] Failed to get models for tier BUDGET: SQLITE_ERROR: no such table: model_tier_assignments
-
-[AIPipeline] Audit log failed: SQLITE_ERROR: no such table: ai_audit_logs
-
-[2026-01-02T18:57:02.068Z] [ERROR] [AI:PersistentSessionStore] Error saving message: SQLITE_ERROR: no such table: conversation_history
-
-[2026-01-02T18:57:02.068Z] [WARN] [AI:Pipeline] Memory recording failed: SQLITE_ERROR: no such table: conversation_history
-
-[2026-01-02T18:57:02.068Z] [WARN] [AI:Pipeline] Failed to load effective settings: SQLITE_ERROR: no such table: superadmin_ai_settings
-
-            </system-err>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SecurityPrivacyModule &gt; Data Controls Tab &gt; renders data retention options" time="0.03461">
         </testcase>
-        <testcase classname="tests/integration/aiPipeline.integration.test.js" name="AIPipeline Integration &gt; Multi-provider Fallback &gt; should fallback to another provider on failure" time="0.412678792">
-            <system-out>
-[2026-01-02T18:57:02.068Z] [INFO] [AI:PerformanceOptimizer] Metrics reset
-
-[2026-01-02T18:57:02.068Z] [INFO] [AI:Pipeline] Starting process {&quot;capability&quot;:&quot;chat&quot;,&quot;traceId&quot;:&quot;trace_1767380222068_0p8me9h6j&quot;}
-
-[2026-01-02T18:57:02.069Z] [DEBUG] [AI:Cache] get: MISS
-
-[2026-01-02T18:57:02.328Z] [DEBUG] [AI:MemoryManager] Retrieving from layers: session, project, organization, knowledge
-
-[2026-01-02T18:57:02.479Z] [DEBUG] [AI:MemoryManager] Retrieved 0 chunks in 151ms
-
-[2026-01-02T18:57:02.479Z] [INFO] [AI:EnhancedContextBuilder] Building context for phase: discovery
-[2026-01-02T18:57:02.479Z] [DEBUG] [AI:EnhancedContextBuilder] Using cached context
-
-[2026-01-02T18:57:02.479Z] [INFO] [AI:Pipeline] Response mode: standard (default)
-
-[2026-01-02T18:57:02.480Z] [INFO] [AI:ModelRouter] Selecting model for tier: BUDGET, org: test-org-fallback
-
-[2026-01-02T18:57:02.480Z] [INFO] [AI:ModelRouter] Selected google from config service for BUDGET
-
-[2026-01-02T18:57:02.480Z] [INFO] [AI:Pipeline] Calling LLM Service {&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;toolsEnabled&quot;:true,&quot;streaming&quot;:false}
-[2026-01-02T18:57:02.480Z] [INFO] [AI:Pipeline] LLM attempt 1/3 {&quot;model&quot;:&quot;gemini-2.0-flash&quot;}
-
-[2026-01-02T18:57:02.480Z] [INFO] [AI:Pipeline] Switching to fallback: gpt-4o-mini
-[2026-01-02T18:57:02.480Z] [INFO] [AI:Pipeline] LLM attempt 2/3 {&quot;model&quot;:&quot;gpt-4o&quot;}
-
-[2026-01-02T18:57:02.480Z] [INFO] [AI:Pipeline] Request succeeded with fallback after 2 attempts {&quot;finalModel&quot;:&quot;gpt-4o&quot;}
-[2026-01-02T18:57:02.480Z] [DEBUG] [AI:QualityChecker] Check PASSED: score=0.97
-
-[2026-01-02T18:57:02.480Z] [INFO] [AI:Observability] Generation recorded {&quot;traceId&quot;:&quot;trace_1767380222068_0p8me9h6j&quot;,&quot;model&quot;:&quot;gpt-4o&quot;,&quot;tokens&quot;:0,&quot;cost&quot;:0}
-
-[2026-01-02T18:57:02.480Z] [DEBUG] [AI:Cache] set: HIT
-
-[2026-01-02T18:57:02.481Z] [DEBUG] [AI:PerformanceOptimizer] Recorded: 412ms, 1000 tokens
-[2026-01-02T18:57:02.481Z] [INFO] [AI:Observability] Trace completed {&quot;traceId&quot;:&quot;trace_1767380222068_0p8me9h6j&quot;,&quot;duration&quot;:413,&quot;status&quot;:&quot;success&quot;}
-[2026-01-02T18:57:02.481Z] [INFO] [AI:Pipeline] Process complete {&quot;latency&quot;:412,&quot;tokensUsed&quot;:1000,&quot;costUsd&quot;:0,&quot;qualityScore&quot;:0.97,&quot;traceId&quot;:&quot;trace_1767380222068_0p8me9h6j&quot;}
-
-            </system-out>
-            <system-err>
-[2026-01-02T18:57:02.069Z] [WARN] [AI:Pipeline] Failed to load effective settings: SQLITE_ERROR: no such table: superadmin_ai_settings
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[RagService] searchRelevantChunks error: Embedding API error: 401
-
-[2026-01-02T18:57:02.329Z] [ERROR] [AI:PersistentSessionStore] Error fetching context: SQLITE_ERROR: no such table: conversation_history
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:57:02.479Z] [WARN] [AI:MemoryManager] Layer knowledge retrieval failed: Embedding API error: 401
-
-[EmbeddingService] Error: Embedding API error: 401
-
-[2026-01-02T18:57:02.479Z] [ERROR] [AI:OrgMemoryStore] Search error: Embedding API error: 401
-
-[2026-01-02T18:57:02.480Z] [ERROR] [AI:ModelRouter] Failed to get models for tier BUDGET: SQLITE_ERROR: no such table: model_tier_assignments
-
-[2026-01-02T18:57:02.480Z] [WARN] [AI:Pipeline] Attempt 1 failed: Provider 1 failed {&quot;model&quot;:&quot;gemini-2.0-flash&quot;,&quot;excludeModels&quot;:[&quot;gemini-2.0-flash&quot;]}
-
-[AIPipeline] Audit log failed: SQLITE_ERROR: no such table: ai_audit_logs
-
-            </system-err>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="SecurityPrivacyModule &gt; Data Controls Tab &gt; renders export data button" time="0.035946209">
         </testcase>
-        <testcase classname="tests/integration/aiPipeline.integration.test.js" name="Enterprise Services Initialization &gt; should have all required services available" time="0.000194042">
-            <failure message="qualityChecker is not defined" type="ReferenceError">
-ReferenceError: qualityChecker is not defined
- ❯ tests/integration/aiPipeline.integration.test.js:342:16
-            </failure>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="IntegrationsModule &gt; Tab Rendering &gt; renders with Apps tab by default" time="0.003842625">
         </testcase>
-        <testcase classname="tests/integration/aiPipeline.integration.test.js" name="Enterprise Services Initialization &gt; should have correct service methods" time="0.000098417">
-            <failure message="qualityChecker is not defined" type="ReferenceError">
-ReferenceError: qualityChecker is not defined
- ❯ tests/integration/aiPipeline.integration.test.js:349:23
-            </failure>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="IntegrationsModule &gt; Tab Rendering &gt; renders all 4 tabs" time="0.004643917">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="IntegrationsModule &gt; API Keys Tab &gt; switches to API Keys tab when clicked" time="0.021112">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="IntegrationsModule &gt; API Keys Tab &gt; renders create new key button" time="0.020316459">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="IntegrationsModule &gt; Webhooks Tab &gt; switches to Webhooks tab when clicked" time="0.019896459">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="IntegrationsModule &gt; Webhooks Tab &gt; renders add webhook button" time="0.020672792">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="IntegrationsModule &gt; Calendar Tab &gt; switches to Calendar tab when clicked" time="0.021192958">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="IntegrationsModule &gt; Calendar Tab &gt; renders Google Calendar option" time="0.020691084">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="IntegrationsModule &gt; Calendar Tab &gt; renders Outlook Calendar option" time="0.021514959">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AppearanceModule &gt; Tab Rendering &gt; renders with Theme tab by default" time="0.006347666">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AppearanceModule &gt; Tab Rendering &gt; renders all 6 tabs" time="0.0088935">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AppearanceModule &gt; Theme Tab &gt; renders light theme option" time="0.005847542">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AppearanceModule &gt; Theme Tab &gt; renders dark theme option" time="0.005252625">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AppearanceModule &gt; Theme Tab &gt; renders system theme option" time="0.005162542">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AppearanceModule &gt; Theme Tab &gt; calls toggleTheme when selecting light theme" time="0.003913334">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AppearanceModule &gt; Theme Tab &gt; calls toggleTheme when selecting dark theme" time="0.00438575">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AppearanceModule &gt; Theme Tab &gt; calls toggleTheme when selecting system theme" time="0.00421875">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AppearanceModule &gt; Language Tab &gt; switches to Language tab when clicked" time="0.061806167">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AppearanceModule &gt; Language Tab &gt; renders English option" time="0.059996417">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="AppearanceModule &gt; Language Tab &gt; renders Polish option" time="0.074155875">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="Settings Integration &gt; all modules can be navigated sequentially" time="0.006170333">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="Settings Integration &gt; each module maps to correct AppView" time="0.000114583">
+        </testcase>
+        <testcase classname="tests/unit/settingsModules.test.tsx" name="Settings Integration &gt; reverse mapping works correctly" time="0.000098375">
         </testcase>
     </testsuite>
 </testsuites>

@@ -272,8 +272,8 @@ async function seedSuperAdminData() {
             const costUsd = (inputTokens + outputTokens) * (model.cost_per_1k || 0.002) / 1000;
             
             await dbRun(`
-                INSERT INTO ai_audit_logs (id, organization_id, user_id, model, capability, action_type, tokens_used, cost_usd, timestamp, success)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO ai_audit_logs (id, organization_id, user_id, model, capability, action_type, ai_role, policy_level, tokens_used, cost_usd, timestamp, success, latency_ms)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
                 uuidv4(),
                 user.organization_id,
@@ -281,10 +281,13 @@ async function seedSuperAdminData() {
                 model.model,
                 randomChoice(capabilities),
                 randomChoice(actionTypes),
+                randomChoice(['analyst', 'consultant', 'strategist', 'assistant']),
+                randomChoice(['low', 'medium', 'high', 'critical']),
                 inputTokens + outputTokens,
                 costUsd,
                 randomDate(90),
-                1
+                1,
+                randomInt(200, 5000)
             ]);
         }
         console.log('✅ AI audit logs seeded (300 entries)');
@@ -368,6 +371,13 @@ async function seedSuperAdminData() {
         const adminUser = users.find(u => u.email?.includes('admin')) || users[0];
         
         for (const code of codes) {
+            // Check if code already exists
+            const existing = await dbGet('SELECT id FROM access_codes WHERE code = ?', [code]);
+            if (existing) {
+                console.log(`  Skipping duplicate code: ${code}`);
+                continue;
+            }
+            
             await dbRun(`
                 INSERT INTO access_codes (id, organization_id, code, created_by, role, max_uses, current_uses, expires_at, is_active, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
@@ -383,7 +393,7 @@ async function seedSuperAdminData() {
                 1 // is_active
             ]);
         }
-        console.log('✅ Access codes seeded (10 entries)');
+        console.log('✅ Access codes seeded');
 
         // 8. Seed Access Requests (20+ entries)
         console.log('📨 Seeding access requests...');

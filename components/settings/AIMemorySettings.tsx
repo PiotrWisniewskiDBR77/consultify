@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Database, Trash2, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Api } from '../../services/api';
 
 interface AIMemorySettingsProps {
   className?: string;
@@ -18,13 +19,10 @@ export const AIMemorySettings: React.FC<AIMemorySettingsProps> = ({ className = 
 
   const handleClearMemory = async () => {
     if (!confirm(t('settings.ai.clearMemoryConfirm', 'Are you sure you want to clear AI memory?'))) return;
-    
+
     setClearing(true);
     try {
-      await fetch('/api/ai-memory/clear', {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      await Api.clearAIMemory();
       toast.success(t('settings.ai.memoryCleared', 'AI memory cleared'));
     } catch (_error) {
       toast.error(t('settings.ai.memoryClearError', 'Failed to clear memory'));

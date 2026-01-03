@@ -10,6 +10,7 @@ import {
     ChatMessage,
     Notification
 } from '../types';
+import { NavigationOptions, WorkspaceContext } from '../types/workspace';
 
 interface AppState {
     currentView: AppView;
@@ -118,6 +119,28 @@ interface AppState {
         scope: string | null;
     };
     setAiFreezeStatus: (status: Partial<AppState['aiFreezeStatus']>) => void;
+
+    // ==================== UNIFIED CHAT NAVIGATION ====================
+    /**
+     * Previous view for "back" functionality
+     */
+    previousView: AppView | null;
+    
+    /**
+     * Navigate to a view while preserving chat context
+     * This triggers the conversation store to switch to split mode
+     */
+    navigateWithChatContext: (view: AppView, options?: NavigationOptions) => void;
+    
+    /**
+     * Return to full-screen AI Chat view
+     */
+    returnToFullChat: () => void;
+    
+    /**
+     * Set previous view for navigation
+     */
+    setPreviousView: (view: AppView | null) => void;
 }
 
 
@@ -394,6 +417,33 @@ export const useAppStore = create<AppState>()(
             setAiFreezeStatus: (status) => set((state) => ({
                 aiFreezeStatus: { ...state.aiFreezeStatus, ...status }
             })),
+
+            // ==================== UNIFIED CHAT NAVIGATION ====================
+            previousView: null,
+            
+            navigateWithChatContext: (view: AppView, options?: NavigationOptions) => set((state) => {
+                console.log('[AppStore] navigateWithChatContext:', view, options);
+                
+                // Import conversation store dynamically to avoid circular dependency
+                // The actual displayMode change happens in useConversationStore
+                // Here we just handle the view change
+                const newState: Partial<AppState> = {
+                    previousView: state.currentView,
+                    currentView: view
+                };
+                
+                return newState;
+            }),
+            
+            returnToFullChat: () => set((state) => {
+                console.log('[AppStore] returnToFullChat from:', state.currentView);
+                return {
+                    previousView: state.currentView,
+                    currentView: AppView.AI_CHAT
+                };
+            }),
+            
+            setPreviousView: (view: AppView | null) => set({ previousView: view }),
         }),
 
         {
@@ -414,7 +464,8 @@ export const useAppStore = create<AppState>()(
                 currentOrganization: state.currentOrganization,
                 isChatCollapsed: state.isChatCollapsed,
                 chatPanelWidth: state.chatPanelWidth,
-                isChatSlidingPanelOpen: state.isChatSlidingPanelOpen
+                isChatSlidingPanelOpen: state.isChatSlidingPanelOpen,
+                previousView: state.previousView // Unified Chat System
             }),
         }
     )

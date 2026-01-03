@@ -800,6 +800,57 @@ function initDb() {
             // Ignore if exists
         });
 
+        // ==========================================
+        // SUPERADMIN EXTENSIONS
+        // ==========================================
+
+        // System Feedback (Bugs & Ideas)
+        db.run(`CREATE TABLE IF NOT EXISTS system_feedback (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            user_email TEXT,
+            user_name TEXT,
+            type TEXT NOT NULL, -- BUG, IDEA, GENERAL
+            message TEXT NOT NULL,
+            rating INTEGER,
+            status TEXT DEFAULT 'NEW', -- NEW, READ, IN_PROGRESS, RESOLVED
+            metadata TEXT, -- JSON
+            admin_response TEXT,
+            responded_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Access Requests (for joining organizations)
+        db.run(`CREATE TABLE IF NOT EXISTS access_requests (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            status TEXT DEFAULT 'pending', -- pending, approved, rejected
+            requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            reviewed_by TEXT,
+            reviewed_at DATETIME,
+            rejection_reason TEXT,
+            metadata TEXT, -- JSON for extra context
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // Access Codes (for joining organizations via code)
+        db.run(`CREATE TABLE IF NOT EXISTS access_codes (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            code TEXT NOT NULL UNIQUE,
+            role TEXT DEFAULT 'USER',
+            max_uses INTEGER DEFAULT 1,
+            uses_count INTEGER DEFAULT 0,
+            expires_at DATETIME,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
         // Add health_status column to llm_providers if not exists
         db.run(`ALTER TABLE llm_providers ADD COLUMN health_status TEXT DEFAULT 'unknown'`, (err) => {
             // Ignore if exists
@@ -3472,7 +3523,7 @@ function initDb() {
                 }
             });
         };
-        
+
         addColumnIfNotExists('user_api_keys', 'rate_limit', 'INTEGER');
         addColumnIfNotExists('user_api_keys', 'quota_limit', 'INTEGER');
         addColumnIfNotExists('user_api_keys', 'quota_used', 'INTEGER DEFAULT 0');
@@ -5949,6 +6000,1479 @@ function initDb() {
         db.run(`CREATE INDEX IF NOT EXISTS idx_scheduled_events_start ON scheduled_events(start_time)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_scheduled_events_project ON scheduled_events(project_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_scheduled_events_status ON scheduled_events(status)`);
+
+        // ==========================================
+        // CONTENT MODULE ENTERPRISE (047_content_module_enterprise.sql)
+        // Email templates versioning, categories, tags, comments, reviews, analytics
+        // ==========================================
+
+        // Extend email_templates with enterprise columns
+        db.run(`ALTER TABLE email_templates ADD COLUMN version INTEGER DEFAULT 1`, () => { });
+        db.run(`ALTER TABLE email_templates ADD COLUMN status TEXT DEFAULT 'DRAFT'`, () => { });
+        db.run(`ALTER TABLE email_templates ADD COLUMN category_id TEXT`, () => { });
+        db.run(`ALTER TABLE email_templates ADD COLUMN language_code TEXT DEFAULT 'en'`, () => { });
+        db.run(`ALTER TABLE email_templates ADD COLUMN parent_template_id TEXT`, () => { });
+        db.run(`ALTER TABLE email_templates ADD COLUMN variables_schema TEXT DEFAULT '{}'`, () => { });
+        db.run(`ALTER TABLE email_templates ADD COLUMN published_at TEXT`, () => { });
+        db.run(`ALTER TABLE email_templates ADD COLUMN published_by TEXT`, () => { });
+        db.run(`ALTER TABLE email_templates ADD COLUMN usage_count INTEGER DEFAULT 0`, () => { });
+
+        // Email Template Versions (Audit Trail)
+        db.run(`CREATE TABLE IF NOT EXISTS email_template_versions(
+            id TEXT PRIMARY KEY,
+            template_id TEXT NOT NULL,
+            version INTEGER NOT NULL,
+            template_key TEXT,
+            name TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            html_content TEXT NOT NULL,
+            text_content TEXT,
+            variables_schema TEXT DEFAULT '{}',
+            changed_by TEXT,
+            change_notes TEXT,
+            change_type TEXT DEFAULT 'UPDATE',
+            status_at_version TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(template_id) REFERENCES email_templates(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_email_template_versions_template ON email_template_versions(template_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_email_template_versions_version ON email_template_versions(template_id, version)`);
+
+        // Email Sends (Tracking)
+        db.run(`CREATE TABLE IF NOT EXISTS email_sends(
+            id TEXT PRIMARY KEY,
+            template_id TEXT,
+            organization_id TEXT,
+            recipient_email TEXT NOT NULL,
+            recipient_user_id TEXT,
+            subject TEXT NOT NULL,
+            status TEXT DEFAULT 'PENDING',
+            sent_at DATETIME,
+            delivered_at DATETIME,
+            opened_at DATETIME,
+            clicked_at DATETIME,
+            bounced_at DATETIME,
+            failed_at DATETIME,
+            error_message TEXT,
+            retry_count INTEGER DEFAULT 0,
+            open_count INTEGER DEFAULT 0,
+            click_count INTEGER DEFAULT 0,
+            first_click_url TEXT,
+            metadata TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(template_id) REFERENCES email_templates(id) ON DELETE SET NULL,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_email_sends_template ON email_sends(template_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_email_sends_org ON email_sends(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_email_sends_recipient ON email_sends(recipient_email)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_email_sends_status ON email_sends(status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_email_sends_created ON email_sends(created_at)`);
+
+        // Content Categories
+        db.run(`CREATE TABLE IF NOT EXISTS content_categories(
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            slug TEXT NOT NULL,
+            description TEXT,
+            content_type TEXT NOT NULL DEFAULT 'ALL',
+            parent_id TEXT,
+            sort_order INTEGER DEFAULT 0,
+            color TEXT DEFAULT '#6366F1',
+            icon TEXT DEFAULT 'folder',
+            organization_id TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_by TEXT,
+            FOREIGN KEY(parent_id) REFERENCES content_categories(id) ON DELETE SET NULL,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_content_categories_slug ON content_categories(slug, organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_categories_type ON content_categories(content_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_categories_parent ON content_categories(parent_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_categories_org ON content_categories(organization_id)`);
+
+        // Content Tags
+        db.run(`CREATE TABLE IF NOT EXISTS content_tags(
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            slug TEXT NOT NULL,
+            content_type TEXT NOT NULL DEFAULT 'ALL',
+            color TEXT DEFAULT '#10B981',
+            organization_id TEXT,
+            usage_count INTEGER DEFAULT 0,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_by TEXT,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_content_tags_slug ON content_tags(slug, organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_tags_type ON content_tags(content_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_tags_org ON content_tags(organization_id)`);
+
+        // Content Tag Mappings
+        db.run(`CREATE TABLE IF NOT EXISTS content_tag_mappings(
+            id TEXT PRIMARY KEY,
+            content_id TEXT NOT NULL,
+            content_type TEXT NOT NULL,
+            tag_id TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_by TEXT,
+            FOREIGN KEY(tag_id) REFERENCES content_tags(id) ON DELETE CASCADE,
+            UNIQUE(content_id, content_type, tag_id)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_tag_mappings_content ON content_tag_mappings(content_id, content_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_tag_mappings_tag ON content_tag_mappings(tag_id)`);
+
+        // Content Comments
+        db.run(`CREATE TABLE IF NOT EXISTS content_comments(
+            id TEXT PRIMARY KEY,
+            content_id TEXT NOT NULL,
+            content_type TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            comment_text TEXT NOT NULL,
+            parent_comment_id TEXT,
+            thread_id TEXT,
+            position_ref TEXT,
+            is_resolved INTEGER DEFAULT 0,
+            resolved_by TEXT,
+            resolved_at DATETIME,
+            mentioned_user_ids TEXT DEFAULT '[]',
+            is_edited INTEGER DEFAULT 0,
+            edited_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(parent_comment_id) REFERENCES content_comments(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_comments_content ON content_comments(content_id, content_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_comments_user ON content_comments(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_comments_thread ON content_comments(thread_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_comments_parent ON content_comments(parent_comment_id)`);
+
+        // Content Reviews
+        db.run(`CREATE TABLE IF NOT EXISTS content_reviews(
+            id TEXT PRIMARY KEY,
+            content_id TEXT NOT NULL,
+            content_type TEXT NOT NULL,
+            requested_by TEXT NOT NULL,
+            requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            reviewer_id TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'PENDING',
+            review_notes TEXT,
+            checklist_items TEXT DEFAULT '[]',
+            reviewed_at DATETIME,
+            version_at_review INTEGER,
+            priority TEXT DEFAULT 'NORMAL',
+            due_date DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(requested_by) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(reviewer_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_reviews_content ON content_reviews(content_id, content_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_reviews_reviewer ON content_reviews(reviewer_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_reviews_status ON content_reviews(status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_reviews_requested_by ON content_reviews(requested_by)`);
+
+        // Content Analytics
+        db.run(`CREATE TABLE IF NOT EXISTS content_analytics(
+            id TEXT PRIMARY KEY,
+            content_id TEXT NOT NULL,
+            content_type TEXT NOT NULL,
+            event_type TEXT NOT NULL,
+            user_id TEXT,
+            organization_id TEXT,
+            metadata TEXT DEFAULT '{}',
+            session_id TEXT,
+            duration_ms INTEGER,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_analytics_content ON content_analytics(content_id, content_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_analytics_event ON content_analytics(event_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_analytics_user ON content_analytics(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_analytics_org ON content_analytics(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_analytics_created ON content_analytics(created_at)`);
+
+        // Content Favorites
+        db.run(`CREATE TABLE IF NOT EXISTS content_favorites(
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            content_id TEXT NOT NULL,
+            content_type TEXT NOT NULL,
+            notes TEXT,
+            folder_name TEXT DEFAULT 'Default',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE(user_id, content_id, content_type)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_favorites_user ON content_favorites(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_favorites_content ON content_favorites(content_id, content_type)`);
+
+        // Content Permissions (Granular)
+        db.run(`CREATE TABLE IF NOT EXISTS content_permissions(
+            id TEXT PRIMARY KEY,
+            content_id TEXT NOT NULL,
+            content_type TEXT NOT NULL,
+            user_id TEXT,
+            role TEXT,
+            permission TEXT NOT NULL,
+            grant_type TEXT DEFAULT 'GRANT',
+            organization_id TEXT,
+            granted_by TEXT,
+            expires_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(granted_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_permissions_content ON content_permissions(content_id, content_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_permissions_user ON content_permissions(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_permissions_role ON content_permissions(role)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_content_permissions_org ON content_permissions(organization_id)`);
+
+        // Extend AI Playbook Templates with enterprise columns
+        db.run(`ALTER TABLE ai_playbook_templates ADD COLUMN category_id TEXT`, () => { });
+        db.run(`ALTER TABLE ai_playbook_templates ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`, () => { });
+        db.run(`ALTER TABLE ai_playbook_templates ADD COLUMN usage_count INTEGER DEFAULT 0`, () => { });
+        db.run(`ALTER TABLE ai_playbook_templates ADD COLUMN last_used_at DATETIME`, () => { });
+        db.run(`ALTER TABLE ai_playbook_templates ADD COLUMN avg_execution_time_mins INTEGER`, () => { });
+        db.run(`ALTER TABLE ai_playbook_templates ADD COLUMN success_rate REAL`, () => { });
+        db.run(`ALTER TABLE ai_playbook_templates ADD COLUMN organization_id TEXT`, () => { });
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_playbook_templates_category ON ai_playbook_templates(category_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_playbook_templates_org_enterprise ON ai_playbook_templates(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_playbook_templates_usage ON ai_playbook_templates(usage_count)`);
+
+        // AI Playbook Template Versions
+        db.run(`CREATE TABLE IF NOT EXISTS ai_playbook_template_versions(
+            id TEXT PRIMARY KEY,
+            template_id TEXT NOT NULL,
+            version INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT,
+            trigger_signal TEXT,
+            template_graph TEXT,
+            estimated_duration_mins INTEGER,
+            changed_by TEXT,
+            change_notes TEXT,
+            change_type TEXT DEFAULT 'UPDATE',
+            status_at_version TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(template_id) REFERENCES ai_playbook_templates(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_playbook_template_versions_template ON ai_playbook_template_versions(template_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_playbook_template_versions_version ON ai_playbook_template_versions(template_id, version)`);
+
+        // ==========================================
+        // ENTERPRISE CUSTOMERS MODULE TABLES
+        // Migration: 015_enterprise_customers_module
+        // ==========================================
+
+        // Organization Metadata & Custom Fields
+        db.run(`CREATE TABLE IF NOT EXISTS organization_metadata (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            key TEXT NOT NULL,
+            value TEXT,
+            value_type TEXT DEFAULT 'string',
+            category TEXT,
+            is_sensitive INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            UNIQUE(organization_id, key)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_metadata_org ON organization_metadata(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_metadata_category ON organization_metadata(category)`);
+
+        // Organization Tags & Labels
+        db.run(`CREATE TABLE IF NOT EXISTS organization_tags (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            tag TEXT NOT NULL,
+            color TEXT,
+            category TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            UNIQUE(organization_id, tag)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_tags_org ON organization_tags(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_tags_category ON organization_tags(category)`);
+
+        // Organization Relationships
+        db.run(`CREATE TABLE IF NOT EXISTS organization_relationships (
+            id TEXT PRIMARY KEY,
+            parent_org_id TEXT NOT NULL,
+            child_org_id TEXT NOT NULL,
+            relationship_type TEXT NOT NULL,
+            status TEXT DEFAULT 'active',
+            metadata TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(parent_org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(child_org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            UNIQUE(parent_org_id, child_org_id, relationship_type)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_relationships_parent ON organization_relationships(parent_org_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_relationships_child ON organization_relationships(child_org_id)`);
+
+        // Organization Health Scores
+        db.run(`CREATE TABLE IF NOT EXISTS organization_health_scores (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            score_date DATE NOT NULL,
+            overall_score REAL,
+            engagement_score REAL,
+            adoption_score REAL,
+            support_score REAL,
+            technical_score REAL,
+            billing_score REAL,
+            churn_risk REAL,
+            health_trend TEXT,
+            factors_json TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            UNIQUE(organization_id, score_date)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_health_org ON organization_health_scores(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_health_date ON organization_health_scores(score_date DESC)`);
+
+        // Organization Segments
+        db.run(`CREATE TABLE IF NOT EXISTS organization_segments (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            segment_name TEXT NOT NULL,
+            segment_type TEXT,
+            assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            assigned_by TEXT,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(assigned_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_segments_org ON organization_segments(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_segments_type ON organization_segments(segment_type)`);
+
+        // Extended User Profiles
+        db.run(`CREATE TABLE IF NOT EXISTS user_profiles (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL UNIQUE,
+            job_title TEXT,
+            department TEXT,
+            phone TEXT,
+            timezone TEXT DEFAULT 'UTC',
+            locale TEXT DEFAULT 'en',
+            avatar_url TEXT,
+            bio TEXT,
+            linkedin_url TEXT,
+            github_url TEXT,
+            website_url TEXT,
+            skills_json TEXT DEFAULT '[]',
+            certifications_json TEXT DEFAULT '[]',
+            preferences_json TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_profiles_user ON user_profiles(user_id)`);
+
+        // User Activity Summary
+        db.run(`CREATE TABLE IF NOT EXISTS user_activity_summary (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            period_start DATE NOT NULL,
+            period_end DATE NOT NULL,
+            login_count INTEGER DEFAULT 0,
+            last_login_at DATETIME,
+            ai_interactions INTEGER DEFAULT 0,
+            tasks_created INTEGER DEFAULT 0,
+            tasks_completed INTEGER DEFAULT 0,
+            projects_accessed INTEGER DEFAULT 0,
+            features_used_json TEXT DEFAULT '[]',
+            engagement_score REAL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            UNIQUE(user_id, organization_id, period_start)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_activity_user ON user_activity_summary(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_activity_org ON user_activity_summary(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_activity_period ON user_activity_summary(period_start DESC)`);
+
+        // User Sessions (Detailed)
+        db.run(`CREATE TABLE IF NOT EXISTS user_sessions (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            session_token TEXT UNIQUE NOT NULL,
+            ip_address TEXT,
+            user_agent TEXT,
+            device_type TEXT,
+            browser TEXT,
+            os TEXT,
+            location_country TEXT,
+            location_city TEXT,
+            login_method TEXT,
+            started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_activity_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expires_at DATETIME NOT NULL,
+            ended_at DATETIME,
+            end_reason TEXT,
+            is_active INTEGER DEFAULT 1,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_sessions_user ON user_sessions(user_id)`, (err) => {
+            if (err && !err.message.includes('no such column')) {
+                console.warn('[DB] User sessions index error:', err.message);
+            }
+        });
+        // Note: session_token already has UNIQUE constraint, which creates an index automatically
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_sessions_active ON user_sessions(is_active, expires_at)`, (err) => {
+            if (err && !err.message.includes('no such column')) {
+                console.warn('[DB] User sessions active index error:', err.message);
+            }
+        });
+
+        // User Groups & Teams (Cross-organization)
+        db.run(`CREATE TABLE IF NOT EXISTS user_groups (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            group_type TEXT,
+            organization_id TEXT,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_groups_org ON user_groups(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_groups_type ON user_groups(group_type)`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS user_group_members (
+            group_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            role TEXT DEFAULT 'member',
+            added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            added_by TEXT,
+            PRIMARY KEY(group_id, user_id),
+            FOREIGN KEY(group_id) REFERENCES user_groups(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(added_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_group_members_group ON user_group_members(group_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_group_members_user ON user_group_members(user_id)`);
+
+        // User Onboarding Progress
+        db.run(`CREATE TABLE IF NOT EXISTS user_onboarding_progress (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            step_key TEXT NOT NULL,
+            step_name TEXT NOT NULL,
+            completed INTEGER DEFAULT 0,
+            completed_at DATETIME,
+            skipped INTEGER DEFAULT 0,
+            skipped_at DATETIME,
+            progress_data TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            UNIQUE(user_id, organization_id, step_key)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_onboarding_user ON user_onboarding_progress(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_onboarding_org ON user_onboarding_progress(organization_id)`);
+
+        // User License Management
+        db.run(`CREATE TABLE IF NOT EXISTS user_licenses (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            license_type TEXT NOT NULL,
+            features_json TEXT DEFAULT '[]',
+            limits_json TEXT DEFAULT '{}',
+            assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expires_at DATETIME,
+            assigned_by TEXT,
+            notes TEXT,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(assigned_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_licenses_user ON user_licenses(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_licenses_org ON user_licenses(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_licenses_type ON user_licenses(license_type)`);
+
+        // IP Whitelisting
+        db.run(`CREATE TABLE IF NOT EXISTS organization_ip_whitelist (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            ip_address TEXT NOT NULL,
+            ip_range TEXT,
+            description TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL,
+            UNIQUE(organization_id, ip_address)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ip_whitelist_org ON organization_ip_whitelist(organization_id)`);
+
+        // Device Management
+        db.run(`CREATE TABLE IF NOT EXISTS user_devices (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            device_id TEXT UNIQUE NOT NULL,
+            device_name TEXT,
+            device_type TEXT,
+            browser TEXT,
+            os TEXT,
+            ip_address TEXT,
+            first_seen_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_seen_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_trusted INTEGER DEFAULT 0,
+            is_blocked INTEGER DEFAULT 0,
+            blocked_reason TEXT,
+            blocked_at DATETIME,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_devices_user ON user_devices(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_devices_device_id ON user_devices(device_id)`);
+
+        // MFA (Multi-Factor Authentication)
+        db.run(`CREATE TABLE IF NOT EXISTS user_mfa_methods (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            method_type TEXT NOT NULL,
+            secret TEXT,
+            phone_number TEXT,
+            backup_codes_json TEXT DEFAULT '[]',
+            is_enabled INTEGER DEFAULT 0,
+            is_primary INTEGER DEFAULT 0,
+            last_used_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_mfa_user ON user_mfa_methods(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_mfa_enabled ON user_mfa_methods(user_id, is_enabled)`);
+
+        // Password Policies
+        db.run(`CREATE TABLE IF NOT EXISTS organization_password_policies (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL UNIQUE,
+            min_length INTEGER DEFAULT 8,
+            require_uppercase INTEGER DEFAULT 1,
+            require_lowercase INTEGER DEFAULT 1,
+            require_numbers INTEGER DEFAULT 1,
+            require_special_chars INTEGER DEFAULT 1,
+            max_age_days INTEGER,
+            prevent_reuse_count INTEGER DEFAULT 5,
+            lockout_attempts INTEGER DEFAULT 5,
+            lockout_duration_minutes INTEGER DEFAULT 30,
+            require_mfa INTEGER DEFAULT 0,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // Security Events & Alerts
+        db.run(`CREATE TABLE IF NOT EXISTS security_events (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT,
+            user_id TEXT,
+            event_type TEXT NOT NULL,
+            severity TEXT DEFAULT 'medium',
+            ip_address TEXT,
+            user_agent TEXT,
+            location_country TEXT,
+            location_city TEXT,
+            details_json TEXT DEFAULT '{}',
+            resolved INTEGER DEFAULT 0,
+            resolved_at DATETIME,
+            resolved_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(resolved_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_security_events_org ON security_events(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_security_events_user ON security_events(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_security_events_type ON security_events(event_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_security_events_severity ON security_events(severity)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_security_events_created ON security_events(created_at DESC)`);
+
+        // Support Tickets
+        db.run(`CREATE TABLE IF NOT EXISTS support_tickets (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            user_id TEXT,
+            ticket_number TEXT UNIQUE NOT NULL,
+            subject TEXT NOT NULL,
+            description TEXT NOT NULL,
+            priority TEXT DEFAULT 'medium',
+            status TEXT DEFAULT 'open',
+            category TEXT,
+            assigned_to TEXT,
+            tags_json TEXT DEFAULT '[]',
+            metadata_json TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            resolved_at DATETIME,
+            closed_at DATETIME,
+            first_response_at DATETIME,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(assigned_to) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_support_tickets_org ON support_tickets(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_support_tickets_user ON support_tickets(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_support_tickets_priority ON support_tickets(priority)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_support_tickets_number ON support_tickets(ticket_number)`);
+
+        // Support Ticket Comments
+        db.run(`CREATE TABLE IF NOT EXISTS support_ticket_comments (
+            id TEXT PRIMARY KEY,
+            ticket_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            comment_text TEXT NOT NULL,
+            is_internal INTEGER DEFAULT 0,
+            attachments_json TEXT DEFAULT '[]',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(ticket_id) REFERENCES support_tickets(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_support_comments_ticket ON support_ticket_comments(ticket_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_support_comments_user ON support_ticket_comments(user_id)`);
+
+        // Customer Success Notes
+        db.run(`CREATE TABLE IF NOT EXISTS customer_success_notes (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            user_id TEXT,
+            note_type TEXT,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            action_items_json TEXT DEFAULT '[]',
+            follow_up_date DATETIME,
+            created_by TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_cs_notes_org ON customer_success_notes(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_cs_notes_user ON customer_success_notes(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_cs_notes_type ON customer_success_notes(note_type)`);
+
+        // Customer Health Checks
+        db.run(`CREATE TABLE IF NOT EXISTS customer_health_checks (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            check_date DATE NOT NULL,
+            overall_health TEXT,
+            engagement_level TEXT,
+            adoption_score REAL,
+            support_tickets_count INTEGER DEFAULT 0,
+            open_tickets_count INTEGER DEFAULT 0,
+            avg_response_time_hours REAL,
+            nps_score INTEGER,
+            churn_risk TEXT,
+            risk_factors_json TEXT DEFAULT '[]',
+            recommendations_json TEXT DEFAULT '[]',
+            checked_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(checked_by) REFERENCES users(id) ON DELETE SET NULL,
+            UNIQUE(organization_id, check_date)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_customer_health_org ON customer_health_checks(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_customer_health_date ON customer_health_checks(check_date DESC)`);
+
+        // Customer Lifecycle Events
+        db.run(`CREATE TABLE IF NOT EXISTS customer_lifecycle_events (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            event_type TEXT NOT NULL,
+            event_date DATE NOT NULL,
+            previous_state TEXT,
+            new_state TEXT,
+            metadata_json TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_lifecycle_events_org ON customer_lifecycle_events(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_lifecycle_events_type ON customer_lifecycle_events(event_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_lifecycle_events_date ON customer_lifecycle_events(event_date DESC)`);
+
+        // Enhanced Feedback System
+        db.run(`CREATE TABLE IF NOT EXISTS feedback_items (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT,
+            user_id TEXT NOT NULL,
+            feedback_type TEXT NOT NULL,
+            category TEXT,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            priority TEXT DEFAULT 'medium',
+            status TEXT DEFAULT 'new',
+            votes_count INTEGER DEFAULT 0,
+            user_impact TEXT,
+            screenshots_json TEXT DEFAULT '[]',
+            attachments_json TEXT DEFAULT '[]',
+            metadata_json TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_feedback_items_org ON feedback_items(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_feedback_items_user ON feedback_items(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_feedback_items_type ON feedback_items(feedback_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_feedback_items_status ON feedback_items(status)`);
+
+        // Feedback Votes
+        db.run(`CREATE TABLE IF NOT EXISTS feedback_votes (
+            id TEXT PRIMARY KEY,
+            feedback_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            vote_type TEXT DEFAULT 'upvote',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(feedback_id) REFERENCES feedback_items(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE(feedback_id, user_id)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_feedback_votes_feedback ON feedback_votes(feedback_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_feedback_votes_user ON feedback_votes(user_id)`);
+
+        // Feedback Comments
+        db.run(`CREATE TABLE IF NOT EXISTS feedback_comments (
+            id TEXT PRIMARY KEY,
+            feedback_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            comment_text TEXT NOT NULL,
+            is_internal INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(feedback_id) REFERENCES feedback_items(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_feedback_comments_feedback ON feedback_comments(feedback_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_feedback_comments_user ON feedback_comments(user_id)`);
+
+        // Feature Roadmap
+        db.run(`CREATE TABLE IF NOT EXISTS feature_roadmap (
+            id TEXT PRIMARY KEY,
+            feature_title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            status TEXT DEFAULT 'planned',
+            priority TEXT DEFAULT 'medium',
+            target_release_date DATE,
+            related_feedback_ids_json TEXT DEFAULT '[]',
+            votes_count INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_feature_roadmap_status ON feature_roadmap(status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_feature_roadmap_priority ON feature_roadmap(priority)`);
+
+        // Organization Analytics
+        db.run(`CREATE TABLE IF NOT EXISTS organization_analytics (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            metric_date DATE NOT NULL,
+            total_users INTEGER DEFAULT 0,
+            active_users INTEGER DEFAULT 0,
+            ai_interactions INTEGER DEFAULT 0,
+            tokens_used INTEGER DEFAULT 0,
+            storage_used_gb REAL DEFAULT 0,
+            projects_count INTEGER DEFAULT 0,
+            tasks_created INTEGER DEFAULT 0,
+            tasks_completed INTEGER DEFAULT 0,
+            support_tickets INTEGER DEFAULT 0,
+            nps_score INTEGER,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            UNIQUE(organization_id, metric_date)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_analytics_org ON organization_analytics(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_org_analytics_date ON organization_analytics(metric_date DESC)`);
+
+        // User Adoption Metrics
+        db.run(`CREATE TABLE IF NOT EXISTS user_adoption_metrics (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            metric_date DATE NOT NULL,
+            features_used_json TEXT DEFAULT '[]',
+            playbooks_completed INTEGER DEFAULT 0,
+            ai_interactions INTEGER DEFAULT 0,
+            login_frequency INTEGER DEFAULT 0,
+            engagement_score REAL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            UNIQUE(user_id, organization_id, metric_date)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_adoption_user ON user_adoption_metrics(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_adoption_org ON user_adoption_metrics(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_adoption_date ON user_adoption_metrics(metric_date DESC)`);
+
+        // Data Retention Policies
+        db.run(`CREATE TABLE IF NOT EXISTS data_retention_policies (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT,
+            data_type TEXT NOT NULL,
+            retention_days INTEGER NOT NULL,
+            auto_delete INTEGER DEFAULT 0,
+            archive_before_delete INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_retention_policies_org ON data_retention_policies(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_retention_policies_type ON data_retention_policies(data_type)`);
+
+        // GDPR Data Subject Requests (DSAR)
+        db.run(`CREATE TABLE IF NOT EXISTS gdpr_data_subject_requests (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            user_id TEXT,
+            request_type TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            completed_at DATETIME,
+            data_json TEXT,
+            notes TEXT,
+            created_by TEXT,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_gdpr_requests_org ON gdpr_data_subject_requests(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_gdpr_requests_user ON gdpr_data_subject_requests(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_gdpr_requests_status ON gdpr_data_subject_requests(status)`);
+
+        // Consent Management
+        db.run(`CREATE TABLE IF NOT EXISTS user_consents (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            consent_type TEXT NOT NULL,
+            consent_status TEXT DEFAULT 'pending',
+            consent_version TEXT,
+            granted_at DATETIME,
+            withdrawn_at DATETIME,
+            ip_address TEXT,
+            user_agent TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            UNIQUE(user_id, organization_id, consent_type)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_consents_user ON user_consents(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_consents_org ON user_consents(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_user_consents_type ON user_consents(consent_type)`);
+
+        // Integration Connections
+        db.run(`CREATE TABLE IF NOT EXISTS integration_connections (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            integration_type TEXT NOT NULL,
+            name TEXT NOT NULL,
+            config_json TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            last_sync_at DATETIME,
+            sync_status TEXT DEFAULT 'success',
+            error_message TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_integration_connections_org ON integration_connections(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_integration_connections_type ON integration_connections(integration_type)`);
+
+        // Automation Rules
+        db.run(`CREATE TABLE IF NOT EXISTS automation_rules (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            trigger_type TEXT NOT NULL,
+            trigger_config_json TEXT NOT NULL,
+            action_type TEXT NOT NULL,
+            action_config_json TEXT NOT NULL,
+            conditions_json TEXT DEFAULT '[]',
+            is_active INTEGER DEFAULT 1,
+            execution_count INTEGER DEFAULT 0,
+            last_executed_at DATETIME,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_automation_rules_org ON automation_rules(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_automation_rules_active ON automation_rules(is_active)`);
+
+        // Webhook Subscriptions
+        db.run(`CREATE TABLE IF NOT EXISTS webhook_subscriptions (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            url TEXT NOT NULL,
+            events_json TEXT NOT NULL,
+            secret TEXT,
+            is_active INTEGER DEFAULT 1,
+            failure_count INTEGER DEFAULT 0,
+            last_success_at DATETIME,
+            last_failure_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_subscriptions_org ON webhook_subscriptions(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_subscriptions_active ON webhook_subscriptions(is_active)`);
+
+        // Email Templates (if not exists - check if already created)
+        db.run(`CREATE TABLE IF NOT EXISTS email_templates (
+            id TEXT PRIMARY KEY,
+            template_key TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            body_html TEXT NOT NULL,
+            body_text TEXT,
+            variables_json TEXT DEFAULT '[]',
+            category TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_email_templates_key ON email_templates(template_key)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_email_templates_category ON email_templates(category)`);
+
+        // Email Campaigns
+        db.run(`CREATE TABLE IF NOT EXISTS email_campaigns (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT,
+            name TEXT NOT NULL,
+            template_id TEXT,
+            subject TEXT NOT NULL,
+            body_html TEXT NOT NULL,
+            recipient_filter_json TEXT DEFAULT '{}',
+            status TEXT DEFAULT 'draft',
+            scheduled_at DATETIME,
+            sent_at DATETIME,
+            total_recipients INTEGER DEFAULT 0,
+            sent_count INTEGER DEFAULT 0,
+            opened_count INTEGER DEFAULT 0,
+            clicked_count INTEGER DEFAULT 0,
+            bounced_count INTEGER DEFAULT 0,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(template_id) REFERENCES email_templates(id) ON DELETE SET NULL,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_email_campaigns_org ON email_campaigns(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_email_campaigns_status ON email_campaigns(status)`);
+
+        // Notification Preferences (if not exists)
+        db.run(`CREATE TABLE IF NOT EXISTS notification_preferences (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            organization_id TEXT,
+            notification_type TEXT NOT NULL,
+            channel TEXT,
+            is_enabled INTEGER DEFAULT 1,
+            frequency TEXT DEFAULT 'immediate',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            UNIQUE(user_id, organization_id, notification_type, channel)
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_notification_prefs_user ON notification_preferences(user_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_notification_prefs_org ON notification_preferences(organization_id)`);
+
+        console.log('Enterprise Customers Module tables created.');
+
+        // =========================================
+        // PHASE 1: ADVANCED IAM MODULE TABLES
+        // =========================================
+
+        // Admin Sessions - MFA Tracking and Session Management
+        db.run(`CREATE TABLE IF NOT EXISTS admin_sessions (
+            id TEXT PRIMARY KEY,
+            admin_id TEXT NOT NULL,
+            session_token TEXT UNIQUE NOT NULL,
+            ip_address TEXT,
+            user_agent TEXT,
+            mfa_verified INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expires_at DATETIME NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            FOREIGN KEY(admin_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_admin_sessions_admin ON admin_sessions(admin_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_admin_sessions_token ON admin_sessions(session_token)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_admin_sessions_active ON admin_sessions(is_active, expires_at)`);
+
+        // Admin Audit Logs - Risk Scoring
+        db.run(`CREATE TABLE IF NOT EXISTS admin_audit_logs (
+            id TEXT PRIMARY KEY,
+            admin_id TEXT NOT NULL,
+            action_type TEXT NOT NULL,
+            resource_type TEXT,
+            resource_id TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            risk_score INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'unresolved',
+            metadata_json TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            resolved_at DATETIME,
+            resolved_by TEXT,
+            resolution_notes TEXT,
+            FOREIGN KEY(admin_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(resolved_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_admin_audit_admin ON admin_audit_logs(admin_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_admin_audit_action ON admin_audit_logs(action_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_admin_audit_risk ON admin_audit_logs(risk_score)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_admin_audit_created ON admin_audit_logs(created_at)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_admin_audit_status ON admin_audit_logs(status)`);
+
+        // Admin Approval Workflows
+        db.run(`CREATE TABLE IF NOT EXISTS admin_approval_workflows (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            resource_type TEXT NOT NULL,
+            trigger_conditions_json TEXT DEFAULT '{}',
+            approvers_json TEXT DEFAULT '[]',
+            is_active INTEGER DEFAULT 1,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_approval_workflows_resource ON admin_approval_workflows(resource_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_approval_workflows_active ON admin_approval_workflows(is_active)`);
+
+        // Admin Approval Requests
+        db.run(`CREATE TABLE IF NOT EXISTS admin_approval_requests (
+            id TEXT PRIMARY KEY,
+            workflow_id TEXT NOT NULL,
+            resource_type TEXT NOT NULL,
+            resource_id TEXT,
+            requester_id TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            current_step INTEGER DEFAULT 0,
+            approvers_json TEXT DEFAULT '[]',
+            request_data_json TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            completed_at DATETIME,
+            FOREIGN KEY(workflow_id) REFERENCES admin_approval_workflows(id) ON DELETE CASCADE,
+            FOREIGN KEY(requester_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_approval_requests_workflow ON admin_approval_requests(workflow_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_approval_requests_requester ON admin_approval_requests(requester_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_approval_requests_status ON admin_approval_requests(status)`);
+
+        // =========================================
+        // PHASE 2: ADVANCED SECURITY MODULE TABLES
+        // =========================================
+
+        // Security Incidents
+        db.run(`CREATE TABLE IF NOT EXISTS security_incidents (
+            id TEXT PRIMARY KEY,
+            incident_type TEXT NOT NULL,
+            severity TEXT NOT NULL DEFAULT 'LOW',
+            status TEXT DEFAULT 'open',
+            description TEXT,
+            affected_resources_json TEXT DEFAULT '[]',
+            detected_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            resolved_at DATETIME,
+            resolved_by TEXT,
+            resolution_notes TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(resolved_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_security_incidents_type ON security_incidents(incident_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_security_incidents_severity ON security_incidents(severity)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_security_incidents_status ON security_incidents(status)`);
+
+        // Threat Intelligence
+        db.run(`CREATE TABLE IF NOT EXISTS threat_intelligence (
+            id TEXT PRIMARY KEY,
+            threat_type TEXT NOT NULL,
+            source TEXT,
+            ip_address TEXT,
+            domain TEXT,
+            reputation_score INTEGER DEFAULT 0,
+            threat_level TEXT DEFAULT 'LOW',
+            description TEXT,
+            first_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_blocked INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_threat_intel_ip ON threat_intelligence(ip_address)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_threat_intel_domain ON threat_intelligence(domain)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_threat_intel_level ON threat_intelligence(threat_level)`);
+
+        // DLP Policies
+        db.run(`CREATE TABLE IF NOT EXISTS dlp_policies (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            policy_type TEXT NOT NULL,
+            rules_json TEXT DEFAULT '[]',
+            enforcement_action TEXT DEFAULT 'warn',
+            is_active INTEGER DEFAULT 1,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_dlp_policies_type ON dlp_policies(policy_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_dlp_policies_active ON dlp_policies(is_active)`);
+
+        // DLP Violations
+        db.run(`CREATE TABLE IF NOT EXISTS dlp_violations (
+            id TEXT PRIMARY KEY,
+            policy_id TEXT NOT NULL,
+            resource_type TEXT,
+            resource_id TEXT,
+            violation_type TEXT NOT NULL,
+            severity TEXT DEFAULT 'LOW',
+            detected_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            resolved_at DATETIME,
+            resolved_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(policy_id) REFERENCES dlp_policies(id) ON DELETE CASCADE,
+            FOREIGN KEY(resolved_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_dlp_violations_policy ON dlp_violations(policy_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_dlp_violations_severity ON dlp_violations(severity)`);
+
+        // =========================================
+        // PHASE 3: ANALYTICS MODULE TABLES
+        // =========================================
+
+        // Admin Dashboards
+        db.run(`CREATE TABLE IF NOT EXISTS admin_dashboards (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            layout_json TEXT DEFAULT '{}',
+            widgets_json TEXT DEFAULT '[]',
+            is_shared INTEGER DEFAULT 0,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_admin_dashboards_created_by ON admin_dashboards(created_by)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_admin_dashboards_shared ON admin_dashboards(is_shared)`);
+
+        // Admin Saved Reports
+        db.run(`CREATE TABLE IF NOT EXISTS admin_saved_reports (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            report_type TEXT NOT NULL,
+            filters_json TEXT DEFAULT '{}',
+            columns_json TEXT DEFAULT '[]',
+            schedule_json TEXT,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_admin_reports_type ON admin_saved_reports(report_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_admin_reports_created_by ON admin_saved_reports(created_by)`);
+
+        // Admin Report Executions
+        db.run(`CREATE TABLE IF NOT EXISTS admin_report_executions (
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            executed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            completed_at DATETIME,
+            result_json TEXT,
+            error_message TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(report_id) REFERENCES admin_saved_reports(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_report_executions_report ON admin_report_executions(report_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_report_executions_status ON admin_report_executions(status)`);
+
+        // Business Metrics
+        db.run(`CREATE TABLE IF NOT EXISTS business_metrics (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            metric_type TEXT NOT NULL,
+            calculation_formula TEXT,
+            target_value REAL,
+            unit TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_business_metrics_type ON business_metrics(metric_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_business_metrics_active ON business_metrics(is_active)`);
+
+        // Business Metric History
+        db.run(`CREATE TABLE IF NOT EXISTS business_metric_history (
+            id TEXT PRIMARY KEY,
+            metric_id TEXT NOT NULL,
+            value REAL NOT NULL,
+            calculated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(metric_id) REFERENCES business_metrics(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_metric_history_metric ON business_metric_history(metric_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_metric_history_calculated ON business_metric_history(calculated_at)`);
+
+        // Predictive Models
+        db.run(`CREATE TABLE IF NOT EXISTS predictive_models (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            model_type TEXT NOT NULL,
+            training_data_json TEXT DEFAULT '{}',
+            model_config_json TEXT DEFAULT '{}',
+            accuracy_score REAL,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_predictive_models_type ON predictive_models(model_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_predictive_models_active ON predictive_models(is_active)`);
+
+        // Model Predictions
+        db.run(`CREATE TABLE IF NOT EXISTS model_predictions (
+            id TEXT PRIMARY KEY,
+            model_id TEXT NOT NULL,
+            prediction_type TEXT NOT NULL,
+            predicted_value TEXT,
+            confidence_score REAL,
+            input_data_json TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(model_id) REFERENCES predictive_models(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_model_predictions_model ON model_predictions(model_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_model_predictions_type ON model_predictions(prediction_type)`);
+
+        // =========================================
+        // PHASE 4: CUSTOMER MANAGEMENT TABLES
+        // =========================================
+
+        // Customer Lifecycle Stages
+        db.run(`CREATE TABLE IF NOT EXISTS customer_lifecycle_stages (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            order_index INTEGER DEFAULT 0,
+            color TEXT DEFAULT '#6B7280',
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_lifecycle_stages_order ON customer_lifecycle_stages(order_index)`);
+
+        // Customer Lifecycle Transitions
+        db.run(`CREATE TABLE IF NOT EXISTS customer_lifecycle_transitions (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            from_stage_id TEXT,
+            to_stage_id TEXT NOT NULL,
+            transitioned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            transitioned_by TEXT,
+            notes TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(from_stage_id) REFERENCES customer_lifecycle_stages(id) ON DELETE SET NULL,
+            FOREIGN KEY(to_stage_id) REFERENCES customer_lifecycle_stages(id) ON DELETE CASCADE,
+            FOREIGN KEY(transitioned_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_lifecycle_transitions_org ON customer_lifecycle_transitions(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_lifecycle_transitions_to ON customer_lifecycle_transitions(to_stage_id)`);
+
+        // Customer Success Playbooks
+        db.run(`CREATE TABLE IF NOT EXISTS customer_success_playbooks (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            trigger_conditions_json TEXT DEFAULT '{}',
+            actions_json TEXT DEFAULT '[]',
+            is_active INTEGER DEFAULT 1,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_success_playbooks_active ON customer_success_playbooks(is_active)`);
+
+        // Customer Success Actions
+        db.run(`CREATE TABLE IF NOT EXISTS customer_success_actions (
+            id TEXT PRIMARY KEY,
+            playbook_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            action_type TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            executed_at DATETIME,
+            completed_at DATETIME,
+            result_json TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(playbook_id) REFERENCES customer_success_playbooks(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_success_actions_playbook ON customer_success_actions(playbook_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_success_actions_org ON customer_success_actions(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_success_actions_status ON customer_success_actions(status)`);
+
+        // Customer Contracts
+        db.run(`CREATE TABLE IF NOT EXISTS customer_contracts (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            contract_type TEXT NOT NULL,
+            start_date DATE NOT NULL,
+            end_date DATE,
+            renewal_date DATE,
+            value REAL DEFAULT 0,
+            currency TEXT DEFAULT 'USD',
+            status TEXT DEFAULT 'active',
+            terms_json TEXT DEFAULT '{}',
+            document_url TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_customer_contracts_org ON customer_contracts(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_customer_contracts_status ON customer_contracts(status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_customer_contracts_renewal ON customer_contracts(renewal_date)`);
+
+        // Contract Amendments
+        db.run(`CREATE TABLE IF NOT EXISTS contract_amendments (
+            id TEXT PRIMARY KEY,
+            contract_id TEXT NOT NULL,
+            amendment_type TEXT NOT NULL,
+            amendment_date DATE NOT NULL,
+            changes_json TEXT DEFAULT '{}',
+            approved_by TEXT,
+            approved_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(contract_id) REFERENCES customer_contracts(id) ON DELETE CASCADE,
+            FOREIGN KEY(approved_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_contract_amendments_contract ON contract_amendments(contract_id)`);
+
+        // =========================================
+        // PHASE 5: REVENUE MANAGEMENT TABLES
+        // =========================================
+
+        // Plan Features
+        db.run(`CREATE TABLE IF NOT EXISTS plan_features (
+            id TEXT PRIMARY KEY,
+            plan_id TEXT NOT NULL,
+            feature_key TEXT NOT NULL,
+            feature_value TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_plan_features_plan ON plan_features(plan_id)`);
+        db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_plan_features_unique ON plan_features(plan_id, feature_key)`);
+
+        // Subscription Changes
+        db.run(`CREATE TABLE IF NOT EXISTS subscription_changes (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            from_plan_id TEXT,
+            to_plan_id TEXT NOT NULL,
+            change_type TEXT NOT NULL,
+            effective_date DATE NOT NULL,
+            proration_amount REAL DEFAULT 0,
+            status TEXT DEFAULT 'pending',
+            approved_by TEXT,
+            approved_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(approved_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_subscription_changes_org ON subscription_changes(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_subscription_changes_status ON subscription_changes(status)`);
+
+        // Revenue Recognition
+        db.run(`CREATE TABLE IF NOT EXISTS revenue_recognition (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            contract_id TEXT,
+            revenue_amount REAL NOT NULL,
+            currency TEXT DEFAULT 'USD',
+            recognition_method TEXT DEFAULT 'straight_line',
+            recognition_schedule_json TEXT DEFAULT '[]',
+            recognized_amount REAL DEFAULT 0,
+            remaining_amount REAL DEFAULT 0,
+            status TEXT DEFAULT 'pending',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(contract_id) REFERENCES customer_contracts(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_revenue_recognition_org ON revenue_recognition(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_revenue_recognition_status ON revenue_recognition(status)`);
+
+        // Revenue Forecasts
+        db.run(`CREATE TABLE IF NOT EXISTS revenue_forecasts (
+            id TEXT PRIMARY KEY,
+            forecast_type TEXT NOT NULL,
+            period_start DATE NOT NULL,
+            period_end DATE NOT NULL,
+            forecasted_amount REAL NOT NULL,
+            currency TEXT DEFAULT 'USD',
+            confidence_level REAL DEFAULT 0.8,
+            method TEXT DEFAULT 'linear',
+            input_data_json TEXT DEFAULT '{}',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_revenue_forecasts_type ON revenue_forecasts(forecast_type)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_revenue_forecasts_period ON revenue_forecasts(period_start, period_end)`);
+
+        // Payment Methods
+        db.run(`CREATE TABLE IF NOT EXISTS payment_methods (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            payment_type TEXT NOT NULL,
+            payment_details_json TEXT DEFAULT '{}',
+            is_default INTEGER DEFAULT 0,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_payment_methods_org ON payment_methods(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_payment_methods_default ON payment_methods(organization_id, is_default)`);
+
+        // Payment Failures
+        db.run(`CREATE TABLE IF NOT EXISTS payment_failures (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            payment_method_id TEXT,
+            failure_reason TEXT,
+            failure_code TEXT,
+            attempted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            retry_count INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'failed',
+            resolved_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(payment_method_id) REFERENCES payment_methods(id) ON DELETE SET NULL
+        )`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_payment_failures_org ON payment_failures(organization_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_payment_failures_status ON payment_failures(status)`);
+
+        console.log('Advanced IAM, Security, Analytics, Customer Management, and Revenue Management tables created.');
 
         // Seed Super Admin & Default Organization
         const superAdminOrgId = 'org-dbr77-system';

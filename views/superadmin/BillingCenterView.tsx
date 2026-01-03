@@ -31,8 +31,9 @@ import { InfoButton } from '../../components/shared/InfoButton';
 import { AdminLLMMultipliers } from '../admin/AdminLLMMultipliers';
 import { AdminMarginConfig } from '../admin/AdminMarginConfig';
 import { AdminTokenPackages } from '../admin/AdminTokenPackages';
+import { SubscriptionAnalytics } from '../../components/billing';
 
-type BillingTab = 'overview' | 'plans' | 'token-economy' | 'transactions';
+type BillingTab = 'overview' | 'plans' | 'token-economy' | 'transactions' | 'analytics';
 
 // ==================== OVERVIEW TAB ====================
 interface RevenueStats {
@@ -932,6 +933,7 @@ export const BillingCenterView: React.FC = () => {
         { id: 'plans', label: 'Subscription Plans', icon: <Package size={18} /> },
         { id: 'token-economy', label: 'Token Economy', icon: <Coins size={18} /> },
         { id: 'transactions', label: 'Transactions', icon: <Receipt size={18} /> },
+        { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={18} /> },
     ];
 
     return (
@@ -973,6 +975,7 @@ export const BillingCenterView: React.FC = () => {
             {activeTab === 'plans' && <PlansTab />}
             {activeTab === 'token-economy' && <TokenEconomyTab />}
             {activeTab === 'transactions' && <TransactionsTab />}
+            {activeTab === 'analytics' && <SubscriptionAnalytics />}
         </div>
     );
 };

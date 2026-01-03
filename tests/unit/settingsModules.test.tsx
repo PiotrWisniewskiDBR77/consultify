@@ -11,6 +11,7 @@ import { I18nextProvider } from 'react-i18next';
 import i18n from '../../i18n';
 
 // Mock the store
+import { Api } from '../../services/api';
 vi.mock('../../store/useAppStore', () => ({
     useAppStore: vi.fn(() => ({
         currentView: 'SETTINGS_PROFILE_MODULE',
@@ -28,6 +29,12 @@ vi.mock('../../services/api', () => ({
         getUser: vi.fn().mockResolvedValue({ id: '1', email: 'test@example.com' }),
         updatePreferences: vi.fn().mockResolvedValue({}),
         getSessions: vi.fn().mockResolvedValue([]),
+        getActiveSessions: vi.fn().mockResolvedValue({
+            sessions: [
+                { id: '1', current: true, deviceInfo: 'Current Device' },
+                { id: '2', current: false, deviceInfo: 'Other Device' }
+            ]
+        }),
         getLoginHistory: vi.fn().mockResolvedValue([]),
         clearAIMemory: vi.fn().mockResolvedValue({}),
         clearChatHistory: vi.fn().mockResolvedValue({}),
@@ -36,6 +43,10 @@ vi.mock('../../services/api', () => ({
         getApiKeys: vi.fn().mockResolvedValue([]),
         getWebhooks: vi.fn().mockResolvedValue([]),
         getCalendarConnections: vi.fn().mockResolvedValue([]),
+        get: vi.fn().mockResolvedValue({}),
+        getLLMProviders: vi.fn().mockResolvedValue([]),
+        getNotificationPreferences: vi.fn().mockResolvedValue({}),
+        checkLLMProvidersHealth: vi.fn().mockResolvedValue([]),
     },
 }));
 
@@ -395,7 +406,7 @@ describe('ProfileModule', () => {
             await waitFor(() => {
                 expect(screen.getAllByText(/personal/i).length).toBeGreaterThan(0);
                 expect(screen.getAllByText(/avatar/i).length).toBeGreaterThan(0);
-                expect(screen.getAllByText(/password/i).length).toBeGreaterThan(0);
+                expect(screen.getAllByText(/security/i).length).toBeGreaterThan(0);
                 expect(screen.getAllByText(/billing/i).length).toBeGreaterThan(0);
                 expect(screen.getAllByText(/account/i).length).toBeGreaterThan(0);
             });
@@ -434,7 +445,7 @@ describe('ProfileModule', () => {
                 </TestWrapper>
             );
 
-            const avatarTab = screen.getByText(/avatar/i);
+            const avatarTab = screen.getByRole('button', { name: /avatar/i });
             fireEvent.click(avatarTab);
 
             await waitFor(() => {
@@ -442,7 +453,7 @@ describe('ProfileModule', () => {
             });
         });
 
-        it('switches to Password tab when clicked', async () => {
+        it('switches to Security tab when clicked', async () => {
             render(
                 <TestWrapper>
                     <ProfileModule
@@ -454,11 +465,11 @@ describe('ProfileModule', () => {
                 </TestWrapper>
             );
 
-            const passwordTab = screen.getByText(/password/i);
-            fireEvent.click(passwordTab);
+            const securityTab = screen.getByRole('button', { name: /security/i });
+            fireEvent.click(securityTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/change password/i)).toBeTruthy();
+                expect(screen.getAllByText(/change password/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -474,7 +485,7 @@ describe('ProfileModule', () => {
                 </TestWrapper>
             );
 
-            const accountTab = screen.getByText(/account/i);
+            const accountTab = screen.getByRole('button', { name: /account/i });
             fireEvent.click(accountTab);
 
             await waitFor(() => {
@@ -488,7 +499,7 @@ describe('ProfileModule', () => {
             render(
                 <TestWrapper>
                     <ProfileModule
-                        initialTab="password"
+                        initialTab="security"
                         currentUser={mockUser as any}
                         onUpdateUser={mockOnUpdateUser}
                         theme="dark"
@@ -498,7 +509,7 @@ describe('ProfileModule', () => {
             );
 
             await waitFor(() => {
-                expect(screen.getByText(/change password/i)).toBeTruthy();
+                expect(screen.getAllByText(/change password/i).length).toBeGreaterThan(0);
             });
         });
     });
@@ -560,7 +571,7 @@ describe('AIPreferencesModule', () => {
                 </TestWrapper>
             );
 
-            const memoryTab = screen.getByText(/memory/i);
+            const memoryTab = screen.getByRole('button', { name: /memory/i });
             fireEvent.click(memoryTab);
 
             await waitFor(() => {
@@ -578,7 +589,7 @@ describe('AIPreferencesModule', () => {
                 </TestWrapper>
             );
 
-            const memoryTab = screen.getByText(/memory/i);
+            const memoryTab = screen.getByRole('button', { name: /memory/i });
             fireEvent.click(memoryTab);
 
             await waitFor(() => {
@@ -596,7 +607,7 @@ describe('AIPreferencesModule', () => {
                 </TestWrapper>
             );
 
-            const memoryTab = screen.getByText(/memory/i);
+            const memoryTab = screen.getByRole('button', { name: /memory/i });
             fireEvent.click(memoryTab);
 
             await waitFor(() => {
@@ -616,11 +627,11 @@ describe('AIPreferencesModule', () => {
                 </TestWrapper>
             );
 
-            const styleTab = screen.getByText(/style/i);
+            const styleTab = screen.getByRole('button', { name: /style/i });
             fireEvent.click(styleTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/response style/i)).toBeTruthy();
+                expect(screen.getAllByText(/response style/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -634,13 +645,13 @@ describe('AIPreferencesModule', () => {
                 </TestWrapper>
             );
 
-            const styleTab = screen.getByText(/style/i);
+            const styleTab = screen.getByRole('button', { name: /style/i });
             fireEvent.click(styleTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/short/i)).toBeTruthy();
-                expect(screen.getByText(/medium/i)).toBeTruthy();
-                expect(screen.getByText(/long/i)).toBeTruthy();
+                expect(screen.getAllByText(/short/i).length).toBeGreaterThan(0);
+                expect(screen.getAllByText(/medium/i).length).toBeGreaterThan(0);
+                expect(screen.getAllByText(/long/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -654,13 +665,13 @@ describe('AIPreferencesModule', () => {
                 </TestWrapper>
             );
 
-            const styleTab = screen.getByText(/style/i);
+            const styleTab = screen.getByRole('button', { name: /style/i });
             fireEvent.click(styleTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/formal/i)).toBeTruthy();
-                expect(screen.getByText(/professional/i)).toBeTruthy();
-                expect(screen.getByText(/casual/i)).toBeTruthy();
+                expect(screen.getAllByText(/formal/i).length).toBeGreaterThan(0);
+                expect(screen.getAllByText(/professional/i).length).toBeGreaterThan(0);
+                expect(screen.getAllByText(/casual/i).length).toBeGreaterThan(0);
             });
         });
     });
@@ -676,11 +687,11 @@ describe('AIPreferencesModule', () => {
                 </TestWrapper>
             );
 
-            const historyTab = screen.getByText(/history/i);
+            const historyTab = screen.getByRole('button', { name: /chat history/i });
             fireEvent.click(historyTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/chat history/i)).toBeTruthy();
+                expect(screen.getAllByText(/chat history/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -694,11 +705,11 @@ describe('AIPreferencesModule', () => {
                 </TestWrapper>
             );
 
-            const historyTab = screen.getByText(/history/i);
+            const historyTab = screen.getByRole('button', { name: /chat history/i });
             fireEvent.click(historyTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/save chat history/i)).toBeTruthy();
+                expect(screen.getAllByText(/save chat history/i).length).toBeGreaterThan(0);
             });
         });
     });
@@ -759,11 +770,11 @@ describe('NotificationsModule', () => {
                 </TestWrapper>
             );
 
-            const scheduleTab = screen.getByText(/schedule/i);
+            const scheduleTab = screen.getByRole('button', { name: /schedule/i });
             fireEvent.click(scheduleTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/quiet hours/i)).toBeTruthy();
+                expect(screen.getAllByText(/quiet hours/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -777,11 +788,11 @@ describe('NotificationsModule', () => {
                 </TestWrapper>
             );
 
-            const scheduleTab = screen.getByText(/schedule/i);
+            const scheduleTab = screen.getByRole('button', { name: /schedule/i });
             fireEvent.click(scheduleTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/weekend notifications/i)).toBeTruthy();
+                expect(screen.getAllByText(/weekend notifications/i).length).toBeGreaterThan(0);
             });
         });
     });
@@ -808,7 +819,7 @@ describe('SecurityPrivacyModule', () => {
             );
 
             await waitFor(() => {
-                expect(screen.getByText(/mfa/i)).toBeTruthy();
+                expect(screen.getAllByText(/mfa/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -825,7 +836,7 @@ describe('SecurityPrivacyModule', () => {
             await waitFor(() => {
                 expect(screen.getAllByText(/mfa/i).length).toBeGreaterThan(0);
                 expect(screen.getAllByText(/session/i).length).toBeGreaterThan(0);
-                expect(screen.getAllByText(/history/i).length).toBeGreaterThan(0);
+                expect(screen.getAllByText(/security events/i).length).toBeGreaterThan(0);
                 expect(screen.getAllByText(/data/i).length).toBeGreaterThan(0);
                 expect(screen.getAllByText(/privacy/i).length).toBeGreaterThan(0);
             });
@@ -843,11 +854,11 @@ describe('SecurityPrivacyModule', () => {
                 </TestWrapper>
             );
 
-            const sessionsTab = screen.getByText(/session/i);
+            const sessionsTab = screen.getByRole('button', { name: /session/i });
             fireEvent.click(sessionsTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/active sessions/i)).toBeTruthy();
+                expect(screen.getAllByText(/active sessions/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -861,11 +872,11 @@ describe('SecurityPrivacyModule', () => {
                 </TestWrapper>
             );
 
-            const sessionsTab = screen.getByText(/session/i);
+            const sessionsTab = screen.getByRole('button', { name: /session/i });
             fireEvent.click(sessionsTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/sign out all/i)).toBeTruthy();
+                expect(screen.getAllByText(/sign out all/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -879,11 +890,11 @@ describe('SecurityPrivacyModule', () => {
                 </TestWrapper>
             );
 
-            const sessionsTab = screen.getByText(/session/i);
+            const sessionsTab = screen.getByRole('button', { name: /session/i });
             fireEvent.click(sessionsTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/current/i)).toBeTruthy();
+                expect(screen.getAllByText(/current/i).length).toBeGreaterThan(0);
             });
         });
     });
@@ -899,15 +910,33 @@ describe('SecurityPrivacyModule', () => {
                 </TestWrapper>
             );
 
-            const historyTab = screen.getByText(/history/i);
+            const historyTab = screen.getByRole('button', { name: /security events/i });
             fireEvent.click(historyTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/login history/i)).toBeTruthy();
+                expect(screen.getAllByText(/security events/i).length).toBeGreaterThan(0);
             });
         });
 
         it('renders login entries with status', async () => {
+            (Api.get as any).mockImplementation((url: string) => {
+                if (url.includes('security/events')) {
+                    return Promise.resolve({
+                        events: [
+                            {
+                                id: '1',
+                                type: 'login',
+                                severity: 'info',
+                                title: 'Successful Login',
+                                description: 'Logged in from Chrome',
+                                timestamp: new Date().toISOString()
+                            }
+                        ]
+                    });
+                }
+                return Promise.resolve({});
+            });
+
             render(
                 <TestWrapper>
                     <SecurityPrivacyModule
@@ -917,11 +946,11 @@ describe('SecurityPrivacyModule', () => {
                 </TestWrapper>
             );
 
-            const historyTab = screen.getByText(/history/i);
+            const historyTab = screen.getByRole('button', { name: /security events/i });
             fireEvent.click(historyTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/successful/i)).toBeTruthy();
+                expect(screen.getAllByText(/successful/i).length).toBeGreaterThan(0);
             });
         });
     });
@@ -937,11 +966,11 @@ describe('SecurityPrivacyModule', () => {
                 </TestWrapper>
             );
 
-            const dataTab = screen.getByText(/data/i);
+            const dataTab = screen.getByRole('button', { name: /data/i });
             fireEvent.click(dataTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/data controls/i)).toBeTruthy();
+                expect(screen.getAllByText(/data controls/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -955,11 +984,11 @@ describe('SecurityPrivacyModule', () => {
                 </TestWrapper>
             );
 
-            const dataTab = screen.getByText(/data/i);
+            const dataTab = screen.getByRole('button', { name: /data/i });
             fireEvent.click(dataTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/training opt-out/i)).toBeTruthy();
+                expect(screen.getAllByText(/ai model training/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -973,11 +1002,11 @@ describe('SecurityPrivacyModule', () => {
                 </TestWrapper>
             );
 
-            const dataTab = screen.getByText(/data/i);
+            const dataTab = screen.getByRole('button', { name: /data/i });
             fireEvent.click(dataTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/retention/i)).toBeTruthy();
+                expect(screen.getAllByText(/retention/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -991,11 +1020,11 @@ describe('SecurityPrivacyModule', () => {
                 </TestWrapper>
             );
 
-            const dataTab = screen.getByText(/data/i);
+            const dataTab = screen.getByRole('button', { name: /data/i });
             fireEvent.click(dataTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/export/i)).toBeTruthy();
+                expect(screen.getAllByText(/export/i).length).toBeGreaterThan(0);
             });
         });
     });
@@ -1019,7 +1048,7 @@ describe('IntegrationsModule', () => {
             );
 
             await waitFor(() => {
-                expect(screen.getByText(/apps/i)).toBeTruthy();
+                expect(screen.getAllByText(/apps/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -1047,11 +1076,11 @@ describe('IntegrationsModule', () => {
                 </TestWrapper>
             );
 
-            const apiTab = screen.getByText(/api/i);
+            const apiTab = screen.getByRole('button', { name: /api/i });
             fireEvent.click(apiTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/api keys/i)).toBeTruthy();
+                expect(screen.getAllByText(/api keys/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -1062,11 +1091,11 @@ describe('IntegrationsModule', () => {
                 </TestWrapper>
             );
 
-            const apiTab = screen.getByText(/api/i);
+            const apiTab = screen.getByRole('button', { name: /api/i });
             fireEvent.click(apiTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/create new key/i)).toBeTruthy();
+                expect(screen.getAllByText(/create new key/i).length).toBeGreaterThan(0);
             });
         });
     });
@@ -1079,11 +1108,11 @@ describe('IntegrationsModule', () => {
                 </TestWrapper>
             );
 
-            const webhookTab = screen.getByText(/webhook/i);
+            const webhookTab = screen.getByRole('button', { name: /webhook/i });
             fireEvent.click(webhookTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/webhooks/i)).toBeTruthy();
+                expect(screen.getAllByText(/webhooks/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -1094,11 +1123,11 @@ describe('IntegrationsModule', () => {
                 </TestWrapper>
             );
 
-            const webhookTab = screen.getByText(/webhook/i);
+            const webhookTab = screen.getByRole('button', { name: /webhook/i });
             fireEvent.click(webhookTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/add webhook/i)).toBeTruthy();
+                expect(screen.getAllByText(/add webhook/i).length).toBeGreaterThan(0);
             });
         });
     });
@@ -1111,11 +1140,11 @@ describe('IntegrationsModule', () => {
                 </TestWrapper>
             );
 
-            const calendarTab = screen.getByText(/calendar/i);
+            const calendarTab = screen.getByRole('button', { name: /calendar/i });
             fireEvent.click(calendarTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/calendar sync/i)).toBeTruthy();
+                expect(screen.getAllByText(/calendar sync/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -1126,11 +1155,11 @@ describe('IntegrationsModule', () => {
                 </TestWrapper>
             );
 
-            const calendarTab = screen.getByText(/calendar/i);
+            const calendarTab = screen.getByRole('button', { name: /calendar/i });
             fireEvent.click(calendarTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/google calendar/i)).toBeTruthy();
+                expect(screen.getAllByText(/google calendar/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -1141,11 +1170,11 @@ describe('IntegrationsModule', () => {
                 </TestWrapper>
             );
 
-            const calendarTab = screen.getByText(/calendar/i);
+            const calendarTab = screen.getByRole('button', { name: /calendar/i });
             fireEvent.click(calendarTab);
 
             await waitFor(() => {
-                expect(screen.getByText(/outlook calendar/i)).toBeTruthy();
+                expect(screen.getAllByText(/outlook calendar/i).length).toBeGreaterThan(0);
             });
         });
     });
@@ -1174,7 +1203,7 @@ describe('AppearanceModule', () => {
             );
 
             await waitFor(() => {
-                expect(screen.getByText(/theme/i)).toBeTruthy();
+                expect(screen.getAllByText(/theme/i).length).toBeGreaterThan(0);
             });
         });
 
@@ -1215,7 +1244,8 @@ describe('AppearanceModule', () => {
             );
 
             await waitFor(() => {
-                expect(screen.getByText(/light/i)).toBeTruthy();
+                // Use functional matcher to strictly match "Light" and avoid "Highlight"
+                expect(screen.getByText((content) => content.trim() === 'Light')).toBeTruthy();
             });
         });
 
@@ -1232,7 +1262,7 @@ describe('AppearanceModule', () => {
             );
 
             await waitFor(() => {
-                expect(screen.getByText(/dark/i)).toBeTruthy();
+                expect(screen.getByText((content) => content.trim() === 'Dark')).toBeTruthy();
             });
         });
 
@@ -1249,7 +1279,7 @@ describe('AppearanceModule', () => {
             );
 
             await waitFor(() => {
-                expect(screen.getByText(/system/i)).toBeTruthy();
+                expect(screen.getByText((content) => content.trim() === 'System')).toBeTruthy();
             });
         });
 
@@ -1265,7 +1295,7 @@ describe('AppearanceModule', () => {
                 </TestWrapper>
             );
 
-            const lightButton = screen.getByText(/light/i);
+            const lightButton = screen.getByText((content) => content.trim() === 'Light');
             fireEvent.click(lightButton);
 
             expect(mockToggleTheme).toHaveBeenCalledWith('light');
@@ -1283,7 +1313,7 @@ describe('AppearanceModule', () => {
                 </TestWrapper>
             );
 
-            const darkButton = screen.getByText(/dark/i);
+            const darkButton = screen.getByText((content) => content.trim() === 'Dark');
             fireEvent.click(darkButton);
 
             expect(mockToggleTheme).toHaveBeenCalledWith('dark');
@@ -1301,7 +1331,7 @@ describe('AppearanceModule', () => {
                 </TestWrapper>
             );
 
-            const systemButton = screen.getByText(/system/i);
+            const systemButton = screen.getByText((content) => content.trim() === 'System');
             fireEvent.click(systemButton);
 
             expect(mockToggleTheme).toHaveBeenCalledWith('system');
@@ -1321,7 +1351,7 @@ describe('AppearanceModule', () => {
                 </TestWrapper>
             );
 
-            const languageTab = screen.getByText(/language/i);
+            const languageTab = screen.getByRole('button', { name: /language/i });
             fireEvent.click(languageTab);
 
             await waitFor(() => {
@@ -1342,7 +1372,7 @@ describe('AppearanceModule', () => {
                 </TestWrapper>
             );
 
-            const languageTab = screen.getByText(/language/i);
+            const languageTab = screen.getByRole('button', { name: /language/i });
             fireEvent.click(languageTab);
 
             await waitFor(() => {
@@ -1362,7 +1392,7 @@ describe('AppearanceModule', () => {
                 </TestWrapper>
             );
 
-            const languageTab = screen.getByText(/language/i);
+            const languageTab = screen.getByRole('button', { name: /language/i });
             fireEvent.click(languageTab);
 
             await waitFor(() => {

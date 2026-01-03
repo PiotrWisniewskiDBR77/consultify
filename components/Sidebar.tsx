@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { AppView, UserRole } from '../types';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
+import { useConversationStore } from '../store/useConversationStore';
 import { useDeviceType } from '../hooks/useDeviceType';
+import { getDefaultWorkspaceType, createWorkspaceContext } from '../types/workspace';
 
 import {
   Shield,
@@ -185,8 +187,20 @@ export const Sidebar: React.FC = () => {
     isSidebarCollapsed,
     toggleSidebarCollapse,
     isChatSlidingPanelOpen,
-    toggleChatSlidingPanel
+    toggleChatSlidingPanel,
+    navigateWithChatContext,
+    currentProjectId
   } = useAppStore();
+  
+  // Unified Chat System: Conversation store for display mode management
+  const {
+    displayMode,
+    setDisplayMode,
+    setWorkspaceContext,
+    expandToFullScreen,
+    collapseToSplit,
+    activeConversationId
+  } = useConversationStore();
 
   const { t } = useTranslation();
   const { isTablet, isMobile, isTouchDevice } = useDeviceType();
@@ -199,6 +213,45 @@ export const Sidebar: React.FC = () => {
   // Floating Menu State
   const [activeFloating, setActiveFloating] = useState<{ id: string; rect: DOMRect; items: MenuItem[]; title: string } | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout>(undefined);
+  
+  // =========================================================================
+  // UNIFIED CHAT SYSTEM: Navigation Handlers
+  // =========================================================================
+  
+  /**
+   * Navigate to AI Chat full-screen mode
+   * - Sets display mode to 'full'
+   * - Opens the chat sliding panel
+   */
+  const navigateToFullChat = useCallback(() => {
+    setDisplayMode('full');
+    setCurrentView(AppView.AI_CHAT);
+    toggleChatSlidingPanel();
+  }, [setDisplayMode, setCurrentView, toggleChatSlidingPanel]);
+  
+  /**
+   * Navigate to a view while preserving chat context
+   * - Sets display mode to 'split'
+   * - Updates workspace context for AI awareness
+   * - Preserves active conversation
+   */
+  const navigateToViewWithChat = useCallback((viewId: AppView) => {
+    // Update display mode to split
+    setDisplayMode('split');
+    
+    // Create workspace context for the target view
+    const workspaceType = getDefaultWorkspaceType(viewId);
+    const context = createWorkspaceContext(viewId, workspaceType, {
+      projectId: currentProjectId || undefined
+    });
+    setWorkspaceContext(context);
+    
+    // Navigate using the app store
+    navigateWithChatContext(viewId, {
+      preserveChat: true,
+      workspaceContext: context
+    });
+  }, [setDisplayMode, setWorkspaceContext, navigateWithChatContext, currentProjectId]);
 
   // Calculate completed views logic
   const completedViews = React.useMemo(() => {
@@ -474,18 +527,32 @@ export const Sidebar: React.FC = () => {
           onClick={() => {
             if (isLocked) return;
 
-            // Special handling for AI Chat - toggle sliding panel
+            // =====================================================
+            // UNIFIED CHAT SYSTEM: Smart Navigation
+            // =====================================================
+            
+            // AI Chat button: Navigate to full-screen chat
             if (item.id === 'AI_CHAT') {
-              toggleChatSlidingPanel();
-              // Also navigate to chat view if not already there
-              if (currentView !== AppView.AI_CHAT) {
-                setCurrentView(AppView.AI_CHAT);
+              // If already in AI Chat, just toggle the sliding panel
+              if (currentView === AppView.AI_CHAT) {
+                toggleChatSlidingPanel();
+              } else {
+                // Navigate to full-screen AI Chat
+                navigateToFullChat();
               }
               return;
             }
 
             if (item.viewId) {
-              setCurrentView(item.viewId);
+              // Check if we have an active conversation
+              // If yes, navigate with chat context preserved (split mode)
+              // If no, navigate normally
+              if (activeConversationId) {
+                navigateToViewWithChat(item.viewId);
+              } else {
+                setCurrentView(item.viewId);
+              }
+              
               // Close on mobile/tablet after navigation
               if (isMobile || (isTablet && isSidebarOpen)) {
                 setIsSidebarOpen(false);
@@ -664,7 +731,12 @@ export const Sidebar: React.FC = () => {
           title={activeFloating.title}
           onClose={() => setActiveFloating(null)}
           onNavigate={(viewId) => {
-            setCurrentView(viewId);
+            // Use smart navigation with chat context preservation
+            if (activeConversationId) {
+              navigateToViewWithChat(viewId);
+            } else {
+              setCurrentView(viewId);
+            }
             setActiveFloating(null);
             if (window.innerWidth < 1024) setIsSidebarOpen(false);
           }}

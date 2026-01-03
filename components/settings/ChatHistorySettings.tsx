@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { History, Trash2, Download, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Api } from '../../services/api';
 
 interface ChatHistorySettingsProps {
   className?: string;
@@ -16,14 +17,13 @@ export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ classN
   const [retentionDays, setRetentionDays] = useState(90);
   const [autoDelete, setAutoDelete] = useState(false);
 
+  // ... inside component
+
   const handleClearHistory = async () => {
     if (!confirm(t('settings.chat.clearConfirm', 'Are you sure you want to clear all chat history?'))) return;
-    
+
     try {
-      await fetch('/api/conversations/clear-all', {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      await Api.clearChatHistory();
       toast.success(t('settings.chat.cleared', 'Chat history cleared'));
     } catch (_error) {
       toast.error(t('settings.chat.clearError', 'Failed to clear history'));
@@ -32,18 +32,13 @@ export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ classN
 
   const handleExportHistory = async () => {
     try {
-      const response = await fetch('/api/conversations/export', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'chat-history.json';
-        a.click();
-        URL.revokeObjectURL(url);
-      }
+      const blob = await Api.exportChatHistory();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'chat-history.json';
+      a.click();
+      URL.revokeObjectURL(url);
     } catch (_error) {
       toast.error(t('settings.chat.exportError', 'Failed to export history'));
     }

@@ -86,13 +86,13 @@ export const SuperAdminSignalCenter: React.FC = () => {
     const getTypeColor = (type: 'system' | 'client' | 'feedback') => {
         switch (type) {
             case 'system': return 'text-red-500';
-            case 'client': return 'text-amber-400';
-            case 'feedback': return 'text-cyan-400';
+            case 'client': return 'text-amber-500 dark:text-amber-400';
+            case 'feedback': return 'text-cyan-600 dark:text-cyan-400';
         }
     };
 
     return (
-        <div className="relative flex items-center gap-2 mr-4 bg-navy-900/50 p-1.5 rounded-xl border border-white/5 backdrop-blur-sm" ref={containerRef}>
+        <div className="relative flex items-center gap-2 mr-4 bg-white dark:bg-navy-900/50 p-1.5 rounded-xl border border-slate-200 dark:border-white/5 backdrop-blur-sm shadow-sm dark:shadow-none" ref={containerRef}>
 
             {/* SYSTEM - HIGH PRIORITY */}
             <SignalNode
@@ -105,7 +105,7 @@ export const SuperAdminSignalCenter: React.FC = () => {
                 onClick={() => setSelectedType(selectedType === 'system' ? null : 'system')}
             />
 
-            <div className="w-px h-6 bg-white/10" />
+            <div className="w-px h-6 bg-slate-200 dark:bg-white/10" />
 
             {/* CLIENT - MEDIUM PRIORITY */}
             <SignalNode
@@ -113,12 +113,12 @@ export const SuperAdminSignalCenter: React.FC = () => {
                 icon={PhoneIncoming}
                 label="Client Tickets"
                 count={notifications.client.length}
-                colorClass="text-amber-400"
+                colorClass="text-amber-500 dark:text-amber-400"
                 active={selectedType === 'client'}
                 onClick={() => setSelectedType(selectedType === 'client' ? null : 'client')}
             />
 
-            <div className="w-px h-6 bg-white/10" />
+            <div className="w-px h-6 bg-slate-200 dark:bg-white/10" />
 
             {/* FEEDBACK - LOW PRIORITY */}
             <SignalNode
@@ -126,15 +126,15 @@ export const SuperAdminSignalCenter: React.FC = () => {
                 icon={MessageSquare}
                 label="Feedback"
                 count={notifications.feedback.length}
-                colorClass="text-cyan-400"
+                colorClass="text-cyan-600 dark:text-cyan-400"
                 active={selectedType === 'feedback'}
                 onClick={() => setSelectedType(selectedType === 'feedback' ? null : 'feedback')}
             />
 
             {/* POPOVER LIST */}
             {selectedType && (
-                <div className="absolute top-full right-0 mt-3 w-80 bg-navy-900 rounded-xl border border-white/10 shadow-2xl overflow-hidden z-[100] animate-in slide-in-from-top-2">
-                    <div className="px-4 py-3 border-b border-white/5 bg-navy-950 flex items-center justify-between">
+                <div className="absolute top-full right-0 mt-3 w-80 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-[100] animate-in slide-in-from-top-2">
+                    <div className="px-4 py-3 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-navy-950 flex items-center justify-between">
                         <h3 className={`font-semibold text-sm ${getTypeColor(selectedType)}`}>
                             {getTypeLabel(selectedType)}
                         </h3>
@@ -149,16 +149,16 @@ export const SuperAdminSignalCenter: React.FC = () => {
                                 No active signals in this category.
                             </div>
                         ) : (
-                            <div className="divide-y divide-white/5">
+                            <div className="divide-y divide-slate-100 dark:divide-white/5">
                                 {notifications[selectedType].map(item => (
-                                    <div key={item.id} className="p-3 hover:bg-white/5 transition-colors group relative">
+                                    <div key={item.id} className="p-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group relative">
                                         <div className="pr-6">
-                                            <p className="text-xs text-white font-medium mb-1">{item.title || 'Untitled Signal'}</p>
-                                            <p className="text-[10px] text-slate-400 leading-relaxed">{item.message || 'No details provided.'}</p>
+                                            <p className="text-xs text-slate-800 dark:text-white font-medium mb-1">{item.title || 'Untitled Signal'}</p>
+                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">{item.message || 'No details provided.'}</p>
                                         </div>
                                         <button
                                             onClick={(e) => handleDismiss(item.id, selectedType, e)}
-                                            className="absolute top-2 right-2 p-1 text-slate-500 hover:text-white hover:bg-white/10 rounded transition-colors"
+                                            className="absolute top-2 right-2 p-1 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors"
                                         >
                                             <X size={12} />
                                         </button>

@@ -12,52 +12,68 @@ import {
     PanelLeftClose,
     Activity,
     Layers,
+    Server,
+    Code,
+    Radar,
+    BarChart3,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { Api } from '../services/api';
 import { AppView } from '../types';
 
-// New 8-module structure
+// Modular structure with 3 AI modules (Variant A)
 export type SuperAdminSection =
     | 'overview'
     | 'customers'
-    | 'ai-platform'
+    | 'ai-platform' // Legacy - kept for backward compatibility
+    | 'ai-infrastructure' // New: LLM Providers, Tiers, Settings, Health
+    | 'ai-development'    // New: Prompts, Intelligence, Experiments, Knowledge
+    | 'ai-operations'     // New: Mission Control, Performance, Costs, SLA, Analytics
     | 'system'
     | 'content'
     | 'revenue'
     | 'security'
-    | 'configuration';
+    | 'configuration'
+    | 'analytics'; // Custom Dashboards, Reports, Metrics, Predictive
 
 // Mapping between sections and AppView
 export const sectionToAppView: Record<SuperAdminSection, AppView> = {
     'overview': AppView.SUPERADMIN_OVERVIEW,
     'customers': AppView.SUPERADMIN_CUSTOMERS,
-    'ai-platform': AppView.SUPERADMIN_AI_PLATFORM,
+    'ai-platform': AppView.SUPERADMIN_AI_PLATFORM, // Legacy
+    'ai-infrastructure': AppView.SUPERADMIN_AI_INFRASTRUCTURE,
+    'ai-development': AppView.SUPERADMIN_AI_DEVELOPMENT,
+    'ai-operations': AppView.SUPERADMIN_AI_OPERATIONS,
     'system': AppView.SUPERADMIN_SYSTEM,
     'content': AppView.SUPERADMIN_CONTENT,
     'revenue': AppView.SUPERADMIN_REVENUE,
     'security': AppView.SUPERADMIN_SECURITY,
     'configuration': AppView.SUPERADMIN_CONFIGURATION,
+    'analytics': AppView.SUPERADMIN_ANALYTICS,
 };
 
 export const appViewToSection: Record<string, SuperAdminSection> = {
     [AppView.SUPERADMIN_OVERVIEW]: 'overview',
     [AppView.SUPERADMIN_CUSTOMERS]: 'customers',
-    [AppView.SUPERADMIN_AI_PLATFORM]: 'ai-platform',
+    [AppView.SUPERADMIN_AI_PLATFORM]: 'ai-infrastructure', // Legacy redirects to infrastructure
+    [AppView.SUPERADMIN_AI_INFRASTRUCTURE]: 'ai-infrastructure',
+    [AppView.SUPERADMIN_AI_DEVELOPMENT]: 'ai-development',
+    [AppView.SUPERADMIN_AI_OPERATIONS]: 'ai-operations',
     [AppView.SUPERADMIN_SYSTEM]: 'system',
     [AppView.SUPERADMIN_CONTENT]: 'content',
     [AppView.SUPERADMIN_REVENUE]: 'revenue',
     [AppView.SUPERADMIN_SECURITY]: 'security',
     [AppView.SUPERADMIN_CONFIGURATION]: 'configuration',
+    [AppView.SUPERADMIN_ANALYTICS]: 'analytics',
     // Legacy view mappings - redirect to new modules
     [AppView.SUPERADMIN_DASHBOARD]: 'overview',
     [AppView.SUPERADMIN_ORGANIZATIONS]: 'customers',
     [AppView.SUPERADMIN_USERS]: 'customers',
     [AppView.SUPERADMIN_FEEDBACK]: 'customers',
     [AppView.SUPERADMIN_BULK_OPERATIONS]: 'customers',
-    [AppView.SUPERADMIN_LLM_MANAGEMENT]: 'ai-platform',
-    [AppView.SUPERADMIN_AI_INTELLIGENCE]: 'ai-platform',
-    [AppView.SUPERADMIN_KNOWLEDGE]: 'ai-platform',
+    [AppView.SUPERADMIN_LLM_MANAGEMENT]: 'ai-infrastructure',
+    [AppView.SUPERADMIN_AI_INTELLIGENCE]: 'ai-development',
+    [AppView.SUPERADMIN_KNOWLEDGE]: 'ai-development',
     [AppView.SUPERADMIN_BILLING]: 'revenue',
     [AppView.SUPERADMIN_INVOICES]: 'revenue',
     [AppView.SUPERADMIN_SSO]: 'security',
@@ -83,18 +99,22 @@ interface MenuItem {
     separator?: 'before';
 }
 
-// 8-module menu structure with minimal separators
+// Modular menu structure with 3 AI modules (Variant A)
 const menuItems: MenuItem[] = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={20} /> },
     // --- separator ---
     { id: 'customers', label: 'Customers', icon: <Users size={20} />, separator: 'before' },
-    { id: 'ai-platform', label: 'AI Platform', icon: <Brain size={20} /> },
+    // --- AI Platform (3 modules) ---
+    { id: 'ai-infrastructure', label: 'AI Infrastructure', icon: <Server size={20} />, separator: 'before' },
+    { id: 'ai-development', label: 'AI Development', icon: <Code size={20} /> },
+    { id: 'ai-operations', label: 'AI Operations', icon: <Radar size={20} /> },
     // --- separator ---
     { id: 'system', label: 'System', icon: <Activity size={20} />, separator: 'before' },
     { id: 'content', label: 'Content', icon: <Layers size={20} /> },
     // --- separator ---
     { id: 'revenue', label: 'Revenue', icon: <CreditCard size={20} />, separator: 'before' },
     { id: 'security', label: 'Security', icon: <Shield size={20} /> },
+    { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={20} /> },
     // --- separator ---
     { id: 'configuration', label: 'Configuration', icon: <Settings size={20} />, separator: 'before' },
 ];

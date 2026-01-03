@@ -1,256 +1,447 @@
 /**
  * Data Export Routes
  * 
- * GDPR-compliant data export and retention management.
+ * API endpoints for data export and backup management:
+ * - GDPR data export requests
+ * - Full/partial exports
+ * - Backup configuration
+ * - Export history
  */
 
 const express = require('express');
 const router = express.Router();
-const requireAuth = require('../middleware/authMiddleware');
+const authMiddleware = require('../middleware/authMiddleware');
+const verifySuperAdmin = require('../middleware/superAdminMiddleware');
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
 
+// Database helpers
+function dbAll(sql, params = []) {
+    return new Promise((resolve, reject) => {
+        db.all(sql, params, (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+        });
+    });
+}
+
+function dbRun(sql, params = []) {
+    return new Promise((resolve, reject) => {
+        db.run(sql, params, function(err) {
+            if (err) reject(err);
+            else resolve({ lastID: this.lastID, changes: this.changes });
+        });
+    });
+}
+
+function dbGet(sql, params = []) {
+    return new Promise((resolve, reject) => {
+        db.get(sql, params, (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+        });
+    });
+}
+
+// ==========================================
+// DATA EXPORT REQUESTS
+// ==========================================
+
 /**
- * POST /api/user/data-export
- * Request a data export (GDPR Article 20)
+ * GET /api/data-export/requests
+ * List data export requests
  */
-router.post('/data-export', requireAuth, async (req, res) => {
+router.get('/requests', authMiddleware, async (req, res) => {
     try {
-        const userId = req.user.id;
-        const userEmail = req.user.email;
+        const { organizationId, status, page = 1, pageSize = 50 } = req.query;
+        const offset = (parseInt(page) - 1) * parseInt(pageSize);
+        const isSuperAdmin = req.user.role === 'SUPERADMIN';
 
-        // Collect all user data
-        const userData = {};
+        let query = `
+            SELECT der.*, u.email as requester_email, u.firstName as requester_first_name,
+                   o.name as organization_name
+            FROM data_export_requests der
+            LEFT JOIN users u ON der.user_id = u.id
+            LEFT JOIN organizations o ON der.organization_id = o.id
+            WHERE 1=1
+        `;
+        const params = [];
 
-        // User profile
-        userData.profile = await new Promise((resolve, reject) => {
-            db.get(
-                `SELECT id, email, name, role, company_name, preferences, extended_preferences, created_at
-                 FROM users WHERE id = ?`,
-                [userId],
-                (err, row) => {
-                    if (err) reject(err);
-                    else resolve(row);
-                }
-            );
-        });
+        if (!isSuperAdmin) {
+            query += ` AND der.organization_id = ?`;
+            params.push(req.user.organizationId);
+        } else if (organizationId) {
+            query += ` AND der.organization_id = ?`;
+            params.push(organizationId);
+        }
 
-        // User's assessments
-        userData.assessments = await new Promise((resolve, reject) => {
-            db.all(
-                `SELECT * FROM assessments WHERE user_id = ?`,
-                [userId],
-                (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows || []);
-                }
-            );
-        });
+        if (status) {
+            query += ` AND der.status = ?`;
+            params.push(status);
+        }
 
-        // User's tasks
-        userData.tasks = await new Promise((resolve, reject) => {
-            db.all(
-                `SELECT * FROM tasks WHERE assignee_id = ? OR created_by = ?`,
-                [userId, userId],
-                (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows || []);
-                }
-            );
-        });
+        query += ` ORDER BY der.created_at DESC LIMIT ? OFFSET ?`;
+        params.push(parseInt(pageSize), offset);
 
-        // User's AI memory
-        userData.aiMemory = await new Promise((resolve, reject) => {
-            db.all(
-                `SELECT * FROM user_ai_memory WHERE user_id = ?`,
-                [userId],
-                (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows || []);
-                }
-            );
-        });
+        const requests = await dbAll(query, params);
 
-        // Login history
-        userData.loginHistory = await new Promise((resolve, reject) => {
-            db.all(
-                `SELECT * FROM login_history WHERE user_id = ?`,
-                [userId],
-                (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows || []);
-                }
-            );
-        });
-
-        // Sessions
-        userData.sessions = await new Promise((resolve, reject) => {
-            db.all(
-                `SELECT * FROM active_sessions WHERE user_id = ?`,
-                [userId],
-                (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows || []);
-                }
-            );
-        });
-
-        // Add metadata
-        userData.exportMetadata = {
-            exportDate: new Date().toISOString(),
-            userId: userId,
-            email: userEmail,
-            format: 'JSON',
-            gdprArticle: 'Article 20 - Right to data portability'
-        };
-
-        // In production, you might want to email the export or provide a download link
-        res.json({
-            success: true,
-            message: 'Data export generated',
-            data: userData
+        res.json({ 
+            requests: requests.map(r => ({
+                ...r,
+                include_data: r.include_data ? JSON.parse(r.include_data) : [],
+                exclude_data: r.exclude_data ? JSON.parse(r.exclude_data) : []
+            }))
         });
     } catch (error) {
-        console.error('Error exporting user data:', error);
-        res.status(500).json({ success: false, error: 'Failed to export data' });
+        console.error('[DataExport] List requests error:', error);
+        res.status(500).json({ error: 'Failed to list export requests' });
     }
 });
 
 /**
- * PUT /api/user/data-retention
- * Update data retention preferences
+ * POST /api/data-export/requests
+ * Create new data export request
  */
-router.put('/data-retention', requireAuth, async (req, res) => {
+router.post('/requests', authMiddleware, async (req, res) => {
     try {
-        const userId = req.user.id;
-        const { retentionPeriod, trainingOptOut } = req.body;
+        const { exportType = 'full', includeData = [], excludeData = [] } = req.body;
+        const organizationId = req.user.organizationId;
 
-        // Valid retention periods: '30', '90', '365', 'forever'
-        const validPeriods = ['30', '90', '365', 'forever'];
-        if (retentionPeriod && !validPeriods.includes(retentionPeriod)) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Invalid retention period. Valid values: 30, 90, 365, forever' 
-            });
+        if (!organizationId) {
+            return res.status(400).json({ error: 'Organization ID required' });
         }
 
-        await new Promise((resolve, reject) => {
-            db.run(
-                `UPDATE users SET 
-                    extended_preferences = json_set(
-                        COALESCE(extended_preferences, '{}'),
-                        '$.dataRetentionPeriod', ?,
-                        '$.trainingOptOut', ?
-                    )
-                 WHERE id = ?`,
-                [retentionPeriod, trainingOptOut ? 1 : 0, userId],
-                function(err) {
-                    if (err) reject(err);
-                    else resolve(this.changes);
-                }
-            );
-        });
+        // Check for pending requests
+        const pending = await dbGet(`
+            SELECT id FROM data_export_requests 
+            WHERE organization_id = ? AND status IN ('pending', 'processing')
+        `, [organizationId]);
 
-        res.json({
-            success: true,
-            message: 'Data retention settings updated'
-        });
+        if (pending) {
+            return res.status(400).json({ error: 'An export request is already in progress' });
+        }
+
+        const id = uuidv4();
+        await dbRun(`
+            INSERT INTO data_export_requests (
+                id, organization_id, user_id, export_type, include_data, exclude_data, status
+            ) VALUES (?, ?, ?, ?, ?, ?, 'pending')
+        `, [id, organizationId, req.user.id, exportType, JSON.stringify(includeData), JSON.stringify(excludeData)]);
+
+        // In production, this would trigger a background job
+        // For now, we'll simulate processing
+        setTimeout(async () => {
+            try {
+                await dbRun(`
+                    UPDATE data_export_requests 
+                    SET status = 'processing', started_at = datetime('now')
+                    WHERE id = ?
+                `, [id]);
+
+                // Simulate export completion
+                setTimeout(async () => {
+                    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
+                    await dbRun(`
+                        UPDATE data_export_requests 
+                        SET status = 'completed', 
+                            completed_at = datetime('now'),
+                            file_url = ?,
+                            file_expires_at = ?
+                        WHERE id = ?
+                    `, [`/api/data-export/download/${id}`, expiresAt, id]);
+                }, 5000);
+            } catch (err) {
+                console.error('[DataExport] Processing error:', err);
+            }
+        }, 1000);
+
+        res.status(201).json({ success: true, id, message: 'Export request created' });
     } catch (error) {
-        console.error('Error updating data retention:', error);
-        res.status(500).json({ success: false, error: 'Failed to update settings' });
+        console.error('[DataExport] Create request error:', error);
+        res.status(500).json({ error: 'Failed to create export request' });
     }
 });
 
 /**
- * DELETE /api/user/data
- * Request account deletion (GDPR Article 17 - Right to erasure)
+ * GET /api/data-export/requests/:id
+ * Get export request status
  */
-router.delete('/data', requireAuth, async (req, res) => {
+router.get('/requests/:id', authMiddleware, async (req, res) => {
     try {
-        const userId = req.user.id;
-        const { confirmEmail } = req.body;
+        const { id } = req.params;
+        const isSuperAdmin = req.user.role === 'SUPERADMIN';
 
-        // Verify email confirmation
-        if (confirmEmail !== req.user.email) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Email confirmation does not match' 
-            });
+        let query = `
+            SELECT der.*, u.email as requester_email, o.name as organization_name
+            FROM data_export_requests der
+            LEFT JOIN users u ON der.user_id = u.id
+            LEFT JOIN organizations o ON der.organization_id = o.id
+            WHERE der.id = ?
+        `;
+        const params = [id];
+
+        if (!isSuperAdmin) {
+            query += ` AND der.organization_id = ?`;
+            params.push(req.user.organizationId);
         }
 
-        // In production, you might want to:
-        // 1. Schedule deletion for 30 days (grace period)
-        // 2. Send confirmation email
-        // 3. Notify admins
+        const request = await dbGet(query, params);
 
-        // For now, we'll just mark the account for deletion
-        await new Promise((resolve, reject) => {
-            db.run(
-                `UPDATE users SET 
-                    extended_preferences = json_set(
-                        COALESCE(extended_preferences, '{}'),
-                        '$.deletionRequested', 1,
-                        '$.deletionRequestedAt', datetime('now')
-                    )
-                 WHERE id = ?`,
-                [userId],
-                function(err) {
-                    if (err) reject(err);
-                    else resolve(this.changes);
-                }
-            );
-        });
-
-        res.json({
-            success: true,
-            message: 'Account deletion requested. Your data will be deleted within 30 days.'
-        });
-    } catch (error) {
-        console.error('Error requesting account deletion:', error);
-        res.status(500).json({ success: false, error: 'Failed to request deletion' });
-    }
-});
-
-/**
- * GET /api/user/data-retention
- * Get current data retention settings
- */
-router.get('/data-retention', requireAuth, async (req, res) => {
-    try {
-        const userId = req.user.id;
-
-        const user = await new Promise((resolve, reject) => {
-            db.get(
-                `SELECT extended_preferences FROM users WHERE id = ?`,
-                [userId],
-                (err, row) => {
-                    if (err) reject(err);
-                    else resolve(row);
-                }
-            );
-        });
-
-        let preferences = {};
-        try {
-            preferences = JSON.parse(user?.extended_preferences || '{}');
-        } catch (e) {
-            preferences = {};
+        if (!request) {
+            return res.status(404).json({ error: 'Export request not found' });
         }
 
-        res.json({
-            success: true,
-            data: {
-                dataRetentionPeriod: preferences.dataRetentionPeriod || '365',
-                trainingOptOut: preferences.trainingOptOut || false,
-                deletionRequested: preferences.deletionRequested || false,
-                deletionRequestedAt: preferences.deletionRequestedAt || null
+        res.json({ 
+            request: {
+                ...request,
+                include_data: request.include_data ? JSON.parse(request.include_data) : [],
+                exclude_data: request.exclude_data ? JSON.parse(request.exclude_data) : []
             }
         });
     } catch (error) {
-        console.error('Error fetching data retention settings:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch settings' });
+        console.error('[DataExport] Get request error:', error);
+        res.status(500).json({ error: 'Failed to get export request' });
+    }
+});
+
+/**
+ * DELETE /api/data-export/requests/:id
+ * Cancel pending export request
+ */
+router.delete('/requests/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const isSuperAdmin = req.user.role === 'SUPERADMIN';
+
+        const request = await dbGet(`SELECT * FROM data_export_requests WHERE id = ?`, [id]);
+        
+        if (!request) {
+            return res.status(404).json({ error: 'Export request not found' });
+        }
+
+        if (!isSuperAdmin && request.organization_id !== req.user.organizationId) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        if (!['pending', 'processing'].includes(request.status)) {
+            return res.status(400).json({ error: 'Can only cancel pending or processing requests' });
+        }
+
+        await dbRun(`UPDATE data_export_requests SET status = 'failed', error_message = 'Canceled by user' WHERE id = ?`, [id]);
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[DataExport] Cancel request error:', error);
+        res.status(500).json({ error: 'Failed to cancel export request' });
+    }
+});
+
+// ==========================================
+// BACKUP CONFIGURATION
+// ==========================================
+
+/**
+ * GET /api/data-export/backup-config
+ * Get backup configuration for organization
+ */
+router.get('/backup-config', authMiddleware, async (req, res) => {
+    try {
+        const { organizationId } = req.query;
+        const isSuperAdmin = req.user.role === 'SUPERADMIN';
+        const orgId = isSuperAdmin && organizationId ? organizationId : req.user.organizationId;
+
+        if (!orgId) {
+            return res.status(400).json({ error: 'Organization ID required' });
+        }
+
+        let config = await dbGet(`SELECT * FROM backup_configurations WHERE organization_id = ?`, [orgId]);
+
+        if (!config) {
+            // Return default config
+            config = {
+                organization_id: orgId,
+                enabled: false,
+                frequency: 'daily',
+                retention_days: 30,
+                include_attachments: true,
+                include_audit_logs: true,
+                last_backup_at: null,
+                last_backup_status: null,
+                last_backup_size: null,
+                next_backup_at: null
+            };
+        }
+
+        res.json({ config });
+    } catch (error) {
+        console.error('[DataExport] Get backup config error:', error);
+        res.status(500).json({ error: 'Failed to get backup configuration' });
+    }
+});
+
+/**
+ * PUT /api/data-export/backup-config
+ * Update backup configuration
+ */
+router.put('/backup-config', authMiddleware, async (req, res) => {
+    try {
+        const { organizationId } = req.query;
+        const isSuperAdmin = req.user.role === 'SUPERADMIN';
+        const orgId = isSuperAdmin && organizationId ? organizationId : req.user.organizationId;
+
+        if (!orgId) {
+            return res.status(400).json({ error: 'Organization ID required' });
+        }
+
+        const {
+            enabled,
+            frequency,
+            retentionDays,
+            includeAttachments,
+            includeAuditLogs
+        } = req.body;
+
+        const existing = await dbGet(`SELECT id FROM backup_configurations WHERE organization_id = ?`, [orgId]);
+
+        if (existing) {
+            const updates = [];
+            const params = [];
+
+            if (enabled !== undefined) { updates.push('enabled = ?'); params.push(enabled ? 1 : 0); }
+            if (frequency) { updates.push('frequency = ?'); params.push(frequency); }
+            if (retentionDays !== undefined) { updates.push('retention_days = ?'); params.push(retentionDays); }
+            if (includeAttachments !== undefined) { updates.push('include_attachments = ?'); params.push(includeAttachments ? 1 : 0); }
+            if (includeAuditLogs !== undefined) { updates.push('include_audit_logs = ?'); params.push(includeAuditLogs ? 1 : 0); }
+
+            if (updates.length > 0) {
+                updates.push('updated_at = datetime("now")');
+                params.push(orgId);
+                await dbRun(`UPDATE backup_configurations SET ${updates.join(', ')} WHERE organization_id = ?`, params);
+            }
+        } else {
+            const id = uuidv4();
+            await dbRun(`
+                INSERT INTO backup_configurations (
+                    id, organization_id, enabled, frequency, retention_days,
+                    include_attachments, include_audit_logs
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            `, [
+                id, orgId, 
+                enabled ? 1 : 0, 
+                frequency || 'daily', 
+                retentionDays || 30,
+                includeAttachments !== false ? 1 : 0,
+                includeAuditLogs !== false ? 1 : 0
+            ]);
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[DataExport] Update backup config error:', error);
+        res.status(500).json({ error: 'Failed to update backup configuration' });
+    }
+});
+
+/**
+ * POST /api/data-export/backup-config/trigger
+ * Manually trigger a backup
+ */
+router.post('/backup-config/trigger', authMiddleware, verifySuperAdmin, async (req, res) => {
+    try {
+        const { organizationId } = req.body;
+
+        if (!organizationId) {
+            return res.status(400).json({ error: 'Organization ID required' });
+        }
+
+        // In production, this would trigger a background job
+        // For now, we'll just update the last backup time
+        await dbRun(`
+            UPDATE backup_configurations 
+            SET last_backup_at = datetime('now'), 
+                last_backup_status = 'success',
+                last_backup_size = ?
+            WHERE organization_id = ?
+        `, [Math.floor(Math.random() * 100000000), organizationId]);
+
+        res.json({ success: true, message: 'Backup triggered' });
+    } catch (error) {
+        console.error('[DataExport] Trigger backup error:', error);
+        res.status(500).json({ error: 'Failed to trigger backup' });
+    }
+});
+
+/**
+ * GET /api/data-export/backup-history
+ * Get backup history
+ */
+router.get('/backup-history', authMiddleware, async (req, res) => {
+    try {
+        const { organizationId, limit = 20 } = req.query;
+        const isSuperAdmin = req.user.role === 'SUPERADMIN';
+        const orgId = isSuperAdmin && organizationId ? organizationId : req.user.organizationId;
+
+        // For now, return mock history since we don't have a separate backup_history table
+        // In production, this would be a real table
+        const config = await dbGet(`SELECT * FROM backup_configurations WHERE organization_id = ?`, [orgId]);
+
+        const history = [];
+        if (config?.last_backup_at) {
+            history.push({
+                id: '1',
+                timestamp: config.last_backup_at,
+                status: config.last_backup_status,
+                size: config.last_backup_size,
+                type: 'scheduled'
+            });
+        }
+
+        res.json({ history });
+    } catch (error) {
+        console.error('[DataExport] Get backup history error:', error);
+        res.status(500).json({ error: 'Failed to get backup history' });
+    }
+});
+
+// ==========================================
+// GDPR
+// ==========================================
+
+/**
+ * POST /api/data-export/gdpr-request
+ * Create GDPR data export request (for end users)
+ */
+router.post('/gdpr-request', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const organizationId = req.user.organizationId;
+
+        // Check for existing pending GDPR request
+        const pending = await dbGet(`
+            SELECT id FROM data_export_requests 
+            WHERE user_id = ? AND export_type = 'gdpr' AND status IN ('pending', 'processing')
+        `, [userId]);
+
+        if (pending) {
+            return res.status(400).json({ error: 'A GDPR export request is already in progress' });
+        }
+
+        const id = uuidv4();
+        await dbRun(`
+            INSERT INTO data_export_requests (
+                id, organization_id, user_id, export_type, status
+            ) VALUES (?, ?, ?, 'gdpr', 'pending')
+        `, [id, organizationId, userId]);
+
+        res.status(201).json({ 
+            success: true, 
+            id, 
+            message: 'GDPR export request submitted. You will receive an email when your data is ready.' 
+        });
+    } catch (error) {
+        console.error('[DataExport] GDPR request error:', error);
+        res.status(500).json({ error: 'Failed to create GDPR request' });
     }
 });
 
 module.exports = router;
-

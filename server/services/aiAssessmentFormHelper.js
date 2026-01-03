@@ -128,7 +128,7 @@ class AIAssessmentFormHelper {
      */
     async autocompleteJustification(partialText, axisId, score, context = {}) {
         if (!partialText || partialText.length < 10) {
-            return { 
+            return {
                 completion: '',
                 message: 'Wpisz co najmniej 10 znaków, aby otrzymać sugestię.'
             };
@@ -150,7 +150,7 @@ class AIAssessmentFormHelper {
 
         for (const axisId of axes) {
             const axisData = assessment[axisId] || {};
-            
+
             // Fill missing justification
             if (axisData.actual && (!axisData.justification || axisData.justification.length < 50)) {
                 const suggestion = await this.aiPartner.suggestJustification(
@@ -158,7 +158,7 @@ class AIAssessmentFormHelper {
                     axisData.actual,
                     { industry: assessment.metadata?.industry }
                 );
-                
+
                 if (suggestion.suggestion) {
                     filledFields[axisId] = {
                         ...filledFields[axisId],
@@ -177,7 +177,7 @@ class AIAssessmentFormHelper {
                     axisData.actual,
                     fillStrategy === 'aggressive' ? 'aggressive' : 'balanced'
                 );
-                
+
                 if (targetSuggestion.suggestedTarget) {
                     filledFields[axisId] = {
                         ...filledFields[axisId],
@@ -197,7 +197,7 @@ class AIAssessmentFormHelper {
                     axisData.actual,
                     { industry: assessment.metadata?.industry }
                 );
-                
+
                 if (evidenceSuggestion.evidence) {
                     filledFields[axisId] = {
                         ...filledFields[axisId],
@@ -227,7 +227,7 @@ class AIAssessmentFormHelper {
 
         for (const axisId of axes) {
             const axisData = assessment[axisId];
-            
+
             if (axisData?.justification) {
                 const review = await this._reviewSingleJustification(
                     axisId,
@@ -235,7 +235,7 @@ class AIAssessmentFormHelper {
                     axisData.justification,
                     options
                 );
-                
+
                 reviews.push({
                     axisId,
                     axisName: DRD_AXES[axisId].name,
@@ -274,7 +274,7 @@ class AIAssessmentFormHelper {
         if (currentField === 'justification') {
             help.tips.push('Opisz konkretne systemy, procesy lub osiągnięcia wspierające tę ocenę.');
             help.tips.push('Unikaj ogólników - im więcej szczegółów, tym lepsza jakość oceny.');
-            
+
             if (currentScore <= 2) {
                 help.tips.push('Dla niższych poziomów skup się na opisie barier i planów poprawy.');
             } else if (currentScore >= 5) {
@@ -461,7 +461,7 @@ class AIAssessmentFormHelper {
         // Score-justification alignment check
         const axis = DRD_AXES[axisId];
         const levelKeywords = this._getLevelKeywords(axisId, score);
-        const hasRelevantKeywords = levelKeywords.some(kw => 
+        const hasRelevantKeywords = levelKeywords.some(kw =>
             justification.toLowerCase().includes(kw.toLowerCase())
         );
         if (!hasRelevantKeywords) {
@@ -472,7 +472,7 @@ class AIAssessmentFormHelper {
 
         // Language quality
         const correctionResult = await this.aiPartner.correctJustificationLanguage(
-            justification, 
+            justification,
             options.language || 'pl'
         );
         if (correctionResult.correctedText !== justification && correctionResult.mode === 'AI_CORRECTED') {
@@ -518,7 +518,7 @@ class AIAssessmentFormHelper {
 
     async _suggestPriority(axisId, score, context) {
         const gap = context.targetScore ? context.targetScore - score : 0;
-        
+
         let priority;
         if (gap >= 3) {
             priority = 'HIGH';
@@ -530,9 +530,9 @@ class AIAssessmentFormHelper {
 
         return {
             suggestedPriority: priority,
-            reasoning: gap >= 3 
+            reasoning: gap >= 3
                 ? 'Duży gap wymaga priorytetowego działania'
-                : gap >= 2 
+                : gap >= 2
                     ? 'Umiarkowany gap - rekomendowany średni priorytet'
                     : 'Mały gap - możliwe szybkie zamknięcie'
         };

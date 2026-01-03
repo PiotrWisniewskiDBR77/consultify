@@ -814,6 +814,600 @@ const AIPlaybookService = {
                 }
             );
         });
+    },
+
+    // ==========================================
+    // ENTERPRISE EXTENSIONS
+    // Version history, comments, reviews, analytics, clone, bulk, search
+    // ==========================================
+
+    /**
+     * Create version record for playbook template
+     */
+    createTemplateVersion: async ({
+        templateId,
+        version,
+        title,
+        description,
+        triggerSignal,
+        templateGraph,
+        estimatedDurationMins,
+        changedBy = null,
+        changeNotes = '',
+        changeType = 'UPDATE',
+        statusAtVersion = 'DRAFT'
+    }) => {
+        const id = `aptv-${uuidv4()}`;
+        const now = new Date().toISOString();
+        const graphJson = typeof templateGraph === 'string' ? templateGraph : JSON.stringify(templateGraph || {});
+
+        return new Promise((resolve, reject) => {
+            db.run(
+                `INSERT INTO ai_playbook_template_versions (
+                    id, template_id, version, title, description, trigger_signal,
+                    template_graph, estimated_duration_mins, changed_by, change_notes,
+                    change_type, status_at_version, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    id, templateId, version, title, description, triggerSignal,
+                    graphJson, estimatedDurationMins, changedBy, changeNotes,
+                    changeType, statusAtVersion, now
+                ],
+                function(err) {
+                    if (err) return reject(err);
+                    resolve({
+                        id,
+                        templateId,
+                        version,
+                        title,
+                        description,
+                        triggerSignal,
+                        templateGraph: templateGraph || {},
+                        estimatedDurationMins,
+                        changedBy,
+                        changeNotes,
+                        changeType,
+                        statusAtVersion,
+                        createdAt: now
+                    });
+                }
+            );
+        });
+    },
+
+    /**
+     * Get version history for a playbook template
+     */
+    getTemplateVersionHistory: async (templateId) => {
+        return new Promise((resolve, reject) => {
+            db.all(
+                `SELECT * FROM ai_playbook_template_versions 
+                 WHERE template_id = ? 
+                 ORDER BY version DESC`,
+                [templateId],
+                (err, rows) => {
+                    if (err) return reject(err);
+                    resolve((rows || []).map(row => ({
+                        id: row.id,
+                        templateId: row.template_id,
+                        version: row.version,
+                        title: row.title,
+                        description: row.description,
+                        triggerSignal: row.trigger_signal,
+                        templateGraph: row.template_graph ? JSON.parse(row.template_graph) : null,
+                        estimatedDurationMins: row.estimated_duration_mins,
+                        changedBy: row.changed_by,
+                        changeNotes: row.change_notes,
+                        changeType: row.change_type,
+                        statusAtVersion: row.status_at_version,
+                        createdAt: row.created_at
+                    })));
+                }
+            );
+        });
+    },
+
+    /**
+     * Get specific version of a playbook template
+     */
+    getTemplateVersion: async (templateId, version) => {
+        return new Promise((resolve, reject) => {
+            db.get(
+                `SELECT * FROM ai_playbook_template_versions 
+                 WHERE template_id = ? AND version = ?`,
+                [templateId, version],
+                (err, row) => {
+                    if (err) return reject(err);
+                    if (!row) return resolve(null);
+                    resolve({
+                        id: row.id,
+                        templateId: row.template_id,
+                        version: row.version,
+                        title: row.title,
+                        description: row.description,
+                        triggerSignal: row.trigger_signal,
+                        templateGraph: row.template_graph ? JSON.parse(row.template_graph) : null,
+                        estimatedDurationMins: row.estimated_duration_mins,
+                        changedBy: row.changed_by,
+                        changeNotes: row.change_notes,
+                        changeType: row.change_type,
+                        statusAtVersion: row.status_at_version,
+                        createdAt: row.created_at
+                    });
+                }
+            );
+        });
+    },
+
+    /**
+     * Restore template to a previous version
+     */
+    restoreTemplateVersion: async (templateId, version, userId = null) => {
+        const template = await AIPlaybookService.getTemplateById(templateId);
+        
+        if (!template) {
+            throw new Error(`Template ${templateId} not found`);
+        }
+        
+        if (template.status !== 'DRAFT') {
+            throw new Error('Can only restore versions of DRAFT templates');
+        }
+
+        const versionToRestore = await AIPlaybookService.getTemplateVersion(templateId, version);
+        
+        if (!versionToRestore) {
+            throw new Error(`Version ${version} not found`);
+        }
+
+        const newVersion = template.version + 1;
+        const now = new Date().toISOString();
+
+        return new Promise((resolve, reject) => {
+            db.run(
+                `UPDATE ai_playbook_templates SET 
+                    title = ?, description = ?, trigger_signal = ?, template_graph = ?,
+                    estimated_duration_mins = ?, version = ?, updated_at = ?
+                 WHERE id = ?`,
+                [
+                    versionToRestore.title,
+                    versionToRestore.description,
+                    versionToRestore.triggerSignal,
+                    JSON.stringify(versionToRestore.templateGraph),
+                    versionToRestore.estimatedDurationMins,
+                    newVersion,
+                    now,
+                    templateId
+                ],
+                async function(err) {
+                    if (err) return reject(err);
+
+                    // Create version record for restore
+                    await AIPlaybookService.createTemplateVersion({
+                        templateId,
+                        version: newVersion,
+                        title: versionToRestore.title,
+                        description: versionToRestore.description,
+                        triggerSignal: versionToRestore.triggerSignal,
+                        templateGraph: versionToRestore.templateGraph,
+                        estimatedDurationMins: versionToRestore.estimatedDurationMins,
+                        changedBy: userId,
+                        changeNotes: `Restored from version ${version}`,
+                        changeType: 'RESTORE',
+                        statusAtVersion: 'DRAFT'
+                    });
+
+                    const updatedTemplate = await AIPlaybookService.getTemplateById(templateId);
+                    resolve(updatedTemplate);
+                }
+            );
+        });
+    },
+
+    /**
+     * Clone a playbook template
+     */
+    cloneTemplate: async (templateId, overrides = {}, userId = null) => {
+        const template = await AIPlaybookService.getTemplateById(templateId);
+        
+        if (!template) {
+            throw new Error(`Template ${templateId} not found`);
+        }
+
+        const newKey = overrides.key || `${template.key}-copy-${Date.now()}`;
+        const newTitle = overrides.title || `${template.title} (Copy)`;
+
+        const cloned = await AIPlaybookService.createDraftTemplate({
+            key: newKey,
+            title: newTitle,
+            description: overrides.description || template.description,
+            triggerSignal: template.triggerSignal,
+            templateGraph: template.templateGraph,
+            estimatedDurationMins: template.estimatedDurationMins
+        });
+
+        // Copy steps if they exist
+        if (template.steps && template.steps.length > 0) {
+            for (const step of template.steps) {
+                await AIPlaybookService.addTemplateStep({
+                    templateId: cloned.id,
+                    stepOrder: step.stepOrder,
+                    actionType: step.actionType,
+                    title: step.title,
+                    description: step.description,
+                    payloadTemplate: step.payloadTemplate,
+                    isOptional: step.isOptional,
+                    waitForPrevious: step.waitForPrevious
+                });
+            }
+        }
+
+        // Log analytics event
+        await AIPlaybookService.logAnalyticsEvent({
+            contentId: templateId,
+            eventType: 'CLONE',
+            userId,
+            metadata: { clonedToId: cloned.id }
+        });
+
+        return cloned;
+    },
+
+    /**
+     * Log analytics event for playbook template
+     */
+    logAnalyticsEvent: async ({
+        contentId,
+        eventType,
+        userId = null,
+        organizationId = null,
+        metadata = {},
+        sessionId = null,
+        durationMs = null
+    }) => {
+        const id = `ca-${uuidv4()}`;
+        const now = new Date().toISOString();
+
+        return new Promise((resolve, reject) => {
+            db.run(
+                `INSERT INTO content_analytics (
+                    id, content_id, content_type, event_type, user_id, organization_id,
+                    metadata, session_id, duration_ms, created_at
+                ) VALUES (?, ?, 'PLAYBOOK_TEMPLATE', ?, ?, ?, ?, ?, ?, ?)`,
+                [id, contentId, eventType, userId, organizationId, JSON.stringify(metadata), sessionId, durationMs, now],
+                function(err) {
+                    if (err) return reject(err);
+                    resolve({
+                        id,
+                        contentId,
+                        contentType: 'PLAYBOOK_TEMPLATE',
+                        eventType,
+                        userId,
+                        organizationId,
+                        metadata,
+                        sessionId,
+                        durationMs,
+                        createdAt: now
+                    });
+                }
+            );
+        });
+    },
+
+    /**
+     * Get template statistics
+     */
+    getTemplateStats: async (templateId) => {
+        const template = await AIPlaybookService.getTemplateById(templateId);
+        
+        if (!template) {
+            throw new Error(`Template ${templateId} not found`);
+        }
+
+        return new Promise((resolve, reject) => {
+            db.get(
+                `SELECT 
+                    COUNT(*) as total_runs,
+                    SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed_runs,
+                    SUM(CASE WHEN status = 'FAILED' THEN 1 ELSE 0 END) as failed_runs,
+                    SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled_runs,
+                    AVG(CASE WHEN completed_at IS NOT NULL AND started_at IS NOT NULL 
+                        THEN (julianday(completed_at) - julianday(started_at)) * 24 * 60 
+                        ELSE NULL END) as avg_duration_mins
+                 FROM ai_playbook_runs WHERE template_id = ?`,
+                [templateId],
+                (err, stats) => {
+                    if (err) return reject(err);
+
+                    const totalRuns = stats?.total_runs || 0;
+                    const completedRuns = stats?.completed_runs || 0;
+
+                    resolve({
+                        id: templateId,
+                        key: template.key,
+                        title: template.title,
+                        status: template.status,
+                        version: template.version || 1,
+                        usageCount: template.usageCount || 0,
+                        successRate: totalRuns > 0 ? Math.round((completedRuns / totalRuns) * 100) : null,
+                        avgExecutionTimeMins: stats?.avg_duration_mins ? Math.round(stats.avg_duration_mins) : null,
+                        totalRuns,
+                        completedRuns,
+                        failedRuns: stats?.failed_runs || 0,
+                        cancelledRuns: stats?.cancelled_runs || 0
+                    });
+                }
+            );
+        });
+    },
+
+    /**
+     * Get analytics events for a template
+     */
+    getTemplateAnalytics: async (templateId, { limit = 100, eventType = null, dateFrom = null, dateTo = null } = {}) => {
+        const conditions = ['content_id = ?', "content_type = 'PLAYBOOK_TEMPLATE'"];
+        const params = [templateId];
+
+        if (eventType) {
+            conditions.push('event_type = ?');
+            params.push(eventType);
+        }
+
+        if (dateFrom) {
+            conditions.push('created_at >= ?');
+            params.push(dateFrom);
+        }
+
+        if (dateTo) {
+            conditions.push('created_at <= ?');
+            params.push(dateTo);
+        }
+
+        return new Promise((resolve, reject) => {
+            db.all(
+                `SELECT * FROM content_analytics 
+                 WHERE ${conditions.join(' AND ')}
+                 ORDER BY created_at DESC
+                 LIMIT ?`,
+                [...params, limit],
+                (err, rows) => {
+                    if (err) return reject(err);
+                    resolve((rows || []).map(row => ({
+                        id: row.id,
+                        contentId: row.content_id,
+                        contentType: row.content_type,
+                        eventType: row.event_type,
+                        userId: row.user_id,
+                        organizationId: row.organization_id,
+                        metadata: row.metadata ? JSON.parse(row.metadata) : {},
+                        sessionId: row.session_id,
+                        durationMs: row.duration_ms,
+                        createdAt: row.created_at
+                    })));
+                }
+            );
+        });
+    },
+
+    /**
+     * Search playbook templates
+     */
+    searchTemplates: async ({
+        query = null,
+        status = null,
+        categoryId = null,
+        triggerSignal = null,
+        organizationId = null,
+        sortBy = 'updated_at',
+        sortOrder = 'DESC',
+        limit = 50,
+        offset = 0
+    } = {}) => {
+        const conditions = [];
+        const params = [];
+
+        if (query) {
+            conditions.push('(title LIKE ? OR description LIKE ? OR key LIKE ?)');
+            const searchTerm = `%${query}%`;
+            params.push(searchTerm, searchTerm, searchTerm);
+        }
+
+        if (status) {
+            conditions.push('status = ?');
+            params.push(status);
+        }
+
+        if (categoryId) {
+            conditions.push('category_id = ?');
+            params.push(categoryId);
+        }
+
+        if (triggerSignal) {
+            conditions.push('trigger_signal = ?');
+            params.push(triggerSignal);
+        }
+
+        if (organizationId) {
+            conditions.push('(organization_id = ? OR organization_id IS NULL)');
+            params.push(organizationId);
+        }
+
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+        const validSortColumns = ['title', 'key', 'created_at', 'updated_at', 'usage_count', 'status'];
+        const sortColumn = validSortColumns.includes(sortBy) ? sortBy : 'updated_at';
+        const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+        return new Promise((resolve, reject) => {
+            db.all(
+                `SELECT * FROM ai_playbook_templates 
+                 ${whereClause}
+                 ORDER BY ${sortColumn} ${order}
+                 LIMIT ? OFFSET ?`,
+                [...params, limit, offset],
+                (err, rows) => {
+                    if (err) return reject(err);
+                    resolve((rows || []).map(t => ({
+                        id: t.id,
+                        key: t.key,
+                        title: t.title,
+                        description: t.description,
+                        triggerSignal: t.trigger_signal,
+                        estimatedDurationMins: t.estimated_duration_mins,
+                        templateGraph: t.template_graph ? JSON.parse(t.template_graph) : null,
+                        version: t.version || 1,
+                        status: t.status || 'DRAFT',
+                        categoryId: t.category_id,
+                        organizationId: t.organization_id,
+                        usageCount: t.usage_count || 0,
+                        publishedAt: t.published_at,
+                        publishedByUserId: t.published_by_user_id,
+                        isActive: !!t.is_active,
+                        createdAt: t.created_at,
+                        updatedAt: t.updated_at
+                    })));
+                }
+            );
+        });
+    },
+
+    /**
+     * Bulk update templates
+     */
+    bulkUpdateTemplates: async (templateIds, updates, userId = null) => {
+        const results = {
+            success: [],
+            failed: []
+        };
+
+        for (const id of templateIds) {
+            try {
+                if (updates.status === 'PUBLISHED') {
+                    await AIPlaybookService.publishTemplate(id, userId);
+                } else if (updates.status === 'DEPRECATED') {
+                    await AIPlaybookService.deprecateTemplate(id);
+                } else if (updates.categoryId !== undefined) {
+                    await new Promise((resolve, reject) => {
+                        db.run(
+                            'UPDATE ai_playbook_templates SET category_id = ?, updated_at = ? WHERE id = ?',
+                            [updates.categoryId, new Date().toISOString(), id],
+                            (err) => err ? reject(err) : resolve()
+                        );
+                    });
+                } else if (updates.isActive !== undefined) {
+                    await new Promise((resolve, reject) => {
+                        db.run(
+                            'UPDATE ai_playbook_templates SET is_active = ?, updated_at = ? WHERE id = ?',
+                            [updates.isActive ? 1 : 0, new Date().toISOString(), id],
+                            (err) => err ? reject(err) : resolve()
+                        );
+                    });
+                }
+                results.success.push(id);
+            } catch (err) {
+                results.failed.push({ id, error: err.message });
+            }
+        }
+
+        return results;
+    },
+
+    /**
+     * Get tags for a playbook template
+     */
+    getTemplateTags: async (templateId) => {
+        return new Promise((resolve, reject) => {
+            db.all(
+                `SELECT ct.* FROM content_tags ct
+                 JOIN content_tag_mappings ctm ON ct.id = ctm.tag_id
+                 WHERE ctm.content_id = ? AND ctm.content_type = 'PLAYBOOK_TEMPLATE'`,
+                [templateId],
+                (err, rows) => {
+                    if (err) return reject(err);
+                    resolve((rows || []).map(row => ({
+                        id: row.id,
+                        name: row.name,
+                        slug: row.slug,
+                        contentType: row.content_type,
+                        color: row.color,
+                        organizationId: row.organization_id,
+                        usageCount: row.usage_count,
+                        isActive: !!row.is_active,
+                        createdAt: row.created_at
+                    })));
+                }
+            );
+        });
+    },
+
+    /**
+     * Add tag to playbook template
+     */
+    addTemplateTag: async (templateId, tagId, userId = null) => {
+        const id = `ctm-${uuidv4()}`;
+        const now = new Date().toISOString();
+
+        return new Promise((resolve, reject) => {
+            db.run(
+                `INSERT OR IGNORE INTO content_tag_mappings (id, content_id, content_type, tag_id, created_at, created_by)
+                 VALUES (?, ?, 'PLAYBOOK_TEMPLATE', ?, ?, ?)`,
+                [id, templateId, tagId, now, userId],
+                function(err) {
+                    if (err) return reject(err);
+                    
+                    if (this.changes > 0) {
+                        db.run(
+                            'UPDATE content_tags SET usage_count = usage_count + 1 WHERE id = ?',
+                            [tagId],
+                            () => resolve(true)
+                        );
+                    } else {
+                        resolve(false);
+                    }
+                }
+            );
+        });
+    },
+
+    /**
+     * Remove tag from playbook template
+     */
+    removeTemplateTag: async (templateId, tagId) => {
+        return new Promise((resolve, reject) => {
+            db.run(
+                `DELETE FROM content_tag_mappings 
+                 WHERE content_id = ? AND content_type = 'PLAYBOOK_TEMPLATE' AND tag_id = ?`,
+                [templateId, tagId],
+                function(err) {
+                    if (err) return reject(err);
+                    
+                    if (this.changes > 0) {
+                        db.run(
+                            'UPDATE content_tags SET usage_count = MAX(0, usage_count - 1) WHERE id = ?',
+                            [tagId],
+                            () => resolve(true)
+                        );
+                    } else {
+                        resolve(false);
+                    }
+                }
+            );
+        });
+    },
+
+    /**
+     * Increment usage count when a template is used
+     */
+    incrementUsageCount: async (templateId) => {
+        const now = new Date().toISOString();
+        return new Promise((resolve, reject) => {
+            db.run(
+                'UPDATE ai_playbook_templates SET usage_count = COALESCE(usage_count, 0) + 1, last_used_at = ? WHERE id = ?',
+                [now, templateId],
+                function(err) {
+                    if (err) return reject(err);
+                    resolve(this.changes > 0);
+                }
+            );
+        });
     }
 };
 

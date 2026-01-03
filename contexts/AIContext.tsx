@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { useConversationStore } from '../store/useConversationStore';
 import {
     ScreenContextPayload,
     validateScreenContext,
     ScreenContextSchema
 } from '../types/AIContract';
 import { AppView, DRDAxis } from '../types';
+import { WorkspaceContext, ChatDisplayMode } from '../types/workspace';
 
 // --- PMO Context Types ---
 interface PMOContext {
@@ -51,6 +53,10 @@ interface AIContextProps {
     // NEW: Assessment AI helpers
     requestAssessmentGuidance: (axisId: DRDAxis) => void;
     requestGapAnalysis: () => void;
+    // UNIFIED CHAT SYSTEM: Workspace Context
+    workspaceContext: WorkspaceContext | null;
+    chatDisplayMode: ChatDisplayMode;
+    isInSplitMode: boolean;
 }
 
 const AIContext = createContext<AIContextProps | undefined>(undefined);
@@ -84,6 +90,12 @@ export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         currentView,
         addChatMessage
     } = useAppStore();
+    
+    // UNIFIED CHAT SYSTEM: Get workspace context from conversation store
+    const {
+        workspaceContext,
+        displayMode: chatDisplayMode
+    } = useConversationStore();
 
     // Local state for chat visibility
     const [isChatOpen, setIsChatOpen] = useState(false);
@@ -357,13 +369,20 @@ _Context: ${pmoContext.currentScreen}_`,
         }
     }, [currentProjectId]);
 
+    // UNIFIED CHAT SYSTEM: Compute if in split mode
+    const isInSplitMode = chatDisplayMode === 'split';
+    
     const globalContext = {
         user: currentUser,
         company: currentUser ? { name: currentUser.companyName } : null,
         // Include PMO context in global context for API calls
         pmo: pmoContext,
         // Include Assessment context for AI calls
-        assessment: assessmentContext
+        assessment: assessmentContext,
+        // UNIFIED CHAT SYSTEM: Include workspace context for split-screen AI awareness
+        workspace: workspaceContext,
+        chatMode: chatDisplayMode,
+        isInSplitMode
     };
 
     return (
@@ -383,7 +402,11 @@ _Context: ${pmoContext.currentScreen}_`,
             updateAssessmentContext,
             clearAssessmentContext,
             requestAssessmentGuidance,
-            requestGapAnalysis
+            requestGapAnalysis,
+            // UNIFIED CHAT SYSTEM: Workspace context
+            workspaceContext,
+            chatDisplayMode,
+            isInSplitMode
         }}>
             {children}
         </AIContext.Provider>

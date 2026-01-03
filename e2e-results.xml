@@ -1,0 +1,419 @@
+<testsuites id="" name="" tests="11" failures="9" skipped="0" errors="0" time="20.451058">
+<testsuite name="workflow-access-levels.spec.ts" timestamp="2026-01-02T21:13:08.721Z" hostname="chromium" tests="11" failures="9" skipped="0" time="105.343" errors="0">
+<testcase name="ADMIN Level Workflow Tests › Complete ADMIN workflow: Settings → Tasks → AI Chat" classname="workflow-access-levels.spec.ts" time="11.693">
+<failure message="workflow-access-levels.spec.ts:24:3 Complete ADMIN workflow: Settings → Tasks → AI Chat" type="FAILURE">
+<![CDATA[  [chromium] › workflow-access-levels.spec.ts:24:3 › ADMIN Level Workflow Tests › Complete ADMIN workflow: Settings → Tasks → AI Chat 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('ADMIN')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for getByText('ADMIN')
+
+
+      28 |
+      29 |     // Verify we're logged in as ADMIN (check for ADMIN button)
+    > 30 |     await expect(page.getByText('ADMIN')).toBeVisible();
+         |                                           ^
+      31 |
+      32 |     // Test 1: Settings Management
+      33 |     await test.step('Settings: Update Profile Information', async () => {
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:30:43
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-ADM-9e964--Settings-→-Tasks-→-AI-Chat-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/workflow-access-levels-ADM-9e964--Settings-→-Tasks-→-AI-Chat-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-ADM-9e964--Settings-→-Tasks-→-AI-Chat-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/workflow-access-levels-ADM-9e964--Settings-→-Tasks-→-AI-Chat-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/workflow-access-levels-ADM-9e964--Settings-→-Tasks-→-AI-Chat-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-ADM-9e964--Settings-→-Tasks-→-AI-Chat-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-ADM-9e964--Settings-→-Tasks-→-AI-Chat-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="ADMIN Level Workflow Tests › ADMIN Security Boundaries" classname="workflow-access-levels.spec.ts" time="11.688">
+<failure message="workflow-access-levels.spec.ts:105:3 ADMIN Security Boundaries" type="FAILURE">
+<![CDATA[  [chromium] › workflow-access-levels.spec.ts:105:3 › ADMIN Level Workflow Tests › ADMIN Security Boundaries 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('ADMIN')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for getByText('ADMIN')
+
+
+      107 |
+      108 |     // Verify ADMIN can access these areas
+    > 109 |     await expect(page.getByText('ADMIN')).toBeVisible();
+          |                                           ^
+      110 |     await expect(page.getByText('Settings')).toBeVisible();
+      111 |     await expect(page.getByText('Organization')).toBeVisible();
+      112 |
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:109:43
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-ADM-a5b8f-s-ADMIN-Security-Boundaries-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/workflow-access-levels-ADM-a5b8f-s-ADMIN-Security-Boundaries-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-ADM-a5b8f-s-ADMIN-Security-Boundaries-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/workflow-access-levels-ADM-a5b8f-s-ADMIN-Security-Boundaries-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/workflow-access-levels-ADM-a5b8f-s-ADMIN-Security-Boundaries-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-ADM-a5b8f-s-ADMIN-Security-Boundaries-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-ADM-a5b8f-s-ADMIN-Security-Boundaries-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="ADMIN Level Workflow Tests › Task CRUD Operations" classname="workflow-access-levels.spec.ts" time="16.609">
+<failure message="workflow-access-levels.spec.ts:120:3 Task CRUD Operations" type="FAILURE">
+<![CDATA[  [chromium] › workflow-access-levels.spec.ts:120:3 › ADMIN Level Workflow Tests › Task CRUD Operations 
+
+    TimeoutError: locator.click: Timeout 15000ms exceeded.
+    Call log:
+      - waiting for getByText('My Work')
+
+
+      121 |
+      122 |     // Navigate to My Work
+    > 123 |     await page.getByText('My Work').click();
+          |                                     ^
+      124 |
+      125 |     // Create task
+      126 |     await page.getByText('Create Task').click();
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:123:37
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-ADM-5487a--Tests-Task-CRUD-Operations-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/workflow-access-levels-ADM-5487a--Tests-Task-CRUD-Operations-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-ADM-5487a--Tests-Task-CRUD-Operations-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/workflow-access-levels-ADM-5487a--Tests-Task-CRUD-Operations-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/workflow-access-levels-ADM-5487a--Tests-Task-CRUD-Operations-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-ADM-5487a--Tests-Task-CRUD-Operations-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-ADM-5487a--Tests-Task-CRUD-Operations-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="AI Integration Tests › AI Chat Persistence" classname="workflow-access-levels.spec.ts" time="15.951">
+<failure message="workflow-access-levels.spec.ts:141:3 AI Chat Persistence" type="FAILURE">
+<![CDATA[  [chromium] › workflow-access-levels.spec.ts:141:3 › AI Integration Tests › AI Chat Persistence ───
+
+    TimeoutError: locator.click: Timeout 15000ms exceeded.
+    Call log:
+      - waiting for getByText('AI Chat')
+
+
+      141 |
+      142 |     // Navigate to AI Chat
+    > 143 |     await page.getByText('AI Chat').click();
+          |                                     ^
+      144 |
+      145 |     // Send message
+      146 |     await page.fill('input[placeholder*="Ask anything"]', 'Test message for persistence');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:143:37
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-AI--798af-n-Tests-AI-Chat-Persistence-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/workflow-access-levels-AI--798af-n-Tests-AI-Chat-Persistence-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-AI--798af-n-Tests-AI-Chat-Persistence-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/workflow-access-levels-AI--798af-n-Tests-AI-Chat-Persistence-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/workflow-access-levels-AI--798af-n-Tests-AI-Chat-Persistence-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-AI--798af-n-Tests-AI-Chat-Persistence-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-AI--798af-n-Tests-AI-Chat-Persistence-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="AI Integration Tests › AI Context Awareness" classname="workflow-access-levels.spec.ts" time="16.617">
+<failure message="workflow-access-levels.spec.ts:162:3 AI Context Awareness" type="FAILURE">
+<![CDATA[  [chromium] › workflow-access-levels.spec.ts:162:3 › AI Integration Tests › AI Context Awareness ──
+
+    TimeoutError: locator.click: Timeout 15000ms exceeded.
+    Call log:
+      - waiting for getByText('AI Chat')
+
+
+      161 |
+      162 |     // Navigate to AI Chat
+    > 163 |     await page.getByText('AI Chat').click();
+          |                                     ^
+      164 |
+      165 |     // Send context-aware message
+      166 |     await page.fill('input[placeholder*="Ask anything"]', 'What is the current status of my organization?');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:163:37
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-AI--b37a4--Tests-AI-Context-Awareness-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/workflow-access-levels-AI--b37a4--Tests-AI-Context-Awareness-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-AI--b37a4--Tests-AI-Context-Awareness-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/workflow-access-levels-AI--b37a4--Tests-AI-Context-Awareness-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/workflow-access-levels-AI--b37a4--Tests-AI-Context-Awareness-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-AI--b37a4--Tests-AI-Context-Awareness-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-AI--b37a4--Tests-AI-Context-Awareness-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Performance Tests › Page Load Performance" classname="workflow-access-levels.spec.ts" time="1.199">
+<system-out>
+<![CDATA[Page load time: 596ms
+]]>
+</system-out>
+</testcase>
+<testcase name="Performance Tests › AI Response Time" classname="workflow-access-levels.spec.ts" time="16.614">
+<failure message="workflow-access-levels.spec.ts:198:3 AI Response Time" type="FAILURE">
+<![CDATA[  [chromium] › workflow-access-levels.spec.ts:198:3 › Performance Tests › AI Response Time ─────────
+
+    TimeoutError: locator.click: Timeout 15000ms exceeded.
+    Call log:
+      - waiting for getByText('AI Chat')
+
+
+      193 |   test('AI Response Time', async ({ page }) => {
+      194 |     await page.goto(`${TEST_CONFIG.baseURL}`);
+    > 195 |     await page.getByText('AI Chat').click();
+          |                                     ^
+      196 |
+      197 |     const startTime = Date.now();
+      198 |
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:195:37
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-Performance-Tests-AI-Response-Time-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/workflow-access-levels-Performance-Tests-AI-Response-Time-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-Performance-Tests-AI-Response-Time-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/workflow-access-levels-Performance-Tests-AI-Response-Time-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/workflow-access-levels-Performance-Tests-AI-Response-Time-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-Performance-Tests-AI-Response-Time-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-Performance-Tests-AI-Response-Time-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Accessibility Tests › Keyboard Navigation" classname="workflow-access-levels.spec.ts" time="1.689">
+<failure message="workflow-access-levels.spec.ts:219:3 Keyboard Navigation" type="FAILURE">
+<![CDATA[  [chromium] › workflow-access-levels.spec.ts:219:3 › Accessibility Tests › Keyboard Navigation ────
+
+    Error: expect(received).toMatch(expected)
+
+    Expected pattern: /\/(chat|settings|organization)/
+    Received string:  "http://localhost:3000/"
+
+      223 |
+      224 |     // Verify navigation works
+    > 225 |     await expect(page.url()).toMatch(/\/(chat|settings|organization)/);
+          |                              ^
+      226 |   });
+      227 |
+      228 |   test('Screen Reader Support', async ({ page }) => {
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:225:30
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-Acc-0e07b-y-Tests-Keyboard-Navigation-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/workflow-access-levels-Acc-0e07b-y-Tests-Keyboard-Navigation-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-Acc-0e07b-y-Tests-Keyboard-Navigation-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/workflow-access-levels-Acc-0e07b-y-Tests-Keyboard-Navigation-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/workflow-access-levels-Acc-0e07b-y-Tests-Keyboard-Navigation-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-Acc-0e07b-y-Tests-Keyboard-Navigation-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-Acc-0e07b-y-Tests-Keyboard-Navigation-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Accessibility Tests › Screen Reader Support" classname="workflow-access-levels.spec.ts" time="1.22">
+<failure message="workflow-access-levels.spec.ts:234:3 Screen Reader Support" type="FAILURE">
+<![CDATA[  [chromium] › workflow-access-levels.spec.ts:234:3 › Accessibility Tests › Screen Reader Support ──
+
+    Error: expect(received).toBeTruthy()
+
+    Received: ""
+
+      235 |       const text = await button.textContent();
+      236 |       // Either aria-label or visible text should be present
+    > 237 |       expect(ariaLabel || text?.trim()).toBeTruthy();
+          |                                         ^
+      238 |     }
+      239 |   });
+      240 | });
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:237:41
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-Acc-0c743-Tests-Screen-Reader-Support-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/workflow-access-levels-Acc-0c743-Tests-Screen-Reader-Support-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-Acc-0c743-Tests-Screen-Reader-Support-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/workflow-access-levels-Acc-0c743-Tests-Screen-Reader-Support-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/workflow-access-levels-Acc-0c743-Tests-Screen-Reader-Support-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-Acc-0c743-Tests-Screen-Reader-Support-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-Acc-0c743-Tests-Screen-Reader-Support-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Cross-browser Compatibility › Core Functionality Works" classname="workflow-access-levels.spec.ts" time="10.787">
+<failure message="workflow-access-levels.spec.ts:253:3 Core Functionality Works" type="FAILURE">
+<![CDATA[  [chromium] › workflow-access-levels.spec.ts:253:3 › Cross-browser Compatibility › Core Functionality Works 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('AI Chat')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for getByText('AI Chat')
+
+
+      248 |
+      249 |     // Basic navigation
+    > 250 |     await expect(page.getByText('AI Chat')).toBeVisible();
+          |                                             ^
+      251 |     await expect(page.getByText('Settings')).toBeVisible();
+      252 |
+      253 |     // Basic interaction
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:250:45
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-Cro-49da1-ty-Core-Functionality-Works-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/workflow-access-levels-Cro-49da1-ty-Core-Functionality-Works-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/workflow-access-levels-Cro-49da1-ty-Core-Functionality-Works-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/workflow-access-levels-Cro-49da1-ty-Core-Functionality-Works-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/workflow-access-levels-Cro-49da1-ty-Core-Functionality-Works-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-Cro-49da1-ty-Core-Functionality-Works-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/workflow-access-levels-Cro-49da1-ty-Core-Functionality-Works-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Error Handling Tests › Graceful Error Handling" classname="workflow-access-levels.spec.ts" time="1.276">
+</testcase>
+</testsuite>
+</testsuites>

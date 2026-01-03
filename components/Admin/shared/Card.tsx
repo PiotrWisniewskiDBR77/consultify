@@ -22,9 +22,9 @@ interface CardProps {
 }
 
 const variantClasses: Record<CardVariant, string> = {
-    base: 'bg-slate-800/50 rounded-xl',
-    bordered: 'border border-white/[0.06] rounded-xl',
-    elevated: 'bg-slate-800 rounded-xl shadow-lg shadow-black/20',
+    base: 'bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-transparent',
+    bordered: 'bg-white dark:bg-transparent border border-slate-200 dark:border-white/[0.06] rounded-xl',
+    elevated: 'bg-white dark:bg-slate-800 rounded-xl shadow-lg shadow-slate-200/50 dark:shadow-black/20 border border-slate-100 dark:border-transparent',
 };
 
 const paddingClasses: Record<string, string> = {
@@ -65,9 +65,9 @@ export const CardWithHeader: React.FC<CardWithHeaderProps> = ({
 }) => {
     return (
         <div className={`${variantClasses[variant]} ${className}`}>
-            <div className="flex items-start justify-between p-5 border-b border-white/[0.06]">
+            <div className="flex items-start justify-between p-5 border-b border-slate-200 dark:border-white/[0.06]">
                 <div>
-                    <h3 className="text-base font-medium text-slate-100">{title}</h3>
+                    <h3 className="text-base font-medium text-slate-900 dark:text-slate-100">{title}</h3>
                     {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
                 </div>
                 {action && <div>{action}</div>}
@@ -86,7 +86,7 @@ interface StatsCardProps {
 }
 
 export const StatsCard: React.FC<StatsCardProps> = ({ className = '', children }) => (
-    <div className={`bg-slate-800/30 border border-white/[0.04] rounded-lg p-4 ${className}`}>
+    <div className={`bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-white/[0.04] rounded-lg p-4 ${className}`}>
         {children}
     </div>
 );
@@ -113,7 +113,7 @@ export const Section: React.FC<SectionProps> = ({
                 <div className="flex items-start justify-between mb-4">
                     {title && (
                         <div>
-                            <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
                             {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
                         </div>
                     )}

@@ -33,16 +33,16 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     return (
         <header className={`mb-8 ${className}`}>
             {breadcrumb && <div className="mb-3">{breadcrumb}</div>}
-            
+
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                     {Icon && (
-                        <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center">
-                            <Icon size={20} className="text-slate-400" />
+                        <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 dark:border-transparent dark:bg-slate-800 flex items-center justify-center shadow-sm dark:shadow-none">
+                            <Icon size={20} className="text-slate-500 dark:text-slate-400" />
                         </div>
                     )}
                     <div>
-                        <h1 className="text-xl font-semibold text-slate-50 tracking-tight">
+                        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-50 tracking-tight">
                             {title}
                         </h1>
                         {subtitle && (
@@ -52,7 +52,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                         )}
                     </div>
                 </div>
-                
+
                 {action && (
                     <div className="flex items-center gap-2">
                         {action}
@@ -80,7 +80,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
     return (
         <div className={`flex items-start justify-between mb-4 ${className}`}>
             <div>
-                <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
                 {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
             </div>
             {action && <div>{action}</div>}

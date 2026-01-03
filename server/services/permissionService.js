@@ -394,6 +394,313 @@ const PermissionService = {
                 }
             );
         });
+    },
+
+    // =========================================
+    // CONTENT MODULE PERMISSIONS
+    // =========================================
+
+    /**
+     * Content permission keys
+     */
+    CONTENT_PERMISSIONS: {
+        // Email Templates
+        EMAIL_TEMPLATE_VIEW: 'EMAIL_TEMPLATE_VIEW',
+        EMAIL_TEMPLATE_CREATE: 'EMAIL_TEMPLATE_CREATE',
+        EMAIL_TEMPLATE_EDIT: 'EMAIL_TEMPLATE_EDIT',
+        EMAIL_TEMPLATE_DELETE: 'EMAIL_TEMPLATE_DELETE',
+        EMAIL_TEMPLATE_PUBLISH: 'EMAIL_TEMPLATE_PUBLISH',
+        EMAIL_TEMPLATE_DEPRECATE: 'EMAIL_TEMPLATE_DEPRECATE',
+        EMAIL_TEMPLATE_CLONE: 'EMAIL_TEMPLATE_CLONE',
+        EMAIL_TEMPLATE_PREVIEW: 'EMAIL_TEMPLATE_PREVIEW',
+        EMAIL_TEMPLATE_TEST_SEND: 'EMAIL_TEMPLATE_TEST_SEND',
+        EMAIL_TEMPLATE_RESTORE: 'EMAIL_TEMPLATE_RESTORE',
+        EMAIL_TEMPLATE_ANALYTICS: 'EMAIL_TEMPLATE_ANALYTICS',
+
+        // Playbook Templates
+        PLAYBOOK_TEMPLATE_VIEW: 'PLAYBOOK_TEMPLATE_VIEW',
+        PLAYBOOK_TEMPLATE_CREATE: 'PLAYBOOK_TEMPLATE_CREATE',
+        PLAYBOOK_TEMPLATE_EDIT: 'PLAYBOOK_TEMPLATE_EDIT',
+        PLAYBOOK_TEMPLATE_DELETE: 'PLAYBOOK_TEMPLATE_DELETE',
+        PLAYBOOK_TEMPLATE_PUBLISH: 'PLAYBOOK_TEMPLATE_PUBLISH',
+        PLAYBOOK_TEMPLATE_DEPRECATE: 'PLAYBOOK_TEMPLATE_DEPRECATE',
+        PLAYBOOK_TEMPLATE_CLONE: 'PLAYBOOK_TEMPLATE_CLONE',
+        PLAYBOOK_TEMPLATE_RESTORE: 'PLAYBOOK_TEMPLATE_RESTORE',
+        PLAYBOOK_TEMPLATE_ANALYTICS: 'PLAYBOOK_TEMPLATE_ANALYTICS',
+
+        // Content Management
+        CONTENT_CATEGORY_VIEW: 'CONTENT_CATEGORY_VIEW',
+        CONTENT_CATEGORY_CREATE: 'CONTENT_CATEGORY_CREATE',
+        CONTENT_CATEGORY_EDIT: 'CONTENT_CATEGORY_EDIT',
+        CONTENT_CATEGORY_DELETE: 'CONTENT_CATEGORY_DELETE',
+        CONTENT_TAG_VIEW: 'CONTENT_TAG_VIEW',
+        CONTENT_TAG_CREATE: 'CONTENT_TAG_CREATE',
+        CONTENT_TAG_EDIT: 'CONTENT_TAG_EDIT',
+        CONTENT_TAG_DELETE: 'CONTENT_TAG_DELETE',
+        CONTENT_COMMENT_CREATE: 'CONTENT_COMMENT_CREATE',
+        CONTENT_COMMENT_EDIT: 'CONTENT_COMMENT_EDIT',
+        CONTENT_COMMENT_DELETE: 'CONTENT_COMMENT_DELETE',
+        CONTENT_COMMENT_RESOLVE: 'CONTENT_COMMENT_RESOLVE',
+        CONTENT_REVIEW_REQUEST: 'CONTENT_REVIEW_REQUEST',
+        CONTENT_REVIEW_APPROVE: 'CONTENT_REVIEW_APPROVE',
+        CONTENT_REVIEW_REJECT: 'CONTENT_REVIEW_REJECT',
+        CONTENT_FAVORITE_ADD: 'CONTENT_FAVORITE_ADD',
+        CONTENT_SEARCH: 'CONTENT_SEARCH',
+        CONTENT_BULK_ACTIONS: 'CONTENT_BULK_ACTIONS',
+        CONTENT_ANALYTICS_VIEW: 'CONTENT_ANALYTICS_VIEW'
+    },
+
+    /**
+     * Check if user can perform action on specific content item
+     * Uses content_permissions table for granular per-item permissions
+     * @param {string} userId - User ID
+     * @param {string} orgId - Organization ID
+     * @param {string} contentId - Content item ID
+     * @param {string} contentType - Content type (PLAYBOOK_TEMPLATE, EMAIL_TEMPLATE, etc.)
+     * @param {string} permissionKey - Permission key
+     * @param {string} userRole - User's role
+     * @returns {Promise<boolean>}
+     */
+    hasContentPermission: async (userId, orgId, contentId, contentType, permissionKey, userRole) => {
+        if (!userId || !contentId || !permissionKey) return false;
+
+        // SUPERADMIN bypass
+        if (userRole === ROLES.SUPERADMIN) return true;
+
+        return new Promise((resolve) => {
+            // First check for content-specific permission
+            deps.db.get(
+                `SELECT grant_type FROM content_permissions 
+                 WHERE content_id = ? AND content_type = ? AND user_id = ? AND permission_key = ?
+                 AND (expires_at IS NULL OR expires_at > datetime('now'))`,
+                [contentId, contentType, userId, permissionKey],
+                async (err, contentPerm) => {
+                    if (err) {
+                        console.error('[PermissionService] Content permission query error:', err);
+                        // Fall back to general permission check
+                        const hasPerm = await PermissionService.hasPermission(userId, orgId, permissionKey, userRole);
+                        return resolve(hasPerm);
+                    }
+
+                    // If explicit content permission exists, use it
+                    if (contentPerm) {
+                        return resolve(contentPerm.grant_type === 'GRANT');
+                    }
+
+                    // Fall back to general permission check
+                    const hasPerm = await PermissionService.hasPermission(userId, orgId, permissionKey, userRole);
+                    resolve(hasPerm);
+                }
+            );
+        });
+    },
+
+    /**
+     * Grant content-specific permission
+     * @param {Object} params - Permission parameters
+     * @returns {Promise<Object>}
+     */
+    grantContentPermission: async ({ contentId, contentType, userId, permissionKey, grantedBy, expiresAt = null }) => {
+        if (!contentId || !contentType || !userId || !permissionKey) {
+            throw new Error('contentId, contentType, userId, and permissionKey are required');
+        }
+
+        const id = deps.uuidv4();
+
+        return new Promise((resolve, reject) => {
+            deps.db.run(
+                `INSERT OR REPLACE INTO content_permissions 
+                 (id, content_id, content_type, user_id, permission_key, grant_type, granted_by, created_at, expires_at)
+                 VALUES (?, ?, ?, ?, ?, 'GRANT', ?, datetime('now'), ?)`,
+                [id, contentId, contentType, userId, permissionKey, grantedBy, expiresAt],
+                function (err) {
+                    if (err) return reject(err);
+
+                    console.log(`[PermissionService] Content permission granted: ${permissionKey} on ${contentType}:${contentId} to ${userId}`);
+                    resolve({
+                        success: true,
+                        id,
+                        contentId,
+                        contentType,
+                        userId,
+                        permissionKey,
+                        grantType: 'GRANT',
+                        grantedBy,
+                        expiresAt
+                    });
+                }
+            );
+        });
+    },
+
+    /**
+     * Revoke content-specific permission
+     * @param {Object} params - Permission parameters
+     * @returns {Promise<Object>}
+     */
+    revokeContentPermission: async ({ contentId, contentType, userId, permissionKey, revokedBy }) => {
+        if (!contentId || !contentType || !userId || !permissionKey) {
+            throw new Error('contentId, contentType, userId, and permissionKey are required');
+        }
+
+        const id = deps.uuidv4();
+
+        return new Promise((resolve, reject) => {
+            deps.db.run(
+                `INSERT OR REPLACE INTO content_permissions 
+                 (id, content_id, content_type, user_id, permission_key, grant_type, granted_by, created_at)
+                 VALUES (?, ?, ?, ?, ?, 'REVOKE', ?, datetime('now'))`,
+                [id, contentId, contentType, userId, permissionKey, revokedBy],
+                function (err) {
+                    if (err) return reject(err);
+
+                    console.log(`[PermissionService] Content permission revoked: ${permissionKey} on ${contentType}:${contentId} from ${userId}`);
+                    resolve({
+                        success: true,
+                        id,
+                        contentId,
+                        contentType,
+                        userId,
+                        permissionKey,
+                        grantType: 'REVOKE',
+                        revokedBy
+                    });
+                }
+            );
+        });
+    },
+
+    /**
+     * Remove content-specific permission (revert to default)
+     * @param {string} contentId - Content ID
+     * @param {string} contentType - Content type
+     * @param {string} userId - User ID
+     * @param {string} permissionKey - Permission key
+     * @returns {Promise<Object>}
+     */
+    removeContentPermission: async (contentId, contentType, userId, permissionKey) => {
+        return new Promise((resolve, reject) => {
+            deps.db.run(
+                `DELETE FROM content_permissions 
+                 WHERE content_id = ? AND content_type = ? AND user_id = ? AND permission_key = ?`,
+                [contentId, contentType, userId, permissionKey],
+                function (err) {
+                    if (err) return reject(err);
+
+                    resolve({
+                        removed: this.changes > 0,
+                        contentId,
+                        contentType,
+                        userId,
+                        permissionKey
+                    });
+                }
+            );
+        });
+    },
+
+    /**
+     * Get all permissions for a specific content item
+     * @param {string} contentId - Content ID
+     * @param {string} contentType - Content type
+     * @returns {Promise<Array>}
+     */
+    getContentPermissions: async (contentId, contentType) => {
+        return new Promise((resolve, reject) => {
+            deps.db.all(
+                `SELECT cp.*, u.first_name, u.last_name, u.email
+                 FROM content_permissions cp
+                 LEFT JOIN users u ON cp.user_id = u.id
+                 WHERE cp.content_id = ? AND cp.content_type = ?
+                 AND (cp.expires_at IS NULL OR cp.expires_at > datetime('now'))
+                 ORDER BY cp.created_at DESC`,
+                [contentId, contentType],
+                (err, rows) => {
+                    if (err) return reject(err);
+                    resolve((rows || []).map(row => ({
+                        id: row.id,
+                        contentId: row.content_id,
+                        contentType: row.content_type,
+                        userId: row.user_id,
+                        permissionKey: row.permission_key,
+                        grantType: row.grant_type,
+                        grantedBy: row.granted_by,
+                        createdAt: row.created_at,
+                        expiresAt: row.expires_at,
+                        user: row.first_name ? {
+                            id: row.user_id,
+                            firstName: row.first_name,
+                            lastName: row.last_name,
+                            email: row.email
+                        } : null
+                    })));
+                }
+            );
+        });
+    },
+
+    /**
+     * Check multiple permissions at once
+     * @param {string} userId - User ID
+     * @param {string} orgId - Organization ID
+     * @param {string[]} permissionKeys - Array of permission keys
+     * @param {string} userRole - User's role
+     * @returns {Promise<Object>} - Map of permission key to boolean
+     */
+    hasPermissions: async (userId, orgId, permissionKeys, userRole) => {
+        if (!userId || !permissionKeys || permissionKeys.length === 0) {
+            return {};
+        }
+
+        // SUPERADMIN bypass
+        if (userRole === ROLES.SUPERADMIN) {
+            return permissionKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {});
+        }
+
+        const results = {};
+        for (const key of permissionKeys) {
+            results[key] = await PermissionService.hasPermission(userId, orgId, key, userRole);
+        }
+        return results;
+    },
+
+    /**
+     * Validate content action (comprehensive check)
+     * Checks both general permission and content-specific permission
+     * @param {Object} params - Validation parameters
+     * @returns {Promise<{ allowed: boolean, reason?: string }>}
+     */
+    validateContentAction: async ({ userId, orgId, userRole, contentId, contentType, action }) => {
+        // Map actions to permission keys
+        const actionPermissionMap = {
+            VIEW: contentType === 'EMAIL_TEMPLATE' ? 'EMAIL_TEMPLATE_VIEW' : 'PLAYBOOK_TEMPLATE_VIEW',
+            CREATE: contentType === 'EMAIL_TEMPLATE' ? 'EMAIL_TEMPLATE_CREATE' : 'PLAYBOOK_TEMPLATE_CREATE',
+            EDIT: contentType === 'EMAIL_TEMPLATE' ? 'EMAIL_TEMPLATE_EDIT' : 'PLAYBOOK_TEMPLATE_EDIT',
+            DELETE: contentType === 'EMAIL_TEMPLATE' ? 'EMAIL_TEMPLATE_DELETE' : 'PLAYBOOK_TEMPLATE_DELETE',
+            PUBLISH: contentType === 'EMAIL_TEMPLATE' ? 'EMAIL_TEMPLATE_PUBLISH' : 'PLAYBOOK_TEMPLATE_PUBLISH',
+            DEPRECATE: contentType === 'EMAIL_TEMPLATE' ? 'EMAIL_TEMPLATE_DEPRECATE' : 'PLAYBOOK_TEMPLATE_DEPRECATE',
+            CLONE: contentType === 'EMAIL_TEMPLATE' ? 'EMAIL_TEMPLATE_CLONE' : 'PLAYBOOK_TEMPLATE_CLONE',
+            RESTORE: contentType === 'EMAIL_TEMPLATE' ? 'EMAIL_TEMPLATE_RESTORE' : 'PLAYBOOK_TEMPLATE_RESTORE',
+            ANALYTICS: contentType === 'EMAIL_TEMPLATE' ? 'EMAIL_TEMPLATE_ANALYTICS' : 'PLAYBOOK_TEMPLATE_ANALYTICS',
+            PREVIEW: 'EMAIL_TEMPLATE_PREVIEW',
+            TEST_SEND: 'EMAIL_TEMPLATE_TEST_SEND'
+        };
+
+        const permissionKey = actionPermissionMap[action];
+        if (!permissionKey) {
+            return { allowed: false, reason: `Unknown action: ${action}` };
+        }
+
+        // Check permission
+        const allowed = contentId
+            ? await PermissionService.hasContentPermission(userId, orgId, contentId, contentType, permissionKey, userRole)
+            : await PermissionService.hasPermission(userId, orgId, permissionKey, userRole);
+
+        if (!allowed) {
+            return { allowed: false, reason: `Permission denied: ${permissionKey}` };
+        }
+
+        return { allowed: true };
     }
 };
 
