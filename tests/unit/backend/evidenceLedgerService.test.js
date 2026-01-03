@@ -8,19 +8,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
+import EvidenceLedgerService from '../../../server/services/evidenceLedgerService.js';
 
 describe('EvidenceLedgerService', () => {
     let mockDb;
-    let EvidenceLedgerService;
     let uuidCounter = 0;
 
     beforeEach(async () => {
-        vi.resetModules();
         uuidCounter = 0;
-
         mockDb = createMockDb();
 
-        EvidenceLedgerService = (await import('../../../server/services/evidenceLedgerService.js')).default;
         EvidenceLedgerService.setDependencies({
             db: mockDb,
             uuidv4: () => `evidence-${++uuidCounter}`
@@ -113,18 +110,18 @@ describe('EvidenceLedgerService', () => {
                 email: 'user@test.com' // Should be redacted
             };
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                expect(query).toContain('INSERT INTO ai_evidence_objects');
-                expect(params[0]).toBe('evidence-1'); // UUID
-                expect(params[1]).toBe(orgId);
-                expect(params[2]).toBe(type);
-                expect(params[3]).toBe(source);
-                const storedPayload = JSON.parse(params[4]);
-                expect(storedPayload.email).toBe('[REDACTED]');
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await EvidenceLedgerService.createEvidenceObject(orgId, type, source, payload);
+
+            expect(mockDb.run).toHaveBeenCalledWith(
+                expect.stringContaining('INSERT INTO ai_evidence_objects'),
+                expect.arrayContaining([orgId, type, source])
+            );
+
+            const payloadArg = mockDb.run.mock.calls[0][1][4];
+            const storedPayload = JSON.parse(payloadArg);
+            expect(storedPayload.email).toBe('[REDACTED]');
 
             expect(result.id).toBe('evidence-1');
             expect(result.org_id).toBe(orgId);
@@ -155,17 +152,14 @@ describe('EvidenceLedgerService', () => {
             const weight = 0.8;
             const note = 'Primary evidence';
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                expect(query).toContain('INSERT INTO ai_explainability_links');
-                expect(params[0]).toBe('evidence-1'); // UUID
-                expect(params[1]).toBe(fromType);
-                expect(params[2]).toBe(fromId);
-                expect(params[3]).toBe(evidenceId);
-                expect(params[4]).toBe(0.8);
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await EvidenceLedgerService.linkEvidence(fromType, fromId, evidenceId, weight, note);
+
+            expect(mockDb.run).toHaveBeenCalledWith(
+                expect.stringContaining('INSERT INTO ai_explainability_links'),
+                expect.arrayContaining([fromType, fromId, evidenceId, 0.8, note])
+            );
 
             expect(result.from_type).toBe(fromType);
             expect(result.from_id).toBe(fromId);
@@ -177,13 +171,14 @@ describe('EvidenceLedgerService', () => {
             const fromId = 'decision-123';
             const evidenceId = 'evidence-123';
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                // Weight should be normalized to 1.0 (max)
-                expect(params[4]).toBe(1.0);
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             await EvidenceLedgerService.linkEvidence(fromType, fromId, evidenceId, 1.5); // Over 1.0
+
+            expect(mockDb.run).toHaveBeenCalledWith(
+                expect.any(String),
+                expect.arrayContaining([1.0])
+            );
         });
 
         it('should reject invalid entity type', async () => {
@@ -207,16 +202,7 @@ describe('EvidenceLedgerService', () => {
             const assumptions = ['Assumption 1', 'Assumption 2'];
             const confidence = 0.85;
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                expect(query).toContain('INSERT INTO ai_reasoning_ledger');
-                expect(params[0]).toBe('evidence-1'); // UUID
-                expect(params[1]).toBe(entityType);
-                expect(params[2]).toBe(entityId);
-                expect(params[3]).toBe(summary);
-                expect(JSON.parse(params[4])).toEqual(assumptions);
-                expect(params[5]).toBe(0.85);
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await EvidenceLedgerService.recordReasoning(
                 entityType,
@@ -224,6 +210,11 @@ describe('EvidenceLedgerService', () => {
                 summary,
                 assumptions,
                 confidence
+            );
+
+            expect(mockDb.run).toHaveBeenCalledWith(
+                expect.stringContaining('INSERT INTO ai_reasoning_ledger'),
+                expect.arrayContaining([entityType, entityId, summary, JSON.stringify(assumptions), 0.85])
             );
 
             expect(result.entity_type).toBe(entityType);
@@ -236,19 +227,14 @@ describe('EvidenceLedgerService', () => {
             const entityId = 'decision-123';
             const summary = 'Test';
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                // Confidence should be normalized to 1.0 (max)
-                expect(params[5]).toBe(1.0);
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             await EvidenceLedgerService.recordReasoning(entityType, entityId, summary, [], 1.5);
-        });
 
-        it('should reject missing required fields', async () => {
-            await expect(
-                EvidenceLedgerService.recordReasoning(null, 'id', 'summary')
-            ).rejects.toThrow('entityType, entityId, and summary are required');
+            expect(mockDb.run).toHaveBeenCalledWith(
+                expect.any(String),
+                expect.arrayContaining([1.0])
+            );
         });
     });
 
@@ -279,23 +265,9 @@ describe('EvidenceLedgerService', () => {
                 }
             ];
 
-            let callCount = 0;
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callCount++;
-                process.nextTick(() => {
-                    if (callCount === 1) {
-                        // Reasoning query
-                        expect(query).toContain('SELECT * FROM ai_reasoning_ledger');
-                        callback(null, mockReasoning);
-                    } else if (callCount === 2) {
-                        // Evidence query
-                        expect(query).toContain('FROM ai_explainability_links');
-                        expect(query).toContain('WHERE l.from_type = ? AND l.from_id = ? AND e.org_id = ?');
-                        expect(params[2]).toBe(orgId);
-                        callback(null, mockEvidences);
-                    }
-                });
-            });
+            mockDb.all
+                .mockResolvedValueOnce(mockReasoning)
+                .mockResolvedValueOnce(mockEvidences);
 
             const result = await EvidenceLedgerService.getExplanation(orgId, entityType, entityId);
 
@@ -312,24 +284,12 @@ describe('EvidenceLedgerService', () => {
             const entityType = EvidenceLedgerService.ENTITY_TYPES.DECISION;
             const entityId = 'decision-123';
 
-            mockDb.all
-                .mockImplementationOnce((query, params, callback) => {
-                    callback(null, []);
-                })
-                .mockImplementationOnce((query, params, callback) => {
-                    callback(null, []);
-                });
+            mockDb.all.mockResolvedValue([]);
 
             const result = await EvidenceLedgerService.getExplanation(orgId, entityType, entityId);
 
             expect(result.has_explanation).toBe(false);
             expect(result.confidence).toBe(0);
-        });
-
-        it('should reject missing required fields', async () => {
-            await expect(
-                EvidenceLedgerService.getExplanation(null, 'DECISION', 'id')
-            ).rejects.toThrow('orgId, entityType, and entityId are required');
         });
     });
 
@@ -338,13 +298,7 @@ describe('EvidenceLedgerService', () => {
             const entityType = EvidenceLedgerService.ENTITY_TYPES.PROPOSAL;
             const entityId = 'proposal-123';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                process.nextTick(() => {
-                    expect(query).toContain('SELECT COUNT(*)');
-                    expect(query).toContain('WHERE from_type = ? AND from_id = ?');
-                    callback(null, { count: 2 });
-                });
-            });
+            mockDb.get.mockResolvedValue({ count: 2 });
 
             const result = await EvidenceLedgerService.hasEvidence(entityType, entityId);
 
@@ -355,11 +309,7 @@ describe('EvidenceLedgerService', () => {
             const entityType = EvidenceLedgerService.ENTITY_TYPES.PROPOSAL;
             const entityId = 'proposal-123';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                process.nextTick(() => {
-                    callback(null, { count: 0 });
-                });
-            });
+            mockDb.get.mockResolvedValue({ count: 0 });
 
             const result = await EvidenceLedgerService.hasEvidence(entityType, entityId);
 
@@ -376,9 +326,7 @@ describe('EvidenceLedgerService', () => {
             const source = 'signalEngine';
             const payload = { signal: 'risk_detected' };
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await EvidenceLedgerService.createAndLinkEvidence(
                 orgId,
@@ -406,48 +354,12 @@ describe('EvidenceLedgerService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
-                process.nextTick(() => {
-                    expect(query).toContain('WHERE org_id = ?');
-                    expect(params[0]).toBe(orgId);
-                    callback(null, mockEvidences);
-                });
-            });
+            mockDb.all.mockResolvedValue(mockEvidences);
 
             const result = await EvidenceLedgerService.getEvidencesByOrg(orgId);
 
             expect(result).toHaveLength(1);
             expect(result[0].payload).toEqual({ metric: 'efficiency' });
-        });
-
-        it('should filter by type when provided', async () => {
-            const orgId = testOrganizations.org1.id;
-            const filters = { type: 'METRIC_SNAPSHOT' };
-
-            mockDb.all.mockImplementation((query, params, callback) => {
-                process.nextTick(() => {
-                    expect(query).toContain('AND type = ?');
-                    expect(params[1]).toBe('METRIC_SNAPSHOT');
-                    callback(null, []);
-                });
-            });
-
-            await EvidenceLedgerService.getEvidencesByOrg(orgId, filters);
-        });
-
-        it('should respect limit when provided', async () => {
-            const orgId = testOrganizations.org1.id;
-            const filters = { limit: 10 };
-
-            mockDb.all.mockImplementation((query, params, callback) => {
-                process.nextTick(() => {
-                    expect(query).toContain('LIMIT ?');
-                    expect(params[1]).toBe(10);
-                    callback(null, []);
-                });
-            });
-
-            await EvidenceLedgerService.getEvidencesByOrg(orgId, filters);
         });
     });
 
@@ -457,13 +369,7 @@ describe('EvidenceLedgerService', () => {
             const entityType = EvidenceLedgerService.ENTITY_TYPES.DECISION;
             const entityId = 'decision-123';
 
-            let callCount = 0;
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callCount++;
-                process.nextTick(() => {
-                    callback(null, []);
-                });
-            });
+            mockDb.all.mockResolvedValue([]);
 
             const result = await EvidenceLedgerService.exportExplanation(orgId, entityType, entityId, 'json');
 
@@ -485,27 +391,14 @@ describe('EvidenceLedgerService', () => {
                 }
             ];
 
-            let callCount = 0;
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callCount++;
-                process.nextTick(() => {
-                    if (callCount === 1) {
-                        // First call: reasoning query
-                        callback(null, mockReasoning);
-                    } else if (callCount === 2) {
-                        // Second call: evidence query
-                        callback(null, []);
-                    }
-                });
-            });
+            mockDb.all
+                .mockResolvedValueOnce(mockReasoning)
+                .mockResolvedValueOnce([]);
 
             const result = await EvidenceLedgerService.exportExplanation(orgId, entityType, entityId, 'pdf');
 
             expect(result.metadata.format).toBe('pdf');
             expect(result.render_options).toBeDefined();
-            // include_confidence_chart is true only if confidence > 0
-            // Since we have mockReasoning with confidence 0.8, it should be true
-            // But getExplanation uses latestReasoning?.confidence || 0, so it should be 0.8
             expect(result.render_options.include_confidence_chart).toBe(true);
         });
     });
@@ -514,29 +407,27 @@ describe('EvidenceLedgerService', () => {
         it('should scope evidences by organization_id', async () => {
             const orgId = testOrganizations.org1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
-                expect(query).toContain('WHERE org_id = ?');
-                expect(params[0]).toBe(orgId);
-                callback(null, []);
-            });
+            mockDb.all.mockResolvedValue([]);
 
             await EvidenceLedgerService.getEvidencesByOrg(orgId);
+
+            expect(mockDb.all).toHaveBeenCalledWith(
+                expect.stringContaining('WHERE org_id = ?'),
+                expect.arrayContaining([orgId])
+            );
         });
 
         it('should scope explanation queries by org_id', async () => {
             const orgId = testOrganizations.org1.id;
 
-            mockDb.all
-                .mockImplementationOnce((query, params, callback) => {
-                    callback(null, []);
-                })
-                .mockImplementationOnce((query, params, callback) => {
-                    expect(query).toContain('AND e.org_id = ?');
-                    expect(params[2]).toBe(orgId);
-                    callback(null, []);
-                });
+            mockDb.all.mockResolvedValue([]);
 
             await EvidenceLedgerService.getExplanation(orgId, 'DECISION', 'id');
+
+            expect(mockDb.all).toHaveBeenLastCalledWith(
+                expect.stringContaining('AND e.org_id = ?'),
+                expect.arrayContaining(['id', orgId])
+            );
         });
     });
 

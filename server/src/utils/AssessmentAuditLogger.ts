@@ -8,14 +8,13 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Request } from 'express';
 import type { AuthRequest } from '../middleware/auth.middleware';
+import { run as dbRun } from '../utils/DbPromise.js';
 
 // ==========================================
 // TYPES
 // ==========================================
 
-interface Database {
-    run: (sql: string, params: unknown[], callback: (this: { lastID?: number; changes: number }, err: Error | null) => void) => void;
-}
+// Database interface no longer needed - using DbPromise directly
 
 interface LogParams {
     userId: string;
@@ -29,7 +28,7 @@ interface LogParams {
 }
 
 interface Dependencies {
-    db: Database;
+    // No longer needed - using DbPromise directly
     uuidv4: () => string;
 }
 
@@ -41,9 +40,7 @@ let deps: Dependencies;
 
 const getDeps = (): Dependencies => {
     if (!deps) {
-        const defaultDb = require('../../database');
         deps = {
-            db: defaultDb,
             uuidv4,
         };
     }
@@ -66,7 +63,7 @@ class AssessmentAuditLogger {
      * Log assessment action
      */
     async log(params: LogParams): Promise<string | undefined> {
-        const { db, uuidv4: uuid } = getDeps();
+        const { uuidv4: uuid } = getDeps();
         
         try {
             const auditId = uuid();
@@ -80,22 +77,21 @@ class AssessmentAuditLogger {
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
             `;
 
-            await new Promise<void>((resolve, reject) => {
-                db.run(sql, [
-                    auditId,
-                    params.userId,
-                    params.organizationId,
-                    params.action,
-                    params.resourceType,
-                    params.resourceId,
-                    JSON.stringify(params.details || {}),
-                    params.ipAddress || null,
-                    params.userAgent || null
-                ], function (err) {
-                    if (err) return reject(err);
-                    resolve();
-                });
-            });
+            const runResult = await dbRun(sql, [
+                auditId,
+                params.userId,
+                params.organizationId,
+                params.action,
+                params.resourceType,
+                params.resourceId,
+                JSON.stringify(params.details || {}),
+                params.ipAddress || null,
+                params.userAgent || null
+            ]);
+
+            if (!runResult.success) {
+                throw new Error(runResult.error || 'Failed to log audit');
+            }
 
             return auditId;
         } catch (error) {

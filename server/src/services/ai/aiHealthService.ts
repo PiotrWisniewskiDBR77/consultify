@@ -1,32 +1,14 @@
 /**
- * Ai/aiHealthService Service
+ * Aihealth Service
  * Enterprise SaaS Architecture - TypeScript Backend
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
 
-const require = createRequire(import.meta.url);
-
-// Import the JS implementation for now (will be fully migrated later)
-const ai/aiHealthServiceServiceJS = require('../../services/ai/aiHealthService.js');
-
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const ai/aiHealthServiceService = ai/aiHealthServiceServiceJS.default || ai/aiHealthServiceServiceJS;
+// Lazy load the JS service module
+const loadAihealth = createCachedLazyService('../../services/ai/aiHealthService.js');
 
 // Export default instance (for backward compatibility)
-export default ai/aiHealthServiceService;
-
-// Also export named exports if they exist
-if (typeof ai/aiHealthServiceServiceJS === 'object' && ai/aiHealthServiceServiceJS !== null) {
-    Object.keys(ai/aiHealthServiceServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = ai/aiHealthServiceServiceJS[key];
-        }
-    });
-}
+export default loadAihealth();

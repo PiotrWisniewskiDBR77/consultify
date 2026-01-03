@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const pdf_importRoutesJS = require('../../routes/pdf-import.js');
+const pdf_importRoutesJSPromise = (async () => {
+    const module = await import('../../routes/pdf-import.js');
+    return module.default || module;
+})();
+const pdf_importRoutesJS = pdf_importRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

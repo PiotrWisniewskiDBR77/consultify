@@ -18,16 +18,11 @@ describe('DunningService', () => {
         mockDb = {
             get: vi.fn(),
             all: vi.fn(),
-            run: vi.fn((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                const dbObj = {
-                    ...mockDb,
-                    changes: 1,
-                    lastID: 1,
-                };
+            run: vi.fn(function (this: any, sql: string, params: unknown[], callback: (err: Error | null) => void) {
                 if (callback) {
-                    callback(null);
+                    callback.call({ lastID: 1, changes: 1 }, null);
                 }
-                return dbObj;
+                return this;
             }),
             exec: vi.fn(),
             serialize: vi.fn(),
@@ -36,13 +31,44 @@ describe('DunningService', () => {
         } as unknown as IDatabase;
 
         if (DunningService.setDependencies) {
-            DunningService.setDependencies({ db: mockDb });
+            DunningService.setDependencies({
+                db: mockDb,
+                uuidv4: () => 'uuid-123',
+                stripe: { invoices: { pay: vi.fn() } },
+                EmailService: { send: vi.fn() },
+                NotificationService: { sendToAdmins: vi.fn() },
+                AuditService: { logSystemEvent: vi.fn() }
+            });
         }
     });
 
     describe('Service Methods', () => {
-        it('should have required methods', () => {
-            expect(DunningService).toBeDefined();
+        it('should handle payment failure and initiate dunning', async () => {
+            (mockDb.get as any).mockImplementation((sql: string, params: any, cb: any) => {
+                cb(null, null); // No existing dunning
+            });
+
+            await DunningService.handlePaymentFailed('org-1', 'inv-1', 'Card declined');
+
+            expect(mockDb.run).toHaveBeenCalledWith(
+                expect.stringContaining('INSERT INTO dunning_status'),
+                expect.any(Array),
+                expect.any(Function)
+            );
+        });
+
+        it('should suspend organization after max retries', async () => {
+            (mockDb.get as any).mockImplementation((sql: string, params: any, cb: any) => {
+                cb(null, { id: 'dunn-1', current_attempt: 3 }); // Already at max (DUNNING_SCHEDULE is 4)
+            });
+
+            await DunningService.handlePaymentFailed('org-1', 'inv-1', 'Persistent failure');
+
+            expect(mockDb.run).toHaveBeenCalledWith(
+                expect.stringContaining("UPDATE organizations SET status = 'suspended'"),
+                expect.any(Array),
+                expect.any(Function)
+            );
         });
     });
 

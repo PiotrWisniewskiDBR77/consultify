@@ -1,31 +1,45 @@
-/**
- * Workstream Service
- * 
- * PMO Standards Compliant Work Package Grouping
- * 
- * Standards:
- * - ISO 21500:2021 - Work Breakdown Structure (Clause 4.4.3)
- * - PMI PMBOK 7th Edition - Work Package Grouping
- * - PRINCE2 - Work Package Cluster
- * 
- * Features:
- * - Create and manage workstreams within projects
- * - Assign initiatives to workstreams
- * - Track workstream progress
- * - Assign workstream owners
- * 
- * @module workstreamService
- */
+import { v4 as uuid } from 'uuid';
 
-const { v4: uuid } = require('uuid');
-const db = require('../database');
-const { PMO_DOMAIN_IDS } = require('./pmoDomainRegistry');
-const PMOStandardsMapping = require('./pmoStandardsMapping');
+/**
+ * Dependency injection container
+ */
+const deps = {
+  _db: null,
+  _pmoDomainRegistry: null,
+  _pmoStandardsMapping: null,
+
+  get db() { return this._db; },
+  set db(val) { this._db = val; },
+
+  get pmoDomainRegistry() { return this._pmoDomainRegistry; },
+  set pmoDomainRegistry(val) { this._pmoDomainRegistry = val; },
+
+  get pmoStandardsMapping() { return this._pmoStandardsMapping; },
+  set pmoStandardsMapping(val) { this._pmoStandardsMapping = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+  if (!deps._db) {
+    const { default: dbInstance } = await import('../database.js');
+    deps._db = dbInstance;
+  }
+  if (!deps._pmoDomainRegistry) {
+    const { default: pmoDomainRegistry } = await import('./pmoDomainRegistry.js');
+    deps._pmoDomainRegistry = pmoDomainRegistry;
+  }
+  if (!deps._pmoStandardsMapping) {
+    const { default: pmoStandardsMapping } = await import('./pmoStandardsMapping.js');
+    deps._pmoStandardsMapping = pmoStandardsMapping;
+  }
+}
 
 /**
  * Workstream Status
  */
-const WORKSTREAM_STATUS = {
+export const WORKSTREAM_STATUS = {
   ACTIVE: 'ACTIVE',
   ON_HOLD: 'ON_HOLD',
   COMPLETED: 'COMPLETED',
@@ -35,7 +49,7 @@ const WORKSTREAM_STATUS = {
 /**
  * Default colors for workstreams
  */
-const DEFAULT_COLORS = [
+export const DEFAULT_COLORS = [
   '#3B82F6', // Blue
   '#10B981', // Green
   '#F59E0B', // Amber
@@ -46,33 +60,51 @@ const DEFAULT_COLORS = [
   '#84CC16'  // Lime
 ];
 
-/**
- * Workstream Service
- */
-const WorkstreamService = {
-  WORKSTREAM_STATUS,
-  DEFAULT_COLORS,
+class WorkstreamService {
+  constructor() {
+    this._db = null;
+    this.WORKSTREAM_STATUS = WORKSTREAM_STATUS;
+    this.DEFAULT_COLORS = DEFAULT_COLORS;
+  }
+
+  get db() {
+    if (!this._db) {
+      throw new Error('WorkstreamService: Database not initialized. Call init() first.');
+    }
+    return this._db;
+  }
+
+  /**
+   * Initialize service dependencies
+   */
+  async init() {
+    await initDeps();
+    this._db = deps.db;
+    return this;
+  }
+
+  /**
+   * Set dependencies manually (for testing)
+   */
+  setDependencies(customDeps) {
+    if (customDeps.db) {
+      this._db = customDeps.db;
+      deps.db = customDeps.db;
+    }
+  }
 
   /**
    * Create a new workstream
-   * 
-   * @param {string} projectId - Project ID
-   * @param {Object} data - Workstream data
-   * @param {string} data.name - Workstream name
-   * @param {string} data.description - Description
-   * @param {string} data.ownerId - Owner user ID
-   * @param {string} data.color - Display color (hex)
-   * @returns {Promise<Object>} Created workstream
    */
   async createWorkstream(projectId, data) {
+    await this.init();
     const { name, description, ownerId, color } = data;
 
     if (!name || !name.trim()) {
       throw new Error('Workstream name is required');
     }
 
-    // Get current max sort order
-    const maxOrder = await db.getAsync(
+    const maxOrder = await this.db.getAsync(
       'SELECT MAX(sort_order) as max_order FROM workstreams WHERE project_id = ?',
       [projectId]
     );
@@ -82,7 +114,7 @@ const WorkstreamService = {
     const sortOrder = (maxOrder?.max_order || 0) + 1;
     const selectedColor = color || DEFAULT_COLORS[(sortOrder - 1) % DEFAULT_COLORS.length];
 
-    await db.runAsync(
+    await this.db.runAsync(
       `INSERT INTO workstreams 
        (id, project_id, name, description, owner_id, status, color, sort_order, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -100,20 +132,17 @@ const WorkstreamService = {
       ]
     );
 
-    // Log to audit trail
     await this._logAudit(projectId, 'WORKSTREAM_CREATED', { workstreamId: id, name });
 
     return this.getWorkstream(id);
-  },
+  }
 
   /**
    * Get a workstream by ID
-   * 
-   * @param {string} id - Workstream ID
-   * @returns {Promise<Object|null>} Workstream or null
    */
   async getWorkstream(id) {
-    const workstream = await db.getAsync(
+    await this.init();
+    const workstream = await this.db.getAsync(
       `SELECT w.*, u.first_name as owner_first_name, u.last_name as owner_last_name
        FROM workstreams w
        LEFT JOIN users u ON u.id = w.owner_id
@@ -123,8 +152,7 @@ const WorkstreamService = {
 
     if (!workstream) return null;
 
-    // Get initiative count and progress
-    const stats = await db.getAsync(
+    const stats = await this.db.getAsync(
       `SELECT 
          COUNT(i.id) as initiative_count,
          SUM(CASE WHEN i.status = 'DONE' OR i.status = 'COMPLETED' THEN 1 ELSE 0 END) as completed_count,
@@ -135,17 +163,13 @@ const WorkstreamService = {
     );
 
     return this._formatWorkstream(workstream, stats);
-  },
+  }
 
   /**
    * Get all workstreams for a project
-   * 
-   * @param {string} projectId - Project ID
-   * @param {Object} options - Filter options
-   * @param {string} options.status - Filter by status
-   * @returns {Promise<Array>} List of workstreams
    */
   async getProjectWorkstreams(projectId, options = {}) {
+    await this.init();
     let query = `
       SELECT w.*, u.first_name as owner_first_name, u.last_name as owner_last_name
       FROM workstreams w
@@ -161,10 +185,11 @@ const WorkstreamService = {
 
     query += ' ORDER BY w.sort_order, w.name';
 
-    const workstreams = await db.allAsync(query, params);
+    const workstreams = await this.db.allAsync(query, params);
 
-    // Get stats for all workstreams
-    const stats = await db.allAsync(
+    if (workstreams.length === 0) return [];
+
+    const stats = await this.db.allAsync(
       `SELECT 
          i.workstream_id,
          COUNT(i.id) as initiative_count,
@@ -182,17 +207,14 @@ const WorkstreamService = {
     }, {});
 
     return workstreams.map(w => this._formatWorkstream(w, statsMap[w.id]));
-  },
+  }
 
   /**
    * Update a workstream
-   * 
-   * @param {string} id - Workstream ID
-   * @param {Object} updates - Fields to update
-   * @returns {Promise<Object>} Updated workstream
    */
   async updateWorkstream(id, updates) {
-    const existing = await db.getAsync('SELECT * FROM workstreams WHERE id = ?', [id]);
+    await this.init();
+    const existing = await this.db.getAsync('SELECT * FROM workstreams WHERE id = ?', [id]);
     if (!existing) {
       throw new Error('Workstream not found');
     }
@@ -217,12 +239,11 @@ const WorkstreamService = {
     values.push(new Date().toISOString());
     values.push(id);
 
-    await db.runAsync(
+    await this.db.runAsync(
       `UPDATE workstreams SET ${setClauses.join(', ')} WHERE id = ?`,
       values
     );
 
-    // Log status changes
     if (updates.status && updates.status !== existing.status) {
       await this._logAudit(existing.project_id, 'WORKSTREAM_STATUS_CHANGED', {
         workstreamId: id,
@@ -232,40 +253,34 @@ const WorkstreamService = {
     }
 
     return this.getWorkstream(id);
-  },
+  }
 
   /**
    * Delete a workstream
-   * 
-   * @param {string} id - Workstream ID
-   * @returns {Promise<boolean>} Success
    */
   async deleteWorkstream(id) {
-    const existing = await db.getAsync('SELECT * FROM workstreams WHERE id = ?', [id]);
+    await this.init();
+    const existing = await this.db.getAsync('SELECT * FROM workstreams WHERE id = ?', [id]);
     if (!existing) {
       throw new Error('Workstream not found');
     }
 
-    // Clear workstream_id from initiatives (don't delete them)
-    await db.runAsync(
+    await this.db.runAsync(
       'UPDATE initiatives SET workstream_id = NULL WHERE workstream_id = ?',
       [id]
     );
 
-    // Clear workstream_id from tasks
-    await db.runAsync(
+    await this.db.runAsync(
       'UPDATE tasks SET workstream_id = NULL WHERE workstream_id = ?',
       [id]
     );
 
-    // Clear workstream_id from project members
-    await db.runAsync(
+    await this.db.runAsync(
       'UPDATE project_members SET workstream_id = NULL WHERE workstream_id = ?',
       [id]
     );
 
-    // Delete workstream
-    await db.runAsync('DELETE FROM workstreams WHERE id = ?', [id]);
+    await this.db.runAsync('DELETE FROM workstreams WHERE id = ?', [id]);
 
     await this._logAudit(existing.project_id, 'WORKSTREAM_DELETED', {
       workstreamId: id,
@@ -273,22 +288,19 @@ const WorkstreamService = {
     });
 
     return true;
-  },
+  }
 
   /**
    * Assign an initiative to a workstream
-   * 
-   * @param {string} workstreamId - Workstream ID
-   * @param {string} initiativeId - Initiative ID
-   * @returns {Promise<Object>} Updated initiative
    */
   async assignInitiative(workstreamId, initiativeId) {
-    const workstream = await db.getAsync('SELECT project_id FROM workstreams WHERE id = ?', [workstreamId]);
+    await this.init();
+    const workstream = await this.db.getAsync('SELECT project_id FROM workstreams WHERE id = ?', [workstreamId]);
     if (!workstream) {
       throw new Error('Workstream not found');
     }
 
-    const initiative = await db.getAsync('SELECT project_id FROM initiatives WHERE id = ?', [initiativeId]);
+    const initiative = await this.db.getAsync('SELECT project_id FROM initiatives WHERE id = ?', [initiativeId]);
     if (!initiative) {
       throw new Error('Initiative not found');
     }
@@ -297,7 +309,7 @@ const WorkstreamService = {
       throw new Error('Initiative and workstream must belong to the same project');
     }
 
-    await db.runAsync(
+    await this.db.runAsync(
       'UPDATE initiatives SET workstream_id = ?, updated_at = ? WHERE id = ?',
       [workstreamId, new Date().toISOString(), initiativeId]
     );
@@ -307,22 +319,20 @@ const WorkstreamService = {
       initiativeId
     });
 
-    return db.getAsync('SELECT * FROM initiatives WHERE id = ?', [initiativeId]);
-  },
+    return this.db.getAsync('SELECT * FROM initiatives WHERE id = ?', [initiativeId]);
+  }
 
   /**
    * Remove an initiative from a workstream
-   * 
-   * @param {string} initiativeId - Initiative ID
-   * @returns {Promise<Object>} Updated initiative
    */
   async unassignInitiative(initiativeId) {
-    const initiative = await db.getAsync('SELECT * FROM initiatives WHERE id = ?', [initiativeId]);
+    await this.init();
+    const initiative = await this.db.getAsync('SELECT * FROM initiatives WHERE id = ?', [initiativeId]);
     if (!initiative) {
       throw new Error('Initiative not found');
     }
 
-    await db.runAsync(
+    await this.db.runAsync(
       'UPDATE initiatives SET workstream_id = NULL, updated_at = ? WHERE id = ?',
       [new Date().toISOString(), initiativeId]
     );
@@ -334,23 +344,20 @@ const WorkstreamService = {
       });
     }
 
-    return db.getAsync('SELECT * FROM initiatives WHERE id = ?', [initiativeId]);
-  },
+    return this.db.getAsync('SELECT * FROM initiatives WHERE id = ?', [initiativeId]);
+  }
 
   /**
    * Get workstream progress details
-   * 
-   * @param {string} workstreamId - Workstream ID
-   * @returns {Promise<Object>} Progress details
    */
   async getWorkstreamProgress(workstreamId) {
-    const workstream = await db.getAsync('SELECT * FROM workstreams WHERE id = ?', [workstreamId]);
+    await this.init();
+    const workstream = await this.db.getAsync('SELECT * FROM workstreams WHERE id = ?', [workstreamId]);
     if (!workstream) {
       throw new Error('Workstream not found');
     }
 
-    // Get initiative stats
-    const initiatives = await db.allAsync(
+    const initiatives = await this.db.allAsync(
       `SELECT id, title, status, progress, priority, due_date
        FROM initiatives
        WHERE workstream_id = ?
@@ -358,8 +365,7 @@ const WorkstreamService = {
       [workstreamId]
     );
 
-    // Get task stats
-    const taskStats = await db.getAsync(
+    const taskStats = await this.db.getAsync(
       `SELECT 
          COUNT(*) as total,
          SUM(CASE WHEN status = 'DONE' OR status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
@@ -370,8 +376,7 @@ const WorkstreamService = {
       [workstreamId]
     );
 
-    // Get members in workstream
-    const members = await db.allAsync(
+    const members = await this.db.allAsync(
       `SELECT pm.*, u.first_name, u.last_name
        FROM project_members pm
        JOIN users u ON u.id = pm.user_id
@@ -408,45 +413,36 @@ const WorkstreamService = {
       })),
       generatedAt: new Date().toISOString()
     };
-  },
+  }
 
   /**
    * Reorder workstreams
-   * 
-   * @param {string} projectId - Project ID
-   * @param {Array<string>} workstreamIds - Ordered list of workstream IDs
-   * @returns {Promise<boolean>} Success
    */
   async reorderWorkstreams(projectId, workstreamIds) {
+    await this.init();
     for (let i = 0; i < workstreamIds.length; i++) {
-      await db.runAsync(
+      await this.db.runAsync(
         'UPDATE workstreams SET sort_order = ?, updated_at = ? WHERE id = ? AND project_id = ?',
         [i + 1, new Date().toISOString(), workstreamIds[i], projectId]
       );
     }
     return true;
-  },
+  }
 
   /**
-   * Get unassigned initiatives (not in any workstream)
-   * 
-   * @param {string} projectId - Project ID
-   * @returns {Promise<Array>} Initiatives without workstream
+   * Get unassigned initiatives
    */
   async getUnassignedInitiatives(projectId) {
-    return db.allAsync(
+    await this.init();
+    return this.db.allAsync(
       `SELECT id, title, status, progress, priority, due_date
        FROM initiatives
        WHERE project_id = ? AND workstream_id IS NULL
        ORDER BY priority DESC, created_at DESC`,
       [projectId]
     );
-  },
+  }
 
-  /**
-   * Format workstream from DB to API response
-   * @private
-   */
   _formatWorkstream(row, stats = {}) {
     return {
       id: row.id,
@@ -466,17 +462,14 @@ const WorkstreamService = {
       createdAt: row.created_at,
       updatedAt: row.updated_at
     };
-  },
+  }
 
-  /**
-   * Log to PMO audit trail
-   * @private
-   */
   async _logAudit(projectId, action, metadata = {}) {
     try {
-      const mapping = PMOStandardsMapping.getMapping('Initiative');
-      
-      await db.runAsync(
+      await this.init();
+      const mapping = deps.pmoStandardsMapping.getMapping('Initiative');
+
+      await this.db.runAsync(
         `INSERT INTO pmo_audit_trail 
          (id, project_id, pmo_domain_id, pmo_phase, object_type, object_id, action, actor_id,
           iso21500_mapping, pmbok_mapping, prince2_mapping, metadata, created_at)
@@ -484,7 +477,7 @@ const WorkstreamService = {
         [
           uuid(),
           projectId,
-          PMO_DOMAIN_IDS.RESOURCE_RESPONSIBILITY,
+          deps.pmoDomainRegistry.PMO_DOMAIN_IDS.RESOURCE_RESPONSIBILITY,
           null,
           'WORKSTREAM',
           metadata.workstreamId || null,
@@ -501,7 +494,8 @@ const WorkstreamService = {
       console.error('[WorkstreamService] Audit log failed:', err.message);
     }
   }
-};
+}
 
-module.exports = WorkstreamService;
+const workstreamServiceInstance = new WorkstreamService();
+export default workstreamServiceInstance;
 

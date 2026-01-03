@@ -1,32 +1,14 @@
 /**
- * Ai/cacheService Service
+ * Cache Service
  * Enterprise SaaS Architecture - TypeScript Backend
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
 
-const require = createRequire(import.meta.url);
-
-// Import the JS implementation for now (will be fully migrated later)
-const ai/cacheServiceServiceJS = require('../../services/ai/cacheService.js');
-
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const ai/cacheServiceService = ai/cacheServiceServiceJS.default || ai/cacheServiceServiceJS;
+// Lazy load the JS service module
+const loadCache = createCachedLazyService('../../services/ai/cacheService.js');
 
 // Export default instance (for backward compatibility)
-export default ai/cacheServiceService;
-
-// Also export named exports if they exist
-if (typeof ai/cacheServiceServiceJS === 'object' && ai/cacheServiceServiceJS !== null) {
-    Object.keys(ai/cacheServiceServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = ai/cacheServiceServiceJS[key];
-        }
-    });
-}
+export default loadCache();

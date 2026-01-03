@@ -3,8 +3,31 @@
  * Manages relationships between organizations (parent-child, partners, etc.)
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection for testing
+const deps = {
+    _db: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
 
 const OrganizationRelationshipService = {
     /**
@@ -86,7 +109,7 @@ const OrganizationRelationshipService = {
     }
 };
 
-module.exports = OrganizationRelationshipService;
+export default OrganizationRelationshipService;
 
 
 

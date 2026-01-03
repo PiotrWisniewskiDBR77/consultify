@@ -10,7 +10,8 @@ vi.mock('../../../server/services/rapidLeanService');
 vi.mock('../../../server/services/rapidLeanObservationMapper');
 vi.mock('../../../server/database');
 
-const RapidLeanReportService = require('../../../server/services/rapidLeanReportService');
+// Use dynamic import to avoid native module crash
+const RapidLeanReportService = await vi.importActual('../../../server/services/rapidLeanReportService').then(m => m.default);
 
 describe('RapidLeanReportService', () => {
     describe('getStatus', () => {

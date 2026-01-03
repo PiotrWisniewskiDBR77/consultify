@@ -6,17 +6,16 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-import { createMockDb, createMockUuid } from '../../helpers/dependencyInjector.js';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
-
-const require = createRequire(import.meta.url);
+import UsageService from '../../../server/services/usageService.js';
 
 describe('UsageService', () => {
     let mockDb;
-    let UsageService;
     let mockUuid;
     let mockBillingService;
+    let mockPayAsYouGoService;
+    let mockBudgetManagementService;
 
     beforeEach(() => {
         mockDb = createMockDb();
@@ -28,14 +27,23 @@ describe('UsageService', () => {
         };
         mockBillingService = {
             getOrganizationBilling: vi.fn(),
-            getPlanById: vi.fn()
+            getPlanById: vi.fn(),
+            getBillingModel: vi.fn().mockResolvedValue({ billingModel: 'standard' })
+        };
+        mockPayAsYouGoService = {
+            calculateUsageCost: vi.fn().mockResolvedValue({ cost: 0, unitPrice: 0 }),
+            recordUsage: vi.fn().mockResolvedValue({ success: true })
+        };
+        mockBudgetManagementService = {
+            checkBudgetLimit: vi.fn().mockResolvedValue({ allowed: true })
         };
 
-        UsageService = require('../../../server/services/usageService.js');
-        UsageService._setDependencies({
+        UsageService.setDependencies({
             db: mockDb,
             uuidv4: mockUuid,
-            billingService: mockBillingService
+            billingService: mockBillingService,
+            payAsYouGoService: mockPayAsYouGoService,
+            budgetManagementService: mockBudgetManagementService
         });
     });
 

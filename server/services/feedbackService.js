@@ -1,13 +1,36 @@
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+const deps = {
+    _db: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
 
 const FeedbackService = {
     /**
      * Saves user feedback for an AI response (The "Learning" Step).
      */
     saveFeedback: async (userId, context, prompt, response, rating, correction = '') => {
-        const stmt = db.prepare(`INSERT INTO ai_feedback (id, user_id, context, prompt, response, rating, correction) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-        stmt.run(uuidv4(), userId, context, prompt, response, rating, correction);
+        await initDeps();
+        const stmt = deps.db.prepare(`INSERT INTO ai_feedback (id, user_id, context, prompt, response, rating, correction) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+        stmt.run(deps.uuidv4(), userId, context, prompt, response, rating, correction);
         stmt.finalize();
     },
 
@@ -17,6 +40,7 @@ const FeedbackService = {
      * @param {string} contextType - e.g. 'diagnose', 'roadmap'
      */
     getLearningExamples: async (contextType) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             const sql = `
                 SELECT prompt, response, correction
@@ -25,7 +49,7 @@ const FeedbackService = {
                 ORDER BY created_at DESC
                 LIMIT 3
             `;
-            db.all(sql, [contextType], (err, rows) => {
+            deps.db.all(sql, [contextType], (err, rows) => {
                 if (err) resolve([]); // Don't fail if DB error, just return empty learning
                 else {
                     // Format as string for prompt injection
@@ -45,13 +69,14 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
      * This closes the loop: User Feedback -> AI Analysis -> Global Strategy -> Better Future Prompts.
      */
     consolidateLearning: async () => {
-        const AiService = require('./aiService'); // Lazy load to avoid circular dep
+        await initDeps();
+        const { default: AiService } = await import('./aiService.js');
 
         console.log("[GlobalLearning] Starting consolidation...");
 
         // 1. Get contexts with enough feedback
         const getContexts = () => new Promise(resolve => {
-            db.all("SELECT context, COUNT(*) as count FROM ai_feedback GROUP BY context HAVING count >= 3", (err, rows) => resolve(rows || []));
+            deps.db.all("SELECT context, COUNT(*) as count FROM ai_feedback GROUP BY context HAVING count >= 3", (err, rows) => resolve(rows || []));
         });
 
         const contexts = await getContexts();
@@ -62,7 +87,7 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
 
             // 2. Fetch feedback rows
             const getFeedback = () => new Promise(resolve => {
-                db.all("SELECT prompt, response, rating, comment, correction FROM ai_feedback WHERE context = ? ORDER BY created_at DESC LIMIT 20", [contextType], (err, rows) => resolve(rows || []));
+                deps.db.all("SELECT prompt, response, rating, comment, correction FROM ai_feedback WHERE context = ? ORDER BY created_at DESC LIMIT 20", [contextType], (err, rows) => resolve(rows || []));
             });
             const feedback = await getFeedback();
 
@@ -91,8 +116,8 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
 
                 if (strategy && strategy.title) {
                     // 4. Save to Global Strategies
-                    const stmt = db.prepare(`INSERT INTO global_strategies (id, title, description, is_active, created_by) VALUES (?, ?, ?, ?, ?)`);
-                    stmt.run(uuidv4(), `${contextType.toUpperCase()}: ${strategy.title}`, strategy.description, 1, 'AI_LEARNING');
+                    const stmt = deps.db.prepare(`INSERT INTO global_strategies (id, title, description, is_active, created_by) VALUES (?, ?, ?, ?, ?)`);
+                    stmt.run(deps.uuidv4(), `${contextType.toUpperCase()}: ${strategy.title}`, strategy.description, 1, 'AI_LEARNING');
                     stmt.finalize();
                     console.log(`[GlobalLearning] Learned new strategy: ${strategy.title}`);
                 }
@@ -106,11 +131,12 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
     /**
      * Enhanced Feedback System - Feedback Items
      */
-    
+
     /**
      * Get feedback items with filters
      */
-    getFeedbackItems: (filters = {}) => {
+    getFeedbackItems: async (filters = {}) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             let query = `SELECT f.*, 
                         u.email as user_email, u.first_name, u.last_name,
@@ -141,7 +167,7 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
             query += ' ORDER BY f.created_at DESC LIMIT ?';
             params.push(filters.limit || 50);
 
-            db.all(query, params, (err, rows) => {
+            deps.db.all(query, params, (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -151,10 +177,11 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
     /**
      * Create feedback item
      */
-    createFeedbackItem: (feedbackData) => {
+    createFeedbackItem: async (feedbackData) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
-            const id = uuidv4();
-            db.run(
+            const id = deps.uuidv4();
+            deps.db.run(
                 `INSERT INTO feedback_items 
                  (id, organization_id, user_id, feedback_type, category, title, description,
                   priority, screenshots_json, attachments_json, metadata_json)
@@ -183,10 +210,11 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
     /**
      * Vote on feedback
      */
-    voteFeedback: (feedbackId, userId, voteType = 'upvote') => {
+    voteFeedback: async (feedbackId, userId, voteType = 'upvote') => {
+        await initDeps();
         return new Promise((resolve, reject) => {
-            const id = uuidv4();
-            db.run(
+            const id = deps.uuidv4();
+            deps.db.run(
                 `INSERT INTO feedback_votes (id, feedback_id, user_id, vote_type)
                  VALUES (?, ?, ?, ?)`,
                 [id, feedbackId, userId, voteType],
@@ -197,13 +225,13 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
                         }
                         return reject(err);
                     }
-                    
+
                     // Update votes count
-                    db.run(
+                    deps.db.run(
                         `UPDATE feedback_items SET votes_count = votes_count + 1 WHERE id = ?`,
                         [feedbackId]
                     );
-                    
+
                     resolve({ id, feedbackId, userId, voteType });
                 }
             );
@@ -213,10 +241,11 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
     /**
      * Add comment to feedback
      */
-    addFeedbackComment: (feedbackId, userId, commentText, isInternal = false) => {
+    addFeedbackComment: async (feedbackId, userId, commentText, isInternal = false) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
-            const id = uuidv4();
-            db.run(
+            const id = deps.uuidv4();
+            deps.db.run(
                 `INSERT INTO feedback_comments (id, feedback_id, user_id, comment_text, is_internal)
                  VALUES (?, ?, ?, ?, ?)`,
                 [id, feedbackId, userId, commentText, isInternal ? 1 : 0],
@@ -231,7 +260,8 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
     /**
      * Get feature roadmap
      */
-    getFeatureRoadmap: (status = null) => {
+    getFeatureRoadmap: async (status = null) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             let query = 'SELECT * FROM feature_roadmap WHERE 1=1';
             const params = [];
@@ -243,7 +273,7 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
 
             query += ' ORDER BY priority DESC, votes_count DESC, created_at DESC';
 
-            db.all(query, params, (err, rows) => {
+            deps.db.all(query, params, (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
             });
@@ -253,7 +283,8 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
     /**
      * Update feature roadmap item
      */
-    updateFeatureRoadmap: (itemId, updates) => {
+    updateFeatureRoadmap: async (itemId, updates) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             const fields = [];
             const values = [];
@@ -282,7 +313,7 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
             fields.push('updated_at = datetime("now")');
             values.push(itemId);
 
-            db.run(
+            deps.db.run(
                 `UPDATE feature_roadmap SET ${fields.join(', ')} WHERE id = ?`,
                 values,
                 function (err) {
@@ -294,4 +325,4 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
     }
 };
 
-module.exports = FeedbackService;
+export default FeedbackService;

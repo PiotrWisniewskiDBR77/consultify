@@ -43,6 +43,35 @@ describe('BudgetManagementService', () => {
     describe('Service Methods', () => {
         it('should have required methods', () => {
             expect(BudgetManagementService).toBeDefined();
+            expect(BudgetManagementService.setUserBudget).toBeDefined();
+        });
+
+        it('should set user budget in database', async () => {
+            (mockDb.run as any).mockImplementation(function (sql: any, params: any, callback: any) {
+                callback.call({ lastID: 1, changes: 1 }, null);
+            });
+
+            const result = await BudgetManagementService.setUserBudget('org-1', 'user-1', {
+                monthlyTokenBudget: 1000
+            });
+
+            expect(result.success).toBe(true);
+        });
+
+        it('should get budget status', async () => {
+            const mockBudget = {
+                organization_id: 'org-1',
+                user_id: 'user-1',
+                monthly_token_budget: 1000,
+                tokens_used_this_month: 100
+            };
+            (mockDb.get as any).mockImplementation((sql: any, params: any, callback: any) => {
+                callback(null, mockBudget);
+            });
+
+            const status = await BudgetManagementService.getBudgetStatus('org-1', 'user-1');
+            expect(status).toBeDefined();
+            expect(status?.tokenUsagePercent).toBe('10.00');
         });
     });
 

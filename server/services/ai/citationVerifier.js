@@ -13,8 +13,48 @@
  * @module citationVerifier
  */
 
-const db = require('../../database');
-const { aiLogger } = require('./logger');
+// Dependency injection for testing
+const deps = {
+    _db: null,
+    _aiLogger: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get aiLogger() { return this._aiLogger; },
+    set aiLogger(val) { this._aiLogger = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../../database.js');
+        deps._db = db;
+    }
+    if (!deps._aiLogger) {
+        const { aiLogger } = await import('./logger.js');
+        deps._aiLogger = aiLogger;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
+
+/**
+ * Set dependencies (for testing)
+ */
+function setDependencies(newDeps = {}) {
+    if (newDeps.db) deps.db = newDeps.db;
+    if (newDeps.aiLogger) deps.aiLogger = newDeps.aiLogger;
+    if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
+}
 
 // Citation patterns to detect
 const CITATION_PATTERNS = {
@@ -53,7 +93,8 @@ const CitationVerifier = {
             };
         }
 
-        aiLogger.info('CitationVerifier', `Verifying citations in ${response.length} char response`);
+        await initDeps();
+        deps.aiLogger.info('CitationVerifier', `Verifying citations in ${response.length} char response`);
 
         // Extract all citations from response
         const extractedCitations = CitationVerifier._extractCitations(response);
@@ -112,7 +153,7 @@ const CitationVerifier = {
 
         // Log results
         if (!result.valid) {
-            aiLogger.warn('CitationVerifier', `Citation verification failed: ${verifiedCount}/${extractedCitations.length} verified`);
+            deps.aiLogger.warn('CitationVerifier', `Citation verification failed: ${verifiedCount}/${extractedCitations.length} verified`);
         }
 
         return result;
@@ -433,10 +474,11 @@ const CitationVerifier = {
      * Record citation verification results
      */
     recordVerification: async (organizationId, verificationResult) => {
-        const id = require('uuid').v4();
+        await initDeps();
+        const id = deps.uuidv4();
 
         return new Promise((resolve) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO citation_verification_logs (
                     id, organization_id, total_citations, verified_citations,
                     accuracy, quality_level, issues, created_at
@@ -452,7 +494,7 @@ const CitationVerifier = {
                 new Date().toISOString()
             ], (err) => {
                 if (err) {
-                    aiLogger.error('CitationVerifier', `Failed to record verification: ${err.message}`);
+                    deps.aiLogger.error('CitationVerifier', `Failed to record verification: ${err.message}`);
                 }
                 resolve({ id, success: !err });
             });
@@ -463,11 +505,12 @@ const CitationVerifier = {
      * Get citation quality stats for organization
      */
     getCitationStats: async (organizationId, periodDays = 7) => {
+        await initDeps();
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - periodDays);
 
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT 
                     DATE(created_at) as date,
                     COUNT(*) as total_verifications,
@@ -495,9 +538,14 @@ const CitationVerifier = {
                 resolve({ daily: rows || [], summary });
             });
         });
-    }
+    },
+
+    /**
+     * Set dependencies (for testing)
+     */
+    setDependencies
 };
 
-module.exports = CitationVerifier;
+export default CitationVerifier;
 
 

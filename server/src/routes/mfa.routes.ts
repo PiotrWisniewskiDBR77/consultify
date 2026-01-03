@@ -8,27 +8,24 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
-const require = createRequire(import.meta.url);
-
-// Import the JS implementation for now (will be fully migrated later)
-const mfaRoutesJS = require('../../routes/mfa.js');
-
-// Create router and apply JS routes
+// Create router
 const router = Router();
 
-// Re-export the JS router (maintains backward compatibility)
-// The JS route file exports a router that we can use directly
-if (typeof mfaRoutesJS === 'function') {
-    // If it's a router function, use it
-    router.use(mfaRoutesJS);
-} else if (mfaRoutesJS.default) {
-    // If it has a default export
-    router.use(mfaRoutesJS.default);
-} else {
-    // If it's the router itself
-    router.use(mfaRoutesJS);
-}
+// Lazy load the JS implementation
+const getMfaRoutesJS = async () => {
+    const module = await import('../../routes/mfa.js');
+    return module.default || module;
+};
+
+// Apply legacy routes with async handler wrapping to ensure they are loaded before use
+router.use(asyncHandler(async (req, res, next) => {
+    const legacyRouter = await getMfaRoutesJS();
+    // Since we can't easily 'await' a router mount inside another router's initialization 
+    // for all sub-routes, we would normally use it at entry point.
+    // However, for this wrapper to work, we need to handle the delegation.
+    return legacyRouter(req, res, next);
+}));
 
 export default router;

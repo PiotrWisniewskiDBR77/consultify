@@ -6,170 +6,95 @@
  * - Cache integration
  * - Error handling
  * - Logging
- * 
- * Usage:
- * ```javascript
- * const MyService = Object.assign({}, BaseService, {
- *   async getData(id) {
- *     return await this.queryOne('SELECT * FROM table WHERE id = ?', [id]);
- *   }
- * });
- * ```
  */
 
-import db from '../database.js';
 import cacheHelper from '../utils/cacheHelper.js';
 import queryHelpers from '../utils/queryHelpers.js';
 import logger from '../utils/logger.js';
 
-const BaseService = {
-    /**
-     * Database instance (can be overridden in tests)
-     */
-    db,
+class BaseService {
+    constructor() {
+        this._db = null;
+        this._cache = cacheHelper;
+        this._queryHelpers = queryHelpers;
+    }
 
     /**
-     * Cache helper (can be overridden in tests)
+     * Initialize dependencies lazily
      */
-    cache: cacheHelper,
+    async init() {
+        if (!this._db) {
+            const dbModule = await import('../database.js');
+            this._db = dbModule.default || dbModule;
+        }
+        return this;
+    }
 
     /**
-     * Query helpers (can be overridden in tests)
+     * Set dependencies manually (useful for testing)
      */
-    query: queryHelpers,
+    setDependencies(deps = {}) {
+        if (deps.db) this._db = deps.db;
+        if (deps.cache) this._cache = deps.cache;
+    }
 
     /**
      * Execute SELECT query returning multiple rows
-     * @param {string} sql - SQL query
-     * @param {Array} params - Query parameters
-     * @param {Object} options - Options { cacheKey, ttl, parseJson }
-     * @returns {Promise<Array>}
      */
     async queryAll(sql, params = [], options = {}) {
+        await this.init();
         const { cacheKey, ttl, parseJson = false, jsonFields = [] } = options;
 
-        if (cacheKey) {
-            return await cacheHelper.getCached(cacheKey, async () => {
-                const rows = await queryHelpers.queryAll(sql, params);
-                return parseJson ? rows.map(r => queryHelpers.parseJsonFields(r, jsonFields)) : rows;
-            }, ttl || cacheHelper.DEFAULT_TTL.MEDIUM);
+        if (cacheKey && this._cache) {
+            return await this._cache.getCached(cacheKey, async () => {
+                const rows = await this._queryHelpers.queryAll(sql, params);
+                return parseJson ? rows.map(r => this._queryHelpers.parseJsonFields(r, jsonFields)) : rows;
+            }, ttl || this._cache.DEFAULT_TTL.MEDIUM);
         }
 
-        const rows = await queryHelpers.queryAll(sql, params);
-        return parseJson ? rows.map(r => queryHelpers.parseJsonFields(r, jsonFields)) : rows;
-    },
+        const rows = await this._queryHelpers.queryAll(sql, params);
+        return parseJson ? rows.map(r => this._queryHelpers.parseJsonFields(r, jsonFields)) : rows;
+    }
 
     /**
      * Execute SELECT query returning single row
-     * @param {string} sql - SQL query
-     * @param {Array} params - Query parameters
-     * @param {Object} options - Options { cacheKey, ttl, parseJson }
-     * @returns {Promise<Object|null>}
      */
     async queryOne(sql, params = [], options = {}) {
+        await this.init();
         const { cacheKey, ttl, parseJson = false, jsonFields = [] } = options;
 
-        if (cacheKey) {
-            return await cacheHelper.getCached(cacheKey, async () => {
-                const row = await queryHelpers.queryOne(sql, params);
-                return parseJson && row ? queryHelpers.parseJsonFields(row, jsonFields) : row;
-            }, ttl || cacheHelper.DEFAULT_TTL.MEDIUM);
+        if (cacheKey && this._cache) {
+            return await this._cache.getCached(cacheKey, async () => {
+                const row = await this._queryHelpers.queryOne(sql, params);
+                return parseJson && row ? this._queryHelpers.parseJsonFields(row, jsonFields) : row;
+            }, ttl || this._cache.DEFAULT_TTL.MEDIUM);
         }
 
-        const row = await queryHelpers.queryOne(sql, params);
-        return parseJson && row ? queryHelpers.parseJsonFields(row, jsonFields) : row;
-    },
+        const row = await this._queryHelpers.queryOne(sql, params);
+        return parseJson && row ? this._queryHelpers.parseJsonFields(row, jsonFields) : row;
+    }
 
     /**
      * Execute INSERT/UPDATE/DELETE query
-     * @param {string} sql - SQL query
-     * @param {Array} params - Query parameters
-     * @returns {Promise<{lastID: number, changes: number}>}
      */
     async queryRun(sql, params = []) {
-        return await queryHelpers.queryRun(sql, params);
-    },
-
-    /**
-     * Execute multiple queries in parallel
-     * @param {Array<{sql: string, params: Array, type: string}>} queries
-     * @returns {Promise<Array>}
-     */
-    async queryParallel(queries) {
-        return await queryHelpers.queryParallel(queries);
-    },
-
-    /**
-     * Invalidate cache for user
-     * @param {string} userId - User ID
-     * @param {string} orgId - Organization ID
-     */
-    async invalidateUserCache(userId, orgId) {
-        await cacheHelper.invalidateUserCache(userId, orgId);
-    },
-
-    /**
-     * Invalidate cache for project
-     * @param {string} projectId - Project ID
-     */
-    async invalidateProjectCache(projectId) {
-        await cacheHelper.invalidateProjectCache(projectId);
-    },
-
-    /**
-     * Invalidate cache for organization
-     * @param {string} orgId - Organization ID
-     */
-    async invalidateOrgCache(orgId) {
-        await cacheHelper.invalidateOrgCache(orgId);
-    },
+        await this.init();
+        return await this._queryHelpers.queryRun(sql, params);
+    }
 
     /**
      * Log info message
-     * @param {string} message - Log message
-     * @param {Object} meta - Additional metadata
      */
     logInfo(message, meta = {}) {
-        logger.info(`[${this.constructor?.name || 'BaseService'}] ${message}`, meta);
-    },
+        logger.info(`[${this.constructor.name}] ${message}`, meta);
+    }
 
     /**
      * Log error message
-     * @param {string} message - Log message
-     * @param {Error|Object} error - Error object or metadata
      */
     logError(message, error = {}) {
-        logger.error(`[${this.constructor?.name || 'BaseService'}] ${message}`, error);
-    },
-
-    /**
-     * Set database instance (for testing)
-     * @param {Object} mockDb - Mock database
-     */
-    setDb(mockDb) {
-        this.db = mockDb;
-    },
-
-    /**
-     * Set cache helper (for testing)
-     * @param {Object} mockCache - Mock cache
-     */
-    setCache(mockCache) {
-        this.cache = mockCache;
+        logger.error(`[${this.constructor.name}] ${message}`, error);
     }
-};
+}
 
 export default BaseService;
-
-
-
-
-
-
-
-
-
-
-
-
-

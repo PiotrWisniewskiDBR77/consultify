@@ -3,16 +3,32 @@
  * Handles MRR tracking, churn analysis, LTV calculations, and cohort analysis
  */
 
-const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+// Dependency injection for testing
+let deps = {
+    db: null,
+    uuidv4: null
 };
+
+/**
+ * Initialize dependencies
+ */
+async function initDeps() {
+    if (deps.db && deps.uuidv4) return;
+
+    const [dbModule, uuidModule] = await Promise.all([
+        import('../database.js'),
+        import('uuid')
+    ]);
+
+    deps.db = dbModule.default || dbModule;
+    deps.uuidv4 = uuidModule.v4;
+}
 
 /**
  * Set dependencies (for testing)
  */
-function setDependencies(newDeps = {}) {
-    Object.assign(deps, newDeps);
+export function setDependencies(newDeps = {}) {
+    deps = { ...deps, ...newDeps };
 }
 
 // ==========================================
@@ -22,7 +38,8 @@ function setDependencies(newDeps = {}) {
 /**
  * Get current MRR and breakdown
  */
-function getCurrentMRR() {
+export async function getCurrentMRR() {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             `SELECT 
@@ -36,7 +53,7 @@ function getCurrentMRR() {
                 if (err) return reject(err);
 
                 const mrr = row?.total_mrr || 0;
-                
+
                 // Get breakdown by plan
                 deps.db.all(
                     `SELECT 
@@ -53,7 +70,7 @@ function getCurrentMRR() {
                     [],
                     (err, plans) => {
                         if (err) return reject(err);
-                        
+
                         resolve({
                             totalMRR: mrr,
                             arr: mrr * 12,
@@ -70,12 +87,11 @@ function getCurrentMRR() {
 /**
  * Get MRR trend over time
  */
-function getMRRTrend(options = {}) {
+export async function getMRRTrend(options = {}) {
     const { days = 30, granularity = 'daily' } = options;
-    
+    await initDeps();
+
     return new Promise((resolve, reject) => {
-        const dateFormat = granularity === 'monthly' ? '%Y-%m' : '%Y-%m-%d';
-        
         deps.db.all(
             `SELECT 
                 snapshot_date as date,
@@ -99,19 +115,19 @@ function getMRRTrend(options = {}) {
                     // Calculate growth metrics
                     const data = rows || [];
                     let previousMRR = data[0]?.mrr || 0;
-                    
+
                     const enriched = data.map((row, index) => {
-                        const growth = previousMRR > 0 
+                        const growth = previousMRR > 0
                             ? ((row.mrr - previousMRR) / previousMRR * 100).toFixed(2)
                             : 0;
                         previousMRR = row.mrr;
-                        
+
                         return {
                             ...row,
                             growth: parseFloat(growth)
                         };
                     });
-                    
+
                     resolve({
                         period: { days, granularity },
                         data: enriched,
@@ -126,7 +142,8 @@ function getMRRTrend(options = {}) {
 /**
  * Calculate MRR movement (new, expansion, churn, etc.)
  */
-async function calculateMRRMovement(startDate, endDate) {
+export async function calculateMRRMovement(startDate, endDate) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.all(
             `SELECT 
@@ -140,7 +157,7 @@ async function calculateMRRMovement(startDate, endDate) {
             [startDate, endDate],
             (err, rows) => {
                 if (err) return reject(err);
-                
+
                 const movement = {
                     newMRR: 0,
                     expansionMRR: 0,
@@ -148,7 +165,7 @@ async function calculateMRRMovement(startDate, endDate) {
                     churnMRR: 0,
                     reactivationMRR: 0
                 };
-                
+
                 (rows || []).forEach(row => {
                     switch (row.event_type) {
                         case 'subscription_created':
@@ -175,10 +192,10 @@ async function calculateMRRMovement(startDate, endDate) {
                             break;
                     }
                 });
-                
-                movement.netMRRChange = movement.newMRR + movement.expansionMRR + 
+
+                movement.netMRRChange = movement.newMRR + movement.expansionMRR +
                     movement.reactivationMRR - movement.contractionMRR - movement.churnMRR;
-                
+
                 resolve(movement);
             }
         );
@@ -192,9 +209,10 @@ async function calculateMRRMovement(startDate, endDate) {
 /**
  * Get churn rate and analysis
  */
-function getChurnRate(options = {}) {
-    const { period = 'monthly', months = 6 } = options;
-    
+export async function getChurnRate(options = {}) {
+    const { months = 6 } = options;
+    await initDeps();
+
     return new Promise((resolve, reject) => {
         // Get churn events
         deps.db.all(
@@ -210,7 +228,7 @@ function getChurnRate(options = {}) {
             [],
             async (err, churnData) => {
                 if (err) return reject(err);
-                
+
                 // Get starting MRR for each month
                 deps.db.all(
                     `SELECT 
@@ -224,13 +242,13 @@ function getChurnRate(options = {}) {
                     [],
                     (err, mrrData) => {
                         if (err) return reject(err);
-                        
+
                         // Calculate churn rates
                         const results = (churnData || []).map(churn => {
                             const monthStart = mrrData?.find(m => m.snapshot_date?.startsWith(churn.month));
                             const startingMRR = monthStart?.total_mrr || 1;
                             const startingCustomers = monthStart?.total_customers || 1;
-                            
+
                             return {
                                 month: churn.month,
                                 churnedCustomers: churn.churned_count,
@@ -239,7 +257,7 @@ function getChurnRate(options = {}) {
                                 mrrChurnRate: ((churn.churned_mrr / startingMRR) * 100).toFixed(2)
                             };
                         });
-                        
+
                         // Calculate averages
                         const avgCustomerChurn = results.length > 0
                             ? results.reduce((sum, r) => sum + parseFloat(r.customerChurnRate), 0) / results.length
@@ -247,7 +265,7 @@ function getChurnRate(options = {}) {
                         const avgMRRChurn = results.length > 0
                             ? results.reduce((sum, r) => sum + parseFloat(r.mrrChurnRate), 0) / results.length
                             : 0;
-                        
+
                         resolve({
                             period: { months },
                             data: results,
@@ -266,9 +284,10 @@ function getChurnRate(options = {}) {
 /**
  * Get churn reasons breakdown
  */
-function getChurnReasons(options = {}) {
+export async function getChurnReasons(options = {}) {
     const { months = 3 } = options;
-    
+    await initDeps();
+
     return new Promise((resolve, reject) => {
         deps.db.all(
             `SELECT 
@@ -305,9 +324,9 @@ function getChurnReasons(options = {}) {
 /**
  * Calculate customer lifetime value
  */
-function getLTV(options = {}) {
-    const { segmentBy = null } = options;
-    
+export async function getLTV(options = {}) {
+    await initDeps();
+
     return new Promise((resolve, reject) => {
         // Get average revenue per account and average lifespan
         deps.db.get(
@@ -330,26 +349,26 @@ function getLTV(options = {}) {
             [],
             async (err, row) => {
                 if (err) return reject(err);
-                
+
                 const avgRevenue = row?.avg_revenue || 0;
                 const avgLifespan = row?.avg_lifespan || 1;
-                
+
                 // Get current MRR for ARPA calculation
                 const mrrData = await getCurrentMRR();
-                const arpa = mrrData.activeSubscriptions > 0 
-                    ? mrrData.totalMRR / mrrData.activeSubscriptions 
+                const arpa = mrrData.activeSubscriptions > 0
+                    ? mrrData.totalMRR / mrrData.activeSubscriptions
                     : 0;
-                
+
                 // Get churn rate for LTV calculation
                 const churnData = await getChurnRate({ months: 12 });
                 const monthlyChurn = parseFloat(churnData.averages.customerChurnRate) / 100 || 0.05;
-                
+
                 // LTV = ARPA / Monthly Churn Rate
                 const ltv = monthlyChurn > 0 ? arpa / monthlyChurn : arpa * 24;
-                
+
                 // Customer Acquisition Cost (placeholder - would need actual data)
                 const cac = 0; // To be implemented with marketing data
-                
+
                 resolve({
                     ltv: Math.round(ltv),
                     arpa: Math.round(arpa),
@@ -366,9 +385,10 @@ function getLTV(options = {}) {
 /**
  * Get LTV by plan/segment
  */
-function getLTVBySegment(segmentField = 'plan') {
+export async function getLTVBySegment(segmentField = 'plan') {
+    await initDeps();
     return new Promise((resolve, reject) => {
-        const query = segmentField === 'plan' 
+        const query = segmentField === 'plan'
             ? `SELECT 
                 sp.name as segment,
                 sp.id as segment_id,
@@ -411,9 +431,10 @@ function getLTVBySegment(segmentField = 'plan') {
 /**
  * Get cohort retention analysis
  */
-function getCohortAnalysis(options = {}) {
+export async function getCohortAnalysis(options = {}) {
     const { cohortMonths = 6, retentionMonths = 12 } = options;
-    
+    await initDeps();
+
     return new Promise((resolve, reject) => {
         // Get cohorts (customers grouped by signup month)
         deps.db.all(
@@ -422,14 +443,14 @@ function getCohortAnalysis(options = {}) {
                 o.id as org_id,
                 o.created_at,
                 ob.status as current_status
-             FROM organizations o
-             LEFT JOIN organization_billing ob ON o.id = ob.organization_id
-             WHERE o.created_at >= date('now', '-${cohortMonths} months')
-             ORDER BY cohort ASC`,
+              FROM organizations o
+              LEFT JOIN organization_billing ob ON o.id = ob.organization_id
+              WHERE o.created_at >= date('now', '-${cohortMonths} months')
+              ORDER BY cohort ASC`,
             [],
             async (err, orgs) => {
                 if (err) return reject(err);
-                
+
                 // Group by cohort
                 const cohorts = {};
                 (orgs || []).forEach(org => {
@@ -443,23 +464,23 @@ function getCohortAnalysis(options = {}) {
                     cohorts[org.cohort].startingCount++;
                     cohorts[org.cohort].organizations.push(org);
                 });
-                
+
                 // Calculate retention for each cohort
                 const cohortData = Object.values(cohorts).map(cohort => {
-                    const activeCount = cohort.organizations.filter(o => 
+                    const activeCount = cohort.organizations.filter(o =>
                         o.current_status === 'active'
                     ).length;
-                    
+
                     return {
                         cohort: cohort.cohort,
                         startingCount: cohort.startingCount,
                         currentActive: activeCount,
-                        retentionRate: cohort.startingCount > 0 
+                        retentionRate: cohort.startingCount > 0
                             ? ((activeCount / cohort.startingCount) * 100).toFixed(1)
                             : 0
                     };
                 });
-                
+
                 resolve({
                     period: { cohortMonths, retentionMonths },
                     cohorts: cohortData
@@ -476,9 +497,10 @@ function getCohortAnalysis(options = {}) {
 /**
  * Get expansion revenue metrics
  */
-function getExpansionRevenue(options = {}) {
+export async function getExpansionRevenue(options = {}) {
     const { months = 6 } = options;
-    
+    await initDeps();
+
     return new Promise((resolve, reject) => {
         deps.db.all(
             `SELECT 
@@ -504,13 +526,13 @@ function getExpansionRevenue(options = {}) {
                         ...row,
                         netExpansion: (row.expansion_mrr || 0) - (row.contraction_mrr || 0)
                     }));
-                    
+
                     const totals = data.reduce((acc, row) => ({
                         totalExpansion: acc.totalExpansion + (row.expansion_mrr || 0),
                         totalContraction: acc.totalContraction + (row.contraction_mrr || 0),
                         netTotal: acc.netTotal + row.netExpansion
                     }), { totalExpansion: 0, totalContraction: 0, netTotal: 0 });
-                    
+
                     resolve({
                         period: { months },
                         data,
@@ -529,22 +551,23 @@ function getExpansionRevenue(options = {}) {
 /**
  * Create daily MRR snapshot
  */
-async function createDailySnapshot() {
+export async function createDailySnapshot() {
+    await initDeps();
     const today = new Date().toISOString().split('T')[0];
-    
+
     // Get current MRR data
     const mrrData = await getCurrentMRR();
-    
+
     // Get today's movement
     const startOfDay = `${today}T00:00:00`;
     const endOfDay = `${today}T23:59:59`;
     const movement = await calculateMRRMovement(startOfDay, endOfDay);
-    
+
     // Get customer counts
     const customerCounts = await getCustomerCounts();
-    
+
     const snapshotId = `snap-${deps.uuidv4()}`;
-    
+
     return new Promise((resolve, reject) => {
         deps.db.run(
             `INSERT OR REPLACE INTO mrr_snapshots (
@@ -567,7 +590,7 @@ async function createDailySnapshot() {
                 JSON.stringify(mrrData.byPlan),
                 movement.netMRRChange
             ],
-            function(err) {
+            function (err) {
                 if (err) reject(err);
                 else resolve({ id: snapshotId, date: today });
             }
@@ -578,7 +601,8 @@ async function createDailySnapshot() {
 /**
  * Get customer counts for snapshot
  */
-function getCustomerCounts() {
+export async function getCustomerCounts() {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             `SELECT 
@@ -601,9 +625,10 @@ function getCustomerCounts() {
 /**
  * Record subscription event for analytics
  */
-function recordSubscriptionEvent(data) {
+export async function recordSubscriptionEvent(data) {
+    await initDeps();
     const id = `evt-${deps.uuidv4()}`;
-    
+
     return new Promise((resolve, reject) => {
         deps.db.run(
             `INSERT INTO subscription_events (
@@ -629,7 +654,7 @@ function recordSubscriptionEvent(data) {
                 data.discountCodeId || null,
                 JSON.stringify(data.metadata || {})
             ],
-            function(err) {
+            function (err) {
                 if (err) reject(err);
                 else resolve({ id });
             }
@@ -645,12 +670,12 @@ function calculateTrendSummary(data) {
     if (!data || data.length === 0) {
         return { startMRR: 0, endMRR: 0, totalGrowth: 0, avgGrowth: 0 };
     }
-    
+
     const startMRR = data[0].mrr || 0;
     const endMRR = data[data.length - 1].mrr || 0;
     const totalGrowth = startMRR > 0 ? ((endMRR - startMRR) / startMRR * 100) : 0;
     const avgGrowth = data.reduce((sum, d) => sum + (d.growth || 0), 0) / data.length;
-    
+
     return {
         startMRR,
         endMRR,
@@ -659,7 +684,7 @@ function calculateTrendSummary(data) {
     };
 }
 
-module.exports = {
+export default {
     setDependencies,
     // MRR
     getCurrentMRR,
@@ -679,6 +704,7 @@ module.exports = {
     createDailySnapshot,
     recordSubscriptionEvent
 };
+
 
 
 

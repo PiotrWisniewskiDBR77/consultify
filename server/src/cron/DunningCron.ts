@@ -13,9 +13,9 @@
 
 import * as cron from 'node-cron';
 import logger from '../utils/Logger.js';
-import { createRequire } from 'module';
 
-const require = createRequire(import.meta.url);
+
+
 
 // ==========================================
 // TYPES
@@ -44,7 +44,7 @@ class DunningCron {
 
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
-            dunningService: deps?.dunningService || require('../../services/dunningService.js'),
+            dunningService: deps?.dunningService || await import('../../services/dunningService.js').then(m => m.default || m),
             sentry: deps?.sentry,
         };
     }

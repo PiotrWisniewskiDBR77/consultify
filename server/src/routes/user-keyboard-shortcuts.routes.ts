@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const user_keyboard_shortcutsRoutesJS = require('../../routes/user-keyboard-shortcuts.js');
+const user_keyboard_shortcutsRoutesJSPromise = (async () => {
+    const module = await import('../../routes/user-keyboard-shortcuts.js');
+    return module.default || module;
+})();
+const user_keyboard_shortcutsRoutesJS = user_keyboard_shortcutsRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

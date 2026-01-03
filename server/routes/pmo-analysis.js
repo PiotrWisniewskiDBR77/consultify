@@ -1,13 +1,11 @@
-// PMO Analysis Routes - AI-driven analysis
-// Step 3: PMO Objects, Statuses & Stage Gates
+import express from 'express';
+import PMOAnalysisService from '../services/pmoAnalysisService.js';
+import ProgressService from '../services/progressService.js';
+import DependencyService from '../services/dependencyService.js';
+import verifyToken from '../middleware/authMiddleware.js';
+import { asyncHandler } from '../utils/errorHandler.js';
 
-const express = require('express');
 const router = express.Router();
-const PMOAnalysisService = require('../services/pmoAnalysisService');
-const ProgressService = require('../services/progressService');
-const DependencyService = require('../services/dependencyService');
-const verifyToken = require('../middleware/authMiddleware');
-const { asyncHandler } = require('../utils/errorHandler');
 
 // GET /api/pmo-analysis/:projectId
 // REFACTORED: Uses asyncHandler
@@ -68,4 +66,4 @@ router.get('/portfolio/:organizationId', verifyToken, asyncHandler(async (req, r
     res.json(metrics);
 }));
 
-module.exports = router;
+export default router;

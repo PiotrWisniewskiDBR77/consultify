@@ -16,13 +16,13 @@
 
 const express = require('express');
 const router = express.Router();
-const MetricsCollector = require('../services/metricsCollector');
+import MetricsCollector from '../services/metricsCollector.js';
 const MetricsAggregator = require('../services/metricsAggregator');
 const verifyToken = require('../middleware/authMiddleware');
 const verifySuperAdmin = require('../middleware/superAdminMiddleware');
 const seatManagementService = require('../services/seatManagementService');
-const payAsYouGoService = require('../services/payAsYouGoService');
-const budgetManagementService = require('../services/budgetManagementService');
+import payAsYouGoService from '../services/payAsYouGoService.js';
+import budgetManagementService from '../services/budgetManagementService.js';
 const usageService = require('../services/usageService');
 const db = require('../database');
 
@@ -365,7 +365,7 @@ router.get('/org/overview', verifyToken, async (req, res) => {
         // Get real billing data
         let billingData = null;
         try {
-            const billingService = require('../services/billingService');
+            const billingService = (await import('../services/billingService.js')).default;
             billingData = await billingService.getOrganizationBilling(organizationId);
         } catch (err) {
             console.warn('[Metrics] Failed to get billing data:', err.message);

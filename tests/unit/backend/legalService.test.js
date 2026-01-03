@@ -8,17 +8,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations } from '../../fixtures/testData.js';
+import LegalService from '../../../server/services/legalService.js';
 
 describe('LegalService', () => {
     let mockDb;
-    let LegalService;
     let mockLegalEventLogger;
 
     beforeEach(async () => {
         vi.resetModules();
-        
+
         mockDb = createMockDb();
-        
+
         mockLegalEventLogger = {
             logAccept: vi.fn().mockResolvedValue({ success: true }),
             logEvent: vi.fn().mockResolvedValue({ success: true }),
@@ -29,13 +29,18 @@ describe('LegalService', () => {
             }
         };
 
-        LegalService = (await import('../../../server/services/legalService.js')).default;
-        
         // Inject mock dependencies
-        LegalService._setDependencies({
+        LegalService.setDependencies({
             db: mockDb,
             uuidv4: () => 'legal-uuid-1',
-            LegalEventLogger: mockLegalEventLogger
+            crypto: {
+                createHash: vi.fn().mockReturnValue({
+                    update: vi.fn().mockReturnThis(),
+                    digest: vi.fn().mockReturnValue('mock-hash')
+                })
+            },
+            LegalEventLogger: mockLegalEventLogger,
+            EVENT_TYPES: mockLegalEventLogger.EVENT_TYPES
         });
     });
 
@@ -76,7 +81,7 @@ describe('LegalService', () => {
 
         it('should filter by effective date', async () => {
             const now = new Date().toISOString();
-            
+
             mockDb.all.mockImplementation((query, params, callback) => {
                 // Verify query includes effective_from check
                 expect(params).toContain(now);
@@ -297,7 +302,7 @@ describe('LegalService', () => {
                         doc_type: docType,
                         version: '1.0'
                     });
-                    } else {
+                } else {
                     // No acceptance found
                     callback(null, null);
                 }

@@ -1,32 +1,57 @@
 /**
- * Ai/tools/createInitiative Service
- * Enterprise SaaS Architecture - TypeScript Backend
- * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Create Initiative Tool Handler
+ * MUTATION - Requires user approval before execution.
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import { v4 as uuidv4 } from 'uuid';
+import * as DbPromise from '../../../utils/DbPromise.js';
 
-const require = createRequire(import.meta.url);
+type CreateInitiativeParams = {
+    projectId: string;
+    title: string;
+    description: string;
+    priority: string;
+    estimatedEffort?: string;
+};
 
-// Import the JS implementation for now (will be fully migrated later)
-const ai/tools/createInitiativeServiceJS = require('../../services/ai/tools/createInitiative.js');
+type ToolContext = {
+    userId?: string;
+    organizationId?: string;
+};
 
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const ai/tools/createInitiativeService = ai/tools/createInitiativeServiceJS.default || ai/tools/createInitiativeServiceJS;
+export async function createInitiative(
+    params: CreateInitiativeParams,
+    context: ToolContext = {}
+): Promise<Record<string, unknown>> {
+    const { projectId, title, description, priority, estimatedEffort } = params;
+    const { userId, organizationId } = context;
 
-// Export default instance (for backward compatibility)
-export default ai/tools/createInitiativeService;
+    const id = uuidv4();
 
-// Also export named exports if they exist
-if (typeof ai/tools/createInitiativeServiceJS === 'object' && ai/tools/createInitiativeServiceJS !== null) {
-    Object.keys(ai/tools/createInitiativeServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = ai/tools/createInitiativeServiceJS[key];
+    try {
+        await DbPromise.run(
+            `INSERT INTO initiatives (id, project_id, title, description, priority, estimated_effort, status, created_by, organization_id, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, 'PROPOSED', ?, ?, datetime('now'))`,
+            [id, projectId, title, description, priority, estimatedEffort || null, userId || null, organizationId || null],
+            { fallback: false }
+        );
+
+        return {
+            id,
+            status: 'CREATED',
+            message: `Initiative "${title}" created successfully`
+        };
+    } catch (error) {
+        const err = error as Error;
+        if (err.message.includes('no such table')) {
+            return {
+                id,
+                status: 'SIMULATED',
+                message: `Initiative "${title}" would be created (table not yet created)`
+            };
         }
-    });
+        throw err;
+    }
 }
+
+export default { createInitiative };

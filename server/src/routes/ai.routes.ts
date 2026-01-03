@@ -4,10 +4,12 @@
  */
 
 import { Router, Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
-import { verifyToken, type AuthRequest } from '../middleware/auth.middleware';
-import { asyncHandler } from '../utils/asyncHandler';
-import { validateBody, validateQuery, validateParams } from '../middleware/validation.middleware';
+import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { run as dbRun, get as dbGet } from '../utils/DbPromise.js';
+import { validateBody, validateQuery, validateParams } from '../middleware/validation.middleware.js';
 import {
     ChatRequestSchema,
     ChatStreamRequestSchema,
@@ -47,19 +49,20 @@ import {
     AuditIdParamSchema,
     SessionIdParamSchema,
     ActionTypeParamSchema,
-} from '../validators/ai.validators';
+} from '../validators/ai.validators.js';
 
 const router = Router();
 
 // Lazy load services to avoid circular dependencies
-const getAIContextBuilder = () => require('../../services/aiContextBuilder');
-const getAIPolicyEngine = () => require('../../services/aiPolicyEngine');
-const getAIMemoryManager = () => require('../../services/aiMemoryManager');
-const getAIOrchestrator = () => require('../../services/aiOrchestrator');
-const getAIActionExecutor = () => require('../../services/aiActionExecutor');
-const getAIAuditLogger = () => require('../../services/aiAuditLogger');
-const getAIPipeline = () => {
-    const { AIPipeline } = require('../../services/ai/aiPipeline');
+
+const getAIContextBuilder = async () => await import('../services/aiContextBuilder.js').then(m => m.default || m);
+const getAIPolicyEngine = async () => await import('../services/aiPolicyEngine.js').then(m => (m as any).default || m);
+const getAIMemoryManager = async () => await import('../services/aiMemoryManager.js').then(m => (m as any).default || m);
+const getAIOrchestrator = async () => await import('../services/aiOrchestrator.js').then(m => (m as any).default || m);
+const getAIActionExecutor = async () => await import('../services/aiActionExecutor.js').then(m => (m as any).default || m);
+const getAIAuditLogger = async () => await import('../services/aiAuditLogger.js').then(m => (m as any).default || m);
+const getAIPipeline = async () => {
+    const { AIPipeline } = await import('../../services/ai/aiPipeline.js');
     return new AIPipeline();
 };
 
@@ -67,12 +70,12 @@ const getAIPipeline = () => {
 
 router.get('/context', verifyToken, validateQuery(AIContextQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const AIContextBuilder = getAIContextBuilder();
+        const AIContextBuilder = await getAIContextBuilder();
         const context = await AIContextBuilder.buildContext(
-            req.userId,
-            req.organizationId,
+            req.userId as string,
+            req.organizationId as string,
             null,
-            { currentScreen: (req.query as { screen?: string }).screen }
+            { currentScreen: (req.query as any).screen as string | undefined }
         );
         res.json(context);
     } catch (err) {
@@ -83,12 +86,12 @@ router.get('/context', verifyToken, validateQuery(AIContextQuerySchema), asyncHa
 
 router.get('/context/:projectId', verifyToken, validateParams(ProjectIdParamSchema), validateQuery(AIContextQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const AIContextBuilder = getAIContextBuilder();
+        const AIContextBuilder = await getAIContextBuilder();
         const context = await AIContextBuilder.buildContext(
-            req.userId,
-            req.organizationId,
+            req.userId as string,
+            req.organizationId as string,
             req.params.projectId,
-            { currentScreen: (req.query as { screen?: string }).screen }
+            { currentScreen: (req.query as any).screen as string | undefined }
         );
         res.json(context);
     } catch (err) {
@@ -110,7 +113,7 @@ router.post('/chat/stream', verifyToken, validateBody(ChatStreamRequestSchema), 
         conversationId?: string;
         resumeFromPartial?: boolean;
     };
-    
+
     const { message, history, systemInstruction, context, roleName, language, conversationId, resumeFromPartial } = body;
 
     const streamSessionId = conversationId || `stream-${req.userId}-${Date.now()}`;
@@ -131,7 +134,7 @@ router.post('/chat/stream', verifyToken, validateBody(ChatStreamRequestSchema), 
     const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Always respond in ${langName}. This is critical - the user's interface is set to ${langName}, so ALL your responses MUST be in ${langName}.]\n`;
 
     const enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
-    const aiPipeline = getAIPipeline();
+    const aiPipeline = await getAIPipeline();
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -143,7 +146,7 @@ router.post('/chat/stream', verifyToken, validateBody(ChatStreamRequestSchema), 
         isClientConnected = false;
         streamAborted = true;
         console.log(`[Stream] Client disconnected: ${streamSessionId}`);
-        
+
         if (accumulatedContent.length > 0) {
             savePartialResponse(streamSessionId, accumulatedContent, req.userId!, req.organizationId!)
                 .catch(err => console.error('[Stream] Failed to save partial:', err));
@@ -155,41 +158,31 @@ router.post('/chat/stream', verifyToken, validateBody(ChatStreamRequestSchema), 
     res.on('close', connectionCleanup);
 
     const savePartialResponse = async (sessionId: string, content: string, userId: string, orgId: string): Promise<void> => {
-        const db = require('../../database');
-        const { v4: uuidv4 } = require('uuid');
-        
-        return new Promise((resolve, reject) => {
-            db.run(`
-                INSERT INTO ai_partial_responses (id, session_id, user_id, organization_id, content, updated_at)
-                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                ON CONFLICT(session_id) DO UPDATE SET
-                    content = excluded.content,
-                    updated_at = CURRENT_TIMESTAMP
-            `, [uuidv4(), sessionId, userId, orgId, content], (err: Error | null) => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
+        await dbRun(`
+            INSERT INTO ai_partial_responses (id, session_id, user_id, organization_id, content, updated_at)
+            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(session_id) DO UPDATE SET
+                content = excluded.content,
+                updated_at = CURRENT_TIMESTAMP
+        `, [uuidv4(), sessionId, userId, orgId, content]);
     };
 
     try {
         if (resumeFromPartial && conversationId) {
-            const db = require('../../database');
-            const partial = await new Promise<string | null>((resolve) => {
-                db.get(`SELECT content FROM ai_partial_responses WHERE session_id = ? AND user_id = ?`,
-                    [conversationId, req.userId], (err: Error | null, row: { content: string } | null) => {
-                        resolve(row?.content || null);
-                    });
-            });
-            
+            const row = await dbGet(`SELECT content FROM ai_partial_responses WHERE session_id = ? AND user_id = ?`,
+                [conversationId, req.userId]) as { content: string } | null;
+            const partial = row?.content || null;
+
             if (partial) {
                 accumulatedContent = partial;
-                res.write(`data: ${JSON.stringify({ 
-                    type: 'resume', 
+                res.write(`data: ${JSON.stringify({
+                    type: 'resume',
                     text: partial,
-                    sessionId: streamSessionId 
+                    sessionId: streamSessionId
                 })}\n\n`);
             }
+
+            // Partial resume logic handled by sending previous content to client
         }
 
         const pipelineRequest = {
@@ -210,9 +203,9 @@ router.post('/chat/stream', verifyToken, validateBody(ChatStreamRequestSchema), 
             }
         };
 
-        const response = await aiPipeline.process(pipelineRequest, (progress: Record<string, unknown>) => {
+        const response = await (aiPipeline as any).process(pipelineRequest, (progress: Record<string, unknown>) => {
             if (!isClientConnected || res.destroyed) return;
-            
+
             res.write(`data: ${JSON.stringify({
                 type: 'thought',
                 ...progress
@@ -225,11 +218,11 @@ router.post('/chat/stream', verifyToken, validateBody(ChatStreamRequestSchema), 
                     console.log(`[Stream] Aborting stream - client disconnected: ${streamSessionId}`);
                     break;
                 }
-                
+
                 if (chunk) {
                     accumulatedContent += chunk;
                     res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
-                    
+
                     if (Date.now() - lastSaveTime > 2000) {
                         savePartialResponse(streamSessionId, accumulatedContent, req.userId!, req.organizationId!)
                             .catch(err => console.warn('[Stream] Partial save failed:', (err as Error).message));
@@ -237,12 +230,11 @@ router.post('/chat/stream', verifyToken, validateBody(ChatStreamRequestSchema), 
                     }
                 }
             }
-            
+
             if (isClientConnected && !streamAborted) {
                 res.write('data: [DONE]\n\n');
-                
-                const db = require('../../database');
-                db.run(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId], () => {});
+
+                await dbRun(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId]);
             }
             res.end();
         } else {
@@ -255,14 +247,14 @@ router.post('/chat/stream', verifyToken, validateBody(ChatStreamRequestSchema), 
 
     } catch (err) {
         console.error('Stream Error:', err);
-        
+
         if (accumulatedContent.length > 0) {
             savePartialResponse(streamSessionId, accumulatedContent, req.userId!, req.organizationId!)
                 .catch(e => console.warn('[Stream] Failed to save partial on error:', (e as Error).message));
         }
-        
+
         if (isClientConnected && !res.destroyed) {
-            res.write(`data: ${JSON.stringify({ 
+            res.write(`data: ${JSON.stringify({
                 error: (err as Error).message,
                 sessionId: streamSessionId,
                 canResume: accumulatedContent.length > 0
@@ -277,37 +269,35 @@ router.post('/chat/stream', verifyToken, validateBody(ChatStreamRequestSchema), 
 }));
 
 router.get('/stream/partial/:sessionId', verifyToken, validateParams(SessionIdParamSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
-    const db = require('../../database');
-    
-    db.get(`
-        SELECT content, updated_at 
-        FROM ai_partial_responses 
-        WHERE session_id = ? AND user_id = ?
-    `, [req.params.sessionId, req.userId], (err: Error | null, row: { content: string; updated_at: string } | null) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
+    try {
+        const row = await dbGet(`
+            SELECT content, updated_at 
+            FROM ai_partial_responses 
+            WHERE session_id = ? AND user_id = ?
+        `, [req.params.sessionId, req.userId]) as { content: string; updated_at: string } | null;
+
         if (!row) {
             res.status(404).json({ error: 'No partial response found' });
             return;
         }
-        
+
         res.json({
             sessionId: req.params.sessionId,
             content: row.content,
             updatedAt: row.updated_at,
             canResume: true
         });
-    });
+    } catch (err) {
+        res.status(500).json({ error: (err as Error).message });
+    }
 }));
 
 router.post('/chat', verifyToken, validateBody(ChatRequestSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     const { message, projectId, currentScreen, selectedObjectId, selectedObjectType } = req.body;
 
     try {
-        const AIOrchestrator = getAIOrchestrator();
-        const AIAuditLogger = getAIAuditLogger();
+        const AIOrchestrator = await getAIOrchestrator();
+        const AIAuditLogger = await getAIAuditLogger();
 
         const result = await AIOrchestrator.processMessage(
             message,
@@ -354,9 +344,9 @@ router.post('/chat', verifyToken, validateBody(ChatRequestSchema), asyncHandler(
 
 router.get('/policy', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const AIPolicyEngine = getAIPolicyEngine();
-        const policy = await AIPolicyEngine.getPolicySummary(req.organizationId!);
-        res.json(policy);
+        const AIPolicyEngine = await getAIPolicyEngine();
+        const info = await (AIPolicyEngine as any).getPolicySummary(req.organizationId as string);
+        res.json(info);
     } catch (err) {
         res.status(500).json({ error: (err as Error).message });
     }
@@ -369,7 +359,7 @@ router.patch('/policy', verifyToken, validateBody(UpdatePolicyRequestSchema), as
     }
 
     try {
-        const AIPolicyEngine = getAIPolicyEngine();
+        const AIPolicyEngine = await getAIPolicyEngine();
         const result = await AIPolicyEngine.updatePolicy(req.organizationId!, req.body);
         res.json(result);
     } catch (err) {
@@ -380,12 +370,12 @@ router.patch('/policy', verifyToken, validateBody(UpdatePolicyRequestSchema), as
 router.get('/policy/can-perform/:actionType', verifyToken, validateParams(ActionTypeParamSchema), validateQuery(CanPerformActionQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     const { projectId } = req.query as { projectId?: string };
     try {
-        const AIPolicyEngine = getAIPolicyEngine();
+        const AIPolicyEngine = await getAIPolicyEngine();
         const result = await AIPolicyEngine.canPerformAction(
             req.params.actionType,
-            req.organizationId!,
-            projectId,
-            req.userId!
+            req.organizationId as string,
+            projectId as string | undefined,
+            req.userId as string
         );
         res.json(result);
     } catch (err) {
@@ -397,7 +387,7 @@ router.get('/policy/can-perform/:actionType', verifyToken, validateParams(Action
 
 router.get('/memory/project/:projectId', verifyToken, validateParams(ProjectIdParamSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const AIMemoryManager = getAIMemoryManager();
+        const AIMemoryManager = await getAIMemoryManager();
         const memory = await AIMemoryManager.buildProjectMemorySummary(req.params.projectId);
         res.json(memory);
     } catch (err) {
@@ -409,7 +399,7 @@ router.post('/memory/project/:projectId/decision', verifyToken, validateParams(P
     const { decisionId, title, outcome, rationale } = req.body;
 
     try {
-        const AIMemoryManager = getAIMemoryManager();
+        const AIMemoryManager = await getAIMemoryManager();
         const result = await AIMemoryManager.recordDecision(
             req.params.projectId,
             decisionId,
@@ -426,7 +416,7 @@ router.post('/memory/project/:projectId/decision', verifyToken, validateParams(P
 
 router.get('/memory/user', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const AIMemoryManager = getAIMemoryManager();
+        const AIMemoryManager = await getAIMemoryManager();
         const preferences = await AIMemoryManager.getUserPreferences(req.userId!);
         res.json(preferences);
     } catch (err) {
@@ -436,7 +426,7 @@ router.get('/memory/user', verifyToken, asyncHandler(async (req: AuthRequest, re
 
 router.patch('/memory/user', verifyToken, validateBody(UpdateUserPreferencesRequestSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const AIMemoryManager = getAIMemoryManager();
+        const AIMemoryManager = await getAIMemoryManager();
         const result = await AIMemoryManager.updateUserPreferences(req.userId!, req.body);
         res.json(result);
     } catch (err) {
@@ -451,7 +441,7 @@ router.delete('/memory/project/:projectId', verifyToken, validateParams(ProjectI
     }
 
     try {
-        const AIMemoryManager = getAIMemoryManager();
+        const AIMemoryManager = await getAIMemoryManager();
         const result = await AIMemoryManager.clearProjectMemory(req.params.projectId);
         res.json(result);
     } catch (err) {
@@ -465,7 +455,7 @@ router.post('/actions/draft', verifyToken, validateBody(CreateDraftRequestSchema
     const { draftType, content, projectId } = req.body;
 
     try {
-        const AIActionExecutor = getAIActionExecutor();
+        const AIActionExecutor = await getAIActionExecutor();
         const result = await AIActionExecutor.createDraft(
             draftType,
             content,
@@ -482,11 +472,11 @@ router.post('/actions/draft', verifyToken, validateBody(CreateDraftRequestSchema
 router.get('/actions/pending', verifyToken, validateQuery(GetPendingActionsQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     const { projectId } = req.query as { projectId?: string };
     try {
-        const AIActionExecutor = getAIActionExecutor();
+        const AIActionExecutor = await getAIActionExecutor();
         const actions = await AIActionExecutor.getPendingActions(
-            null,
-            projectId,
-            req.organizationId!
+            req.userId as string,
+            projectId as string | undefined,
+            req.organizationId as string
         );
         res.json(actions);
     } catch (err) {
@@ -496,7 +486,7 @@ router.get('/actions/pending', verifyToken, validateQuery(GetPendingActionsQuery
 
 router.patch('/actions/:id/approve', verifyToken, validateParams(ActionIdParamSchema), validateBody(ApproveActionRequestSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const AIActionExecutor = getAIActionExecutor();
+        const AIActionExecutor = await getAIActionExecutor();
         const result = await AIActionExecutor.approveAction(req.params.id, req.userId!);
         res.json(result);
     } catch (err) {
@@ -507,7 +497,7 @@ router.patch('/actions/:id/approve', verifyToken, validateParams(ActionIdParamSc
 router.patch('/actions/:id/reject', verifyToken, validateParams(ActionIdParamSchema), validateBody(RejectActionRequestSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     const { reason } = req.body;
     try {
-        const AIActionExecutor = getAIActionExecutor();
+        const AIActionExecutor = await getAIActionExecutor();
         const result = await AIActionExecutor.rejectAction(req.params.id, req.userId!, reason);
         res.json(result);
     } catch (err) {
@@ -517,7 +507,7 @@ router.patch('/actions/:id/reject', verifyToken, validateParams(ActionIdParamSch
 
 router.post('/actions/:id/execute', verifyToken, validateParams(ActionIdParamSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const AIActionExecutor = getAIActionExecutor();
+        const AIActionExecutor = await getAIActionExecutor();
         const result = await AIActionExecutor.executeAction(req.params.id, req.userId!);
         res.json(result);
     } catch (err) {
@@ -527,7 +517,7 @@ router.post('/actions/:id/execute', verifyToken, validateParams(ActionIdParamSch
 
 router.get('/actions/proposals', verifyToken, validateQuery(GenerateProposalsQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     if (req.userRole !== 'ADMIN' && req.userRole !== 'SUPERADMIN') {
-        const logger = require('../../utils/logger');
+        const logger = (await import('../utils/Logger.js')).default;
         logger.warn('Unauthorized proposal access attempt', { userId: req.userId, role: req.userRole });
         res.status(403).json({ error: 'Permission denied. ADMIN or SUPERADMIN required.' });
         return;
@@ -544,18 +534,18 @@ router.get('/actions/proposals', verifyToken, validateQuery(GenerateProposalsQue
     }
 
     try {
-        const logger = require('../../utils/logger');
-        const { getRequestContext } = require('../../utils/requestContext');
+        const { getRequestContext } = await import('../utils/requestContext.js');
+        const logger = (await import('../utils/Logger.js')).default;
 
         logger.info('Generating action proposals', {
             ...getRequestContext(req),
-            targetOrgId: organizationId
+            targetOrgId: organizationId as string
         });
 
-        const AIContextBuilder = getAIContextBuilder();
-        const ActionProposalEngine = require('../../ai/actionProposalEngine');
+        const AIContextBuilder = await getAIContextBuilder();
+        const ActionProposalEngine = await import('../../ai/actionProposalEngine.js').then(m => (m as any).default || m);
 
-        const context = await AIContextBuilder.buildContext(null, organizationId);
+        const context = await AIContextBuilder.buildContext(undefined as any, organizationId);
         const proposals = ActionProposalEngine.generateProposals(context);
 
         res.json(proposals);
@@ -570,7 +560,7 @@ router.get('/actions/proposals', verifyToken, validateQuery(GenerateProposalsQue
             });
             return;
         }
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: (err as Error).message });
     }
 }));
 
@@ -579,7 +569,7 @@ router.post('/recommend', verifyToken, validateBody(RecommendRequestSchema), asy
     const { diagnosisReport } = req.body;
 
     const generateFallbackInitiatives = (assessment: Record<string, unknown>, goals: string[], industry: string) => {
-        const { v4: uuidv4 } = require('uuid');
+
         const axes = ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'];
 
         const templates: Record<string, { name: string; priority: string; roi: number; budget: number }> = {
@@ -621,7 +611,7 @@ router.post('/recommend', verifyToken, validateBody(RecommendRequestSchema), asy
     };
 
     try {
-        const aiPipeline = getAIPipeline();
+        const aiPipeline = await getAIPipeline();
 
         const assessment = diagnosisReport.assessment || {};
         const goals = diagnosisReport.goals || ['Digital Transformation'];
@@ -675,7 +665,7 @@ Return as a JSON array of initiatives.`;
             initiatives = generateFallbackInitiatives(assessment, goals, industry);
         }
 
-        const { v4: uuidv4 } = require('uuid');
+
         const processedInitiatives = (Array.isArray(initiatives) ? initiatives : []).map((init: Record<string, unknown>, idx: number) => ({
             id: (init.id as string) || uuidv4(),
             name: (init.name as string) || `Initiative ${idx + 1}`,
@@ -710,9 +700,9 @@ router.post('/roadmap', verifyToken, validateBody(RoadmapRequestSchema), asyncHa
     const { initiatives } = req.body;
 
     try {
-        const aiPipeline = getAIPipeline();
+        const aiPipeline = await getAIPipeline();
 
-        const initiativesSummary = initiatives.map((init: Record<string, unknown>, idx: number) =>
+        const initiativesSummary = initiatives.map((init: any, idx: number) =>
             `${idx + 1}. "${init.name}" - Priority: ${init.priority || 'Medium'}, Complexity: ${init.complexity || 'Medium'}, ROI: ${init.expectedRoi || init.roi || 'Unknown'}`
         ).join('\n');
 
@@ -790,22 +780,19 @@ router.get('/audit', verifyToken, validateQuery(GetAuditLogsQuerySchema), asyncH
         return;
     }
 
-    const { projectId, userId, actionType, limit, offset } = req.query as {
-        projectId?: string;
-        userId?: string;
-        actionType?: string;
-        limit: number;
-        offset: number;
-    };
+    const { projectId, userId, actionType, limit, offset } = req.query as any;
+    // The original instruction had an extra closing brace here, which is removed for syntactical correctness.
+    // The instruction was: `const { projectId, userId, actionType, limit, offset } = req.query as any; };`
+    // Corrected to: `const { projectId, userId, actionType, limit, offset } = req.query as any;`
 
     try {
-        const AIAuditLogger = getAIAuditLogger();
+        const AIAuditLogger = await getAIAuditLogger();
         const logs = await AIAuditLogger.getAuditLogs(req.organizationId!, {
-            projectId,
-            userId,
-            actionType,
-            limit: limit || 50,
-            offset: offset || 0
+            projectId: projectId as string | undefined,
+            userId: userId as string | undefined,
+            actionType: actionType as string | undefined,
+            limit: Number(limit) || 50,
+            offset: Number(offset) || 0
         });
         res.json(logs);
     } catch (err) {
@@ -816,8 +803,8 @@ router.get('/audit', verifyToken, validateQuery(GetAuditLogsQuerySchema), asyncH
 router.get('/audit/stats', verifyToken, validateQuery(GetAuditLogsQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     const { projectId } = req.query as { projectId?: string };
     try {
-        const AIAuditLogger = getAIAuditLogger();
-        const stats = await AIAuditLogger.getAuditStats(req.organizationId!, projectId);
+        const AIAuditLogger = await getAIAuditLogger();
+        const stats = await AIAuditLogger.getAuditStats(req.organizationId!, projectId as string | undefined);
         res.json(stats);
     } catch (err) {
         res.status(500).json({ error: (err as Error).message });
@@ -827,7 +814,7 @@ router.get('/audit/stats', verifyToken, validateQuery(GetAuditLogsQuerySchema), 
 router.post('/audit/:id/decision', verifyToken, validateParams(AuditIdParamSchema), validateBody(RecordAuditDecisionRequestSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     const { decision, feedback } = req.body;
     try {
-        const AIAuditLogger = getAIAuditLogger();
+        const AIAuditLogger = await getAIAuditLogger();
         const result = await AIAuditLogger.recordUserDecision(req.params.id, decision, feedback);
         res.json(result);
     } catch (err) {
@@ -843,14 +830,14 @@ router.get('/explanations/:projectId', verifyToken, validateParams(ProjectIdPara
         return;
     }
 
-    const { limit, offset } = req.query as { limit: number; offset: number };
+    const { limit, offset } = req.query as any;
 
     try {
-        const AIAuditLogger = getAIAuditLogger();
+        const AIAuditLogger = await getAIAuditLogger();
         const logs = await AIAuditLogger.getAuditLogs(req.organizationId!, {
             projectId: req.params.projectId,
-            limit: limit || 50,
-            offset: offset || 0,
+            limit: Number(limit) || 50,
+            offset: Number(offset) || 0,
             includeExplanation: true
         });
 
@@ -885,7 +872,7 @@ router.get('/explanations/export', verifyToken, validateQuery(ExportExplanations
     };
 
     try {
-        const AIAuditLogger = getAIAuditLogger();
+        const AIAuditLogger = await getAIAuditLogger();
         const logs = await AIAuditLogger.getAuditLogs(req.organizationId!, {
             projectId: projectId || null,
             limit: 1000,
@@ -937,7 +924,7 @@ router.get('/explanations/export', verifyToken, validateQuery(ExportExplanations
 
 router.get('/health', asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const { healthMonitor } = require('../../services/ai/healthMonitor');
+        const { healthMonitor } = await import('../../services/ai/healthMonitor.js').then(m => m);
         const status = healthMonitor.getStatus();
 
         res.json({
@@ -958,7 +945,7 @@ router.get('/health', asyncHandler(async (req: AuthRequest, res: Response) => {
 
 router.post('/health/diagnose', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const { healthMonitor } = require('../../services/ai/healthMonitor');
+        const { healthMonitor } = await import('../../services/ai/healthMonitor.js').then(m => m);
         const results = await healthMonitor.runDiagnostics();
         res.json(results);
     } catch (err) {
@@ -974,7 +961,7 @@ router.post('/health/diagnose', verifyToken, asyncHandler(async (req: AuthReques
 router.get('/suggestions', verifyToken, validateQuery(GetSuggestionsQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
         const { projectId } = req.query as { projectId?: string };
-        const smartSuggestions = require('../../services/ai/smartSuggestions');
+        const smartSuggestions = await import('../../services/ai/smartSuggestions.js').then(m => (m as any).default || m);
 
         const suggestions = await smartSuggestions.getCachedSuggestions(
             req.userId!,
@@ -995,7 +982,7 @@ router.get('/suggestions', verifyToken, validateQuery(GetSuggestionsQuerySchema)
 router.post('/suggestions', verifyToken, validateBody(PostSuggestionsRequestSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
         const { projectId, conversationContext } = req.body;
-        const smartSuggestions = require('../../services/ai/smartSuggestions');
+        const smartSuggestions = await import('../../services/ai/smartSuggestions.js').then(m => (m as any).default || m);
 
         const suggestions = await smartSuggestions.getSuggestions(
             req.userId!,
@@ -1015,7 +1002,7 @@ router.post('/suggestions', verifyToken, validateBody(PostSuggestionsRequestSche
 
 // ==================== APPROVAL PATTERNS ====================
 
-const ApprovalPatternService = require('../../services/approvalPatternService');
+const ApprovalPatternService = await import('../../services/approvalPatternService.js').then(m => (m as any).default || m);
 
 router.get('/patterns', verifyToken, validateQuery(GetPatternsQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
@@ -1068,11 +1055,11 @@ router.delete('/patterns/:patternId', verifyToken, validateParams(PatternIdParam
 
 router.post('/actions/:actionId/approve', verifyToken, validateParams(z.object({ actionId: z.string().uuid() })), validateBody(ApproveActionRequestSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const { alwaysApprove } = req.body;
-        const AIActionExecutor = getAIActionExecutor();
+        const alwaysApprove = (req.body as any).alwaysApprove;
+        const AIActionExecutor = await getAIActionExecutor();
         const result = await AIActionExecutor.approveAction(
-            (req.params as { actionId: string }).actionId,
-            req.userId!,
+            (req.params as any).actionId,
+            req.userId as string,
             { alwaysApprove }
         );
         res.json(result);
@@ -1084,11 +1071,11 @@ router.post('/actions/:actionId/approve', verifyToken, validateParams(z.object({
 
 router.post('/actions/:actionId/reject', verifyToken, validateParams(z.object({ actionId: z.string().uuid() })), validateBody(RejectActionRequestSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const { reason, alwaysReject } = req.body;
-        const AIActionExecutor = getAIActionExecutor();
+        const { reason, alwaysReject } = req.body as any;
+        const AIActionExecutor = await getAIActionExecutor();
         const result = await AIActionExecutor.rejectAction(
-            (req.params as { actionId: string }).actionId,
-            req.userId!,
+            (req.params as any).actionId,
+            req.userId as string,
             reason,
             { alwaysReject }
         );
@@ -1102,17 +1089,17 @@ router.post('/actions/:actionId/reject', verifyToken, validateParams(z.object({ 
 router.get('/actions/pending', verifyToken, validateQuery(GetPendingActionsQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
         const { projectId } = req.query as { projectId?: string };
-        const AIActionExecutor = getAIActionExecutor();
+        const AIActionExecutor = await getAIActionExecutor();
         const actions = await AIActionExecutor.getPendingActions(
-            req.userId!,
-            projectId,
-            req.organizationId!
+            req.userId as string,
+            projectId || null,
+            req.organizationId as string
         );
 
         const actionsWithPatterns = await Promise.all(
             (Array.isArray(actions) ? actions : []).map(async (action: Record<string, unknown>) => {
-                const patternInfo = await AIActionExecutor.getPatternInfo(
-                    req.userId!,
+                const patternInfo = await (AIActionExecutor as any).getPatternInfo(
+                    req.userId as string,
                     action.action_type as string,
                     (action.payload as Record<string, unknown>) || {}
                 );
@@ -1135,9 +1122,9 @@ router.post('/feedback', verifyToken, validateBody(RecordFeedbackRequestSchema),
 
     try {
         console.log(`[AI Feedback] User ${userId} rated message ${messageId} as ${rating}`);
-        
+
         try {
-            const aiLogger = require('../../services/ai/logger');
+            const aiLogger = await import('../../services/ai/logger.js').then(m => (m as any).default || m);
             await aiLogger.log('feedback', {
                 userId,
                 messageId,
@@ -1161,9 +1148,9 @@ router.post('/report', verifyToken, validateBody(ReportMessageRequestSchema), as
 
     try {
         console.error(`[AI REPORT] 🚨 User ${userId} reported message ${messageId}: ${reason}`);
-        
+
         try {
-            const aiLogger = require('../../services/ai/logger');
+            const aiLogger = await import('../../services/ai/logger.js').then(m => (m as any).default || m);
             await aiLogger.log('report', {
                 userId,
                 messageId,
@@ -1186,14 +1173,14 @@ router.post('/report', verifyToken, validateBody(ReportMessageRequestSchema), as
 
 router.get('/memory/metrics', verifyToken, validateQuery(GetMemoryMetricsQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const AIMemoryMetricsService = require('../../services/ai/aiMemoryMetricsService');
-        const { period } = req.query as { period: number };
-        
+        const AIMemoryMetricsService = await import('../../services/ai/aiMemoryMetricsService.js').then(m => (m as any).default || m);
+        const { period } = req.query as any;
+
         const metrics = await AIMemoryMetricsService.getDashboardMetrics(
             req.organizationId!,
             period
         );
-        
+
         res.json({ success: true, ...metrics });
     } catch (err) {
         console.error('[AI] Memory metrics error:', err);
@@ -1203,14 +1190,14 @@ router.get('/memory/metrics', verifyToken, validateQuery(GetMemoryMetricsQuerySc
 
 router.get('/memory/current', verifyToken, validateQuery(GetCurrentMemoryQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const AIMemoryMetricsService = require('../../services/ai/aiMemoryMetricsService');
-        const { projectId } = req.query as { projectId?: string };
-        
+        const AIMemoryMetricsService = await import('../../services/ai/aiMemoryMetricsService.js').then(m => (m as any).default || m);
+        const { projectId } = req.query as any;
+
         const state = await AIMemoryMetricsService.getCurrentMemoryState(
             projectId,
             req.organizationId!
         );
-        
+
         res.json({ success: true, ...state });
     } catch (err) {
         console.error('[AI] Current memory state error:', err);
@@ -1220,14 +1207,14 @@ router.get('/memory/current', verifyToken, validateQuery(GetCurrentMemoryQuerySc
 
 router.get('/memory/latency', verifyToken, validateQuery(GetMemoryLatencyQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const AIMemoryMetricsService = require('../../services/ai/aiMemoryMetricsService');
-        const { hours } = req.query as { hours: number };
-        
+        const AIMemoryMetricsService = await import('../../services/ai/aiMemoryMetricsService.js').then(m => (m as any).default || m);
+        const { hours } = req.query as any;
+
         const latency = await AIMemoryMetricsService.getLatencyPercentiles(
             req.organizationId!,
             hours
         );
-        
+
         res.json({ success: true, ...latency });
     } catch (err) {
         console.error('[AI] Latency metrics error:', err);
@@ -1237,13 +1224,13 @@ router.get('/memory/latency', verifyToken, validateQuery(GetMemoryLatencyQuerySc
 
 // ==================== PROACTIVE SUGGESTIONS ====================
 
-const ProactiveSuggestionsService = require('../../services/ai/proactiveSuggestionsService');
-const ResponseQualityService = require('../../services/ai/responseQualityService');
+const ProactiveSuggestionsService = await import('../../services/ai/proactiveSuggestionsService.js').then(m => m.default || m);
+const ResponseQualityService = await import('../../services/ai/responseQualityService.js').then(m => m.default || m);
 
 router.get('/suggestions', verifyToken, validateQuery(GetSuggestionsQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const { projectId, screenContext } = req.query as { projectId?: string; screenContext?: string };
-        
+        const { projectId, screenContext } = req.query as any;
+
         const suggestions = await ProactiveSuggestionsService.generateSuggestions({
             userId: req.userId!,
             organizationId: req.organizationId!,
@@ -1262,7 +1249,7 @@ router.get('/suggestions', verifyToken, validateQuery(GetSuggestionsQuerySchema)
 router.post('/suggestions/action', verifyToken, validateBody(RecordSuggestionActionRequestSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
         const { suggestionId, action, feedback } = req.body;
-        
+
         await ProactiveSuggestionsService.recordSuggestionAction(
             suggestionId,
             req.userId!,
@@ -1279,8 +1266,8 @@ router.post('/suggestions/action', verifyToken, validateBody(RecordSuggestionAct
 
 router.get('/suggestions/metrics', verifyToken, validateQuery(GetSuggestionMetricsQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const { days } = req.query as { days: number };
-        
+        const { days } = req.query as any;
+
         const metrics = await ProactiveSuggestionsService.getSuggestionMetrics(
             req.organizationId!,
             days
@@ -1298,7 +1285,7 @@ router.get('/suggestions/metrics', verifyToken, validateQuery(GetSuggestionMetri
 router.post('/quality/calculate', verifyToken, validateBody(CalculateQualityRequestSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
         const { query, response, context, sources } = req.body;
-        
+
         const metrics = await ResponseQualityService.calculateQuality({
             query,
             response,
@@ -1318,8 +1305,8 @@ router.post('/quality/calculate', verifyToken, validateBody(CalculateQualityRequ
 
 router.get('/quality/aggregate', verifyToken, validateQuery(GetAggregateQualityQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const { days } = req.query as { days: number };
-        
+        const { days } = req.query as any;
+
         const metrics = await ResponseQualityService.getAggregateMetrics(
             req.organizationId!,
             days
@@ -1334,8 +1321,8 @@ router.get('/quality/aggregate', verifyToken, validateQuery(GetAggregateQualityQ
 
 router.get('/quality/trends', verifyToken, validateQuery(GetQualityTrendsQuerySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const { days } = req.query as { days: number };
-        
+        const { days } = req.query as any;
+
         const trends = await ResponseQualityService.getQualityTrends(
             req.organizationId!,
             days

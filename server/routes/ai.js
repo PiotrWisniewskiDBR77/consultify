@@ -1220,8 +1220,8 @@ router.get('/memory/latency', verifyToken, async (req, res) => {
 
 // ==================== PROACTIVE SUGGESTIONS ====================
 
-const ProactiveSuggestionsService = require('../services/ai/proactiveSuggestionsService');
-const ResponseQualityService = require('../services/ai/responseQualityService');
+const ProactiveSuggestionsService = await import('../services/ai/proactiveSuggestionsService.js').then(m => m.default || m);
+const ResponseQualityService = await import('../services/ai/responseQualityService.js').then(m => m.default || m);
 
 // GET /api/ai/suggestions - Get proactive suggestions based on context
 router.get('/suggestions', verifyToken, async (req, res) => {

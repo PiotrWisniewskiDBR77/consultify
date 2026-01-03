@@ -9,10 +9,10 @@
  * - Long-term roadmap planning
  */
 
-const { BaseAgent } = require('./baseAgent');
-const llmService = require('../llmService');
+import { BaseAgent } from './baseAgent.js';
+import llmService from '../llmService.js';
 
-class StrategyAgent extends BaseAgent {
+export class StrategyAgent extends BaseAgent {
     constructor(config = {}) {
         super({
             name: 'StrategyAgent',
@@ -279,10 +279,4 @@ For each initiative provide:
     }
 }
 
-module.exports = { StrategyAgent };
-
-
-
-
-
-
+export default StrategyAgent;

@@ -6,7 +6,9 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import type { AuthRequest } from './auth.middleware';
+import type { AuthRequest } from './auth.middleware.js';
+import { get as dbGet } from '../utils/DbPromise.js';
+import { getDatabase } from '../database/Database.js';
 
 // ==========================================
 // TYPES
@@ -72,7 +74,7 @@ let deps: Dependencies;
 
 const getDeps = (): Dependencies => {
     if (!deps) {
-        const defaultDb = require('../../database');
+        const defaultDb = await import('../../database.js').then(m => m.default || m);
         deps = { db: defaultDb };
     }
     return deps;
@@ -91,8 +93,6 @@ const getDeps = (): Dependencies => {
 export const checkPlanLimit = (limitKey: keyof PlanLimits) => {
     return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { db } = getDeps();
-            
             const orgId = req.user?.organizationId || req.user?.organization_id;
             if (!orgId) {
                 res.status(403).json({ error: 'No organization found' });
@@ -100,12 +100,7 @@ export const checkPlanLimit = (limitKey: keyof PlanLimits) => {
             }
 
             // 1. Get Organization Plan
-            const org = await new Promise<OrganizationRow | null>((resolve, reject) => {
-                db.get('SELECT plan, status FROM organizations WHERE id = ?', [orgId], (err, row) => {
-                    if (err) reject(err);
-                    else resolve(row as OrganizationRow | null);
-                });
-            });
+            const org = await dbGet<OrganizationRow>('SELECT plan, status FROM organizations WHERE id = ?', [orgId]);
 
             if (!org) {
                 res.status(404).json({ error: 'Organization not found' });
@@ -128,21 +123,11 @@ export const checkPlanLimit = (limitKey: keyof PlanLimits) => {
             let currentCount = 0;
 
             if (limitKey === 'max_projects') {
-                const result = await new Promise<CountRow>((resolve, reject) => {
-                    db.get('SELECT COUNT(*) as count FROM projects WHERE organization_id = ? AND status != "archived"', [orgId], (err, row) => {
-                        if (err) reject(err);
-                        else resolve(row as CountRow);
-                    });
-                });
-                currentCount = result.count;
+                const result = await dbGet<CountRow>('SELECT COUNT(*) as count FROM projects WHERE organization_id = ? AND status != "archived"', [orgId]);
+                currentCount = result?.count || 0;
             } else if (limitKey === 'max_members') {
-                const result = await new Promise<CountRow>((resolve, reject) => {
-                    db.get('SELECT COUNT(*) as count FROM users WHERE organization_id = ?', [orgId], (err, row) => {
-                        if (err) reject(err);
-                        else resolve(row as CountRow);
-                    });
-                });
-                currentCount = result.count;
+                const result = await dbGet<CountRow>('SELECT COUNT(*) as count FROM users WHERE organization_id = ?', [orgId]);
+                currentCount = result?.count || 0;
             }
             // Add other checks (storage, models) here as needed
 

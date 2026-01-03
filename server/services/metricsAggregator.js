@@ -17,7 +17,7 @@
 
 const db = require('../database');
 const { v4: uuidv4 } = require('uuid');
-const MetricsCollector = require('./metricsCollector');
+import MetricsCollector from './metricsCollector.js';
 
 /**
  * Metric key constants for snapshots

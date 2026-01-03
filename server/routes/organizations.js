@@ -169,7 +169,7 @@ router.post('/:orgId/consultants', async (req, res) => {
         }
 
         // We need ConsultantService for linking
-        const ConsultantService = require('../services/consultantService');
+        const ConsultantService = await import('../services/consultantService.js').then(m => m.default || m);
         const link = await ConsultantService.linkConsultantToOrg(consultantId, orgId, userId, permissions);
         res.status(201).json(link);
     } catch (err) {

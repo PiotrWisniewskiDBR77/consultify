@@ -2,33 +2,60 @@
  * Gamification Routes
  * API endpoints for gamification
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript
+ * Fully migrated to TypeScript ES modules
  */
 
-import { Router } from 'express';
-import { createRequire } from 'module';
+import { Router, Response } from 'express';
+import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
-const require = createRequire(import.meta.url);
-
-// Import the JS implementation for now (will be fully migrated later)
-const gamificationRoutesJS = require('../../routes/gamification.js');
-
-// Create router and apply JS routes
 const router = Router();
 
-// Re-export the JS router (maintains backward compatibility)
-// The JS route file exports a router that we can use directly
-if (typeof gamificationRoutesJS === 'function') {
-    // If it's a router function, use it
-    router.use(gamificationRoutesJS);
-} else if (gamificationRoutesJS.default) {
-    // If it has a default export
-    router.use(gamificationRoutesJS.default);
-} else {
-    // If it's the router itself
-    router.use(gamificationRoutesJS);
+// Service interfaces
+interface GamificationServiceInterface {
+    getUserProfile?: (userId: string) => Promise<unknown>;
+    getUserAchievements?: (userId: string) => Promise<unknown>;
 }
+
+// Dynamic import for GamificationService (may not be migrated yet)
+let GamificationService: GamificationServiceInterface | null = null;
+
+try {
+    const gamificationModule = await import('../../services/gamificationService.js');
+    GamificationService = (gamificationModule.default || gamificationModule) as GamificationServiceInterface;
+} catch {
+    console.warn('[Gamification Routes] GamificationService not available');
+}
+
+/**
+ * GET /api/gamification/me
+ * Get current user's stats and achievements
+ */
+router.get('/me', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!GamificationService?.getUserProfile || !GamificationService?.getUserAchievements) {
+        return res.status(503).json({ error: 'Gamification service not available' });
+    }
+
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const profile = await GamificationService.getUserProfile(userId);
+        const achievements = await GamificationService.getUserAchievements(userId);
+
+        res.json({
+            success: true,
+            data: {
+                ...(profile as Record<string, unknown>),
+                achievements
+            }
+        });
+    } catch (error: unknown) {
+        console.error('Gamification profile error:', error);
+        res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+}));
 
 export default router;

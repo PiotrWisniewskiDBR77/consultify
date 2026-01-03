@@ -1,76 +1,45 @@
+import BaseService from './BaseService.js';
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
+import config from '../config.js';
+
 /**
  * Refresh Token Service
  * 
  * Handles secure refresh token management for JWT authentication.
- * 
- * Features:
- * - Secure token generation with family tracking
- * - Token rotation on refresh
- * - Refresh token theft detection
- * - Device tracking for session management
- * - Automatic cleanup of expired tokens
- * 
- * Security:
- * - Tokens hashed with SHA-256 before storage
- * - Token families for rotation detection
- * - Immediate revocation on suspicious activity
  */
+class RefreshTokenService extends BaseService {
+    constructor() {
+        super();
+        this.CONFIG = {
+            ACCESS_TOKEN_EXPIRY: '365d', // Long-lived for development
+            ACCESS_TOKEN_EXPIRY_MS: 365 * 24 * 60 * 60 * 1000, // 1 year
+            REFRESH_TOKEN_EXPIRY_DAYS: 365,
+            MAX_SESSIONS_PER_USER: 10
+        };
+    }
 
-import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
-import { v4 as uuidv4 } from 'uuid';
-import db from '../database.js';
-import config from '../config.js';
+    /**
+     * Initialize dependencies
+     */
+    async init() {
+        await super.init();
+        return this;
+    }
 
-// Configuration
-const CONFIG = {
-    ACCESS_TOKEN_EXPIRY: '365d', // Long-lived for development
-    ACCESS_TOKEN_EXPIRY_MS: 365 * 24 * 60 * 60 * 1000, // 1 year
-    REFRESH_TOKEN_EXPIRY_DAYS: 365,
-    MAX_SESSIONS_PER_USER: 10
-};
+    /**
+     * Hash token for storage
+     */
+    _hashToken(token) {
+        return crypto.createHash('sha256').update(token).digest('hex');
+    }
 
-// Database helpers
-function dbGet(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.get(sql, params, (err, row) => {
-            if (err) reject(err);
-            else resolve(row);
-        });
-    });
-}
-
-function dbRun(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.run(sql, params, function (err) {
-            if (err) reject(err);
-            else resolve({ lastID: this.lastID, changes: this.changes });
-        });
-    });
-}
-
-function dbAll(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.all(sql, params, (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows || []);
-        });
-    });
-}
-
-// Hash token for storage
-function hashToken(token) {
-    return crypto.createHash('sha256').update(token).digest('hex');
-}
-
-const RefreshTokenService = {
     /**
      * Generate new token pair (access + refresh)
-     * @param {Object} user - User object
-     * @param {Object} options - Options like device info
-     * @returns {Promise<{accessToken: string, refreshToken: string, expiresIn: number}>}
      */
     async generateTokenPair(user, options = {}) {
+        await this.init();
         const { deviceInfo = 'Unknown Device', ip = null, userAgent = null } = options;
 
         // Clean up excess sessions (keep only MAX_SESSIONS)
@@ -80,7 +49,7 @@ const RefreshTokenService = {
         const jti = uuidv4();
         const tokenFamily = uuidv4();
         const refreshToken = crypto.randomBytes(64).toString('hex');
-        const refreshTokenHash = hashToken(refreshToken);
+        const refreshTokenHash = this._hashToken(refreshToken);
 
         // Access token (short-lived)
         const accessToken = jwt.sign(
@@ -92,15 +61,15 @@ const RefreshTokenService = {
                 jti
             },
             config.JWT_SECRET,
-            { expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY }
+            { expiresIn: this.CONFIG.ACCESS_TOKEN_EXPIRY }
         );
 
         // Store refresh token
         const expiresAt = new Date(
-            Date.now() + CONFIG.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
+            Date.now() + this.CONFIG.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
         ).toISOString();
 
-        await dbRun(
+        await this.queryRun(
             `INSERT INTO refresh_tokens 
              (id, user_id, token_hash, token_family, device_info, ip_address, user_agent, expires_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -110,23 +79,21 @@ const RefreshTokenService = {
         return {
             accessToken,
             refreshToken,
-            expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY_MS,
-            expiresAt: new Date(Date.now() + CONFIG.ACCESS_TOKEN_EXPIRY_MS).toISOString()
+            expiresIn: this.CONFIG.ACCESS_TOKEN_EXPIRY_MS,
+            expiresAt: new Date(Date.now() + this.CONFIG.ACCESS_TOKEN_EXPIRY_MS).toISOString()
         };
-    },
+    }
 
     /**
      * Refresh access token using refresh token
-     * @param {string} refreshToken - The refresh token
-     * @param {Object} options - Options like IP for tracking
-     * @returns {Promise<{accessToken: string, refreshToken: string} | null>}
      */
     async refreshAccessToken(refreshToken, options = {}) {
+        await this.init();
         const { ip = null, userAgent = null } = options;
-        const tokenHash = hashToken(refreshToken);
+        const tokenHash = this._hashToken(refreshToken);
 
         // Find valid refresh token
-        const storedToken = await dbGet(
+        const storedToken = await this.queryOne(
             `SELECT rt.*, u.email, u.role, u.organization_id, u.status as user_status
              FROM refresh_tokens rt
              JOIN users u ON rt.user_id = u.id
@@ -138,25 +105,22 @@ const RefreshTokenService = {
 
         if (!storedToken) {
             // Check if this is a reused token (potential theft)
-            const revokedToken = await dbGet(
+            const revokedToken = await this.queryOne(
                 `SELECT * FROM refresh_tokens WHERE token_hash = ? AND revoked_at IS NOT NULL`,
                 [tokenHash]
             );
 
             if (revokedToken) {
                 // Check if token was revoked very recently (within grace period)
-                // This handles multi-tab race conditions where multiple tabs try to refresh
                 const GRACE_PERIOD_SECONDS = 10;
                 const revokedAt = new Date(revokedToken.revoked_at).getTime();
                 const now = Date.now();
                 const secondsSinceRevoke = (now - revokedAt) / 1000;
 
                 if (revokedToken.revoked_reason === 'rotation' && secondsSinceRevoke < GRACE_PERIOD_SECONDS) {
-                    // Token was just rotated - this is likely a multi-tab race condition
-                    // Return the latest valid token from the same family instead of treating as theft
-                    console.log(`[RefreshToken] Grace period: Token was rotated ${secondsSinceRevoke.toFixed(1)}s ago, looking for new token in family`);
+                    console.log(`[RefreshToken] Grace period: Token was rotated ${secondsSinceRevoke.toFixed(1)}s ago`);
 
-                    const latestToken = await dbGet(
+                    const latestToken = await this.queryOne(
                         `SELECT rt.*, u.email, u.role, u.organization_id, u.status as user_status
                          FROM refresh_tokens rt
                          JOIN users u ON rt.user_id = u.id
@@ -169,11 +133,6 @@ const RefreshTokenService = {
                     );
 
                     if (latestToken) {
-                        // Found a valid token in the same family - return new tokens based on it
-                        // but DON'T rotate again (let the original refresh handle that)
-                        console.log(`[RefreshToken] Grace period: Found valid token in family, returning current tokens`);
-
-                        // Generate new access token only (don't rotate refresh token again)
                         const jti = uuidv4();
                         const accessToken = jwt.sign(
                             {
@@ -184,22 +143,20 @@ const RefreshTokenService = {
                                 jti
                             },
                             config.JWT_SECRET,
-                            { expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY }
+                            { expiresIn: this.CONFIG.ACCESS_TOKEN_EXPIRY }
                         );
 
-                        // Return the existing refresh token from localStorage (client should still have it)
-                        // This prevents double-rotation issues
                         return {
                             accessToken,
-                            refreshToken: null, // Signal to client to keep existing refresh token
-                            expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY_MS,
+                            refreshToken: null,
+                            expiresIn: this.CONFIG.ACCESS_TOKEN_EXPIRY_MS,
                             gracePeriod: true
                         };
                     }
                 }
 
-                // Token was already used outside grace period - revoke entire family (security breach)
-                console.warn(`[RefreshToken] SECURITY: Reused token detected for user ${revokedToken.user_id} (${secondsSinceRevoke.toFixed(1)}s since revoke)`);
+                // Token was already used outside grace period - revoke entire family
+                console.warn(`[RefreshToken] SECURITY: Reused token detected for user ${revokedToken.user_id}`);
                 await this._revokeTokenFamily(revokedToken.token_family, 'security');
             }
 
@@ -208,23 +165,23 @@ const RefreshTokenService = {
 
         // Check if user is still active
         if (storedToken.user_status !== 'active') {
-            await this._revokeAllUserTokens(storedToken.user_id, 'user_inactive');
+            await this.revokeAllUserTokens(storedToken.user_id, 'user_inactive');
             return null;
         }
 
         // Revoke current token (rotation)
-        await dbRun(
+        await this.queryRun(
             `UPDATE refresh_tokens SET revoked_at = datetime('now'), revoked_reason = 'rotation' WHERE id = ?`,
             [storedToken.id]
         );
 
         // Generate new token pair (same family)
         const newRefreshToken = crypto.randomBytes(64).toString('hex');
-        const newRefreshTokenHash = hashToken(newRefreshToken);
+        const newRefreshTokenHash = this._hashToken(newRefreshToken);
         const jti = uuidv4();
 
         const expiresAt = new Date(
-            Date.now() + CONFIG.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
+            Date.now() + this.CONFIG.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
         ).toISOString();
 
         // New access token
@@ -237,11 +194,11 @@ const RefreshTokenService = {
                 jti
             },
             config.JWT_SECRET,
-            { expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY }
+            { expiresIn: this.CONFIG.ACCESS_TOKEN_EXPIRY }
         );
 
         // Store new refresh token (same family)
-        await dbRun(
+        await this.queryRun(
             `INSERT INTO refresh_tokens 
              (id, user_id, token_hash, token_family, device_info, ip_address, user_agent, expires_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -260,52 +217,53 @@ const RefreshTokenService = {
         return {
             accessToken,
             refreshToken: newRefreshToken,
-            expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY_MS
+            expiresIn: this.CONFIG.ACCESS_TOKEN_EXPIRY_MS
         };
-    },
+    }
 
     /**
      * Revoke a specific refresh token
-     * @param {string} refreshToken 
-     * @param {string} reason 
      */
     async revokeToken(refreshToken, reason = 'logout') {
-        const tokenHash = hashToken(refreshToken);
+        await this.init();
+        const tokenHash = this._hashToken(refreshToken);
 
-        await dbRun(
+        await this.queryRun(
             `UPDATE refresh_tokens SET revoked_at = datetime('now'), revoked_reason = ? WHERE token_hash = ?`,
             [reason, tokenHash]
         );
-    },
+    }
 
     /**
-     * Revoke all tokens for a user (logout from all devices)
-     * @param {string} userId 
-     * @param {string} reason
+     * Revoke all tokens for a user
      */
     async revokeAllUserTokens(userId, reason = 'logout_all') {
-        await this._revokeAllUserTokens(userId, reason);
-    },
+        await this.init();
+        await this.queryRun(
+            `UPDATE refresh_tokens SET revoked_at = datetime('now'), revoked_reason = ? 
+             WHERE user_id = ? AND revoked_at IS NULL`,
+            [reason, userId]
+        );
+    }
 
     /**
      * Revoke a specific session by ID
-     * @param {string} userId 
-     * @param {string} sessionId 
      */
     async revokeSession(userId, sessionId) {
-        await dbRun(
+        await this.init();
+        await this.queryRun(
             `UPDATE refresh_tokens SET revoked_at = datetime('now'), revoked_reason = 'session_revoked' 
              WHERE id = ? AND user_id = ?`,
             [sessionId, userId]
         );
-    },
+    }
 
     /**
      * Get active sessions for a user
-     * @param {string} userId 
      */
     async getActiveSessions(userId) {
-        const sessions = await dbAll(
+        await this.init();
+        const sessions = await this.queryAll(
             `SELECT id, device_info, ip_address, created_at, last_used_at
              FROM refresh_tokens
              WHERE user_id = ? AND revoked_at IS NULL AND expires_at > datetime('now')
@@ -320,53 +278,44 @@ const RefreshTokenService = {
             createdAt: s.created_at,
             lastUsedAt: s.last_used_at
         }));
-    },
+    }
 
     /**
-     * Cleanup expired tokens (run via cron)
+     * Cleanup expired tokens
      */
     async cleanupExpiredTokens() {
-        const result = await dbRun(
+        await this.init();
+        const result = await this.queryRun(
             `DELETE FROM refresh_tokens WHERE expires_at < datetime('now') OR revoked_at < datetime('now', '-7 days')`
         );
 
         console.log(`[RefreshToken] Cleanup: Removed ${result.changes} expired tokens`);
         return result.changes;
-    },
+    }
 
     // ==========================================
     // PRIVATE HELPERS
     // ==========================================
 
-    async _revokeAllUserTokens(userId, reason) {
-        await dbRun(
-            `UPDATE refresh_tokens SET revoked_at = datetime('now'), revoked_reason = ? 
-             WHERE user_id = ? AND revoked_at IS NULL`,
-            [reason, userId]
-        );
-    },
-
     async _revokeTokenFamily(tokenFamily, reason) {
-        await dbRun(
+        await this.queryRun(
             `UPDATE refresh_tokens SET revoked_at = datetime('now'), revoked_reason = ? 
              WHERE token_family = ? AND revoked_at IS NULL`,
             [reason, tokenFamily]
         );
-    },
+    }
 
     async _enforceSessionLimit(userId) {
-        // Count active sessions
-        const countResult = await dbGet(
+        const countResult = await this.queryOne(
             `SELECT COUNT(*) as count FROM refresh_tokens 
              WHERE user_id = ? AND revoked_at IS NULL AND expires_at > datetime('now')`,
             [userId]
         );
 
-        if (countResult && countResult.count >= CONFIG.MAX_SESSIONS_PER_USER) {
-            // Revoke oldest sessions
-            const excess = countResult.count - CONFIG.MAX_SESSIONS_PER_USER + 1;
+        if (countResult && countResult.count >= this.CONFIG.MAX_SESSIONS_PER_USER) {
+            const excess = countResult.count - this.CONFIG.MAX_SESSIONS_PER_USER + 1;
 
-            await dbRun(
+            await this.queryRun(
                 `UPDATE refresh_tokens SET revoked_at = datetime('now'), revoked_reason = 'session_limit'
                  WHERE id IN (
                      SELECT id FROM refresh_tokens 
@@ -378,6 +327,8 @@ const RefreshTokenService = {
             );
         }
     }
-};
+}
 
-export default RefreshTokenService;
+const service = new RefreshTokenService();
+export default service;
+

@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const generic_reportsRoutesJS = require('../../routes/generic-reports.js');
+const generic_reportsRoutesJSPromise = (async () => {
+    const module = await import('../../routes/generic-reports.js');
+    return module.default || module;
+})();
+const generic_reportsRoutesJS = generic_reportsRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

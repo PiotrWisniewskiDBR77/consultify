@@ -12,7 +12,7 @@
  * @param {array} params - Parameters for prepared statement
  * @returns {Promise<{changes: number, lastID: number}>}
  */
-function runAsync(db, sql, params = []) {
+export function runAsync(db, sql, params = []) {
     return new Promise((resolve, reject) => {
         db.run(sql, params, function (err) {
             if (err) return reject(err);
@@ -21,14 +21,7 @@ function runAsync(db, sql, params = []) {
     });
 }
 
-/**
- * Execute a SQL query that returns a single row
- * @param {object} db - sqlite3 database instance
- * @param {string} sql - SQL query
- * @param {array} params - Parameters for prepared statement
- * @returns {Promise<object|undefined>}
- */
-function getAsync(db, sql, params = []) {
+export function getAsync(db, sql, params = []) {
     return new Promise((resolve, reject) => {
         db.get(sql, params, (err, row) => {
             if (err) return reject(err);
@@ -37,14 +30,7 @@ function getAsync(db, sql, params = []) {
     });
 }
 
-/**
- * Execute a SQL query that returns multiple rows
- * @param {object} db - sqlite3 database instance
- * @param {string} sql - SQL query
- * @param {array} params - Parameters for prepared statement
- * @returns {Promise<array>}
- */
-function allAsync(db, sql, params = []) {
+export function allAsync(db, sql, params = []) {
     return new Promise((resolve, reject) => {
         db.all(sql, params, (err, rows) => {
             if (err) return reject(err);
@@ -53,16 +39,7 @@ function allAsync(db, sql, params = []) {
     });
 }
 
-/**
- * Execute a function within a transaction
- * Uses BEGIN IMMEDIATE for better serialization in high-concurrency scenarios
- * 
- * @param {object} db - sqlite3 database instance
- * @param {function} fn - Async function to execute within transaction
- * @returns {Promise<any>} - Result of fn()
- * @throws {Error} - If fn throws, transaction is rolled back and error is re-thrown
- */
-async function withTransaction(db, fn) {
+export async function withTransaction(db, fn) {
     await runAsync(db, 'BEGIN IMMEDIATE');
     try {
         const result = await fn();
@@ -77,5 +54,3 @@ async function withTransaction(db, fn) {
         throw e;
     }
 }
-
-module.exports = { runAsync, getAsync, allAsync, withTransaction };

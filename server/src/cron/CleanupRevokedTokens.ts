@@ -9,6 +9,7 @@ import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
 import { getConfig } from '../config/Config.js';
 import logger from '../utils/Logger.js';
+import { run as dbRun } from '../utils/DbPromise.js';
 
 // ==========================================
 // TYPES
@@ -40,24 +41,25 @@ class CleanupRevokedTokensCron {
     async cleanupRevokedTokens(): Promise<number> {
         logger.info('[Cron] Cleaning up expired revoked tokens...');
 
-        return new Promise((resolve, reject) => {
-            this.deps.db.run(
+        try {
+            const runResult = await dbRun(
                 "DELETE FROM revoked_tokens WHERE expires_at < datetime('now')",
-                [],
-                function (err) {
-                    if (err) {
-                        logger.error('[Cron] Error cleaning up revoked tokens:', err);
-                        reject(err);
-                    } else {
-                        const deleted = this.changes || 0;
-                        if (deleted > 0) {
-                            logger.info(`[Cron] Removed ${deleted} expired revoked tokens`);
-                        }
-                        resolve(deleted);
-                    }
-                }
+                []
             );
-        });
+
+            if (!runResult.success) {
+                throw new Error(runResult.error || 'Failed to cleanup revoked tokens');
+            }
+
+            const deleted = runResult.changes || 0;
+            if (deleted > 0) {
+                logger.info(`[Cron] Removed ${deleted} expired revoked tokens`);
+            }
+            return deleted;
+        } catch (err) {
+            logger.error('[Cron] Error cleaning up revoked tokens:', err);
+            throw err;
+        }
     }
 
     /**

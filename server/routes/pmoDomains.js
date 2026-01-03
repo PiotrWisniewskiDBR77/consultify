@@ -1,24 +1,9 @@
-/**
- * PMO Domains API Routes
- * 
- * SCMS Meta-PMO Framework: RESTful API for domain management
- * 
- * Provides endpoints for:
- * - Querying PMO domains with standards mapping
- * - Configuring per-project domain enablement
- * - Accessing the standards mapping table
- * - Retrieving audit trails for certification
- * 
- * Standards: ISO 21500, PMI PMBOK 7th Ed, PRINCE2
- * 
- * @module routes/pmoDomains
- */
+import express from 'express';
+import PMODomainRegistry from '../services/pmoDomainRegistry.js';
+import PMOStandardsMapping from '../services/pmoStandardsMapping.js';
+import auth from '../middleware/authMiddleware.js';
 
-const express = require('express');
 const router = express.Router();
-const PMODomainRegistry = require('../services/pmoDomainRegistry');
-const PMOStandardsMapping = require('../services/pmoStandardsMapping');
-const auth = require('../middleware/authMiddleware');
 
 /**
  * GET /api/pmo-domains
@@ -327,4 +312,4 @@ router.post('/seed', auth, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

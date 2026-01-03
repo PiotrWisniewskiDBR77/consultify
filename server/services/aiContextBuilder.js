@@ -2,43 +2,64 @@
 // AI Core Layer — Enterprise PMO Brain
 // Enhanced with HITL pending approvals context
 
-const db = require('../database');
-// Step A: Import PMOHealthService for canonical health snapshot
-let PMOHealthService;
-try {
-    PMOHealthService = require('./pmoHealthService');
-} catch (e) {
-    console.warn('[AIContextBuilder] PMOHealthService not available, pmo.healthSnapshot will be null');
+import db from '../database.js';
+import crypto from 'crypto';
+
+// Lazy loading dependencies to avoid circular dependencies in ESM
+let _pmoHealthService = null;
+async function getPMOHealthService() {
+    if (!_pmoHealthService) {
+        try {
+            const mod = await import('./pmoHealthService.js');
+            _pmoHealthService = mod.default || mod.pmoHealthService || mod;
+        } catch (e) {
+            console.warn('[AIContextBuilder] PMOHealthService not available, pmo.healthSnapshot will be null');
+        }
+    }
+    return _pmoHealthService;
 }
 
-// Step B: Import AIActionExecutor for pending approvals context
-let AIActionExecutor;
-try {
-    AIActionExecutor = require('./aiActionExecutor');
-} catch (e) {
-    console.warn('[AIContextBuilder] AIActionExecutor not available, pendingApprovals will be empty');
+let _aiActionExecutor = null;
+async function getAIActionExecutor() {
+    if (!_aiActionExecutor) {
+        try {
+            const mod = await import('./aiActionExecutor.js');
+            _aiActionExecutor = mod.default || mod.aiActionExecutor || mod;
+        } catch (e) {
+            console.warn('[AIContextBuilder] AIActionExecutor not available, pendingApprovals will be empty');
+        }
+    }
+    return _aiActionExecutor;
 }
 
-// AI Settings Service for effective settings
-let AISettingsService;
-try {
-    AISettingsService = require('./aiSettingsService');
-} catch (e) {
-    console.warn('[AIContextBuilder] AISettingsService not available, effectiveSettings will be null');
+let _aiSettingsService = null;
+async function getAISettingsService() {
+    if (!_aiSettingsService) {
+        try {
+            const mod = await import('./aiSettingsService.js');
+            _aiSettingsService = mod.default || mod.aiSettingsService || mod;
+        } catch (e) {
+            console.warn('[AIContextBuilder] AISettingsService not available, effectiveSettings will be null');
+        }
+    }
+    return _aiSettingsService;
 }
 
 // Dependency injection container (for deterministic unit tests)
 const deps = {
     db,
-    PMOHealthService,
-    AIActionExecutor,
-    AISettingsService
+    get PMOHealthService() { return _pmoHealthService; },
+    get AIActionExecutor() { return _aiActionExecutor; },
+    get AISettingsService() { return _aiSettingsService; }
 };
 
-const AIContextBuilder = {
+export const AIContextBuilder = {
     // For testing: allow overriding dependencies
     setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
+        if (newDeps.db) deps.db = newDeps.db;
+        if (newDeps.PMOHealthService) _pmoHealthService = newDeps.PMOHealthService;
+        if (newDeps.AIActionExecutor) _aiActionExecutor = newDeps.AIActionExecutor;
+        if (newDeps.AISettingsService) _aiSettingsService = newDeps.AISettingsService;
     },
     /**
      * Build complete 6-layer context + PMO health snapshot
@@ -53,7 +74,11 @@ const AIContextBuilder = {
      */
     buildContext: async (userId, organizationId, projectId = null, options = {}) => {
         const focusMode = options.focusMode || 'all';
-        
+
+        // Ensure lazy dependencies are loaded
+        const PMOHealthService = await getPMOHealthService();
+        const AISettingsService = await getAISettingsService();
+
         // Build all context layers (some may be filtered based on focusMode)
         const platform = await AIContextBuilder._buildPlatformContext(userId, organizationId);
         const organization = await AIContextBuilder._buildOrganizationContext(organizationId);
@@ -65,9 +90,9 @@ const AIContextBuilder = {
         // Step A: Fetch PMOHealthSnapshot for AI context (same data as UI sees)
         // Only include for 'all', 'pmo-docs', or 'project-data' focus modes
         let pmo = { healthSnapshot: null };
-        if (projectId && deps.PMOHealthService && ['all', 'pmo-docs', 'project-data'].includes(focusMode)) {
+        if (projectId && PMOHealthService && ['all', 'pmo-docs', 'project-data'].includes(focusMode)) {
             try {
-                pmo.healthSnapshot = await deps.PMOHealthService.getHealthSnapshot(projectId);
+                pmo.healthSnapshot = await PMOHealthService.getHealthSnapshot(projectId);
             } catch (err) {
                 console.warn('[AIContextBuilder] Failed to get PMO health snapshot:', err.message);
             }
@@ -78,9 +103,9 @@ const AIContextBuilder = {
 
         // Step C: Fetch effective AI settings for the user
         let aiSettings = null;
-        if (deps.AISettingsService) {
+        if (AISettingsService) {
             try {
-                aiSettings = await deps.AISettingsService.getEffectiveSettings(userId, organizationId);
+                aiSettings = await AISettingsService.getEffectiveSettings(userId, organizationId);
             } catch (err) {
                 console.warn('[AIContextBuilder] Failed to get AI settings:', err.message);
             }
@@ -124,7 +149,7 @@ const AIContextBuilder = {
                 // Only PMO documentation and standards
                 return {
                     platform: fullContext.platform,
-                    organization: { 
+                    organization: {
                         name: fullContext.organization?.name,
                         // Keep minimal org info
                     },
@@ -177,7 +202,7 @@ const AIContextBuilder = {
             case 'web':
                 // Web search focus - minimal internal context
                 return {
-                    platform: { 
+                    platform: {
                         role: fullContext.platform?.role,
                         // Minimal platform info for web search context
                     },
@@ -418,8 +443,8 @@ const AIContextBuilder = {
      * @param {string} focusMode - Focus mode for potential pre-filtering
      */
     _buildKnowledgeContext: async (projectId, focusMode = 'all') => {
-        const KnowledgeService = require('./knowledgeService');
-        
+        const { default: KnowledgeService } = await import('./knowledgeService.js');
+
         // Get organization ID from project
         let organizationId = null;
         if (projectId) {
@@ -520,7 +545,6 @@ const AIContextBuilder = {
         let documents = [];
         if (organizationId) {
             try {
-                const KnowledgeService = require('./knowledgeService');
                 documents = await KnowledgeService.getDocuments(organizationId);
             } catch (err) {
                 console.warn('[AIContextBuilder] Failed to load documents:', err.message);
@@ -584,13 +608,14 @@ const AIContextBuilder = {
      * Provides AI with awareness of pending approvals so it can proactively mention them
      */
     _buildPendingApprovalsContext: async (userId, organizationId, projectId) => {
-        if (!deps.AIActionExecutor) {
+        const AIActionExecutor = await getAIActionExecutor();
+        if (!AIActionExecutor) {
             return { count: 0, actions: [], summary: null };
         }
 
         try {
-            const pendingActions = await deps.AIActionExecutor.getPendingActions(userId, projectId, organizationId);
-            
+            const pendingActions = await AIActionExecutor.getPendingActions(userId, projectId, organizationId);
+
             if (!pendingActions || pendingActions.length === 0) {
                 return { count: 0, actions: [], summary: null };
             }
@@ -600,9 +625,9 @@ const AIContextBuilder = {
                 pendingActions.slice(0, 5).map(async (action) => {
                     let patternInfo = null;
                     try {
-                        patternInfo = await deps.AIActionExecutor.getPatternInfo(
-                            userId, 
-                            action.action_type, 
+                        patternInfo = await AIActionExecutor.getPatternInfo(
+                            userId,
+                            action.action_type,
                             action.payload || {}
                         );
                     } catch (e) {
@@ -648,7 +673,6 @@ const AIContextBuilder = {
      */
     _generateHash: (platform, organization, project) => {
         // Deterministic hash (no time component) for caching/comparison
-        const crypto = require('crypto');
         const data = JSON.stringify({
             tenantId: platform?.tenantId,
             organizationId: organization?.organizationId,
@@ -660,4 +684,4 @@ const AIContextBuilder = {
     }
 };
 
-module.exports = AIContextBuilder;
+export default AIContextBuilder;

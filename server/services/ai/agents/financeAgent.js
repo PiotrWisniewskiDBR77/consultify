@@ -10,10 +10,10 @@
  * - Business case development
  */
 
-const { BaseAgent } = require('./baseAgent');
-const llmService = require('../llmService');
+import { BaseAgent } from './baseAgent.js';
+import llmService from '../llmService.js';
 
-class FinanceAgent extends BaseAgent {
+export class FinanceAgent extends BaseAgent {
     constructor(config = {}) {
         super({
             name: 'FinanceAgent',
@@ -336,10 +336,4 @@ Provide:
     }
 }
 
-module.exports = { FinanceAgent };
-
-
-
-
-
-
+export default FinanceAgent;

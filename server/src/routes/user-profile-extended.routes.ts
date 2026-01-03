@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const user_profile_extendedRoutesJS = require('../../routes/user-profile-extended.js');
+const user_profile_extendedRoutesJSPromise = (async () => {
+    const module = await import('../../routes/user-profile-extended.js');
+    return module.default || module;
+})();
+const user_profile_extendedRoutesJS = user_profile_extendedRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

@@ -1,6 +1,29 @@
-const db = require('../database');
+// Dependency injection for testing
+const deps = {
+    _db: null,
+    _performanceMetrics: null,
 
-const performanceMetrics = require('../middleware/performanceMetrics');
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get performanceMetrics() { return this._performanceMetrics; },
+    set performanceMetrics(val) { this._performanceMetrics = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._performanceMetrics) {
+        const { default: performanceMetrics } = await import('../middleware/performanceMetrics.js');
+        deps._performanceMetrics = performanceMetrics;
+    }
+}
+
 
 /**
  * Service to manage long-term persistence of performance metrics
@@ -11,11 +34,13 @@ const MetricsPersistenceService = {
      * Takes a snapshot of current in-memory metrics and saves to DB.
      * Optionally resets the in-memory counters after saving.
      */
-    async saveSnapshot(reset = true, dbInstance = db) {
+    async saveSnapshot(reset = true, dbInstance = null) => {
+        await initDeps();
+        const db = dbInstance || deps.db;
         try {
             // Get current in-memory metrics (last 60 mins window by default)
-            const summary = performanceMetrics.getMetricsSummary(60);
-            const memory = performanceMetrics.getMemoryMetrics();
+            const summary = deps.performanceMetrics.getMetricsSummary(60);
+            const memory = deps.performanceMetrics.getMemoryMetrics();
 
             const snapshot = {
                 timestamp: new Date().toISOString(),
@@ -61,8 +86,8 @@ const MetricsPersistenceService = {
 
             console.log('[MetricsPersistence] Snapshot saved successfully.');
 
-            if (reset && typeof performanceMetrics.resetMetrics === 'function') {
-                performanceMetrics.resetMetrics();
+            if (reset && typeof deps.performanceMetrics.resetMetrics === 'function') {
+                deps.performanceMetrics.resetMetrics();
             }
 
             return true;
@@ -84,7 +109,7 @@ const MetricsPersistenceService = {
                 ORDER BY timestamp ASC
             `;
 
-            dbInstance.all(query, [`-${days} days`], (err, rows) => {
+            deps.db.all(query, [`-${days} days`], (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows);
             });
@@ -92,4 +117,4 @@ const MetricsPersistenceService = {
     }
 };
 
-module.exports = MetricsPersistenceService;
+export default MetricsPersistenceService;

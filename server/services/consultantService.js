@@ -9,10 +9,42 @@
  * @module ConsultantService
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
-const AccessCodeService = require('./accessCodeService');
+import crypto from 'crypto';
+import AccessCodeService from './accessCodeService.js';
+
+// Dependency injection for testing
+const deps = {
+    _db: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
+
+/**
+ * Set dependencies (for testing)
+ */
+function setDependencies(newDeps = {}) {
+    if (newDeps.db) deps.db = newDeps.db;
+    if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
+}
 
 
 const CONSULTANT_INVITE_TYPES = {
@@ -30,8 +62,9 @@ const ConsultantService = {
      * @returns {Promise<Object|null>} Consultant record or null
      */
     getConsultantProfile: async (userId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT * FROM consultants WHERE id = ?`,
                 [userId],
                 (err, row) => {
@@ -49,8 +82,9 @@ const ConsultantService = {
      * @returns {Promise<Object>}
      */
     registerConsultant: async (userId, displayName) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `INSERT INTO consultants (id, display_name, status) VALUES (?, ?, 'ACTIVE')
                  ON CONFLICT(id) DO UPDATE SET display_name = excluded.display_name`,
                 [userId, displayName],
@@ -68,8 +102,9 @@ const ConsultantService = {
      * @returns {Promise<Array>} List of organizations with permissions
      */
     getLinkedOrganizations: async (consultantId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT 
                     o.id, o.name, o.status, o.billing_status, o.trial_expires_at,
                     l.id as link_id, l.permission_scope, l.status as link_status, l.created_at as linked_at
@@ -98,8 +133,9 @@ const ConsultantService = {
      * @returns {Promise<Object|null>} Link record if valid, null otherwise
      */
     verifyAccess: async (consultantId, organizationId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT * FROM consultant_org_links 
                  WHERE consultant_id = ? AND organization_id = ? AND status = 'ACTIVE'`,
                 [consultantId, organizationId],
@@ -236,19 +272,20 @@ const ConsultantService = {
 
     // Improved Link Implementation to handle no-unique-constraint schema
     ensureLink: async (consultantId, organizationId, createdByUserId, permissions = {}) => {
-        const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
         const permissionJson = JSON.stringify(permissions);
 
         return new Promise((resolve, reject) => {
-            db.serialize(() => {
-                db.get(
+            deps.db.serialize(() => {
+                deps.db.get(
                     `SELECT id FROM consultant_org_links WHERE consultant_id = ? AND organization_id = ?`,
                     [consultantId, organizationId],
                     (err, row) => {
                         if (err) return reject(err);
 
                         if (row) {
-                            db.run(
+                            deps.db.run(
                                 `UPDATE consultant_org_links 
                                  SET status = 'ACTIVE', permission_scope = ? 
                                  WHERE id = ?`,
@@ -259,7 +296,7 @@ const ConsultantService = {
                                 }
                             );
                         } else {
-                            db.run(
+                            deps.db.run(
                                 `INSERT INTO consultant_org_links 
                                  (id, consultant_id, organization_id, created_by_user_id, permission_scope, status)
                                  VALUES (?, ?, ?, ?, ?, 'ACTIVE')`,
@@ -294,8 +331,9 @@ const ConsultantService = {
         // 2. Perform Specific Logic
         if (inviteType === 'TRIAL_ORG' || inviteType === 'TRIAL') {
             // A. Consultant invited a Client to start a Trial
+            await initDeps();
             await new Promise((res, rej) => {
-                db.run(
+                deps.db.run(
                     "UPDATE users SET attribution_source = 'CONSULTANT_INVITE', attribution_data = ? WHERE id = ?",
                     [JSON.stringify({ consultantId, code: inviteCode }), userId],
                     (err) => err ? rej(err) : res()
@@ -320,8 +358,9 @@ const ConsultantService = {
      * Update permissions for a consultant link
      */
     updateLinkPermissions: async (linkId, permissions) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE consultant_org_links SET permission_scope = ? WHERE id = ?`,
                 [JSON.stringify(permissions), linkId],
                 (err) => {
@@ -336,8 +375,9 @@ const ConsultantService = {
      * Revoke consultant access
      */
     revokeLink: async (linkId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE consultant_org_links SET status = 'REVOKED' WHERE id = ?`,
                 [linkId],
                 (err) => {
@@ -346,7 +386,12 @@ const ConsultantService = {
                 }
             );
         });
-    }
+    },
+
+    /**
+     * Set dependencies (for testing)
+     */
+    setDependencies
 };
 
-module.exports = ConsultantService;
+export default ConsultantService;

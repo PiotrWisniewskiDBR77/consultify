@@ -22,6 +22,7 @@ import { correlationMiddleware } from './utils/RequestStore.js';
 import logger from './utils/Logger.js';
 import RedisRateLimitStore from './utils/RedisRateLimitStore.js';
 import { getDatabase } from './database/Database.js';
+import { get as dbGet } from './utils/DbPromise.js';
 import { init as initScheduler } from './cron/Scheduler.js';
 import { startHealthCheck } from './cron/HealthCheckJob.js';
 
@@ -36,10 +37,171 @@ import taskRoutes from './routes/tasks.routes.js';
 import organizationRoutes from './routes/organizations.routes.js';
 import webhookRoutes from './routes/webhooks.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
+import sessionsRoutes from './routes/sessions.routes.js';
+import teamsRoutes from './routes/teams.routes.js';
+import initiativesRoutes from './routes/initiatives.routes.js';
+import adminAlertsRoutes from './routes/adminAlerts.routes.js';
 
-// ES Module compatibility for CommonJS imports (legacy routes only)
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+// All routes migrated to ES modules
+import settingsRoutes from './routes/settings.routes.js';
+import superAdminRoutes from './routes/superadmin.routes.js';
+import knowledgeRoutes from './routes/knowledge.routes.js';
+import llmRoutes from './routes/llm.routes.js';
+import notificationRoutes from './routes/notifications.routes.js';
+import feedbackRoutes from './routes/feedback.routes.js';
+import accessControlRoutes from './routes/access-control.routes.js';
+import aiTrainingRoutes from './routes/ai-training.routes.js';
+import budgetsRoutes from './routes/budgets.routes.js';
+import tokenBillingRoutes from './routes/tokenBilling.routes.js';
+import documentRoutes from './routes/documents.routes.js';
+import megatrendRoutes from './routes/megatrend.routes.js';
+import adminDataRoutes from './routes/admin-data.routes.js';
+import userContactRoutes from './routes/user-contact.routes.js';
+import userAvailabilityRoutes from './routes/user-availability.routes.js';
+import userProfileCompletenessRoutes from './routes/user-profile-completeness.routes.js';
+import userProfessionalProfileRoutes from './routes/user-professional-profile.routes.js';
+import userSecurityAdvancedRoutes from './routes/user-security-advanced.routes.js';
+import userPrivacyExtendedRoutes from './routes/user-privacy-extended.routes.js';
+import userDataControlsRoutes from './routes/user-data-controls.routes.js';
+import aiPreferencesExtendedRoutes from './routes/ai-preferences-extended.routes.js';
+import notificationRulesRoutes from './routes/notification-rules.routes.js';
+import userProfileExtendedRoutes from './routes/user-profile-extended.routes.js';
+import conversationsRoutes from './routes/conversations.routes.js';
+import chatProjectsRoutes from './routes/chat-projects.routes.js';
+import dailyBriefRoutes from './routes/daily-brief.routes.js';
+import pinnedPromptsRoutes from './routes/pinned-prompts.routes.js';
+import aiMemoryRoutes from './routes/ai-memory.routes.js';
+import aiDraftsRoutes from './routes/ai-drafts.routes.js';
+import taskAdvisorRoutes from './routes/task-advisor.routes.js';
+import aiAnalyticsRoutes from './routes/ai-analytics.routes.js';
+import aiFeedbackRoutes from './routes/ai-feedback.routes.js';
+import aiPromptsRoutes from './routes/ai-prompts.routes.js';
+import promptAssistantRoutes from './routes/prompt-assistant.routes.js';
+import aiAbTestingRoutes from './routes/ai-ab-testing.routes.js';
+import aiSecurityRoutes from './routes/ai-security.routes.js';
+import aiNudgesRoutes from './routes/ai-nudges.routes.js';
+import aiSettingsRoutes from './routes/ai-settings.routes.js';
+import aiActionsRoutes from './routes/aiActions.routes.js';
+import aiLearningRoutes from './routes/aiLearning.routes.js';
+import voiceRoutes from './routes/voice.routes.js';
+import userIntegrationsRoutes from './routes/userIntegrations.routes.js';
+import calendarIntegrationsRoutes from './routes/calendarIntegrations.routes.js';
+import mcpRoutes from './routes/mcp.routes.js';
+import auditLogRoutes from './routes/auditLog.routes.js';
+import featureFlagsRoutes from './routes/featureFlags.routes.js';
+import integrationsRoutes from './routes/integrations.routes.js';
+import systemConfigRoutes from './routes/systemConfig.routes.js';
+import systemHealthRoutes from './routes/systemHealth.routes.js';
+import apiKeysRoutes from './routes/apiKeys.routes.js';
+import backupRoutes from './routes/backup.routes.js';
+import mediaIngestionRoutes from './routes/media-ingestion.routes.js';
+import permissionRequestsRoutes from './routes/permissionRequests.routes.js';
+import pricingRoutes from './routes/pricing.routes.js';
+import invitationRoutes from './routes/invitations.routes.js';
+import securityRoutes from './routes/security.routes.js';
+import gdprRoutes from './routes/gdpr.routes.js';
+import organizationProfilesRoutes from './routes/organization-profiles.routes.js';
+import onboardingRoutes from './routes/onboarding.routes.js';
+import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
+import referralRoutes from './routes/referrals.routes.js';
+import consultantRoutes from './routes/consultants.routes.js';
+import consultantProjectAccessRoutes from './routes/consultant-project-access.routes.js';
+import userOrgsRoutes from './routes/userOrgs.routes.js';
+import userGoalsRoutes from './routes/userGoals.routes.js';
+import gamificationRoutes from './routes/gamification.routes.js';
+import advancedAnalyticsRoutes from './routes/analyticsAdvanced.routes.js';
+import trialRoutes from './routes/trial.routes.js';
+import ssoRoutes from './routes/sso.routes.js';
+import scimRoutes from './routes/scim.routes.js';
+import webauthnRoutes from './routes/webauthn.routes.js';
+import aiBudgetsRoutes from './routes/ai-budgets.routes.js';
+import aiInfrastructureRoutes from './routes/ai-infrastructure.routes.js';
+import aiDevelopmentRoutes from './routes/ai-development.routes.js';
+import aiOperationsRoutes from './routes/ai-operations.routes.js';
+import rbacRoutes from './routes/rbac.routes.js';
+import securityPoliciesRoutes from './routes/securityPolicies.routes.js';
+import brandingRoutes from './routes/branding.routes.js';
+import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
+import oauthRoutes from './routes/oauthRoutes.routes.js';
+import aiAsyncRoutes from './routes/aiAsync.routes.js';
+import myWorkRoutes from './routes/my-work.routes.js';
+import governanceRoutes from './routes/governance.routes.js';
+import contextRoutes from './routes/context.routes.js';
+import assessmentRoutes from './routes/assessment.routes.js';
+import rapidleanRoutes from './routes/rapidlean.routes.js';
+import externalAssessmentsRoutes from './routes/external-assessments.routes.js';
+import genericReportsRoutes from './routes/generic-reports.routes.js';
+import initiativeGeneratorRoutes from './routes/initiative-generator.routes.js';
+import assessmentWorkflowRoutes from './routes/assessment-workflow.routes.js';
+import assessmentHubRoutes from './routes/assessment-hub.routes.js';
+import assessmentReportsRoutes from './routes/assessment-reports.routes.js';
+import assessmentLevelAttachmentsRoutes from './routes/assessment-level-attachments.routes.js';
+import reportCommentsRoutes from './routes/report-comments.routes.js';
+import multiFrameworkAssessmentRoutes from './routes/multi-framework-assessment.routes.js';
+import multiFrameworkWorkflowRoutes from './routes/multi-framework-workflow.routes.js';
+import premiumReportsRoutes from './routes/premiumReports.routes.js';
+import roadmapRoutes from './routes/roadmap.routes.js';
+import executionRoutes from './routes/execution.routes.js';
+import stabilizationRoutes from './routes/stabilization.routes.js';
+import decisionsRoutes from './routes/decisions.routes.js';
+import stageGatesRoutes from './routes/stage-gates.routes.js';
+import pmoAnalysisRoutes from './routes/pmo-analysis.routes.js';
+import pmoContextRoutes from './routes/pmo-context.routes.js';
+import pmoRoutes from './routes/pmo.routes.js';
+import pmoDomainsRoutes from './routes/pmoDomains.routes.js';
+import projectMembersRoutes from './routes/project-members.routes.js';
+import workstreamsRoutes from './routes/workstreams.routes.js';
+import workModeRoutes from './routes/workMode.routes.js';
+import pmoRolesRoutes from './routes/pmoRoles.routes.js';
+import baselinesRoutes from './routes/baselines.routes.js';
+import capacityRoutes from './routes/capacity.routes.js';
+import scenariosRoutes from './routes/scenarios.routes.js';
+import reportsRoutes from './routes/reports.routes.js';
+import managementReportsRoutes from './routes/managementReports.routes.js';
+import managementReportsAnalyticsRoutes from './routes/managementReportsAnalytics.routes.js';
+import economicsRoutes from './routes/economics.routes.js';
+import locationsRoutes from './routes/locations.routes.js';
+import notificationSettingsRoutes from './routes/notificationSettings.routes.js';
+import legalRoutes from './routes/legal.routes.js';
+import demoRoutes from './routes/demo.routes.js';
+import orgLimitsRoutes from './routes/organization-limits.routes.js';
+import promoRoutes from './routes/promo.routes.js';
+import partnerRoutes from './routes/partners.routes.js';
+import settlementRoutes from './routes/settlements.routes.js';
+import accessCodeRoutes from './routes/accessCodes.routes.js';
+import helpRoutes from './routes/help.routes.js';
+import helpFeedbackRoutes from './routes/helpFeedback.routes.js';
+import helpChatRoutes from './routes/helpChat.routes.js';
+import helpAnalyticsRoutes from './routes/helpAnalytics.routes.js';
+import videoRoutes from './routes/videos.routes.js';
+import statusRoutes from './routes/status.routes.js';
+import loginHistoryRoutes from './routes/loginHistory.routes.js';
+import dataExportRoutes from './routes/dataExport.routes.js';
+import organizationDataRoutes from './routes/organization-data.routes.js';
+import metricsRoutes from './routes/metrics.routes.js';
+import performanceMetricsRoutes from './routes/performance-metrics.routes.js';
+import aiCoachRoutes from './routes/aiCoach.routes.js';
+import actionDecisionRoutes from './routes/actionDecisions.routes.js';
+import aiPlaybooksRoutes from './routes/aiPlaybooks.routes.js';
+import contentRoutes from './routes/content.routes.js';
+import aiExplainRoutes from './routes/aiExplain.routes.js';
+import agentsRoutes from './routes/agents.routes.js';
+import workqueueRoutes from './routes/workqueue.routes.js';
+import governanceAdminRoutes from './routes/governanceAdmin.routes.js';
+import connectorRoutes from './routes/connectors.routes.js';
+import aiAnalyticsRoutesV2 from './routes/aiAnalytics.routes.js';
+import auditRoutes from './routes/audit.routes.js';
+import mfaRoutes from './routes/mfa.routes.js';
+import raidRoutes from './routes/raid.routes.js';
+import budgetRoutes from './routes/budget.routes.js';
+import statusReportsRoutes from './routes/status-reports.routes.js';
+import verifyRoutes from './routes/verify.routes.js';
+import preferencesRoutes from './routes/preferences.routes.js';
+import featureFlagRoutes from './routes/featureFlags.routes.js';
+import webhookSubRoutes from './routes/webhookSubscriptions.routes.js';
+import studioRoutes from './routes/studio.routes.js';
+import intelligenceRoutes from './routes/intelligence.routes.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -83,7 +245,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     // ============================================================
     (async () => {
         try {
-            const { validateOnStartup } = require('../services/ai/startupValidator');
+            const { validateOnStartup } = await import('../services/ai/startupValidator.js');
             const healthReport = await validateOnStartup({
                 testConnectivity: true,
                 parallel: true
@@ -108,9 +270,12 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
 
     // Init LLM Provider Health Monitoring (Auto-Fallback)
     try {
-        const llmFallbackService = require('../services/llmFallbackService');
-        llmFallbackService.startHealthMonitoring(60000);
-        console.log('[Server] LLM Provider Health Monitoring started');
+        const llmFallbackService = await import('../services/llmFallbackService.js');
+        const service = llmFallbackService.default || llmFallbackService;
+        if (service && typeof service.startHealthMonitoring === 'function') {
+            service.startHealthMonitoring(60000);
+            console.log('[Server] LLM Provider Health Monitoring started');
+        }
     } catch (err) {
         const error = err as Error;
         console.warn('[Server] LLM Fallback Service not available:', error.message);
@@ -118,7 +283,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
 
     // Init AI Health Monitor (Self-Healing System)
     try {
-        const { healthMonitor } = require('../services/ai/healthMonitor');
+        const { healthMonitor } = await import('../services/ai/healthMonitor.js');
         healthMonitor.start(60000);
 
         healthMonitor.onAlert((alert: { message: string; checks?: string[] }) => {
@@ -299,7 +464,7 @@ app.use(correlationMiddleware);
 app.get('/api/health', async (req: Request, res: Response) => {
     const start = Date.now();
     const db = getDatabase();
-    
+
     // Import healthMonitor dynamically (still uses CommonJS)
     let healthMonitor: { getStatus: () => { status: string } } | null = null;
     try {
@@ -309,13 +474,9 @@ app.get('/api/health', async (req: Request, res: Response) => {
         // Health monitor not available
     }
 
-    db.get('SELECT 1', [], (err: Error | null) => {
+    try {
+        await dbGet('SELECT 1', []);
         const duration = Date.now() - start;
-        if (err) {
-            console.error('Health Check DB Error:', err);
-            return res.status(500).json({ status: 'error', message: 'Database unreachable', error: err.message });
-        }
-
         const aiStatus = healthMonitor ? healthMonitor.getStatus() : { status: 'unknown' };
 
         res.json({
@@ -325,7 +486,10 @@ app.get('/api/health', async (req: Request, res: Response) => {
             database: 'connected',
             aiSystem: aiStatus
         });
-    });
+    } catch (err) {
+        console.error('Health Check DB Error:', err);
+        res.status(500).json({ status: 'error', message: 'Database unreachable', error: (err as any).message });
+    }
 });
 
 // ============================================================
@@ -353,154 +517,75 @@ app.use('/api/auth', authRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/ai', aiRoutes);
 
-// CommonJS routes (legacy - will be migrated gradually)
-// Using require() for CommonJS compatibility
-const registerLegacyRoutes = () => {
+// Register all routes (all migrated to ES modules)
+const registerRoutes = () => {
     try {
-        // Core routes
-        // Migrated routes (already imported as ES modules at top of file):
-        // userRoutes, projectRoutes, taskRoutes, organizationRoutes, webhookRoutes
-        
-        // Legacy routes (still using require - will be migrated in FAZA 2.2):
-        const sessionRoutes = require('../routes/sessions');
-        const settingsRoutes = require('../routes/settings');
-        const superAdminRoutes = require('../routes/superadmin');
-        const knowledgeRoutes = require('../routes/knowledge');
-        const llmRoutes = require('../routes/llm');
-        const teamRoutes = require('../routes/teams');
-        const notificationRoutes = require('../routes/notifications');
-        const initiativeRoutes = require('../routes/initiatives');
-        // analyticsRoutes is already imported as ES module at top
-        const feedbackRoutes = require('../routes/feedback');
-        const accessControlRoutes = require('../routes/access-control');
-        const aiTrainingRoutes = require('../routes/ai-training');
-        const budgetsRoutes = require('../routes/budgets');
-        const adminAlertsRoutes = require('../routes/adminAlerts');
-        const stripeWebhookRoutes = require('../routes/webhooks/stripe');
-        const tokenBillingRoutes = require('../routes/tokenBilling');
-        const documentRoutes = require('../routes/documents');
-        const megatrendRoutes = require('../routes/megatrend');
-        const adminDataRoutes = require('../routes/admin-data');
-
         // Register routes
         app.use('/api/admin-data', adminDataRoutes);
-        
+
         // Demo Guard middleware
         app.use(demoGuard);
 
         app.use('/api/users', userRoutes);
-        
+
         // User profile routes
-        const userContactRoutes = require('../routes/user-contact');
         app.use('/api/user/contact-information', userContactRoutes);
-        
-        const userAvailabilityRoutes = require('../routes/user-availability');
         app.use('/api/user/availability', userAvailabilityRoutes);
-        
-        const userProfileCompletenessRoutes = require('../routes/user-profile-completeness');
         app.use('/api/user/profile-completeness', userProfileCompletenessRoutes);
-        
-        const userProfessionalProfileRoutes = require('../routes/user-professional-profile');
         app.use('/api/user/professional-profile', userProfessionalProfileRoutes);
-        
-        const userSecurityAdvancedRoutes = require('../routes/user-security-advanced');
         app.use('/api/user/security', userSecurityAdvancedRoutes);
-        
-        const userPrivacyExtendedRoutes = require('../routes/user-privacy-extended');
         app.use('/api/user/privacy-settings', userPrivacyExtendedRoutes);
-        
-        const userDataControlsRoutes = require('../routes/user-data-controls');
         app.use('/api/user/data-controls', userDataControlsRoutes);
-        
-        const aiPreferencesExtendedRoutes = require('../routes/ai-preferences-extended');
         app.use('/api/user/ai-preferences', aiPreferencesExtendedRoutes);
-        
-        const notificationRulesRoutes = require('../routes/notification-rules');
         app.use('/api/user/notification-rules', notificationRulesRoutes);
         app.use('/api/user/notification-channels', notificationRulesRoutes);
-        
-        const userProfileExtendedRoutes = require('../routes/user-profile-extended');
         app.use('/api/profile', userProfileExtendedRoutes);
-        
-        app.use('/api/sessions', sessionRoutes);
+
+        // Core routes
+        app.use('/api/sessions', sessionsRoutes);
+        app.use('/api/teams', teamsRoutes);
+        app.use('/api/initiatives', initiativesRoutes);
+        app.use('/api/admin-alerts', adminAlertsRoutes);
         app.use('/api/ai', aiRoutes);
-        
-        const conversationsRoutes = require('../routes/conversations');
+
+        // AI-related routes
         app.use('/api/conversations', conversationsRoutes);
-        
-        const chatProjectsRoutes = require('../routes/chat-projects');
         app.use('/api/chat-projects', chatProjectsRoutes);
-        
-        const dailyBriefRoutes = require('../routes/daily-brief');
         app.use('/api/daily-brief', dailyBriefRoutes);
-        
-        const pinnedPromptsRoutes = require('../routes/pinned-prompts');
         app.use('/api/pinned-prompts', pinnedPromptsRoutes);
-        
-        const aiMemoryRoutes = require('../routes/ai-memory');
         app.use('/api/ai-memory', aiMemoryRoutes);
-        
-        const aiDraftsRoutes = require('../routes/ai-drafts');
         app.use('/api/ai-drafts', aiDraftsRoutes);
-        
-        const taskAdvisorRoutes = require('../routes/task-advisor');
         app.use('/api/task-advisor', taskAdvisorRoutes);
-        
-        const aiAnalyticsRoutes = require('../routes/ai-analytics');
         app.use('/api/ai-analytics', aiAnalyticsRoutes);
-        
-        const aiFeedbackRoutes = require('../routes/ai-feedback');
         app.use('/api/ai-feedback', aiFeedbackRoutes);
-        
-        const aiPromptsRoutes = require('../routes/ai-prompts');
         app.use('/api/ai-prompts', aiPromptsRoutes);
-        
-        const promptAssistantRoutes = require('../routes/prompt-assistant');
         app.use('/api/prompt-assistant', promptAssistantRoutes);
-        
-        const aiAbTestingRoutes = require('../routes/ai-ab-testing');
         app.use('/api/ai-ab-testing', aiAbTestingRoutes);
-        
-        const aiSecurityRoutes = require('../routes/ai-security');
         app.use('/api/ai-security', aiSecurityRoutes);
-        
-        const aiNudgesRoutes = require('../routes/ai-nudges');
         app.use('/api/ai/nudges', aiNudgesRoutes);
-        
-        const aiSettingsRoutes = require('../routes/ai-settings');
         app.use('/api/ai-settings', aiSettingsRoutes);
-        
-        const aiActionsRoutes = require('../routes/aiActions');
         app.use('/api/ai/actions', aiActionsRoutes);
-        
-        const aiLearningRoutes = require('../routes/aiLearning');
         app.use('/api/ai/learning', aiLearningRoutes);
-        
-        const voiceRoutes = require('../routes/voice');
+        app.use('/api/ai-budgets', aiBudgetsRoutes);
+        app.use('/api/ai-infrastructure', aiInfrastructureRoutes);
+        app.use('/api/ai-development', aiDevelopmentRoutes);
+        app.use('/api/ai-operations', aiOperationsRoutes);
+        app.use('/api/ai-async', aiAsyncRoutes);
+        app.use('/api/ai/coach', aiCoachRoutes);
+        app.use('/api/ai/playbooks', aiPlaybooksRoutes);
+        app.use('/api/ai/explain', aiExplainRoutes);
+        app.use('/api/ai-training', aiTrainingRoutes);
+
+        // Integration routes
         app.use('/api/voice', voiceRoutes);
-        
         app.use('/api/documents', documentRoutes);
         app.use('/api/settings', settingsRoutes);
-        
-        const userIntegrationsRoutes = require('../routes/userIntegrations');
         app.use('/api/settings/integrations', userIntegrationsRoutes);
-        
-        const calendarIntegrationsRoutes = require('../routes/calendarIntegrations');
         app.use('/api/integrations/calendar', calendarIntegrationsRoutes);
-        
-        const mcpRoutes = require('../routes/mcp');
         app.use('/api/mcp', mcpRoutes);
-        
+
+        // Admin routes
         app.use('/api/superadmin', superAdminRoutes);
-        
-        const auditLogRoutes = require('../routes/auditLog');
-        const featureFlagsRoutes = require('../routes/featureFlags');
-        const integrationsRoutes = require('../routes/integrations');
-        const systemConfigRoutes = require('../routes/systemConfig');
-        const systemHealthRoutes = require('../routes/systemHealth');
-        const apiKeysRoutes = require('../routes/apiKeys');
-        const backupRoutes = require('../routes/backup');
-        
         app.use('/api/audit-logs', auditLogRoutes);
         app.use('/api/feature-flags', featureFlagsRoutes);
         app.use('/api/integrations', integrationsRoutes);
@@ -508,141 +593,74 @@ const registerLegacyRoutes = () => {
         app.use('/api/system-health', systemHealthRoutes);
         app.use('/api/api-keys', apiKeysRoutes);
         app.use('/api/backups', backupRoutes);
-        
+
+        // Core API routes
         app.use('/api/projects', projectRoutes);
         app.use('/api/knowledge', knowledgeRoutes);
-        
-        const mediaIngestionRoutes = require('../routes/media-ingestion');
         app.use('/api/media-ingestion', mediaIngestionRoutes);
-        
         app.use('/api/llm', llmRoutes);
         app.use('/api/tasks', taskRoutes);
-        app.use('/api/teams', teamRoutes);
         app.use('/api/notifications', notificationRoutes);
-        app.use('/api/initiatives', initiativeRoutes);
         app.use('/api/analytics', analyticsRoutes);
         app.use('/api/feedback', feedbackRoutes);
         app.use('/api/access-control', accessControlRoutes);
-        
-        const permissionRequestsRoutes = require('../routes/permissionRequests');
         app.use('/api/permission-requests', permissionRequestsRoutes);
-        
+
+        // Webhook routes (stripe webhook is handled by webhookRoutes)
         app.use('/api/webhooks', webhookRoutes);
-        app.use('/api/ai-training', aiTrainingRoutes);
+
+        // Billing routes
         app.use('/api/billing', billingRoutes);
         app.use('/api/token-billing', tokenBillingRoutes);
         app.use('/api/budgets', budgetsRoutes);
-        app.use('/api/admin-alerts', adminAlertsRoutes);
-        
-        const pricingRoutes = require('../routes/pricing');
         app.use('/api/pricing', pricingRoutes);
-        
+
+        // Organization routes
         app.use('/api/megatrends', megatrendRoutes);
         app.use('/api/organizations', organizationRoutes);
-        
-        const invitationRoutes = require('../routes/invitations');
         app.use('/api/invitations', invitationRoutes);
-        
-        const securityRoutes = require('../routes/security');
-        app.use('/api/security', securityRoutes);
-        
-        const gdprRoutes = require('../routes/gdpr');
-        app.use('/api/gdpr', gdprRoutes);
-        
-        const organizationProfilesRoutes = require('../routes/organization-profiles');
         app.use('/api/organization-profiles', organizationProfilesRoutes);
-        
-        const onboardingRoutes = require('../routes/onboarding');
-        app.use('/api/onboarding', onboardingRoutes);
-        
-        const journeyAnalyticsRoutes = require('../routes/journeyAnalytics');
-        app.use('/api/analytics/journey', journeyAnalyticsRoutes);
-        
-        const referralRoutes = require('../routes/referrals');
-        app.use('/api/referrals', referralRoutes);
-        
-        const consultantRoutes = require('../routes/consultants');
-        app.use('/api/consultants', consultantRoutes);
-        
-        const consultantProjectAccessRoutes = require('../routes/consultant-project-access');
-        app.use('/api/consultant-project-access', consultantProjectAccessRoutes);
-        
-        const userOrgsRoutes = require('../routes/userOrgs');
-        app.use('/api/users', userOrgsRoutes);
-        
-        const userGoalsRoutes = require('../routes/userGoals');
-        app.use('/api/user', userGoalsRoutes);
-        
-        const gamificationRoutes = require('../routes/gamification');
-        app.use('/api/gamification', gamificationRoutes);
-        
-        const advancedAnalyticsRoutes = require('../routes/analyticsAdvanced');
-        app.use('/api/analytics/advanced', advancedAnalyticsRoutes);
-        
-        app.use('/api/webhooks', stripeWebhookRoutes);
-        
-        const trialRoutes = require('../routes/trial');
-        app.use('/api/trial', trialRoutes);
-        
-        const ssoRoutes = require('../routes/sso');
+        app.use('/api/organization-data', organizationDataRoutes);
+        app.use('/api/organization', orgLimitsRoutes);
+
+        // Security routes
+        app.use('/api/security', securityRoutes);
+        app.use('/api/gdpr', gdprRoutes);
         app.use('/api/sso', ssoRoutes);
-        
-        const scimRoutes = require('../routes/scim');
         app.use('/api/scim/v2', scimRoutes);
         app.use('/api/scim/admin', scimRoutes);
-        
-        const webauthnRoutes = require('../routes/webauthn');
         app.use('/api/auth/webauthn', webauthnRoutes);
-        
-        const aiBudgetsRoutes = require('../routes/ai-budgets');
-        app.use('/api/ai-budgets', aiBudgetsRoutes);
-        
-        const aiInfrastructureRoutes = require('../routes/ai-infrastructure');
-        const aiDevelopmentRoutes = require('../routes/ai-development');
-        const aiOperationsRoutes = require('../routes/ai-operations');
-        app.use('/api/ai-infrastructure', aiInfrastructureRoutes);
-        app.use('/api/ai-development', aiDevelopmentRoutes);
-        app.use('/api/ai-operations', aiOperationsRoutes);
-        
-        const rbacRoutes = require('../routes/rbac');
+        app.use('/api/auth', oauthRoutes);
+        app.use('/api/auth/login-history', loginHistoryRoutes);
+        app.use('/api/security-policies', securityPoliciesRoutes);
+
+        // User management routes
+        app.use('/api/onboarding', onboardingRoutes);
+        app.use('/api/analytics/journey', journeyAnalyticsRoutes);
+        app.use('/api/referrals', referralRoutes);
+        app.use('/api/consultants', consultantRoutes);
+        app.use('/api/consultant-project-access', consultantProjectAccessRoutes);
+        app.use('/api/users', userOrgsRoutes);
+        app.use('/api/user', userGoalsRoutes);
+        app.use('/api/user', dataExportRoutes);
+
+        // Feature routes
+        app.use('/api/gamification', gamificationRoutes);
+        app.use('/api/analytics/advanced', advancedAnalyticsRoutes);
+        app.use('/api/trial', trialRoutes);
         app.use('/api/rbac', rbacRoutes);
         app.use('/api', rbacRoutes);
-        
-        const securityPoliciesRoutes = require('../routes/securityPolicies');
-        app.use('/api/security-policies', securityPoliciesRoutes);
-        
-        const brandingRoutes = require('../routes/branding');
         app.use('/api/branding', brandingRoutes);
-        
-        const workspaceDefaultsRoutes = require('../routes/workspace-defaults');
         app.use('/api/workspace-defaults', workspaceDefaultsRoutes);
-        
-        const oauthRoutes = require('../routes/oauthRoutes');
-        app.use('/api/auth', oauthRoutes);
-        
-        const aiAsyncRoutes = require('../routes/aiAsync');
-        app.use('/api/ai-async', aiAsyncRoutes);
-        
-        const myWorkRoutes = require('../routes/my-work');
         app.use('/api/my-work', myWorkRoutes);
-        
-        const governanceRoutes = require('../routes/governance');
+
+        // Governance routes
         app.use('/api/governance', governanceRoutes);
-        
-        const contextRoutes = require('../routes/context');
+        app.use('/api/governance', governanceAdminRoutes);
         app.use('/api/context', contextRoutes);
-        
-        const assessmentRoutes = require('../routes/assessment');
+
+        // Assessment routes
         app.use('/api/assessment', assessmentRoutes);
-        
-        const rapidleanRoutes = require('../routes/rapidlean');
-        const externalAssessmentsRoutes = require('../routes/external-assessments');
-        const genericReportsRoutes = require('../routes/generic-reports');
-        const initiativeGeneratorRoutes = require('../routes/initiative-generator');
-        const assessmentWorkflowRoutes = require('../routes/assessment-workflow');
-        const assessmentHubRoutes = require('../routes/assessment-hub');
-        const assessmentReportsRoutes = require('../routes/assessment-reports');
-        
         app.use('/api/rapidlean', rapidleanRoutes);
         app.use('/api/external-assessments', externalAssessmentsRoutes);
         app.use('/api/generic-reports', genericReportsRoutes);
@@ -650,212 +668,81 @@ const registerLegacyRoutes = () => {
         app.use('/api/assessment-workflow', assessmentWorkflowRoutes);
         app.use('/api/assessments', assessmentHubRoutes);
         app.use('/api/assessment-reports', assessmentReportsRoutes);
-        
-        const assessmentLevelAttachmentsRoutes = require('../routes/assessment-level-attachments');
         app.use('/api/assessment-level-attachments', assessmentLevelAttachmentsRoutes);
-        
-        const reportCommentsRoutes = require('../routes/report-comments');
         app.use('/api/report-comments', reportCommentsRoutes);
-        
-        const multiFrameworkAssessmentRoutes = require('../routes/multi-framework-assessment');
         app.use('/api/mf-assessments', multiFrameworkAssessmentRoutes);
-        
-        const multiFrameworkWorkflowRoutes = require('../routes/multi-framework-workflow');
         app.use('/api/assessment-workflow', multiFrameworkWorkflowRoutes);
-        
-        const premiumReportsRoutes = require('../routes/premiumReports');
-        app.use('/api/reports/premium', premiumReportsRoutes);
-        
-        const roadmapRoutes = require('../routes/roadmap');
+
+        // PMO routes
         app.use('/api/roadmap', roadmapRoutes);
-        
-        const executionRoutes = require('../routes/execution');
         app.use('/api/execution', executionRoutes);
-        
-        const stabilizationRoutes = require('../routes/stabilization');
         app.use('/api/stabilization', stabilizationRoutes);
-        
-        const decisionsRoutes = require('../routes/decisions');
         app.use('/api/decisions', decisionsRoutes);
-        
-        const stageGatesRoutes = require('../routes/stage-gates');
         app.use('/api/stage-gates', stageGatesRoutes);
-        
-        const pmoAnalysisRoutes = require('../routes/pmo-analysis');
         app.use('/api/pmo-analysis', pmoAnalysisRoutes);
-        
-        const pmoContextRoutes = require('../routes/pmo-context');
         app.use('/api/pmo-context', pmoContextRoutes);
-        
-        const pmoRoutes = require('../routes/pmo');
         app.use('/api/pmo', pmoRoutes);
-        
-        const pmoDomainsRoutes = require('../routes/pmoDomains');
         app.use('/api/pmo-domains', pmoDomainsRoutes);
-        
-        const projectMembersRoutes = require('../routes/project-members');
         app.use('/api/projects', projectMembersRoutes);
-        
-        const workstreamsRoutes = require('../routes/workstreams');
         app.use('/api', workstreamsRoutes);
-        
-        const workModeRoutes = require('../routes/workMode');
         app.use('/api/org/work-mode', workModeRoutes);
-        
-        const pmoRolesRoutes = require('../routes/pmoRoles');
         app.use('/api/pmo-roles', pmoRolesRoutes);
         app.use('/api', pmoRolesRoutes);
-        
-        const baselinesRoutes = require('../routes/baselines');
         app.use('/api/baselines', baselinesRoutes);
-        
-        const capacityRoutes = require('../routes/capacity');
         app.use('/api/capacity', capacityRoutes);
-        
-        const scenariosRoutes = require('../routes/scenarios');
         app.use('/api/scenarios', scenariosRoutes);
-        
-        app.use('/api/notifications', notificationRoutes);
-        
-        const reportsRoutes = require('../routes/reports');
+
+        // Reports routes
         app.use('/api/reports', reportsRoutes);
-        
-        const managementReportsRoutes = require('../routes/managementReports');
-        const managementReportsAnalyticsRoutes = require('../routes/managementReportsAnalytics');
+        app.use('/api/reports/premium', premiumReportsRoutes);
         app.use('/api/management-reports', managementReportsRoutes);
         app.use('/api/management-reports/analytics', managementReportsAnalyticsRoutes);
-        
-        const economicsRoutes = require('../routes/economics');
+
+        // Analytics routes
         app.use('/api/economics', economicsRoutes);
-        
-        const locationsRoutes = require('../routes/locations');
         app.use('/api/locations', locationsRoutes);
-        
-        const notificationSettingsRoutes = require('../routes/notificationSettings');
         app.use('/api/notification-settings', notificationSettingsRoutes);
-        
-        const legalRoutes = require('../routes/legal');
+        app.use('/api/metrics', metricsRoutes);
+        app.use('/api/performance-metrics', performanceMetricsRoutes);
+        app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
+
+        // Other routes
         app.use('/api/legal', legalRoutes);
-        
-        const demoRoutes = require('../routes/demo');
-        const orgLimitsRoutes = require('../routes/organization-limits');
         app.use('/api/demo', demoRoutes);
-        app.use('/api/organization', orgLimitsRoutes);
-        
-        const promoRoutes = require('../routes/promo');
         app.use('/api/promo', promoRoutes);
-        
-        const partnerRoutes = require('../routes/partners');
-        const settlementRoutes = require('../routes/settlements');
         app.use('/api/partners', partnerRoutes);
         app.use('/api/settlements', settlementRoutes);
-        
-        const accessCodeRoutes = require('../routes/accessCodes');
         app.use('/api/access-codes', accessCodeRoutes);
-        
-        const helpRoutes = require('../routes/help');
         app.use('/api/help', helpRoutes);
-        
-        const helpFeedbackRoutes = require('../routes/helpFeedback');
-        const helpChatRoutes = require('../routes/helpChat');
         app.use('/api/help', helpFeedbackRoutes);
         app.use('/api/help', helpChatRoutes);
-        
-        const helpAnalyticsRoutes = require('../routes/helpAnalytics');
         app.use('/api/help-analytics', helpAnalyticsRoutes);
-        
-        const videoRoutes = require('../routes/videos');
         app.use('/api/videos', videoRoutes);
-        
-        const statusRoutes = require('../routes/status');
         app.use('/api/status', statusRoutes);
-        
-        const loginHistoryRoutes = require('../routes/loginHistory');
-        app.use('/api/auth/login-history', loginHistoryRoutes);
-        
-        const dataExportRoutes = require('../routes/dataExport');
-        app.use('/api/user', dataExportRoutes);
-        
-        const organizationDataRoutes = require('../routes/organization-data');
-        app.use('/api/organization-data', organizationDataRoutes);
-        
-        const metricsRoutes = require('../routes/metrics');
-        app.use('/api/metrics', metricsRoutes);
-        
-        const performanceMetricsRoutes = require('../routes/performance-metrics');
-        app.use('/api/performance-metrics', performanceMetricsRoutes);
-        
-        const aiCoachRoutes = require('../routes/aiCoach');
-        app.use('/api/ai/coach', aiCoachRoutes);
-        
-        const actionDecisionRoutes = require('../routes/actionDecisions');
-        app.use('/api/ai/actions', actionDecisionRoutes);
-        
-        const aiPlaybooksRoutes = require('../routes/aiPlaybooks');
-        app.use('/api/ai/playbooks', aiPlaybooksRoutes);
-        
-        const contentRoutes = require('../routes/content');
-        app.use('/api/content', contentRoutes);
-        
-        const aiExplainRoutes = require('../routes/aiExplain');
-        app.use('/api/ai/explain', aiExplainRoutes);
-        
-        const agentsRoutes = require('../routes/agents');
-        app.use('/api/agents', agentsRoutes);
-        
-        const workqueueRoutes = require('../routes/workqueue');
-        app.use('/api/workqueue', workqueueRoutes);
-        
-        const governanceAdminRoutes = require('../routes/governanceAdmin');
-        app.use('/api/governance', governanceAdminRoutes);
-        
-        const connectorRoutes = require('../routes/connectors');
-        app.use('/api/connectors', connectorRoutes);
-        
-        const aiAnalyticsRoutesV2 = require('../routes/aiAnalytics');
-        app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
-        
-        const auditRoutes = require('../routes/audit');
-        app.use('/api/audit', auditRoutes);
-        
-        const mfaRoutes = require('../routes/mfa');
-        app.use('/api/mfa', mfaRoutes);
-        
-        const raidRoutes = require('../routes/raid');
-        app.use('/api/raid', raidRoutes);
-        
-        const budgetRoutes = require('../routes/budget');
-        app.use('/api/budget', budgetRoutes);
-        
-        const statusReportsRoutes = require('../routes/status-reports');
         app.use('/api/status-reports', statusReportsRoutes);
-        
-        const verifyRoutes = require('../routes/verify');
         app.use('/api/verify', verifyRoutes);
-        
-        const preferencesRoutes = require('../routes/preferences');
         app.use('/api/preferences', preferencesRoutes);
-        
-        const featureFlagRoutes = require('../routes/featureFlags');
         app.use('/api/features', featureFlagRoutes);
-        
-        const webhookSubRoutes = require('../routes/webhookSubscriptions');
         app.use('/api/webhooks/subscriptions', webhookSubRoutes);
-        
-        const studioRoutes = require('../routes/studio');
         app.use('/api/studio', studioRoutes);
-        
-        const intelligenceRoutes = require('../routes/intelligence');
         app.use('/api/intelligence', intelligenceRoutes);
-        
+        app.use('/api/agents', agentsRoutes);
+        app.use('/api/workqueue', workqueueRoutes);
+        app.use('/api/connectors', connectorRoutes);
+        app.use('/api/audit', auditRoutes);
+        app.use('/api/mfa', mfaRoutes);
+        app.use('/api/raid', raidRoutes);
+        app.use('/api/budget', budgetRoutes);
+        app.use('/api/content', contentRoutes);
+
     } catch (error) {
-        console.error('[Server] Error loading legacy routes:', error);
+        console.error('[Server] Error loading routes:', error);
         // Don't block server startup - allow degraded mode
     }
 };
 
-// Register legacy routes synchronously
-registerLegacyRoutes();
+// Register all routes
+registerRoutes();
 
 // ============================================================
 // STATIC FILES & CATCHALL
@@ -936,7 +823,7 @@ if (!isTest) {
 
 // Only listen if the file is run directly (not imported)
 // Check if this is the main module
-const isMainModule = import.meta.url === `file://${process.argv[1]}` || 
+const isMainModule = import.meta.url === `file://${process.argv[1]}` ||
     process.argv[1] && import.meta.url.endsWith(process.argv[1]);
 
 if (isMainModule || require.main === module) {
@@ -952,68 +839,100 @@ if (isMainModule || require.main === module) {
     });
 
     // Initialize WebSocket server
-    const realtimeService = require('../services/realtimeService');
-    realtimeService.initializeSimple(server);
+    (async () => {
+        try {
+            const realtimeServiceModule = await import('../services/realtimeService.js');
+            const realtimeServicePromise = realtimeServiceModule.default || realtimeServiceModule;
+            const realtimeService = await realtimeServicePromise;
+            if (realtimeService && typeof realtimeService.initializeSimple === 'function') {
+                realtimeService.initializeSimple(server);
+            }
+        } catch (err) {
+            const error = err as Error;
+            logger.warn('[Server] Realtime service not available:', error.message);
+        }
+    })();
 
     // Start token cleanup cron job
-    try {
-        const { startCleanupJob } = require('../cron/cleanupRevokedTokens');
-        startCleanupJob();
-    } catch (err) {
-        const error = err as Error;
-        logger.warn('[Server] Token cleanup job failed to start:', error.message);
-    }
+    (async () => {
+        try {
+            const { startCleanupJob } = await import('../cron/cleanupRevokedTokens.js');
+            startCleanupJob();
+        } catch (err) {
+            const error = err as Error;
+            logger.warn('[Server] Token cleanup job failed to start:', error.message);
+        }
+    })();
 
     // Start metrics snapshot job
-    try {
-        const initMetricsSnapshotJob = require('../cron/snapshotMetrics');
-        initMetricsSnapshotJob();
-    } catch (err) {
-        const error = err as Error;
-        logger.warn('[Server] Metrics snapshot job failed to start:', error.message);
-    }
+    (async () => {
+        try {
+            const snapshotMetricsModule = await import('../cron/snapshotMetrics.js');
+            const initMetricsSnapshotJob = snapshotMetricsModule.default || snapshotMetricsModule;
+            if (typeof initMetricsSnapshotJob === 'function') {
+                initMetricsSnapshotJob();
+            }
+        } catch (err) {
+            const error = err as Error;
+            logger.warn('[Server] Metrics snapshot job failed to start:', error.message);
+        }
+    })();
 
     // Init AI Services (Redis, Cache, Rate Limiter)
-    try {
-        const { initRedis, getRedisClient } = require('../services/ai/redisClient');
-        const redisUrl = process.env.REDIS_URL;
+    (async () => {
+        try {
+            const { initRedis, getRedisClient } = await import('../services/ai/redisClient.js');
+            const redisUrl = process.env.REDIS_URL;
 
-        initRedis(redisUrl).then((redisClient: unknown) => {
-            if (redisClient) {
-                const { cacheService } = require('../services/ai/cacheService');
-                cacheService.connectRedis(redisClient);
+            initRedis(redisUrl).then(async (redisClient: unknown) => {
+                if (redisClient) {
+                    const { cacheService } = await import('../services/ai/cacheService.js');
+                    cacheService.connectRedis(redisClient);
 
-                const { rateLimiter } = require('../services/ai/rateLimiter');
-                rateLimiter.connectRedis(redisClient);
+                    const { rateLimiter } = await import('../services/ai/rateLimiter.js');
+                    rateLimiter.connectRedis(redisClient);
 
-                console.log('[AI Services] Redis connected for cache and rate limiting');
-            } else {
-                console.log('[AI Services] Using in-memory fallback (Redis not available)');
-            }
-        }).catch((err: Error) => {
-            console.warn('[AI Services] Redis init failed, using in-memory:', err.message);
-        });
-    } catch (err) {
-        const error = err as Error;
-        logger.warn('[Server] AI Services failed to initialize:', error.message);
-    }
+                    console.log('[AI Services] Redis connected for cache and rate limiting');
+                } else {
+                    console.log('[AI Services] Using in-memory fallback (Redis not available)');
+                }
+            }).catch((err: Error) => {
+                console.warn('[AI Services] Redis init failed, using in-memory:', err.message);
+            });
+        } catch (err) {
+            const error = err as Error;
+            logger.warn('[Server] AI Services failed to initialize:', error.message);
+        }
+    })();
 
     // Init AI Worker
-    try {
-        const { initWorker } = require('../workers/aiWorker');
-        initWorker();
-    } catch (err) {
-        const error = err as Error;
-        logger.warn('[Server] AI Worker failed to start (likely Redis missing):', error.message);
-    }
+    (async () => {
+        try {
+            const { initWorker } = await import('../workers/aiWorker.js');
+            initWorker();
+        } catch (err) {
+            const error = err as Error;
+            logger.warn('[Server] AI Worker failed to start (likely Redis missing):', error.message);
+        }
+    })();
 
     // Run Integrity Check at Startup
-    const SystemIntegrity = require('../services/systemIntegrity');
-    if (!isTest && process.env.DISABLE_SYSTEM_INTEGRITY !== 'true') {
-        setTimeout(() => {
-            SystemIntegrity.check();
-        }, 2000);
-    }
+    (async () => {
+        if (!isTest && process.env.DISABLE_SYSTEM_INTEGRITY !== 'true') {
+            try {
+                const systemIntegrityModule = await import('../services/systemIntegrity.js');
+                const SystemIntegrity = systemIntegrityModule.default || systemIntegrityModule;
+                if (SystemIntegrity && typeof SystemIntegrity.check === 'function') {
+                    setTimeout(() => {
+                        SystemIntegrity.check();
+                    }, 2000);
+                }
+            } catch (err) {
+                const error = err as Error;
+                logger.warn('[Server] System Integrity check failed:', error.message);
+            }
+        }
+    })();
 
     server.listen(PORT, '0.0.0.0', () => {
         console.log('Server running on http://0.0.0.0:' + PORT);

@@ -2,14 +2,55 @@
 // AI Core Layer — Enterprise PMO Brain
 // Extended for AI Trust & Explainability Layer
 
-let db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
+
+/**
+ * Dependency injection container with lazy loading
+ */
+const deps = {
+    _db: null,
+
+    get db() {
+        if (!this._db) {
+            // Fallback for non-DI environments (legacy)
+            return null;
+        }
+        return this._db;
+    },
+
+    set db(val) {
+        this._db = val;
+    }
+};
+
+/**
+ * Initialize dependencies
+ */
+async function initDeps() {
+    if (!deps._db) {
+        try {
+            const { default: db } = await import('../database.js');
+            deps._db = db;
+        } catch (err) {
+            console.error('[AIAuditLogger] Failed to load database dependency:', err);
+        }
+    }
+}
 
 const AIAuditLogger = {
+    /**
+     * For testing: allow overriding dependencies
+     */
+    _setDependencies: (newDeps = {}) => {
+        if (newDeps.db) deps.db = newDeps.db;
+    },
+
     /**
      * Log an AI interaction with full explainability support
      */
     logInteraction: async (entry) => {
+        await initDeps();
+
         const {
             userId, organizationId, projectId,
             actionType, actionDescription,
@@ -31,8 +72,13 @@ const AIAuditLogger = {
 
         const id = uuidv4();
 
+        if (!deps.db) {
+            console.error('[AIAuditLogger] Database not available for logging');
+            return { id, actionType, error: 'DB_NOT_AVAILABLE' };
+        }
+
         return new Promise((resolve, reject) => {
-            db.run(`INSERT INTO ai_audit_logs 
+            deps.db.run(`INSERT INTO ai_audit_logs 
                 (id, user_id, organization_id, project_id, action_type, action_description,
                  context_snapshot, data_sources_used, ai_role, policy_level, confidence_level,
                  ai_suggestion, user_decision, user_feedback,
@@ -73,8 +119,8 @@ const AIAuditLogger = {
      * @param {string} params.projectId - Project ID
      * @param {Object} params.explanation - AIExplanation object
      * @param {string} params.aiResponse - The AI response text
-     * @param {string} params.actionType - Type of action (SUGGESTION, ACTION, etc.)
-     * @param {string} [params.correlationId] - Optional correlation ID for tracing
+     * @param {string} params.actionType - Type of action (AI_RESPONSE, etc.)
+     * @param {string} [params.correlationId] - Optional correlation ID
      * @returns {Promise<Object>} - Result with audit log ID
      */
     logWithExplanation: async ({ userId, organizationId, projectId, explanation, aiResponse, actionType = 'AI_RESPONSE', correlationId }) => {
@@ -123,8 +169,11 @@ const AIAuditLogger = {
      * Update user decision on a logged suggestion
      */
     recordUserDecision: async (auditId, decision, feedback = null) => {
+        await initDeps();
+        if (!deps.db) throw new Error('DB_NOT_AVAILABLE');
+
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE ai_audit_logs 
+            deps.db.run(`UPDATE ai_audit_logs 
                     SET user_decision = ?, user_feedback = ?
                     WHERE id = ?`,
                 [decision, feedback, auditId], function (err) {
@@ -138,6 +187,9 @@ const AIAuditLogger = {
      * Get audit logs for organization with explainability data
      */
     getAuditLogs: async (organizationId, options = {}) => {
+        await initDeps();
+        if (!deps.db) return [];
+
         const { projectId, userId, actionType, limit, offset, includeExplanation } = options;
 
         return new Promise((resolve, reject) => {
@@ -163,7 +215,7 @@ const AIAuditLogger = {
             sql += ` ORDER BY al.created_at DESC LIMIT ? OFFSET ?`;
             params.push(limit || 50, offset || 0);
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
 
                 const result = (rows || []).map(row => {
@@ -200,6 +252,9 @@ const AIAuditLogger = {
      * Get audit statistics
      */
     getAuditStats: async (organizationId, projectId = null) => {
+        await initDeps();
+        if (!deps.db) return { total: 0 };
+
         return new Promise((resolve, reject) => {
             let sql = `SELECT 
                         COUNT(*) as total,
@@ -216,7 +271,7 @@ const AIAuditLogger = {
                 params.push(projectId);
             }
 
-            db.get(sql, params, (err, row) => {
+            deps.db.get(sql, params, (err, row) => {
                 if (err) return reject(err);
 
                 const total = row?.total || 0;
@@ -239,8 +294,11 @@ const AIAuditLogger = {
      * Get role distribution
      */
     getRoleDistribution: async (organizationId) => {
+        await initDeps();
+        if (!deps.db) return [];
+
         return new Promise((resolve, reject) => {
-            db.all(`SELECT ai_role, COUNT(*) as count 
+            deps.db.all(`SELECT ai_role, COUNT(*) as count 
                     FROM ai_audit_logs WHERE organization_id = ?
                     GROUP BY ai_role`,
                 [organizationId], (err, rows) => {
@@ -254,8 +312,11 @@ const AIAuditLogger = {
      * Clear old audit logs (retention policy)
      */
     clearOldLogs: async (organizationId, daysToKeep = 90) => {
+        await initDeps();
+        if (!deps.db) return { deleted: 0 };
+
         return new Promise((resolve, reject) => {
-            db.run(`DELETE FROM ai_audit_logs 
+            deps.db.run(`DELETE FROM ai_audit_logs 
                     WHERE organization_id = ? 
                     AND created_at < datetime('now', '-${daysToKeep} days')`,
                 [organizationId], function (err) {
@@ -265,7 +326,7 @@ const AIAuditLogger = {
         });
     },
     // For testing purposes
-    _setDb: (mockDb) => { db = mockDb; }
+    _setDb: (mockDb) => { deps.db = mockDb; }
 };
 
-module.exports = AIAuditLogger;
+export default AIAuditLogger;

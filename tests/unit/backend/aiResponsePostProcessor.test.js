@@ -1,9 +1,9 @@
 /**
  * Unit tests for AI Response Post-Processor
- * Step B: Verify deterministic labeling works correctly
  */
 
-const {
+import { describe, it, expect } from 'vitest';
+import {
     aiResponsePostProcessor,
     getMemoryCount,
     getExternalSources,
@@ -12,7 +12,7 @@ const {
     stripPrefixes,
     MEMORY_PREFIX,
     EXTERNAL_PREFIX
-} = require('../../server/services/aiResponsePostProcessor');
+} from '../../../server/services/aiResponsePostProcessor.js';
 
 describe('aiResponsePostProcessor', () => {
     describe('Memory Prefix', () => {

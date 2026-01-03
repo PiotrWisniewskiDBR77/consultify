@@ -6,22 +6,19 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
+import AIContextBuilder from '../../../server/services/aiContextBuilder.js';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
 
-const require = createRequire(import.meta.url);
-
 describe('AIContextBuilder', () => {
     let mockDb;
-    let AIContextBuilder;
     let mockPMOHealthService;
+    let mockAISettingsService;
+    let mockAIActionExecutor;
 
     beforeEach(() => {
-        vi.resetModules();
-        
         mockDb = createMockDb();
-        
+
         mockPMOHealthService = {
             getHealthSnapshot: vi.fn().mockResolvedValue({
                 overall: 'healthy',
@@ -29,23 +26,29 @@ describe('AIContextBuilder', () => {
             })
         };
 
-        // Mock database before importing
-        vi.doMock('../../../server/database', () => ({
-            default: mockDb
-        }));
+        mockAISettingsService = {
+            getEffectiveSettings: vi.fn().mockResolvedValue({
+                policyLevel: 'ASSISTED',
+                proactivityMode: 'BALANCED'
+            })
+        };
 
-        AIContextBuilder = require('../../../server/services/aiContextBuilder.js');
-        
+        mockAIActionExecutor = {
+            getPendingActions: vi.fn().mockResolvedValue([]),
+            getPatternInfo: vi.fn().mockResolvedValue(null)
+        };
+
         // Inject mock dependencies
         AIContextBuilder.setDependencies({
             db: mockDb,
-            PMOHealthService: mockPMOHealthService
+            PMOHealthService: mockPMOHealthService,
+            AISettingsService: mockAISettingsService,
+            AIActionExecutor: mockAIActionExecutor
         });
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
-        vi.doUnmock('../../../server/database');
+        vi.clearAllMocks();
     });
 
     describe('buildContext()', () => {
@@ -54,23 +57,27 @@ describe('AIContextBuilder', () => {
             const orgId = testOrganizations.org1.id;
             const projectId = testProjects.project1.id;
 
-            // Mock all DB queries
+            // Mock all DB queries using the standardized mockDb
             mockDb.get.mockImplementation((query, params, callback) => {
+                const cb = typeof params === 'function' ? params : callback;
                 if (query.includes('users')) {
-                    callback(null, { role: 'USER' });
+                    process.nextTick(() => cb(null, { role: 'USER' }));
                 } else if (query.includes('ai_policies')) {
-                    callback(null, { policy_level: 'ASSISTED' });
+                    process.nextTick(() => cb(null, { policy_level: 'ASSISTED' }));
                 } else if (query.includes('organizations')) {
-                    callback(null, { name: 'Test Org', plan: 'free' });
+                    process.nextTick(() => cb(null, { name: 'Test Org', plan: 'free' }));
                 } else if (query.includes('projects')) {
-                    callback(null, { name: 'Test Project', status: 'active' });
+                    process.nextTick(() => cb(null, { name: 'Test Project', status: 'active' }));
                 } else {
-                    callback(null, null);
+                    process.nextTick(() => cb(null, null));
                 }
+                return mockDb;
             });
 
             mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
+                const cb = typeof params === 'function' ? params : callback;
+                process.nextTick(() => cb(null, []));
+                return mockDb;
             });
 
             const context = await AIContextBuilder.buildContext(userId, orgId, projectId);
@@ -92,19 +99,17 @@ describe('AIContextBuilder', () => {
             const orgId = testOrganizations.org1.id;
 
             mockDb.get.mockImplementation((query, params, callback) => {
+                const cb = typeof params === 'function' ? params : callback;
                 if (query.includes('users')) {
-                    callback(null, { role: 'USER' });
+                    process.nextTick(() => cb(null, { role: 'USER' }));
                 } else if (query.includes('ai_policies')) {
-                    callback(null, { policy_level: 'ASSISTED' });
+                    process.nextTick(() => cb(null, { policy_level: 'ASSISTED' }));
                 } else if (query.includes('organizations')) {
-                    callback(null, { name: 'Test Org' });
+                    process.nextTick(() => cb(null, { name: 'Test Org' }));
                 } else {
-                    callback(null, null);
+                    process.nextTick(() => cb(null, null));
                 }
-            });
-
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
+                return mockDb;
             });
 
             const context = await AIContextBuilder.buildContext(userId, orgId, null);
@@ -129,11 +134,9 @@ describe('AIContextBuilder', () => {
             mockPMOHealthService.getHealthSnapshot.mockResolvedValue(healthSnapshot);
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {});
-            });
-
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
+                const cb = typeof params === 'function' ? params : callback;
+                process.nextTick(() => cb(null, {}));
+                return mockDb;
             });
 
             const context = await AIContextBuilder.buildContext(userId, orgId, projectId);
@@ -150,11 +153,9 @@ describe('AIContextBuilder', () => {
             mockPMOHealthService.getHealthSnapshot.mockRejectedValue(new Error('Service unavailable'));
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {});
-            });
-
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
+                const cb = typeof params === 'function' ? params : callback;
+                process.nextTick(() => cb(null, {}));
+                return mockDb;
             });
 
             const context = await AIContextBuilder.buildContext(userId, orgId, projectId);
@@ -174,11 +175,9 @@ describe('AIContextBuilder', () => {
             };
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {});
-            });
-
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
+                const cb = typeof params === 'function' ? params : callback;
+                process.nextTick(() => cb(null, {}));
+                return mockDb;
             });
 
             const context = await AIContextBuilder.buildContext(userId, orgId, null, options);
@@ -195,11 +194,9 @@ describe('AIContextBuilder', () => {
             const options = { focusMode: 'pmo-docs' };
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {});
-            });
-
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
+                const cb = typeof params === 'function' ? params : callback;
+                process.nextTick(() => cb(null, {}));
+                return mockDb;
             });
 
             const context = await AIContextBuilder.buildContext(userId, orgId, projectId, options);
@@ -218,11 +215,9 @@ describe('AIContextBuilder', () => {
             const options = { focusMode: 'project-data' };
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {});
-            });
-
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
+                const cb = typeof params === 'function' ? params : callback;
+                process.nextTick(() => cb(null, {}));
+                return mockDb;
             });
 
             const context = await AIContextBuilder.buildContext(userId, orgId, projectId, options);
@@ -240,11 +235,9 @@ describe('AIContextBuilder', () => {
             const options = { focusMode: 'research' };
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {});
-            });
-
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
+                const cb = typeof params === 'function' ? params : callback;
+                process.nextTick(() => cb(null, {}));
+                return mockDb;
             });
 
             const context = await AIContextBuilder.buildContext(userId, orgId, projectId, options);
@@ -261,11 +254,9 @@ describe('AIContextBuilder', () => {
             const options = { focusMode: 'web' };
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {});
-            });
-
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
+                const cb = typeof params === 'function' ? params : callback;
+                process.nextTick(() => cb(null, {}));
+                return mockDb;
             });
 
             const context = await AIContextBuilder.buildContext(userId, orgId, projectId, options);
@@ -284,11 +275,9 @@ describe('AIContextBuilder', () => {
             const options = { focusMode: 'all' };
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {});
-            });
-
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
+                const cb = typeof params === 'function' ? params : callback;
+                process.nextTick(() => cb(null, {}));
+                return mockDb;
             });
 
             const context = await AIContextBuilder.buildContext(userId, orgId, projectId, options);
@@ -310,17 +299,19 @@ describe('AIContextBuilder', () => {
             const orgId = testOrganizations.org1.id;
 
             mockDb.get.mockImplementation((query, params, callback) => {
+                const cb = typeof params === 'function' ? params : callback;
                 if (query.includes('users')) {
-                    callback(null, { role: 'ADMIN' });
+                    process.nextTick(() => cb(null, { role: 'ADMIN' }));
                 } else if (query.includes('ai_policies')) {
-                    callback(null, {
+                    process.nextTick(() => cb(null, {
                         policy_level: 'ASSISTED',
                         internet_enabled: 1,
                         audit_required: 1
-                    });
+                    }));
                 } else {
-                    callback(null, null);
+                    process.nextTick(() => cb(null, null));
                 }
+                return mockDb;
             });
 
             const platform = await AIContextBuilder._buildPlatformContext(userId, orgId);
@@ -336,11 +327,13 @@ describe('AIContextBuilder', () => {
             const orgId = testOrganizations.org1.id;
 
             mockDb.get.mockImplementation((query, params, callback) => {
+                const cb = typeof params === 'function' ? params : callback;
                 if (query.includes('users')) {
-                    callback(null, { role: 'SUPERADMIN' });
+                    process.nextTick(() => cb(null, { role: 'SUPERADMIN' }));
                 } else {
-                    callback(null, {});
+                    process.nextTick(() => cb(null, {}));
                 }
+                return mockDb;
             });
 
             const platform = await AIContextBuilder._buildPlatformContext(userId, orgId);
@@ -354,15 +347,19 @@ describe('AIContextBuilder', () => {
             const orgId = testOrganizations.org1.id;
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {
+                const cb = typeof params === 'function' ? params : callback;
+                process.nextTick(() => cb(null, {
                     name: 'Test Org',
                     plan: 'enterprise',
                     status: 'active'
-                });
+                }));
+                return mockDb;
             });
-            
+
             mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, [{ id: 'proj-1' }, { id: 'proj-2' }]);
+                const cb = typeof params === 'function' ? params : callback;
+                process.nextTick(() => cb(null, [{ id: 'proj-1' }, { id: 'proj-2' }]));
+                return mockDb;
             });
 
             const org = await AIContextBuilder._buildOrganizationContext(orgId);
@@ -378,19 +375,21 @@ describe('AIContextBuilder', () => {
             const projectId = testProjects.project1.id;
 
             mockDb.get.mockImplementation((query, params, callback) => {
+                const cb = typeof params === 'function' ? params : callback;
                 if (query.includes('SELECT * FROM projects')) {
-                    callback(null, {
+                    process.nextTick(() => cb(null, {
                         id: projectId,
                         name: 'Test Project',
                         status: 'active',
                         current_phase: 'Assessment',
                         ai_role: 'MANAGER'
-                    });
+                    }));
                 } else if (query.includes('initiatives')) {
-                    callback(null, { total: 5, completed: 2 });
+                    process.nextTick(() => cb(null, { total: 5, completed: 2 }));
                 } else {
-                    callback(null, null);
+                    process.nextTick(() => cb(null, null));
                 }
+                return mockDb;
             });
 
             const project = await AIContextBuilder._buildProjectContext(projectId);

@@ -10,10 +10,10 @@
  * - Culture transformation
  */
 
-const { BaseAgent } = require('./baseAgent');
-const llmService = require('../llmService');
+import { BaseAgent } from './baseAgent.js';
+import llmService from '../llmService.js';
 
-class ChangeAgent extends BaseAgent {
+export class ChangeAgent extends BaseAgent {
     constructor(config = {}) {
         super({
             name: 'ChangeAgent',
@@ -343,10 +343,4 @@ Provide:
     }
 }
 
-module.exports = { ChangeAgent };
-
-
-
-
-
-
+export default ChangeAgent;

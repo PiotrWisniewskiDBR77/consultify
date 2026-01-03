@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const pinned_promptsRoutesJS = require('../../routes/pinned-prompts.js');
+const pinned_promptsRoutesJSPromise = (async () => {
+    const module = await import('../../routes/pinned-prompts.js');
+    return module.default || module;
+})();
+const pinned_promptsRoutesJS = pinned_promptsRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

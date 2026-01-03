@@ -1,32 +1,14 @@
 /**
- * LegalService Service
+ * Legal Service
  * Enterprise SaaS Architecture - TypeScript Backend
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
 
-const require = createRequire(import.meta.url);
-
-// Import the JS implementation for now (will be fully migrated later)
-const legalServiceServiceJS = require('../../services/legalService.js');
-
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const legalServiceService = legalServiceServiceJS.default || legalServiceServiceJS;
+// Lazy load the JS service module
+const loadLegalservice = createCachedLazyService('../../services/legalService.js');
 
 // Export default instance (for backward compatibility)
-export default legalServiceService;
-
-// Also export named exports if they exist
-if (typeof legalServiceServiceJS === 'object' && legalServiceServiceJS !== null) {
-    Object.keys(legalServiceServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = legalServiceServiceJS[key];
-        }
-    });
-}
+export default loadLegalservice();

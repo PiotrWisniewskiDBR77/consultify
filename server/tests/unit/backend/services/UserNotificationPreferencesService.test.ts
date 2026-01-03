@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import UserNotificationPreferencesService from '../../../../src/services/userNotificationPreferencesService.js';
+import UserNotificationPreferencesService from '../../../../services/userNotificationPreferencesService.js';
 
 describe('UserNotificationPreferencesService', () => {
     let mockDb: IDatabase;

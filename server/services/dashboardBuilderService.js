@@ -3,18 +3,38 @@
  * Manages custom admin dashboards with widgets
  */
 
-const { v4: uuidv4 } = require('uuid');
-
 // Dependency injection for testing
 const deps = {
-    db: require('../database')
+    _db: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
 };
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
 
 /**
  * Set dependencies for testing
  */
 const setDependencies = (newDeps) => {
-    Object.assign(deps, newDeps);
+    if (newDeps.db) deps.db = newDeps.db;
+    if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
 };
 
 /**
@@ -55,7 +75,8 @@ const DATA_SOURCES = {
  * Create a new dashboard
  */
 const createDashboard = async ({ name, description, layout = {}, widgets = [], isShared = false, createdBy }) => {
-    const id = uuidv4();
+    await initDeps();
+    const id = deps.uuidv4();
     
     const sql = `
         INSERT INTO admin_dashboards (
@@ -90,6 +111,7 @@ const createDashboard = async ({ name, description, layout = {}, widgets = [], i
  * Get dashboard by ID
  */
 const getDashboardById = async (id) => {
+    await initDeps();
     const sql = `
         SELECT d.*, u.email as created_by_email, u.first_name, u.last_name
         FROM admin_dashboards d
@@ -119,6 +141,7 @@ const getDashboardById = async (id) => {
  * Get all dashboards
  */
 const getDashboards = async ({ createdBy, isShared, limit = 100, offset = 0 } = {}) => {
+    await initDeps();
     let sql = `
         SELECT d.*, u.email as created_by_email, u.first_name, u.last_name
         FROM admin_dashboards d
@@ -160,6 +183,7 @@ const getDashboards = async ({ createdBy, isShared, limit = 100, offset = 0 } = 
  * Update a dashboard
  */
 const updateDashboard = async (id, updates) => {
+    await initDeps();
     const allowedFields = ['name', 'description', 'layout_json', 'widgets_json', 'is_shared'];
     const setClauses = [];
     const params = [];
@@ -202,6 +226,7 @@ const updateDashboard = async (id, updates) => {
  * Delete a dashboard
  */
 const deleteDashboard = async (id) => {
+    await initDeps();
     const sql = `DELETE FROM admin_dashboards WHERE id = ?`;
     const result = await deps.db.run(sql, [id]);
     return result.changes > 0;
@@ -211,6 +236,7 @@ const deleteDashboard = async (id) => {
  * Share/unshare a dashboard
  */
 const toggleShare = async (id, isShared) => {
+    await initDeps();
     const sql = `UPDATE admin_dashboards SET is_shared = ?, updated_at = datetime('now') WHERE id = ?`;
     const result = await deps.db.run(sql, [isShared ? 1 : 0, id]);
     return result.changes > 0;
@@ -241,11 +267,12 @@ const cloneDashboard = async (id, newName, createdBy) => {
  * Add widget to dashboard
  */
 const addWidget = async (dashboardId, widget) => {
+    await initDeps();
     const dashboard = await getDashboardById(dashboardId);
     if (!dashboard) return null;
     
     const newWidget = {
-        id: uuidv4(),
+        id: deps.uuidv4(),
         ...widget,
         createdAt: new Date().toISOString()
     };
@@ -304,6 +331,7 @@ const reorderWidgets = async (dashboardId, widgetOrder) => {
  * Get data for a widget
  */
 const getWidgetData = async (widget) => {
+    await initDeps();
     const { dataSource, config = {} } = widget;
     
     switch (dataSource) {
@@ -329,6 +357,7 @@ const getWidgetData = async (widget) => {
 };
 
 const getUsersWidgetData = async (config) => {
+    await initDeps();
     const sql = `
         SELECT 
             COUNT(*) as total,
@@ -341,6 +370,7 @@ const getUsersWidgetData = async (config) => {
 };
 
 const getOrganizationsWidgetData = async (config) => {
+    await initDeps();
     const sql = `
         SELECT 
             COUNT(*) as total,
@@ -352,6 +382,7 @@ const getOrganizationsWidgetData = async (config) => {
 };
 
 const getBillingWidgetData = async (config) => {
+    await initDeps();
     const sql = `
         SELECT 
             COUNT(*) as total_invoices,
@@ -364,6 +395,7 @@ const getBillingWidgetData = async (config) => {
 };
 
 const getAIUsageWidgetData = async (config) => {
+    await initDeps();
     const sql = `
         SELECT 
             COUNT(*) as total_requests,
@@ -377,6 +409,7 @@ const getAIUsageWidgetData = async (config) => {
 };
 
 const getActivityWidgetData = async (config) => {
+    await initDeps();
     const sql = `
         SELECT 
             COUNT(*) as total_activities,
@@ -393,6 +426,7 @@ const getActivityWidgetData = async (config) => {
 };
 
 const getSecurityWidgetData = async (config) => {
+    await initDeps();
     const sql = `
         SELECT 
             COUNT(*) as total_incidents,
@@ -405,6 +439,7 @@ const getSecurityWidgetData = async (config) => {
 };
 
 const getSupportTicketsWidgetData = async (config) => {
+    await initDeps();
     const sql = `
         SELECT 
             COUNT(*) as total_tickets,
@@ -417,6 +452,7 @@ const getSupportTicketsWidgetData = async (config) => {
 };
 
 const getCustomQueryData = async (config) => {
+    await initDeps();
     // For safety, only allow SELECT statements
     if (!config.query || !config.query.trim().toLowerCase().startsWith('select')) {
         return { error: 'Only SELECT queries are allowed' };
@@ -433,6 +469,7 @@ const getCustomQueryData = async (config) => {
  * Get dashboard statistics
  */
 const getStats = async () => {
+    await initDeps();
     const sql = `
         SELECT 
             COUNT(*) as total_dashboards,
@@ -450,7 +487,7 @@ const getStats = async () => {
     };
 };
 
-module.exports = {
+export default {
     setDependencies,
     // Dashboards
     createDashboard,

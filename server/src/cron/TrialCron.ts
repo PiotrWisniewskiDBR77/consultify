@@ -13,9 +13,10 @@
 import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
 import logger from '../utils/Logger.js';
-import { createRequire } from 'module';
+import * as DbPromise from '../utils/DbPromise.js';
 
-const require = createRequire(import.meta.url);
+
+
 
 // ==========================================
 // TYPES
@@ -52,8 +53,8 @@ class TrialCron {
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
             db: deps?.db || getDatabase(),
-            demoService: deps?.demoService || require('../../services/demoService.js'),
-            trialService: deps?.trialService || require('../../services/trialService.js'),
+            demoService: deps?.demoService || await import('../../services/demoService.js').then(m => m.default || m),
+            trialService: deps?.trialService || await import('../../services/trialService.js').then(m => m.default || m),
         };
     }
 
@@ -97,36 +98,19 @@ class TrialCron {
     async cleanupOldUsageCounters(): Promise<number> {
         const cutoffDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-        return new Promise((resolve, reject) => {
-            const dbResult = this.deps.db.run(
+        try {
+            const result = await DbPromise.run(
                 `DELETE FROM usage_counters WHERE counter_date < ?`,
-                [cutoffDate],
-                function (err) {
-                    if (err) {
-                        logger.error('[TrialCron] Error cleaning up usage counters:', err);
-                        reject(err);
-                    } else {
-                        // In SQLite, db.run() returns the database object, and 'this' in the callback refers to it
-                        // The database object has a 'changes' property
-                        const deleted = (this as { changes?: number }).changes || 0;
-                        logger.info(`[TrialCron] Cleaned up ${deleted} old usage counter record(s)`);
-                        resolve(deleted);
-                    }
-                }
+                [cutoffDate]
             );
             
-            // Fallback: if db.run() returns a Promise, handle it
-            if (dbResult && typeof (dbResult as Promise<{ changes: number }>).then === 'function') {
-                (dbResult as Promise<{ changes: number }>).then((result) => {
-                    const deleted = result.changes || 0;
-                    logger.info(`[TrialCron] Cleaned up ${deleted} old usage counter record(s)`);
-                    resolve(deleted);
-                }).catch((err) => {
-                    logger.error('[TrialCron] Error cleaning up usage counters:', err);
-                    reject(err);
-                });
-            }
-        });
+            const deleted = result.changes || 0;
+            logger.info(`[TrialCron] Cleaned up ${deleted} old usage counter record(s)`);
+            return deleted;
+        } catch (err) {
+            logger.error('[TrialCron] Error cleaning up usage counters:', err);
+            throw err;
+        }
     }
 }
 

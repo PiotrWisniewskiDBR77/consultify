@@ -1,9 +1,4 @@
-/**
- * Quota Service - 3-Level Token Quota Management
- * Levels: User → Project → Organization
- */
-
-const db = require('../../database');
+import BaseService from '../BaseService.js';
 
 // Default quotas (tokens)
 const DEFAULT_QUOTAS = {
@@ -21,26 +16,31 @@ const DEFAULT_QUOTAS = {
     }
 };
 
-class QuotaService {
+class QuotaService extends BaseService {
     constructor() {
+        super();
         this.isPg = process.env.DB_TYPE === 'postgres';
-        this.ensureTable();
+        // Table creation is handled lazily or via migrations
+        this._tableEnsured = false;
     }
 
     /**
      * Ensure the quota table exists
      */
     async ensureTable() {
-        if (!db || !db.run) return;
+        if (this._tableEnsured) return;
+
+        await this.init();
+        if (!this._db) return;
 
         // Check database type at runtime (in case env var changes)
-        const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
-        
+        const isPg = process.env.DB_TYPE === 'postgres' || (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres'));
+
         // Use PostgreSQL-compatible syntax if using PostgreSQL
-        const idColumn = isPg 
+        const idColumn = isPg
             ? 'id SERIAL PRIMARY KEY'
             : 'id INTEGER PRIMARY KEY AUTOINCREMENT';
-        
+
         // For PostgreSQL, use TIMESTAMP for created_at/updated_at, but keep TEXT for date strings
         const createdAtType = isPg ? 'TIMESTAMP' : 'TEXT';
         const updatedAtType = isPg ? 'TIMESTAMP' : 'TEXT';
@@ -62,12 +62,12 @@ class QuotaService {
             )
         `;
 
-        return new Promise((resolve) => {
-            db.run(sql, (err) => {
-                if (err) console.warn('[QuotaService] Table creation:', err.message);
-                resolve();
-            });
-        });
+        try {
+            await this.queryRun(sql);
+            this._tableEnsured = true;
+        } catch (err) {
+            this.logError('Table creation failed', err);
+        }
     }
 
     /**
@@ -76,6 +76,7 @@ class QuotaService {
      * @returns {{ allowed: boolean, reason?: string, quotaInfo?: object }}
      */
     async checkQuota(userId, organizationId, projectId = null) {
+        await this.ensureTable();
         await this.resetExpiredQuotas();
 
         // Check user quota
@@ -129,7 +130,7 @@ class QuotaService {
      */
     async consumeTokens(userId, organizationId, projectId, tokenCount, options = {}) {
         const { tier, isMaxMode } = options;
-        
+
         // Apply multiplier for MAX Mode / REASONING tier
         let multiplier = 1;
         if (tier === 'REASONING' || isMaxMode) {
@@ -151,9 +152,8 @@ class QuotaService {
 
         await Promise.all(updates);
 
-        // Log MAX mode usage for analytics
         if (multiplier > 1) {
-            console.log(`[QuotaService] MAX Mode consumption: ${tokenCount} × ${multiplier} = ${effectiveTokens} tokens`);
+            this.logInfo(`MAX Mode consumption: ${tokenCount} × ${multiplier} = ${effectiveTokens} tokens`);
         }
 
         return { effectiveTokens, multiplier };
@@ -174,94 +174,71 @@ class QuotaService {
     }
 
     async getQuota(entityType, entityId) {
-        if (!db || !db.get) return null;
-
-        return new Promise((resolve) => {
-            db.get(
-                `SELECT * FROM ai_usage_quotas WHERE entity_type = ? AND entity_id = ?`,
-                [entityType, entityId],
-                (err, row) => resolve(err ? null : row)
-            );
-        });
+        return await this.queryOne(
+            `SELECT * FROM ai_usage_quotas WHERE entity_type = ? AND entity_id = ?`,
+            [entityType, entityId]
+        );
     }
 
     async createQuota(entityType, entityId) {
-        if (!db || !db.run) return;
-
         const defaults = DEFAULT_QUOTAS[entityType] || DEFAULT_QUOTAS.user;
         const now = new Date().toISOString();
 
-        return new Promise((resolve) => {
-            db.run(
-                `INSERT OR IGNORE INTO ai_usage_quotas 
-                 (entity_type, entity_id, daily_token_limit, monthly_token_limit, 
-                  tokens_used_today, tokens_used_month, last_reset_daily, last_reset_monthly)
-                 VALUES (?, ?, ?, ?, 0, 0, ?, ?)`,
-                [entityType, entityId, defaults.daily, defaults.monthly, now, now],
-                (err) => resolve()
-            );
-        });
+        return await this.queryRun(
+            `INSERT OR IGNORE INTO ai_usage_quotas 
+             (entity_type, entity_id, daily_token_limit, monthly_token_limit, 
+              tokens_used_today, tokens_used_month, last_reset_daily, last_reset_monthly)
+             VALUES (?, ?, ?, ?, 0, 0, ?, ?)`,
+            [entityType, entityId, defaults.daily, defaults.monthly, now, now]
+        );
     }
 
     async incrementUsage(entityType, entityId, tokenCount) {
-        if (!db || !db.run) return;
-
-        return new Promise((resolve) => {
-            db.run(
-                `UPDATE ai_usage_quotas 
-                 SET tokens_used_today = tokens_used_today + ?,
-                     tokens_used_month = tokens_used_month + ?,
-                     updated_at = CURRENT_TIMESTAMP
-                 WHERE entity_type = ? AND entity_id = ?`,
-                [tokenCount, tokenCount, entityType, entityId],
-                (err) => resolve()
-            );
-        });
+        return await this.queryRun(
+            `UPDATE ai_usage_quotas 
+             SET tokens_used_today = tokens_used_today + ?,
+                 tokens_used_month = tokens_used_month + ?,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE entity_type = ? AND entity_id = ?`,
+            [tokenCount, tokenCount, entityType, entityId]
+        );
     }
 
     /**
      * Reset expired quotas (daily and monthly)
      */
     async resetExpiredQuotas() {
-        if (!db || !db.run) return;
-
         const now = new Date();
         const today = now.toISOString().split('T')[0];
         const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
 
         // Check database type at runtime
-        const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
-        
+        const isPg = process.env.DB_TYPE === 'postgres' || (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres'));
+
         // Use PostgreSQL-compatible date comparison
-        const dateCompare = isPg 
+        const dateCompare = isPg
             ? `(last_reset_daily::date < ?::date)`
             : `date(last_reset_daily) < date(?)`;
 
         // Reset daily quotas
-        await new Promise((resolve) => {
-            db.run(
-                `UPDATE ai_usage_quotas 
-                 SET tokens_used_today = 0, last_reset_daily = ?
-                 WHERE ${dateCompare}`,
-                [now.toISOString(), today],
-                (err) => resolve()
-            );
-        });
+        await this.queryRun(
+            `UPDATE ai_usage_quotas 
+             SET tokens_used_today = 0, last_reset_daily = ?
+             WHERE ${dateCompare}`,
+            [now.toISOString(), today]
+        );
 
-        const monthlyDateCompare = isPg 
+        const monthlyDateCompare = isPg
             ? `(last_reset_monthly::date < ?::date)`
             : `date(last_reset_monthly) < date(?)`;
 
         // Reset monthly quotas
-        await new Promise((resolve) => {
-            db.run(
-                `UPDATE ai_usage_quotas 
-                 SET tokens_used_month = 0, last_reset_monthly = ?
-                 WHERE ${monthlyDateCompare}`,
-                [now.toISOString(), firstOfMonth],
-                (err) => resolve()
-            );
-        });
+        await this.queryRun(
+            `UPDATE ai_usage_quotas 
+             SET tokens_used_month = 0, last_reset_monthly = ?
+             WHERE ${monthlyDateCompare}`,
+            [now.toISOString(), firstOfMonth]
+        );
     }
 
     /**
@@ -293,23 +270,20 @@ class QuotaService {
      * Update quota limits for an entity
      */
     async setQuotaLimits(entityType, entityId, dailyLimit, monthlyLimit) {
-        if (!db || !db.run) return;
-
         await this.getOrCreateQuota(entityType, entityId);
 
-        return new Promise((resolve) => {
-            db.run(
-                `UPDATE ai_usage_quotas 
-                 SET daily_token_limit = ?, monthly_token_limit = ?, updated_at = CURRENT_TIMESTAMP
-                 WHERE entity_type = ? AND entity_id = ?`,
-                [dailyLimit, monthlyLimit, entityType, entityId],
-                (err) => resolve(!err)
-            );
-        });
+        const result = await this.queryRun(
+            `UPDATE ai_usage_quotas 
+             SET daily_token_limit = ?, monthly_token_limit = ?, updated_at = CURRENT_TIMESTAMP
+             WHERE entity_type = ? AND entity_id = ?`,
+            [dailyLimit, monthlyLimit, entityType, entityId]
+        );
+        return !!result;
     }
 }
 
 // Singleton
 const quotaService = new QuotaService();
 
-module.exports = { QuotaService, quotaService, DEFAULT_QUOTAS };
+export { QuotaService, quotaService, DEFAULT_QUOTAS };
+export default quotaService;

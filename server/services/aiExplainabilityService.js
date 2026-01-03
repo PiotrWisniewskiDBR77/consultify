@@ -8,17 +8,97 @@
  */
 
 // Confidence Level Enum (mirrors TypeScript types)
-const AIConfidenceLevel = {
+export const AIConfidenceLevel = {
     LOW: 'LOW',
     MEDIUM: 'MEDIUM',
     HIGH: 'HIGH'
 };
 
 // AI Project Role Enum (mirrors TypeScript types)
-const AIProjectRole = {
+export const AIProjectRole = {
     ADVISOR: 'ADVISOR',
     MANAGER: 'MANAGER',
     OPERATOR: 'OPERATOR'
+};
+
+/**
+ * Count the number of populated context layers
+ * @private
+ */
+export const _countPopulatedLayers = (context) => {
+    if (!context) return 0;
+
+    let count = 0;
+    if (context.platform && Object.keys(context.platform).length > 0) count++;
+    if (context.organization && context.organization.organizationId) count++;
+    if (context.project && context.project.projectId) count++;
+    if (context.execution && (context.execution.userTasks || context.execution.pendingDecisions)) count++;
+    if (context.knowledge && Object.keys(context.knowledge).length > 0) count++;
+    if (context.external && Object.keys(context.external).length > 0) count++;
+
+    return count;
+};
+
+/**
+ * Get total blocker count from context
+ * @private
+ */
+export const _getBlockerCount = (context) => {
+    let count = 0;
+
+    // From PMO health snapshot
+    const healthSnapshot = context?.pmo?.healthSnapshot;
+    if (healthSnapshot?.blockers) {
+        count += healthSnapshot.blockers.length;
+    }
+
+    // From execution context
+    if (context?.execution?.blockers) {
+        count += context.execution.blockers.length;
+    }
+
+    return count;
+};
+
+/**
+ * Extract external sources list
+ * @private
+ */
+export const _extractExternalSources = (context) => {
+    const sources = [];
+
+    if (!context?.external?.internetEnabled) {
+        return sources;
+    }
+
+    if (context.external.fetchedData?.webSearch) {
+        sources.push('Web Search');
+    }
+    if (context.external.fetchedData?.news) {
+        sources.push('News');
+    }
+    if (context.external.fetchedData?.market) {
+        sources.push('Market Data');
+    }
+    if (context.external.externalSourcesUsed?.length > 0) {
+        sources.push(...context.external.externalSourcesUsed);
+    }
+
+    return [...new Set(sources)]; // Deduplicate
+};
+
+/**
+ * Map orchestrator role to project role
+ * @private
+ */
+export const _mapOrchestratorRoleToProjectRole = (orchestratorRole) => {
+    const mapping = {
+        'ADVISOR': AIProjectRole.ADVISOR,
+        'PMO_MANAGER': AIProjectRole.MANAGER,
+        'EXECUTOR': AIProjectRole.OPERATOR,
+        'EDUCATOR': AIProjectRole.ADVISOR
+    };
+    return mapping[orchestratorRole] || AIProjectRole.ADVISOR;
 };
 
 /**
@@ -48,7 +128,7 @@ const AIProjectRole = {
  * @param {Object} options - Additional options
  * @returns {string} - 'LOW' | 'MEDIUM' | 'HIGH'
  */
-const computeConfidenceLevel = (context, options = {}) => {
+export const computeConfidenceLevel = (context, options = {}) => {
     // Safety check: no context means LOW confidence
     if (!context) {
         return AIConfidenceLevel.LOW;
@@ -130,45 +210,6 @@ const computeConfidenceLevel = (context, options = {}) => {
 };
 
 /**
- * Count the number of populated context layers
- * @private
- */
-const _countPopulatedLayers = (context) => {
-    if (!context) return 0;
-
-    let count = 0;
-    if (context.platform && Object.keys(context.platform).length > 0) count++;
-    if (context.organization && context.organization.organizationId) count++;
-    if (context.project && context.project.projectId) count++;
-    if (context.execution && (context.execution.userTasks || context.execution.pendingDecisions)) count++;
-    if (context.knowledge && Object.keys(context.knowledge).length > 0) count++;
-    if (context.external && Object.keys(context.external).length > 0) count++;
-
-    return count;
-};
-
-/**
- * Get total blocker count from context
- * @private
- */
-const _getBlockerCount = (context) => {
-    let count = 0;
-
-    // From PMO health snapshot
-    const healthSnapshot = context?.pmo?.healthSnapshot;
-    if (healthSnapshot?.blockers) {
-        count += healthSnapshot.blockers.length;
-    }
-
-    // From execution context
-    if (context?.execution?.blockers) {
-        count += context.execution.blockers.length;
-    }
-
-    return count;
-};
-
-/**
  * Build a reasoning summary based on context
  * This is deterministic and NOT LLM-dependent
  * 
@@ -176,7 +217,7 @@ const _getBlockerCount = (context) => {
  * @param {Object} options - Additional options
  * @returns {string} - Human-readable reasoning summary
  */
-const buildReasoningSummary = (context, options = {}) => {
+export const buildReasoningSummary = (context, options = {}) => {
     const parts = [];
     const healthSnapshot = context?.pmo?.healthSnapshot;
 
@@ -244,7 +285,7 @@ const buildReasoningSummary = (context, options = {}) => {
  * @param {string} aiRole - The active AI role
  * @returns {string[]} - List of constraints
  */
-const extractConstraintsApplied = (context, policy, aiRole) => {
+export const extractConstraintsApplied = (context, policy, aiRole) => {
     const constraints = [];
 
     // AI Role constraint
@@ -293,7 +334,7 @@ const extractConstraintsApplied = (context, policy, aiRole) => {
  * @param {Object} options - Additional options
  * @returns {Object} - Data used object
  */
-const identifyDataUsed = (context, options = {}) => {
+export const identifyDataUsed = (context, options = {}) => {
     const projectMemory = options.projectMemory || context?.projectMemory;
 
     return {
@@ -301,33 +342,6 @@ const identifyDataUsed = (context, options = {}) => {
         projectMemoryCount: projectMemory?.memoryCount || 0,
         externalSources: _extractExternalSources(context)
     };
-};
-
-/**
- * Extract external sources list
- * @private
- */
-const _extractExternalSources = (context) => {
-    const sources = [];
-
-    if (!context?.external?.internetEnabled) {
-        return sources;
-    }
-
-    if (context.external.fetchedData?.webSearch) {
-        sources.push('Web Search');
-    }
-    if (context.external.fetchedData?.news) {
-        sources.push('News');
-    }
-    if (context.external.fetchedData?.market) {
-        sources.push('Market Data');
-    }
-    if (context.external.externalSourcesUsed?.length > 0) {
-        sources.push(...context.external.externalSourcesUsed);
-    }
-
-    return [...new Set(sources)]; // Deduplicate
 };
 
 /**
@@ -339,7 +353,7 @@ const _extractExternalSources = (context) => {
  * @param {Object} responseContext - The orchestrator response context
  * @returns {Object} - Complete AIExplanation object
  */
-const buildAIExplanation = (responseContext) => {
+export const buildAIExplanation = (responseContext) => {
     const context = responseContext?.context || {};
     const policy = responseContext?.policy || {};
     const projectMemory = responseContext?.projectMemory;
@@ -373,20 +387,6 @@ const buildAIExplanation = (responseContext) => {
 };
 
 /**
- * Map orchestrator role to project role
- * @private
- */
-const _mapOrchestratorRoleToProjectRole = (orchestratorRole) => {
-    const mapping = {
-        'ADVISOR': AIProjectRole.ADVISOR,
-        'PMO_MANAGER': AIProjectRole.MANAGER,
-        'EXECUTOR': AIProjectRole.OPERATOR,
-        'EDUCATOR': AIProjectRole.ADVISOR
-    };
-    return mapping[orchestratorRole] || AIProjectRole.ADVISOR;
-};
-
-/**
  * Build human-readable explainability footer for UI
  * 
  * Example output:
@@ -401,7 +401,7 @@ const _mapOrchestratorRoleToProjectRole = (orchestratorRole) => {
  * @param {Object} explanation - The AIExplanation object
  * @returns {string} - Formatted footer string
  */
-const buildExplainabilityFooter = (explanation) => {
+export const buildExplainabilityFooter = (explanation) => {
     if (!explanation) {
         return '';
     }
@@ -442,20 +442,15 @@ const buildExplainabilityFooter = (explanation) => {
     return lines.join('\n');
 };
 
-module.exports = {
-    // Enums
+export default {
     AIConfidenceLevel,
     AIProjectRole,
-
-    // Core functions
     computeConfidenceLevel,
     buildReasoningSummary,
     extractConstraintsApplied,
     identifyDataUsed,
     buildAIExplanation,
     buildExplainabilityFooter,
-
-    // Internal helpers (exported for testing)
     _countPopulatedLayers,
     _getBlockerCount,
     _extractExternalSources,

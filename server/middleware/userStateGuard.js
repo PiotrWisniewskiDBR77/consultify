@@ -170,7 +170,7 @@ async function transitionState(userId, fromState, toState, context = {}) {
 
         // Log to audit (if auditService available)
         try {
-            const AuditService = require('../services/auditService');
+            const AuditService = (await import('../services/auditService.js')).default;
             await AuditService.log({
                 eventType: 'USER_STATE_TRANSITION',
                 userId,

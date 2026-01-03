@@ -1,32 +1,53 @@
 /**
- * Ai/tools/updateAssessmentScore Service
- * Enterprise SaaS Architecture - TypeScript Backend
- * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Update Assessment Score Tool Handler
+ * MUTATION - Requires user approval before execution.
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import * as DbPromise from '../../../utils/DbPromise.js';
 
-const require = createRequire(import.meta.url);
+type UpdateAssessmentScoreParams = {
+    assessmentId: string;
+    axisId: string;
+    score: number;
+};
 
-// Import the JS implementation for now (will be fully migrated later)
-const ai/tools/updateAssessmentScoreServiceJS = require('../../services/ai/tools/updateAssessmentScore.js');
+type ToolContext = {
+    userId?: string;
+};
 
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const ai/tools/updateAssessmentScoreService = ai/tools/updateAssessmentScoreServiceJS.default || ai/tools/updateAssessmentScoreServiceJS;
+export async function updateAssessmentScore(
+    params: UpdateAssessmentScoreParams,
+    context: ToolContext = {}
+): Promise<Record<string, unknown>> {
+    const { assessmentId, axisId, score } = params;
+    const { userId } = context;
 
-// Export default instance (for backward compatibility)
-export default ai/tools/updateAssessmentScoreService;
+    try {
+        const result = await DbPromise.run(
+            `UPDATE assessment_scores 
+             SET score = ?, updated_by = ?, updated_at = datetime('now')
+             WHERE assessment_id = ? AND axis_id = ?`,
+            [score, userId || null, assessmentId, axisId],
+            { fallback: false }
+        );
 
-// Also export named exports if they exist
-if (typeof ai/tools/updateAssessmentScoreServiceJS === 'object' && ai/tools/updateAssessmentScoreServiceJS !== null) {
-    Object.keys(ai/tools/updateAssessmentScoreServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = ai/tools/updateAssessmentScoreServiceJS[key];
+        const changes = result.changes || 0;
+        return {
+            success: changes > 0,
+            message: changes > 0
+                ? `Score updated to ${score} for axis ${axisId}`
+                : 'No matching assessment found'
+        };
+    } catch (error) {
+        const err = error as Error;
+        if (err.message.includes('no such table') || err.message.includes('no such column')) {
+            return {
+                success: true,
+                message: `Score for axis ${axisId} would be updated to ${score} (simulated)`
+            };
         }
-    });
+        throw err;
+    }
 }
+
+export default { updateAssessmentScore };

@@ -9,9 +9,9 @@
 
 import * as cron from 'node-cron';
 import logger from '../utils/Logger.js';
-import { createRequire } from 'module';
 
-const require = createRequire(import.meta.url);
+
+
 
 // ==========================================
 // TYPES
@@ -41,7 +41,7 @@ class BackupCron {
 
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
-            backupService: deps?.backupService || require('../../services/backupService.js'),
+            backupService: deps?.backupService || await import('../../services/backupService.js').then(m => m.default || m),
             sentry: deps?.sentry,
         };
     }

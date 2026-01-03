@@ -31,52 +31,15 @@ import {
     CreditNoteIdParamSchema,
     SpendingAlertIdParamSchema,
 } from '../validators/billing.validators.js';
-import { getDatabase } from '../database/Database.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { v4 as uuidv4 } from 'uuid';
-
-// Dynamic import for billingWebhookService (may still be wrapper)
-let billingWebhookService: any;
-let BILLING_EVENT_TYPES: any;
-
-async function getBillingWebhookService() {
-    if (!billingWebhookService) {
-        const module = await import('../services/billingWebhookService.js');
-        billingWebhookService = module.default || module;
-        BILLING_EVENT_TYPES = billingWebhookService.BILLING_EVENT_TYPES || module.BILLING_EVENT_TYPES;
-    }
-    return { service: billingWebhookService, eventTypes: BILLING_EVENT_TYPES };
-}
+import BillingWebhookService, { BILLING_EVENT_TYPES } from '../services/BillingWebhookService.js';
 
 const router = Router();
-const db = getDatabase();
 
-// Database helpers
-function dbAll(sql: string, params: unknown[] = []): Promise<unknown[]> {
-    return new Promise((resolve, reject) => {
-        db.all(sql, params, (err: Error | null, rows: unknown[]) => {
-            if (err) reject(err);
-            else resolve(rows || []);
-        });
-    });
-}
-
-function dbRun(sql: string, params: unknown[] = []): Promise<{ lastID: number; changes: number }> {
-    return new Promise((resolve, reject) => {
-        db.run(sql, params, function (err: Error | null) {
-            if (err) reject(err);
-            else resolve({ lastID: this.lastID, changes: this.changes });
-        });
-    });
-}
-
-function dbGet(sql: string, params: unknown[] = []): Promise<unknown | null> {
-    return new Promise((resolve, reject) => {
-        db.get(sql, params, (err: Error | null, row: unknown) => {
-            if (err) reject(err);
-            else resolve(row || null);
-        });
-    });
-}
+// Database helpers with proper typing
+type SQLParam = string | number | boolean | null | undefined;
+type SQLParams = SQLParam[];
 
 // Billing access middleware
 const requireBillingAccess = (req: AuthRequest, res: Response, next: () => void): void => {
@@ -188,7 +151,7 @@ router.get('/invoices', verifyToken, validateQuery(ListInvoicesQuerySchema), asy
             LEFT JOIN organizations o ON i.organization_id = o.id
             WHERE 1=1
         `;
-        const params: unknown[] = [];
+        const params: SQLParams = [];
 
         if (!isSuperAdmin) {
             query += ` AND i.organization_id = ?`;
@@ -206,14 +169,25 @@ router.get('/invoices', verifyToken, validateQuery(ListInvoicesQuerySchema), asy
         query += ` ORDER BY i.created_at DESC LIMIT ? OFFSET ?`;
         params.push(pageSize, offset);
 
-        const invoices = await dbAll(query, params) as Array<{
+        interface InvoiceRow {
+            id: string;
+            organization_id: string;
+            organization_name?: string;
+            status: string;
+            amount: number;
+            amount_paid: number;
+            currency: string;
+            due_date: string;
+            paid_at?: string;
             line_items?: string;
             metadata?: string;
-            [key: string]: unknown;
-        }>;
+            created_at: string;
+            updated_at: string;
+        }
+        const invoices = await dbAll<InvoiceRow>(query, params);
 
         let countQuery = `SELECT COUNT(*) as total FROM invoices WHERE 1=1`;
-        const countParams: unknown[] = [];
+        const countParams: SQLParams = [];
         if (!isSuperAdmin) {
             countQuery += ` AND organization_id = ?`;
             countParams.push(req.user!.organizationId);
@@ -254,18 +228,17 @@ router.get('/invoices/:id', verifyToken, validateParams(InvoiceIdParamSchema), a
             LEFT JOIN organizations o ON i.organization_id = o.id
             WHERE i.id = ?
         `;
-        const params: unknown[] = [id];
+        const params: SQLParams = [id];
 
         if (!isSuperAdmin) {
             query += ` AND i.organization_id = ?`;
             params.push(req.user!.organizationId);
         }
 
-        const invoice = await dbGet(query, params) as {
-            line_items?: string;
-            metadata?: string;
-            [key: string]: unknown;
-        } | null;
+        interface InvoiceDetailRow extends InvoiceRow {
+            // Additional fields from JOIN
+        }
+        const invoice = await dbGet<InvoiceDetailRow>(query, params);
 
         if (!invoice) {
             res.status(404).json({ error: 'Invoice not found' });
@@ -322,7 +295,7 @@ router.put('/invoices/:id', verifyToken, requireSuperAdmin, validateParams(Invoi
         const { status, lineItems, dueDate, metadata } = req.body;
 
         const updates: string[] = [];
-        const params: unknown[] = [];
+        const params: SQLParams = [];
 
         if (status) {
             updates.push('status = ?');
@@ -413,7 +386,7 @@ router.get('/subscriptions', verifyToken, validateQuery(ListSubscriptionsQuerySc
             LEFT JOIN organizations o ON s.organization_id = o.id
             WHERE 1=1
         `;
-        const params: unknown[] = [];
+        const params: SQLParams = [];
 
         if (!isSuperAdmin) {
             query += ` AND s.organization_id = ?`;
@@ -431,10 +404,22 @@ router.get('/subscriptions', verifyToken, validateQuery(ListSubscriptionsQuerySc
         query += ` ORDER BY s.created_at DESC LIMIT ? OFFSET ?`;
         params.push(pageSize, offset);
 
-        const subscriptions = await dbAll(query, params) as Array<{
+        interface SubscriptionRow {
+            id: string;
+            organization_id: string;
+            organization_name?: string;
+            plan_id: string;
+            plan_name?: string;
+            status: string;
+            billing_cycle: string;
+            current_period_start: string;
+            current_period_end: string;
+            cancel_at_period_end: number;
             metadata?: string;
-            [key: string]: unknown;
-        }>;
+            created_at: string;
+            updated_at: string;
+        }
+        const subscriptions = await dbAll<SubscriptionRow>(query, params);
 
         res.json({
             subscriptions: subscriptions.map(sub => ({
@@ -461,7 +446,7 @@ router.get('/subscriptions/:id', verifyToken, validateParams(SubscriptionIdParam
             LEFT JOIN organizations o ON s.organization_id = o.id
             WHERE s.id = ?
         `;
-        const params: unknown[] = [id];
+        const params: SQLParams = [id];
 
         if (!isSuperAdmin) {
             query += ` AND s.organization_id = ?`;
@@ -472,7 +457,6 @@ router.get('/subscriptions/:id', verifyToken, validateParams(SubscriptionIdParam
             metadata?: string;
             features?: string;
             limits?: string;
-            [key: string]: unknown;
         } | null;
 
         if (!subscription) {
@@ -544,7 +528,7 @@ router.put('/subscriptions/:id', verifyToken, requireSuperAdmin, validateParams(
         const { status, planId, billingCycle, cancelAtPeriodEnd } = req.body;
 
         const updates: string[] = [];
-        const params: unknown[] = [];
+        const params: SQLParams = [];
 
         if (status) {
             updates.push('status = ?');
@@ -643,11 +627,23 @@ router.get('/plans', verifyToken, validateQuery(ListPlansQuerySchema), asyncHand
         }
         query += ` ORDER BY sort_order ASC`;
 
-        const plans = await dbAll(query) as Array<{
+        interface PlanRow {
+            id: string;
+            name: string;
+            description?: string;
+            price_monthly: number;
+            price_yearly: number;
+            currency: string;
+            trial_days: number;
+            is_public: number;
+            is_active: number;
+            sort_order: number;
             features?: string;
             limits?: string;
-            [key: string]: unknown;
-        }>;
+            created_at: string;
+            updated_at: string;
+        }
+        const plans = await dbAll<PlanRow>(query);
 
         res.json({
             plans: plans.map(plan => ({
@@ -693,7 +689,7 @@ router.put('/plans/:id', verifyToken, requireSuperAdmin, validateParams(PlanIdPa
     try {
         const { id } = req.params;
         const updates: string[] = [];
-        const params: unknown[] = [];
+        const params: SQLParams = [];
 
         const fields = ['name', 'description', 'price_monthly', 'price_yearly', 'currency',
             'trial_days', 'is_public', 'is_active', 'sort_order'];
@@ -754,7 +750,7 @@ router.get('/credit-notes', verifyToken, asyncHandler(async (req: AuthRequest, r
             LEFT JOIN organizations o ON cn.organization_id = o.id
             WHERE 1=1
         `;
-        const params: unknown[] = [];
+        const params: SQLParams = [];
 
         if (!isSuperAdmin) {
             query += ` AND cn.organization_id = ?`;
@@ -818,7 +814,7 @@ router.get('/usage', verifyToken, validateQuery(UsageQuerySchema), asyncHandler(
             FROM usage_records
             WHERE organization_id = ?
         `;
-        const params: unknown[] = [orgId];
+        const params: SQLParams = [orgId];
 
         if (metric) {
             query += ` AND metric_name = ?`;
@@ -877,7 +873,11 @@ router.get('/usage', verifyToken, validateQuery(UsageQuerySchema), asyncHandler(
             }
         };
 
-        const totals = await dbAll(`SELECT metric_name, SUM(quantity) as total FROM usage_records WHERE organization_id = ? GROUP BY metric_name`, [orgId]);
+        interface UsageTotalRow {
+            metric_name: string;
+            total: number;
+        }
+        const totals = await dbAll<UsageTotalRow>(`SELECT metric_name, SUM(quantity) as total FROM usage_records WHERE organization_id = ? GROUP BY metric_name`, [orgId]);
 
         res.json({ usage, structuredUsage, totals });
     } catch (error) {
@@ -911,13 +911,18 @@ router.post('/usage', verifyToken, validateBody(RecordUsageRequestSchema), async
 router.get('/spending-alerts', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
         const orgId = req.user!.organizationId;
-        const alerts = await dbAll(`SELECT * FROM spending_alerts WHERE organization_id = ?`, [orgId]) as Array<{
-            notify_emails?: string;
+        interface SpendingAlertRow {
+            id: string;
+            organization_id: string;
+            threshold_amount: number;
             threshold_type?: string;
+            notify_emails?: string;
             is_active?: number;
             last_triggered_at?: string;
-            [key: string]: unknown;
-        }>;
+            created_at: string;
+            updated_at: string;
+        }
+        const alerts = await dbAll<SpendingAlertRow>(`SELECT * FROM spending_alerts WHERE organization_id = ?`, [orgId]);
 
         res.json(alerts.map(a => ({
             ...a,
@@ -1026,8 +1031,7 @@ router.get('/webhook-events', verifyToken, requireBillingAccess, asyncHandler(as
     try {
         const orgId = (req as unknown as { org?: { id: string } }).org?.id || req.user!.organizationId;
         const limit = parseInt((req.query.limit as string) || '100', 10);
-        const { service } = await getBillingWebhookService();
-        const events = await service.getRecentEvents(orgId, limit);
+        const events = await BillingWebhookService.getRecentEvents(orgId, limit);
         res.json({ events });
     } catch (error) {
         console.error('[Billing] Get webhook events error:', error);
@@ -1039,8 +1043,7 @@ router.get('/webhook-events/stats', verifyToken, requireBillingAccess, asyncHand
     try {
         const orgId = (req as unknown as { org?: { id: string } }).org?.id || req.user!.organizationId;
         const period = (req.query.period as string) || '30 days';
-        const { service } = await getBillingWebhookService();
-        const stats = await service.getEventStats(orgId, period);
+        const stats = await BillingWebhookService.getEventStats(orgId, period);
         res.json({ stats });
     } catch (error) {
         console.error('[Billing] Get webhook event stats error:', error);
@@ -1050,8 +1053,7 @@ router.get('/webhook-events/stats', verifyToken, requireBillingAccess, asyncHand
 
 router.get('/webhook-events/:id', verifyToken, requireBillingAccess, validateParams(InvoiceIdParamSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const { service } = await getBillingWebhookService();
-        const event = await service.getEventById(req.params.id);
+        const event = await BillingWebhookService.getEventById(req.params.id);
         if (!event) {
             res.status(404).json({ error: 'Webhook event not found' });
             return;
@@ -1069,24 +1071,32 @@ router.get('/webhook-events/:id', verifyToken, requireBillingAccess, validatePar
 }));
 
 router.get('/webhook-event-types', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { eventTypes } = await getBillingWebhookService();
-    res.json({ eventTypes });
+    res.json({ eventTypes: BILLING_EVENT_TYPES });
 }));
 
 router.post('/admin/webhook-events/:id/retry', verifyToken, requireSuperAdmin, validateParams(InvoiceIdParamSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-        const { service } = await getBillingWebhookService();
-        const event = await service.getEventById(req.params.id);
+        const event = await BillingWebhookService.getEventById(req.params.id);
         if (!event) {
             res.status(404).json({ error: 'Webhook event not found' });
             return;
         }
 
-        const { service } = await getBillingWebhookService();
-        const result = await service.triggerEvent(
-            (event as { organization_id: string }).organization_id,
-            (event as { event_type: string }).event_type,
-            ((event as { payload?: { data?: { object?: unknown } } }).payload?.data?.object || (event as { payload?: unknown }).payload)
+        interface WebhookEvent {
+            organization_id: string;
+            event_type: string;
+            payload?: {
+                data?: {
+                    object?: Record<string, unknown>;
+                };
+            } | Record<string, unknown>;
+        }
+        const webhookEvent = event as WebhookEvent;
+        const payload = (webhookEvent.payload?.data?.object || webhookEvent.payload) as Record<string, unknown> | undefined;
+        const result = await BillingWebhookService.triggerEvent(
+            webhookEvent.organization_id,
+            webhookEvent.event_type,
+            payload
         );
 
         res.json({ success: true, result });
@@ -1099,8 +1109,7 @@ router.post('/admin/webhook-events/:id/retry', verifyToken, requireSuperAdmin, v
 router.get('/admin/webhook-events/failed', verifyToken, requireSuperAdmin, asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
         const limit = parseInt((req.query.limit as string) || '50', 10);
-        const { service } = await getBillingWebhookService();
-        const failedEvents = await service.getFailedEvents(limit);
+        const failedEvents = await BillingWebhookService.getFailedEvents(limit);
         res.json({ events: failedEvents });
     } catch (error) {
         console.error('[Billing Admin] Get failed webhook events error:', error);
@@ -1111,8 +1120,7 @@ router.get('/admin/webhook-events/failed', verifyToken, requireSuperAdmin, async
 router.get('/admin/webhook-events/pending', verifyToken, requireSuperAdmin, asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
         const limit = parseInt((req.query.limit as string) || '50', 10);
-        const { service } = await getBillingWebhookService();
-        const pendingEvents = await service.getPendingRetries(limit);
+        const pendingEvents = await BillingWebhookService.getPendingRetries(limit);
         res.json({ events: pendingEvents });
     } catch (error) {
         console.error('[Billing Admin] Get pending webhook events error:', error);

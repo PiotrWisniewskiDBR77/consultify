@@ -3,19 +3,41 @@
 
 // Dependency injection container (for deterministic unit tests)
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+    _db: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
 };
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
 
 const BaselineService = {
     // For testing: allow overriding dependencies
     setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
+        if (newDeps.db) deps.db = newDeps.db;
+        if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
     },
     /**
      * Capture a new schedule baseline
      */
     captureBaseline: async (roadmapId, projectId, userId, rationale) => {
+        await initDeps();
         // Get current initiative timeline data from roadmap_initiatives
         const initiatives = await new Promise((resolve, reject) => {
             deps.db.all(`SELECT initiative_id, planned_start_date, planned_end_date, sequence_position 
@@ -89,6 +111,7 @@ const BaselineService = {
      * Get all baselines for a roadmap
      */
     getBaselineHistory: async (roadmapId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.all(`SELECT id, version, approved_by, approved_at, rationale FROM schedule_baselines 
                     WHERE roadmap_id = ? ORDER BY version DESC`, [roadmapId], (err, rows) => {
@@ -102,6 +125,7 @@ const BaselineService = {
      * Calculate variance between baseline and actual
      */
     calculateVariance: async (roadmapId, baselineVersion = null) => {
+        await initDeps();
         const baseline = await BaselineService.getBaseline(roadmapId, baselineVersion);
         if (!baseline) throw new Error('No baseline found');
 
@@ -174,4 +198,4 @@ const BaselineService = {
     }
 };
 
-module.exports = BaselineService;
+export default BaselineService;

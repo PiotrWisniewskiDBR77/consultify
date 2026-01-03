@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const roadmapRoutesJS = require('../../routes/roadmap.js');
+const roadmapRoutesJSPromise = (async () => {
+    const module = await import('../../routes/roadmap.js');
+    return module.default || module;
+})();
+const roadmapRoutesJS = roadmapRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

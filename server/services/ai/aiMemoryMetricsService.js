@@ -7,15 +7,53 @@
  * @version 1.0.0
  */
 
-const db = require('../../database');
-const { v4: uuidv4 } = require('uuid');
-const AIMemoryManager = require('../aiMemoryManager');
+// Dependency injection container
+const deps = {
+    _db: null,
+    _uuidv4: null,
+    _AIMemoryManager: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; },
+
+    get AIMemoryManager() { return this._AIMemoryManager; },
+    set AIMemoryManager(val) { this._AIMemoryManager = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+    if (!deps._AIMemoryManager) {
+        const { default: manager } = await import('../aiMemoryManager.js');
+        deps._AIMemoryManager = manager;
+    }
+}
 
 const AIMemoryMetricsService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        if (newDeps.db) deps.db = newDeps.db;
+        if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
+        if (newDeps.AIMemoryManager) deps.AIMemoryManager = newDeps.AIMemoryManager;
+    },
+
     /**
      * Record memory operation metrics
      */
     recordOperation: async (operationType, context, metrics) => {
+        await initDeps();
         const { organizationId, projectId, userId } = context;
         const now = new Date();
         const hourStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours());
@@ -23,7 +61,7 @@ const AIMemoryMetricsService = {
 
         return new Promise((resolve, reject) => {
             // Upsert hourly record
-            const id = uuidv4();
+            const id = deps.uuidv4();
             const sql = `
                 INSERT INTO ai_memory_metrics (
                     id, organization_id, project_id, user_id,
@@ -46,7 +84,7 @@ const AIMemoryMetricsService = {
 
             // Note: SQLite doesn't support ON CONFLICT UPDATE well with multiple columns
             // We'll use a simpler approach - INSERT OR IGNORE + UPDATE
-            db.run(`
+            deps.db.run(`
                 INSERT OR IGNORE INTO ai_memory_metrics (
                     id, organization_id, project_id, user_id,
                     period_type, period_start, period_end
@@ -82,7 +120,7 @@ const AIMemoryMetricsService = {
                 const isTrim = operationType === 'TRIM' ? 1 : 0;
                 const isCleanup = operationType === 'CLEANUP' ? 1 : 0;
 
-                db.run(updateSql, [
+                deps.db.run(updateSql, [
                     isRead, isWrite, isTrim, isCleanup,
                     metrics.totalTokens || null,
                     metrics.tokensSaved || 0,
@@ -108,6 +146,7 @@ const AIMemoryMetricsService = {
      * Get memory metrics for dashboard
      */
     getDashboardMetrics: async (organizationId, periodDays = 7) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             const cutoffDate = new Date();
             cutoffDate.setDate(cutoffDate.getDate() - periodDays);
@@ -131,7 +170,7 @@ const AIMemoryMetricsService = {
                 ORDER BY date DESC
             `;
 
-            db.all(sql, [organizationId, cutoffDate.toISOString()], (err, rows) => {
+            deps.db.all(sql, [organizationId, cutoffDate.toISOString()], (err, rows) => {
                 if (err) {
                     console.error('[AIMemoryMetrics] Dashboard query error:', err);
                     return resolve({ daily: [], summary: {} });
@@ -180,16 +219,17 @@ const AIMemoryMetricsService = {
      * Get current memory state for a project
      */
     getCurrentMemoryState: async (projectId, organizationId) => {
+        await initDeps();
         try {
             // Get project memory count
-            const projectMemory = await AIMemoryManager.getProjectMemory(projectId);
+            const projectMemory = await deps.AIMemoryManager.getProjectMemory(projectId);
             const memoryContent = projectMemory ? JSON.stringify(projectMemory) : '';
-            const projectTokens = AIMemoryManager.estimateTokens(memoryContent);
+            const projectTokens = deps.AIMemoryManager.estimateTokens(memoryContent);
 
             // Get org memory
-            const orgMemory = await AIMemoryManager.getOrganizationMemory(organizationId);
+            const orgMemory = await deps.AIMemoryManager.getOrganizationMemory(organizationId);
             const orgContent = orgMemory ? JSON.stringify(orgMemory) : '';
-            const orgTokens = AIMemoryManager.estimateTokens(orgContent);
+            const orgTokens = deps.AIMemoryManager.estimateTokens(orgContent);
 
             return {
                 projectMemory: {
@@ -225,11 +265,12 @@ const AIMemoryMetricsService = {
      * Get latency percentiles for memory operations
      */
     getLatencyPercentiles: async (organizationId, windowHours = 24) => {
+        await initDeps();
         return new Promise((resolve) => {
             const cutoff = new Date();
             cutoff.setHours(cutoff.getHours() - windowHours);
 
-            db.all(`
+            deps.db.all(`
                 SELECT avg_retrieval_time_ms as latency
                 FROM ai_memory_metrics
                 WHERE organization_id = ? AND period_start >= ? AND avg_retrieval_time_ms > 0
@@ -260,12 +301,13 @@ const AIMemoryMetricsService = {
      * Aggregate daily metrics (called by cron job)
      */
     aggregateDailyMetrics: async () => {
+        await initDeps();
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         const dateStr = yesterday.toISOString().split('T')[0];
 
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT 
                     organization_id,
                     SUM(total_memory_tokens) as total_tokens,
@@ -290,7 +332,7 @@ const AIMemoryMetricsService = {
                 let aggregated = 0;
                 for (const row of rows || []) {
                     await new Promise((res) => {
-                        db.run(`
+                        deps.db.run(`
                             INSERT OR REPLACE INTO ai_memory_metrics_daily (
                                 id, organization_id, date,
                                 total_memory_tokens, peak_memory_tokens, avg_memory_tokens,
@@ -299,7 +341,7 @@ const AIMemoryMetricsService = {
                                 avg_latency_ms, p95_latency_ms
                             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         `, [
-                            uuidv4(),
+                            deps.uuidv4(),
                             row.organization_id,
                             dateStr,
                             row.total_tokens || 0,
@@ -326,6 +368,6 @@ const AIMemoryMetricsService = {
     }
 };
 
-module.exports = AIMemoryMetricsService;
+export default AIMemoryMetricsService;
 
 

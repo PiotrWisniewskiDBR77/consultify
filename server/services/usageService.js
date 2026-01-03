@@ -4,18 +4,56 @@
  */
 
 // Dependency injection for testing
-const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4,
-    billingService: require('./billingService'),
-    payAsYouGoService: require('./payAsYouGoService'),
-    budgetManagementService: require('./budgetManagementService')
+let deps = {
+    db: null,
+    uuidv4: null,
+    billingService: null,
+    payAsYouGoService: null,
+    budgetManagementService: null
 };
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps.db) {
+        const dbModule = await import('../database.js');
+        deps.db = dbModule.default || dbModule;
+    }
+
+    if (!deps.uuidv4) {
+        const uuidModule = await import('uuid');
+        deps.uuidv4 = uuidModule.v4;
+    }
+
+    if (!deps.billingService) {
+        const billingModule = await import('./billingService.js');
+        deps.billingService = billingModule.default || billingModule;
+    }
+
+    if (!deps.payAsYouGoService) {
+        const payAsYouGoModule = await import('./payAsYouGoService.js');
+        deps.payAsYouGoService = payAsYouGoModule.default || payAsYouGoModule;
+    }
+
+    if (!deps.budgetManagementService) {
+        const budgetManagementModule = await import('./budgetManagementService.js');
+        deps.budgetManagementService = budgetManagementModule.default || budgetManagementModule;
+    }
+}
+
+/**
+ * Set dependencies for testing
+ */
+function setDependencies(newDeps) {
+    deps = { ...deps, ...newDeps };
+}
 
 /**
  * Record token usage
  */
 async function recordTokenUsage(orgId, userId, tokens, action, metadata = {}) {
+    await initDeps();
     // Check budget limits before recording usage
     try {
         const budgetCheck = await deps.budgetManagementService.checkBudgetLimit(orgId, userId, null, 'tokens', tokens);
@@ -62,8 +100,9 @@ async function recordTokenUsage(orgId, userId, tokens, action, metadata = {}) {
  * Record storage usage
  */
 async function recordStorageUsage(orgId, bytes, action, metadata = {}) {
+    await initDeps();
     const gb = bytes / (1024 * 1024 * 1024);
-    
+
     // Check budget limits before recording usage
     try {
         const budgetCheck = await deps.budgetManagementService.checkBudgetLimit(orgId, null, null, 'storage', gb);
@@ -112,6 +151,7 @@ async function recordStorageUsage(orgId, bytes, action, metadata = {}) {
  * Get current period usage for an organization
  */
 async function getCurrentUsage(orgId) {
+    await initDeps();
     const billing = await deps.billingService.getOrganizationBilling(orgId);
     const plan = billing?.subscription_plan_id
         ? await deps.billingService.getPlanById(billing.subscription_plan_id)
@@ -172,6 +212,7 @@ async function getCurrentUsage(orgId) {
  * Returns: { allowed: boolean, remaining: number, overageEnabled: boolean }
  */
 async function checkQuota(orgId, type = 'token') {
+    await initDeps();
     const usage = await getCurrentUsage(orgId);
     const billing = await deps.billingService.getOrganizationBilling(orgId);
     const plan = billing?.subscription_plan_id
@@ -201,6 +242,7 @@ async function checkQuota(orgId, type = 'token') {
  * Calculate overage charges for a billing period
  */
 async function calculateOverage(orgId, periodStart, periodEnd) {
+    await initDeps();
     const billing = await deps.billingService.getOrganizationBilling(orgId);
     const plan = billing?.subscription_plan_id
         ? await deps.billingService.getPlanById(billing.subscription_plan_id)
@@ -249,6 +291,7 @@ async function calculateOverage(orgId, periodStart, periodEnd) {
  * Create or update monthly usage summary
  */
 async function updateUsageSummary(orgId, periodStart) {
+    await initDeps();
     const periodEnd = new Date(periodStart);
     periodEnd.setMonth(periodEnd.getMonth() + 1);
 
@@ -284,7 +327,8 @@ async function updateUsageSummary(orgId, periodStart) {
 /**
  * Get usage history for organization
  */
-function getUsageHistory(orgId, limit = 12) {
+async function getUsageHistory(orgId, limit = 12) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.all(
             `SELECT * FROM usage_summaries 
@@ -303,7 +347,8 @@ function getUsageHistory(orgId, limit = 12) {
 /**
  * Get global usage statistics (Superadmin)
  */
-function getGlobalUsageStats() {
+async function getGlobalUsageStats() {
+    await initDeps();
     return new Promise((resolve, reject) => {
         const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -334,7 +379,8 @@ function getGlobalUsageStats() {
 /**
  * Record project-level storage usage
  */
-function recordProjectStorageUsage(projectId, bytes, action) {
+async function recordProjectStorageUsage(projectId, bytes, action) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         // Increment usage
         deps.db.run(
@@ -352,7 +398,8 @@ function recordProjectStorageUsage(projectId, bytes, action) {
  * Check if project has storage quota
  * Returns: { allowed: boolean, remaining: number }
  */
-function checkProjectQuota(projectId) {
+async function checkProjectQuota(projectId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             `SELECT storage_limit_gb, storage_used_bytes FROM projects WHERE id = ?`,
@@ -383,35 +430,17 @@ function checkProjectQuota(projectId) {
 }
 
 
-module.exports = {
-    recordTokenUsage,
-    recordStorageUsage,
-    getCurrentUsage,
-    checkQuota,
-    calculateOverage,
-    updateUsageSummary,
-    getUsageHistory,
-    getGlobalUsageStats,
-    recordProjectStorageUsage,
-    checkProjectQuota,
+/**
+ * Get operational costs grouped by Provider/Model
+ */
+async function getOperationalCosts(startDate, endDate) {
+    await initDeps();
+    return new Promise((resolve, reject) => {
+        // Default to last 30 days if no dates provided
+        const end = endDate ? new Date(endDate) : new Date();
+        const start = startDate ? new Date(startDate) : new Date(new Date().setDate(end.getDate() - 30));
 
-    /**
-     * Allow dependency injection for testing
-     */
-    _setDependencies: (newDeps) => {
-        Object.assign(deps, newDeps);
-    },
-
-    /**
-     * Get operational costs grouped by Provider/Model
-     */
-    getOperationalCosts: async (startDate, endDate) => {
-        return new Promise((resolve, reject) => {
-            // Default to last 30 days if no dates provided
-            const end = endDate ? new Date(endDate) : new Date();
-            const start = startDate ? new Date(startDate) : new Date(new Date().setDate(end.getDate() - 30));
-
-            const query = `
+        const query = `
                 SELECT 
                     u.metadata,
                     SUM(u.amount) as total_tokens
@@ -422,95 +451,91 @@ module.exports = {
                 GROUP BY u.metadata
             `;
 
-            deps.db.all(query, [start.toISOString(), end.toISOString()], async (err, rows) => {
-                if (err) return reject(err);
+        deps.db.all(query, [start.toISOString(), end.toISOString()], async (err, rows) => {
+            if (err) return reject(err);
 
-                try {
-                    // Fetch current provider costs to calculate estimated spend
-                    const providers = await new Promise((res, rej) => {
-                        deps.db.all("SELECT provider, model_id, cost_per_1k FROM llm_providers", (e, r) => e ? rej(e) : res(r));
-                    });
+            try {
+                // Fetch current provider costs to calculate estimated spend
+                const providers = await new Promise((res, rej) => {
+                    deps.db.all("SELECT provider, model_id, cost_per_1k FROM llm_providers", (e, r) => e ? rej(e) : res(r));
+                });
 
-                    // Create a lookup map for costs: "provider:model" -> cost
-                    const costMap = {};
-                    providers.forEach(p => {
-                        costMap[`${p.provider}:${p.model_id}`] = p.cost_per_1k || 0;
-                        // Also fallback for just provider if model specific not found? 
-                        // Or just fuzzy match. For now exact match on what we logged.
-                    });
+                // Create a lookup map for costs: "provider:model" -> cost
+                const costMap = {};
+                providers.forEach(p => {
+                    costMap[`${p.provider}:${p.model_id}`] = p.cost_per_1k || 0;
+                });
 
-                    const aggregated = {};
-                    let totalCost = 0;
+                const aggregated = {};
 
-                    for (const row of rows) {
-                        let meta = {};
-                        try {
-                            meta = JSON.parse(row.metadata || '{}');
-                        } catch (e) { continue; }
+                for (const row of rows) {
+                    let meta = {};
+                    try {
+                        meta = JSON.parse(row.metadata || '{}');
+                    } catch (e) { continue; }
 
-                        const provider = meta.llmProvider || 'unknown';
-                        const model = meta.modelUsed || 'unknown';
-                        const key = `${provider}|${model}`;
+                    const provider = meta.llmProvider || 'unknown';
+                    const model = meta.modelUsed || 'unknown';
+                    const key = `${provider}|${model}`;
 
-                        if (!aggregated[key]) {
-                            aggregated[key] = {
-                                provider,
-                                model,
-                                totalTokens: 0,
-                                cost: 0
-                            };
-                        }
-
-                        aggregated[key].totalTokens += row.total_tokens;
-
-                        // Calculate cost
-                        // Try to find cost in map
-                        // Metadata model might be "openai:gpt-4", but provider table has provider="openai", model_id="gpt-4"
-                        // Or metadata provider="openai", model="gpt-4"
-
-                        // We need to match efficiently.
-                        // Let's assume usage service logged: llmProvider="openai", modelUsed="openai:gpt-4" (as seen in aiService)
-                        // Wait, aiService logs: modelUsed = `${provider}:${model_id}`
-
-                        // So let's extract real model id if it contains colon
-                        let cleanModelId = model;
-                        if (model.includes(':')) {
-                            cleanModelId = model.split(':')[1];
-                        }
-
-                        // Lookup cost
-                        // We try matches: "provider:model"
-                        let costPer1k = 0;
-
-                        // 1. Direct match on modelUsed (which is provider:model)
-                        // 2. Match on provider + cleanModelId
-
-                        // Let's iterate providers to find best match
-                        const matchedProvider = providers.find(p =>
-                            (p.provider === provider && p.model_id === cleanModelId) ||
-                            (`${p.provider}:${p.model_id}` === model)
-                        );
-
-                        if (matchedProvider) {
-                            costPer1k = matchedProvider.cost_per_1k || 0;
-                        }
-
-                        aggregated[key].cost += (row.total_tokens / 1000) * costPer1k;
+                    if (!aggregated[key]) {
+                        aggregated[key] = {
+                            provider,
+                            model,
+                            totalTokens: 0,
+                            cost: 0
+                        };
                     }
 
-                    // Convert to array
-                    const results = Object.values(aggregated).sort((a, b) => b.cost - a.cost);
+                    aggregated[key].totalTokens += row.total_tokens;
 
-                    resolve({
-                        period: { start, end },
-                        items: results,
-                        totalCost: results.reduce((sum, item) => sum + item.cost, 0)
-                    });
+                    let cleanModelId = model;
+                    if (model.includes(':')) {
+                        cleanModelId = model.split(':')[1];
+                    }
 
-                } catch (e) {
-                    reject(e);
+                    let costPer1k = 0;
+
+                    const matchedProvider = providers.find(p =>
+                        (p.provider === provider && p.model_id === cleanModelId) ||
+                        (`${p.provider}:${p.model_id}` === model)
+                    );
+
+                    if (matchedProvider) {
+                        costPer1k = matchedProvider.cost_per_1k || 0;
+                    }
+
+                    aggregated[key].cost += (row.total_tokens / 1000) * costPer1k;
                 }
-            });
+
+                // Convert to array
+                const results = Object.values(aggregated).sort((a, b) => b.cost - a.cost);
+
+                resolve({
+                    period: { start, end },
+                    items: results,
+                    totalCost: results.reduce((sum, item) => sum + item.cost, 0)
+                });
+
+            } catch (e) {
+                reject(e);
+            }
         });
-    }
+    });
+}
+
+
+export default {
+    recordTokenUsage,
+    recordStorageUsage,
+    getCurrentUsage,
+    checkQuota,
+    calculateOverage,
+    updateUsageSummary,
+    getUsageHistory,
+    getGlobalUsageStats,
+    recordProjectStorageUsage,
+    checkProjectQuota,
+    setDependencies,
+    getOperationalCosts
 };

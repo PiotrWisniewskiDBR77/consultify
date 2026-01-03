@@ -12,17 +12,70 @@
  * v2.0 - Fixed tests with graceful fallbacks and better error handling
  */
 
-const { AIPipeline } = require('./aiPipeline');
-const { aiLogger } = require('./logger');
-const { circuitBreaker } = require('./llmService');
-const { rateLimiter } = require('./rateLimiter');
-const { cacheService } = require('./cacheService');
-const { isRedisConnected, healthCheck: redisHealthCheck } = require('./redisClient');
-const db = require('../../database');
+const deps = {
+    _AIPipeline: null,
+    _aiLogger: null,
+    _circuitBreaker: null,
+    _rateLimiter: null,
+    _cacheService: null,
+    _isRedisConnected: null,
+    _redisHealthCheck: null,
+    _db: null,
+    _uuidv4: null,
+    _LLMService: null
+};
+
+async function initDeps() {
+    if (!deps._AIPipeline) {
+        const { AIPipeline } = await import('./aiPipeline.js');
+        deps._AIPipeline = AIPipeline;
+    }
+    if (!deps._aiLogger) {
+        const { aiLogger } = await import('./logger.js');
+        deps._aiLogger = aiLogger;
+    }
+    if (!deps._circuitBreaker) {
+        const { circuitBreaker } = await import('./llmService.js');
+        deps._circuitBreaker = circuitBreaker;
+    }
+    if (!deps._rateLimiter) {
+        const { rateLimiter } = await import('./rateLimiter.js');
+        deps._rateLimiter = rateLimiter;
+    }
+    if (!deps._cacheService) {
+        const { cacheService } = await import('./cacheService.js');
+        deps._cacheService = cacheService;
+    }
+    if (!deps._isRedisConnected || !deps._redisHealthCheck) {
+        const redisClient = await import('./redisClient.js');
+        deps._isRedisConnected = redisClient.isRedisConnected;
+        deps._redisHealthCheck = redisClient.healthCheck;
+    }
+    if (!deps._db) {
+        const { default: db } = await import('../../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+    if (!deps._LLMService) {
+        const { LLMService } = await import('./llmService.js');
+        deps._LLMService = LLMService;
+    }
+}
 
 class AIHealthService {
     constructor() {
-        this.pipeline = new AIPipeline();
+        this.pipeline = null;
+    }
+
+    async ensurePipeline() {
+        await initDeps();
+        if (!this.pipeline) {
+            this.pipeline = new deps._AIPipeline();
+        }
+        return this.pipeline;
     }
 
     /**
@@ -30,6 +83,7 @@ class AIHealthService {
      * @param {string} capability - 'connection' | 'chat_ready' | 'eyes' | 'memory' | 'hands' | 'reasoning'
      */
     async testCapability(capability, context = {}) {
+        await initDeps();
         const startTime = Date.now();
         const results = {
             capability,
@@ -67,7 +121,7 @@ class AIHealthService {
         } catch (err) {
             results.status = 'FAILED';
             results.error = err.message;
-            aiLogger.error('HealthService', `Test failed: ${capability}`, err);
+            deps._aiLogger.error('HealthService', `Test failed: ${capability}`, err);
         } finally {
             results.latency = Date.now() - startTime;
         }
@@ -107,7 +161,8 @@ class AIHealthService {
      * 1. Test basic LLM connection
      */
     async testConnection() {
-        const response = await this.pipeline.process({
+        const pipeline = await this.ensurePipeline();
+        const response = await pipeline.process({
             type: 'chat',
             capability: 'chat_simple',
             prompt: 'Respond with exactly one word: "pong"',
@@ -127,8 +182,9 @@ class AIHealthService {
      * 2. Test Chat Ready - verifies model can engage in conversation
      */
     async testChatReady() {
+        const pipeline = await this.ensurePipeline();
         // Simple conversational test
-        const response = await this.pipeline.process({
+        const response = await pipeline.process({
             type: 'chat',
             capability: 'chat',
             prompt: 'Hello! Please respond with "I am ready to assist you." if you can help me.',
@@ -154,9 +210,10 @@ class AIHealthService {
      * Now with graceful fallback when vision is not supported
      */
     async testEyes(context) {
+        await initDeps();
         // First check if we have a vision-capable model
         const visionProviders = await new Promise((resolve) => {
-            db.all(
+            deps._db.all(
                 `SELECT * FROM llm_providers 
                  WHERE is_active = 1 
                  AND (model_id LIKE '%vision%' OR model_id LIKE '%4o%' OR model_id LIKE 'gemini%' OR model_id LIKE 'claude-3%')
@@ -184,7 +241,8 @@ class AIHealthService {
         };
 
         try {
-            const response = await this.pipeline.process({
+            const pipeline = await this.ensurePipeline();
+            const response = await pipeline.process({
                 type: 'chat',
                 capability: 'chat',
                 prompt: `I am showing you screen context data. The test_value in the visible data is a number. What is that number? Just respond with the number.`,
@@ -220,9 +278,10 @@ class AIHealthService {
      * Now checks if RAG is enabled and documents exist
      */
     async testMemory(context) {
+        await initDeps();
         // Check if there are any indexed documents
         const docCount = await new Promise((resolve) => {
-            db.get(
+            deps._db.get(
                 "SELECT COUNT(*) as count FROM knowledge_chunks",
                 [],
                 (err, row) => resolve(row?.count || 0)
@@ -244,7 +303,8 @@ class AIHealthService {
         const query = context.query || 'project management methodology';
         
         try {
-            const response = await this.pipeline.process({
+            const pipeline = await this.ensurePipeline();
+            const response = await pipeline.process({
                 type: 'chat',
                 capability: 'chat',
                 prompt: `Based on the knowledge base, tell me about ${query}. If you have relevant information from documents, cite the source.`,
@@ -282,11 +342,12 @@ class AIHealthService {
      * Now checks if tools are registered and available
      */
     async testHands(context) {
+        await initDeps();
         // Check if we have any tools registered
         let toolsAvailable = false;
         try {
             // Try to check if tool registry exists
-            const toolRegistry = require('../ai/toolRegistry');
+            const toolRegistry = await import('./toolRegistry.js');
             toolsAvailable = toolRegistry && typeof toolRegistry.getTools === 'function';
         } catch (e) {
             // Tool registry might not exist
@@ -294,7 +355,7 @@ class AIHealthService {
 
         // Check if the provider supports function calling
         const fcProvider = await new Promise((resolve) => {
-            db.get(
+            deps._db.get(
                 `SELECT * FROM llm_providers 
                  WHERE is_active = 1 
                  AND (provider = 'openai' OR provider = 'anthropic')
@@ -316,7 +377,8 @@ class AIHealthService {
         }
 
         try {
-            const response = await this.pipeline.process({
+            const pipeline = await this.ensurePipeline();
+            const response = await pipeline.process({
                 type: 'chat',
                 capability: 'chat',
                 prompt: 'What tools or functions do you have available to help me? List any capabilities.',
@@ -357,9 +419,10 @@ class AIHealthService {
      * Now with fallback to standard model if o1 is unavailable
      */
     async testReasoning(context) {
+        await initDeps();
         // Check if we have o1 or a reasoning model available
         const reasoningProvider = await new Promise((resolve) => {
-            db.get(
+            deps._db.get(
                 `SELECT * FROM llm_providers 
                  WHERE is_active = 1 
                  AND (model_id LIKE '%o1%' OR tier = 'REASONING')
@@ -373,7 +436,8 @@ class AIHealthService {
         const hasReasoningModel = !!reasoningProvider;
 
         try {
-            const response = await this.pipeline.process({
+            const pipeline = await this.ensurePipeline();
+            const response = await pipeline.process({
                 type: 'chat',
                 capability: hasReasoningModel ? 'max_mode' : 'chat_complex',
                 prompt: 'Think step by step: If a company has 100 employees and loses 20% each year for 2 years, how many employees remain? Show your reasoning.',
@@ -397,9 +461,10 @@ class AIHealthService {
         } catch (err) {
             // If max_mode fails, try with regular capability
             if (hasReasoningModel) {
-                aiLogger.warn('HealthService', 'MAX Mode failed, falling back to standard model');
+                deps._aiLogger.warn('HealthService', 'MAX Mode failed, falling back to standard model');
                 try {
-                    const fallbackResponse = await this.pipeline.process({
+                    const pipeline = await this.ensurePipeline();
+                    const fallbackResponse = await pipeline.process({
                         type: 'chat',
                         capability: 'chat_complex',
                         prompt: 'Think step by step: What is 15% of 200?',
@@ -440,8 +505,9 @@ class AIHealthService {
      * @returns {Promise<Object>} Latency metrics
      */
     async getLatencyMetrics(sampleSize = 1000) {
+        await initDeps();
         const logs = await new Promise((resolve) => {
-            db.all(
+            deps._db.all(
                 `SELECT latency_ms, success, action, timestamp 
                  FROM ai_audit_logs 
                  WHERE latency_ms IS NOT NULL AND latency_ms > 0
@@ -514,15 +580,16 @@ class AIHealthService {
      * @param {Object} metric - Metric data
      */
     async recordLatencySnapshot() {
+        await initDeps();
         const metrics = await this.getLatencyMetrics(100); // Last 100 for snapshot
         
         return new Promise((resolve, reject) => {
-            db.run(
+            deps._db.run(
                 `INSERT INTO ai_latency_metrics 
                  (id, timestamp, sample_size, p50, p75, p90, p95, p99, avg_ms, min_ms, max_ms, success_rate) 
                  VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    require('uuid').v4(),
+                    deps._uuidv4(),
                     metrics.sampleSize,
                     metrics.p50,
                     metrics.p75,
@@ -554,8 +621,9 @@ class AIHealthService {
      * @returns {Promise<Array>} Historical metrics
      */
     async getLatencyHistory(days = 7) {
+        await initDeps();
         return new Promise((resolve) => {
-            db.all(
+            deps._db.all(
                 `SELECT * FROM ai_latency_metrics 
                  WHERE timestamp > datetime('now', '-' || ? || ' days')
                  ORDER BY timestamp ASC`,
@@ -628,13 +696,14 @@ class AIHealthService {
      * Get system-wide AI status including all subsystems
      */
     async getStatus() {
+        await initDeps();
         const providers = await new Promise((resolve) => {
-            db.all("SELECT name, provider, is_active, visibility FROM llm_providers", [], (err, rows) => resolve(rows || []));
+            deps._db.all("SELECT name, provider, is_active, visibility FROM llm_providers", [], (err, rows) => resolve(rows || []));
         });
 
         // Get last 50 audit logs to check success rate
         const logs = await new Promise((resolve) => {
-            db.all("SELECT success, latency_ms FROM ai_audit_logs ORDER BY timestamp DESC LIMIT 50", [], (err, rows) => resolve(rows || []));
+            deps._db.all("SELECT success, latency_ms FROM ai_audit_logs ORDER BY timestamp DESC LIMIT 50", [], (err, rows) => resolve(rows || []));
         });
 
         const successCount = logs.filter(l => l.success === 1).length;
@@ -644,15 +713,15 @@ class AIHealthService {
         const latencyMetrics = await this.getLatencyMetrics(100);
 
         // Get circuit breaker status
-        const circuitStatus = circuitBreaker ? circuitBreaker.getStatus() : {};
+        const circuitStatus = deps._circuitBreaker ? deps._circuitBreaker.getStatus() : {};
 
         // Get cache stats
-        const cacheStats = cacheService.getStats();
+        const cacheStats = deps._cacheService.getStats();
 
         // Get Redis health
         let redisStatus = { status: 'disconnected' };
         try {
-            redisStatus = await redisHealthCheck();
+            redisStatus = await deps._redisHealthCheck();
         } catch (e) {
             redisStatus = { status: 'error', error: e.message };
         }
@@ -697,7 +766,7 @@ class AIHealthService {
                 redis: redisStatus,
                 rateLimiter: {
                     status: 'ACTIVE',
-                    backend: isRedisConnected() ? 'REDIS' : 'MEMORY'
+                    backend: deps._isRedisConnected() ? 'REDIS' : 'MEMORY'
                 }
             },
             timestamp: new Date().toISOString()
@@ -709,8 +778,9 @@ class AIHealthService {
      * @param {string} providerId - Provider to check (e.g., 'openai', 'anthropic')
      */
     async probeProvider(providerId) {
+        await initDeps();
         // Check circuit breaker first
-        const circuitCheck = circuitBreaker ? circuitBreaker.canExecute(providerId) : { allowed: true };
+        const circuitCheck = deps._circuitBreaker ? deps._circuitBreaker.canExecute(providerId) : { allowed: true };
         if (!circuitCheck.allowed) {
             return {
                 providerId,
@@ -722,7 +792,7 @@ class AIHealthService {
 
         // Get provider config from DB
         const providerConfig = await new Promise((resolve) => {
-            db.get(
+            deps._db.get(
                 "SELECT * FROM llm_providers WHERE provider = ? AND is_active = 1 LIMIT 1",
                 [providerId],
                 (err, row) => resolve(row)
@@ -740,8 +810,7 @@ class AIHealthService {
 
         // Test connection
         try {
-            const { LLMService } = require('./llmService');
-            const llmService = new LLMService();
+            const llmService = new deps._LLMService();
             
             const testResult = await llmService.testConnection({
                 id: providerConfig.model_id || 'gpt-4o',
@@ -771,8 +840,9 @@ class AIHealthService {
      * Run health probes for all active providers
      */
     async probeAllProviders() {
+        await initDeps();
         const providers = await new Promise((resolve) => {
-            db.all(
+            deps._db.all(
                 "SELECT DISTINCT provider FROM llm_providers WHERE is_active = 1",
                 [],
                 (err, rows) => resolve(rows || [])
@@ -788,4 +858,4 @@ class AIHealthService {
     }
 }
 
-module.exports = { AIHealthService: new AIHealthService() };
+export default new AIHealthService();

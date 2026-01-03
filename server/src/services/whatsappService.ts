@@ -1,32 +1,27 @@
 /**
- * WhatsappService Service
+ * WhatsApp Service Proxy
  * Enterprise SaaS Architecture - TypeScript Backend
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Standardized PascalCase wrapper for WhatsAppService
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
 
-const require = createRequire(import.meta.url);
+// Lazy load the JS service module
+const loadWhatsAppService = createCachedLazyService('../../services/whatsappService.js');
 
-// Import the JS implementation for now (will be fully migrated later)
-const whatsappServiceServiceJS = require('../../services/whatsappService.js');
+/**
+ * Export a proxy object that awaits the service on each call.
+ */
+const WhatsAppService = {
+    sendNewFeedbackAlert: async (data: { userId?: string; userEmail?: string; type: string; message: string }) => {
+        const service = await loadWhatsAppService();
+        return (service as any).sendNewFeedbackAlert(data);
+    },
+    sendNotification: async (to: string, template: string, vars: any) => {
+        const service = await loadWhatsAppService();
+        return (service as any).sendNotification(to, template, vars);
+    }
+};
 
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const whatsappServiceService = whatsappServiceServiceJS.default || whatsappServiceServiceJS;
-
-// Export default instance (for backward compatibility)
-export default whatsappServiceService;
-
-// Also export named exports if they exist
-if (typeof whatsappServiceServiceJS === 'object' && whatsappServiceServiceJS !== null) {
-    Object.keys(whatsappServiceServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = whatsappServiceServiceJS[key];
-        }
-    });
-}
+export default WhatsAppService;

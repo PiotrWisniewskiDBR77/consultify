@@ -1,30 +1,59 @@
 // AI Policy Engine - Controls what AI is allowed to do
 // AI Core Layer — Enterprise PMO Brain
 
+import db from '../database.js';
+
+// Lazy-load dependencies to avoid circular dependencies
+let _aiRoleGuard = null;
+async function getAIRoleGuard() {
+    if (!_aiRoleGuard) {
+        try {
+            const mod = await import('./aiRoleGuard.js');
+            _aiRoleGuard = mod.default || mod.aiRoleGuard || mod;
+        } catch (e) {
+            console.error('[AIPolicyEngine] aiRoleGuard not available');
+        }
+    }
+    return _aiRoleGuard;
+}
+
+let _regulatoryModeGuard = null;
+async function getRegulatoryModeGuard() {
+    if (!_regulatoryModeGuard) {
+        try {
+            const mod = await import('./regulatoryModeGuard.js');
+            _regulatoryModeGuard = mod.default || mod.regulatoryModeGuard || mod;
+        } catch (e) {
+            console.error('[AIPolicyEngine] regulatoryModeGuard not available');
+        }
+    }
+    return _regulatoryModeGuard;
+}
+
 // Dependency injection container (for deterministic unit tests)
 const deps = {
-    db: require('../database'),
-    AIRoleGuard: require('./aiRoleGuard'),
-    RegulatoryModeGuard: require('./regulatoryModeGuard')
+    db,
+    get AIRoleGuard() { return _aiRoleGuard; },
+    get RegulatoryModeGuard() { return _regulatoryModeGuard; }
 };
 
-const POLICY_LEVELS = {
+export const POLICY_LEVELS = {
     ADVISORY: 'ADVISORY',       // Suggest only
     ASSISTED: 'ASSISTED',       // Create drafts, requires approval
     PROACTIVE: 'PROACTIVE',     // Execute low-risk actions
     AUTOPILOT: 'AUTOPILOT'      // Execute within governance rules
 };
 
-const POLICY_HIERARCHY = ['ADVISORY', 'ASSISTED', 'PROACTIVE', 'AUTOPILOT'];
+export const POLICY_HIERARCHY = ['ADVISORY', 'ASSISTED', 'PROACTIVE', 'AUTOPILOT'];
 
-const AI_ROLES = {
+export const AI_ROLES = {
     ADVISOR: 'ADVISOR',
     PMO_MANAGER: 'PMO_MANAGER',
     EXECUTOR: 'EXECUTOR',
     EDUCATOR: 'EDUCATOR'
 };
 
-const ACTION_POLICY_REQUIREMENTS = {
+export const ACTION_POLICY_REQUIREMENTS = {
     EXPLAIN_CONTEXT: 'ADVISORY',
     ANALYZE_RISKS: 'ADVISORY',
     PREPARE_DECISION_SUMMARY: 'ADVISORY',
@@ -34,23 +63,28 @@ const ACTION_POLICY_REQUIREMENTS = {
     GENERATE_REPORT: 'ASSISTED'
 };
 
-const AIPolicyEngine = {
+export const AIPolicyEngine = {
     POLICY_LEVELS,
     AI_ROLES,
 
     // For testing: allow overriding dependencies
     setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
+        if (newDeps.db) deps.db = newDeps.db;
+        if (newDeps.AIRoleGuard) _aiRoleGuard = newDeps.AIRoleGuard;
+        if (newDeps.RegulatoryModeGuard) _regulatoryModeGuard = newDeps.RegulatoryModeGuard;
     },
 
     /**
      * Get effective policy for a context
      */
     getEffectivePolicy: async (organizationId, projectId = null, userId = null) => {
+        const RegulatoryModeGuard = await getRegulatoryModeGuard();
+        const AIRoleGuard = await getAIRoleGuard();
+
         // 0. REGULATORY MODE CHECK - Highest priority override
         // When enabled, forces ADVISORY-only mode regardless of other settings
-        if (projectId) {
-            const regulatoryModeEnabled = await deps.RegulatoryModeGuard.isEnabled(projectId);
+        if (projectId && RegulatoryModeGuard) {
+            const regulatoryModeEnabled = await RegulatoryModeGuard.isEnabled(projectId);
             if (regulatoryModeEnabled) {
                 // Return maximally restricted policy
                 return {
@@ -73,7 +107,7 @@ const AIPolicyEngine = {
                     roleDescription: 'Regulatory Mode: Advisory-only',
                     // Regulatory Mode specific flags
                     regulatoryModeEnabled: true,
-                    regulatoryModePrompt: deps.RegulatoryModeGuard.getRegulatoryPrompt()
+                    regulatoryModePrompt: await RegulatoryModeGuard.getRegulatoryPrompt()
                 };
             }
         }
@@ -125,16 +159,16 @@ const AIPolicyEngine = {
         // Ensure we don't exceed max level
         const effectiveIndex = POLICY_HIERARCHY.indexOf(effectiveLevel);
         const maxIndex = POLICY_HIERARCHY.indexOf(maxLevel);
-        if (effectiveIndex > maxIndex) {
+        if (maxIndex !== -1 && effectiveIndex > maxIndex) {
             effectiveLevel = maxLevel;
         }
 
         // 4. Get project AI role (AI Roles Model)
         let projectAIRole = 'ADVISOR';
-        let roleCapabilities = deps.AIRoleGuard.getRoleCapabilities('ADVISOR');
-        if (projectId) {
-            projectAIRole = await deps.AIRoleGuard.getProjectRole(projectId);
-            roleCapabilities = deps.AIRoleGuard.getRoleCapabilities(projectAIRole);
+        let roleCapabilities = AIRoleGuard ? AIRoleGuard.getRoleCapabilities('ADVISOR') : {};
+        if (projectId && AIRoleGuard) {
+            projectAIRole = await AIRoleGuard.getProjectRole(projectId);
+            roleCapabilities = AIRoleGuard.getRoleCapabilities(projectAIRole);
         }
 
         return {
@@ -149,7 +183,7 @@ const AIPolicyEngine = {
             // AI Roles Model
             projectAIRole,
             roleCapabilities,
-            roleDescription: deps.AIRoleGuard.getRoleDescription(projectAIRole)
+            roleDescription: AIRoleGuard ? AIRoleGuard.getRoleDescription(projectAIRole) : ''
         };
     },
 
@@ -270,4 +304,4 @@ const AIPolicyEngine = {
     }
 };
 
-module.exports = AIPolicyEngine;
+export default AIPolicyEngine;

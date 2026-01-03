@@ -10,14 +10,33 @@
  * CRITICAL: Reasoning entries are SERVER-GENERATED ONLY. No client input.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-
-// Dependency injection container (for deterministic unit tests)
-const deps = {
-    db,
-    uuidv4
+// Dependency injection for testing
+let deps = {
+    db: null,
+    uuidv4: null
 };
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps.db) {
+        const dbModule = await import('../database.js');
+        deps.db = dbModule.default || dbModule;
+    }
+
+    if (!deps.uuidv4) {
+        const uuidModule = await import('uuid');
+        deps.uuidv4 = uuidModule.v4;
+    }
+}
+
+/**
+ * Manually set dependencies (primarily for testing)
+ */
+function setDependencies(newDeps) {
+    deps = { ...deps, ...newDeps };
+}
 
 // Evidence types enum
 const EVIDENCE_TYPES = {
@@ -99,40 +118,35 @@ const redactPayload = (payload, config = {}) => {
  * @param {Object} payload - Evidence payload (will be redacted)
  * @returns {Promise<Object>} - Created evidence object
  */
-const createEvidenceObject = (orgId, type, source, payload) => {
-    return new Promise((resolve, reject) => {
-        if (!orgId || !type || !source) {
-            return reject(new Error('orgId, type, and source are required'));
-        }
+const createEvidenceObject = async (orgId, type, source, payload) => {
+    await initDeps();
 
-        if (!Object.values(EVIDENCE_TYPES).includes(type)) {
-            return reject(new Error(`Invalid evidence type: ${type}`));
-        }
+    if (!orgId || !type || !source) {
+        throw new Error('orgId, type, and source are required');
+    }
 
-        const id = deps.uuidv4();
-        const redactedPayload = redactPayload(payload);
-        const payloadJson = JSON.stringify(redactedPayload);
+    if (!Object.values(EVIDENCE_TYPES).includes(type)) {
+        throw new Error(`Invalid evidence type: ${type}`);
+    }
 
-        deps.db.run(
-            `INSERT INTO ai_evidence_objects (id, org_id, type, source, payload_json)
-             VALUES (?, ?, ?, ?, ?)`,
-            [id, orgId, type, source, payloadJson],
-            function (err) {
-                if (err) {
-                    console.error('[EvidenceLedger] createEvidenceObject error:', err);
-                    return reject(err);
-                }
-                resolve({
-                    id,
-                    org_id: orgId,
-                    type,
-                    source,
-                    payload_json: payloadJson,
-                    created_at: new Date().toISOString()
-                });
-            }
-        );
-    });
+    const id = deps.uuidv4();
+    const redactedPayload = redactPayload(payload);
+    const payloadJson = JSON.stringify(redactedPayload);
+
+    await deps.db.run(
+        `INSERT INTO ai_evidence_objects (id, org_id, type, source, payload_json)
+         VALUES (?, ?, ?, ?, ?)`,
+        [id, orgId, type, source, payloadJson]
+    );
+
+    return {
+        id,
+        org_id: orgId,
+        type,
+        source,
+        payload_json: payloadJson,
+        created_at: new Date().toISOString()
+    };
 };
 
 /**
@@ -145,40 +159,35 @@ const createEvidenceObject = (orgId, type, source, payload) => {
  * @param {string} note - Optional note
  * @returns {Promise<Object>} - Created link
  */
-const linkEvidence = (fromType, fromId, evidenceId, weight = 1.0, note = null) => {
-    return new Promise((resolve, reject) => {
-        if (!fromType || !fromId || !evidenceId) {
-            return reject(new Error('fromType, fromId, and evidenceId are required'));
-        }
+const linkEvidence = async (fromType, fromId, evidenceId, weight = 1.0, note = null) => {
+    await initDeps();
 
-        if (!Object.values(ENTITY_TYPES).includes(fromType)) {
-            return reject(new Error(`Invalid entity type: ${fromType}`));
-        }
+    if (!fromType || !fromId || !evidenceId) {
+        throw new Error('fromType, fromId, and evidenceId are required');
+    }
 
-        const normalizedWeight = Math.max(0, Math.min(1, weight));
-        const id = deps.uuidv4();
+    if (!Object.values(ENTITY_TYPES).includes(fromType)) {
+        throw new Error(`Invalid entity type: ${fromType}`);
+    }
 
-        deps.db.run(
-            `INSERT INTO ai_explainability_links (id, from_type, from_id, evidence_id, weight, note)
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [id, fromType, fromId, evidenceId, normalizedWeight, note],
-            function (err) {
-                if (err) {
-                    console.error('[EvidenceLedger] linkEvidence error:', err);
-                    return reject(err);
-                }
-                resolve({
-                    id,
-                    from_type: fromType,
-                    from_id: fromId,
-                    evidence_id: evidenceId,
-                    weight: normalizedWeight,
-                    note,
-                    created_at: new Date().toISOString()
-                });
-            }
-        );
-    });
+    const normalizedWeight = Math.max(0, Math.min(1, weight));
+    const id = deps.uuidv4();
+
+    await deps.db.run(
+        `INSERT INTO ai_explainability_links (id, from_type, from_id, evidence_id, weight, note)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [id, fromType, fromId, evidenceId, normalizedWeight, note]
+    );
+
+    return {
+        id,
+        from_type: fromType,
+        from_id: fromId,
+        evidence_id: evidenceId,
+        weight: normalizedWeight,
+        note,
+        created_at: new Date().toISOString()
+    };
 };
 
 /**
@@ -194,37 +203,32 @@ const linkEvidence = (fromType, fromId, evidenceId, weight = 1.0, note = null) =
  * @param {number} confidence - Confidence score (0-1)
  * @returns {Promise<Object>} - Created reasoning entry
  */
-const recordReasoning = (entityType, entityId, summary, assumptions = [], confidence = 0.5) => {
-    return new Promise((resolve, reject) => {
-        if (!entityType || !entityId || !summary) {
-            return reject(new Error('entityType, entityId, and summary are required'));
-        }
+const recordReasoning = async (entityType, entityId, summary, assumptions = [], confidence = 0.5) => {
+    await initDeps();
 
-        const normalizedConfidence = Math.max(0, Math.min(1, confidence));
-        const id = deps.uuidv4();
-        const assumptionsJson = JSON.stringify(assumptions);
+    if (!entityType || !entityId || !summary) {
+        throw new Error('entityType, entityId, and summary are required');
+    }
 
-        deps.db.run(
-            `INSERT INTO ai_reasoning_ledger (id, entity_type, entity_id, reasoning_summary, assumptions_json, confidence)
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [id, entityType, entityId, summary, assumptionsJson, normalizedConfidence],
-            function (err) {
-                if (err) {
-                    console.error('[EvidenceLedger] recordReasoning error:', err);
-                    return reject(err);
-                }
-                resolve({
-                    id,
-                    entity_type: entityType,
-                    entity_id: entityId,
-                    reasoning_summary: summary,
-                    assumptions_json: assumptionsJson,
-                    confidence: normalizedConfidence,
-                    created_at: new Date().toISOString()
-                });
-            }
-        );
-    });
+    const normalizedConfidence = Math.max(0, Math.min(1, confidence));
+    const id = deps.uuidv4();
+    const assumptionsJson = JSON.stringify(assumptions);
+
+    await deps.db.run(
+        `INSERT INTO ai_reasoning_ledger (id, entity_type, entity_id, reasoning_summary, assumptions_json, confidence)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [id, entityType, entityId, summary, assumptionsJson, normalizedConfidence]
+    );
+
+    return {
+        id,
+        entity_type: entityType,
+        entity_id: entityId,
+        reasoning_summary: summary,
+        assumptions_json: assumptionsJson,
+        confidence: normalizedConfidence,
+        created_at: new Date().toISOString()
+    };
 };
 
 /**
@@ -235,73 +239,61 @@ const recordReasoning = (entityType, entityId, summary, assumptions = [], confid
  * @param {string} entityId - Entity ID
  * @returns {Promise<Object>} - Full explanation with reasoning and evidences
  */
-const getExplanation = (orgId, entityType, entityId) => {
-    return new Promise((resolve, reject) => {
-        if (!orgId || !entityType || !entityId) {
-            return reject(new Error('orgId, entityType, and entityId are required'));
-        }
+const getExplanation = async (orgId, entityType, entityId) => {
+    await initDeps();
 
-        // Get reasoning entries
-        db.all(
-            `SELECT * FROM ai_reasoning_ledger 
-             WHERE entity_type = ? AND entity_id = ?
-             ORDER BY created_at DESC`,
-            [entityType, entityId],
-            (err, reasoningRows) => {
-                if (err) {
-                    console.error('[EvidenceLedger] getExplanation reasoning error:', err);
-                    return reject(err);
-                }
+    if (!orgId || !entityType || !entityId) {
+        throw new Error('orgId, entityType, and entityId are required');
+    }
 
-                // Get linked evidences (with org scoping)
-                db.all(
-                    `SELECT l.*, e.type as evidence_type, e.source, e.payload_json, e.created_at as evidence_created_at
-                     FROM ai_explainability_links l
-                     JOIN ai_evidence_objects e ON l.evidence_id = e.id
-                     WHERE l.from_type = ? AND l.from_id = ? AND e.org_id = ?
-                     ORDER BY l.weight DESC, l.created_at DESC`,
-                    [entityType, entityId, orgId],
-                    (err, evidenceRows) => {
-                        if (err) {
-                            console.error('[EvidenceLedger] getExplanation evidence error:', err);
-                            return reject(err);
-                        }
+    // Get reasoning entries
+    const reasoningRows = await deps.db.all(
+        `SELECT * FROM ai_reasoning_ledger 
+         WHERE entity_type = ? AND entity_id = ?
+         ORDER BY created_at DESC`,
+        [entityType, entityId]
+    );
 
-                        // Parse JSON fields
-                        const reasoning = reasoningRows.map(r => ({
-                            ...r,
-                            assumptions: JSON.parse(r.assumptions_json || '[]')
-                        }));
+    // Get linked evidences (with org scoping)
+    const evidenceRows = await deps.db.all(
+        `SELECT l.*, e.type as evidence_type, e.source, e.payload_json, e.created_at as evidence_created_at
+         FROM ai_explainability_links l
+         JOIN ai_evidence_objects e ON l.evidence_id = e.id
+         WHERE l.from_type = ? AND l.from_id = ? AND e.org_id = ?
+         ORDER BY l.weight DESC, l.created_at DESC`,
+        [entityType, entityId, orgId]
+    );
 
-                        const evidences = evidenceRows.map(e => ({
-                            link_id: e.id,
-                            evidence_id: e.evidence_id,
-                            type: e.evidence_type,
-                            source: e.source,
-                            weight: e.weight,
-                            note: e.note,
-                            payload: JSON.parse(e.payload_json || '{}'),
-                            created_at: e.evidence_created_at
-                        }));
+    // Parse JSON fields
+    const reasoning = (reasoningRows || []).map(r => ({
+        ...r,
+        assumptions: JSON.parse(r.assumptions_json || '[]')
+    }));
 
-                        // Compute aggregate confidence from latest reasoning
-                        const latestReasoning = reasoning[0];
-                        const aggregateConfidence = latestReasoning?.confidence || 0;
+    const evidences = (evidenceRows || []).map(e => ({
+        link_id: e.id,
+        evidence_id: e.evidence_id,
+        type: e.evidence_type,
+        source: e.source,
+        weight: e.weight,
+        note: e.note,
+        payload: JSON.parse(e.payload_json || '{}'),
+        created_at: e.evidence_created_at
+    }));
 
-                        resolve({
-                            entity_type: entityType,
-                            entity_id: entityId,
-                            confidence: aggregateConfidence,
-                            reasoning: reasoning,
-                            evidences: evidences,
-                            evidence_count: evidences.length,
-                            has_explanation: reasoning.length > 0 || evidences.length > 0
-                        });
-                    }
-                );
-            }
-        );
-    });
+    // Compute aggregate confidence from latest reasoning
+    const latestReasoning = reasoning[0];
+    const aggregateConfidence = latestReasoning?.confidence || 0;
+
+    return {
+        entity_type: entityType,
+        entity_id: entityId,
+        confidence: aggregateConfidence,
+        reasoning: reasoning,
+        evidences: evidences,
+        evidence_count: evidences.length,
+        has_explanation: reasoning.length > 0 || evidences.length > 0
+    };
 };
 
 /**
@@ -363,16 +355,6 @@ const exportExplanation = async (orgId, entityType, entityId, format = 'json') =
  * Creates evidence and links it to an entity in one operation
  * 
  * Convenience function for common use case.
- * 
- * @param {string} orgId - Organization ID
- * @param {string} entityType - Entity type
- * @param {string} entityId - Entity ID
- * @param {string} evidenceType - Evidence type
- * @param {string} source - Source
- * @param {Object} payload - Payload
- * @param {number} weight - Weight
- * @param {string} note - Note
- * @returns {Promise<Object>} - Created evidence with link
  */
 const createAndLinkEvidence = async (orgId, entityType, entityId, evidenceType, source, payload, weight = 1.0, note = null) => {
     const evidence = await createEvidenceObject(orgId, evidenceType, source, payload);
@@ -386,77 +368,55 @@ const createAndLinkEvidence = async (orgId, entityType, entityId, evidenceType, 
 
 /**
  * Gets all evidence objects for an organization
- * 
- * @param {string} orgId - Organization ID
- * @param {Object} filters - Optional filters (type, source, limit)
- * @returns {Promise<Array>} - Evidence objects
  */
-const getEvidencesByOrg = (orgId, filters = {}) => {
-    return new Promise((resolve, reject) => {
-        let sql = `SELECT * FROM ai_evidence_objects WHERE org_id = ?`;
-        const params = [orgId];
+const getEvidencesByOrg = async (orgId, filters = {}) => {
+    await initDeps();
 
-        if (filters.type) {
-            sql += ` AND type = ?`;
-            params.push(filters.type);
-        }
+    let sql = `SELECT * FROM ai_evidence_objects WHERE org_id = ?`;
+    const params = [orgId];
 
-        if (filters.source) {
-            sql += ` AND source = ?`;
-            params.push(filters.source);
-        }
+    if (filters.type) {
+        sql += ` AND type = ?`;
+        params.push(filters.type);
+    }
 
-        sql += ` ORDER BY created_at DESC`;
+    if (filters.source) {
+        sql += ` AND source = ?`;
+        params.push(filters.source);
+    }
 
-        if (filters.limit) {
-            sql += ` LIMIT ?`;
-            params.push(filters.limit);
-        }
+    sql += ` ORDER BY created_at DESC`;
 
-        db.all(sql, params, (err, rows) => {
-            if (err) {
-                console.error('[EvidenceLedger] getEvidencesByOrg error:', err);
-                return reject(err);
-            }
-            resolve(rows.map(r => ({
-                ...r,
-                payload: JSON.parse(r.payload_json || '{}')
-            })));
-        });
-    });
+    if (filters.limit) {
+        sql += ` LIMIT ?`;
+        params.push(filters.limit);
+    }
+
+    const rows = await deps.db.all(sql, params);
+    return (rows || []).map(r => ({
+        ...r,
+        payload: JSON.parse(r.payload_json || '{}')
+    }));
 };
 
 /**
  * Validates that an entity has at least one evidence object
- * 
- * Required by Step 15.5: "Każda propozycja musi mieć min. 1 evidence object"
- * 
- * @param {string} entityType - Entity type
- * @param {string} entityId - Entity ID
- * @returns {Promise<boolean>} - True if entity has evidence
  */
-const hasEvidence = (entityType, entityId) => {
-    return new Promise((resolve, reject) => {
-        db.get(
-            `SELECT COUNT(*) as count FROM ai_explainability_links
-             WHERE from_type = ? AND from_id = ?`,
-            [entityType, entityId],
-            (err, row) => {
-                if (err) {
-                    console.error('[EvidenceLedger] hasEvidence error:', err);
-                    return reject(err);
-                }
-                resolve(row.count > 0);
-            }
-        );
-    });
+const hasEvidence = async (entityType, entityId) => {
+    await initDeps();
+
+    const row = await deps.db.get(
+        `SELECT COUNT(*) as count FROM ai_explainability_links
+         WHERE from_type = ? AND from_id = ?`,
+        [entityType, entityId]
+    );
+    return (row?.count || 0) > 0;
 };
 
-module.exports = {
+export default {
     // For testing
-    setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
-    },
+    setDependencies,
+
     // Enums
     EVIDENCE_TYPES,
     ENTITY_TYPES,

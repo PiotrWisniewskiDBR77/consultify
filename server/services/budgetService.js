@@ -9,16 +9,39 @@
  * PMO Domain: RESOURCE_RESPONSIBILITY, PERFORMANCE_MONITORING
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const queryHelpers = require('../utils/queryHelpers');
-
 // Dependency injection container
 const deps = {
-    db,
-    uuidv4,
-    queryHelpers
+    _db: null,
+    _uuidv4: null,
+    _queryHelpers: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; },
+
+    get queryHelpers() { return this._queryHelpers; },
+    set queryHelpers(val) { this._queryHelpers = val; }
 };
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+    if (!deps._queryHelpers) {
+        const queryHelpers = await import('../utils/queryHelpers.js');
+        deps._queryHelpers = queryHelpers.default || queryHelpers;
+    }
+}
 
 // Budget Categories
 const BUDGET_CATEGORIES = {
@@ -50,13 +73,16 @@ const ALERT_THRESHOLDS = {
 const BudgetService = {
     // For testing: allow overriding dependencies
     setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
+        if (newDeps.db) deps.db = newDeps.db;
+        if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
+        if (newDeps.queryHelpers) deps.queryHelpers = newDeps.queryHelpers;
     },
 
     /**
      * Create budget for initiative
      */
     createBudget: async (orgId, initiativeId, budgetData, userId) => {
+        await initDeps();
         const id = deps.uuidv4();
         const now = new Date().toISOString();
 
@@ -99,6 +125,7 @@ const BudgetService = {
      * Get budget for initiative
      */
     getBudget: async (initiativeId, orgId) => {
+        await initDeps();
         const budget = await deps.queryHelpers.queryOne(`
             SELECT b.*, i.title as initiative_name
             FROM initiative_budgets b
@@ -173,6 +200,7 @@ const BudgetService = {
      * Calculate budget totals
      */
     calculateTotals: async (budgetId) => {
+        await initDeps();
         const result = await deps.queryHelpers.queryOne(`
             SELECT 
                 SUM(planned_amount) as total_planned,
@@ -220,6 +248,7 @@ const BudgetService = {
      * Add line item to budget
      */
     addLineItem: async (budgetId, itemData) => {
+        await initDeps();
         const id = deps.uuidv4();
         const now = new Date().toISOString();
 
@@ -246,6 +275,7 @@ const BudgetService = {
      * Add transaction
      */
     addTransaction: async (budgetId, transactionData, userId) => {
+        await initDeps();
         const id = deps.uuidv4();
         const now = new Date().toISOString();
 
@@ -299,6 +329,7 @@ const BudgetService = {
      * Calculate burn rate
      */
     calculateBurnRate: async (budgetId) => {
+        await initDeps();
         // Get transactions for the last 3 months
         const threeMonthsAgo = new Date();
         threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
@@ -342,6 +373,7 @@ const BudgetService = {
      * Forecast at completion
      */
     forecastCompletion: async (budgetId) => {
+        await initDeps();
         const budget = await deps.queryHelpers.queryOne(`
             SELECT * FROM initiative_budgets WHERE id = ?
         `, [budgetId]);
@@ -410,6 +442,7 @@ const BudgetService = {
      * Check and generate alerts
      */
     checkAlerts: async (budgetId) => {
+        await initDeps();
         const totals = await BudgetService.calculateTotals(budgetId);
         const now = new Date().toISOString();
         const alerts = [];
@@ -479,6 +512,7 @@ const BudgetService = {
      * Get budget alerts
      */
     getAlerts: async (budgetId, includeAcknowledged = false) => {
+        await initDeps();
         const sql = includeAcknowledged
             ? `SELECT * FROM budget_alerts WHERE budget_id = ? ORDER BY created_at DESC`
             : `SELECT * FROM budget_alerts WHERE budget_id = ? AND is_acknowledged = 0 ORDER BY created_at DESC`;
@@ -490,6 +524,7 @@ const BudgetService = {
      * Acknowledge alert
      */
     acknowledgeAlert: async (alertId, userId) => {
+        await initDeps();
         await deps.queryHelpers.queryRun(`
             UPDATE budget_alerts 
             SET is_acknowledged = 1, acknowledged_by = ?, acknowledged_at = ?
@@ -501,6 +536,7 @@ const BudgetService = {
      * Get portfolio budget summary
      */
     getPortfolioSummary: async (orgId, filters = {}) => {
+        await initDeps();
         const { fiscalYear, status } = filters;
 
         let sql = `
@@ -589,6 +625,7 @@ const BudgetService = {
      * Create budget snapshot
      */
     createSnapshot: async (budgetId, snapshotType, userId) => {
+        await initDeps();
         const totals = await BudgetService.calculateTotals(budgetId);
         const forecast = await BudgetService.forecastCompletion(budgetId);
         const burnRate = await BudgetService.calculateBurnRate(budgetId);
@@ -620,7 +657,7 @@ const BudgetService = {
     ALERT_THRESHOLDS
 };
 
-module.exports = BudgetService;
+export default BudgetService;
 
 
 

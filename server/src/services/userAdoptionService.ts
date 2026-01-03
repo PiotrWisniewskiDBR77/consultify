@@ -1,32 +1,132 @@
 /**
- * UserAdoptionService Service
- * Enterprise SaaS Architecture - TypeScript Backend
- * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * User Adoption Service
+ * Tracks user adoption metrics.
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import { v4 as uuidv4 } from 'uuid';
+import * as DbPromise from '../utils/DbPromise.js';
 
-const require = createRequire(import.meta.url);
+type FeatureRow = {
+    feature?: string | null;
+};
 
-// Import the JS implementation for now (will be fully migrated later)
-const userAdoptionServiceServiceJS = require('../../services/userAdoptionService.js');
+type CountRow = {
+    completed?: number;
+    interactions?: number;
+    frequency?: number;
+};
 
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const userAdoptionServiceService = userAdoptionServiceServiceJS.default || userAdoptionServiceServiceJS;
+type AdoptionMetrics = {
+    id: string;
+    userId: string;
+    organizationId: string;
+    metricDate: string;
+    featuresUsed: string[];
+    playbooksCompleted: number;
+    aiInteractions: number;
+    loginFrequency: number;
+    engagementScore: number;
+};
 
-// Export default instance (for backward compatibility)
-export default userAdoptionServiceService;
+const UserAdoptionService = {
+    calculateMetrics: async (
+        userId: string,
+        organizationId: string,
+        metricDate: string | null = null
+    ): Promise<AdoptionMetrics> => {
+        const date = metricDate || new Date().toISOString().split('T')[0];
 
-// Also export named exports if they exist
-if (typeof userAdoptionServiceServiceJS === 'object' && userAdoptionServiceServiceJS !== null) {
-    Object.keys(userAdoptionServiceServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = userAdoptionServiceServiceJS[key];
-        }
-    });
-}
+        const [features, playbooks, aiInteractions, logins] = await Promise.all([
+            DbPromise.all<FeatureRow>(
+                `SELECT DISTINCT entity_type as feature FROM activity_logs 
+                 WHERE user_id = ? AND DATE(created_at) = ?`,
+                [userId, date]
+            ),
+            DbPromise.get<CountRow>(
+                `SELECT COUNT(*) as completed
+                 FROM ai_playbook_runs WHERE user_id = ? AND status = 'completed'
+                 AND DATE(completed_at) = ?`,
+                [userId, date]
+            ),
+            DbPromise.get<CountRow>(
+                `SELECT COUNT(*) as interactions
+                 FROM ai_logs WHERE user_id = ? AND DATE(created_at) = ?`,
+                [userId, date]
+            ),
+            DbPromise.get<CountRow>(
+                `SELECT COUNT(*) as frequency
+                 FROM users WHERE id = ? AND last_login IS NOT NULL`,
+                [userId]
+            )
+        ]);
+
+        const featuresUsed = features
+            .map((row) => row.feature)
+            .filter((feature): feature is string => Boolean(feature));
+
+        const playbooksCompleted = playbooks?.completed ?? 0;
+        const interactionCount = aiInteractions?.interactions ?? 0;
+        const loginFrequency = logins?.frequency ?? 0;
+
+        const engagementScore = Math.min(100,
+            (featuresUsed.length * 10) +
+            (playbooksCompleted * 15) +
+            (interactionCount * 2) +
+            (loginFrequency * 5)
+        );
+
+        const id = uuidv4();
+        await DbPromise.run(
+            `INSERT INTO user_adoption_metrics 
+             (id, user_id, organization_id, metric_date, features_used_json,
+              playbooks_completed, ai_interactions, login_frequency, engagement_score)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(user_id, organization_id, metric_date) DO UPDATE SET
+             features_used_json = excluded.features_used_json,
+             playbooks_completed = excluded.playbooks_completed,
+             ai_interactions = excluded.ai_interactions,
+             login_frequency = excluded.login_frequency,
+             engagement_score = excluded.engagement_score`,
+            [
+                id,
+                userId,
+                organizationId,
+                date,
+                JSON.stringify(featuresUsed),
+                playbooksCompleted,
+                interactionCount,
+                loginFrequency,
+                engagementScore
+            ],
+            { fallback: false }
+        );
+
+        return {
+            id,
+            userId,
+            organizationId,
+            metricDate: date,
+            featuresUsed,
+            playbooksCompleted,
+            aiInteractions: interactionCount,
+            loginFrequency,
+            engagementScore
+        };
+    },
+
+    getMetrics: async (
+        userId: string,
+        organizationId: string,
+        startDate: string,
+        endDate: string
+    ): Promise<unknown[]> => {
+        return DbPromise.all(
+            `SELECT * FROM user_adoption_metrics 
+             WHERE user_id = ? AND organization_id = ? AND metric_date BETWEEN ? AND ?
+             ORDER BY metric_date ASC`,
+            [userId, organizationId, startDate, endDate]
+        );
+    }
+};
+
+export default UserAdoptionService;

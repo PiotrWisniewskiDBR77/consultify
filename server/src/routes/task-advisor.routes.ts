@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const task_advisorRoutesJS = require('../../routes/task-advisor.js');
+const task_advisorRoutesJSPromise = (async () => {
+    const module = await import('../../routes/task-advisor.js');
+    return module.default || module;
+})();
+const task_advisorRoutesJS = task_advisorRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

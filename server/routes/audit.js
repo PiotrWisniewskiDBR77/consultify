@@ -7,7 +7,7 @@
 
 const express = require('express');
 const router = express.Router();
-const AuditService = require('../services/auditService');
+import AuditService from '../services/auditService.js';
 const auth = require('../middleware/authMiddleware');
 const { orgContextMiddleware } = require('../middleware/orgContextMiddleware');
 

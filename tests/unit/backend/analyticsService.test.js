@@ -1,44 +1,21 @@
-import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
-
-// Mock database with proper prepare/finalize support
-const mockPrepare = vi.fn();
-const mockRun = vi.fn();
-const mockFinalize = vi.fn();
-const mockAll = vi.fn();
-
-vi.mock('../../../server/database', () => ({
-    default: {
-        prepare: mockPrepare,
-        run: mockRun,
-        all: mockAll,
-        get: vi.fn()
-    },
-    prepare: mockPrepare,
-    run: mockRun,
-    all: mockAll,
-    get: vi.fn()
-}));
-
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
 import AnalyticsService from '../../../server/services/analyticsService.js';
 
 /**
  * Unit tests for AnalyticsService
  */
-describe('AnalyticsService - Integration', () => {
+describe('AnalyticsService', () => {
+    let mockDb;
+    let mockUuid;
+
     beforeEach(() => {
-        vi.clearAllMocks();
-        
-        // Setup prepare mock to return statement object
-        mockPrepare.mockReturnValue({
-            run: vi.fn(),
-            finalize: vi.fn()
-        });
-        
-        // Setup all mock to return empty array by default (callback-based)
-        mockAll.mockImplementation((sql, params, callback) => {
-            if (typeof callback === 'function') {
-                callback(null, []);
-            }
+        mockDb = createMockDb();
+        mockUuid = vi.fn(() => 'test-uuid-123');
+
+        AnalyticsService.setDependencies({
+            db: mockDb,
+            uuidv4: mockUuid
         });
     });
 

@@ -1,16 +1,9 @@
-/**
- * PMO Roles Routes
- * 
- * API endpoints for PMO role definitions and project team management.
- * 
- * @module routes/pmoRoles
- */
+import express from 'express';
+import auth from '../middleware/authMiddleware.js';
+import { requireRole } from '../middleware/rbac.js';
+import PMORoleService from '../services/pmoRoleService.js';
 
-const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/authMiddleware');
-const { requireRole } = require('../middleware/rbac');
-const PMORoleService = require('../services/pmoRoleService');
 
 // ============================================
 // PMO ROLE DEFINITIONS
@@ -355,7 +348,7 @@ router.get('/me/project-roles', auth, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
 
 
 

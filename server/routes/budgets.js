@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const { requireOrgAccess } = require('../middleware/rbac');
-const budgetManagementService = require('../services/budgetManagementService');
+import budgetManagementService from '../services/budgetManagementService.js';
 
 /**
  * GET /api/budgets/user/:userId

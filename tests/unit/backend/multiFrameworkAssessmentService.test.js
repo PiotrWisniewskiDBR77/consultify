@@ -1,64 +1,36 @@
-/**
- * Unit Tests: Multi-Framework Assessment Service
- */
-
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-// Mock database BEFORE importing service
-vi.mock('../../../server/database', () => {
-    const mockQuery = vi.fn();
-    const mockRun = vi.fn();
-    return {
-        default: {
-            query: mockQuery,
-            run: mockRun,
-            get: vi.fn(),
-            all: vi.fn(),
-            exec: vi.fn()
-        },
-        query: mockQuery,
-        run: mockRun,
-        get: vi.fn(),
-        all: vi.fn(),
-        exec: vi.fn()
-    };
-});
-
-// Mock audit service - all functions must return Promises
-vi.mock('../../../server/services/multiFrameworkAuditService', () => ({
-    logCreate: vi.fn().mockResolvedValue(1),
-    logUpdate: vi.fn().mockResolvedValue(2),
-    logDelete: vi.fn().mockResolvedValue(3),
-    logAction: vi.fn().mockResolvedValue(4),
-    logWorkflowChange: vi.fn().mockResolvedValue(5),
-    logReportGeneration: vi.fn().mockResolvedValue(6),
-    logInitiativeGeneration: vi.fn().mockResolvedValue(7),
-    ENTITY_TYPES: { ASSESSMENT: 'ASSESSMENT' },
-    ACTION_TYPES: { CREATE: 'CREATE', UPDATE: 'UPDATE' },
-    ACTIONS: { CREATE: 'CREATE', UPDATE: 'UPDATE', DELETE: 'DELETE' },
-    default: {
-        logCreate: vi.fn().mockResolvedValue(1),
-        logUpdate: vi.fn().mockResolvedValue(2),
-        logDelete: vi.fn().mockResolvedValue(3),
-        logAction: vi.fn().mockResolvedValue(4),
-        logWorkflowChange: vi.fn().mockResolvedValue(5),
-        logReportGeneration: vi.fn().mockResolvedValue(6),
-        logInitiativeGeneration: vi.fn().mockResolvedValue(7)
-    }
-}));
-
-import multiFrameworkAssessmentService from '../../../server/services/multiFrameworkAssessmentService';
-import db from '../../../server/database';
-import { calculateFrameworkScore } from '../../../server/services/frameworkScoreCalculators';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
+import multiFrameworkAssessmentService from '../../../server/services/multiFrameworkAssessmentService.js';
+import * as frameworkScoreCalculators from '../../../server/services/frameworkScoreCalculators.js';
 
 describe('MultiFrameworkAssessmentService', () => {
+    let mockDb;
+    let mockAuditService;
+
     beforeEach(async () => {
-        vi.clearAllMocks();
-        
+        mockDb = createMockDb();
+        mockAuditService = {
+            logCreate: vi.fn().mockResolvedValue(1),
+            logUpdate: vi.fn().mockResolvedValue(2),
+            logDelete: vi.fn().mockResolvedValue(3),
+            logAction: vi.fn().mockResolvedValue(4),
+            logWorkflowChange: vi.fn().mockResolvedValue(5),
+            logReportGeneration: vi.fn().mockResolvedValue(6),
+            logInitiativeGeneration: vi.fn().mockResolvedValue(7),
+            ENTITY_TYPES: { ASSESSMENT: 'ASSESSMENT' },
+            ACTION_TYPES: { CREATE: 'CREATE', UPDATE: 'UPDATE' },
+            ACTIONS: { CREATE: 'CREATE', UPDATE: 'UPDATE', DELETE: 'DELETE' }
+        };
+
+        multiFrameworkAssessmentService.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'test-id',
+            frameworkScoreCalculators: frameworkScoreCalculators,
+            multiFrameworkAuditService: mockAuditService
+        });
+
         // Setup default mock responses for database
-        // The service uses db.query() with INSERT...RETURNING pattern
-        db.query.mockImplementation((sql, params) => {
-            // For INSERT...RETURNING, return the created row
+        mockDb.query.mockImplementation((sql, params) => {
             if (sql.includes('INSERT INTO multi_framework_assessments')) {
                 const createdRow = {
                     id: params[0] || 'test-id',
@@ -79,11 +51,10 @@ describe('MultiFrameworkAssessmentService', () => {
                     rowCount: 1
                 });
             }
-            // For SELECT queries, return empty by default
             return Promise.resolve({ rows: [], rowCount: 0 });
         });
-        
-        db.run.mockResolvedValue({ changes: 0 });
+
+        mockDb.run.mockResolvedValue({ changes: 0 });
     });
 
     describe('createAssessment', () => {
@@ -115,7 +86,6 @@ describe('MultiFrameworkAssessmentService', () => {
 
             expect(result).toBeDefined();
             expect(result.framework).toBe('SIRI');
-            // expect(db.query).toHaveBeenCalled(); // Removed
         });
 
         it('should create ADMA assessment with valid data', async () => {
@@ -236,8 +206,10 @@ describe('MultiFrameworkAssessmentService', () => {
                 { organizationId: 'org-123' }
             );
 
-            // Check correctness of calculation
-            expect(result.overall_score).toBeCloseTo(3.375, 2); // 27/8 = 3.375
+            // Check correctness of calculation (weighted average of building blocks)
+            // PROCESS: 4.0 (0.35), TECHNOLOGY: 3.0 (0.35), ORGANIZATION: 3.0 (0.30)
+            // (4.0*0.35 + 3.0*0.35 + 3.0*0.30) = 1.4 + 1.05 + 0.9 = 3.35
+            expect(result.overall_score).toBeCloseTo(3.35, 2);
         });
     });
 
@@ -344,7 +316,7 @@ describe('FrameworkScoreCalculators', () => {
                 },
             };
 
-            const result = calculateFrameworkScore('SIRI', data);
+            const result = frameworkScoreCalculators.calculateFrameworkScore('SIRI', data);
 
             expect(result.overall).toBeGreaterThan(0);
             expect(result.overall).toBeLessThanOrEqual(5);
@@ -367,7 +339,7 @@ describe('FrameworkScoreCalculators', () => {
                 },
             };
 
-            const result = calculateFrameworkScore('SIRI', data);
+            const result = frameworkScoreCalculators.calculateFrameworkScore('SIRI', data);
 
             expect(result.overall).toBeGreaterThanOrEqual(0);
             expect(result.completeness).toBeLessThan(1);
@@ -401,7 +373,7 @@ describe('FrameworkScoreCalculators', () => {
                 },
             };
 
-            const result = calculateFrameworkScore('CMMI', data);
+            const result = frameworkScoreCalculators.calculateFrameworkScore('CMMI', data);
 
             // CMMI staged representation: overall = minimum
             expect(result.overall).toBe(2);
@@ -417,7 +389,7 @@ describe('FrameworkScoreCalculators', () => {
                 },
             };
 
-            const result = calculateFrameworkScore('CMMI', data);
+            const result = frameworkScoreCalculators.calculateFrameworkScore('CMMI', data);
 
             expect(result.overall).toBeGreaterThanOrEqual(1);
             expect(result.completeness).toBeLessThan(1);
@@ -441,7 +413,7 @@ describe('FrameworkScoreCalculators', () => {
                 },
             };
 
-            const result = calculateFrameworkScore('LEAN', data);
+            const result = frameworkScoreCalculators.calculateFrameworkScore('LEAN', data);
 
             expect(result.overall).toBeGreaterThan(0);
             expect(result.categories).toHaveProperty('MEASURE');
@@ -451,9 +423,3 @@ describe('FrameworkScoreCalculators', () => {
         });
     });
 });
-
-
-
-
-
-

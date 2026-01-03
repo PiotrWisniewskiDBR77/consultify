@@ -1,12 +1,5 @@
-/**
- * AI Settings Service
- * 
- * 3-Tier settings management: SuperAdmin → Admin/Org → User
- * Handles CRUD operations with audit logging and cascading defaults.
- */
-
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
+import BaseService from './BaseService.js';
 
 // Default settings values
 const SUPERADMIN_DEFAULTS = {
@@ -164,55 +157,30 @@ const mapUserSettings = (row) => {
     };
 };
 
-const AISettingsService = {
+export class AISettingsService extends BaseService {
+    constructor() {
+        super();
+    }
     // ==========================================
     // SUPERADMIN SETTINGS
     // ==========================================
 
-    /**
-     * Get SuperAdmin (global) settings
-     */
-    getSuperAdminSettings: () => {
-        return new Promise((resolve, reject) => {
-            db.get(
-                `SELECT * FROM superadmin_ai_settings WHERE id = 'global'`,
-                [],
-                (err, row) => {
-                    if (err) return reject(err);
+    async getSuperAdminSettings() {
+        await this.init();
+        let row = await this.queryOne(`SELECT * FROM superadmin_ai_settings WHERE id = 'global'`, []);
 
-                    if (!row) {
-                        // Insert default if not exists
-                        db.run(
-                            `INSERT OR IGNORE INTO superadmin_ai_settings (id) VALUES ('global')`,
-                            [],
-                            (insertErr) => {
-                                if (insertErr) return reject(insertErr);
-                                db.get(
-                                    `SELECT * FROM superadmin_ai_settings WHERE id = 'global'`,
-                                    [],
-                                    (err2, row2) => {
-                                        if (err2) return reject(err2);
-                                        resolve(mapSuperAdminSettings(row2));
-                                    }
-                                );
-                            }
-                        );
-                    } else {
-                        resolve(mapSuperAdminSettings(row));
-                    }
-                }
-            );
-        });
-    },
+        if (!row) {
+            await this.queryRun(`INSERT OR IGNORE INTO superadmin_ai_settings (id) VALUES ('global')`, []);
+            row = await this.queryOne(`SELECT * FROM superadmin_ai_settings WHERE id = 'global'`, []);
+        }
 
-    /**
-     * Update SuperAdmin settings with audit
-     */
-    updateSuperAdminSettings: async (settings, actorId, actorRole, ipAddress = null, userAgent = null) => {
-        // Get current settings for audit
-        const current = await AISettingsService.getSuperAdminSettings();
+        return mapSuperAdminSettings(row);
+    }
 
-        // Build update query
+    async updateSuperAdminSettings(settings, actorId, actorRole, ipAddress = null, userAgent = null) {
+        await this.init();
+        const current = await this.getSuperAdminSettings();
+
         const updates = [];
         const values = [];
         const changedKeys = [];
@@ -248,81 +216,48 @@ const AISettingsService = {
         updates.push('updated_by = ?');
         values.push(actorId);
 
-        return new Promise((resolve, reject) => {
-            db.run(
-                `UPDATE superadmin_ai_settings SET ${updates.join(', ')} WHERE id = 'global'`,
-                values,
-                async (err) => {
-                    if (err) return reject(err);
+        await this.queryRun(`UPDATE superadmin_ai_settings SET ${updates.join(', ')} WHERE id = 'global'`, values);
 
-                    // Audit log for each changed field
-                    for (const key of changedKeys) {
-                        await AISettingsService.logAudit({
-                            level: 'superadmin',
-                            actorId,
-                            actorRole,
-                            targetId: 'global',
-                            settingKey: key,
-                            oldValue: current[key],
-                            newValue: settings[key],
-                            ipAddress,
-                            userAgent
-                        });
-                    }
+        for (const key of changedKeys) {
+            await this.logAudit({
+                level: 'superadmin',
+                actorId,
+                actorRole,
+                targetId: 'global',
+                settingKey: key,
+                oldValue: current[key],
+                newValue: settings[key],
+                ipAddress,
+                userAgent
+            });
+        }
 
-                    const updated = await AISettingsService.getSuperAdminSettings();
-                    resolve(updated);
-                }
-            );
-        });
-    },
+        return await this.getSuperAdminSettings();
+    }
 
     // ==========================================
     // ORGANIZATION SETTINGS
     // ==========================================
 
-    /**
-     * Get Organization AI settings (with defaults)
-     */
-    getOrgSettings: (organizationId) => {
-        return new Promise((resolve, reject) => {
-            db.get(
-                `SELECT * FROM organization_ai_settings WHERE organization_id = ?`,
-                [organizationId],
-                (err, row) => {
-                    if (err) return reject(err);
+    async getOrgSettings(organizationId) {
+        await this.init();
+        const row = await this.queryOne(`SELECT * FROM organization_ai_settings WHERE organization_id = ?`, [organizationId]);
 
-                    if (!row) {
-                        // Return defaults with orgId
-                        resolve({
-                            organizationId,
-                            ...mapOrgSettings({ organization_id: organizationId, ...ORG_DEFAULTS })
-                        });
-                    } else {
-                        resolve(mapOrgSettings(row));
-                    }
-                }
-            );
-        });
-    },
+        if (!row) {
+            return {
+                organizationId,
+                ...mapOrgSettings({ organization_id: organizationId, ...ORG_DEFAULTS })
+            };
+        } else {
+            return mapOrgSettings(row);
+        }
+    }
 
-    /**
-     * Update Organization settings with audit
-     */
-    updateOrgSettings: async (organizationId, settings, actorId, actorRole, ipAddress = null, userAgent = null) => {
-        const current = await AISettingsService.getOrgSettings(organizationId);
+    async updateOrgSettings(organizationId, settings, actorId, actorRole, ipAddress = null, userAgent = null) {
+        await this.init();
+        const current = await this.getOrgSettings(organizationId);
 
-        // Check if row exists
-        const exists = await new Promise((resolve, reject) => {
-            db.get(
-                `SELECT 1 FROM organization_ai_settings WHERE organization_id = ?`,
-                [organizationId],
-                (err, row) => {
-                    if (err) return reject(err);
-                    resolve(!!row);
-                }
-            );
-        });
+        const exists = await this.queryOne(`SELECT 1 FROM organization_ai_settings WHERE organization_id = ?`, [organizationId]);
 
         const fieldMap = {
             policyLevel: 'policy_level',
@@ -363,116 +298,61 @@ const AISettingsService = {
 
         if (updates.length === 0) return current;
 
-        return new Promise((resolve, reject) => {
-            if (!exists) {
-                // INSERT new row
-                const insertFields = ['organization_id', ...updates.map(u => u.split(' = ')[0])];
-                const insertPlaceholders = insertFields.map(() => '?').join(', ');
-                const insertValues = [organizationId, ...values];
+        if (!exists) {
+            const insertFields = ['organization_id', ...updates.map(u => u.split(' = ')[0])];
+            const insertPlaceholders = insertFields.map(() => '?').join(', ');
+            const insertValues = [organizationId, ...values];
 
-                db.run(
-                    `INSERT INTO organization_ai_settings (${insertFields.join(', ')}) VALUES (${insertPlaceholders})`,
-                    insertValues,
-                    async (err) => {
-                        if (err) return reject(err);
+            await this.queryRun(`INSERT INTO organization_ai_settings (${insertFields.join(', ')}) VALUES (${insertPlaceholders})`, insertValues);
+        } else {
+            updates.push('updated_at = CURRENT_TIMESTAMP');
+            updates.push('updated_by = ?');
+            values.push(actorId);
+            values.push(organizationId);
 
-                        for (const key of changedKeys) {
-                            await AISettingsService.logAudit({
-                                level: 'admin',
-                                actorId,
-                                actorRole,
-                                targetId: organizationId,
-                                settingKey: key,
-                                oldValue: current[key],
-                                newValue: settings[key],
-                                ipAddress,
-                                userAgent
-                            });
-                        }
+            await this.queryRun(`UPDATE organization_ai_settings SET ${updates.join(', ')} WHERE organization_id = ?`, values);
+        }
 
-                        const updated = await AISettingsService.getOrgSettings(organizationId);
-                        resolve(updated);
-                    }
-                );
-            } else {
-                // UPDATE existing row
-                updates.push('updated_at = CURRENT_TIMESTAMP');
-                updates.push('updated_by = ?');
-                values.push(actorId);
-                values.push(organizationId);
+        for (const key of changedKeys) {
+            await this.logAudit({
+                level: 'admin',
+                actorId,
+                actorRole,
+                targetId: organizationId,
+                settingKey: key,
+                oldValue: current[key],
+                newValue: settings[key],
+                ipAddress,
+                userAgent
+            });
+        }
 
-                db.run(
-                    `UPDATE organization_ai_settings SET ${updates.join(', ')} WHERE organization_id = ?`,
-                    values,
-                    async (err) => {
-                        if (err) return reject(err);
-
-                        for (const key of changedKeys) {
-                            await AISettingsService.logAudit({
-                                level: 'admin',
-                                actorId,
-                                actorRole,
-                                targetId: organizationId,
-                                settingKey: key,
-                                oldValue: current[key],
-                                newValue: settings[key],
-                                ipAddress,
-                                userAgent
-                            });
-                        }
-
-                        const updated = await AISettingsService.getOrgSettings(organizationId);
-                        resolve(updated);
-                    }
-                );
-            }
-        });
-    },
+        return await this.getOrgSettings(organizationId);
+    }
 
     // ==========================================
     // USER SETTINGS
     // ==========================================
 
-    /**
-     * Get User AI settings (with defaults)
-     */
-    getUserSettings: (userId) => {
-        return new Promise((resolve, reject) => {
-            db.get(
-                `SELECT * FROM user_ai_settings WHERE user_id = ?`,
-                [userId],
-                (err, row) => {
-                    if (err) return reject(err);
+    async getUserSettings(userId) {
+        await this.init();
+        const row = await this.queryOne(`SELECT * FROM user_ai_settings WHERE user_id = ?`, [userId]);
 
-                    if (!row) {
-                        resolve({
-                            userId,
-                            ...mapUserSettings({ user_id: userId, ...USER_DEFAULTS })
-                        });
-                    } else {
-                        resolve(mapUserSettings(row));
-                    }
-                }
-            );
-        });
-    },
+        if (!row) {
+            return {
+                userId,
+                ...mapUserSettings({ user_id: userId, ...USER_DEFAULTS })
+            };
+        } else {
+            return mapUserSettings(row);
+        }
+    }
 
-    /**
-     * Update User settings
-     */
-    updateUserSettings: async (userId, settings) => {
-        const current = await AISettingsService.getUserSettings(userId);
+    async updateUserSettings(userId, settings) {
+        await this.init();
+        const current = await this.getUserSettings(userId);
 
-        const exists = await new Promise((resolve, reject) => {
-            db.get(
-                `SELECT 1 FROM user_ai_settings WHERE user_id = ?`,
-                [userId],
-                (err, row) => {
-                    if (err) return reject(err);
-                    resolve(!!row);
-                }
-            );
-        });
+        const exists = await this.queryOne(`SELECT 1 FROM user_ai_settings WHERE user_id = ?`, [userId]);
 
         const fieldMap = {
             responseStyle: 'response_style',
@@ -513,71 +393,41 @@ const AISettingsService = {
 
         if (updates.length === 0) return current;
 
-        return new Promise((resolve, reject) => {
-            if (!exists) {
-                const insertFields = ['user_id', ...updates.map(u => u.split(' = ')[0])];
-                const insertPlaceholders = insertFields.map(() => '?').join(', ');
-                const insertValues = [userId, ...values];
+        if (!exists) {
+            const insertFields = ['user_id', ...updates.map(u => u.split(' = ')[0])];
+            const insertPlaceholders = insertFields.map(() => '?').join(', ');
+            const insertValues = [userId, ...values];
 
-                db.run(
-                    `INSERT INTO user_ai_settings (${insertFields.join(', ')}) VALUES (${insertPlaceholders})`,
-                    insertValues,
-                    async (err) => {
-                        if (err) return reject(err);
-                        const updated = await AISettingsService.getUserSettings(userId);
-                        resolve(updated);
-                    }
-                );
-            } else {
-                updates.push('updated_at = CURRENT_TIMESTAMP');
-                values.push(userId);
+            await this.queryRun(`INSERT INTO user_ai_settings (${insertFields.join(', ')}) VALUES (${insertPlaceholders})`, insertValues);
+        } else {
+            updates.push('updated_at = CURRENT_TIMESTAMP');
+            values.push(userId);
 
-                db.run(
-                    `UPDATE user_ai_settings SET ${updates.join(', ')} WHERE user_id = ?`,
-                    values,
-                    async (err) => {
-                        if (err) return reject(err);
-                        const updated = await AISettingsService.getUserSettings(userId);
-                        resolve(updated);
-                    }
-                );
-            }
-        });
-    },
+            await this.queryRun(`UPDATE user_ai_settings SET ${updates.join(', ')} WHERE user_id = ?`, values);
+        }
 
-    // ==========================================
-    // EFFECTIVE SETTINGS (MERGED)
-    // ==========================================
+        return await this.getUserSettings(userId);
+    }
 
-    /**
-     * Get effective (merged) settings for runtime
-     * User settings are constrained by org settings, which are constrained by superadmin settings
-     */
-    getEffectiveSettings: async (userId, organizationId) => {
+    async getEffectiveSettings(userId, organizationId) {
         const [superadmin, org, user] = await Promise.all([
-            AISettingsService.getSuperAdminSettings(),
-            AISettingsService.getOrgSettings(organizationId),
-            AISettingsService.getUserSettings(userId)
+            this.getSuperAdminSettings(),
+            this.getOrgSettings(organizationId),
+            this.getUserSettings(userId)
         ]);
 
-        // Get available models (intersection of superadmin providers and org-enabled)
-        const availableModelIds = org.enabledModelIds.length > 0
-            ? org.enabledModelIds
-            : []; // Will be populated from LLM providers table
+        const availableModelIds = org.enabledModelIds.length > 0 ? org.enabledModelIds : [];
 
-        // User's visible models must be subset of org-enabled
         const userVisibleIds = user.visibleModelIds.filter(id =>
             availableModelIds.length === 0 || availableModelIds.includes(id)
         );
 
-        // Determine effective proactivity mode (user can only go lower than org default)
         const proactivityOrder = { REACTIVE: 0, BALANCED: 1, PROACTIVE: 2 };
         const orgDefault = proactivityOrder[org.defaultProactivityMode] || 1;
         const userPref = proactivityOrder[user.proactivityMode] || 1;
         const effectiveProactivityIdx = Math.min(orgDefault, userPref);
         const effectiveProactivity = ['REACTIVE', 'BALANCED', 'PROACTIVE'][effectiveProactivityIdx];
 
-        // Proactivity behaviors
         const proactivityBehaviors = {
             REACTIVE: { autoSuggest: false, nudges: false, contextualHints: false, initiateConversation: false },
             BALANCED: { autoSuggest: true, nudges: true, contextualHints: true, initiateConversation: false },
@@ -585,19 +435,14 @@ const AISettingsService = {
         };
 
         return {
-            // Policy
             policyLevel: org.policyLevel,
             proactivityMode: effectiveProactivity,
             proactivityBehavior: proactivityBehaviors[effectiveProactivity],
-
-            // Response settings (from user)
             responseStyle: user.responseStyle,
             writingTone: user.writingTone,
             preferredLanguage: user.preferredLanguage,
-
-            // Model settings (user constrained by superadmin limits)
             modelTemperature: user.modelTemperature,
-            maxTokens: Math.min(user.maxTokens, superadmin.maxTokensPerRequest),
+            maxTokens: Math.min(user.maxTokens, superadmin.maxTokensPerRequest || 8192),
             topP: user.topP,
             frequencyPenalty: user.frequencyPenalty,
             presencePenalty: user.presencePenalty,
@@ -605,164 +450,102 @@ const AISettingsService = {
             preferredModelId: user.preferredModelId,
             selectedTier: user.selectedTier,
             availableModelIds: userVisibleIds.length > 0 ? userVisibleIds : availableModelIds,
-
-            // Feature flags (from org)
             webSearchEnabled: org.webSearchEnabled,
             artifactsEnabled: org.artifactsEnabled,
             thinkingStepsEnabled: org.thinkingStepsEnabled,
             focusModesEnabled: org.focusModesEnabled,
             voiceEnabled: org.voiceEnabled,
-
-            // Privacy (user preference if allowed by org)
             enablePiiRedaction: user.enablePiiRedaction,
             dataRetentionPolicy: user.dataRetentionPolicy,
-
-            // Limits (from org)
             maxAICallsPerDay: org.maxAICallsPerDay,
             maxTokensPerMonth: org.maxTokensPerMonth,
-
-            // Sources for debugging
             _sources: {
-                superadmin: { id: superadmin.id, updatedAt: superadmin.updatedAt },
+                superadmin: { id: superadmin?.id, updatedAt: superadmin?.updatedAt },
                 org: { organizationId: org.organizationId, updatedAt: org.updatedAt },
                 user: { userId: user.userId, updatedAt: user.updatedAt }
             }
         };
-    },
+    }
 
-    // ==========================================
-    // AUDIT LOGGING
-    // ==========================================
+    async logAudit({ level, actorId, actorRole, targetId, settingKey, oldValue, newValue, ipAddress, userAgent }) {
+        await this.init();
+        const id = uuidv4();
+        await this.queryRun(
+            `INSERT INTO ai_settings_audit 
+             (id, level, actor_id, actor_role, target_id, setting_key, old_value, new_value, ip_address, user_agent)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                id,
+                level,
+                actorId,
+                actorRole,
+                targetId,
+                settingKey,
+                JSON.stringify(oldValue),
+                JSON.stringify(newValue),
+                ipAddress,
+                userAgent
+            ]
+        );
+        return { id };
+    }
 
-    /**
-     * Log a setting change to audit table
-     */
-    logAudit: ({ level, actorId, actorRole, targetId, settingKey, oldValue, newValue, ipAddress, userAgent }) => {
-        return new Promise((resolve, reject) => {
-            const id = uuidv4();
-            db.run(
-                `INSERT INTO ai_settings_audit 
-                 (id, level, actor_id, actor_role, target_id, setting_key, old_value, new_value, ip_address, user_agent)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    id,
-                    level,
-                    actorId,
-                    actorRole,
-                    targetId,
-                    settingKey,
-                    JSON.stringify(oldValue),
-                    JSON.stringify(newValue),
-                    ipAddress,
-                    userAgent
-                ],
-                (err) => {
-                    if (err) return reject(err);
-                    resolve({ id });
-                }
-            );
-        });
-    },
+    async getAuditLog({ level, targetId, actorId, limit = 100, offset = 0 } = {}) {
+        await this.init();
+        const conditions = [];
+        const values = [];
 
-    /**
-     * Get audit log with filters
-     */
-    getAuditLog: ({ level, targetId, actorId, limit = 100, offset = 0 }) => {
-        return new Promise((resolve, reject) => {
-            const conditions = [];
-            const values = [];
+        if (level) {
+            conditions.push('level = ?');
+            values.push(level);
+        }
+        if (targetId) {
+            conditions.push('target_id = ?');
+            values.push(targetId);
+        }
+        if (actorId) {
+            conditions.push('actor_id = ?');
+            values.push(actorId);
+        }
 
-            if (level) {
-                conditions.push('level = ?');
-                values.push(level);
-            }
-            if (targetId) {
-                conditions.push('target_id = ?');
-                values.push(targetId);
-            }
-            if (actorId) {
-                conditions.push('actor_id = ?');
-                values.push(actorId);
-            }
+        const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+        values.push(limit, offset);
 
-            const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-            values.push(limit, offset);
+        const rows = await this.queryAll(`SELECT * FROM ai_settings_audit ${where} ORDER BY timestamp DESC LIMIT ? OFFSET ?`, values);
+        return rows.map(row => ({
+            id: row.id,
+            timestamp: row.timestamp,
+            level: row.level,
+            actorId: row.actor_id,
+            actorRole: row.actor_role,
+            targetId: row.target_id,
+            settingKey: row.setting_key,
+            oldValue: JSON.parse(row.old_value || 'null'),
+            newValue: JSON.parse(row.new_value || 'null'),
+            ipAddress: row.ip_address,
+            userAgent: row.user_agent
+        })));
+    }
+    async getAvailableModels(userId, organizationId) {
+        await this.init();
+        const orgSettings = await this.getOrgSettings(organizationId);
 
-            db.all(
-                `SELECT * FROM ai_settings_audit ${where} ORDER BY timestamp DESC LIMIT ? OFFSET ?`,
-                values,
-                (err, rows) => {
-                    if (err) return reject(err);
-                    resolve(rows.map(row => ({
-                        id: row.id,
-                        timestamp: row.timestamp,
-                        level: row.level,
-                        actorId: row.actor_id,
-                        actorRole: row.actor_role,
-                        targetId: row.target_id,
-                        settingKey: row.setting_key,
-                        oldValue: JSON.parse(row.old_value || 'null'),
-                        newValue: JSON.parse(row.new_value || 'null'),
-                        ipAddress: row.ip_address,
-                        userAgent: row.user_agent
-                    })));
-                }
-            );
-        });
-    },
+        const allProviders = await this.queryAll(`SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY name`, []);
 
-    // ==========================================
-    // AVAILABLE MODELS
-    // ==========================================
-
-    /**
-     * Get available models for a user (constrained by org settings)
-     */
-    getAvailableModels: async (userId, organizationId) => {
-        const orgSettings = await AISettingsService.getOrgSettings(organizationId);
-
-        // Get all active LLM providers
-        const allProviders = await new Promise((resolve, reject) => {
-            db.all(
-                `SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY name`,
-                [],
-                (err, rows) => {
-                    if (err) return reject(err);
-                    resolve(rows || []);
-                }
-            );
-        });
-
-        // If org has enabled specific models, filter to those
         if (orgSettings.enabledModelIds.length > 0) {
             return allProviders.filter(p => orgSettings.enabledModelIds.includes(p.id));
         }
 
-        // Otherwise return all active providers
         return allProviders;
-    },
+    }
 
-    // ==========================================
-    // USER COST TRACKING
-    // ==========================================
-
-    /**
-     * Get user's cost history
-     * @param {string} userId - User ID
-     * @param {string} period - Period (7d, 30d, 90d)
-     */
-    getUserCostHistory: async (userId, period = '30d') => {
-        const periodDays = {
-            '7d': 7,
-            '30d': 30,
-            '90d': 90,
-            '365d': 365
-        };
+    async getUserCostHistory(userId, period = '30d') {
+        await this.init();
+        const periodDays = { '7d': 7, '30d': 30, '90d': 90, '365d': 365 };
         const days = periodDays[period] || 30;
 
-        return new Promise((resolve, reject) => {
-            // Try to get from ai_usage_log table if exists, otherwise return mock data
-            db.all(
+        try {
+            const rows = await this.queryAll(
                 `SELECT 
                     DATE(timestamp) as date,
                     COUNT(*) as requests,
@@ -774,76 +557,62 @@ const AISettingsService = {
                 AND timestamp >= datetime('now', '-${days} days')
                 GROUP BY DATE(timestamp), tier
                 ORDER BY date DESC`,
-                [userId],
-                (err, rows) => {
-                    if (err) {
-                        // Return mock data if table doesn't exist
-                        resolve({
-                            period,
-                            totalCost: 4.32,
-                            totalRequests: 127,
-                            totalTokens: 45200,
-                            avgCostPerRequest: 0.034,
-                            byTier: [
-                                { tier: 'BUDGET', requests: 85, tokens: 28000, cost: 1.20, percentage: 67 },
-                                { tier: 'STANDARD', requests: 35, tokens: 14200, cost: 2.45, percentage: 27 },
-                                { tier: 'PREMIUM', requests: 7, tokens: 3000, cost: 0.67, percentage: 6 }
-                            ],
-                            daily: []
-                        });
-                        return;
-                    }
-
-                    // Aggregate results
-                    const byTier = {};
-                    let totalCost = 0;
-                    let totalRequests = 0;
-                    let totalTokens = 0;
-
-                    (rows || []).forEach(row => {
-                        const tier = row.tier || 'STANDARD';
-                        if (!byTier[tier]) {
-                            byTier[tier] = { tier, requests: 0, tokens: 0, cost: 0 };
-                        }
-                        byTier[tier].requests += row.requests;
-                        byTier[tier].tokens += row.tokens || 0;
-                        byTier[tier].cost += row.cost || 0;
-                        totalCost += row.cost || 0;
-                        totalRequests += row.requests;
-                        totalTokens += row.tokens || 0;
-                    });
-
-                    // Calculate percentages
-                    const byTierArray = Object.values(byTier).map(t => ({
-                        ...t,
-                        percentage: totalRequests > 0 ? Math.round((t.requests / totalRequests) * 100) : 0
-                    }));
-
-                    resolve({
-                        period,
-                        totalCost: Math.round(totalCost * 100) / 100,
-                        totalRequests,
-                        totalTokens,
-                        avgCostPerRequest: totalRequests > 0 ? Math.round((totalCost / totalRequests) * 1000) / 1000 : 0,
-                        byTier: byTierArray,
-                        daily: rows || []
-                    });
-                }
+                [userId]
             );
-        });
-    },
 
-    // ==========================================
-    // USER TIER MANAGEMENT
-    // ==========================================
+            const byTier = {};
+            let totalCost = 0;
+            let totalRequests = 0;
+            let totalTokens = 0;
 
-    /**
-     * Get all user tier assignments for an organization
-     * @param {string} organizationId - Organization ID
-     */
-    getOrgUserTiers: async (organizationId) => {
-        return new Promise((resolve, reject) => {
-            db.all(
+            (rows || []).forEach(row => {
+                const tier = row.tier || 'STANDARD';
+                if (!byTier[tier]) {
+                    byTier[tier] = { tier, requests: 0, tokens: 0, cost: 0 };
+                }
+                byTier[tier].requests += row.requests;
+                byTier[tier].tokens += row.tokens || 0;
+                byTier[tier].cost += row.cost || 0;
+                totalCost += row.cost || 0;
+                totalRequests += row.requests;
+                totalTokens += row.tokens || 0;
+            });
+
+            const byTierArray = Object.values(byTier).map(t => ({
+                ...t,
+                percentage: totalRequests > 0 ? Math.round((t.requests / totalRequests) * 100) : 0
+            }));
+
+            return {
+                period,
+                totalCost: Math.round(totalCost * 100) / 100,
+                totalRequests,
+                totalTokens,
+                avgCostPerRequest: totalRequests > 0 ? Math.round((totalCost / totalRequests) * 1000) / 1000 : 0,
+                byTier: byTierArray,
+                daily: rows || []
+            };
+        } catch (e) {
+            return {
+                period,
+                totalCost: 4.32,
+                totalRequests: 127,
+                totalTokens: 45200,
+                avgCostPerRequest: 0.034,
+                byTier: [
+                    { tier: 'BUDGET', requests: 85, tokens: 28000, cost: 1.20, percentage: 67 },
+                    { tier: 'STANDARD', requests: 35, tokens: 14200, cost: 2.45, percentage: 27 },
+                    { tier: 'PREMIUM', requests: 7, tokens: 3000, cost: 0.67, percentage: 6 }
+                ],
+                daily: []
+            };
+        }
+    }
+
+    async getOrgUserTiers(organizationId) {
+        await this.init();
+        try {
+            return await this.queryAll(
                 `SELECT 
                     u.id as userId,
                     u.name as userName,
@@ -855,78 +624,43 @@ const AISettingsService = {
                 LEFT JOIN user_ai_settings uas ON u.id = uas.user_id
                 WHERE u.organization_id = ?
                 ORDER BY u.name`,
-                [organizationId],
-                (err, rows) => {
-                    if (err) {
-                        // Return mock data if query fails
-                        resolve([
-                            { userId: '1', userName: 'John Doe', email: 'john@example.com', currentTier: 'STANDARD', usage: 45, cost: 3.45 },
-                            { userId: '2', userName: 'Jane Smith', email: 'jane@example.com', currentTier: 'PREMIUM', usage: 120, cost: 12.30 }
-                        ]);
-                        return;
-                    }
-                    resolve(rows || []);
-                }
+                [organizationId]
             );
-        });
-    },
+        } catch (e) {
+            return [
+                { userId: '1', userName: 'John Doe', email: 'john@example.com', currentTier: 'STANDARD', usage: 45, cost: 3.45 },
+                { userId: '2', userName: 'Jane Smith', email: 'jane@example.com', currentTier: 'PREMIUM', usage: 120, cost: 12.30 }
+            ];
+        }
+    }
 
-    /**
-     * Assign a tier to a specific user
-     * @param {string} organizationId - Organization ID
-     * @param {string} userId - User ID
-     * @param {string} tier - Tier (BUDGET, STANDARD, PREMIUM, REASONING)
-     */
-    assignUserTier: async (organizationId, userId, tier) => {
-        // First verify user belongs to org
-        const userOrg = await new Promise((resolve, reject) => {
-            db.get(
-                `SELECT organization_id FROM users WHERE id = ?`,
-                [userId],
-                (err, row) => {
-                    if (err) return reject(err);
-                    resolve(row?.organization_id);
-                }
-            );
-        });
+    async assignUserTier(organizationId, userId, tier) {
+        await this.init();
+        const userOrg = (await this.queryOne(`SELECT organization_id FROM users WHERE id = ?`, [userId]))?.organization_id;
 
         if (userOrg !== organizationId) {
             throw new Error('User does not belong to this organization');
         }
 
-        // Update or insert user settings with new tier
-        return new Promise((resolve, reject) => {
-            db.run(
-                `INSERT INTO user_ai_settings (user_id, selected_tier, updated_at)
-                 VALUES (?, ?, CURRENT_TIMESTAMP)
-                 ON CONFLICT(user_id) DO UPDATE SET 
-                    selected_tier = excluded.selected_tier,
-                    updated_at = CURRENT_TIMESTAMP`,
-                [userId, tier],
-                (err) => {
-                    if (err) return reject(err);
-                    resolve({ userId, tier, success: true });
-                }
-            );
-        });
-    },
+        await this.queryRun(
+            `INSERT INTO user_ai_settings (user_id, selected_tier, updated_at)
+             VALUES (?, ?, CURRENT_TIMESTAMP)
+             ON CONFLICT(user_id) DO UPDATE SET 
+                selected_tier = excluded.selected_tier,
+                updated_at = CURRENT_TIMESTAMP`,
+            [userId, tier]
+        );
 
-    // ==========================================
-    // COST ATTRIBUTION
-    // ==========================================
+        return { userId, tier, success: true };
+    }
 
-    /**
-     * Get cost attribution for an organization
-     * @param {string} organizationId - Organization ID
-     * @param {string} period - Period (7d, 30d, 90d)
-     */
-    getOrgCostAttribution: async (organizationId, period = '7d') => {
+    async getOrgCostAttribution(organizationId, period = '7d') {
+        await this.init();
         const periodDays = { '7d': 7, '30d': 30, '90d': 90 };
         const days = periodDays[period] || 7;
 
-        return new Promise((resolve, reject) => {
-            // Try user attribution first
-            db.all(
+        try {
+            const userRows = await this.queryAll(
                 `SELECT 
                     'user' as entityType,
                     u.id as entityId,
@@ -942,73 +676,54 @@ const AISettingsService = {
                 HAVING requests > 0
                 ORDER BY cost DESC
                 LIMIT 10`,
-                [organizationId],
-                (err, userRows) => {
-                    if (err) {
-                        // Return mock data
-                        resolve({
-                            period,
-                            totalCost: 27.15,
-                            avgCostPerRequest: 0.034,
-                            totalRequests: 821,
-                            totalTokens: 291000,
-                            attribution: [
-                                { entityType: 'user', entityId: '2', entityName: 'Jane Smith', requests: 342, tokens: 125000, cost: 12.30, percentage: 45 },
-                                { entityType: 'project', entityId: 'p1', entityName: 'Digital Transformation', requests: 234, tokens: 89000, cost: 8.50, percentage: 31 },
-                                { entityType: 'user', entityId: '1', entityName: 'John Doe', requests: 156, tokens: 45000, cost: 3.45, percentage: 13 }
-                            ]
-                        });
-                        return;
-                    }
-
-                    // Calculate totals
-                    let totalCost = 0;
-                    let totalRequests = 0;
-                    let totalTokens = 0;
-
-                    const attribution = (userRows || []).map(row => {
-                        totalCost += row.cost;
-                        totalRequests += row.requests;
-                        totalTokens += row.tokens;
-                        return row;
-                    });
-
-                    // Add percentages
-                    attribution.forEach(item => {
-                        item.percentage = totalCost > 0 ? Math.round((item.cost / totalCost) * 100) : 0;
-                    });
-
-                    resolve({
-                        period,
-                        totalCost: Math.round(totalCost * 100) / 100,
-                        avgCostPerRequest: totalRequests > 0 ? Math.round((totalCost / totalRequests) * 1000) / 1000 : 0,
-                        totalRequests,
-                        totalTokens,
-                        attribution
-                    });
-                }
+                [organizationId]
             );
-        });
-    },
 
-    // ==========================================
-    // COMPLIANCE REPORTS
-    // ==========================================
+            let totalCost = 0;
+            let totalRequests = 0;
+            let totalTokens = 0;
 
-    /**
-     * Generate a compliance report
-     * @param {string} organizationId - Organization ID
-     * @param {string} standard - Standard (ISO21500, PMBOK7, PRINCE2, GDPR, SOC2)
-     * @param {string} format - Format (json, csv, pdf)
-     */
-    generateComplianceReport: async (organizationId, standard, format = 'json') => {
-        // Get org settings and audit log
+            const attribution = (userRows || []).map(row => {
+                totalCost += row.cost;
+                totalRequests += row.requests;
+                totalTokens += row.tokens;
+                return row;
+            });
+
+            attribution.forEach(item => {
+                item.percentage = totalCost > 0 ? Math.round((item.cost / totalCost) * 100) : 0;
+            });
+
+            return {
+                period,
+                totalCost: Math.round(totalCost * 100) / 100,
+                avgCostPerRequest: totalRequests > 0 ? Math.round((totalCost / totalRequests) * 1000) / 1000 : 0,
+                totalRequests,
+                totalTokens,
+                attribution
+            };
+        } catch (e) {
+            return {
+                period,
+                totalCost: 27.15,
+                avgCostPerRequest: 0.034,
+                totalRequests: 821,
+                totalTokens: 291000,
+                attribution: [
+                    { entityType: 'user', entityId: '2', entityName: 'Jane Smith', requests: 342, tokens: 125000, cost: 12.30, percentage: 45 },
+                    { entityType: 'project', entityId: 'p1', entityName: 'Digital Transformation', requests: 234, tokens: 89000, cost: 8.50, percentage: 31 },
+                    { entityType: 'user', entityId: '1', entityName: 'John Doe', requests: 156, tokens: 45000, cost: 3.45, percentage: 13 }
+                ]
+            };
+        }
+    }
+
+    async generateComplianceReport(organizationId, standard, format = 'json') {
         const [orgSettings, auditLog] = await Promise.all([
-            AISettingsService.getOrgSettings(organizationId),
-            AISettingsService.getAuditLog({ targetId: organizationId, limit: 1000 })
+            this.getOrgSettings(organizationId),
+            this.getAuditLog({ targetId: organizationId, limit: 1000 })
         ]);
 
-        // Build compliance checks based on standard
         const complianceChecks = {
             ISO21500: [
                 { id: 'audit_enabled', name: 'Audit Trail Enabled', status: orgSettings.auditPolicyChanges ? 'compliant' : 'non_compliant' },
@@ -1071,7 +786,7 @@ const AISettingsService = {
                 checkId: c.id,
                 checkName: c.name,
                 status: c.status,
-                recommendation: c.status === 'non_compliant' 
+                recommendation: c.status === 'non_compliant'
                     ? `Enable ${c.name} to achieve compliance`
                     : `Review and optimize ${c.name} configuration`
             })),
@@ -1081,7 +796,6 @@ const AISettingsService = {
             }
         };
 
-        // Format conversion
         if (format === 'csv') {
             const csvRows = [
                 ['Check ID', 'Check Name', 'Status', 'Recommendation'],
@@ -1099,7 +813,6 @@ const AISettingsService = {
         }
 
         if (format === 'pdf') {
-            // For PDF, return a structured format that frontend can render
             return {
                 ...report,
                 data: Buffer.from(JSON.stringify(report, null, 2))
@@ -1108,7 +821,8 @@ const AISettingsService = {
 
         return report;
     }
-};
+}
 
-module.exports = AISettingsService;
+const aiSettingsService = new AISettingsService();
+export default aiSettingsService;
 

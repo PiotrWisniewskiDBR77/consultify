@@ -13,14 +13,13 @@
 
 import { Request, Response, NextFunction } from 'express';
 import type { AuthRequest } from './auth.middleware';
+import { get as dbGet } from '../utils/DbPromise.js';
 
 // ==========================================
 // TYPES
 // ==========================================
 
-interface Database {
-    get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
-}
+// Database interface no longer needed - using DbPromise directly
 
 interface UserRow {
     user_status?: string;
@@ -36,7 +35,7 @@ interface TrialRequest extends AuthRequest {
 }
 
 interface Dependencies {
-    db: Database;
+    // No longer needed - using DbPromise directly
 }
 
 // ==========================================
@@ -83,8 +82,7 @@ let deps: Dependencies;
 
 const getDeps = (): Dependencies => {
     if (!deps) {
-        const defaultDb = require('../../database');
-        deps = { db: defaultDb };
+        deps = {};
     }
     return deps;
 };
@@ -97,19 +95,12 @@ const getDeps = (): Dependencies => {
  * Check if user is in Trial Entry status
  */
 export async function isTrialEntryUser(userId: string): Promise<boolean> {
-    const { db } = getDeps();
+    const userRow = await dbGet<UserRow>(
+        `SELECT user_status FROM users WHERE id = ?`,
+        [userId]
+    );
     
-    return new Promise<boolean>((resolve, reject) => {
-        db.get(
-            `SELECT user_status FROM users WHERE id = ?`,
-            [userId],
-            (err, row) => {
-                if (err) return reject(err);
-                const userRow = row as UserRow | undefined;
-                resolve(userRow?.user_status === 'TRIAL_ENTRY');
-            }
-        );
-    });
+    return userRow?.user_status === 'TRIAL_ENTRY';
 }
 
 /**
@@ -210,7 +201,8 @@ export const requireOrgContext = async (
 // DEPENDENCY INJECTION (for testing)
 // ==========================================
 
-export const setDependencies = (newDeps: Partial<Dependencies>): void => {
-    deps = { ...getDeps(), ...newDeps };
+export const setDependencies = (_newDeps: Partial<Dependencies>): void => {
+    // No longer needed - using DbPromise directly
+    deps = getDeps();
 };
 

@@ -34,6 +34,49 @@ interface ProjectMember {
     account_role: string;
 }
 
+interface Workstream {
+    id: string;
+    project_id: string;
+    name: string;
+    description?: string;
+    created_at: string;
+    updated_at: string;
+    [key: string]: unknown; // Allow additional fields from database
+}
+
+interface Initiative {
+    id: string;
+    project_id: string;
+    name: string;
+    description?: string;
+    status: string;
+    created_at: string;
+    updated_at: string;
+    [key: string]: unknown; // Allow additional fields from database
+}
+
+interface Assessment {
+    id: string;
+    project_id: string;
+    framework: string;
+    status: string;
+    created_at: string;
+    updated_at: string;
+    [key: string]: unknown; // Allow additional fields from database
+}
+
+interface Document {
+    id: string;
+    project_id: string;
+    title: string;
+    content?: string;
+    type: string;
+    created_at: string;
+    updated_at: string;
+    deleted_at?: string | null;
+    [key: string]: unknown; // Allow additional fields from database
+}
+
 interface ProjectDetails {
     id: string;
     organization_id: string;
@@ -47,10 +90,10 @@ interface ProjectDetails {
     created_at: string;
     updated_at: string;
     team?: ProjectMember[];
-    workstreams?: unknown[];
-    initiatives?: unknown[];
-    assessments?: unknown[];
-    documents?: unknown[];
+    workstreams?: Workstream[];
+    initiatives?: Initiative[];
+    assessments?: Assessment[];
+    documents?: Document[];
 }
 
 // ==========================================
@@ -156,10 +199,10 @@ export class ProjectController {
                 JOIN users u ON pm.user_id = u.id
                 WHERE pm.project_id = ?
             `, [id]),
-            queryHelpers.queryAll(`SELECT * FROM workstreams WHERE project_id = ?`, [id]),
-            queryHelpers.queryAll(`SELECT * FROM initiatives WHERE project_id = ?`, [id]),
-            queryHelpers.queryAll(`SELECT * FROM multi_framework_assessments WHERE project_id = ?`, [id]),
-            queryHelpers.queryAll(`SELECT * FROM knowledge_docs WHERE project_id = ? AND deleted_at IS NULL`, [id])
+            queryHelpers.queryAll<Workstream>(`SELECT * FROM workstreams WHERE project_id = ?`, [id]),
+            queryHelpers.queryAll<Initiative>(`SELECT * FROM initiatives WHERE project_id = ?`, [id]),
+            queryHelpers.queryAll<Assessment>(`SELECT * FROM multi_framework_assessments WHERE project_id = ?`, [id]),
+            queryHelpers.queryAll<Document>(`SELECT * FROM knowledge_docs WHERE project_id = ? AND deleted_at IS NULL`, [id])
         ]);
 
         res.json({
@@ -305,7 +348,7 @@ export class ProjectController {
         const { id } = req.params;
         
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const AIRoleGuard = require('../../services/aiRoleGuard');
+        const AIRoleGuard = await import('../../services/aiRoleGuard.js').then(m => m.default || m);
         const roleConfig = await AIRoleGuard.getRoleConfig(id);
 
         res.json({
@@ -348,9 +391,9 @@ export class ProjectController {
         }
 
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const AIRoleGuard = require('../../services/aiRoleGuard');
+        const AIRoleGuard = await import('../../services/aiRoleGuard.js').then(m => m.default || m);
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const AIAuditLogger = require('../../services/aiAuditLogger');
+        const AIAuditLogger = await import('../../services/aiAuditLogger.js').then(m => m.default || m);
 
         // Get current role for audit
         const currentRole = await AIRoleGuard.getProjectRole(projectId);
@@ -391,7 +434,7 @@ export class ProjectController {
         const { id } = req.params;
         
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const RegulatoryModeGuard = require('../../services/regulatoryModeGuard');
+        const RegulatoryModeGuard = await import('../../services/regulatoryModeGuard.js').then(m => m.default || m);
         const status = await RegulatoryModeGuard.getStatus(id);
 
         res.json({
@@ -430,9 +473,9 @@ export class ProjectController {
         }
 
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const RegulatoryModeGuard = require('../../services/regulatoryModeGuard');
+        const RegulatoryModeGuard = await import('../../services/regulatoryModeGuard.js').then(m => m.default || m);
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const AIAuditLogger = require('../../services/aiAuditLogger');
+        const AIAuditLogger = await import('../../services/aiAuditLogger.js').then(m => m.default || m);
 
         // Get current status for audit
         const currentStatus = await RegulatoryModeGuard.isEnabled(projectId);

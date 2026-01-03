@@ -1,31 +1,29 @@
-/**
- * PMO Domain Registry Service
- * 
- * SCMS Meta-PMO Framework: Certifiable, Methodology-Neutral PMO Model
- * 
- * This service implements the core principle:
- * "SCMS implements common denominators of professional PMO standards 
- *  with no proprietary terminology and clear traceability to known norms."
- * 
- * Standards Compatibility:
- * - ISO 21500:2021 (Guidance on Project Management)
- * - PMI PMBOK 7th Edition (Project Management Body of Knowledge)
- * - PRINCE2 (Projects IN Controlled Environments)
- * 
- * @module pmoDomainRegistry
- */
+import { v4 as uuidv4 } from 'uuid';
 
-let db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+/**
+ * Dependency injection container
+ */
+const deps = {
+    _db: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: dbInstance } = await import('../database.js');
+        deps._db = dbInstance;
+    }
+}
 
 /**
  * PMO Domain IDs - Certifiable Core Domains
- * 
- * @mapping ISO 21500: Subject Groups (Integration, Stakeholder, Scope, Resource, Time, Cost, Risk, Quality, Procurement, Communication)
- * @mapping PMBOK 7: Performance Domains (Stakeholder, Team, Development Approach, Planning, Project Work, Delivery, Measurement, Uncertainty)
- * @mapping PRINCE2: Themes (Business Case, Organization, Quality, Plans, Risk, Change, Progress)
  */
-const PMO_DOMAIN_IDS = {
+export const PMO_DOMAIN_IDS = {
     GOVERNANCE_DECISION_MAKING: 'GOVERNANCE_DECISION_MAKING',
     SCOPE_CHANGE_CONTROL: 'SCOPE_CHANGE_CONTROL',
     SCHEDULE_MILESTONES: 'SCHEDULE_MILESTONES',
@@ -37,14 +35,8 @@ const PMO_DOMAIN_IDS = {
 
 /**
  * PMO Domains Registry - First-Class Certifiable Concepts
- * 
- * Each domain:
- * - Is optional and configurable per project
- * - Has neutral naming (no vendor-specific terminology)
- * - Maps explicitly to ISO 21500, PMBOK, and PRINCE2
- * - Contains documentation hooks for certification audits
  */
-const PMO_DOMAINS = [
+export const PMO_DOMAINS = [
     {
         id: PMO_DOMAIN_IDS.GOVERNANCE_DECISION_MAKING,
         name: 'Governance & Decision Making',
@@ -131,20 +123,46 @@ const PMO_DOMAINS = [
     }
 ];
 
-/**
- * PMO Domain Registry Service
- */
-const PMODomainRegistry = {
-    PMO_DOMAIN_IDS,
-    PMO_DOMAINS,
+class PMODomainRegistry {
+    constructor() {
+        this._db = null;
+        this.PMO_DOMAIN_IDS = PMO_DOMAIN_IDS;
+        this.PMO_DOMAINS = PMO_DOMAINS;
+    }
+
+    get db() {
+        if (!this._db) {
+            throw new Error('PMODomainRegistry: Database not initialized. Call init() first.');
+        }
+        return this._db;
+    }
+
+    /**
+     * Initialize service dependencies
+     */
+    async init() {
+        await initDeps();
+        this._db = deps.db;
+        return this;
+    }
+
+    /**
+     * Set dependencies manually (for testing)
+     */
+    setDependencies(customDeps) {
+        if (customDeps.db) {
+            this._db = customDeps.db;
+            deps.db = customDeps.db;
+        }
+    }
 
     /**
      * Initialize the domain registry in the database
-     * Called during database initialization
      */
     async seedDomains() {
+        await this.init();
         return new Promise((resolve, reject) => {
-            const stmt = db.prepare(`
+            const stmt = this.db.prepare(`
                 INSERT OR REPLACE INTO pmo_domains 
                 (id, name, description, iso21500_term, pmbok_term, prince2_term, is_configurable, sort_order)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -168,27 +186,26 @@ const PMODomainRegistry = {
                 else resolve({ seeded: PMO_DOMAINS.length });
             });
         });
-    },
+    }
 
     /**
      * Get all PMO domains with standards mapping
-     * @returns {Promise<Array>} All domains
      */
-    getAllDomains() {
+    async getAllDomains() {
+        await this.init();
         return new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM pmo_domains ORDER BY sort_order`, [], (err, rows) => {
+            this.db.all(`SELECT * FROM pmo_domains ORDER BY sort_order`, [], (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || PMO_DOMAINS);
             });
         });
-    },
+    }
 
     /**
      * Get a specific domain by ID
-     * @param {string} domainId - The domain ID
-     * @returns {Promise<Object>} Domain details
      */
-    getDomain(domainId) {
+    async getDomain(domainId) {
+        await this.init();
         return new Promise((resolve, reject) => {
             const domain = PMO_DOMAINS.find(d => d.id === domainId);
             if (!domain) {
@@ -196,21 +213,20 @@ const PMODomainRegistry = {
                 return;
             }
 
-            db.get(`SELECT * FROM pmo_domains WHERE id = ?`, [domainId], (err, row) => {
+            this.db.get(`SELECT * FROM pmo_domains WHERE id = ?`, [domainId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row || domain);
             });
         });
-    },
+    }
 
     /**
      * Get enabled domains for a project
-     * @param {string} projectId - The project ID
-     * @returns {Promise<Array>} Enabled domain IDs
      */
-    getProjectDomains(projectId) {
+    async getProjectDomains(projectId) {
+        await this.init();
         return new Promise((resolve, reject) => {
-            db.all(`
+            this.db.all(`
                 SELECT pd.*, ppd.is_enabled, ppd.enabled_at
                 FROM pmo_domains pd
                 LEFT JOIN project_pmo_domains ppd ON pd.id = ppd.domain_id AND ppd.project_id = ?
@@ -218,91 +234,73 @@ const PMODomainRegistry = {
             `, [projectId], (err, rows) => {
                 if (err) reject(err);
                 else {
-                    // If no project config exists, all domains are enabled by default
                     const domains = (rows || []).map(row => ({
                         ...row,
-                        isEnabled: row.is_enabled !== 0 // null or 1 = enabled
+                        isEnabled: row.is_enabled !== 0
                     }));
                     resolve(domains);
                 }
             });
         });
-    },
+    }
 
     /**
      * Configure which domains are enabled for a project
-     * @param {string} projectId - The project ID
-     * @param {Array} enabledDomainIds - Array of domain IDs to enable
-     * @param {string} userId - The user making the change
-     * @returns {Promise<Object>} Configuration result
      */
     async configureProjectDomains(projectId, enabledDomainIds, userId) {
+        await this.init();
         return new Promise((resolve, reject) => {
-            db.serialize(() => {
-                // First, set all domains to disabled for this project
-                db.run(`
+            this.db.serialize(() => {
+                this.db.run(`
                     INSERT OR REPLACE INTO project_pmo_domains (project_id, domain_id, is_enabled, enabled_by, enabled_at)
                     SELECT ?, id, 0, ?, CURRENT_TIMESTAMP FROM pmo_domains
                 `, [projectId, userId]);
 
-                // Then enable the specified domains
                 if (enabledDomainIds.length > 0) {
                     const placeholders = enabledDomainIds.map(() => '?').join(',');
-                    db.run(`
+                    this.db.run(`
                         UPDATE project_pmo_domains 
                         SET is_enabled = 1, enabled_by = ?, enabled_at = CURRENT_TIMESTAMP
                         WHERE project_id = ? AND domain_id IN (${placeholders})
-                    `, [userId, projectId, ...enabledDomainIds], function (err) {
+                    `, [userId, projectId, ...enabledDomainIds], (err) => {
                         if (err) reject(err);
-                        else resolve({ projectId, enabledDomains: enabledDomainIds, changes: this.changes });
+                        else resolve({ projectId, enabledDomains: enabledDomainIds });
                     });
                 } else {
-                    resolve({ projectId, enabledDomains: [], changes: 0 });
+                    resolve({ projectId, enabledDomains: [] });
                 }
             });
         });
-    },
+    }
 
     /**
      * Get SCMS objects that belong to a specific domain
-     * @param {string} domainId - The domain ID
-     * @returns {Array} SCMS object types in this domain
      */
     getDomainObjects(domainId) {
         const domain = PMO_DOMAINS.find(d => d.id === domainId);
         return domain ? domain.scmsObjects : [];
-    },
+    }
 
     /**
      * Determine which domain an SCMS object belongs to
-     * @param {string} objectType - The SCMS object type (e.g., 'Decision', 'Initiative')
-     * @returns {Object|null} The domain containing this object
      */
-    getDomainForObject: (objectType) => {
+    getDomainForObject(objectType) {
         return PMO_DOMAINS.find(d => d.scmsObjects.includes(objectType)) || PMO_DOMAINS.find(d => d.id === 'integration_management');
-    },
-
-    // Test helper
-    _setDb: (mockDb) => { db = mockDb; },
+    }
 
     /**
      * Get certification notes for a domain
-     * Useful for audit documentation
-     * @param {string} domainId - The domain ID
-     * @returns {string} Certification notes
      */
     getCertificationNotes(domainId) {
         const domain = PMO_DOMAINS.find(d => d.id === domainId);
         return domain ? domain.certificationNotes : '';
-    },
+    }
 
     /**
      * Record an action in the PMO audit trail
-     * Provides certification traceability
-     * @param {Object} auditData - Audit entry data
-     * @returns {Promise<Object>} Created audit entry
      */
-    recordAuditEntry(auditData) {
+    async recordAuditEntry(auditData) {
+        await this.init();
         return new Promise((resolve, reject) => {
             const {
                 projectId,
@@ -323,7 +321,7 @@ const PMODomainRegistry = {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
-            db.run(sql, [
+            this.db.run(sql, [
                 id,
                 projectId,
                 pmoDomainId,
@@ -335,20 +333,18 @@ const PMODomainRegistry = {
                 domain?.iso21500Term || 'N/A',
                 domain?.pmbokTerm || 'N/A',
                 domain?.prince2Term || 'N/A'
-            ], function (err) {
+            ], (err) => {
                 if (err) reject(err);
                 else resolve({ id, ...auditData });
             });
         });
-    },
+    }
 
     /**
      * Get audit trail for a project
-     * @param {string} projectId - The project ID
-     * @param {Object} options - Filter options
-     * @returns {Promise<Array>} Audit entries
      */
-    getProjectAuditTrail(projectId, options = {}) {
+    async getProjectAuditTrail(projectId, options = {}) {
+        await this.init();
         return new Promise((resolve, reject) => {
             let sql = `
                 SELECT pat.*, pd.name as domain_name
@@ -374,12 +370,13 @@ const PMODomainRegistry = {
                 params.push(options.limit);
             }
 
-            db.all(sql, params, (err, rows) => {
+            this.db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
         });
     }
-};
+}
 
-module.exports = PMODomainRegistry;
+const pmoDomainRegistryInstance = new PMODomainRegistry();
+export default pmoDomainRegistryInstance;

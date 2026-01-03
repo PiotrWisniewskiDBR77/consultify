@@ -20,7 +20,7 @@ import type {
 // HELPER FUNCTIONS
 // ==========================================
 
-const safeJsonParse = (str: string | null | undefined, defaultValue: unknown[] = []): unknown[] => {
+const safeJsonParse = <T = unknown>(str: string | null | undefined, defaultValue: T[] = [] as T[]): T[] => {
     if (!str || str === '' || str === 'null' || str === 'undefined') {
         return defaultValue;
     }

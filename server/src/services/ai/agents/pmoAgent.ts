@@ -1,32 +1,14 @@
 /**
- * Ai/agents/pmoAgent Service
+ * Pmoagent Service
  * Enterprise SaaS Architecture - TypeScript Backend
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
 
-const require = createRequire(import.meta.url);
-
-// Import the JS implementation for now (will be fully migrated later)
-const ai/agents/pmoAgentServiceJS = require('../../services/ai/agents/pmoAgent.js');
-
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const ai/agents/pmoAgentService = ai/agents/pmoAgentServiceJS.default || ai/agents/pmoAgentServiceJS;
+// Lazy load the JS service module
+const loadPmoagent = createCachedLazyService('../../services/ai/agents/pmoAgent.js');
 
 // Export default instance (for backward compatibility)
-export default ai/agents/pmoAgentService;
-
-// Also export named exports if they exist
-if (typeof ai/agents/pmoAgentServiceJS === 'object' && ai/agents/pmoAgentServiceJS !== null) {
-    Object.keys(ai/agents/pmoAgentServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = ai/agents/pmoAgentServiceJS[key];
-        }
-    });
-}
+export default loadPmoagent();

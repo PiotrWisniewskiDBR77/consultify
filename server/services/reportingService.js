@@ -161,7 +161,7 @@ const ReportingService = Object.assign({}, BaseService, {
     generateGovernanceReport: async function (projectId, userId) {
         // Decisions taken
         const decisions = await new Promise((resolve, reject) => {
-            db.all(`SELECT id, title, decision_type, status, created_at, decided_at 
+            deps.db.all(`SELECT id, title, decision_type, status, created_at, decided_at 
                     FROM decisions WHERE project_id = ? ORDER BY created_at DESC LIMIT 20`,
                 [projectId], (err, rows) => {
                     if (err) reject(err);
@@ -171,7 +171,7 @@ const ReportingService = Object.assign({}, BaseService, {
 
         // Escalations
         const escalations = await new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM escalations WHERE project_id = ? ORDER BY created_at DESC LIMIT 10`,
+            deps.db.all(`SELECT * FROM escalations WHERE project_id = ? ORDER BY created_at DESC LIMIT 10`,
                 [projectId], (err, rows) => {
                     if (err) reject(err);
                     else resolve(rows || []);
@@ -180,7 +180,7 @@ const ReportingService = Object.assign({}, BaseService, {
 
         // Baseline changes (stage gates passed)
         const gatesPassed = await new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM stage_gates WHERE project_id = ? AND status = 'PASSED' ORDER BY approved_at DESC`,
+            deps.db.all(`SELECT * FROM stage_gates WHERE project_id = ? AND status = 'PASSED' ORDER BY approved_at DESC`,
                 [projectId], (err, rows) => {
                     if (err) reject(err);
                     else resolve(rows || []);
@@ -236,7 +236,7 @@ const ReportingService = Object.assign({}, BaseService, {
     generateOrganizationOverviewReport: async function (organizationId) {
         // Organization details
         const org = await new Promise((resolve, reject) => {
-            db.get(`SELECT id, name, billing_status, organization_type, created_at FROM organizations WHERE id = ?`,
+            deps.db.get(`SELECT id, name, billing_status, organization_type, created_at FROM organizations WHERE id = ?`,
                 [organizationId], (err, row) => {
                     if (err) reject(err);
                     else resolve(row);
@@ -249,7 +249,7 @@ const ReportingService = Object.assign({}, BaseService, {
 
         // Transformation context
         const transformationGoals = await new Promise((resolve, reject) => {
-            db.get(`SELECT goals, digital_maturity, transformation_type FROM organization_context WHERE organization_id = ?`,
+            deps.db.get(`SELECT goals, digital_maturity, transformation_type FROM organization_context WHERE organization_id = ?`,
                 [organizationId], (err, row) => {
                     if (err) reject(err);
                     else resolve(row);
@@ -258,7 +258,7 @@ const ReportingService = Object.assign({}, BaseService, {
 
         // Initiatives summary
         const initiativesSummary = await new Promise((resolve, reject) => {
-            db.all(`SELECT 
+            deps.db.all(`SELECT 
                         i.id, i.title, i.status, i.priority, i.progress, i.due_date,
                         u.name as owner_name
                     FROM initiatives i
@@ -281,7 +281,7 @@ const ReportingService = Object.assign({}, BaseService, {
 
         // Blockers
         const blockers = await new Promise((resolve, reject) => {
-            db.all(`SELECT i.title as initiative, t.title as task, t.blocked_reason
+            deps.db.all(`SELECT i.title as initiative, t.title as task, t.blocked_reason
                     FROM tasks t
                     JOIN initiatives i ON t.initiative_id = i.id
                     WHERE i.org_id = ? AND t.status = 'BLOCKED'
@@ -294,7 +294,7 @@ const ReportingService = Object.assign({}, BaseService, {
 
         // Next steps (upcoming tasks)
         const nextSteps = await new Promise((resolve, reject) => {
-            db.all(`SELECT t.title, t.due_date, i.title as initiative
+            deps.db.all(`SELECT t.title, t.due_date, i.title as initiative
                     FROM tasks t
                     JOIN initiatives i ON t.initiative_id = i.id
                     WHERE i.org_id = ? AND t.status IN ('TODO', 'IN_PROGRESS')
@@ -338,7 +338,7 @@ const ReportingService = Object.assign({}, BaseService, {
     generateInitiativeExecutionReport: async function (initiativeId, organizationId) {
         // Initiative details
         const initiative = await new Promise((resolve, reject) => {
-            db.get(`SELECT i.*, u.name as owner_name, u.email as owner_email
+            deps.db.get(`SELECT i.*, u.name as owner_name, u.email as owner_email
                     FROM initiatives i
                     LEFT JOIN users u ON i.owner_id = u.id
                     WHERE i.id = ? AND i.org_id = ?`,
@@ -354,7 +354,7 @@ const ReportingService = Object.assign({}, BaseService, {
 
         // Tasks
         const tasks = await new Promise((resolve, reject) => {
-            db.all(`SELECT t.id, t.title, t.description, t.status, t.priority, 
+            deps.db.all(`SELECT t.id, t.title, t.description, t.status, t.priority, 
                            t.due_date, t.progress, t.blocked_reason,
                            u.name as assignee_name
                     FROM tasks t
@@ -423,5 +423,5 @@ const ReportingService = Object.assign({}, BaseService, {
     }
 });
 
-module.exports = ReportingService;
+export default ReportingService;
 

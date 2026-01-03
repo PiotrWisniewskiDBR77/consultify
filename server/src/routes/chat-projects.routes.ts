@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const chat_projectsRoutesJS = require('../../routes/chat-projects.js');
+const chat_projectsRoutesJSPromise = (async () => {
+    const module = await import('../../routes/chat-projects.js');
+    return module.default || module;
+})();
+const chat_projectsRoutesJS = chat_projectsRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

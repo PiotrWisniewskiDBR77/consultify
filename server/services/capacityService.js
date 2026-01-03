@@ -3,20 +3,42 @@
 
 // Dependency injection container (for deterministic unit tests)
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+    _db: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
 };
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
 
 const CapacityService = {
     // For testing: allow overriding dependencies
     setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
+        if (newDeps.db) deps.db = newDeps.db;
+        if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
     },
 
     /**
      * Get user capacity for a week
      */
     getUserCapacity: async (userId, weekStart) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.get(`SELECT * FROM user_capacity WHERE user_id = ? AND week_start = ?`,
                 [userId, weekStart], (err, row) => {
@@ -44,6 +66,7 @@ const CapacityService = {
      * Calculate capacity from tasks
      */
     calculateUserCapacity: async (userId, projectId = null) => {
+        await initDeps();
         // Get all active tasks for user in next 4 weeks
         const fourWeeksLater = new Date();
         fourWeeksLater.setDate(fourWeeksLater.getDate() + 28);
@@ -131,6 +154,7 @@ const CapacityService = {
      * Detect overloaded users in a project
      */
     detectOverloads: async (projectId) => {
+        await initDeps();
         // Get all users with tasks in project
         const usersWithTasks = await new Promise((resolve, reject) => {
             deps.db.all(`SELECT DISTINCT assignee_id FROM tasks WHERE project_id = ? AND assignee_id IS NOT NULL`,
@@ -203,4 +227,4 @@ const CapacityService = {
     }
 };
 
-module.exports = CapacityService;
+export default CapacityService;

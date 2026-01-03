@@ -17,15 +17,13 @@
 
 import { Request, Response, NextFunction } from 'express';
 import type { AuthRequest } from './auth.middleware';
+import { get as dbGet, all as dbAll } from '../utils/DbPromise.js';
 
 // ==========================================
 // TYPES
 // ==========================================
 
-interface Database {
-    get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
-    all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
-}
+// Database interface no longer needed - using DbPromise directly
 
 interface MembershipRow {
     id: string;
@@ -74,7 +72,7 @@ interface OrgContextOptions {
 }
 
 interface Dependencies {
-    db: Database;
+    // No longer needed - using DbPromise directly
 }
 
 // ==========================================
@@ -85,8 +83,7 @@ let deps: Dependencies;
 
 const getDeps = (): Dependencies => {
     if (!deps) {
-        const defaultDb = require('../../database');
-        deps = { db: defaultDb };
+        deps = {};
     }
     return deps;
 };
@@ -105,94 +102,78 @@ async function resolveUserOrgAccess(userId: string, orgId: string): Promise<OrgA
         return { allowed: false };
     }
 
-    const { db } = getDeps();
+    // Check direct membership first
+    const membership = await dbGet<MembershipRow>(
+        `SELECT id, role, status, permission_scope FROM organization_members 
+         WHERE user_id = ? AND organization_id = ? AND status = 'ACTIVE'`,
+        [userId, orgId]
+    );
 
-    return new Promise<OrgAccessResult>((resolve, reject) => {
-        // Check direct membership first
-        db.get(
-            `SELECT id, role, status, permission_scope FROM organization_members 
-             WHERE user_id = ? AND organization_id = ? AND status = 'ACTIVE'`,
-            [userId, orgId],
-            (err, membership) => {
-                if (err) return reject(err);
-                if (membership) {
-                    const memRow = membership as MembershipRow;
-                    return resolve({
-                        allowed: true,
-                        isMember: true,
-                        isConsultant: false,
-                        role: memRow.role,
-                        permissionScope: memRow.permission_scope ? JSON.parse(memRow.permission_scope) : {},
-                        membershipId: memRow.id
-                    });
-                }
+    if (membership) {
+        return {
+            allowed: true,
+            isMember: true,
+            isConsultant: false,
+            role: membership.role,
+            permissionScope: membership.permission_scope ? JSON.parse(membership.permission_scope) : {},
+            membershipId: membership.id
+        };
+    }
 
-                // Check consultant link (fresh from DB — revocation is immediate)
-                db.get(
-                    `SELECT id, permission_scope, status FROM consultant_org_links 
-                     WHERE consultant_id = ? AND organization_id = ? AND status = 'ACTIVE'`,
-                    [userId, orgId],
-                    (err2, consultantLink) => {
-                        if (err2) return reject(err2);
-                        if (consultantLink) {
-                            const linkRow = consultantLink as ConsultantLinkRow;
-                            return resolve({
-                                allowed: true,
-                                isMember: false,
-                                isConsultant: true,
-                                role: 'CONSULTANT',
-                                permissionScope: linkRow.permission_scope ? JSON.parse(linkRow.permission_scope) : {},
-                                linkId: linkRow.id
-                            });
-                        }
+    // Check consultant link (fresh from DB — revocation is immediate)
+    const consultantLink = await dbGet<ConsultantLinkRow>(
+        `SELECT id, permission_scope, status FROM consultant_org_links 
+         WHERE consultant_id = ? AND organization_id = ? AND status = 'ACTIVE'`,
+        [userId, orgId]
+    );
 
-                        // No access found
-                        resolve({ allowed: false });
-                    }
-                );
-            }
-        );
-    });
+    if (consultantLink) {
+        return {
+            allowed: true,
+            isMember: false,
+            isConsultant: true,
+            role: 'CONSULTANT',
+            permissionScope: consultantLink.permission_scope ? JSON.parse(consultantLink.permission_scope) : {},
+            linkId: consultantLink.id
+        };
+    }
+
+    // No access found
+    return { allowed: false };
 }
 
 /**
  * Get list of all organizations a user has access to.
  */
 async function getUserOrganizations(userId: string): Promise<Array<{ id: string; name: string; role: string; access_type: string }>> {
-    const { db } = getDeps();
+    const orgs: Array<{ id: string; name: string; role: string; access_type: string }> = [];
+
+    // Get member organizations
+    const memberOrgs = await dbAll<{ id: string; name: string; role: string; access_type: string }>(
+        `SELECT o.id, o.name, om.role, 'MEMBER' as access_type
+         FROM organizations o
+         JOIN organization_members om ON o.id = om.organization_id
+         WHERE om.user_id = ? AND om.status = 'ACTIVE' AND o.is_active = 1`,
+        [userId]
+    );
+    orgs.push(...memberOrgs);
+
+    // Get consultant organizations
+    const consultantOrgs = await dbAll<{ id: string; name: string; role: string; access_type: string }>(
+        `SELECT o.id, o.name, 'CONSULTANT' as role, 'CONSULTANT' as access_type
+         FROM organizations o
+         JOIN consultant_org_links col ON o.id = col.organization_id
+         WHERE col.consultant_id = ? AND col.status = 'ACTIVE' AND o.is_active = 1`,
+        [userId]
+    );
+    orgs.push(...consultantOrgs);
+
+    // Remove duplicates
+    const uniqueOrgs = Array.from(
+        new Map(orgs.map(o => [o.id, o])).values()
+    );
     
-    return new Promise((resolve, reject) => {
-        const orgs: Array<{ id: string; name: string; role: string; access_type: string }> = [];
-
-        db.all(
-            `SELECT o.id, o.name, om.role, 'MEMBER' as access_type
-             FROM organizations o
-             JOIN organization_members om ON o.id = om.organization_id
-             WHERE om.user_id = ? AND om.status = 'ACTIVE' AND o.is_active = 1`,
-            [userId],
-            (err, memberOrgs) => {
-                if (err) return reject(err);
-                orgs.push(...((memberOrgs || []) as Array<{ id: string; name: string; role: string; access_type: string }>));
-
-                db.all(
-                    `SELECT o.id, o.name, 'CONSULTANT' as role, 'CONSULTANT' as access_type
-                     FROM organizations o
-                     JOIN consultant_org_links col ON o.id = col.organization_id
-                     WHERE col.consultant_id = ? AND col.status = 'ACTIVE' AND o.is_active = 1`,
-                    [userId],
-                    (err2, consultantOrgs) => {
-                        if (err2) return reject(err2);
-                        orgs.push(...((consultantOrgs || []) as Array<{ id: string; name: string; role: string; access_type: string }>));
-
-                        const uniqueOrgs = Array.from(
-                            new Map(orgs.map(o => [o.id, o])).values()
-                        );
-                        resolve(uniqueOrgs);
-                    }
-                );
-            }
-        );
-    });
+    return uniqueOrgs;
 }
 
 // ==========================================
@@ -335,8 +316,9 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
     getUserOrganizations: typeof getUserOrganizations;
     resolveUserOrgAccess: typeof resolveUserOrgAccess;
     setDependencies: (newDeps: Partial<Dependencies>) => void;
-}).setDependencies = (newDeps: Partial<Dependencies>): void => {
-    deps = { ...getDeps(), ...newDeps };
+}).setDependencies = (_newDeps: Partial<Dependencies>): void => {
+    // No longer needed - using DbPromise directly
+    deps = getDeps();
 };
 
 export default orgContextMiddleware;

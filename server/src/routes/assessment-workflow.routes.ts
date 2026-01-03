@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const assessment_workflowRoutesJS = require('../../routes/assessment-workflow.js');
+const assessment_workflowRoutesJSPromise = (async () => {
+    const module = await import('../../routes/assessment-workflow.js');
+    return module.default || module;
+})();
+const assessment_workflowRoutesJS = assessment_workflowRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

@@ -12,10 +12,50 @@
  * @module secretManager
  */
 
-const db = require('../database');
-const { aiLogger } = require('./ai/logger');
-const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
+import crypto from 'crypto';
+
+// Dependency injection for testing
+const deps = {
+    _db: null,
+    _aiLogger: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get aiLogger() { return this._aiLogger; },
+    set aiLogger(val) { this._aiLogger = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._aiLogger) {
+        const { aiLogger } = await import('./ai/logger.js');
+        deps._aiLogger = aiLogger;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
+
+/**
+ * Set dependencies (for testing)
+ */
+function setDependencies(newDeps = {}) {
+    if (newDeps.db) deps.db = newDeps.db;
+    if (newDeps.aiLogger) deps.aiLogger = newDeps.aiLogger;
+    if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
+}
 
 // Secret types
 const SECRET_TYPES = {
@@ -53,6 +93,7 @@ const SecretManager = {
      * @param {Object} params - { providerId, secretType, secretHash, expiresAt }
      */
     registerSecret: async (params) => {
+        await initDeps();
         const {
             providerId,
             secretType,
@@ -61,7 +102,7 @@ const SecretManager = {
             metadata = {}
         } = params;
 
-        const id = uuidv4();
+        const id = deps.uuidv4();
         const now = new Date();
         
         // Calculate expiry based on rotation policy if not provided
@@ -69,7 +110,7 @@ const SecretManager = {
         const calculatedExpiry = expiresAt || new Date(now.getTime() + policyDays * 24 * 60 * 60 * 1000);
 
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO secret_rotation_tracking (
                     id, provider_id, secret_type, secret_hash,
                     created_at, expires_at, last_rotated_at,
@@ -88,11 +129,11 @@ const SecretManager = {
                 JSON.stringify(metadata)
             ], function(err) {
                 if (err) {
-                    aiLogger.error('SecretManager', `Failed to register secret: ${err.message}`);
+                    deps.aiLogger.error('SecretManager', `Failed to register secret: ${err.message}`);
                     return reject(err);
                 }
 
-                aiLogger.info('SecretManager', `Registered secret for ${providerId} (${secretType})`);
+                deps.aiLogger.info('SecretManager', `Registered secret for ${providerId} (${secretType})`);
                 
                 SecretManager._logAudit({
                     action: 'SECRET_REGISTERED',
@@ -113,12 +154,13 @@ const SecretManager = {
      * @param {string} newSecretHash - Hash of the new secret (for verification)
      */
     recordRotation: async (providerId, secretType, newSecretHash = null) => {
+        await initDeps();
         const now = new Date();
         const policyDays = ROTATION_POLICIES[secretType] || 90;
         const newExpiry = new Date(now.getTime() + policyDays * 24 * 60 * 60 * 1000);
 
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 UPDATE secret_rotation_tracking
                 SET 
                     secret_hash = ?,
@@ -135,7 +177,7 @@ const SecretManager = {
                 secretType
             ], function(err) {
                 if (err) {
-                    aiLogger.error('SecretManager', `Failed to record rotation: ${err.message}`);
+                    deps.aiLogger.error('SecretManager', `Failed to record rotation: ${err.message}`);
                     return reject(err);
                 }
 
@@ -146,7 +188,7 @@ const SecretManager = {
                         .catch(reject);
                 }
 
-                aiLogger.info('SecretManager', `Recorded rotation for ${providerId} (${secretType})`);
+                deps.aiLogger.info('SecretManager', `Recorded rotation for ${providerId} (${secretType})`);
                 
                 SecretManager._logAudit({
                     action: 'SECRET_ROTATED',
@@ -165,11 +207,12 @@ const SecretManager = {
      * @param {number} withinDays - Check secrets expiring within this many days
      */
     checkExpiringSecrets: async (withinDays = 30) => {
+        await initDeps();
         const checkDate = new Date();
         checkDate.setDate(checkDate.getDate() + withinDays);
 
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT 
                     id, provider_id, secret_type, 
                     created_at, expires_at, last_rotated_at,
@@ -179,7 +222,7 @@ const SecretManager = {
                 ORDER BY expires_at ASC
             `, [checkDate.toISOString()], (err, rows) => {
                 if (err) {
-                    aiLogger.error('SecretManager', `Failed to check expiring secrets: ${err.message}`);
+                    deps.aiLogger.error('SecretManager', `Failed to check expiring secrets: ${err.message}`);
                     return resolve([]);
                 }
 
@@ -214,6 +257,7 @@ const SecretManager = {
      * Get rotation status for all secrets
      */
     getRotationStatus: async (organizationId = null) => {
+        await initDeps();
         return new Promise((resolve) => {
             let sql = `
                 SELECT 
@@ -230,7 +274,7 @@ const SecretManager = {
                 params.push(`%"organizationId":"${organizationId}"%`);
             }
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) {
                     return resolve({ secrets: [], summary: {} });
                 }
@@ -265,8 +309,9 @@ const SecretManager = {
      * Get rotation history for a secret
      */
     getRotationHistory: async (providerId, secretType, limit = 10) => {
+        await initDeps();
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT *
                 FROM secret_rotation_audit
                 WHERE provider_id = ? AND secret_type = ?
@@ -288,10 +333,11 @@ const SecretManager = {
      * @param {string} secretValue - Secret to verify
      */
     verifySecret: async (providerId, secretType, secretValue) => {
+        await initDeps();
         const hash = SecretManager._hashSecret(secretValue);
 
         return new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT secret_hash, expires_at
                 FROM secret_rotation_tracking
                 WHERE provider_id = ? AND secret_type = ? AND status = 'active'
@@ -319,8 +365,9 @@ const SecretManager = {
      * Mark a secret as revoked
      */
     revokeSecret: async (providerId, secretType, reason = 'manual') => {
+        await initDeps();
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 UPDATE secret_rotation_tracking
                 SET status = 'revoked', metadata = json_set(COALESCE(metadata, '{}'), '$.revokedAt', ?, '$.revokeReason', ?)
                 WHERE provider_id = ? AND secret_type = ? AND status = 'active'
@@ -358,6 +405,7 @@ const SecretManager = {
      * Send rotation reminders (integrate with notification system)
      */
     sendRotationReminders: async () => {
+        await initDeps();
         const expiring = await SecretManager.checkExpiringSecrets(WARNING_THRESHOLDS.WARNING);
         
         const reminders = [];
@@ -373,7 +421,7 @@ const SecretManager = {
         }
 
         if (reminders.length > 0) {
-            aiLogger.warn('SecretManager', `${reminders.length} secrets need rotation`, reminders);
+            deps.aiLogger.warn('SecretManager', `${reminders.length} secrets need rotation`, reminders);
         }
 
         return reminders;
@@ -396,9 +444,10 @@ const SecretManager = {
     /**
      * Log audit event
      */
-    _logAudit: (event) => {
-        const id = uuidv4();
-        db.run(`
+    _logAudit: async (event) => {
+        await initDeps();
+        const id = deps.uuidv4();
+        deps.db.run(`
             INSERT INTO secret_rotation_audit (
                 id, action, provider_id, secret_type, details, created_at
             ) VALUES (?, ?, ?, ?, ?, ?)
@@ -411,12 +460,17 @@ const SecretManager = {
             new Date().toISOString()
         ], (err) => {
             if (err) {
-                aiLogger.error('SecretManager', `Failed to log audit: ${err.message}`);
+                deps.aiLogger.error('SecretManager', `Failed to log audit: ${err.message}`);
             }
         });
-    }
+    },
+
+    /**
+     * Set dependencies (for testing)
+     */
+    setDependencies
 };
 
-module.exports = SecretManager;
+export default SecretManager;
 
 

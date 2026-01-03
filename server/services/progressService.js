@@ -1,21 +1,63 @@
-// Progress Calculation Service
-// Step 3: PMO Objects, Statuses & Stage Gates
+/**
+ * Progress Calculation Service
+ * Step 3: PMO Objects, Statuses & Stage Gates
+ */
 
-// Dependency injection container (for deterministic unit tests)
+/**
+ * Dependency injection container
+ */
 const deps = {
-    db: require('../database')
+    _db: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; }
 };
 
-const ProgressService = {
-    // For testing: allow overriding dependencies
-    setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
-    },
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: dbInstance } = await import('../database.js');
+        deps._db = dbInstance;
+    }
+}
+
+class ProgressService {
+    constructor() {
+        this._db = null;
+    }
+
+    get db() {
+        if (!this._db) {
+            throw new Error('ProgressService: Database not initialized. Call init() first.');
+        }
+        return this._db;
+    }
+
+    /**
+     * Initialize service dependencies
+     */
+    async init() {
+        await initDeps();
+        this._db = deps.db;
+        return this;
+    }
+
+    /**
+     * Set dependencies for testing
+     */
+    setDependencies(mockDeps) {
+        Object.assign(deps, mockDeps);
+        this._db = deps.db;
+    }
+
     /**
      * Calculate initiative progress from its tasks
      * @returns {{ progress: number, totalTasks: number, completedTasks: number, isBlocked: boolean }}
      */
-    calculateInitiativeProgress: async (initiativeId) => {
+    async calculateInitiativeProgress(initiativeId) {
+        await this.init();
         return new Promise((resolve, reject) => {
             const sql = `
                 SELECT 
@@ -26,7 +68,7 @@ const ProgressService = {
                 WHERE initiative_id = ?
             `;
 
-            deps.db.get(sql, [initiativeId], (err, row) => {
+            this.db.get(sql, [initiativeId], (err, row) => {
                 if (err) return reject(err);
 
                 const total = row?.total || 0;
@@ -44,26 +86,28 @@ const ProgressService = {
                 });
             });
         });
-    },
+    }
 
     /**
      * Check if initiative has blocking decisions
      */
-    hasBlockingDecisions: async (initiativeId) => {
+    async hasBlockingDecisions(initiativeId) {
+        await this.init();
         return new Promise((resolve, reject) => {
-            db.get(`SELECT COUNT(*) as cnt FROM decisions 
+            this.db.get(`SELECT COUNT(*) as cnt FROM decisions 
                     WHERE related_object_id = ? AND related_object_type = 'INITIATIVE' AND status = 'PENDING' AND required = 1`,
                 [initiativeId], (err, row) => {
                     if (err) return reject(err);
                     resolve(row && row.cnt > 0);
                 });
         });
-    },
+    }
 
     /**
      * Check if initiative has unsatisfied hard dependencies
      */
-    hasBlockingDependencies: async (initiativeId) => {
+    async hasBlockingDependencies(initiativeId) {
+        await this.init();
         return new Promise((resolve, reject) => {
             const sql = `
                 SELECT d.id, i.status as dep_status
@@ -74,17 +118,18 @@ const ProgressService = {
                   AND i.status NOT IN ('DONE', 'CANCELLED')
             `;
 
-            deps.db.all(sql, [initiativeId], (err, rows) => {
+            this.db.all(sql, [initiativeId], (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows && rows.length > 0);
             });
         });
-    },
+    }
 
     /**
      * Calculate project progress from initiatives
      */
-    calculateProjectProgress: async (projectId) => {
+    async calculateProjectProgress(projectId) {
+        await this.init();
         return new Promise((resolve, reject) => {
             const sql = `
                 SELECT 
@@ -97,7 +142,7 @@ const ProgressService = {
                 WHERE project_id = ?
             `;
 
-            deps.db.get(sql, [projectId], (err, row) => {
+            this.db.get(sql, [projectId], (err, row) => {
                 if (err) return reject(err);
 
                 const total = row?.total || 0;
@@ -121,12 +166,13 @@ const ProgressService = {
                 });
             });
         });
-    },
+    }
 
     /**
      * Calculate portfolio-level metrics
      */
-    calculatePortfolioMetrics: async (organizationId) => {
+    async calculatePortfolioMetrics(organizationId) {
+        await this.init();
         return new Promise((resolve, reject) => {
             const sql = `
                 SELECT 
@@ -138,7 +184,7 @@ const ProgressService = {
                 WHERE organization_id = ?
             `;
 
-            deps.db.get(sql, [organizationId], async (err, row) => {
+            this.db.get(sql, [organizationId], async (err, row) => {
                 if (err) return reject(err);
 
                 // Get initiative counts
@@ -152,7 +198,7 @@ const ProgressService = {
                     WHERE p.organization_id = ?
                 `;
 
-                deps.db.get(initSql, [organizationId], (err2, initRow) => {
+                this.db.get(initSql, [organizationId], (err2, initRow) => {
                     if (err2) return reject(err2);
 
                     const totalProjects = row?.total_projects || 0;
@@ -179,37 +225,38 @@ const ProgressService = {
                 });
             });
         });
-    },
+    }
 
     /**
      * Update initiative progress (call after task changes)
      */
-    updateInitiativeProgress: async (initiativeId) => {
-        const progress = await ProgressService.calculateInitiativeProgress(initiativeId);
+    async updateInitiativeProgress(initiativeId) {
+        const progress = await this.calculateInitiativeProgress(initiativeId);
 
         return new Promise((resolve, reject) => {
-            deps.db.run(`UPDATE initiatives SET progress = ? WHERE id = ?`,
+            this.db.run(`UPDATE initiatives SET progress = ? WHERE id = ?`,
                 [progress.progress, initiativeId], (err) => {
                     if (err) return reject(err);
                     resolve(progress);
                 });
         });
-    },
+    }
 
     /**
      * Update project progress (call after initiative changes)
      */
-    updateProjectProgress: async (projectId) => {
-        const progress = await ProgressService.calculateProjectProgress(projectId);
+    async updateProjectProgress(projectId) {
+        const progress = await this.calculateProjectProgress(projectId);
 
         return new Promise((resolve, reject) => {
-            deps.db.run(`UPDATE projects SET progress = ? WHERE id = ?`,
+            this.db.run(`UPDATE projects SET progress = ? WHERE id = ?`,
                 [progress.progress, projectId], (err) => {
                     if (err) return reject(err);
                     resolve(progress);
                 });
         });
     }
-};
+}
 
-module.exports = ProgressService;
+const progressServiceInstance = new ProgressService();
+export default progressServiceInstance;

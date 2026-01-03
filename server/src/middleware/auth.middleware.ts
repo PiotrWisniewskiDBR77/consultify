@@ -5,6 +5,8 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { get as dbGet } from '../utils/DbPromise.js';
 
 // ==========================================
 // TYPES
@@ -49,9 +51,6 @@ export interface AuthRequest extends Request {
 interface Dependencies {
     jwt: typeof jwt;
     config: { JWT_SECRET: string };
-    db: {
-        get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
-    };
     PermissionService: {
         can: (user: AuthenticatedUser, capability: string, context?: { organizationId?: string }) => boolean;
     };
@@ -60,17 +59,15 @@ interface Dependencies {
 let deps: Dependencies;
 
 // Lazy initialization to avoid circular dependencies
-const getDeps = (): Dependencies => {
+const getDeps = async (): Promise<Dependencies> => {
     if (!deps) {
-        const defaultJwt = require('jsonwebtoken');
-        const defaultConfig = require('../../config');
-        const defaultDb = require('../../database');
-        const defaultPermissionService = require('../../services/permissionService');
-        
+        const defaultJwt = await import('jsonwebtoken').then(m => m.default || m);
+        const defaultConfig = await import('../../config.js').then(m => m.default || m);
+        const defaultPermissionService = await import('../../services/permissionService.js').then(m => m.default || m);
+
         deps = {
             jwt: defaultJwt,
             config: defaultConfig,
-            db: defaultDb,
             PermissionService: defaultPermissionService,
         };
     }
@@ -86,7 +83,7 @@ const getDeps = (): Dependencies => {
  */
 const extractToken = (req: AuthRequest): string | null => {
     const authHeader = req.headers['authorization'];
-    
+
     // Try Authorization header first
     if (authHeader && authHeader.startsWith('Bearer ')) {
         return authHeader.slice(7);
@@ -94,31 +91,31 @@ const extractToken = (req: AuthRequest): string | null => {
     if (authHeader) {
         return authHeader;
     }
-    
+
     // Try body or query (legacy support)
     const bodyToken = req.body?.token;
     if (bodyToken) return bodyToken;
-    
+
     const queryToken = req.query?.token;
     if (typeof queryToken === 'string') return queryToken;
-    
+
     return null;
 };
 
 /**
  * Attach user data to request
  */
-const attachUser = (
+const attachUser = async (
     decoded: JWTPayload,
     req: AuthRequest,
     next: NextFunction
-): void => {
-    const { PermissionService } = getDeps();
-    
+): Promise<void> => {
+    const { PermissionService } = await getDeps();
+
     req.userId = decoded.id;
     req.userRole = decoded.role || decoded.userRole;
     req.organizationId = decoded.organizationId || decoded.organization_id;
-    
+
     const user: AuthenticatedUser = {
         id: decoded.id,
         email: decoded.email,
@@ -127,79 +124,72 @@ const attachUser = (
         isSuperAdmin: decoded.isSuperAdmin || false,
         impersonatorId: decoded.impersonatorId,
     };
-    
+
     req.user = user;
-    
+
     // Attach permission helper
     req.can = (capability: string): boolean => {
         return PermissionService.can(user, capability, {
             organizationId: req.organizationId,
         });
     };
-    
+
     next();
 };
 
 /**
  * Check if token has been revoked
  */
-const checkTokenRevocation = (
+const checkTokenRevocation = async (
     decoded: JWTPayload,
     req: AuthRequest,
     res: Response,
     next: NextFunction
-): void => {
-    const { db } = getDeps();
-    
+): Promise<void> => {
     if (!decoded.jti) {
         // No jti - older token format, just continue
-        attachUser(decoded, req, next);
+        await attachUser(decoded, req, next);
         return;
     }
-    
-    // Check if specific token is revoked
-    db.get(
-        'SELECT jti FROM revoked_tokens WHERE jti = ?',
-        [decoded.jti],
-        (dbErr, row) => {
-            if (dbErr) {
-                console.error('Error checking revoked tokens:', dbErr);
-                // Continue anyway - don't block on DB errors
-            }
-            
-            if (row) {
-                res.status(401).json({ error: 'Token has been revoked' });
+
+    try {
+        // Check if specific token is revoked
+        const revokedToken = await dbGet<{ jti: string }>(
+            'SELECT jti FROM revoked_tokens WHERE jti = ?',
+            [decoded.jti]
+        );
+
+        if (revokedToken) {
+            res.status(401).json({ error: 'Token has been revoked' });
+            return;
+        }
+
+        // Check for "revoke-all" marker for this user
+        const revokeAllRow = await dbGet<{ jti: string }>(
+            "SELECT jti FROM revoked_tokens WHERE user_id = ? AND reason = 'revoke-all' AND expires_at > datetime('now')",
+            [decoded.id]
+        );
+
+        if (revokeAllRow) {
+            // Check if token was issued before the revoke-all
+            const revokeTime = parseInt(revokeAllRow.jti.split('-').pop() || '0', 10);
+            const tokenIssuedAt = (decoded.iat || 0) * 1000;
+
+            if (tokenIssuedAt < revokeTime) {
+                res.status(401).json({
+                    error: 'All sessions have been revoked. Please log in again.'
+                });
                 return;
             }
-            
-            // Check for "revoke-all" marker for this user
-            db.get(
-                "SELECT jti FROM revoked_tokens WHERE user_id = ? AND reason = 'revoke-all' AND expires_at > datetime('now')",
-                [decoded.id],
-                (dbErr2, revokeAllRow: { jti: string } | undefined) => {
-                    if (dbErr2) {
-                        console.error('Error checking revoke-all:', dbErr2);
-                    }
-                    
-                    if (revokeAllRow) {
-                        // Check if token was issued before the revoke-all
-                        const revokeTime = parseInt(revokeAllRow.jti.split('-').pop() || '0', 10);
-                        const tokenIssuedAt = (decoded.iat || 0) * 1000;
-                        
-                        if (tokenIssuedAt < revokeTime) {
-                            res.status(401).json({ 
-                                error: 'All sessions have been revoked. Please log in again.' 
-                            });
-                            return;
-                        }
-                    }
-                    
-                    // Token is valid
-                    attachUser(decoded, req, next);
-                }
-            );
         }
-    );
+
+        // Token is valid
+        await attachUser(decoded, req, next);
+    } catch (dbErr) {
+        console.error('Error checking revoked tokens:', dbErr);
+        // Continue anyway - don't block on DB errors
+        await attachUser(decoded, req, next);
+    }
 };
 
 // ==========================================
@@ -209,15 +199,15 @@ const checkTokenRevocation = (
 /**
  * Verify JWT token and attach user to request
  */
-export const verifyToken = (
+export const verifyToken = asyncHandler(async (
     req: AuthRequest,
     res: Response,
     next: NextFunction
-): void => {
-    const { jwt: jwtLib, config } = getDeps();
-    
+): Promise<void> => {
+    const { jwt: jwtLib, config } = await getDeps();
+
     const token = extractToken(req);
-    
+
     if (!token) {
         // Test mode bypass
         if (process.env.NODE_ENV === 'test' && process.env.ENABLE_TEST_AUTH_BYPASS === 'true') {
@@ -231,12 +221,12 @@ export const verifyToken = (
             req.organizationId = 'test-org-id';
             return next();
         }
-        
+
         res.status(403).json({ error: 'No token provided' });
         return;
     }
-    
-    jwtLib.verify(token, config.JWT_SECRET, (err, decoded) => {
+
+    jwtLib.verify(token, config.JWT_SECRET, async (err, decoded) => {
         if (err) {
             if (err.name === 'TokenExpiredError') {
                 res.status(401).json({ error: 'Token expired' });
@@ -245,37 +235,37 @@ export const verifyToken = (
             res.status(401).json({ error: 'Unauthorized' });
             return;
         }
-        
-        checkTokenRevocation(decoded as JWTPayload, req, res, next);
+
+        await checkTokenRevocation(decoded as JWTPayload, req, res, next);
     });
-};
+});
 
 /**
  * Optional auth - attaches user if token present, but doesn't require it
  */
-export const optionalAuth = (
+export const optionalAuth = asyncHandler(async (
     req: AuthRequest,
     res: Response,
     next: NextFunction
-): void => {
-    const { jwt: jwtLib, config } = getDeps();
-    
+): Promise<void> => {
+    const { jwt: jwtLib, config } = await getDeps();
+
     const token = extractToken(req);
-    
+
     if (!token) {
         return next();
     }
-    
-    jwtLib.verify(token, config.JWT_SECRET, (err, decoded) => {
+
+    jwtLib.verify(token, config.JWT_SECRET, async (err, decoded) => {
         if (err) {
             // Invalid token, but optional - continue without user
             return next();
         }
-        
+
         // Attach user without revocation check for optional auth
-        attachUser(decoded as JWTPayload, req, next);
+        await attachUser(decoded as JWTPayload, req, next);
     });
-};
+});
 
 /**
  * Require specific role
@@ -286,12 +276,12 @@ export const requireRole = (...roles: string[]) => {
             res.status(401).json({ error: 'Authentication required' });
             return;
         }
-        
+
         if (!roles.includes(req.user.role)) {
             res.status(403).json({ error: 'Insufficient permissions' });
             return;
         }
-        
+
         next();
     };
 };
@@ -308,12 +298,12 @@ export const requireSuperAdmin = (
         res.status(401).json({ error: 'Authentication required' });
         return;
     }
-    
+
     if (!req.user.isSuperAdmin) {
         res.status(403).json({ error: 'Super admin access required' });
         return;
     }
-    
+
     next();
 };
 
@@ -329,7 +319,7 @@ export const requireOrganization = (
         res.status(403).json({ error: 'Organization context required' });
         return;
     }
-    
+
     next();
 };
 
@@ -342,15 +332,15 @@ export const requirePermission = (capability: string) => {
             res.status(401).json({ error: 'Authentication required' });
             return;
         }
-        
+
         if (!req.can || !req.can(capability)) {
-            res.status(403).json({ 
+            res.status(403).json({
                 error: 'Permission denied',
                 required: capability,
             });
             return;
         }
-        
+
         next();
     };
 };
@@ -360,7 +350,10 @@ export const requirePermission = (capability: string) => {
 // ==========================================
 
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
-    deps = { ...getDeps(), ...newDeps };
+    if (!deps) {
+        deps = {} as Dependencies;
+    }
+    deps = { ...deps, ...newDeps };
 };
 
 // ==========================================

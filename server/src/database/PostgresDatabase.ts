@@ -9,39 +9,41 @@
 import { Pool, type PoolClient } from 'pg';
 import type { IDatabase, RunResult, QueryResult } from './IDatabase.js';
 import databaseConfig from '../../config/database.config.js';
-import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
 
-console.log('[Postgres] Initializing connection pool...');
-console.log('[Postgres] Config:', {
-    host: databaseConfig.postgres?.host,
-    port: databaseConfig.postgres?.port,
-    database: databaseConfig.postgres?.database,
-    user: databaseConfig.postgres?.user,
-    ssl: databaseConfig.postgres?.ssl,
-    connectionTimeoutMillis: databaseConfig.postgres?.connectionTimeoutMillis,
-    max: databaseConfig.postgres?.max
-});
+let pool: Pool | null = null;
 
-const pool = new Pool(databaseConfig.postgres);
+function getPool(): Pool {
+    if (!pool) {
+        console.log('[Postgres] Initializing connection pool...');
+        console.log('[Postgres] Config:', {
+            host: databaseConfig.postgres?.host,
+            port: databaseConfig.postgres?.port,
+            database: databaseConfig.postgres?.database,
+            user: databaseConfig.postgres?.user,
+            ssl: databaseConfig.postgres?.ssl,
+            connectionTimeoutMillis: databaseConfig.postgres?.connectionTimeoutMillis,
+            max: databaseConfig.postgres?.max
+        });
+        pool = new Pool(databaseConfig.postgres);
 
-pool.on('error', (err: Error, _client: PoolClient) => {
-    console.error('[Postgres] Unexpected error on idle client:', err.message);
-    console.error('[Postgres] Error code:', (err as any).code);
-    // Don't exit - allow retry
-});
+        pool.on('error', (err: Error, _client: PoolClient) => {
+            console.error('[Postgres] Unexpected error on idle client:', err.message);
+            console.error('[Postgres] Error code:', (err as any).code);
+        });
 
-pool.on('connect', (_client: PoolClient) => {
-    console.log('[Postgres] Client connected');
-});
+        pool.on('connect', (_client: PoolClient) => {
+            console.log('[Postgres] Client connected');
+        });
 
-pool.on('acquire', (_client: PoolClient) => {
-    console.log('[Postgres] Client acquired from pool');
-});
-
-pool.on('remove', (_client: PoolClient) => {
-    console.log('[Postgres] Client removed from pool');
-});
+        // Initialize schema lazily if needed
+        if (process.env.NODE_ENV !== 'test') {
+            initDb().catch(err => {
+                console.error('[Postgres] Failed to initialize database:', err);
+            });
+        }
+    }
+    return pool;
+}
 
 /**
  * Helper to convert SQLite params (?) to Postgres params ($1, $2)
@@ -158,7 +160,7 @@ class PostgresDatabase implements IDatabase {
                     params = args.slice(0, -1) as unknown[];
                 }
 
-                pool.query(adaptedSql, params)
+                getPool().query(adaptedSql, params)
                     .then(res => {
                         if (callback) callback.call({ changes: res.rowCount, lastID: null }, null);
                     })
@@ -184,7 +186,7 @@ class PostgresDatabase implements IDatabase {
 
         const adaptedSql = adaptQuery(sql);
 
-        const promise = pool.query(adaptedSql, params)
+        const promise = getPool().query(adaptedSql, params)
             .then(res => {
                 const result: RunResult = { changes: res.rowCount, lastID: undefined };
                 if (callback) {
@@ -217,7 +219,7 @@ class PostgresDatabase implements IDatabase {
 
         const adaptedSql = adaptQuery(sql);
 
-        const promise = pool.query(adaptedSql, params)
+        const promise = getPool().query(adaptedSql, params)
             .then(res => {
                 const row = res.rows[0] || null;
                 if (callback) callback(null, row as T);
@@ -248,7 +250,7 @@ class PostgresDatabase implements IDatabase {
 
         const adaptedSql = adaptQuery(sql);
 
-        const promise = pool.query(adaptedSql, params)
+        const promise = getPool().query(adaptedSql, params)
             .then(res => {
                 if (callback) callback(null, res.rows as T[]);
                 return res.rows as T[];
@@ -266,7 +268,7 @@ class PostgresDatabase implements IDatabase {
     }
 
     exec(sql: string, callback?: (err: Error | null) => void): this | Promise<void> {
-        const promise = pool.query(sql)
+        const promise = getPool().query(sql)
             .then(() => {
                 if (callback) callback(null);
             })
@@ -282,8 +284,13 @@ class PostgresDatabase implements IDatabase {
     }
 
     close(callback?: (err: Error | null) => void): Promise<void> | void {
+        if (!pool) {
+            if (callback) callback(null);
+            return Promise.resolve();
+        }
         const promise = pool.end()
             .then(() => {
+                pool = null;
                 if (callback) callback(null);
             })
             .catch(err => {
@@ -300,7 +307,7 @@ class PostgresDatabase implements IDatabase {
     async query<T = unknown>(text: string, params?: unknown[]): Promise<QueryResult<T>> {
         const adapted = adaptQuery(text);
         try {
-            const result = await pool.query(adapted, params);
+            const result = await getPool().query(adapted, params);
             return {
                 rows: result.rows as T[],
                 rowCount: result.rowCount
@@ -317,7 +324,7 @@ async function testConnection(retries = 3, delay = 2000): Promise<boolean> {
     for (let i = 0; i < retries; i++) {
         try {
             console.log(`[Postgres] Testing connection (attempt ${i + 1}/${retries})...`);
-            const result = await pool.query('SELECT NOW() as current_time');
+            const result = await getPool().query('SELECT NOW() as current_time');
             console.log('[Postgres] Connection test successful:', result.rows[0]);
             return true;
         } catch (err) {
@@ -353,7 +360,7 @@ async function initDb(): Promise<void> {
         const query = async (sql: string, params?: unknown[]): Promise<void> => {
             const adapted = adaptQuery(sql);
             try {
-                await pool.query(adapted, params);
+                await getPool().query(adapted, params);
             } catch (e) {
                 console.error('[Postgres] Query Failed:', (e as Error).message);
                 throw e;
@@ -443,10 +450,6 @@ async function initDb(): Promise<void> {
             FOREIGN KEY(organization_id) REFERENCES organizations(id)
         )`);
 
-        // Continue with remaining schema initialization...
-        // Note: Due to length, remaining schema initialization continues in next part
-        // This is a simplified version - full schema would include all tables from original file
-
         console.log('[Postgres] Schema Check Complete.');
 
     } catch (err) {
@@ -458,18 +461,11 @@ async function initDb(): Promise<void> {
         if ((err as Error).message) {
             console.error('[Postgres] Error message:', (err as Error).message);
         }
-        // Don't exit - allow app to start even if some tables fail
-        // This is important for Railway where tables might already exist or be created separately
     }
 }
 
 // Create database instance
 const db = new PostgresDatabase();
-
-// Initialize on load
-initDb().catch(err => {
-    console.error('[Postgres] Failed to initialize database:', err);
-});
 
 export default db;
 

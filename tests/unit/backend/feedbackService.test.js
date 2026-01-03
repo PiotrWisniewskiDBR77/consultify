@@ -1,67 +1,54 @@
-import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
-import { createRequire } from 'module';
-// Requires moved to beforeAll for dynamic environment config
+import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from 'vitest';
+import { TestDatabaseFactory } from '../../utils/TestDatabaseFactory.js';
+import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Integration tests for FeedbackService
- * Uses real database - production-ready tests
+ * Uses isolated in-memory database via TestDatabaseFactory
  */
 describe('Backend Service Test: FeedbackService', () => {
     let testOrgId;
     let testUserId;
     let FeedbackService;
-    let db;
-    let dbHelper;
-    // Helper functions reference
-    let initTestDb, cleanTables, dbAll;
+    let testDb;
 
     beforeAll(async () => {
-        // RESET MODULES to ensure we load specific DB versions
-        vi.resetModules();
-        process.env.MOCK_DB = 'false'; // Force real DB logic
-        process.env.NODE_ENV = 'test'; // Ensure :memory: usage
-
-        const createRequire = (await import('module')).createRequire;
-        const require = createRequire(import.meta.url);
-
-        // Re-import dependencies with new environment
-        dbHelper = require('../../helpers/dbHelper.cjs');
-        initTestDb = dbHelper.initTestDb;
-        cleanTables = dbHelper.cleanTables;
-        dbAll = dbHelper.dbAll;
-
-        FeedbackService = require('../../../server/services/feedbackService.js');
-        db = require('../../../server/database.js');
-        const bcrypt = require('bcryptjs');
-
-        await initTestDb();
+        // Create isolated test database
+        testDb = await TestDatabaseFactory.create();
 
         // Create test organization and user
         testOrgId = 'test-org-feedback-' + Date.now();
         testUserId = 'test-user-feedback-' + Date.now();
 
-        await new Promise((resolve, reject) => {
-            db.serialize(() => {
-                db.run(
-                    'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
-                    [testOrgId, 'Feedback Test Org', 'free', 'active'],
-                    (err) => err && !err.message.includes('UNIQUE') ? reject(err) : null
-                );
+        await testDb.runAsync(
+            'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
+            [testOrgId, 'Feedback Test Org', 'free', 'active']
+        );
 
-                db.run(
-                    'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-                    [testUserId, testOrgId, `feedback-${Date.now()}@test.com`, bcrypt.hashSync('test', 8), 'Test', 'USER'],
-                    (err) => err && !err.message.includes('UNIQUE') ? reject(err) : null
-                );
+        await testDb.runAsync(
+            'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+            [testUserId, testOrgId, `feedback-${Date.now()}@test.com`, bcrypt.hashSync('test', 8), 'Test', 'USER']
+        );
 
-                setTimeout(resolve, 100);
-            });
-        });
+        // Import service and inject test database
+        const mod = await import('../../../server/services/feedbackService.js');
+        FeedbackService = mod.default || mod;
+
+        if (FeedbackService.setDependencies) {
+            FeedbackService.setDependencies({ db: testDb });
+        }
     });
 
     beforeEach(async () => {
         // Clean feedback table before each test
-        if (cleanTables) await cleanTables(['ai_feedback']);
+        await testDb.runAsync('DELETE FROM ai_feedback WHERE user_id = ?', [testUserId]);
+    });
+
+    afterAll(async () => {
+        if (testDb && testDb.destroy) {
+            await testDb.destroy();
+        }
     });
 
     describe('saveFeedback', () => {
@@ -78,8 +65,8 @@ describe('Backend Service Test: FeedbackService', () => {
             // Wait for async operation
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            // Verify in real database
-            const feedbacks = await dbAll(
+            // Verify in database
+            const feedbacks = await testDb.allAsync(
                 'SELECT * FROM ai_feedback WHERE user_id = ? AND context = ?',
                 [testUserId, 'diagnose']
             );
@@ -103,7 +90,7 @@ describe('Backend Service Test: FeedbackService', () => {
 
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            const feedbacks = await dbAll(
+            const feedbacks = await testDb.allAsync(
                 'SELECT * FROM ai_feedback WHERE user_id = ? AND context = ?',
                 [testUserId, 'roadmap']
             );
@@ -116,25 +103,16 @@ describe('Backend Service Test: FeedbackService', () => {
 
     describe('getLearningExamples', () => {
         it('retrieves learning examples for context', async () => {
-            const db = require('../../../server/database.js');
-            const { v4: uuidv4 } = require('uuid');
-
             // Insert test feedback with high rating
-            await new Promise((resolve) => {
-                db.run(
-                    'INSERT INTO ai_feedback (id, user_id, context, prompt, response, rating, correction) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [uuidv4(), testUserId, 'diagnose', 'Test prompt 1', 'Test response 1', 5, 'Correction 1'],
-                    resolve
-                );
-            });
+            await testDb.runAsync(
+                'INSERT INTO ai_feedback (id, user_id, context, prompt, response, rating, correction) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [uuidv4(), testUserId, 'diagnose', 'Test prompt 1', 'Test response 1', 5, 'Correction 1']
+            );
 
-            await new Promise((resolve) => {
-                db.run(
-                    'INSERT INTO ai_feedback (id, user_id, context, prompt, response, rating, correction) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [uuidv4(), testUserId, 'diagnose', 'Test prompt 2', 'Test response 2', 4, ''],
-                    resolve
-                );
-            });
+            await testDb.runAsync(
+                'INSERT INTO ai_feedback (id, user_id, context, prompt, response, rating, correction) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [uuidv4(), testUserId, 'diagnose', 'Test prompt 2', 'Test response 2', 4, '']
+            );
 
             await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -154,32 +132,22 @@ describe('Backend Service Test: FeedbackService', () => {
         });
 
         it('handles database errors gracefully', async () => {
-            // Service should handle errors internally and return empty string
             const result = await FeedbackService.getLearningExamples('diagnose');
             expect(typeof result).toBe('string');
         });
 
         it('only returns examples with rating >= 4', async () => {
-            const db = require('../../../server/database.js');
-            const { v4: uuidv4 } = require('uuid');
-
             // Insert low rating feedback
-            await new Promise((resolve) => {
-                db.run(
-                    'INSERT INTO ai_feedback (id, user_id, context, prompt, response, rating) VALUES (?, ?, ?, ?, ?, ?)',
-                    [uuidv4(), testUserId, 'diagnose', 'Bad prompt', 'Bad response', 2],
-                    resolve
-                );
-            });
+            await testDb.runAsync(
+                'INSERT INTO ai_feedback (id, user_id, context, prompt, response, rating) VALUES (?, ?, ?, ?, ?, ?)',
+                [uuidv4(), testUserId, 'diagnose', 'Bad prompt', 'Bad response', 2]
+            );
 
             // Insert high rating feedback
-            await new Promise((resolve) => {
-                db.run(
-                    'INSERT INTO ai_feedback (id, user_id, context, prompt, response, rating) VALUES (?, ?, ?, ?, ?, ?)',
-                    [uuidv4(), testUserId, 'diagnose', 'Good prompt', 'Good response', 5],
-                    resolve
-                );
-            });
+            await testDb.runAsync(
+                'INSERT INTO ai_feedback (id, user_id, context, prompt, response, rating) VALUES (?, ?, ?, ?, ?, ?)',
+                [uuidv4(), testUserId, 'diagnose', 'Good prompt', 'Good response', 5]
+            );
 
             await new Promise(resolve => setTimeout(resolve, 100));
 

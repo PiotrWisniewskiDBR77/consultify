@@ -26,9 +26,8 @@ router.use(verifyToken);
 router.get('/health/:projectId', asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const { projectId } = req.params;
     
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const PMOHealthService = require('../../services/pmoHealthService');
-    const snapshot = await PMOHealthService.getHealthSnapshot(projectId);
+    const { getHealthSnapshot } = await import('../../services/pmoHealthService.js');
+    const snapshot = await getHealthSnapshot(projectId);
 
     res.json(snapshot);
 }));

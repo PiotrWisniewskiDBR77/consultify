@@ -1,30 +1,39 @@
-const crypto = require('crypto');
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
-
-// Use native fetch (Node 18+) - no import needed, globally available
+import BaseService from './BaseService.js';
+import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 /**
  * Webhook Service - Trigger webhooks for various events
- * Extended with full CRUD and delivery management
  */
-class WebhookService {
+class WebhookService extends BaseService {
+    constructor() {
+        super();
+        this._fetch = globalThis.fetch;
+    }
+
     /**
-     * @param {Object} dbInstance - Database instance (optional, defaults to require)
-     * @param {Object} options - Optional dependencies for testing
-     * @param {Function} options.fetch - Custom fetch implementation
+     * Initialize dependencies
      */
-    constructor(dbInstance = null, options = {}) {
-        this.db = dbInstance || db;
-        this.fetch = options.fetch || globalThis.fetch;
+    async init() {
+        await super.init();
+        return this;
+    }
+
+    /**
+     * Set dependencies for testing
+     */
+    setDependencies(newDeps) {
+        super.setDependencies(newDeps);
+        if (newDeps.fetch) this._fetch = newDeps.fetch;
     }
 
     /**
      * Get all webhooks for an organization
      */
     async getWebhooks(organizationId, filters = {}) {
-        const { enabled } = filters;
+        await this.init();
 
+        const { enabled } = filters;
         let query = 'SELECT * FROM webhooks WHERE organization_id = ?';
         const params = [organizationId];
 
@@ -35,58 +44,43 @@ class WebhookService {
 
         query += ' ORDER BY created_at DESC';
 
-        return new Promise((resolve, reject) => {
-            this.db.all(query, params, (err, rows) => {
-                if (err) {
-                    console.error('[Webhook] Error fetching webhooks:', err);
-                    return reject(err);
-                }
+        const rows = await this.queryAll(query, params);
 
-                const webhooks = rows.map(row => ({
-                    ...row,
-                    events: row.events ? JSON.parse(row.events) : [],
-                    retry_policy: row.retry_policy ? JSON.parse(row.retry_policy) : null,
-                    headers: row.headers ? JSON.parse(row.headers) : null,
-                    payload_template: row.payload_template ? JSON.parse(row.payload_template) : null,
-                    is_active: row.is_active === 1
-                }));
-
-                resolve(webhooks);
-            });
-        });
+        return rows.map(row => ({
+            ...row,
+            events: row.events ? JSON.parse(row.events) : [],
+            retry_policy: row.retry_policy ? JSON.parse(row.retry_policy) : null,
+            headers: row.headers ? JSON.parse(row.headers) : null,
+            payload_template: row.payload_template ? JSON.parse(row.payload_template) : null,
+            is_active: row.is_active === 1
+        }));
     }
 
     /**
      * Get webhook by ID
      */
     async getWebhookById(id) {
-        return new Promise((resolve, reject) => {
-            this.db.get('SELECT * FROM webhooks WHERE id = ?', [id], (err, row) => {
-                if (err) {
-                    console.error('[Webhook] Error fetching webhook:', err);
-                    return reject(err);
-                }
+        await this.init();
 
-                if (!row) {
-                    return resolve(null);
-                }
+        const row = await this.queryOne('SELECT * FROM webhooks WHERE id = ?', [id]);
+        if (!row) return null;
 
-                resolve({
-                    ...row,
-                    events: row.events ? JSON.parse(row.events) : [],
-                    retry_policy: row.retry_policy ? JSON.parse(row.retry_policy) : null,
-                    headers: row.headers ? JSON.parse(row.headers) : null,
-                    payload_template: row.payload_template ? JSON.parse(row.payload_template) : null,
-                    is_active: row.is_active === 1
-                });
-            });
-        });
+        return {
+            ...row,
+            events: row.events ? JSON.parse(row.events) : [],
+            retry_policy: row.retry_policy ? JSON.parse(row.retry_policy) : null,
+            headers: row.headers ? JSON.parse(row.headers) : null,
+            payload_template: row.payload_template ? JSON.parse(row.payload_template) : null,
+            is_active: row.is_active === 1
+        };
     }
 
     /**
      * Create a webhook
      */
     async createWebhook(webhookData) {
+        await this.init();
+
         const {
             organization_id,
             name,
@@ -104,37 +98,32 @@ class WebhookService {
         const id = uuidv4();
         const now = new Date().toISOString();
 
-        return new Promise((resolve, reject) => {
-            this.db.run(
-                `INSERT INTO webhooks (
-                    id, organization_id, name, description, url, events, secret,
-                    is_active, retry_policy, headers, payload_template,
-                    created_at, updated_at, created_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    id, organization_id, name, description, url,
-                    JSON.stringify(events), secret,
-                    is_active ? 1 : 0,
-                    JSON.stringify(retry_policy),
-                    JSON.stringify(headers),
-                    payload_template ? JSON.stringify(payload_template) : null,
-                    now, now, created_by
-                ],
-                function (err) {
-                    if (err) {
-                        console.error('[Webhook] Error creating webhook:', err);
-                        return reject(err);
-                    }
-                    resolve({ id, ...webhookData });
-                }
-            );
-        });
+        await this.queryRun(
+            `INSERT INTO webhooks (
+                id, organization_id, name, description, url, events, secret,
+                is_active, retry_policy, headers, payload_template,
+                created_at, updated_at, created_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                id, organization_id, name, description, url,
+                JSON.stringify(events), secret,
+                is_active ? 1 : 0,
+                JSON.stringify(retry_policy),
+                JSON.stringify(headers),
+                payload_template ? JSON.stringify(payload_template) : null,
+                now, now, created_by
+            ]
+        );
+
+        return { id, ...webhookData };
     }
 
     /**
      * Update a webhook
      */
     async updateWebhook(id, updates) {
+        await this.init();
+
         const {
             name,
             description,
@@ -154,42 +143,34 @@ class WebhookService {
             updatesList.push('name = ?');
             params.push(name);
         }
-
         if (description !== undefined) {
             updatesList.push('description = ?');
             params.push(description);
         }
-
         if (url !== undefined) {
             updatesList.push('url = ?');
             params.push(url);
         }
-
         if (events !== undefined) {
             updatesList.push('events = ?');
             params.push(JSON.stringify(events));
         }
-
         if (secret !== undefined) {
             updatesList.push('secret = ?');
             params.push(secret);
         }
-
         if (is_active !== undefined) {
             updatesList.push('is_active = ?');
             params.push(is_active ? 1 : 0);
         }
-
         if (retry_policy !== undefined) {
             updatesList.push('retry_policy = ?');
             params.push(JSON.stringify(retry_policy));
         }
-
         if (headers !== undefined) {
             updatesList.push('headers = ?');
             params.push(JSON.stringify(headers));
         }
-
         if (payload_template !== undefined) {
             updatesList.push('payload_template = ?');
             params.push(payload_template ? JSON.stringify(payload_template) : null);
@@ -203,34 +184,21 @@ class WebhookService {
         params.push(new Date().toISOString());
         params.push(id);
 
-        return new Promise((resolve, reject) => {
-            this.db.run(
-                `UPDATE webhooks SET ${updatesList.join(', ')} WHERE id = ?`,
-                params,
-                async function (err) {
-                    if (err) {
-                        console.error('[Webhook] Error updating webhook:', err);
-                        return reject(err);
-                    }
-                    resolve(await this.getWebhookById(id));
-                }.bind(this)
-            );
-        });
+        await this.queryRun(
+            `UPDATE webhooks SET ${updatesList.join(', ')} WHERE id = ?`,
+            params
+        );
+
+        return this.getWebhookById(id);
     }
 
     /**
      * Delete a webhook
      */
     async deleteWebhook(id) {
-        return new Promise((resolve, reject) => {
-            this.db.run('DELETE FROM webhooks WHERE id = ?', [id], function (err) {
-                if (err) {
-                    console.error('[Webhook] Error deleting webhook:', err);
-                    return reject(err);
-                }
-                resolve({ deleted: this.changes > 0 });
-            });
-        });
+        await this.init();
+        const result = await this.queryRun('DELETE FROM webhooks WHERE id = ?', [id]);
+        return { deleted: result.changes > 0 };
     }
 
     /**
@@ -260,6 +228,8 @@ class WebhookService {
      * Get webhook deliveries
      */
     async getDeliveries(webhookId, filters = {}, pagination = { page: 1, pageSize: 50 }) {
+        await this.init();
+
         const { status, eventType } = filters;
         const { page = 1, pageSize = 50 } = pagination;
         const offset = (page - 1) * pageSize;
@@ -271,7 +241,6 @@ class WebhookService {
             query += ' AND status = ?';
             params.push(status);
         }
-
         if (eventType) {
             query += ' AND event_type = ?';
             params.push(eventType);
@@ -280,51 +249,39 @@ class WebhookService {
         query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
         params.push(pageSize, offset);
 
-        return new Promise((resolve, reject) => {
-            this.db.all(query, params, (err, rows) => {
-                if (err) {
-                    console.error('[Webhook] Error fetching deliveries:', err);
-                    return reject(err);
-                }
+        const rows = await this.queryAll(query, params);
 
-                const deliveries = rows.map(row => ({
-                    ...row,
-                    payload: row.payload ? JSON.parse(row.payload) : null
-                }));
-
-                resolve(deliveries);
-            });
-        });
+        return rows.map(row => ({
+            ...row,
+            payload: row.payload ? JSON.parse(row.payload) : null
+        }));
     }
 
     /**
      * Record a webhook delivery
      */
     async recordDelivery(webhookId, eventType, payload, status = 'pending') {
+        await this.init();
+
         const id = uuidv4();
         const now = new Date().toISOString();
 
-        return new Promise((resolve, reject) => {
-            this.db.run(
-                `INSERT INTO webhook_deliveries (
-                    id, webhook_id, event_type, payload, status, attempts, created_at
-                ) VALUES (?, ?, ?, ?, ?, 0, ?)`,
-                [id, webhookId, eventType, JSON.stringify(payload), status, now],
-                function (err) {
-                    if (err) {
-                        console.error('[Webhook] Error recording delivery:', err);
-                        return reject(err);
-                    }
-                    resolve({ id, webhook_id: webhookId, status });
-                }
-            );
-        });
+        await this.queryRun(
+            `INSERT INTO webhook_deliveries (
+                id, webhook_id, event_type, payload, status, attempts, created_at
+            ) VALUES (?, ?, ?, ?, ?, 0, ?)`,
+            [id, webhookId, eventType, JSON.stringify(payload), status, now]
+        );
+
+        return { id, webhook_id: webhookId, status };
     }
 
     /**
      * Update delivery status
      */
     async updateDeliveryStatus(deliveryId, status, responseCode = null, responseBody = null) {
+        await this.init();
+
         const updates = ['status = ?', 'attempts = attempts + 1'];
         const params = [status];
 
@@ -332,7 +289,6 @@ class WebhookService {
             updates.push('response_code = ?');
             params.push(responseCode);
         }
-
         if (responseBody !== null) {
             updates.push('response_body = ?');
             params.push(responseBody);
@@ -345,32 +301,21 @@ class WebhookService {
 
         params.push(deliveryId);
 
-        return new Promise((resolve, reject) => {
-            this.db.run(
-                `UPDATE webhook_deliveries SET ${updates.join(', ')} WHERE id = ?`,
-                params,
-                function (err) {
-                    if (err) {
-                        console.error('[Webhook] Error updating delivery:', err);
-                        return reject(err);
-                    }
-                    resolve({ updated: this.changes > 0 });
-                }
-            );
-        });
+        const result = await this.queryRun(
+            `UPDATE webhook_deliveries SET ${updates.join(', ')} WHERE id = ?`,
+            params
+        );
+
+        return { updated: result.changes > 0 };
     }
 
     /**
      * Retry a failed delivery
      */
     async retryDelivery(deliveryId) {
-        const delivery = await new Promise((resolve, reject) => {
-            this.db.get('SELECT * FROM webhook_deliveries WHERE id = ?', [deliveryId], (err, row) => {
-                if (err) return reject(err);
-                resolve(row);
-            });
-        });
+        await this.init();
 
+        const delivery = await this.queryOne('SELECT * FROM webhook_deliveries WHERE id = ?', [deliveryId]);
         if (!delivery) {
             throw new Error('Delivery not found');
         }
@@ -396,59 +341,52 @@ class WebhookService {
      * Trigger webhooks for a specific event
      */
     async trigger(organizationId, eventType, data) {
-        return new Promise((resolve, reject) => {
-            // Get active webhooks for this organization that listen to this event
-            this.db.all(
-                `SELECT * FROM webhooks 
-                 WHERE organization_id = ? 
-                 AND is_active = 1 
-                 AND events LIKE ?`,
-                [organizationId, `%${eventType}%`],
-                async (err, webhooks) => {
-                    if (err) {
-                        console.error('[Webhook] Query error:', err);
-                        return reject(err);
-                    }
+        await this.init();
 
-                    if (!webhooks || webhooks.length === 0) {
-                        return resolve({ triggered: 0 });
-                    }
+        const webhooks = await this.queryAll(
+            `SELECT * FROM webhooks 
+             WHERE organization_id = ? 
+             AND is_active = 1 
+             AND events LIKE ?`,
+            [organizationId, `%${eventType}%`]
+        );
 
-                    const results = [];
+        if (!webhooks || webhooks.length === 0) {
+            return { triggered: 0 };
+        }
 
-                    for (const webhook of webhooks) {
-                        try {
-                            const result = await this.sendWebhook(webhook, eventType, data);
-                            results.push({ webhookId: webhook.id, success: true, result });
-                        } catch (error) {
-                            results.push({ webhookId: webhook.id, success: false, error: error.message });
-                            console.error(`[Webhook] Failed to send to ${webhook.url}:`, error.message);
-                        }
-                    }
+        const results = [];
+        for (const webhook of webhooks) {
+            try {
+                const result = await this.sendWebhook(webhook, eventType, data);
+                results.push({ webhookId: webhook.id, success: true, result });
+            } catch (error) {
+                results.push({ webhookId: webhook.id, success: false, error: error.message });
+                console.error(`[Webhook] Failed to send to ${webhook.url}:`, error.message);
+            }
+        }
 
-                    resolve({ triggered: results.length, results });
-                }
-            );
-        });
+        return { triggered: results.length, results };
     }
 
     /**
      * Send individual webhook
      */
     async sendWebhook(webhook, eventType, data) {
+        await this.init();
+
         const payload = {
             event: eventType,
             timestamp: new Date().toISOString(),
             data
         };
 
-        // Create HMAC signature
         const signature = crypto
             .createHmac('sha256', webhook.secret)
             .update(JSON.stringify(payload))
             .digest('hex');
 
-        const response = await this.fetch(webhook.url, {
+        const response = await this._fetch(webhook.url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -457,7 +395,7 @@ class WebhookService {
                 'User-Agent': 'Consultify-Webhook/1.0'
             },
             body: JSON.stringify(payload),
-            timeout: 5000 // 5 second timeout
+            timeout: 5000
         });
 
         if (!response.ok) {
@@ -474,8 +412,10 @@ class WebhookService {
      * Send Slack notification
      */
     async sendSlackNotification(webhookUrl, message) {
+        await this.init();
+
         try {
-            const response = await this.fetch(webhookUrl, {
+            const response = await this._fetch(webhookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(message)
@@ -539,7 +479,7 @@ class WebhookService {
     }
 }
 
-// Export singleton instance
 const service = new WebhookService();
-service.WebhookService = WebhookService;
-module.exports = service;
+export default service;
+
+

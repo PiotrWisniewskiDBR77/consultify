@@ -11,8 +11,8 @@
  * Follows the same pattern as organization_events, legal_events, invitation_events.
  */
 
-const defaultDb = require('../database');
-const { v4: defaultUuidv4 } = require('uuid');
+import defaultDb from '../database.js';
+import { v4 as defaultUuidv4 } from 'uuid';
 
 const deps = {
     db: defaultDb,
@@ -294,4 +294,4 @@ const AttributionService = {
     }
 };
 
-module.exports = AttributionService;
+export default AttributionService;

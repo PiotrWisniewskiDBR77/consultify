@@ -10,11 +10,23 @@ import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { v4 as uuidv4 } from 'uuid';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import * as DbPromise from '../utils/DbPromise.js';
 import type {
     CreateDecisionRequest,
     DecideRequest,
     EscalateDecisionRequest,
 } from '../validators/decision.validators.js';
+
+// ==========================================
+// TYPES
+// ==========================================
+
+interface AuditTrailEntry {
+    action: string;
+    by: string;
+    at: string;
+    notes?: string;
+}
 
 // ==========================================
 // CONTROLLER METHODS
@@ -31,7 +43,8 @@ export class DecisionController {
                    FROM decisions d
                    LEFT JOIN users u ON d.decision_owner_id = u.id
                    WHERE 1=1`;
-        const params: unknown[] = [];
+        type SQLParam = string | number | boolean | null | undefined;
+        const params: SQLParam[] = [];
 
         if (projectId) {
             sql += ` AND d.project_id = ?`;
@@ -57,9 +70,6 @@ export class DecisionController {
      */
     static getBottlenecks = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { projectId } = req.query;
-        
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const db = require('../../database');
 
         // Aging decisions
         const agingSql = `
@@ -76,12 +86,7 @@ export class DecisionController {
         `;
         const agingParams = projectId ? [projectId] : [];
         
-        const aging = await new Promise((resolve, reject) => {
-            db.all(agingSql, agingParams, (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows || []);
-            });
-        });
+        const aging = await DbPromise.all(agingSql, agingParams);
 
         // Blocking decisions
         const blockingSql = `
@@ -100,12 +105,7 @@ export class DecisionController {
         `;
         const blockingParams = projectId ? [projectId] : [];
         
-        const blocking = await new Promise((resolve, reject) => {
-            db.all(blockingSql, blockingParams, (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows || []);
-            });
-        });
+        const blocking = await DbPromise.all(blockingSql, blockingParams);
 
         res.json({ aging, blocking });
     });
@@ -221,9 +221,9 @@ export class DecisionController {
         }
 
         // Update audit trail
-        let auditTrail: unknown[] = [];
+        let auditTrail: AuditTrailEntry[] = [];
         try {
-            auditTrail = JSON.parse(currentDecision.audit_trail || '[]') as unknown[];
+            auditTrail = JSON.parse(currentDecision.audit_trail || '[]') as AuditTrailEntry[];
         } catch {
             // Ignore parse errors
         }

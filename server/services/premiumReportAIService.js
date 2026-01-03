@@ -5,12 +5,35 @@
  * and professional consulting frameworks.
  */
 
-const AiService = require('./aiService');
-const db = require('../database');
+// Dependency injection for testing
+const deps = {
+    _AiService: null,
+    _db: null,
+
+    get AiService() { return this._AiService; },
+    set AiService(val) { this._AiService = val; },
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._AiService) {
+        const { default: AiService } = await import('./aiService.js');
+        deps._AiService = AiService;
+    }
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+}
 
 class PremiumReportAIService {
     constructor() {
-        this.aiService = AiService;
+        // Lazy initialization in methods
     }
 
     /**
@@ -424,4 +447,4 @@ Napisz profesjonalną sekcję raportu zgodnie z powyższym żądaniem.`;
     }
 }
 
-module.exports = new PremiumReportAIService();
+export default new PremiumReportAIService();

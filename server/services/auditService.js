@@ -9,8 +9,8 @@
  * - Fail-silent: Audit failures don't break main flow
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import { v4 as uuidv4 } from 'uuid';
+import db from '../database.js';
 
 // Actor Types
 const ACTOR_TYPES = {
@@ -347,7 +347,7 @@ async function getCSVExport({ orgId, limit = 1000 }) {
     return csvContent;
 }
 
-module.exports = {
+export {
     // Constants
     ACTOR_TYPES,
     ACTION_TYPES,
@@ -362,6 +362,20 @@ module.exports = {
     getCSVExport,
 
     // Utility (exported for testing)
+    sanitizeMetadata
+};
+
+// Default export for backwards compatibility
+export default {
+    ACTOR_TYPES,
+    ACTION_TYPES,
+    logEvent,
+    logFromRequest,
+    logSystemEvent,
+    logAIEvent,
+    logSecurityEvent,
+    getEvents,
+    getCSVExport,
     sanitizeMetadata
 };
 

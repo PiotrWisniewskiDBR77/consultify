@@ -8,6 +8,7 @@
 
 import type { IDatabase, QueryResult, RunResult } from '../database/IDatabase.js';
 import { databaseConfig } from '../config/DatabaseConfig.js';
+import { run as dbRunPromise } from './DbPromise.js';
 
 export type DatabaseType = 'sqlite' | 'postgres';
 
@@ -91,12 +92,14 @@ export class QueryAdapter {
                 lastID: (result.rows[0] as { id?: number })?.id // For RETURNING id
             };
         } else {
-            return new Promise<RunResult>((resolve, reject) => {
-                this.db.run(adapted.sql, adapted.params, function (err) {
-                    if (err) reject(err);
-                    else resolve({ changes: this.changes, lastID: this.lastID });
-                });
-            });
+            const result = await dbRunPromise(adapted.sql, adapted.params);
+            if (!result.success) {
+                throw new Error(result.error || 'Database operation failed');
+            }
+            return {
+                changes: result.changes || 0,
+                lastID: result.lastID
+            };
         }
     }
 

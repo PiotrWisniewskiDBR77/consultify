@@ -22,6 +22,7 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import type { IDatabase, RunResult } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
+import { run as dbRun } from '../utils/DbPromise.js';
 import { config } from '../config/Config.js';
 import logger from '../utils/Logger.js';
 
@@ -128,18 +129,14 @@ class RefreshTokenService {
      * Database helper: Run query
      */
     private async dbRun(sql: string, params: unknown[] = []): Promise<RunResult> {
-        return new Promise((resolve, reject) => {
-            this.db.run(sql, params, function (this: { lastID?: number; changes: number }, err: Error | null) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({
-                        lastID: this.lastID,
-                        changes: this.changes || 0
-                    });
-                }
-            });
-        });
+        const result = await dbRun(sql, params);
+        if (!result.success) {
+            throw new Error(result.error || 'Database operation failed');
+        }
+        return {
+            lastID: result.lastID,
+            changes: result.changes || 0
+        };
     }
 
     /**

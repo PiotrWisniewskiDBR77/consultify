@@ -9,9 +9,29 @@
 
 // Dependency injection for testing
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+    _db: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
 };
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
 
 // Prompt layer priority (lower = higher priority, cannot be overridden)
 const PROMPT_LAYERS = {
@@ -564,4 +584,4 @@ const AIPromptHierarchy = {
     }
 };
 
-module.exports = AIPromptHierarchy;
+export default AIPromptHierarchy;

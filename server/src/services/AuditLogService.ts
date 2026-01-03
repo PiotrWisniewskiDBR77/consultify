@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
 import logger from '../utils/Logger.js';
+import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
 // TYPES
@@ -121,8 +122,8 @@ class AuditLogService {
         const id = uuidv4();
         const timestamp = new Date().toISOString();
 
-        return new Promise((resolve, reject) => {
-            this.db.run(
+        try {
+            await DbPromise.run(
                 `INSERT INTO audit_logs (
                     id, timestamp, user_id, user_email, ip_address, user_agent,
                     action_type, resource_type, resource_id, before_data, after_data,
@@ -135,16 +136,13 @@ class AuditLogService {
                     after_data ? JSON.stringify(after_data) : null,
                     risk_level, JSON.stringify(compliance_tags), request_id,
                     organization_id, JSON.stringify(metadata)
-                ],
-                function (err) {
-                    if (err) {
-                        logger.error('[AuditLog] Error creating log:', err);
-                        return reject(err);
-                    }
-                    resolve({ id, timestamp });
-                }
+                ]
             );
-        });
+            return { id, timestamp };
+        } catch (err) {
+            logger.error('[AuditLog] Error creating log:', err);
+            throw err;
+        }
     }
 
     /**
@@ -234,29 +232,14 @@ class AuditLogService {
 
         // Get total count
         const countQuery = query.replace('SELECT *', 'SELECT COUNT(*) as total');
-        const total = await new Promise<number>((resolve, reject) => {
-            this.db.get<{ total: number }>(countQuery, params, (err, row) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                resolve(row?.total || 0);
-            });
-        });
+        const countResult = await DbPromise.get<{ total: number }>(countQuery, params);
+        const total = countResult?.total || 0;
 
         // Get paginated results
         query += ' ORDER BY timestamp DESC LIMIT ? OFFSET ?';
         params.push(pageSize, offset);
 
-        const logs = await new Promise<AuditLog[]>((resolve, reject) => {
-            this.db.all<AuditLog>(query, params, (err, rows) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                resolve(rows || []);
-            });
-        });
+        const logs = await DbPromise.all<AuditLog>(query, params);
 
         return {
             logs,

@@ -19,7 +19,7 @@ const rateLimit = require('express-rate-limit');
 const config = require('../config');
 const DemoService = require('../services/demoService');
 const OrganizationEventService = require('../services/organizationEventService');
-const AttributionService = require('../services/attributionService');
+import AttributionService from '../services/attributionService.js';
 
 // Demo abuse protection: 3 demos per 10 minutes per IP
 const demoRateLimiter = rateLimit({

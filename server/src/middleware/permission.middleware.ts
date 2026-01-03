@@ -8,6 +8,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import type { AuthRequest } from './auth.middleware';
+import type { Role } from '../services/permissionService.js';
 
 // ==========================================
 // TYPES
@@ -55,10 +56,10 @@ interface AuditOptions {
 
 let deps: Dependencies;
 
-const getDeps = (): Dependencies => {
+const getDeps = async (): Promise<Dependencies> => {
     if (!deps) {
-        const defaultPermissionService = require('../../services/permissionService');
-        const defaultGovernanceAuditService = require('../../services/governanceAuditService');
+        const { default: defaultPermissionService } = await import('../services/permissionService.js');
+        const { default: defaultGovernanceAuditService } = await import('../services/governanceAuditService.js');
         
         deps = {
             PermissionService: defaultPermissionService,
@@ -80,7 +81,7 @@ const getDeps = (): Dependencies => {
 export const requirePermission = (permissionKey: string) => {
     return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { PermissionService } = getDeps();
+            const { PermissionService } = await getDeps();
             
             const userId = req.userId || req.user?.id;
             const orgId = req.organizationId || req.user?.organization_id;
@@ -132,7 +133,7 @@ export const requirePermission = (permissionKey: string) => {
 export const requireAnyPermission = (permissionKeys: string[]) => {
     return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { PermissionService } = getDeps();
+            const { PermissionService } = await getDeps();
             
             const userId = req.userId || req.user?.id;
             const orgId = req.organizationId || req.user?.organization_id;
@@ -185,7 +186,7 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
 export const requireAllPermissions = (permissionKeys: string[]) => {
     return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { PermissionService } = getDeps();
+            const { PermissionService } = await getDeps();
             
             const userId = req.userId || req.user?.id;
             const orgId = req.organizationId || req.user?.organization_id;
@@ -251,7 +252,7 @@ export const auditAction = (options: AuditOptions) => {
     } = options;
 
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-        const { GovernanceAuditService } = getDeps();
+        const { GovernanceAuditService } = await getDeps();
         
         // Store original json method
         const originalJson = res.json.bind(res);
@@ -290,7 +291,8 @@ export const auditAction = (options: AuditOptions) => {
 // DEPENDENCY INJECTION (for testing)
 // ==========================================
 
-export const setDependencies = (newDeps: Partial<Dependencies>): void => {
-    deps = { ...getDeps(), ...newDeps };
+export const setDependencies = async (newDeps: Partial<Dependencies>): Promise<void> => {
+    const currentDeps = await getDeps();
+    deps = { ...currentDeps, ...newDeps };
 };
 

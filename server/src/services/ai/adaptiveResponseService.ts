@@ -1,32 +1,14 @@
 /**
- * Ai/adaptiveResponseService Service
+ * Adaptiveresponse Service
  * Enterprise SaaS Architecture - TypeScript Backend
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
 
-const require = createRequire(import.meta.url);
-
-// Import the JS implementation for now (will be fully migrated later)
-const ai/adaptiveResponseServiceServiceJS = require('../../services/ai/adaptiveResponseService.js');
-
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const ai/adaptiveResponseServiceService = ai/adaptiveResponseServiceServiceJS.default || ai/adaptiveResponseServiceServiceJS;
+// Lazy load the JS service module
+const loadAdaptiveresponse = createCachedLazyService('../../services/ai/adaptiveResponseService.js');
 
 // Export default instance (for backward compatibility)
-export default ai/adaptiveResponseServiceService;
-
-// Also export named exports if they exist
-if (typeof ai/adaptiveResponseServiceServiceJS === 'object' && ai/adaptiveResponseServiceServiceJS !== null) {
-    Object.keys(ai/adaptiveResponseServiceServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = ai/adaptiveResponseServiceServiceJS[key];
-        }
-    });
-}
+export default loadAdaptiveresponse();

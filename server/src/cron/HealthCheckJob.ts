@@ -9,9 +9,10 @@ import * as cron from 'node-cron';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
 import logger from '../utils/Logger.js';
-import { createRequire } from 'module';
+import * as DbPromise from '../utils/DbPromise.js';
 
-const require = createRequire(import.meta.url);
+
+
 
 // ==========================================
 // TYPES
@@ -41,7 +42,7 @@ class HealthCheckJob {
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
             db: deps?.db || getDatabase(),
-            emailService: deps?.emailService || require('../../services/emailService.js'),
+            emailService: deps?.emailService || await import('../../services/emailService.js').then(m => m.default || m),
             alertEmail: deps?.alertEmail || 'piotr.wisniewski@dbr77.com',
             alertThreshold: deps?.alertThreshold || 1, // Send alert immediately on first confirmed failure
         };
@@ -57,15 +58,7 @@ class HealthCheckJob {
             const start = Date.now();
             
             try {
-                await new Promise<void>((resolve, reject) => {
-                    this.deps.db.get('SELECT 1', [], (err) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve();
-                        }
-                    });
-                });
+                await DbPromise.get('SELECT 1', []);
 
                 // SUCCESS
                 if (!this.isSystemHealthy) {

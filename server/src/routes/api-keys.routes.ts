@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const api_keysRoutesJS = require('../../routes/api-keys.js');
+const api_keysRoutesJSPromise = (async () => {
+    const module = await import('../../routes/api-keys.js');
+    return module.default || module;
+})();
+const api_keysRoutesJS = api_keysRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

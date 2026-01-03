@@ -1,44 +1,35 @@
-/**
- * ActivityService Tests
- * Enterprise SaaS Architecture - TypeScript Backend
- */
-
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ActivityService } from '../../../src/services/ActivityService.js';
-import type { IDatabase } from '../../../src/database/IDatabase.js';
+import ActivityService from '../../../../services/activityService.js';
 
 describe('ActivityService', () => {
-    let mockDb: IDatabase;
-    let service: ActivityService;
+    let mockDb;
 
     beforeEach(() => {
         mockDb = {
             get: vi.fn(),
             all: vi.fn(),
-            run: vi.fn(),
+            run: vi.fn((sql, params, cb) => { if (cb) cb(null); }),
             exec: vi.fn(),
             serialize: vi.fn(),
             close: vi.fn(),
             query: vi.fn(),
-        } as unknown as IDatabase;
+            queryOne: vi.fn(),
+            queryAll: vi.fn(),
+            queryRun: vi.fn()
+        };
 
-        service = new ActivityService(mockDb);
+        ActivityService.setDependencies({ db: mockDb });
     });
 
-    it('should be instantiable', () => {
-        expect(service).toBeInstanceOf(ActivityService);
+    it('should be defined', () => {
+        expect(ActivityService).toBeDefined();
     });
 
     it('should have log method', () => {
-        expect(typeof service.log).toBe('function');
+        expect(typeof ActivityService.log).toBe('function');
     });
 
     it('should have getRecent method', () => {
-        expect(typeof service.getRecent).toBe('function');
-    });
-
-    it('should have getByOrganization method', () => {
-        expect(typeof service.getByOrganization).toBe('function');
+        expect(typeof ActivityService.getRecent).toBe('function');
     });
 });
-

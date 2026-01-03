@@ -20,11 +20,11 @@
  * @deprecated Use CircuitBreakerService directly for new implementations
  */
 
-const CircuitBreakerService = require('../circuitBreakerService');
-const { aiLogger } = require('./logger');
+import { CircuitBreakerService, STATES } from '../circuitBreakerService.js';
+import { aiLogger } from './logger.js';
 
 // Re-export states for backward compatibility
-const STATE = CircuitBreakerService.STATES;
+export const STATE = STATES;
 
 // LLM-specific configuration (higher thresholds for AI providers)
 const LLM_CONFIG = {
@@ -40,7 +40,7 @@ const LLM_CONFIG = {
 /**
  * Check if circuit allows request (legacy API)
  */
-function canExecute(providerId) {
+export function canExecute(providerId) {
     const breaker = CircuitBreakerService.getBreaker(providerId, LLM_CONFIG);
     return breaker.canExecute();
 }
@@ -48,28 +48,28 @@ function canExecute(providerId) {
 /**
  * Record a successful request (legacy API)
  */
-function recordSuccess(providerId) {
-    CircuitBreakerService.recordSuccess(providerId);
+export async function recordSuccess(providerId) {
+    await CircuitBreakerService.recordSuccess(providerId);
 }
 
 /**
  * Record a failed request (legacy API)
  */
-function recordFailure(providerId, error) {
-    CircuitBreakerService.recordFailure(providerId, error);
+export async function recordFailure(providerId, error) {
+    await CircuitBreakerService.recordFailure(providerId, error);
 }
 
 /**
  * Reset circuit to closed state (legacy API)
  */
-function reset(providerId) {
-    CircuitBreakerService.reset(providerId);
+export async function reset(providerId) {
+    await CircuitBreakerService.reset(providerId);
 }
 
 /**
  * Get status of all circuits (legacy API)
  */
-function getStatus() {
+export function getStatus() {
     return CircuitBreakerService.getAllStatuses().reduce((acc, status) => {
         acc[status.name] = status;
         return acc;
@@ -79,7 +79,7 @@ function getStatus() {
 /**
  * Execute function with circuit breaker and retry logic (legacy API)
  */
-async function execute(providerId, fn, options = {}) {
+export async function execute(providerId, fn, options = {}) {
     const breaker = CircuitBreakerService.getBreaker(providerId, {
         ...LLM_CONFIG,
         ...options
@@ -90,7 +90,7 @@ async function execute(providerId, fn, options = {}) {
 /**
  * Initialize circuit breaker - restore states from database
  */
-async function initialize() {
+export async function initialize() {
     try {
         await CircuitBreakerService.restoreStates();
         aiLogger.info('CircuitBreaker', 'LLM circuit breakers initialized');
@@ -106,7 +106,7 @@ setImmediate(() => {
     });
 });
 
-module.exports = {
+export default {
     STATE,
     canExecute,
     recordSuccess,
@@ -115,7 +115,8 @@ module.exports = {
     getStatus,
     execute,
     initialize,
-    
+
     // Export for direct access if needed
     CircuitBreakerService
 };
+

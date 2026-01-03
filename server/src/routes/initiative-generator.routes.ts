@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const initiative_generatorRoutesJS = require('../../routes/initiative-generator.js');
+const initiative_generatorRoutesJSPromise = (async () => {
+    const module = await import('../../routes/initiative-generator.js');
+    return module.default || module;
+})();
+const initiative_generatorRoutesJS = initiative_generatorRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

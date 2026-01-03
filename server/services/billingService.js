@@ -3,46 +3,49 @@
  * Handles Stripe integration, subscriptions, and invoice management
  */
 
-// Dependency injection container (for deterministic unit tests)
-const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4,
-    stripe: null,
-    // Internal functions for deterministic testing
-    getPlanById: null,
-    getOrganizationBilling: null,
-    upsertOrgBilling: null,
-    getOrCreateStripeCustomer: null,
-    calculateSeatCost: null
+// Dependency injection for testing
+let deps = {
+    db: null,
+    uuidv4: null,
+    stripe: null
 };
 
-// Stripe will be initialized when keys are configured
-try {
-    if (process.env.STRIPE_SECRET_KEY) {
-        deps.stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps.db) {
+        const dbModule = await import('../database.js');
+        deps.db = dbModule.default || dbModule;
     }
-} catch (e) {
-    console.log('Stripe not initialized - API key not configured');
+
+    if (!deps.uuidv4) {
+        const uuidModule = await import('uuid');
+        deps.uuidv4 = uuidModule.v4;
+    }
+
+    if (!deps.stripe && process.env.STRIPE_SECRET_KEY) {
+        try {
+            const { default: Stripe } = await import('stripe');
+            deps.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        } catch (e) {
+            console.log('Stripe not initialized - API key not configured or package missing');
+        }
+    }
 }
 
 /**
  * Set dependencies (for testing)
  */
-function setDependencies(newDeps = {}) {
-    Object.assign(deps, newDeps);
+export function setDependencies(newDeps = {}) {
+    deps = { ...deps, ...newDeps };
 }
-
-// Initialize internal deps
-deps.getPlanById = getPlanById;
-deps.getOrganizationBilling = getOrganizationBilling;
-deps.upsertOrgBilling = upsertOrgBilling;
-deps.getOrCreateStripeCustomer = getOrCreateStripeCustomer;
-deps.calculateSeatCost = calculateSeatCost;
 
 /**
  * Get all subscription plans
  */
-function getPlans() {
+export async function getPlans() {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.all('SELECT * FROM subscription_plans WHERE is_active = 1 ORDER BY price_monthly ASC', [], (err, rows) => {
             if (err) reject(err);
@@ -54,7 +57,8 @@ function getPlans() {
 /**
  * Get plan by ID
  */
-function getPlanById(planId) {
+export async function getPlanById(planId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get('SELECT * FROM subscription_plans WHERE id = ?', [planId], (err, row) => {
             if (err) reject(err);
@@ -66,7 +70,8 @@ function getPlanById(planId) {
 /**
  * Create a new subscription plan (Superadmin only)
  */
-function createPlan(planData) {
+export async function createPlan(planData) {
+    await initDeps();
     const id = `plan-${deps.uuidv4()}`;
     return new Promise((resolve, reject) => {
         deps.db.run(
@@ -86,7 +91,8 @@ function createPlan(planData) {
 /**
  * Update subscription plan
  */
-function updatePlan(planId, updates) {
+export async function updatePlan(planId, updates) {
+    await initDeps();
     const fields = [];
     const values = [];
 
@@ -97,7 +103,7 @@ function updatePlan(planId, updates) {
         }
     });
 
-    if (fields.length === 0) return Promise.resolve(null);
+    if (fields.length === 0) return null;
 
     values.push(planId);
 
@@ -116,15 +122,16 @@ function updatePlan(planId, updates) {
 /**
  * Delete subscription plan (soft delete by setting is_active = 0)
  */
-function deletePlan(planId) {
-    return updatePlan(planId, { is_active: 0 });
+export async function deletePlan(planId) {
+    return await updatePlan(planId, { is_active: 0 });
 }
 
 // ==========================================
 // USER LICENSE PLANS
 // ==========================================
 
-function getUserPlans() {
+export async function getUserPlans() {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.all('SELECT * FROM user_license_plans WHERE is_active = 1 ORDER BY price_monthly ASC', [], (err, rows) => {
             if (err) reject(err);
@@ -133,7 +140,8 @@ function getUserPlans() {
     });
 }
 
-function createUserPlan(planData) {
+export async function createUserPlan(planData) {
+    await initDeps();
     const id = `license-${deps.uuidv4()}`;
     return new Promise((resolve, reject) => {
         deps.db.run(
@@ -148,7 +156,8 @@ function createUserPlan(planData) {
     });
 }
 
-function updateUserPlan(planId, updates) {
+export async function updateUserPlan(planId, updates) {
+    await initDeps();
     const fields = [];
     const values = [];
 
@@ -164,7 +173,7 @@ function updateUserPlan(planId, updates) {
         }
     });
 
-    if (fields.length === 0) return Promise.resolve(null);
+    if (fields.length === 0) return null;
 
     values.push(planId);
 
@@ -180,14 +189,16 @@ function updateUserPlan(planId, updates) {
     });
 }
 
-function deleteUserPlan(planId) {
-    return updateUserPlan(planId, { is_active: 0 });
+export async function deleteUserPlan(planId) {
+    return await updateUserPlan(planId, { is_active: 0 });
 }
+
 
 /**
  * Get organization billing info
  */
-function getOrganizationBilling(orgId) {
+export async function getOrganizationBilling(orgId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             `SELECT ob.*, sp.name as plan_name, sp.price_monthly, sp.token_limit, sp.storage_limit_gb
@@ -206,7 +217,8 @@ function getOrganizationBilling(orgId) {
 /**
  * Create or update organization billing record
  */
-async function upsertOrgBilling(orgId, billingData) {
+export async function upsertOrgBilling(orgId, billingData) {
+    await initDeps();
     const id = `billing-${deps.uuidv4()}`;
     return new Promise((resolve, reject) => {
         deps.db.run(
@@ -232,13 +244,14 @@ async function upsertOrgBilling(orgId, billingData) {
 /**
  * Create Stripe customer if not exists
  */
-async function getOrCreateStripeCustomer(orgId, email, orgName) {
+export async function getOrCreateStripeCustomer(orgId, email, orgName) {
+    await initDeps();
     if (!deps.stripe) {
         console.warn('Stripe not configured, returning mock customer');
         return { id: `mock_cus_${orgId}`, email };
     }
 
-    const billing = await deps.getOrganizationBilling(orgId);
+    const billing = await getOrganizationBilling(orgId);
 
     if (billing?.stripe_customer_id) {
         return deps.stripe.customers.retrieve(billing.stripe_customer_id);
@@ -249,7 +262,7 @@ async function getOrCreateStripeCustomer(orgId, email, orgName) {
         name: orgName,
         metadata: { organization_id: orgId }
     });
-    await deps.upsertOrgBilling(orgId, { stripe_customer_id: customer.id });
+    await upsertOrgBilling(orgId, { stripe_customer_id: customer.id });
 
     return customer;
 }
@@ -257,20 +270,21 @@ async function getOrCreateStripeCustomer(orgId, email, orgName) {
 /**
  * Create subscription for organization
  */
-async function createSubscription(orgId, planId, paymentMethodId, email, orgName) {
-    const plan = await deps.getPlanById(planId);
+export async function createSubscription(orgId, planId, paymentMethodId, email, orgName) {
+    await initDeps();
+    const plan = await getPlanById(planId);
     if (!plan) throw new Error('Invalid plan');
 
     if (!deps.stripe) {
         // Simulate subscription for development/test environments (Stripe key missing)
-        await deps.upsertOrgBilling(orgId, {
+        await upsertOrgBilling(orgId, {
             subscription_plan_id: planId,
             status: 'active'
         });
         return { id: `mock_sub_${orgId}`, status: 'active', plan };
     }
 
-    const customer = await deps.getOrCreateStripeCustomer(orgId, email, orgName);
+    const customer = await getOrCreateStripeCustomer(orgId, email, orgName);
 
     // Attach payment method
     await deps.stripe.paymentMethods.attach(paymentMethodId, { customer: customer.id });
@@ -285,7 +299,7 @@ async function createSubscription(orgId, planId, paymentMethodId, email, orgName
         expand: ['latest_invoice.payment_intent']
     });
 
-    await deps.upsertOrgBilling(orgId, {
+    await upsertOrgBilling(orgId, {
         subscription_plan_id: planId,
         stripe_subscription_id: subscription.id,
         status: subscription.status,
@@ -299,14 +313,15 @@ async function createSubscription(orgId, planId, paymentMethodId, email, orgName
 /**
  * Cancel subscription
  */
-async function cancelSubscription(orgId) {
-    const billing = await deps.getOrganizationBilling(orgId);
+export async function cancelSubscription(orgId) {
+    await initDeps();
+    const billing = await getOrganizationBilling(orgId);
     if (!billing?.stripe_subscription_id) {
         throw new Error('No active subscription');
     }
 
     if (!deps.stripe) {
-        await deps.upsertOrgBilling(orgId, { status: 'canceled' });
+        await upsertOrgBilling(orgId, { status: 'canceled' });
         return { status: 'canceled' };
     }
 
@@ -314,7 +329,7 @@ async function cancelSubscription(orgId) {
         cancel_at_period_end: true
     });
 
-    await deps.upsertOrgBilling(orgId, { status: 'canceling' });
+    await upsertOrgBilling(orgId, { status: 'canceling' });
 
     return subscription;
 }
@@ -322,14 +337,15 @@ async function cancelSubscription(orgId) {
 /**
  * Change subscription plan
  */
-async function changePlan(orgId, newPlanId) {
-    const billing = await deps.getOrganizationBilling(orgId);
-    const newPlan = await deps.getPlanById(newPlanId);
+export async function changePlan(orgId, newPlanId) {
+    await initDeps();
+    const billing = await getOrganizationBilling(orgId);
+    const newPlan = await getPlanById(newPlanId);
 
     if (!newPlan) throw new Error('Invalid plan');
 
     if (!deps.stripe || !billing?.stripe_subscription_id) {
-        await deps.upsertOrgBilling(orgId, { subscription_plan_id: newPlanId });
+        await upsertOrgBilling(orgId, { subscription_plan_id: newPlanId });
         return { status: 'updated', plan: newPlan };
     }
 
@@ -343,7 +359,7 @@ async function changePlan(orgId, newPlanId) {
         proration_behavior: 'create_prorations'
     });
 
-    await deps.upsertOrgBilling(orgId, { subscription_plan_id: newPlanId });
+    await upsertOrgBilling(orgId, { subscription_plan_id: newPlanId });
 
     return { status: 'updated', plan: newPlan };
 }
@@ -351,7 +367,8 @@ async function changePlan(orgId, newPlanId) {
 /**
  * Get invoices for organization
  */
-function getInvoices(orgId) {
+export async function getInvoices(orgId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.all(
             'SELECT * FROM invoices WHERE organization_id = ? ORDER BY created_at DESC',
@@ -367,7 +384,8 @@ function getInvoices(orgId) {
 /**
  * Record invoice from Stripe webhook
  */
-function recordInvoice(orgId, stripeInvoice) {
+export async function recordInvoice(orgId, stripeInvoice) {
+    await initDeps();
     const id = `inv-${deps.uuidv4()}`;
     return new Promise((resolve, reject) => {
         deps.db.run(
@@ -388,7 +406,8 @@ function recordInvoice(orgId, stripeInvoice) {
 /**
  * Get revenue statistics (Superadmin)
  */
-function getRevenueStats() {
+export async function getRevenueStats() {
+    await initDeps();
     return new Promise((resolve, reject) => {
         const stats = {};
 
@@ -431,7 +450,8 @@ function getRevenueStats() {
 /**
  * Get all payment methods for an organization
  */
-function getPaymentMethods(orgId) {
+export async function getPaymentMethods(orgId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.all(
             `SELECT * FROM payment_methods WHERE organization_id = ? ORDER BY is_default DESC, created_at DESC`,
@@ -447,7 +467,8 @@ function getPaymentMethods(orgId) {
 /**
  * Get a single payment method
  */
-function getPaymentMethod(paymentMethodId) {
+export async function getPaymentMethod(paymentMethodId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             'SELECT * FROM payment_methods WHERE id = ?',
@@ -463,7 +484,8 @@ function getPaymentMethod(paymentMethodId) {
 /**
  * Add a new payment method
  */
-async function addPaymentMethod(orgId, stripePaymentMethodId) {
+export async function addPaymentMethod(orgId, stripePaymentMethodId) {
+    await initDeps();
     const id = `pm-${deps.uuidv4()}`;
 
     // Get Stripe payment method details
@@ -489,7 +511,7 @@ async function addPaymentMethod(orgId, stripePaymentMethodId) {
             };
 
             // Attach to customer if we have one
-            const billing = await deps.getOrganizationBilling(orgId);
+            const billing = await getOrganizationBilling(orgId);
             if (billing?.stripe_customer_id) {
                 await deps.stripe.paymentMethods.attach(stripePaymentMethodId, {
                     customer: billing.stripe_customer_id
@@ -521,7 +543,8 @@ async function addPaymentMethod(orgId, stripePaymentMethodId) {
 /**
  * Remove a payment method
  */
-async function removePaymentMethod(paymentMethodId, orgId) {
+export async function removePaymentMethod(paymentMethodId, orgId) {
+    await initDeps();
     const pm = await getPaymentMethod(paymentMethodId);
     if (!pm || pm.organization_id !== orgId) {
         throw new Error('Payment method not found');
@@ -551,7 +574,8 @@ async function removePaymentMethod(paymentMethodId, orgId) {
 /**
  * Set a payment method as default
  */
-async function setDefaultPaymentMethod(paymentMethodId, orgId) {
+export async function setDefaultPaymentMethod(paymentMethodId, orgId) {
+    await initDeps();
     const pm = await getPaymentMethod(paymentMethodId);
     if (!pm || pm.organization_id !== orgId) {
         throw new Error('Payment method not found');
@@ -560,7 +584,7 @@ async function setDefaultPaymentMethod(paymentMethodId, orgId) {
     // Update Stripe customer default payment method
     if (deps.stripe && pm.stripe_payment_method_id) {
         try {
-            const billing = await deps.getOrganizationBilling(orgId);
+            const billing = await getOrganizationBilling(orgId);
             if (billing?.stripe_customer_id) {
                 await deps.stripe.customers.update(billing.stripe_customer_id, {
                     invoice_settings: { default_payment_method: pm.stripe_payment_method_id }
@@ -593,10 +617,12 @@ async function setDefaultPaymentMethod(paymentMethodId, orgId) {
     });
 }
 
+
 /**
  * Create a Stripe SetupIntent for adding a new payment method
  */
-async function createSetupIntent(orgId, email, orgName) {
+export async function createSetupIntent(orgId, email, orgName) {
+    await initDeps();
     if (!deps.stripe) {
         // Return mock for development
         return {
@@ -626,7 +652,8 @@ async function createSetupIntent(orgId, email, orgName) {
 /**
  * Get billing alert configuration for an organization
  */
-function getBillingAlerts(orgId) {
+export async function getBillingAlerts(orgId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             'SELECT * FROM billing_alerts WHERE organization_id = ?',
@@ -652,7 +679,8 @@ function getBillingAlerts(orgId) {
 /**
  * Update billing alert configuration
  */
-function updateBillingAlerts(orgId, alertSettings) {
+export async function updateBillingAlerts(orgId, alertSettings) {
+    await initDeps();
     const id = `alert-${deps.uuidv4()}`;
     return new Promise((resolve, reject) => {
         deps.db.run(
@@ -698,7 +726,8 @@ function updateBillingAlerts(orgId, alertSettings) {
 /**
  * Get tax settings for an organization
  */
-function getTaxSettings(orgId) {
+export async function getTaxSettings(orgId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             'SELECT * FROM billing_tax_settings WHERE organization_id = ?',
@@ -714,7 +743,8 @@ function getTaxSettings(orgId) {
 /**
  * Update tax settings
  */
-function updateTaxSettings(orgId, taxSettings) {
+export async function updateTaxSettings(orgId, taxSettings) {
+    await initDeps();
     const id = `tax-${deps.uuidv4()}`;
     return new Promise((resolve, reject) => {
         deps.db.run(
@@ -760,6 +790,7 @@ function updateTaxSettings(orgId, taxSettings) {
     });
 }
 
+
 // ==========================================
 // DISCOUNT CODES
 // ==========================================
@@ -767,7 +798,8 @@ function updateTaxSettings(orgId, taxSettings) {
 /**
  * Validate and apply a discount code
  */
-async function validateDiscountCode(code, planId) {
+export async function validateDiscountCode(code, planId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             `SELECT * FROM discount_codes 
@@ -806,7 +838,8 @@ async function validateDiscountCode(code, planId) {
 /**
  * Increment discount code usage
  */
-function incrementDiscountCodeUsage(codeId) {
+export async function incrementDiscountCodeUsage(codeId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.run(
             'UPDATE discount_codes SET current_uses = current_uses + 1 WHERE id = ?',
@@ -819,10 +852,15 @@ function incrementDiscountCodeUsage(codeId) {
     });
 }
 
+// ==========================================
+// SEAT MANAGEMENT
+// ==========================================
+
 /**
  * Get seat pricing for a plan
  */
-function getSeatPricing(planId) {
+export async function getSeatPricing(planId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             'SELECT seats_included, seat_price_monthly, max_seats FROM subscription_plans WHERE id = ?',
@@ -838,7 +876,8 @@ function getSeatPricing(planId) {
 /**
  * Calculate seat cost
  */
-function calculateSeatCost(orgId, quantity) {
+export async function calculateSeatCost(orgId, quantity) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             `SELECT sp.seat_price_monthly, os.seat_price_monthly as org_seat_price
@@ -848,11 +887,7 @@ function calculateSeatCost(orgId, quantity) {
              WHERE ob.organization_id = ?`,
             [orgId],
             (err, row) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-
+                if (err) return reject(err);
                 const seatPrice = row?.org_seat_price || row?.seat_price_monthly || 0;
                 const totalCost = seatPrice * quantity;
                 resolve({ unitPrice: seatPrice, totalCost, quantity });
@@ -864,28 +899,24 @@ function calculateSeatCost(orgId, quantity) {
 /**
  * Process seat purchase (with Stripe integration)
  */
-function processSeatPurchase(orgId, quantity, paymentMethodId) {
-    return new Promise((resolve, reject) => {
-        deps.calculateSeatCost(orgId, quantity)
-            .then((cost) => {
-                // In a full implementation, this would create a Stripe invoice item
-                // For now, return the cost calculation
-                resolve({
-                    success: true,
-                    quantity,
-                    unitPrice: cost.unitPrice,
-                    totalCost: cost.totalCost,
-                    paymentMethodId
-                });
-            })
-            .catch(reject);
-    });
+export async function processSeatPurchase(orgId, quantity, paymentMethodId) {
+    await initDeps();
+    const cost = await calculateSeatCost(orgId, quantity);
+    // In a full implementation, this would create a Stripe invoice item
+    return {
+        success: true,
+        quantity,
+        unitPrice: cost.unitPrice,
+        totalCost: cost.totalCost,
+        paymentMethodId
+    };
 }
 
 /**
  * Get billing model for organization
  */
-function getBillingModel(orgId) {
+export async function getBillingModel(orgId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             `SELECT os.billing_model, sp.billing_model as plan_billing_model
@@ -895,11 +926,7 @@ function getBillingModel(orgId) {
              WHERE os.organization_id = ?`,
             [orgId],
             (err, row) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-
+                if (err) return reject(err);
                 resolve({
                     billingModel: row?.billing_model || row?.plan_billing_model || 'subscription'
                 });
@@ -908,7 +935,24 @@ function getBillingModel(orgId) {
     });
 }
 
-module.exports = {
+/**
+ * Update billing model
+ */
+export async function updateBillingModel(orgId, model) {
+    await initDeps();
+    return new Promise((resolve, reject) => {
+        deps.db.run(
+            'UPDATE organization_seats SET billing_model = ?, updated_at = CURRENT_TIMESTAMP WHERE organization_id = ?',
+            [model, orgId],
+            function (err) {
+                if (err) reject(err);
+                else resolve({ organization_id: orgId, billing_model: model });
+            }
+        );
+    });
+}
+
+export default {
     setDependencies,
     getPlans,
     getPlanById,
@@ -948,5 +992,7 @@ module.exports = {
     getSeatPricing,
     calculateSeatCost,
     processSeatPurchase,
-    getBillingModel
+    getBillingModel,
+    updateBillingModel
 };
+

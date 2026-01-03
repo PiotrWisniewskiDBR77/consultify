@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const mcpRoutesJS = require('../../routes/mcp.js');
+const mcpRoutesJSPromise = (async () => {
+    const module = await import('../../routes/mcp.js');
+    return module.default || module;
+})();
+const mcpRoutesJS = mcpRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

@@ -4,13 +4,13 @@ const { AppError, asyncHandler: catchAsync } = require('../utils/errorHandler');
 const deps = {
     db: require('../database'),
     ActivityService: require('../services/activityService'),
-    BillingService: require('../services/billingService'),
+    BillingService: null, // Lazy loaded
     UsageService: require('../services/usageService'),
     RealtimeService: require('../services/realtimeService'),
     StorageService: require('../services/storageService'),
     LegalService: require('../services/legalService'),
     LegalEventLogger: require('../services/legalEventLogger').LegalEventLogger,
-    AttributionService: require('../services/attributionService'),
+    AttributionService: null, // Lazy loaded
     jwt: require('jsonwebtoken'),
     bcrypt: require('bcryptjs'),
     config: require('../config'),
@@ -45,6 +45,28 @@ const deps = {
     ThreatIntelligenceService: require('../services/threatIntelligenceService'),
     DLPService: require('../services/dlpService'),
     DashboardBuilderService: require('../services/dashboardBuilderService')
+};
+
+/**
+ * Lazy load AttributionService (ES module)
+ */
+const getAttributionService = async () => {
+    if (!deps.AttributionService) {
+        const module = await import('../services/attributionService.js');
+        deps.AttributionService = module.default;
+    }
+    return deps.AttributionService;
+};
+
+/**
+ * Lazy load BillingService (ES module)
+ */
+const getBillingService = async () => {
+    if (!deps.BillingService) {
+        const module = await import('../services/billingService.js');
+        deps.BillingService = module.default;
+    }
+    return deps.BillingService;
 };
 
 /**
@@ -196,10 +218,11 @@ const deleteOrganization = catchAsync(async (req, res, next) => {
  */
 const getOrgBilling = catchAsync(async (req, res, next) => {
     const { id } = req.params;
+    const BillingService = await getBillingService();
     const [billing, usage, invoices] = await Promise.all([
-        deps.BillingService.getOrganizationBilling(id),
+        BillingService.getOrganizationBilling(id),
         deps.UsageService.getCurrentUsage(id),
-        deps.BillingService.getInvoices(id)
+        BillingService.getInvoices(id)
     ]);
 
     res.json({
@@ -703,8 +726,9 @@ const getLegalEventStats = catchAsync(async (req, res, next) => {
  */
 const getOrgAttribution = catchAsync(async (req, res, next) => {
     const { id } = req.params;
-    const attribution = await deps.AttributionService.getOrganizationAttribution(id);
-    const firstAttribution = await deps.AttributionService.getFirstAttribution(id);
+    const AttributionService = await getAttributionService();
+    const attribution = await AttributionService.getOrganizationAttribution(id);
+    const firstAttribution = await AttributionService.getFirstAttribution(id);
 
     res.json({
         organizationId: id,

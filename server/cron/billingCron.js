@@ -3,18 +3,61 @@
  * Handles scheduled tasks for billing system
  */
 
+// Dependency injection container
 const deps = {
-    db: require('../database'),
-    budgetManagementService: require('../services/budgetManagementService'),
-    adminAlertService: require('../services/adminAlertService'),
-    payAsYouGoService: require('../services/payAsYouGoService'),
-    seatManagementService: require('../services/seatManagementService')
+    _db: null,
+    _budgetManagementService: null,
+    _adminAlertService: null,
+    _payAsYouGoService: null,
+    _seatManagementService: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get budgetManagementService() { return this._budgetManagementService; },
+    set budgetManagementService(val) { this._budgetManagementService = val; },
+
+    get adminAlertService() { return this._adminAlertService; },
+    set adminAlertService(val) { this._adminAlertService = val; },
+
+    get payAsYouGoService() { return this._payAsYouGoService; },
+    set payAsYouGoService(val) { this._payAsYouGoService = val; },
+
+    get seatManagementService() { return this._seatManagementService; },
+    set seatManagementService(val) { this._seatManagementService = val; }
 };
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._budgetManagementService) {
+        const { default: budgetManagementService } = await import('../services/budgetManagementService.js');
+        deps._budgetManagementService = budgetManagementService;
+    }
+    if (!deps._adminAlertService) {
+        const { default: adminAlertService } = await import('../services/adminAlertService.js');
+        deps._adminAlertService = adminAlertService;
+    }
+    if (!deps._payAsYouGoService) {
+        const { default: payAsYouGoService } = await import('../services/payAsYouGoService.js');
+        deps._payAsYouGoService = payAsYouGoService;
+    }
+    if (!deps._seatManagementService) {
+        const { default: seatManagementService } = await import('../services/seatManagementService.js');
+        deps._seatManagementService = seatManagementService;
+    }
+}
 
 /**
  * Reset monthly budgets (runs daily, checks reset_day_of_month)
  */
 async function resetMonthlyBudgets() {
+    await initDeps();
     try {
         console.log('[BillingCron] Running resetMonthlyBudgets...');
         await deps.budgetManagementService.resetMonthlyBudgets();
@@ -28,6 +71,7 @@ async function resetMonthlyBudgets() {
  * Check and trigger admin alerts (runs hourly)
  */
 async function checkAndTriggerAlerts() {
+    await initDeps();
     try {
         console.log('[BillingCron] Running checkAndTriggerAlerts...');
         
@@ -62,6 +106,7 @@ async function checkAndTriggerAlerts() {
  * Generate PAYG invoices (runs monthly)
  */
 async function generatePayAsYouGoInvoices() {
+    await initDeps();
     try {
         console.log('[BillingCron] Running generatePayAsYouGoInvoices...');
         
@@ -110,6 +155,7 @@ async function generatePayAsYouGoInvoices() {
  * Update seat counts (runs daily)
  */
 async function updateSeatCounts() {
+    await initDeps();
     try {
         console.log('[BillingCron] Running updateSeatCounts...');
         
@@ -140,6 +186,7 @@ async function updateSeatCounts() {
  * Calculate monthly usage (runs monthly)
  */
 async function calculateMonthlyUsage() {
+    await initDeps();
     try {
         console.log('[BillingCron] Running calculateMonthlyUsage...');
         // This would aggregate usage_records into usage_summaries
@@ -150,7 +197,7 @@ async function calculateMonthlyUsage() {
     }
 }
 
-module.exports = {
+export default {
     resetMonthlyBudgets,
     checkAndTriggerAlerts,
     generatePayAsYouGoInvoices,
@@ -159,7 +206,7 @@ module.exports = {
 };
 
 // If run directly, execute all tasks (for testing)
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
     (async () => {
         console.log('Running billing cron jobs...\n');
         await resetMonthlyBudgets();

@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const stage_gatesRoutesJS = require('../../routes/stage-gates.js');
+const stage_gatesRoutesJSPromise = (async () => {
+    const module = await import('../../routes/stage-gates.js');
+    return module.default || module;
+})();
+const stage_gatesRoutesJS = stage_gatesRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

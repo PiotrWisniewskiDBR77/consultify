@@ -2,33 +2,131 @@
  * Trial Routes
  * API endpoints for trial
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript
+ * Fully migrated to TypeScript ES modules
  */
 
-import { Router } from 'express';
-import { createRequire } from 'module';
+import { Router, Response } from 'express';
+import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { demoGuard } from '../middleware/demoGuard.middleware.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
-const require = createRequire(import.meta.url);
-
-// Import the JS implementation for now (will be fully migrated later)
-const trialRoutesJS = require('../../routes/trial.js');
-
-// Create router and apply JS routes
 const router = Router();
 
-// Re-export the JS router (maintains backward compatibility)
-// The JS route file exports a router that we can use directly
-if (typeof trialRoutesJS === 'function') {
-    // If it's a router function, use it
-    router.use(trialRoutesJS);
-} else if (trialRoutesJS.default) {
-    // If it has a default export
-    router.use(trialRoutesJS.default);
-} else {
-    // If it's the router itself
-    router.use(trialRoutesJS);
+// Service interfaces
+interface TrialServiceInterface {
+    convertTrialToOrg?: (trialId: string, userId: string, newOrgName: string) => Promise<{ newOrganizationId: string }>;
 }
+
+interface AuditServiceInterface {
+    log?: (data: {
+        userId: string;
+        action: string;
+        entityType: string;
+        entityId: string;
+        metadata?: Record<string, unknown>;
+    }) => Promise<void>;
+}
+
+// Dynamic imports for services (may not be migrated yet)
+let TrialService: TrialServiceInterface | null = null;
+let AuditService: AuditServiceInterface | null = null;
+
+try {
+    const trialModule = await import('../../services/trialService.js');
+    TrialService = (trialModule.default || trialModule) as TrialServiceInterface;
+} catch {
+    console.warn('[Trial Routes] TrialService not available');
+}
+
+try {
+    const auditModule = await import('../../services/auditService.js');
+    AuditService = (auditModule.default || auditModule) as AuditServiceInterface;
+} catch {
+    console.warn('[Trial Routes] AuditService not available');
+}
+
+/**
+ * POST /api/trial/:trialId/convert
+ * Convert trial to permanent organization
+ */
+router.post('/:trialId/convert', verifyToken, demoGuard, asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!TrialService?.convertTrialToOrg) {
+        return res.status(503).json({ error: 'Trial service not available' });
+    }
+
+    try {
+        const { trialId } = req.params;
+        const { newOrgName } = req.body;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        if (!newOrgName) {
+            return res.status(400).json({ error: 'New organization name is required' });
+        }
+
+        const result = await TrialService.convertTrialToOrg(trialId, userId, newOrgName);
+
+        res.json({
+            success: true,
+            message: 'Trial converted successfully',
+            newOrganizationId: result.newOrganizationId
+        });
+    } catch (error: unknown) {
+        console.error('Trial Conversion Error:', error);
+        res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+}));
+
+/**
+ * POST /api/trial/confirm-transition
+ * Records explicit user confirmations before organization creation (Phase C → D Gate)
+ */
+router.post('/confirm-transition', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!AuditService?.log) {
+        return res.status(503).json({ error: 'Audit service not available' });
+    }
+
+    try {
+        const { confirmations, confirmedAt } = req.body;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        // Validate all 3 confirmations are present
+        if (!confirmations?.timeCommitment || !confirmations?.teamScope || !confirmations?.memoryAware) {
+            return res.status(400).json({
+                error: 'All three confirmations required',
+                required: ['timeCommitment', 'teamScope', 'memoryAware']
+            });
+        }
+
+        // Log to audit trail
+        await AuditService.log({
+            userId,
+            action: 'trial_transition_confirmed',
+            entityType: 'user',
+            entityId: userId,
+            metadata: {
+                confirmations,
+                confirmedAt: confirmedAt || new Date().toISOString(),
+                phase: 'C_TO_D',
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Transition confirmed',
+            nextStep: 'ORG_SETUP_WIZARD'
+        });
+    } catch (error: unknown) {
+        console.error('Transition Confirmation Error:', error);
+        res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+}));
 
 export default router;

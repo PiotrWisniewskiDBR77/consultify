@@ -6,21 +6,64 @@
  * used by both UI and AI context builder to ensure consistency.
  */
 
-// Dependency injection container (for deterministic unit tests)
-// Use createRequire for compatibility with both CommonJS and ES modules in tests
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-
+/**
+ * Dependency injection container
+ */
 const deps = {
-    db: require('../database'),
-    StageGateService: require('./stageGateService')
+    _db: null,
+    _stageGateService: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get stageGateService() { return this._stageGateService; },
+    set stageGateService(val) { this._stageGateService = val; }
 };
 
-const PMOHealthService = {
-    // For testing: allow overriding dependencies
-    setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
-    },
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: dbInstance } = await import('../database.js');
+        deps._db = dbInstance;
+    }
+
+    if (!deps._stageGateService) {
+        const { default: stageGateService } = await import('./stageGateService.js');
+        deps._stageGateService = stageGateService;
+    }
+}
+
+class PMOHealthService {
+    constructor() {
+        this._db = null;
+    }
+
+    get db() {
+        if (!this._db) {
+            throw new Error('PMOHealthService: Database not initialized. Call init() first.');
+        }
+        return this._db;
+    }
+
+    /**
+     * Initialize service dependencies
+     */
+    async init() {
+        await initDeps();
+        this._db = deps.db;
+        return this;
+    }
+
+    /**
+     * Set dependencies for testing
+     */
+    setDependencies(mockDeps) {
+        Object.assign(deps, mockDeps);
+        this._db = deps.db;
+    }
+
     /**
      * Get PMOHealthSnapshot for a project
      * Returns a canonical snapshot of project health status
@@ -28,12 +71,13 @@ const PMOHealthService = {
      * @param {string} projectId - The project ID
      * @returns {Promise<PMOHealthSnapshot>}
      */
-    getHealthSnapshot: async (projectId) => {
+    async getHealthSnapshot(projectId) {
+        await this.init();
         const startTime = Date.now();
 
         // 1. Get project and current phase
         const project = await new Promise((resolve, reject) => {
-            deps.db.get(`SELECT * FROM projects WHERE id = ?`, [projectId], (err, row) => {
+            this.db.get(`SELECT * FROM projects WHERE id = ?`, [projectId], (err, row) => {
                 if (err) reject(err);
                 else resolve(row);
             });
@@ -44,7 +88,7 @@ const PMOHealthService = {
         }
 
         const currentPhase = project.current_phase || 'Context';
-        const phaseNumber = deps.StageGateService.PHASE_ORDER.indexOf(currentPhase) + 1;
+        const phaseNumber = deps.stageGateService.PHASE_ORDER.indexOf(currentPhase) + 1;
 
         // 2. Evaluate stage gate
         let stageGate = {
@@ -54,12 +98,12 @@ const PMOHealthService = {
             metCriteria: []
         };
 
-        if (phaseNumber < deps.StageGateService.PHASE_ORDER.length) {
-            const nextPhase = deps.StageGateService.PHASE_ORDER[phaseNumber];
-            const gateType = deps.StageGateService.getGateType(currentPhase, nextPhase);
+        if (phaseNumber < deps.stageGateService.PHASE_ORDER.length) {
+            const nextPhase = deps.stageGateService.PHASE_ORDER[phaseNumber];
+            const gateType = deps.stageGateService.getGateType(currentPhase, nextPhase);
 
             if (gateType) {
-                const evaluation = await deps.StageGateService.evaluateGate(projectId, gateType);
+                const evaluation = await deps.stageGateService.evaluateGate(projectId, gateType);
                 stageGate = {
                     gateType,
                     isReady: evaluation.status === 'READY',
@@ -74,16 +118,16 @@ const PMOHealthService = {
         }
 
         // 3. Get task counts with efficient SQL
-        const taskCounts = await PMOHealthService._getTaskCounts(projectId);
+        const taskCounts = await this._getTaskCounts(projectId);
 
         // 4. Get decision counts
-        const decisionCounts = await PMOHealthService._getDecisionCounts(projectId);
+        const decisionCounts = await this._getDecisionCounts(projectId);
 
         // 5. Get initiative counts
-        const initiativeCounts = await PMOHealthService._getInitiativeCounts(projectId);
+        const initiativeCounts = await this._getInitiativeCounts(projectId);
 
         // 6. Get blockers
-        const blockers = await PMOHealthService._getBlockers(projectId);
+        const blockers = await this._getBlockers(projectId);
 
         const duration = Date.now() - startTime;
         console.log(`[PMOHealthService] Snapshot generated in ${duration}ms for project ${projectId}`);
@@ -102,17 +146,18 @@ const PMOHealthService = {
             initiatives: initiativeCounts,
             updatedAt: new Date().toISOString()
         };
-    },
+    }
 
     /**
      * Get task counts efficiently
      */
-    _getTaskCounts: async (projectId) => {
+    async _getTaskCounts(projectId) {
+        await this.init();
         const today = new Date().toISOString().split('T')[0];
         const dueSoonDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
         return new Promise((resolve) => {
-            deps.db.get(`
+            this.db.get(`
                 SELECT 
                     SUM(CASE WHEN due_date < ? AND status NOT IN ('done', 'DONE', 'cancelled', 'CANCELLED') THEN 1 ELSE 0 END) as overdueCount,
                     SUM(CASE WHEN due_date >= ? AND due_date <= ? AND status NOT IN ('done', 'DONE', 'cancelled', 'CANCELLED') THEN 1 ELSE 0 END) as dueSoonCount,
@@ -132,16 +177,17 @@ const PMOHealthService = {
                 }
             });
         });
-    },
+    }
 
     /**
      * Get decision counts efficiently
      */
-    _getDecisionCounts: async (projectId) => {
+    async _getDecisionCounts(projectId) {
+        await this.init();
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
         return new Promise((resolve) => {
-            deps.db.get(`
+            this.db.get(`
                 SELECT 
                     SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) as pendingCount,
                     SUM(CASE WHEN status = 'PENDING' AND created_at < ? THEN 1 ELSE 0 END) as overdueCount
@@ -159,14 +205,15 @@ const PMOHealthService = {
                 }
             });
         });
-    },
+    }
 
     /**
      * Get initiative counts efficiently
      */
-    _getInitiativeCounts: async (projectId) => {
+    async _getInitiativeCounts(projectId) {
+        await this.init();
         return new Promise((resolve) => {
-            deps.db.get(`
+            this.db.get(`
                 SELECT 
                     SUM(CASE WHEN risk_level = 'HIGH' OR status = 'AT_RISK' THEN 1 ELSE 0 END) as atRiskCount,
                     SUM(CASE WHEN status IN ('blocked', 'BLOCKED') THEN 1 ELSE 0 END) as blockedCount
@@ -184,19 +231,20 @@ const PMOHealthService = {
                 }
             });
         });
-    },
+    }
 
     /**
      * Get blockers across all types
      */
-    _getBlockers: async (projectId) => {
+    async _getBlockers(projectId) {
+        await this.init();
         const blockers = [];
         const today = new Date().toISOString().split('T')[0];
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
         // Overdue tasks
         const overdueTasks = await new Promise((resolve) => {
-            deps.db.all(`
+            this.db.all(`
                 SELECT id, title FROM tasks 
                 WHERE project_id = ? AND due_date < ? AND status NOT IN ('done', 'DONE', 'cancelled', 'CANCELLED')
                 LIMIT 5
@@ -213,7 +261,7 @@ const PMOHealthService = {
 
         // Pending decisions (7+ days)
         const pendingDecisions = await new Promise((resolve) => {
-            deps.db.all(`
+            this.db.all(`
                 SELECT id, title FROM decisions 
                 WHERE project_id = ? AND status = 'PENDING' AND created_at < ?
                 LIMIT 5
@@ -229,17 +277,16 @@ const PMOHealthService = {
         }
 
         // Stage gate blockers (missing criteria)
-        const phaseNumber = deps.StageGateService.PHASE_ORDER.indexOf(
-            await PMOHealthService._getCurrentPhase(projectId)
-        ) + 1;
+        const phaseName = await this._getCurrentPhase(projectId);
+        const phaseNumber = deps.stageGateService.PHASE_ORDER.indexOf(phaseName) + 1;
 
-        if (phaseNumber < deps.StageGateService.PHASE_ORDER.length) {
-            const nextPhase = deps.StageGateService.PHASE_ORDER[phaseNumber];
-            const currentPhase = deps.StageGateService.PHASE_ORDER[phaseNumber - 1];
-            const gateType = deps.StageGateService.getGateType(currentPhase, nextPhase);
+        if (phaseNumber < deps.stageGateService.PHASE_ORDER.length) {
+            const nextPhase = deps.stageGateService.PHASE_ORDER[phaseNumber];
+            const currentPhase = deps.stageGateService.PHASE_ORDER[phaseNumber - 1];
+            const gateType = deps.stageGateService.getGateType(currentPhase, nextPhase);
 
             if (gateType) {
-                const evaluation = await deps.StageGateService.evaluateGate(projectId, gateType);
+                const evaluation = await deps.stageGateService.evaluateGate(projectId, gateType);
                 const missing = (evaluation.completionCriteria || []).filter(c => !c.isMet);
 
                 if (missing.length > 0) {
@@ -253,18 +300,20 @@ const PMOHealthService = {
         }
 
         return blockers;
-    },
+    }
 
     /**
      * Get current phase for a project
      */
-    _getCurrentPhase: async (projectId) => {
+    async _getCurrentPhase(projectId) {
+        await this.init();
         return new Promise((resolve) => {
-            deps.db.get(`SELECT current_phase FROM projects WHERE id = ?`, [projectId], (err, row) => {
+            this.db.get(`SELECT current_phase FROM projects WHERE id = ?`, [projectId], (err, row) => {
                 resolve(row?.current_phase || 'Context');
             });
         });
     }
-};
+}
 
-module.exports = PMOHealthService;
+const pmoHealthServiceInstance = new PMOHealthService();
+export default pmoHealthServiceInstance;

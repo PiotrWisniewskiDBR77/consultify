@@ -9,6 +9,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import type { AuthRequest } from './auth.middleware';
+import { get as dbGet } from '../utils/DbPromise.js';
 
 // ==========================================
 // TYPES
@@ -21,9 +22,7 @@ interface JWTPayload {
     organization_id?: string;
 }
 
-interface Database {
-    get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
-}
+// Database interface no longer needed - using DbPromise directly
 
 interface UserRow {
     role?: string;
@@ -32,7 +31,6 @@ interface UserRow {
 interface Dependencies {
     jwt: typeof jwt;
     config: { JWT_SECRET: string };
-    db: Database;
 }
 
 // ==========================================
@@ -43,14 +41,12 @@ let deps: Dependencies;
 
 const getDeps = (): Dependencies => {
     if (!deps) {
-        const defaultJwt = require('jsonwebtoken');
-        const defaultConfig = require('../../config');
-        const defaultDb = require('../../database');
+        const defaultJwt = await import('jsonwebtoken.js').then(m => m.default || m);
+        const defaultConfig = await import('../../config.js').then(m => m.default || m);
         
         deps = {
             jwt: defaultJwt,
             config: defaultConfig,
-            db: defaultDb,
         };
     }
     return deps;
@@ -97,12 +93,7 @@ export const verifySuperAdmin = (
         if (userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') {
             console.log(`[SuperAdmin Middleware] Initial role check failed for: ${userRole}`);
             try {
-                const user = await new Promise<UserRow | null>((resolve, reject) => {
-                    db.get('SELECT role FROM users WHERE id = ?', [payload.id], (dbErr, row) => {
-                        if (dbErr) reject(dbErr);
-                        else resolve(row as UserRow | null);
-                    });
-                });
+                const user = await dbGet<UserRow>('SELECT role FROM users WHERE id = ?', [payload.id]);
 
                 if (user && (user.role === 'SUPERADMIN' || user.role === 'SUPER_ADMIN')) {
                     // Role was changed in database, update decoded token

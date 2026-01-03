@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const aiPlaybooksRoutesJS = require('../../routes/aiPlaybooks.js');
+const aiPlaybooksRoutesJSPromise = (async () => {
+    const module = await import('../../routes/aiPlaybooks.js');
+    return module.default || module;
+})();
+const aiPlaybooksRoutesJS = aiPlaybooksRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

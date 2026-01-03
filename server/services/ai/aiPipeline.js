@@ -1,42 +1,26 @@
-// server/services/ai/aiPipeline.js
-// ============================================================================
-// UNIFIED AI PIPELINE - Enterprise-Grade AI Processing
-// ============================================================================
-// This is the main entry point for all AI operations in Consultify.
-// Migrated from aiService.js (2062 lines) to this unified, capability-based pipeline.
-// 
-// Features:
-// - Multi-provider support with automatic fallback (12 providers)
-// - Enterprise security (PII detection, rate limiting, audit logging)
-// - Quality validation (hallucination detection)
-// - 5-layer memory system
-// - Semantic caching
-// - Performance optimization
-// - Learning system for pattern extraction
-// ============================================================================
-
-const { AIGateway } = require('./aiGateway');
-const { enhancedContextBuilder } = require('./enhancedContextBuilder');
-const { PromptAssembler, FALLBACK_ROLES } = require('./promptAssembler');
-const { ModelRouter } = require('./modelRouter');
-const { LLMService } = require('./llmService');
-const { quotaService } = require('./quotaService');
-const { memoryManager } = require('./memoryManager');
-const { aiLogger } = require('./logger');
-const { createTrace, calculateCost } = require('./observability');
-const metrics = require('./metrics');
-const crypto = require('crypto');
-const db = require('../../database');
+import BaseService from '../BaseService.js';
+import { AIGateway } from './aiGateway.js';
+import { enhancedContextBuilder } from './enhancedContextBuilder.js';
+import { PromptAssembler, FALLBACK_ROLES } from './promptAssembler.js';
+import { ModelRouter } from './modelRouter.js';
+import { LLMService } from './llmService.js';
+import { quotaService } from './quotaService.js';
+import { memoryManager } from './memoryManager.js';
+import { aiLogger } from './logger.js';
+import { createTrace, calculateCost } from './observability.js';
+import metrics from './metrics.js';
+import crypto from 'crypto';
+import db from '../../database.js';
 
 // Enterprise AI Services Integration
-const { qualityChecker } = require('./qualityChecker');
-const { enterpriseSecurity } = require('./enterpriseSecurity');
-const { performanceOptimizer } = require('./performanceOptimizer');
-const { learningSystem } = require('./learningSystem');
+import { qualityChecker } from './qualityChecker.js';
+import { enterpriseSecurity } from './enterpriseSecurity.js';
+import { performanceOptimizer } from './performanceOptimizer.js';
+import { learningSystem } from './learningSystem.js';
 
 // AI Settings Integration
-const AISettingsService = require('../aiSettingsService');
-const AIProactivityEngine = require('../aiProactivityEngine');
+import AISettingsService from '../aiSettingsService.js';
+import AIProactivityEngine from '../aiProactivityEngine.js';
 
 // ============================================================================
 // CAPABILITY REGISTRY
@@ -306,8 +290,9 @@ function getCapabilityConfig(capability) {
     };
 }
 
-class AIPipeline {
+class AIPipeline extends BaseService {
     constructor(dependencies = {}) {
+        super();
         this.gateway = new AIGateway();
         this.contextBuilder = enhancedContextBuilder;
         this.promptAssembler = new PromptAssembler();
@@ -331,11 +316,26 @@ class AIPipeline {
         this.qualityChecker = injectedQualityChecker || qualityChecker;
         this.performanceOptimizer = injectedOptimizer || performanceOptimizer;
         this.learningSystem = injectedLearningSystem || learningSystem;
-        this.cacheService = injectedCacheService || require('./cacheService').cacheService;
+        this.cacheService = injectedCacheService || null; // Will be loaded lazily if needed
 
         // Initialize other services
-        this.ragService = require('../ragService');
-        this.settingsService = require('../aiSettingsService').aiSettingsService;
+        this.ragService = null;
+        this.settingsService = null;
+    }
+
+    async initDeps() {
+        if (!this.cacheService) {
+            const { cacheService } = await import('./cacheService.js');
+            this.cacheService = cacheService;
+        }
+        if (!this.ragService) {
+            const { default: ragService } = await import('../ragService.js');
+            this.ragService = ragService;
+        }
+        if (!this.settingsService) {
+            const { aiSettingsService } = await import('../aiSettingsService.js');
+            this.settingsService = aiSettingsService;
+        }
     }
 
     // =========================================================================
@@ -1732,23 +1732,16 @@ function enhanceResponse(response) {
 // ============================================================================
 const aiPipeline = new AIPipeline();
 
-module.exports = {
+export {
     AIPipeline,
     aiPipeline,
     CAPABILITY_REGISTRY,
     getCapabilityConfig,
     FALLBACK_ROLES,
-    // Domain-specific methods for backward compatibility
-    suggestTasks,
-    validateInitiative,
-    enrichInitiative,
-    generateObservations,
-    generateStructuredContent,
-    chat,
-    streamChat,
-    parseJsonResponse,
     // World-Class Chat 2025: Thinking & Artifacts
     extractThinkingSteps,
     extractArtifacts,
     enhanceResponse
 };
+
+export default aiPipeline;

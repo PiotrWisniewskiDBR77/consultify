@@ -352,7 +352,7 @@ const AIDecisionGovernance = {
      */
     getDecisionDebt: async (projectId) => {
         return new Promise((resolve, reject) => {
-            db.all(`
+            deps.db.all(`
                 SELECT 
                     d.id, d.title, d.decision_type, d.status, d.created_at,
                     u.first_name, u.last_name,
@@ -508,4 +508,4 @@ const AIDecisionGovernance = {
     }
 };
 
-module.exports = AIDecisionGovernance;
+export default AIDecisionGovernance;

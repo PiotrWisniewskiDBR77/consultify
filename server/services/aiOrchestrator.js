@@ -3,27 +3,86 @@
 // Extended for AI Trust & Explainability Layer
 // Extended for Demo/Trial Access Model
 
-// Dependency injection for testing
+import { v4 as uuidv4 } from 'uuid';
+
+/**
+ * Dependency injection container with lazy loading to prevent circular dependencies
+ */
 const deps = {
-    AIContextBuilder: require('./aiContextBuilder'),
-    AIPolicyEngine: require('./aiPolicyEngine'),
-    AIMemoryManager: require('./aiMemoryManager'),
-    AIRoleGuard: require('./aiRoleGuard'),
-    RegulatoryModeGuard: require('./regulatoryModeGuard'),
-    AIExplainabilityService: require('./aiExplainabilityService'),
-    AccessPolicyService: require('./accessPolicyService'),
-    TokenBillingService: require('./tokenBillingService'),
-    uuidv4: require('uuid').v4
+    _AIContextBuilder: null,
+    _AIPolicyEngine: null,
+    _AIMemoryManager: null,
+    _AIRoleGuard: null,
+    _RegulatoryModeGuard: null,
+    _AIExplainabilityService: null,
+    _AccessPolicyService: null,
+    _TokenBillingService: null,
+    _AIResponsePostProcessor: null,
+    _AIAgents: null,
+    uuidv4,
+
+    get AIContextBuilder() { return this._AIContextBuilder; },
+    get AIPolicyEngine() { return this._AIPolicyEngine; },
+    get AIMemoryManager() { return this._AIMemoryManager; },
+    get AIRoleGuard() { return this._AIRoleGuard; },
+    get RegulatoryModeGuard() { return this._RegulatoryModeGuard; },
+    get AIExplainabilityService() { return this._AIExplainabilityService; },
+    get AccessPolicyService() { return this._AccessPolicyService; },
+    get TokenBillingService() { return this._TokenBillingService; },
+    get AIResponsePostProcessor() { return this._AIResponsePostProcessor; },
+    get AIAgents() { return this._AIAgents; }
 };
 
-const AI_ROLES = {
+/**
+ * Initialize all dependencies dynamically
+ */
+async function initDeps() {
+    if (!deps._AIContextBuilder) {
+        const [
+            { default: aiContextBuilder },
+            { default: aiPolicyEngine },
+            { default: aiMemoryManager },
+            { default: aiRoleGuard },
+            { default: regulatoryModeGuard },
+            { default: aiExplainabilityService },
+            { default: accessPolicyService },
+            { default: tokenBillingService },
+            { aiResponsePostProcessor },
+            aiAgents
+        ] = await Promise.all([
+            import('./aiContextBuilder.js'),
+            import('./aiPolicyEngine.js'),
+            import('./aiMemoryManager.js'),
+            import('./aiRoleGuard.js'),
+            import('./regulatoryModeGuard.js'),
+            import('./aiExplainabilityService.js'),
+            import('./accessPolicyService.js'),
+            import('./tokenBillingService.js'),
+            import('./aiResponsePostProcessor.js'),
+            import('./ai/agents/index.js')
+        ]);
+
+        deps._AIContextBuilder = aiContextBuilder;
+        deps._AIPolicyEngine = aiPolicyEngine;
+        deps._AIMemoryManager = aiMemoryManager;
+        deps._AIRoleGuard = aiRoleGuard;
+        deps._RegulatoryModeGuard = regulatoryModeGuard;
+        deps._AIExplainabilityService = aiExplainabilityService;
+        deps._AccessPolicyService = accessPolicyService;
+        deps._TokenBillingService = tokenBillingService;
+        deps._AIResponsePostProcessor = aiResponsePostProcessor;
+        deps._AIAgents = aiAgents;
+    }
+}
+
+export const AI_ROLES = {
     ADVISOR: 'ADVISOR',
     PMO_MANAGER: 'PMO_MANAGER',
     EXECUTOR: 'EXECUTOR',
     EDUCATOR: 'EDUCATOR'
 };
 
-const CHAT_MODES = {
+export const CHAT_MODES = {
     EXPLAIN: 'EXPLAIN',
     GUIDE: 'GUIDE',
     ANALYZE: 'ANALYZE',
@@ -31,7 +90,7 @@ const CHAT_MODES = {
     TEACH: 'TEACH'
 };
 
-const AIOrchestrator = {
+export const AIOrchestrator = {
     AI_ROLES,
     CHAT_MODES,
 
@@ -39,13 +98,25 @@ const AIOrchestrator = {
      * Allow dependency injection for testing
      */
     _setDependencies: (newDeps) => {
-        Object.assign(deps, newDeps);
+        if (newDeps.AIContextBuilder) deps._AIContextBuilder = newDeps.AIContextBuilder;
+        if (newDeps.AIPolicyEngine) deps._AIPolicyEngine = newDeps.AIPolicyEngine;
+        if (newDeps.AIMemoryManager) deps._AIMemoryManager = newDeps.AIMemoryManager;
+        if (newDeps.AIRoleGuard) deps._AIRoleGuard = newDeps.AIRoleGuard;
+        if (newDeps.RegulatoryModeGuard) deps._RegulatoryModeGuard = newDeps.RegulatoryModeGuard;
+        if (newDeps.AIExplainabilityService) deps._AIExplainabilityService = newDeps.AIExplainabilityService;
+        if (newDeps.AccessPolicyService) deps._AccessPolicyService = newDeps.AccessPolicyService;
+        if (newDeps.TokenBillingService) deps._TokenBillingService = newDeps.TokenBillingService;
+        if (newDeps.AIResponsePostProcessor) deps._AIResponsePostProcessor = newDeps.AIResponsePostProcessor;
+        if (newDeps.AIAgents) deps._AIAgents = newDeps.AIAgents;
+        if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
     },
 
     /**
      * Process a chat message
      */
     processMessage: async (message, userId, organizationId, projectId = null, options = {}) => {
+        await initDeps();
+
         // 0. Check Demo/Trial access policy
         const accessContext = await deps.AccessPolicyService.getAIAccessContext(organizationId);
 
@@ -254,11 +325,11 @@ const AIOrchestrator = {
     _buildPrompt: (userMessage, responseContext, options = {}) => {
         const { role, context, policy, preferences } = responseContext;
         let { projectMemory } = responseContext;
-        
+
         // Token control: Get model and apply trimming if needed
         const modelName = options.modelName || policy?.preferredModel || 'gpt-4';
         const conversationHistory = options.conversationHistory || [];
-        
+
         // Analyze token usage and auto-trim if necessary
         if (projectMemory || conversationHistory.length > 0) {
             const trimResult = deps.AIMemoryManager.autoTrimContext({
@@ -268,7 +339,7 @@ const AIOrchestrator = {
                 memory: projectMemory,
                 modelName
             });
-            
+
             if (trimResult.trimmed) {
                 projectMemory = trimResult.memory;
                 // Log trimming event for monitoring
@@ -283,7 +354,7 @@ const AIOrchestrator = {
 
         // REGULATORY MODE: Inject compliance prompt FIRST if enabled
         let regulatoryPrefix = '';
-        if (policy?.regulatoryModeEnabled) {
+        if (policy?.regulatoryModeEnabled && deps.RegulatoryModeGuard) {
             regulatoryPrefix = deps.RegulatoryModeGuard.getRegulatoryPrompt() + '\n\n';
         }
 
@@ -323,12 +394,12 @@ CURRENT CONTEXT:
 
 CURRENT WORKSPACE:
 - User is viewing: ${context.currentScreen || 'general dashboard'}`;
-            
+
             if (context.selectedObjectId) {
                 systemPrompt += `
 - Selected object: ${context.selectedObjectType || 'unknown'} (ID: ${context.selectedObjectId})`;
             }
-            
+
             // Add contextual hints based on screen
             const screenContextHints = {
                 'initiatives': 'Focus on initiative management, status updates, and deliverables.',
@@ -342,16 +413,16 @@ CURRENT WORKSPACE:
                 'settings': 'Focus on configuration, preferences, and system management.',
                 'projects': 'Focus on project overview, health, and portfolio view.'
             };
-            
-            const screenKey = Object.keys(screenContextHints).find(key => 
+
+            const screenKey = Object.keys(screenContextHints).find(key =>
                 (context.currentScreen || '').toLowerCase().includes(key)
             );
-            
+
             if (screenKey) {
                 systemPrompt += `
 - Context hint: ${screenContextHints[screenKey]}`;
             }
-            
+
             systemPrompt += `
 - IMPORTANT: Reference this workspace context in your response when relevant.`;
         }
@@ -443,7 +514,7 @@ USER MESSAGE: ${userMessage}`;
 
         // Prepend regulatory mode prompt if enabled
         const finalPrompt = regulatoryPrefix + systemPrompt;
-        
+
         // Token usage analysis for monitoring
         const tokenAnalysis = deps.AIMemoryManager.analyzeContextTokens(
             finalPrompt,
@@ -452,7 +523,7 @@ USER MESSAGE: ${userMessage}`;
             projectMemory,
             modelName
         );
-        
+
         // Warn if approaching limits
         if (tokenAnalysis.status.utilizationPercent > 80) {
             console.warn('[AIOrchestrator] High token utilization:', {
@@ -462,7 +533,7 @@ USER MESSAGE: ${userMessage}`;
                 limit: tokenAnalysis.limits.availableForContext
             });
         }
-        
+
         // Attach token metadata to response context for tracking
         if (responseContext) {
             responseContext._tokenAnalysis = {
@@ -472,7 +543,7 @@ USER MESSAGE: ${userMessage}`;
                 trimmed: projectMemory?._trimmed || false
             };
         }
-        
+
         return finalPrompt;
     },
 
@@ -543,8 +614,8 @@ USER MESSAGE: ${userMessage}`;
      * Call this method after receiving LLM response to ensure labels are present
      * Now includes explainability footer
      */
-    postProcessResponse: (responseText, responseContext) => {
-        const { aiResponsePostProcessor } = require('./aiResponsePostProcessor');
+    postProcessResponse: async (responseText, responseContext) => {
+        await initDeps();
 
         // Build context object from responseContext for post-processor
         const context = {
@@ -556,7 +627,7 @@ USER MESSAGE: ${userMessage}`;
         };
 
         // Apply existing post-processing (memory/external prefixes)
-        let processedResponse = aiResponsePostProcessor(responseText, context);
+        let processedResponse = deps.AIResponsePostProcessor(responseText, context);
 
         // Inject explainability footer if explanation is present
         if (responseContext?.explanation) {
@@ -585,8 +656,8 @@ USER MESSAGE: ${userMessage}`;
      * @returns {object} Coordinated multi-agent response
      */
     processMessageWithAgents: async (message, userId, organizationId, projectId = null, options = {}) => {
-        const { getCoordinator } = require('./ai/agents');
-        
+        await initDeps();
+
         // 0. Check access policy first
         const accessContext = await deps.AccessPolicyService.getAIAccessContext(organizationId);
 
@@ -608,7 +679,7 @@ USER MESSAGE: ${userMessage}`;
 
         // 1. Build context
         const context = await deps.AIContextBuilder.buildContext(userId, organizationId, projectId, options);
-        
+
         // 2. Get policy and preferences
         const policy = await deps.AIPolicyEngine.getEffectivePolicy(organizationId, projectId, userId);
         const preferences = await deps.AIMemoryManager.getUserPreferences(userId);
@@ -643,7 +714,7 @@ USER MESSAGE: ${userMessage}`;
         };
 
         // 4. Get coordinator and process query
-        const coordinator = getCoordinator({
+        const coordinator = deps.AIAgents.getCoordinator({
             minAgentsForDebate: options.enableDebate !== false ? 2 : 99,
             maxAgentsPerQuery: options.maxAgents || 3
         });
@@ -680,18 +751,18 @@ USER MESSAGE: ${userMessage}`;
      * @returns {object} Agent response
      */
     querySpecialistAgent: async (domain, message, userId, organizationId, projectId = null) => {
-        const { getCoordinator } = require('./ai/agents');
-        
+        await initDeps();
+
         // Build context
         const context = await deps.AIContextBuilder.buildContext(userId, organizationId, projectId);
-        
+
         const agentContext = {
             organization: { id: organizationId },
             project: projectId ? { id: projectId } : null,
             ...context
         };
 
-        const coordinator = getCoordinator();
+        const coordinator = deps.AIAgents.getCoordinator();
         return await coordinator.queryAgent(domain, message, agentContext);
     },
 
@@ -705,30 +776,29 @@ USER MESSAGE: ${userMessage}`;
      * @returns {object} Recommendations by agent domain
      */
     getMultiAgentRecommendations: async (topic, userId, organizationId, projectId = null) => {
-        const { getCoordinator } = require('./ai/agents');
-        
+        await initDeps();
+
         const context = await deps.AIContextBuilder.buildContext(userId, organizationId, projectId);
-        const coordinator = getCoordinator();
-        
+        const coordinator = deps.AIAgents.getCoordinator();
+
         return await coordinator.getSpecialistRecommendations(topic, context);
     },
 
     /**
      * Get available agent domains and their metadata
      */
-    getAvailableAgents: () => {
-        const { getAllAgentMetadata } = require('./ai/agents');
-        return getAllAgentMetadata();
+    getAvailableAgents: async () => {
+        await initDeps();
+        return deps.AIAgents.getAllAgentMetadata();
     },
 
     /**
      * Get agent coordinator metrics
      */
-    getAgentMetrics: () => {
-        const { getCoordinator } = require('./ai/agents');
-        return getCoordinator().getMetrics();
+    getAgentMetrics: async () => {
+        await initDeps();
+        return deps.AIAgents.getCoordinator().getMetrics();
     }
 };
 
-module.exports = AIOrchestrator;
-
+export default AIOrchestrator;

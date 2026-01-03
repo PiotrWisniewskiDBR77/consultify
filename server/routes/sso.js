@@ -14,7 +14,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const verifySuperAdmin = require('../middleware/superAdminMiddleware');
 const { requireOrgAccess } = require('../middleware/rbac');
 const SSOService = require('../services/ssoService');
-const AuditService = require('../services/auditService');
+import AuditService from '../services/auditService.js';
 
 // ==========================================
 // SUPERADMIN ROUTES

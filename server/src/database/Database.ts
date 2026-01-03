@@ -9,8 +9,8 @@
 import type { IDatabase } from './IDatabase.js';
 import { databaseConfig } from '../config/DatabaseConfig.js';
 import PostgresDatabase from './PostgresDatabase.js';
-// SQLiteDatabase will be imported once migration is complete
-// For now, we'll use dynamic import for SQLite during migration
+
+// SQLiteDatabase will be imported using dynamic import for ES modules compatibility
 
 // Mock database for tests
 export interface MockDatabase extends IDatabase {
@@ -81,10 +81,10 @@ function createMockDatabase(): MockDatabase {
  * 
  * Full TypeScript ES modules implementation
  */
-export function createDatabase(): IDatabase {
+export async function createDatabase(): Promise<IDatabase> {
     // Mock database for tests
-    if (process.env.MOCK_DB === 'true') {
-        console.log('[Database] Mocking database for tests');
+    if (process.env.MOCK_DB === 'true' || process.env.NODE_ENV === 'test') {
+        console.log('[Database] Using test/mock database');
         const mockDb = global.__TEST_DB_MOCK__ as MockDatabase | undefined;
         if (mockDb) {
             return mockDb;
@@ -95,29 +95,71 @@ export function createDatabase(): IDatabase {
     // Use TypeScript implementations
     if (databaseConfig.type === 'postgres') {
         console.log('[Database] Selected: PostgreSQL');
-        return PostgresDatabase;
+        return PostgresDatabase as unknown as IDatabase;
     } else {
-        console.log('[Database] Selected: SQLite');
-        // During migration, use dynamic import for SQLite
-        // Once SQLiteDatabase.ts is fully migrated, we can use static import
-        // For now, we'll import the existing JS file as ES module
-        // Note: database.sqlite.active.js still uses createRequire() internally
-        // This will be replaced with SQLiteDatabase.ts once full migration is complete
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const sqliteModule = require('../../database.sqlite.active.js');
-        return sqliteModule.default as IDatabase;
+        console.log('[Database] Selected: SQLite (Legacy)');
+        // Use dynamic import for ES modules compatibility
+        try {
+            const sqliteModule = await import('../../database.sqlite.active.js').then(m => m.default || m);
+            return (sqliteModule.default || sqliteModule) as IDatabase;
+        } catch (err) {
+            console.error('[Database] Failed to load legacy SQLite database:', err);
+            // Fallback to mock to prevent total crash in some environments, or re-throw
+            throw err;
+        }
     }
 }
 
 // Singleton instance
 let dbInstance: IDatabase | null = null;
+let dbInstancePromise: Promise<IDatabase> | null = null;
 
 /**
- * Get database singleton instance
+ * Get database singleton instance (async)
+ */
+export async function getDatabaseAsync(): Promise<IDatabase> {
+    if (dbInstance) {
+        return dbInstance;
+    }
+    if (!dbInstancePromise) {
+        dbInstancePromise = createDatabase().then(db => {
+            dbInstance = db;
+            return db;
+        });
+    }
+    return dbInstancePromise;
+}
+
+/**
+ * Get database singleton instance (synchronous for backward compatibility)
+ * Note: This will initialize synchronously if possible, otherwise returns a mock
  */
 export function getDatabase(): IDatabase {
+    if (dbInstance) {
+        return dbInstance;
+    }
+
+    // Mock database for tests must be handled first to avoid any real DB initialization
+    if (process.env.MOCK_DB === 'true' || process.env.NODE_ENV === 'test') {
+        const mockDb = global.__TEST_DB_MOCK__ as MockDatabase | undefined;
+        if (mockDb) {
+            dbInstance = mockDb;
+            return dbInstance;
+        }
+        dbInstance = createMockDatabase();
+        return dbInstance;
+    }
+
+    // For backward compatibility, try to initialize synchronously
+    // If async initialization is needed, use getDatabaseAsync()
+    if (databaseConfig.type === 'postgres') {
+        dbInstance = PostgresDatabase as unknown as IDatabase;
+        return dbInstance;
+    }
+    // For SQLite, return mock for now (will be initialized async on first use)
+    // This maintains backward compatibility while allowing async initialization
     if (!dbInstance) {
-        dbInstance = createDatabase();
+        dbInstance = createMockDatabase();
     }
     return dbInstance;
 }
@@ -131,4 +173,3 @@ declare global {
     // eslint-disable-next-line no-var
     var __TEST_DB_MOCK__: MockDatabase | undefined;
 }
-

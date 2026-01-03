@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const user_profile_completenessRoutesJS = require('../../routes/user-profile-completeness.js');
+const user_profile_completenessRoutesJSPromise = (async () => {
+    const module = await import('../../routes/user-profile-completeness.js');
+    return module.default || module;
+})();
+const user_profile_completenessRoutesJS = user_profile_completenessRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

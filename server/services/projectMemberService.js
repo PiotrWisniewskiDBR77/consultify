@@ -1,26 +1,40 @@
-/**
- * Project Member Service
- * 
- * PMO Standards Compliant Team Management
- * 
- * Standards:
- * - ISO 21500:2021 - Project Team (Clause 4.6.2)
- * - PMI PMBOK 7th Edition - Team Performance Domain
- * - PRINCE2 - Organization Theme (Project Roles)
- * 
- * Features:
- * - Project role assignment (SPONSOR, PMO_LEAD, WORKSTREAM_OWNER, etc.)
- * - Permission management
- * - RACI matrix generation
- * - Role-based access control
- * 
- * @module projectMemberService
- */
+import { v4 as uuid } from 'uuid';
 
-const { v4: uuid } = require('uuid');
-const db = require('../database');
-const { PMO_DOMAIN_IDS } = require('./pmoDomainRegistry');
-const PMOStandardsMapping = require('./pmoStandardsMapping');
+/**
+ * Dependency injection container
+ */
+const deps = {
+  _db: null,
+  _pmoDomainRegistry: null,
+  _pmoStandardsMapping: null,
+
+  get db() { return this._db; },
+  set db(val) { this._db = val; },
+
+  get pmoDomainRegistry() { return this._pmoDomainRegistry; },
+  set pmoDomainRegistry(val) { this._pmoDomainRegistry = val; },
+
+  get pmoStandardsMapping() { return this._pmoStandardsMapping; },
+  set pmoStandardsMapping(val) { this._pmoStandardsMapping = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+  if (!deps._db) {
+    const { default: dbInstance } = await import('../database.js');
+    deps._db = dbInstance;
+  }
+  if (!deps._pmoDomainRegistry) {
+    const pmoDomainRegistry = await import('./pmoDomainRegistry.js');
+    deps._pmoDomainRegistry = pmoDomainRegistry.default || pmoDomainRegistry;
+  }
+  if (!deps._pmoStandardsMapping) {
+    const { default: pmoStandardsMapping } = await import('./pmoStandardsMapping.js');
+    deps._pmoStandardsMapping = pmoStandardsMapping;
+  }
+}
 
 /**
  * Project Role Enum - aligned with types.ts PMOProjectRole
@@ -198,30 +212,47 @@ const RACI_MATRIX = {
   }
 };
 
-/**
- * Project Member Service
- */
-const ProjectMemberService = {
-  PROJECT_ROLES,
-  DEFAULT_PERMISSIONS,
-  RACI_MATRIX,
+class ProjectMemberService {
+  constructor() {
+    this._db = null;
+    this.PROJECT_ROLES = PROJECT_ROLES;
+    this.DEFAULT_PERMISSIONS = DEFAULT_PERMISSIONS;
+    this.RACI_MATRIX = RACI_MATRIX;
+  }
+
+  get db() {
+    if (!this._db) {
+      throw new Error('ProjectMemberService: Database not initialized. Call init() first.');
+    }
+    return this._db;
+  }
+
+  /**
+   * Initialize service dependencies
+   */
+  async init() {
+    await initDeps();
+    this._db = deps.db;
+    return this;
+  }
+
+  /**
+   * Set dependencies manually (for testing)
+   */
+  setDependencies(customDeps) {
+    if (customDeps.db) {
+      this._db = customDeps.db;
+      deps.db = customDeps.db;
+    }
+    if (customDeps.pmoDomainRegistry) deps.pmoDomainRegistry = customDeps.pmoDomainRegistry;
+    if (customDeps.pmoStandardsMapping) deps.pmoStandardsMapping = customDeps.pmoStandardsMapping;
+  }
 
   /**
    * Add a member to a project
-   * 
-   * @param {string} projectId - Project ID
-   * @param {string} userId - User ID to add
-   * @param {string} projectRole - Role from PROJECT_ROLES
-   * @param {Object} options - Additional options
-   * @param {string} options.addedById - Who is adding this member
-   * @param {string} options.workstreamId - Optional workstream assignment
-   * @param {number} options.allocationPercent - Allocation (0-100)
-   * @param {Object} options.customPermissions - Override default permissions
-   * @param {string} options.startDate - Start of assignment
-   * @param {string} options.endDate - End of assignment
-   * @returns {Promise<Object>} Created member record
    */
   async addMember(projectId, userId, projectRole, options = {}) {
+    await this.init();
     const {
       addedById,
       workstreamId,
@@ -231,13 +262,11 @@ const ProjectMemberService = {
       endDate
     } = options;
 
-    // Validate role
     if (!PROJECT_ROLES[projectRole]) {
       throw new Error(`Invalid project role: ${projectRole}`);
     }
 
-    // Check if user is already a member
-    const existing = await db.getAsync(
+    const existing = await this.db.getAsync(
       'SELECT id FROM project_members WHERE project_id = ? AND user_id = ?',
       [projectId, userId]
     );
@@ -245,7 +274,6 @@ const ProjectMemberService = {
       throw new Error('User is already a member of this project');
     }
 
-    // Get default permissions for role, merge with custom
     const permissions = {
       ...DEFAULT_PERMISSIONS[projectRole],
       ...(customPermissions || {})
@@ -254,7 +282,7 @@ const ProjectMemberService = {
     const id = uuid();
     const now = new Date().toISOString();
 
-    await db.runAsync(
+    await this.db.runAsync(
       `INSERT INTO project_members 
        (id, project_id, user_id, project_role, workstream_id, allocation_percent, 
         permissions, start_date, end_date, created_at, updated_at, added_by_id)
@@ -275,7 +303,6 @@ const ProjectMemberService = {
       ]
     );
 
-    // Log to audit trail
     await this._logAudit(projectId, 'MEMBER_ADDED', {
       memberId: id,
       userId,
@@ -284,18 +311,14 @@ const ProjectMemberService = {
     });
 
     return this.getMember(projectId, userId);
-  },
+  }
 
   /**
    * Update a member's role or permissions
-   * 
-   * @param {string} projectId - Project ID
-   * @param {string} userId - User ID to update
-   * @param {Object} updates - Fields to update
-   * @returns {Promise<Object>} Updated member record
    */
   async updateMember(projectId, userId, updates) {
-    const existing = await db.getAsync(
+    await this.init();
+    const existing = await this.db.getAsync(
       'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
       [projectId, userId]
     );
@@ -303,12 +326,12 @@ const ProjectMemberService = {
       throw new Error('Member not found in project');
     }
 
-    const allowedFields = ['project_role', 'workstream_id', 'allocation_percent', 'permissions', 'start_date', 'end_date'];
+    const allowedFields = ['project_role', 'workstream_id', 'allocation_percent', 'permissions', 'start_date', 'end_date', 'projectRole', 'workstreamId', 'allocationPercent', 'startDate', 'endDate'];
     const setClauses = [];
     const values = [];
 
     for (const [key, value] of Object.entries(updates)) {
-      const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase(); // camelCase to snake_case
+      const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
       if (allowedFields.includes(dbKey)) {
         setClauses.push(`${dbKey} = ?`);
         values.push(dbKey === 'permissions' ? JSON.stringify(value) : value);
@@ -323,15 +346,14 @@ const ProjectMemberService = {
     values.push(new Date().toISOString());
     values.push(projectId, userId);
 
-    await db.runAsync(
+    await this.db.runAsync(
       `UPDATE project_members SET ${setClauses.join(', ')} WHERE project_id = ? AND user_id = ?`,
       values
     );
 
-    // If role changed, update permissions to new defaults
     if (updates.projectRole && updates.projectRole !== existing.project_role) {
       const newPermissions = DEFAULT_PERMISSIONS[updates.projectRole];
-      await db.runAsync(
+      await this.db.runAsync(
         'UPDATE project_members SET permissions = ? WHERE project_id = ? AND user_id = ?',
         [JSON.stringify(newPermissions), projectId, userId]
       );
@@ -344,17 +366,14 @@ const ProjectMemberService = {
     }
 
     return this.getMember(projectId, userId);
-  },
+  }
 
   /**
    * Remove a member from a project
-   * 
-   * @param {string} projectId - Project ID
-   * @param {string} userId - User ID to remove
-   * @returns {Promise<boolean>} Success
    */
   async removeMember(projectId, userId) {
-    const existing = await db.getAsync(
+    await this.init();
+    const existing = await this.db.getAsync(
       'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
       [projectId, userId]
     );
@@ -362,7 +381,7 @@ const ProjectMemberService = {
       throw new Error('Member not found in project');
     }
 
-    await db.runAsync(
+    await this.db.runAsync(
       'DELETE FROM project_members WHERE project_id = ? AND user_id = ?',
       [projectId, userId]
     );
@@ -373,17 +392,14 @@ const ProjectMemberService = {
     });
 
     return true;
-  },
+  }
 
   /**
    * Get a single member
-   * 
-   * @param {string} projectId - Project ID
-   * @param {string} userId - User ID
-   * @returns {Promise<Object|null>} Member record with user details
    */
   async getMember(projectId, userId) {
-    const member = await db.getAsync(
+    await this.init();
+    const member = await this.db.getAsync(
       `SELECT pm.*, u.first_name, u.last_name, u.email, u.avatar_url
        FROM project_members pm
        JOIN users u ON u.id = pm.user_id
@@ -392,20 +408,14 @@ const ProjectMemberService = {
     );
 
     if (!member) return null;
-
     return this._formatMember(member);
-  },
+  }
 
   /**
    * Get all members of a project
-   * 
-   * @param {string} projectId - Project ID
-   * @param {Object} options - Filter options
-   * @param {string} options.role - Filter by role
-   * @param {string} options.workstreamId - Filter by workstream
-   * @returns {Promise<Array>} List of members
    */
   async getProjectTeam(projectId, options = {}) {
+    await this.init();
     let query = `
       SELECT pm.*, u.first_name, u.last_name, u.email, u.avatar_url
       FROM project_members pm
@@ -426,30 +436,21 @@ const ProjectMemberService = {
 
     query += ' ORDER BY pm.project_role, u.last_name, u.first_name';
 
-    const members = await db.allAsync(query, params);
+    const members = await this.db.allAsync(query, params);
     return members.map(m => this._formatMember(m));
-  },
+  }
 
   /**
    * Check if a user has a specific permission on a project
-   * 
-   * @param {string} projectId - Project ID
-   * @param {string} userId - User ID
-   * @param {string} permission - Permission to check (e.g., 'canAssignTasks')
-   * @returns {Promise<boolean>} Has permission
    */
   async checkPermission(projectId, userId, permission) {
     const member = await this.getMember(projectId, userId);
     if (!member) return false;
-
     return member.permissions[permission] === true;
-  },
+  }
 
   /**
    * Get the RACI matrix for a project
-   * 
-   * @param {string} projectId - Project ID
-   * @returns {Promise<Object>} RACI matrix with actual members
    */
   async getRACIMatrix(projectId) {
     const members = await this.getProjectTeam(projectId);
@@ -457,7 +458,7 @@ const ProjectMemberService = {
 
     for (const objectType of Object.keys(RACI_MATRIX)) {
       matrix[objectType] = {};
-      
+
       for (const member of members) {
         const raciType = RACI_MATRIX[objectType][member.projectRole];
         if (raciType) {
@@ -478,17 +479,13 @@ const ProjectMemberService = {
       matrix,
       generatedAt: new Date().toISOString()
     };
-  },
+  }
 
   /**
    * Get members who can receive escalations
-   * 
-   * @param {string} projectId - Project ID
-   * @param {number} escalationLevel - Current escalation level
-   * @returns {Promise<Array>} Members who can receive escalation at this level
    */
   async getEscalationRecipients(projectId, escalationLevel) {
-    // Escalation path: INITIATIVE_OWNER (1) → PMO_LEAD (2) → SPONSOR (3)
+    await this.init();
     const rolesByLevel = {
       1: [PROJECT_ROLES.INITIATIVE_OWNER, PROJECT_ROLES.WORKSTREAM_OWNER],
       2: [PROJECT_ROLES.PMO_LEAD],
@@ -496,8 +493,8 @@ const ProjectMemberService = {
     };
 
     const roles = rolesByLevel[escalationLevel] || rolesByLevel[3];
-    
-    const members = await db.allAsync(
+
+    const members = await this.db.allAsync(
       `SELECT pm.*, u.first_name, u.last_name, u.email
        FROM project_members pm
        JOIN users u ON u.id = pm.user_id
@@ -506,19 +503,13 @@ const ProjectMemberService = {
     );
 
     return members.map(m => this._formatMember(m));
-  },
+  }
 
   /**
    * Get available assignees for a task
-   * Based on workstream and permissions
-   * 
-   * @param {string} projectId - Project ID
-   * @param {Object} options - Filter options
-   * @param {string} options.workstreamId - Limit to workstream members
-   * @param {string} options.taskType - Task type for filtering
-   * @returns {Promise<Array>} Available assignees
    */
   async getAvailableAssignees(projectId, options = {}) {
+    await this.init();
     let query = `
       SELECT pm.*, u.first_name, u.last_name, u.email, u.avatar_url
       FROM project_members pm
@@ -541,19 +532,13 @@ const ProjectMemberService = {
 
     query += ' ORDER BY u.last_name, u.first_name';
 
-    const members = await db.allAsync(query, params);
+    const members = await this.db.allAsync(query, params);
     return members.map(m => this._formatMember(m));
-  },
+  }
 
-  /**
-   * Get member by role (first match)
-   * 
-   * @param {string} projectId - Project ID
-   * @param {string} role - Role to find
-   * @returns {Promise<Object|null>} Member or null
-   */
   async getMemberByRole(projectId, role) {
-    const member = await db.getAsync(
+    await this.init();
+    const member = await this.db.getAsync(
       `SELECT pm.*, u.first_name, u.last_name, u.email, u.avatar_url
        FROM project_members pm
        JOIN users u ON u.id = pm.user_id
@@ -563,31 +548,20 @@ const ProjectMemberService = {
     );
 
     return member ? this._formatMember(member) : null;
-  },
+  }
 
-  /**
-   * Get user's role in a project
-   * 
-   * @param {string} projectId - Project ID
-   * @param {string} userId - User ID
-   * @returns {Promise<string|null>} Role or null
-   */
   async getUserRole(projectId, userId) {
-    const member = await db.getAsync(
+    await this.init();
+    const member = await this.db.getAsync(
       'SELECT project_role FROM project_members WHERE project_id = ? AND user_id = ?',
       [projectId, userId]
     );
     return member ? member.project_role : null;
-  },
+  }
 
-  /**
-   * Get all projects a user is a member of
-   * 
-   * @param {string} userId - User ID
-   * @returns {Promise<Array>} Projects with user's role
-   */
   async getUserProjects(userId) {
-    const projects = await db.allAsync(
+    await this.init();
+    const projects = await this.db.allAsync(
       `SELECT p.id, p.name, p.status, pm.project_role, pm.workstream_id, pm.allocation_percent
        FROM project_members pm
        JOIN projects p ON p.id = pm.project_id
@@ -604,12 +578,8 @@ const ProjectMemberService = {
       workstreamId: p.workstream_id,
       allocationPercent: p.allocation_percent
     }));
-  },
+  }
 
-  /**
-   * Format member record from DB to API response
-   * @private
-   */
   _formatMember(row) {
     return {
       id: row.id,
@@ -624,23 +594,20 @@ const ProjectMemberService = {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       addedById: row.added_by_id,
-      // User info if joined
       firstName: row.first_name,
       lastName: row.last_name,
       email: row.email,
       avatarUrl: row.avatar_url
     };
-  },
+  }
 
-  /**
-   * Log to PMO audit trail
-   * @private
-   */
   async _logAudit(projectId, action, metadata = {}) {
     try {
-      const mapping = PMOStandardsMapping.getMapping('Escalation'); // Use Escalation mapping for team changes
-      
-      await db.runAsync(
+      await this.init();
+      const { PMO_DOMAIN_IDS } = deps.pmoDomainRegistry;
+      const mapping = deps.pmoStandardsMapping.getMapping('Escalation');
+
+      await this.db.runAsync(
         `INSERT INTO pmo_audit_trail 
          (id, project_id, pmo_domain_id, pmo_phase, object_type, object_id, action, actor_id,
           iso21500_mapping, pmbok_mapping, prince2_mapping, metadata, created_at)
@@ -649,7 +616,7 @@ const ProjectMemberService = {
           uuid(),
           projectId,
           PMO_DOMAIN_IDS.RESOURCE_RESPONSIBILITY,
-          null, // Phase not relevant for team changes
+          null,
           'PROJECT_MEMBER',
           metadata.memberId || metadata.userId,
           action,
@@ -665,7 +632,8 @@ const ProjectMemberService = {
       console.error('[ProjectMemberService] Audit log failed:', err.message);
     }
   }
-};
+}
 
-module.exports = ProjectMemberService;
+const projectMemberServiceInstance = new ProjectMemberService();
+export default projectMemberServiceInstance;
 

@@ -1,32 +1,85 @@
 /**
- * Ai/circuitBreaker Service
- * Enterprise SaaS Architecture - TypeScript Backend
- * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Circuit Breaker for LLM Providers
+ *
+ * Backward-compatible API over CircuitBreakerService.
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import CircuitBreakerService, { STATES } from '../circuitBreakerService.js';
+import { aiLogger } from './logger.js';
 
-const require = createRequire(import.meta.url);
+export const STATE = STATES;
 
-// Import the JS implementation for now (will be fully migrated later)
-const ai/circuitBreakerServiceJS = require('../../services/ai/circuitBreaker.js');
+const LLM_CONFIG = {
+    failureThreshold: 5,
+    successThreshold: 2,
+    resetTimeout: 60000,
+    retryAttempts: 3,
+    retryBaseDelay: 1000,
+    retryMaxDelay: 30000,
+    persistenceEnabled: true
+};
 
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const ai/circuitBreakerService = ai/circuitBreakerServiceJS.default || ai/circuitBreakerServiceJS;
-
-// Export default instance (for backward compatibility)
-export default ai/circuitBreakerService;
-
-// Also export named exports if they exist
-if (typeof ai/circuitBreakerServiceJS === 'object' && ai/circuitBreakerServiceJS !== null) {
-    Object.keys(ai/circuitBreakerServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = ai/circuitBreakerServiceJS[key];
-        }
-    });
+export function canExecute(providerId: string) {
+    const breaker = CircuitBreakerService.getBreaker(providerId, LLM_CONFIG);
+    return breaker.canExecute();
 }
+
+export async function recordSuccess(providerId: string): Promise<void> {
+    await CircuitBreakerService.recordSuccess(providerId);
+}
+
+export async function recordFailure(providerId: string, error: Error): Promise<void> {
+    await CircuitBreakerService.recordFailure(providerId, error);
+}
+
+export async function reset(providerId: string): Promise<void> {
+    await CircuitBreakerService.reset(providerId);
+}
+
+export function getStatus(): Record<string, unknown> {
+    return CircuitBreakerService.getAllStatuses().reduce<Record<string, unknown>>((acc, status) => {
+        acc[status.name] = status;
+        return acc;
+    }, {});
+}
+
+export async function execute<T>(
+    providerId: string,
+    fn: () => Promise<T>,
+    options: Record<string, unknown> = {}
+): Promise<T> {
+    const breaker = CircuitBreakerService.getBreaker(providerId, {
+        ...LLM_CONFIG,
+        ...options
+    });
+    return breaker.execute(fn, options);
+}
+
+export async function initialize(): Promise<void> {
+    try {
+        await CircuitBreakerService.restoreStates();
+        aiLogger.info('CircuitBreaker', 'LLM circuit breakers initialized');
+    } catch (error) {
+        const err = error as Error;
+        aiLogger.warn('CircuitBreaker', `Initialization warning: ${err.message}`);
+    }
+}
+
+setImmediate(() => {
+    initialize().catch(error => {
+        const err = error as Error;
+        console.warn('[CircuitBreaker] Auto-init failed:', err.message);
+    });
+});
+
+export default {
+    STATE,
+    canExecute,
+    recordSuccess,
+    recordFailure,
+    reset,
+    getStatus,
+    execute,
+    initialize,
+    CircuitBreakerService
+};

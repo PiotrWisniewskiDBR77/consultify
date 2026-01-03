@@ -21,23 +21,58 @@ import {
 
 const router = Router();
 import webhookService from '../services/WebhookService.js';
+import type { DunningService } from '../services/DunningService.js';
+import type { InvoiceServiceClass } from '../services/InvoiceService.js';
+import Stripe from 'stripe';
+
+// Type definitions for lazy-loaded services
+interface DunningServiceInstance {
+    handlePaymentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void>;
+    handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent): Promise<void>;
+    processScheduledRetries(): Promise<void>;
+    getDunningStatus(orgId: string): Promise<{
+        inDunning: boolean;
+        status: string;
+        stage: number;
+        stageName?: string;
+        daysSinceStart: number;
+        daysUntilSuspension: number;
+        suspensionScheduledAt?: string | null;
+    }>;
+    manualRetry(orgId: string): Promise<{ success: boolean; message: string; error?: string }>;
+    suspendOrganization(orgId: string, reason?: string): Promise<void>;
+    reactivateOrganization(orgId: string): Promise<void>;
+}
+
+interface InvoiceServiceInstance {
+    createFromStripe(stripeInvoice: Stripe.Invoice): Promise<{
+        id: string;
+        invoiceNumber: string;
+        total: number;
+        currency: string;
+    } | null>;
+    createInvoice(options: unknown): Promise<unknown>;
+    getInvoice(invoiceId: string): Promise<unknown>;
+    listInvoices(organizationId: string, options?: unknown): Promise<unknown[]>;
+}
+
 // Dynamic imports for services that may still be wrappers
-let DunningService: any;
-let InvoiceService: any;
+let DunningService: DunningServiceInstance | null = null;
+let InvoiceService: InvoiceServiceInstance | null = null;
 
 // Lazy load services to avoid circular dependencies
-async function getDunningService() {
+async function getDunningService(): Promise<DunningServiceInstance> {
     if (!DunningService) {
         const module = await import('../services/dunningService.js');
-        DunningService = module.default || module;
+        DunningService = (module.default || module) as DunningServiceInstance;
     }
     return DunningService;
 }
 
-async function getInvoiceService() {
+async function getInvoiceService(): Promise<InvoiceServiceInstance> {
     if (!InvoiceService) {
         const module = await import('../services/InvoiceService.js');
-        InvoiceService = module.default || module;
+        InvoiceService = (module.default || module) as InvoiceServiceInstance;
     }
     return InvoiceService;
 }
@@ -225,21 +260,56 @@ router.post(
             const invoice = await getInvoiceService();
 
             switch (type) {
-                case 'invoice.payment_failed':
-                    await dunning.processPaymentFailure({
-                        subscriptionId: data.subscription,
-                        customerId: data.customer,
-                        invoiceId: data.id,
-                        amountDue: data.amount_due,
-                        currency: data.currency,
-                        failureReason: data.last_payment_error?.message || 'Unknown error'
-                    });
+                case 'invoice.payment_failed': {
+                    // Convert Invoice to PaymentIntent-like structure for DunningService
+                    const invoice = data as Stripe.Invoice;
+                    const paymentIntentId = invoice.payment_intent as string | undefined;
+                    
+                    if (paymentIntentId) {
+                        // If we have payment_intent, we can handle it directly
+                        // For now, we'll start dunning process based on invoice data
+                        const orgId = invoice.metadata?.organization_id;
+                        if (orgId) {
+                            // Get organization and start dunning if needed
+                            const org = await dunning.getDunningStatus(orgId);
+                            if (!org || (org as { inDunning: boolean }).inDunning === false) {
+                                // Create a mock PaymentIntent structure for handlePaymentFailed
+                                const mockPaymentIntent = {
+                                    id: paymentIntentId,
+                                    amount: invoice.amount_due || 0,
+                                    currency: invoice.currency || 'usd',
+                                    metadata: invoice.metadata || {},
+                                    last_payment_error: {
+                                        code: 'payment_failed',
+                                        message: invoice.last_payment_error?.message || 'Payment failed'
+                                    }
+                                } as Stripe.PaymentIntent;
+                                
+                                await dunning.handlePaymentFailed(mockPaymentIntent);
+                            }
+                        }
+                    }
                     break;
+                }
 
-                case 'invoice.payment_succeeded':
-                    await dunning.processPaymentSuccess(data.subscription);
-                    await invoice.createFromStripe(data);
+                case 'invoice.payment_succeeded': {
+                    const invoice = data as Stripe.Invoice;
+                    const paymentIntentId = invoice.payment_intent as string | undefined;
+                    
+                    if (paymentIntentId) {
+                        const mockPaymentIntent = {
+                            id: paymentIntentId,
+                            amount: invoice.amount_paid || 0,
+                            currency: invoice.currency || 'usd',
+                            metadata: invoice.metadata || {}
+                        } as Stripe.PaymentIntent;
+                        
+                        await dunning.handlePaymentSucceeded(mockPaymentIntent);
+                    }
+                    
+                    await invoice.createFromStripe(invoice);
                     break;
+                }
 
                 case 'customer.subscription.deleted':
                     console.log(`[Webhook] Subscription canceled: ${data.id}`);

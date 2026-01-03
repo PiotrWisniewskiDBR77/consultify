@@ -18,7 +18,7 @@ const {
     getMemoryMetrics
 } = require('../middleware/performanceMetrics');
 const metricsPersistenceService = require('../services/metricsPersistenceService');
-const alertService = require('../services/alertService');
+import alertService from '../services/alertService.js';
 
 // GET /api/performance-metrics/summary
 // REFACTORED: Uses asyncHandler

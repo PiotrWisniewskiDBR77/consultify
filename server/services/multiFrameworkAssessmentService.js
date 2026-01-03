@@ -5,10 +5,45 @@
  * Provides CRUD operations, score calculation, gap analysis, and initiative mapping.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const { calculateFrameworkScore } = require('./frameworkScoreCalculators');
-const multiFrameworkAuditService = require('./multiFrameworkAuditService');
+// Dependency injection for testing
+let deps = {
+    db: null,
+    uuidv4: null,
+    frameworkScoreCalculators: null,
+    multiFrameworkAuditService: null
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps.db) {
+        const dbModule = await import('../database.js');
+        deps.db = dbModule.default || dbModule;
+    }
+
+    if (!deps.uuidv4) {
+        const uuidModule = await import('uuid');
+        deps.uuidv4 = uuidModule.v4;
+    }
+
+    if (!deps.frameworkScoreCalculators) {
+        const calcModule = await import('./frameworkScoreCalculators.js');
+        deps.frameworkScoreCalculators = calcModule;
+    }
+
+    if (!deps.multiFrameworkAuditService) {
+        const auditModule = await import('./multiFrameworkAuditService.js');
+        deps.multiFrameworkAuditService = auditModule.default || auditModule;
+    }
+}
+
+/**
+ * Set dependencies for testing
+ */
+function setDependencies(newDeps) {
+    deps = { ...deps, ...newDeps };
+}
 
 // ============================================
 // CONSTANTS
@@ -31,14 +66,15 @@ async function createAssessment(projectId, framework, data, userId, options = {}
         throw new Error(`Invalid framework: ${framework}`);
     }
 
-    const id = uuidv4();
-    
+    await initDeps();
+    const id = deps.uuidv4();
+
     // Calculate initial scores
     let overallScore = null;
     let categoryScores = {};
     if (data && Object.keys(data).length > 0) {
         try {
-            const scoreResult = calculateFrameworkScore(framework, data);
+            const scoreResult = deps.frameworkScoreCalculators.calculateFrameworkScore(framework, data);
             overallScore = scoreResult.overall;
             categoryScores = scoreResult.categories;
         } catch (e) {
@@ -46,7 +82,7 @@ async function createAssessment(projectId, framework, data, userId, options = {}
         }
     }
 
-    const result = await db.query(`
+    const result = await deps.db.query(`
         INSERT INTO multi_framework_assessments (
             id, project_id, organization_id, framework, name, data,
             overall_score, category_scores, import_source,
@@ -67,7 +103,7 @@ async function createAssessment(projectId, framework, data, userId, options = {}
     ]);
 
     // Audit log
-    await multiFrameworkAuditService.logCreate(id, framework, userId, data);
+    await deps.multiFrameworkAuditService.logCreate(id, framework, userId, data);
 
     return result.rows[0];
 }
@@ -76,7 +112,8 @@ async function createAssessment(projectId, framework, data, userId, options = {}
  * Get assessment by ID
  */
 async function getAssessment(id) {
-    const result = await db.query(`
+    await initDeps();
+    const result = await deps.db.query(`
         SELECT 
             mfa.*,
             u.first_name || ' ' || u.last_name AS created_by_name,
@@ -112,7 +149,7 @@ async function updateAssessment(id, data, userId) {
     let categoryScores = current.category_scores;
     if (data) {
         try {
-            const scoreResult = calculateFrameworkScore(current.framework, data);
+            const scoreResult = deps.frameworkScoreCalculators.calculateFrameworkScore(current.framework, data);
             overallScore = scoreResult.overall;
             categoryScores = scoreResult.categories;
         } catch (e) {
@@ -121,7 +158,7 @@ async function updateAssessment(id, data, userId) {
     }
 
     // Save version history
-    await db.query(`
+    await deps.db.query(`
         INSERT INTO multi_framework_assessment_versions (
             assessment_id, version, data, overall_score, category_scores,
             change_summary, created_by, created_at
@@ -137,7 +174,7 @@ async function updateAssessment(id, data, userId) {
     ]);
 
     // Update assessment
-    const result = await db.query(`
+    const result = await deps.db.query(`
         UPDATE multi_framework_assessments
         SET 
             data = $1,
@@ -157,7 +194,7 @@ async function updateAssessment(id, data, userId) {
     ]);
 
     // Audit log
-    await multiFrameworkAuditService.logUpdate(id, current.framework, userId, current.data, data);
+    await deps.multiFrameworkAuditService.logUpdate(id, current.framework, userId, current.data, data);
 
     return result.rows[0];
 }
@@ -171,13 +208,13 @@ async function deleteAssessment(id, userId) {
         throw new Error('Assessment not found');
     }
 
-    await db.query(
+    await deps.db.query(
         'UPDATE multi_framework_assessments SET status = $1, updated_at = NOW() WHERE id = $2',
         ['ARCHIVED', id]
     );
 
     // Audit log
-    await multiFrameworkAuditService.logDelete(id, current.framework, userId, current.data);
+    await deps.multiFrameworkAuditService.logDelete(id, current.framework, userId, current.data);
 
     return true;
 }
@@ -236,7 +273,7 @@ async function listAssessments(projectId, options = {}) {
     query += ` ORDER BY mfa.updated_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(limit, offset);
 
-    const result = await db.query(query, params);
+    const result = await deps.db.query(query, params);
     return result.rows;
 }
 
@@ -253,9 +290,9 @@ async function recalculateScore(id, userId) {
         throw new Error('Assessment not found');
     }
 
-    const scoreResult = calculateFrameworkScore(assessment.framework, assessment.data);
+    const scoreResult = deps.frameworkScoreCalculators.calculateFrameworkScore(assessment.framework, assessment.data);
 
-    await db.query(`
+    await deps.db.query(`
         UPDATE multi_framework_assessments
         SET 
             overall_score = $1,
@@ -269,7 +306,7 @@ async function recalculateScore(id, userId) {
     ]);
 
     // Audit log
-    await multiFrameworkAuditService.logAction({
+    await deps.multiFrameworkAuditService.logAction({
         assessmentId: id,
         framework: assessment.framework,
         action: 'SCORE_RECALCULATE',
@@ -564,7 +601,7 @@ function getCMMICategory(paId) {
 // EXPORTS
 // ============================================
 
-module.exports = {
+export default {
     // CRUD
     createAssessment,
     getAssessment,
@@ -572,16 +609,33 @@ module.exports = {
     deleteAssessment,
     duplicateAssessment,
     listAssessments,
-    
+
     // Scoring
     recalculateScore,
-    
+
     // Gap Analysis
     mapToUnifiedGaps,
-    
+
     // Constants
     VALID_FRAMEWORKS,
     VALID_STATUSES,
+
+    // Testing
+    setDependencies
+};
+
+export {
+    createAssessment,
+    getAssessment,
+    updateAssessment,
+    deleteAssessment,
+    duplicateAssessment,
+    listAssessments,
+    recalculateScore,
+    mapToUnifiedGaps,
+    VALID_FRAMEWORKS,
+    VALID_STATUSES,
+    setDependencies
 };
 
 

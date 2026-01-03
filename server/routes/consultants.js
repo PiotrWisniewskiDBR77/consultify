@@ -1,7 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const ConsultantService = require('../services/consultantService');
 const authMiddleware = require('../middleware/authMiddleware'); // Standard auth checks valid token
+
+// Lazy load ConsultantService
+let ConsultantService = null;
+async function getConsultantService() {
+    if (!ConsultantService) {
+        const module = await import('../services/consultantService.js');
+        ConsultantService = module.default || module;
+    }
+    return ConsultantService;
+}
 
 // Middleware to ensure user is a consultant
 const requireConsultant = async (req, res, next) => {
@@ -9,6 +18,7 @@ const requireConsultant = async (req, res, next) => {
         if (!req.user || !req.user.id) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
+        const ConsultantService = await getConsultantService();
         const consultant = await ConsultantService.getConsultantProfile(req.user.id);
         if (!consultant || consultant.status !== 'ACTIVE') {
             return res.status(403).json({ error: 'Access denied: Active consultant profile required' });
@@ -44,6 +54,7 @@ router.get('/me', async (req, res) => {
 // GET /api/consultants/orgs - Get linked organizations
 router.get('/orgs', async (req, res) => {
     try {
+        const ConsultantService = await getConsultantService();
         const orgs = await ConsultantService.getLinkedOrganizations(req.user.id);
         res.json(orgs);
     } catch (err) {
@@ -54,6 +65,7 @@ router.get('/orgs', async (req, res) => {
 // POST /api/consultants/invites - Create invite code
 router.post('/invites', async (req, res) => {
     try {
+        const ConsultantService = await getConsultantService();
         const { type, targetEmail, targetCompanyName, maxUses, expiresInDays } = req.body;
 
         if (!type || !ConsultantService.INVITE_TYPES[type]) {
@@ -78,6 +90,7 @@ router.post('/invites', async (req, res) => {
 // GET /api/consultants/invites - List invites
 router.get('/invites', async (req, res) => {
     try {
+        const ConsultantService = await getConsultantService();
         const invites = await ConsultantService.getConsultantInvites(req.user.id);
         res.json(invites);
     } catch (err) {

@@ -9,6 +9,7 @@ import type { Response } from 'express';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import type { CreateAdminAlertRequest } from '../validators/admin.validators.js';
+import { getAlertHistory, createAdminAlert } from '../services/adminAlertService.js';
 
 // ==========================================
 // CONTROLLER METHODS
@@ -26,9 +27,7 @@ export class AdminAlertController {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const adminAlertService = require('../../services/adminAlertService');
-        const alerts = await adminAlertService.getAlertHistory(orgId, limit);
+        const alerts = await getAlertHistory(orgId, limit);
 
         res.json({ alerts });
     });
@@ -44,9 +43,7 @@ export class AdminAlertController {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const adminAlertService = require('../../services/adminAlertService');
-        const alert = await adminAlertService.createAdminAlert(orgId, alertConfig);
+        const alert = await createAdminAlert(orgId, alertConfig);
 
         res.json({ success: true, alert });
     });
@@ -62,10 +59,8 @@ export class AdminAlertController {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const adminAlertService = require('../../services/adminAlertService');
-        const alerts = await adminAlertService.getAlertHistory(orgId, limit);
-        const triggered = alerts.filter((a: { trigger_count?: number }) => (a.trigger_count || 0) > 0);
+        const alerts = await getAlertHistory(orgId, limit);
+        const triggered = alerts.filter((a) => (a.trigger_count || 0) > 0);
 
         res.json({ alerts: triggered });
     });

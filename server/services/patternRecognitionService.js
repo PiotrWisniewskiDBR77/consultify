@@ -9,8 +9,31 @@
  * - Best practices extraction
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection for testing
+const deps = {
+    _db: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
 
 // Pattern categories
 const PATTERN_TYPES = {
@@ -79,7 +102,7 @@ const PatternRecognitionService = {
      */
     getCompletedProjects: async () => {
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT p.*, o.industry, o.employee_count, o.name as org_name
                 FROM projects p
                 LEFT JOIN organizations o ON p.organization_id = o.id
@@ -118,7 +141,7 @@ const PatternRecognitionService = {
                 stakeholderEngagement: 0
             };
 
-            db.get(`
+            deps.db.get(`
                 SELECT 
                     COUNT(*) as initiative_count,
                     AVG(progress) as avg_progress
@@ -128,7 +151,7 @@ const PatternRecognitionService = {
                     details.initiativeCount = row.initiative_count || 0;
                 }
 
-                db.get(`
+                deps.db.get(`
                     SELECT 
                         COUNT(*) as total,
                         SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed
@@ -138,7 +161,7 @@ const PatternRecognitionService = {
                         details.taskCompletionRate = row.completed / row.total;
                     }
 
-                    db.get(`
+                    deps.db.get(`
                         SELECT COUNT(DISTINCT user_id) as team_size
                         FROM project_members WHERE project_id = ?
                     `, [projectId], (err, row) => {
@@ -343,7 +366,7 @@ const PatternRecognitionService = {
      */
     storePattern: async (pattern) => {
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT OR REPLACE INTO recognized_patterns (
                     id, type, name, description, industry, attributes,
                     confidence, occurrences, recommendations, created_at, updated_at
@@ -382,7 +405,7 @@ const PatternRecognitionService = {
 
             sql += ` ORDER BY confidence DESC, occurrences DESC LIMIT 20`;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return resolve([]);
 
                 const patterns = (rows || []).map(r => ({
@@ -409,7 +432,7 @@ const PatternRecognitionService = {
     applyCrossProjectLearning: async (projectId) => {
         // Get project context
         const project = await new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT p.*, o.industry FROM projects p
                 LEFT JOIN organizations o ON p.organization_id = o.id
                 WHERE p.id = ?
@@ -474,7 +497,7 @@ const PatternRecognitionService = {
      */
     getPatternStats: async () => {
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT 
                     type,
                     COUNT(*) as count,
@@ -493,7 +516,7 @@ const PatternRecognitionService = {
      */
     initialize: async () => {
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 CREATE TABLE IF NOT EXISTS recognized_patterns (
                     id TEXT PRIMARY KEY,
                     type TEXT NOT NULL,
@@ -509,15 +532,15 @@ const PatternRecognitionService = {
                 )
             `, (err) => {
                 if (err) return reject(err);
-                db.run(`CREATE INDEX IF NOT EXISTS idx_rp_type ON recognized_patterns(type)`);
-                db.run(`CREATE INDEX IF NOT EXISTS idx_rp_industry ON recognized_patterns(industry)`);
+                deps.db.run(`CREATE INDEX IF NOT EXISTS idx_rp_type ON recognized_patterns(type)`);
+                deps.db.run(`CREATE INDEX IF NOT EXISTS idx_rp_industry ON recognized_patterns(industry)`);
                 resolve();
             });
         });
     }
 };
 
-module.exports = PatternRecognitionService;
+export default PatternRecognitionService;
 
 
 

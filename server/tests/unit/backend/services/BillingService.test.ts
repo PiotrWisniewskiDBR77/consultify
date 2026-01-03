@@ -43,6 +43,31 @@ describe('BillingService', () => {
     describe('Service Methods', () => {
         it('should have required methods', () => {
             expect(BillingService).toBeDefined();
+            expect(BillingService.getPlans).toBeDefined();
+        });
+
+        it('should fetch plans from database', async () => {
+            const mockPlans = [{ id: 'plan-1', name: 'Free Plan' }];
+            (mockDb.all as any).mockReturnValue(Promise.resolve(mockPlans));
+
+            const plans = await BillingService.getPlans();
+            expect(plans).toEqual(mockPlans);
+            expect(mockDb.all).toHaveBeenCalledWith(
+                expect.stringContaining('SELECT * FROM subscription_plans'),
+                expect.any(Array)
+            );
+        });
+
+        it('should fetch plan by id', async () => {
+            const mockPlan = { id: 'plan-1', name: 'Free Plan' };
+            (mockDb.get as any).mockReturnValue(Promise.resolve(mockPlan));
+
+            const plan = await BillingService.getPlanById('plan-1');
+            expect(plan).toEqual(mockPlan);
+            expect(mockDb.get).toHaveBeenCalledWith(
+                expect.stringContaining('SELECT * FROM subscription_plans WHERE id = ?'),
+                ['plan-1']
+            );
         });
     });
 

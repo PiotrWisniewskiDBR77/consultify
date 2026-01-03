@@ -53,10 +53,10 @@ let deps: Dependencies;
 
 const getDeps = (): Dependencies => {
     if (!deps) {
-        const defaultUserStateMachine = require('../../services/userStateMachine');
+        const defaultUserStateMachine = await import('../../services/userStateMachine.js').then(m => m.default || m);
         let defaultDb: Database | null = null;
         try {
-            defaultDb = require('../../db/sqliteAsync');
+            defaultDb = await import('../../db/sqliteAsync.js').then(m => m.default || m);
         } catch (e) {
             console.warn('userStateGuard: Database not available');
         }
@@ -255,7 +255,7 @@ export async function transitionState(
 
         // Log to audit (if auditService available)
         try {
-            const AuditService = require('../../services/auditService');
+            const AuditService = await import('../../services/auditService.js').then(m => m.default || m);
             await AuditService.log({
                 eventType: 'USER_STATE_TRANSITION',
                 userId,

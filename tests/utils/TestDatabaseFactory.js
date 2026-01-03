@@ -54,11 +54,35 @@ export class TestDatabaseFactory {
     }
 
     static enhanceDb(db) {
-        // Add async wrappers if missing (server/database.js usually just exports the sqlite instance directly in test mode)
-        // But some services might expect .runAsync if they use a promise wrapper.
-        // For now, we return the raw sqlite3 instance because that's what `server/database.js` does for `database.sqlite.active.js`.
+        // Add promise wrappers for services expecting async methods
+        db.runAsync = function (sql, params = []) {
+            return new Promise((resolve, reject) => {
+                this.run(sql, params, function (err) {
+                    if (err) return reject(err);
+                    resolve({ lastID: this.lastID, changes: this.changes });
+                });
+            });
+        };
 
-        // However, we can add a helper to close it cleanly
+        db.getAsync = function (sql, params = []) {
+            return new Promise((resolve, reject) => {
+                this.get(sql, params, (err, row) => {
+                    if (err) return reject(err);
+                    resolve(row);
+                });
+            });
+        };
+
+        db.allAsync = function (sql, params = []) {
+            return new Promise((resolve, reject) => {
+                this.all(sql, params, (err, rows) => {
+                    if (err) return reject(err);
+                    resolve(rows || []);
+                });
+            });
+        };
+
+        // Helper to close database cleanly
         db.destroy = () => {
             return new Promise((resolve) => db.close(resolve));
         };

@@ -1,17 +1,86 @@
-// PMO Analysis Service - AI-driven PMO health analysis
-// Step 3: PMO Objects, Statuses & Stage Gates
-// REFACTORED: Uses BaseService for common functionality
+/**
+ * PMO Analysis Service - AI-driven PMO health analysis
+ * Step 3: PMO Objects, Statuses & Stage Gates
+ */
 
-const BaseService = require('./BaseService');
-const ProgressService = require('./progressService');
-const DependencyService = require('./dependencyService');
+/**
+ * Dependency injection container
+ */
+const deps = {
+    _db: null,
+    _baseService: null,
+    _progressService: null,
+    _dependencyService: null,
 
-const PMOAnalysisService = Object.assign({}, BaseService, {
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get baseService() { return this._baseService; },
+    set baseService(val) { this._baseService = val; },
+
+    get progressService() { return this._progressService; },
+    set progressService(val) { this._progressService = val; },
+
+    get dependencyService() { return this._dependencyService; },
+    set dependencyService(val) { this._dependencyService = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: dbInstance } = await import('../database.js');
+        deps._db = dbInstance;
+    }
+    if (!deps._baseService) {
+        const { default: baseService } = await import('./BaseService.js');
+        deps._baseService = baseService;
+    }
+    if (!deps._progressService) {
+        const { default: progressService } = await import('./progressService.js');
+        deps._progressService = progressService;
+    }
+    if (!deps._dependencyService) {
+        const { default: dependencyService } = await import('./dependencyService.js');
+        deps._dependencyService = dependencyService;
+    }
+}
+
+class PMOAnalysisService {
+    constructor() {
+        this._db = null;
+    }
+
+    get db() {
+        if (!this._db) {
+            throw new Error('PMOAnalysisService: Database not initialized. Call init() first.');
+        }
+        return this._db;
+    }
+
+    /**
+     * Initialize service dependencies
+     */
+    async init() {
+        await initDeps();
+        this._db = deps.db;
+        return this;
+    }
+
+    /**
+     * Set dependencies for testing
+     */
+    setDependencies(mockDeps) {
+        Object.assign(deps, mockDeps);
+        this._db = deps.db;
+    }
+
     /**
      * Run full PMO analysis for a project
-     * REFACTORED: Uses BaseService and parallel queries
      */
-    analyzeProject: async function (projectId) {
+    async analyzeProject(projectId) {
+        await this.init();
         try {
             const issues = [];
             const warnings = [];
@@ -28,7 +97,7 @@ const PMOAnalysisService = Object.assign({}, BaseService, {
                 this.detectOrphanInitiatives(projectId),
                 this.detectInitiativesWithoutTasks(projectId),
                 this.detectOverloadedUsers(projectId),
-                DependencyService.detectDeadlocks(projectId),
+                deps.dependencyService.detectDeadlocks(projectId),
                 this.detectStalledInitiatives(projectId)
             ]);
 
@@ -108,26 +177,26 @@ const PMOAnalysisService = Object.assign({}, BaseService, {
                 analyzedAt: new Date().toISOString()
             };
         } catch (error) {
-            this.logError('Error analyzing project', error);
+            deps.baseService.logError('Error analyzing project', error);
             throw error;
         }
-    },
+    }
 
     /**
      * Detect initiatives without owners
-     * REFACTORED: Uses BaseService query helpers
      */
-    detectOrphanInitiatives: async function (projectId) {
+    async detectOrphanInitiatives(projectId) {
+        await this.init();
         const sql = `SELECT id, title as name FROM initiatives 
                     WHERE project_id = ? AND (owner_business_id IS NULL OR owner_business_id = '')`;
-        return await this.queryAll(sql, [projectId]);
-    },
+        return await deps.baseService.queryAll(sql, [projectId]);
+    }
 
     /**
      * Detect initiatives without tasks
-     * REFACTORED: Uses BaseService query helpers
      */
-    detectInitiativesWithoutTasks: async function (projectId) {
+    async detectInitiativesWithoutTasks(projectId) {
+        await this.init();
         const sql = `
             SELECT i.id, i.title as name 
             FROM initiatives i
@@ -136,14 +205,14 @@ const PMOAnalysisService = Object.assign({}, BaseService, {
             GROUP BY i.id
             HAVING COUNT(t.id) = 0
         `;
-        return await this.queryAll(sql, [projectId]);
-    },
+        return await deps.baseService.queryAll(sql, [projectId]);
+    }
 
     /**
      * Detect overloaded users (>10 active tasks)
-     * REFACTORED: Uses BaseService query helpers
      */
-    detectOverloadedUsers: async function (projectId) {
+    async detectOverloadedUsers(projectId) {
+        await this.init();
         const sql = `
             SELECT t.assignee_id, u.first_name, u.last_name, COUNT(*) as task_count
             FROM tasks t
@@ -152,19 +221,19 @@ const PMOAnalysisService = Object.assign({}, BaseService, {
             GROUP BY t.assignee_id
             HAVING COUNT(*) > 10
         `;
-        const rows = await this.queryAll(sql, [projectId]);
+        const rows = await deps.baseService.queryAll(sql, [projectId]);
         return rows.map(r => ({
             userId: r.assignee_id,
             name: `${r.first_name} ${r.last_name}`,
             taskCount: r.task_count
         }));
-    },
+    }
 
     /**
      * Detect stalled initiatives (no updates in 7+ days)
-     * REFACTORED: Uses BaseService query helpers
      */
-    detectStalledInitiatives: async function (projectId) {
+    async detectStalledInitiatives(projectId) {
+        await this.init();
         const sql = `
             SELECT id, title as name, status, updated_at
             FROM initiatives
@@ -172,27 +241,27 @@ const PMOAnalysisService = Object.assign({}, BaseService, {
               AND status IN ('EXECUTING', 'APPROVED')
               AND updated_at < datetime('now', '-7 days')
         `;
-        return await this.queryAll(sql, [projectId]);
-    },
+        return await deps.baseService.queryAll(sql, [projectId]);
+    }
 
     /**
      * Explain why something is blocked
-     * REFACTORED: Uses BaseService query helpers and parallel queries
      */
-    explainBlocker: async function (objectType, objectId) {
+    async explainBlocker(objectType, objectId) {
+        await this.init();
         try {
             const reasons = [];
 
             if (objectType === 'INITIATIVE') {
                 // OPTIMIZED: Execute queries in parallel
-                const [decisions, deps, init] = await Promise.all([
+                const [decisions, depsResult, init] = await Promise.all([
                     // Check for blocking decisions
-                    this.queryAll(`SELECT title, status FROM decisions 
+                    deps.baseService.queryAll(`SELECT title, status FROM decisions 
                             WHERE related_object_id = ? AND status = 'PENDING' AND required = 1`, [objectId]),
                     // Check for blocking dependencies
-                    DependencyService.canStart(objectId),
+                    deps.dependencyService.canStart(objectId),
                     // Check blockedReason field
-                    this.queryOne(`SELECT blocked_reason FROM initiatives WHERE id = ?`, [objectId])
+                    deps.baseService.queryOne(`SELECT blocked_reason FROM initiatives WHERE id = ?`, [objectId])
                 ]);
 
                 if (decisions.length > 0) {
@@ -202,10 +271,10 @@ const PMOAnalysisService = Object.assign({}, BaseService, {
                     });
                 }
 
-                if (!deps.canStart) {
+                if (!depsResult.canStart) {
                     reasons.push({
                         type: 'BLOCKED_DEPENDENCY',
-                        message: `Waiting for: ${deps.blockedBy.map(d => d.name).join(', ')}`
+                        message: `Waiting for: ${depsResult.blockedBy.map(d => d.name).join(', ')}`
                     });
                 }
 
@@ -218,7 +287,7 @@ const PMOAnalysisService = Object.assign({}, BaseService, {
             }
 
             if (objectType === 'TASK') {
-                const task = await this.queryOne(`SELECT blocked_reason, blocker_type FROM tasks WHERE id = ?`, [objectId]);
+                const task = await deps.baseService.queryOne(`SELECT blocked_reason, blocker_type FROM tasks WHERE id = ?`, [objectId]);
 
                 if (task) {
                     reasons.push({
@@ -235,10 +304,11 @@ const PMOAnalysisService = Object.assign({}, BaseService, {
                 reasons
             };
         } catch (error) {
-            this.logError('Error explaining blocker', error);
+            deps.baseService.logError('Error explaining blocker', error);
             throw error;
         }
     }
-});
+}
 
-module.exports = PMOAnalysisService;
+const pmoAnalysisServiceInstance = new PMOAnalysisService();
+export default pmoAnalysisServiceInstance;

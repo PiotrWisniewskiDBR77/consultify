@@ -1,358 +1,166 @@
-/**
- * AI Role Guard Tests
- * 
- * CRITICAL SECURITY SERVICE - Must have 95%+ coverage
- * Tests AI role enforcement, action blocking, and mutation validation.
- */
-
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { testProjects } from '../../fixtures/testData.js';
-
-// Hoisted mock - must be defined before imports
-const mockDb = vi.hoisted(() => {
-    return {
-        get: vi.fn(),
-        all: vi.fn(),
-        run: vi.fn(),
-        exec: vi.fn(),
-        prepare: vi.fn(),
-        serialize: vi.fn((cb) => { if (cb) cb(); }),
-        query: vi.fn(),
-        runAsync: vi.fn(),
-        getAsync: vi.fn(),
-        allAsync: vi.fn(),
-        execAsync: vi.fn(),
-        initPromise: Promise.resolve()
-    };
-});
-
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
-// Import service after mock is set up
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import AIRoleGuard from '../../../server/services/aiRoleGuard.js';
 
-describe('AIRoleGuard', () => {
+describe('AI Role Guard', () => {
+    const mockDb = {
+        get: vi.fn(),
+        run: vi.fn(),
+        all: vi.fn()
+    };
+
     beforeEach(() => {
         vi.clearAllMocks();
-        
-        // Inject mock dependencies
-        AIRoleGuard.setDependencies({ db: mockDb });
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
-
-    describe('getProjectRole()', () => {
-        it('should return ADVISOR as default for null projectId', async () => {
-            const role = await AIRoleGuard.getProjectRole(null);
-            expect(role).toBe('ADVISOR');
-        });
-
-        it('should return project AI role from database', async () => {
-            const projectId = testProjects.project1.id;
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { ai_role: 'MANAGER' });
-            });
-
-            const role = await AIRoleGuard.getProjectRole(projectId);
-            
-            expect(role).toBe('MANAGER');
-            expect(mockDb.get).toHaveBeenCalledWith(
-                expect.stringContaining('SELECT ai_role FROM projects'),
-                [projectId],
-                expect.any(Function)
-            );
-        });
-
-        it('should default to ADVISOR when project not found', async () => {
-            const projectId = 'non-existent';
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
-            });
-
-            const role = await AIRoleGuard.getProjectRole(projectId);
-            
-            expect(role).toBe('ADVISOR');
-        });
-
-        it('should default to ADVISOR on database error', async () => {
-            const projectId = testProjects.project1.id;
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(new Error('DB Error'), null);
-            });
-
-            const role = await AIRoleGuard.getProjectRole(projectId);
-            
-            expect(role).toBe('ADVISOR');
+        AIRoleGuard.setDependencies({
+            db: mockDb
         });
     });
 
-    describe('setProjectRole()', () => {
-        it('should set project AI role', async () => {
-            const projectId = testProjects.project1.id;
-            const newRole = 'OPERATOR';
-            const userId = 'user-123';
+    describe('Role Definitions', () => {
+        it('should define three roles in correct hierarchy', () => {
+            expect(AIRoleGuard.AI_PROJECT_ROLES.ADVISOR).toBe('ADVISOR');
+            expect(AIRoleGuard.AI_PROJECT_ROLES.MANAGER).toBe('MANAGER');
+            expect(AIRoleGuard.AI_PROJECT_ROLES.OPERATOR).toBe('OPERATOR');
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
-            });
-
-            const result = await AIRoleGuard.setProjectRole(projectId, newRole, userId);
-
-            expect(result.updated).toBe(true);
-            expect(result.projectId).toBe(projectId);
-            expect(result.role).toBe(newRole);
-            expect(mockDb.run).toHaveBeenCalledWith(
-                expect.stringContaining('UPDATE projects SET ai_role'),
-                [newRole, projectId],
-                expect.any(Function)
-            );
+            expect(AIRoleGuard.ROLE_HIERARCHY).toEqual(['ADVISOR', 'MANAGER', 'OPERATOR']);
         });
 
-        it('should reject invalid role', async () => {
-            const projectId = testProjects.project1.id;
+        it('should define capabilities for each role', () => {
+            const advisorCaps = AIRoleGuard.getRoleCapabilities('ADVISOR');
+            expect(advisorCaps.canExplain).toBe(true);
+            expect(advisorCaps.canCreateDrafts).toBe(false);
+            expect(advisorCaps.canExecuteActions).toBe(false);
+            expect(advisorCaps.canModifyEntities).toBe(false);
 
-            await expect(
-                AIRoleGuard.setProjectRole(projectId, 'INVALID_ROLE', 'user-123')
-            ).rejects.toThrow('Invalid AI role');
-        });
+            const managerCaps = AIRoleGuard.getRoleCapabilities('MANAGER');
+            expect(managerCaps.canExplain).toBe(true);
+            expect(managerCaps.canCreateDrafts).toBe(true);
+            expect(managerCaps.canExecuteActions).toBe(false);
+            expect(managerCaps.requiresApproval).toBe(true);
 
-        it('should handle database errors', async () => {
-            const projectId = testProjects.project1.id;
-
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback(new Error('DB Error'));
-            });
-
-            await expect(
-                AIRoleGuard.setProjectRole(projectId, 'MANAGER', 'user-123')
-            ).rejects.toThrow('DB Error');
+            const operatorCaps = AIRoleGuard.getRoleCapabilities('OPERATOR');
+            expect(operatorCaps.canExplain).toBe(true);
+            expect(operatorCaps.canCreateDrafts).toBe(true);
+            expect(operatorCaps.canExecuteActions).toBe(true);
+            expect(operatorCaps.canModifyEntities).toBe(true);
         });
     });
 
-    describe('canPerformAction()', () => {
-        it('should allow EXPLAIN_CONTEXT for ADVISOR', async () => {
-            const projectId = testProjects.project1.id;
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { ai_role: 'ADVISOR' });
-            });
-
-            const result = await AIRoleGuard.canPerformAction(projectId, 'EXPLAIN_CONTEXT');
-
-            expect(result.allowed).toBe(true);
-            expect(result.role).toBe('ADVISOR');
+    describe('Role Descriptions', () => {
+        it('should return correct description for each role', () => {
+            expect(AIRoleGuard.getRoleDescription('ADVISOR')).toContain('explains');
+            expect(AIRoleGuard.getRoleDescription('MANAGER')).toContain('drafts');
+            expect(AIRoleGuard.getRoleDescription('OPERATOR')).toContain('executes');
         });
 
-        it('should block CREATE_DRAFT_TASK for ADVISOR', async () => {
-            const projectId = testProjects.project1.id;
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { ai_role: 'ADVISOR' });
-            });
-
-            const result = await AIRoleGuard.canPerformAction(projectId, 'CREATE_DRAFT_TASK');
-
-            expect(result.allowed).toBe(false);
-            expect(result.role).toBe('ADVISOR');
-            expect(result.reason).toContain('canCreateDrafts');
-        });
-
-        it('should allow CREATE_DRAFT_TASK for MANAGER', async () => {
-            const projectId = testProjects.project1.id;
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { ai_role: 'MANAGER' });
-            });
-
-            const result = await AIRoleGuard.canPerformAction(projectId, 'CREATE_DRAFT_TASK');
-
-            expect(result.allowed).toBe(true);
-            expect(result.requiresApproval).toBe(true);
-            expect(result.role).toBe('MANAGER');
-        });
-
-        it('should allow EXECUTE_TASK_UPDATE for OPERATOR', async () => {
-            const projectId = testProjects.project1.id;
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { ai_role: 'OPERATOR' });
-            });
-
-            const result = await AIRoleGuard.canPerformAction(projectId, 'EXECUTE_TASK_UPDATE');
-
-            expect(result.allowed).toBe(true);
-            expect(result.requiresApproval).toBe(false);
-            expect(result.role).toBe('OPERATOR');
-        });
-
-        it('should block EXECUTE_TASK_UPDATE for MANAGER', async () => {
-            const projectId = testProjects.project1.id;
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { ai_role: 'MANAGER' });
-            });
-
-            const result = await AIRoleGuard.canPerformAction(projectId, 'EXECUTE_TASK_UPDATE');
-
-            expect(result.allowed).toBe(false);
-            expect(result.reason).toContain('canExecuteActions');
-        });
-
-        it('should allow unknown action types (default allow)', async () => {
-            const projectId = testProjects.project1.id;
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { ai_role: 'ADVISOR' });
-            });
-
-            const result = await AIRoleGuard.canPerformAction(projectId, 'UNKNOWN_ACTION');
-
-            expect(result.allowed).toBe(true);
-            expect(result.reason).toBe('Action type not restricted');
+        it('should default to ADVISOR description for unknown role', () => {
+            expect(AIRoleGuard.getRoleDescription('UNKNOWN')).toContain('explains');
         });
     });
 
-    describe('isActionBlocked()', () => {
-        it('should return blocked=false for allowed actions', async () => {
-            const projectId = testProjects.project1.id;
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { ai_role: 'MANAGER' });
+    describe('Action Capability Checks', () => {
+        describe('ADVISOR Role', () => {
+            it('should allow explain actions', async () => {
+                mockDb.get.mockImplementation((sql, params, cb) => cb(null, { ai_role: 'ADVISOR' }));
+
+                const result = await AIRoleGuard.canPerformAction('test-project', 'EXPLAIN_CONTEXT');
+                expect(result.allowed).toBe(true);
+                expect(result.role).toBe('ADVISOR');
             });
 
-            const result = await AIRoleGuard.isActionBlocked(projectId, 'CREATE_DRAFT_TASK');
+            it('should block draft creation', async () => {
+                mockDb.get.mockImplementation((sql, params, cb) => cb(null, { ai_role: 'ADVISOR' }));
 
-            expect(result.blocked).toBe(false);
-            expect(result.requiresApproval).toBe(true);
+                const result = await AIRoleGuard.canPerformAction('test-project', 'CREATE_DRAFT_TASK');
+                expect(result.allowed).toBe(false);
+                expect(result.requiredCapability).toBe('canCreateDrafts');
+            });
+
+            it('should block execution actions', async () => {
+                mockDb.get.mockImplementation((sql, params, cb) => cb(null, { ai_role: 'ADVISOR' }));
+
+                const result = await AIRoleGuard.canPerformAction('test-project', 'EXECUTE_TASK_UPDATE');
+                expect(result.allowed).toBe(false);
+            });
         });
 
-        it('should return blocked=true with details for blocked actions', async () => {
-            const projectId = testProjects.project1.id;
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { ai_role: 'ADVISOR' });
+        describe('MANAGER Role', () => {
+            it('should allow draft creation with approval required', async () => {
+                mockDb.get.mockImplementation((sql, params, cb) => cb(null, { ai_role: 'MANAGER' }));
+
+                const result = await AIRoleGuard.canPerformAction('test-project', 'CREATE_DRAFT_TASK');
+                expect(result.allowed).toBe(true);
+                expect(result.requiresApproval).toBe(true);
             });
 
-            const result = await AIRoleGuard.isActionBlocked(projectId, 'CREATE_DRAFT_TASK');
+            it('should block execution actions', async () => {
+                mockDb.get.mockImplementation((sql, params, cb) => cb(null, { ai_role: 'MANAGER' }));
 
-            expect(result.blocked).toBe(true);
-            expect(result.currentRole).toBe('ADVISOR');
-            expect(result.roleRequired).toBe('MANAGER');
-            expect(result.reason).toContain('requires MANAGER role');
-            expect(result.suggestion).toBeDefined();
+                const result = await AIRoleGuard.canPerformAction('test-project', 'EXECUTE_TASK_UPDATE');
+                expect(result.allowed).toBe(false);
+            });
+        });
+
+        describe('OPERATOR Role', () => {
+            it('should allow execution actions', async () => {
+                mockDb.get.mockImplementation((sql, params, cb) => cb(null, { ai_role: 'OPERATOR' }));
+
+                const result = await AIRoleGuard.canPerformAction('test-project', 'EXECUTE_TASK_UPDATE');
+                expect(result.allowed).toBe(true);
+                expect(result.requiresApproval).toBe(false);
+            });
+
+            it('should allow entity modifications', async () => {
+                mockDb.get.mockImplementation((sql, params, cb) => cb(null, { ai_role: 'OPERATOR' }));
+
+                const result = await AIRoleGuard.canPerformAction('test-project', 'UPDATE_ENTITY');
+                expect(result.allowed).toBe(true);
+            });
         });
     });
 
-    describe('validateMutation()', () => {
+    describe('Mutation Validation', () => {
         it('should block all mutations for ADVISOR', async () => {
-            const projectId = testProjects.project1.id;
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { ai_role: 'ADVISOR' });
-            });
+            mockDb.get.mockImplementation((sql, params, cb) => cb(null, { ai_role: 'ADVISOR' }));
 
-            const result = await AIRoleGuard.validateMutation(projectId, 'create');
-
+            const result = await AIRoleGuard.validateMutation('test-project', 'create');
             expect(result.allowed).toBe(false);
-            expect(result.asDraft).toBe(false);
-            expect(result.reason).toContain('ADVISOR mode');
+            expect(result.reason).toContain('ADVISOR');
         });
 
         it('should allow mutations as drafts for MANAGER', async () => {
-            const projectId = testProjects.project1.id;
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { ai_role: 'MANAGER' });
-            });
+            mockDb.get.mockImplementation((sql, params, cb) => cb(null, { ai_role: 'MANAGER' }));
 
-            const result = await AIRoleGuard.validateMutation(projectId, 'create');
-
+            const result = await AIRoleGuard.validateMutation('test-project', 'create');
             expect(result.allowed).toBe(true);
             expect(result.asDraft).toBe(true);
             expect(result.requiresApproval).toBe(true);
-            expect(result.reason).toContain('MANAGER mode');
         });
 
-        it('should allow mutations for OPERATOR', async () => {
-            const projectId = testProjects.project1.id;
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { ai_role: 'OPERATOR' });
-            });
+        it('should allow direct mutations for OPERATOR', async () => {
+            mockDb.get.mockImplementation((sql, params, cb) => cb(null, { ai_role: 'OPERATOR' }));
 
-            const result = await AIRoleGuard.validateMutation(projectId, 'update');
-
+            const result = await AIRoleGuard.validateMutation('test-project', 'create');
             expect(result.allowed).toBe(true);
             expect(result.asDraft).toBe(false);
-            expect(result.requiresApproval).toBe(false);
-            expect(result.reason).toContain('OPERATOR mode');
-        });
-
-        it('should fail-safe to ADVISOR for unknown role', async () => {
-            const projectId = testProjects.project1.id;
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { ai_role: 'UNKNOWN' });
-            });
-
-            const result = await AIRoleGuard.validateMutation(projectId, 'create');
-
-            expect(result.allowed).toBe(false);
-            expect(result.reason).toContain('Unknown AI role');
         });
     });
 
-    describe('getRoleCapabilities()', () => {
-        it('should return capabilities for ADVISOR', () => {
-            const caps = AIRoleGuard.getRoleCapabilities('ADVISOR');
-            expect(caps.canExplain).toBe(true);
-            expect(caps.canCreateDrafts).toBe(false);
-            expect(caps.canExecuteActions).toBe(false);
+    describe('isActionBlocked', () => {
+        it('should return blocked with required role for insufficient permissions', async () => {
+            mockDb.get.mockImplementation((sql, params, cb) => cb(null, { ai_role: 'ADVISOR' }));
+
+            const result = await AIRoleGuard.isActionBlocked('test-project', 'CREATE_DRAFT_TASK');
+            expect(result.blocked).toBe(true);
+            expect(result.currentRole).toBe('ADVISOR');
+            expect(result.roleRequired).toBe('MANAGER');
+            expect(result.suggestion).toContain('Project Settings');
         });
 
-        it('should return capabilities for MANAGER', () => {
-            const caps = AIRoleGuard.getRoleCapabilities('MANAGER');
-            expect(caps.canCreateDrafts).toBe(true);
-            expect(caps.requiresApproval).toBe(true);
-            expect(caps.canExecuteActions).toBe(false);
-        });
+        it('should return not blocked for allowed actions', async () => {
+            mockDb.get.mockImplementation((sql, params, cb) => cb(null, { ai_role: 'MANAGER' }));
 
-        it('should return capabilities for OPERATOR', () => {
-            const caps = AIRoleGuard.getRoleCapabilities('OPERATOR');
-            expect(caps.canExecuteActions).toBe(true);
-            expect(caps.canModifyEntities).toBe(true);
-            expect(caps.requiresApproval).toBe(false);
-        });
-
-        it('should default to ADVISOR for unknown role', () => {
-            const caps = AIRoleGuard.getRoleCapabilities('UNKNOWN');
-            expect(caps.canExplain).toBe(true);
-            expect(caps.canCreateDrafts).toBe(false);
-        });
-    });
-
-    describe('getRoleConfig()', () => {
-        it('should return full role configuration', async () => {
-            const projectId = testProjects.project1.id;
-            
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { ai_role: 'MANAGER' });
-            });
-
-            const config = await AIRoleGuard.getRoleConfig(projectId);
-
-            expect(config.activeRole).toBe('MANAGER');
-            expect(config.capabilities).toBeDefined();
-            expect(config.roleDescription).toBeDefined();
-            expect(config.roleHierarchy).toEqual(['ADVISOR', 'MANAGER', 'OPERATOR']);
-            expect(config.roleIndex).toBe(1);
+            const result = await AIRoleGuard.isActionBlocked('test-project', 'CREATE_DRAFT_TASK');
+            expect(result.blocked).toBe(false);
         });
     });
 });

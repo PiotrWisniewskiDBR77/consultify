@@ -1,34 +1,83 @@
 /**
  * AnalyticsAdvanced Routes
- * API endpoints for analyticsAdvanced
+ * API endpoints for advanced analytics
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript
+ * Fully migrated to TypeScript ES modules
  */
 
-import { Router } from 'express';
-import { createRequire } from 'module';
+import { Router, Response } from 'express';
+import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { verifyAdmin } from '../middleware/admin.middleware.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
-const require = createRequire(import.meta.url);
-
-// Import the JS implementation for now (will be fully migrated later)
-const analyticsAdvancedRoutesJS = require('../../routes/analyticsAdvanced.js');
-
-// Create router and apply JS routes
 const router = Router();
 
-// Re-export the JS router (maintains backward compatibility)
-// The JS route file exports a router that we can use directly
-if (typeof analyticsAdvancedRoutesJS === 'function') {
-    // If it's a router function, use it
-    router.use(analyticsAdvancedRoutesJS);
-} else if (analyticsAdvancedRoutesJS.default) {
-    // If it has a default export
-    router.use(analyticsAdvancedRoutesJS.default);
-} else {
-    // If it's the router itself
-    router.use(analyticsAdvancedRoutesJS);
+// Service interfaces
+interface CohortServiceInterface {
+    getRetentionMatrix?: () => Promise<unknown>;
 }
+
+interface ExperimentServiceInterface {
+    getAllUserExperiments?: (userId: string) => Promise<unknown>;
+}
+
+// Dynamic imports for services (may not be migrated yet)
+let CohortService: CohortServiceInterface | null = null;
+let ExperimentService: ExperimentServiceInterface | null = null;
+
+try {
+    const cohortModule = await import('../../services/cohortService.js');
+    CohortService = (cohortModule.default || cohortModule) as CohortServiceInterface;
+} catch {
+    console.warn('[AnalyticsAdvanced Routes] CohortService not available');
+}
+
+try {
+    const experimentModule = await import('../../services/experimentService.js');
+    ExperimentService = (experimentModule.default || experimentModule) as ExperimentServiceInterface;
+} catch {
+    console.warn('[AnalyticsAdvanced Routes] ExperimentService not available');
+}
+
+/**
+ * GET /api/analytics/cohorts
+ * Cohort Matrix (Admin only)
+ */
+router.get('/cohorts', verifyToken, verifyAdmin, asyncHandler(async (_req: AuthRequest, res: Response) => {
+    if (!CohortService?.getRetentionMatrix) {
+        return res.status(503).json({ error: 'Cohort service not available' });
+    }
+
+    try {
+        const matrix = await CohortService.getRetentionMatrix();
+        res.json({ success: true, matrix });
+    } catch (error: unknown) {
+        console.error('Cohort analysis error:', error);
+        res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+}));
+
+/**
+ * GET /api/experiments/me
+ * User's feature flags
+ */
+router.get('/experiments/me', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!ExperimentService?.getAllUserExperiments) {
+        return res.status(503).json({ error: 'Experiment service not available' });
+    }
+
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const flags = await ExperimentService.getAllUserExperiments(userId);
+        res.json({ success: true, flags });
+    } catch (error: unknown) {
+        console.error('Experiment assignment error:', error);
+        res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+}));
 
 export default router;

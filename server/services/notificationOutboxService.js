@@ -1,181 +1,166 @@
+import BaseService from './BaseService.js';
+import { v4 as uuidv4 } from 'uuid';
+
 /**
  * NotificationOutboxService
  * 
  * Step 16: Outbox pattern for async notification delivery.
  * Queues notifications for later processing, respects user preferences.
  */
+class NotificationOutboxService extends BaseService {
+    constructor() {
+        super();
+        this._auditLogger = null;
+        this.NOTIFICATION_TYPES = {
+            APPROVAL_DUE: 'APPROVAL_DUE',
+            PLAYBOOK_STUCK: 'PLAYBOOK_STUCK',
+            DEAD_LETTER: 'DEAD_LETTER',
+            ESCALATION: 'ESCALATION'
+        };
+        this.OUTBOX_STATUSES = {
+            QUEUED: 'QUEUED',
+            SENT: 'SENT',
+            FAILED: 'FAILED'
+        };
+        this.MAX_ATTEMPTS = 3;
+    }
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const auditLogger = require('../utils/auditLogger');
+    /**
+     * Initialize dependencies
+     */
+    async init() {
+        await super.init();
+        if (!this._auditLogger) {
+            const auditLogger = await import('../utils/auditLogger.js');
+            this._auditLogger = auditLogger.default || auditLogger;
+        }
+        return this;
+    }
 
-const NOTIFICATION_TYPES = {
-    APPROVAL_DUE: 'APPROVAL_DUE',
-    PLAYBOOK_STUCK: 'PLAYBOOK_STUCK',
-    DEAD_LETTER: 'DEAD_LETTER',
-    ESCALATION: 'ESCALATION'
-};
-
-const OUTBOX_STATUSES = {
-    QUEUED: 'QUEUED',
-    SENT: 'SENT',
-    FAILED: 'FAILED'
-};
-
-const MAX_ATTEMPTS = 3;
-
-const NotificationOutboxService = {
-    NOTIFICATION_TYPES,
-    OUTBOX_STATUSES,
-    MAX_ATTEMPTS,
+    /**
+     * Set dependencies for testing
+     */
+    setDependencies(newDeps) {
+        super.setDependencies(newDeps);
+        if (newDeps.auditLogger) this._auditLogger = newDeps.auditLogger;
+    }
 
     /**
      * Enqueue a notification for async delivery.
-     * 
-     * @param {string} userId - Target user ID
-     * @param {string} orgId - Organization ID
-     * @param {string} type - Notification type
-     * @param {Object} payload - Notification payload
-     * @param {string} [channel='email'] - Delivery channel
-     * @returns {Promise<Object>} Created outbox entry
      */
-    enqueue: async (userId, orgId, type, payload, channel = 'email') => {
+    async enqueue(userId, orgId, type, payload, channel = 'email') {
+        await this.init();
+
         // Check user preferences first
-        const shouldSend = await NotificationOutboxService.shouldNotify(userId, orgId, type);
+        const shouldSend = await this.shouldNotify(userId, orgId, type);
         if (!shouldSend) {
             console.log(`[NotificationOutbox] User ${userId} has disabled ${type} notifications`);
             return { skipped: true, reason: 'user_preference' };
         }
 
-        return new Promise((resolve, reject) => {
-            const id = uuidv4();
+        const id = uuidv4();
 
-            db.run(
-                `INSERT INTO notification_outbox 
-                 (id, org_id, user_id, notification_type, payload_json, status, channel, created_at)
-                 VALUES (?, ?, ?, ?, ?, 'QUEUED', ?, CURRENT_TIMESTAMP)`,
-                [id, orgId, userId, type, JSON.stringify(payload), channel],
-                function (err) {
-                    if (err) return reject(err);
+        await this.queryRun(
+            `INSERT INTO notification_outbox 
+             (id, org_id, user_id, notification_type, payload_json, status, channel, created_at)
+             VALUES (?, ?, ?, ?, ?, 'QUEUED', ?, CURRENT_TIMESTAMP)`,
+            [id, orgId, userId, type, JSON.stringify(payload), channel]
+        );
 
-                    auditLogger.debug('NOTIFICATION_QUEUED', {
-                        notification_id: id,
-                        user_id: userId,
-                        org_id: orgId,
-                        type,
-                        channel
-                    });
+        if (this._auditLogger) {
+            this._auditLogger.debug('NOTIFICATION_QUEUED', {
+                notification_id: id,
+                user_id: userId,
+                org_id: orgId,
+                type,
+                channel
+            });
+        }
 
-                    resolve({ id, userId, orgId, type, status: OUTBOX_STATUSES.QUEUED });
-                }
-            );
-        });
-    },
+        return { id, userId, orgId, type, status: this.OUTBOX_STATUSES.QUEUED };
+    }
 
     /**
      * Check if user wants to receive this notification type.
-     * 
-     * @param {string} userId - User ID
-     * @param {string} orgId - Organization ID
-     * @param {string} eventType - Notification type
-     * @returns {Promise<boolean>} Whether to send
      */
-    shouldNotify: async (userId, orgId, eventType) => {
-        const prefs = await NotificationOutboxService.getUserPreferences(userId, orgId);
-
+    async shouldNotify(userId, orgId, eventType) {
+        await this.init();
+        const prefs = await this.getUserPreferences(userId, orgId);
 
         // Default to true if no preferences set
         if (!prefs) return true;
 
         const eventMap = {
-            [NOTIFICATION_TYPES.APPROVAL_DUE]: prefs.event_approval_due,
-            [NOTIFICATION_TYPES.PLAYBOOK_STUCK]: prefs.event_playbook_stuck,
-            [NOTIFICATION_TYPES.DEAD_LETTER]: prefs.event_dead_letter,
-            [NOTIFICATION_TYPES.ESCALATION]: prefs.event_escalation
+            [this.NOTIFICATION_TYPES.APPROVAL_DUE]: prefs.event_approval_due,
+            [this.NOTIFICATION_TYPES.PLAYBOOK_STUCK]: prefs.event_playbook_stuck,
+            [this.NOTIFICATION_TYPES.DEAD_LETTER]: prefs.event_dead_letter,
+            [this.NOTIFICATION_TYPES.ESCALATION]: prefs.event_escalation
         };
 
         return eventMap[eventType] !== 0;
-    },
+    }
 
     /**
      * Get user notification preferences.
-     * 
-     * @param {string} userId - User ID
-     * @param {string} orgId - Organization ID
-     * @returns {Promise<Object|null>} Preferences or null
      */
-    getUserPreferences: async (userId, orgId) => {
-        return new Promise((resolve, reject) => {
-            db.get(
-                `SELECT * FROM user_notification_preferences 
-                 WHERE user_id = ? AND org_id = ?`,
-                [userId, orgId],
-                (err, row) => {
-                    if (err) return reject(err);
-                    resolve(row || null);
-                }
-            );
-        });
-    },
+    async getUserPreferences(userId, orgId) {
+        await this.init();
+        return this.queryOne(
+            `SELECT * FROM user_notification_preferences 
+             WHERE user_id = ? AND org_id = ?`,
+            [userId, orgId]
+        );
+    }
 
     /**
      * Update user notification preferences.
-     * 
-     * @param {string} userId - User ID
-     * @param {string} orgId - Organization ID
-     * @param {Object} preferences - Preference settings
-     * @returns {Promise<Object>} Updated preferences
      */
-    updateUserPreferences: async (userId, orgId, preferences) => {
-        return new Promise((resolve, reject) => {
-            const id = uuidv4();
+    async updateUserPreferences(userId, orgId, preferences) {
+        await this.init();
+        const id = uuidv4();
 
-            db.run(
-                `INSERT INTO user_notification_preferences 
-                 (id, user_id, org_id, channel_email, channel_slack, channel_teams,
-                  event_approval_due, event_playbook_stuck, event_dead_letter, event_escalation,
-                  updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                 ON CONFLICT(user_id, org_id) DO UPDATE SET
-                    channel_email = excluded.channel_email,
-                    channel_slack = excluded.channel_slack,
-                    channel_teams = excluded.channel_teams,
-                    event_approval_due = excluded.event_approval_due,
-                    event_playbook_stuck = excluded.event_playbook_stuck,
-                    event_dead_letter = excluded.event_dead_letter,
-                    event_escalation = excluded.event_escalation,
-                    updated_at = CURRENT_TIMESTAMP`,
-                [
-                    id, userId, orgId,
-                    preferences.channel_email ?? 1,
-                    preferences.channel_slack ?? 0,
-                    preferences.channel_teams ?? 0,
-                    preferences.event_approval_due ?? 1,
-                    preferences.event_playbook_stuck ?? 1,
-                    preferences.event_dead_letter ?? 1,
-                    preferences.event_escalation ?? 1
-                ],
-                function (err) {
-                    if (err) return reject(err);
+        await this.queryRun(
+            `INSERT INTO user_notification_preferences 
+             (id, user_id, org_id, channel_email, channel_slack, channel_teams,
+              event_approval_due, event_playbook_stuck, event_dead_letter, event_escalation,
+              updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+             ON CONFLICT(user_id, org_id) DO UPDATE SET
+                channel_email = excluded.channel_email,
+                channel_slack = excluded.channel_slack,
+                channel_teams = excluded.channel_teams,
+                event_approval_due = excluded.event_approval_due,
+                event_playbook_stuck = excluded.event_playbook_stuck,
+                event_dead_letter = excluded.event_dead_letter,
+                event_escalation = excluded.event_escalation,
+                updated_at = CURRENT_TIMESTAMP`,
+            [
+                id, userId, orgId,
+                preferences.channel_email ?? 1,
+                preferences.channel_slack ?? 0,
+                preferences.channel_teams ?? 0,
+                preferences.event_approval_due ?? 1,
+                preferences.event_playbook_stuck ?? 1,
+                preferences.event_dead_letter ?? 1,
+                preferences.event_escalation ?? 1
+            ]
+        );
 
-                    auditLogger.info('NOTIFICATION_PREFS_UPDATED', {
-                        user_id: userId,
-                        org_id: orgId
-                    });
+        if (this._auditLogger) {
+            this._auditLogger.info('NOTIFICATION_PREFS_UPDATED', {
+                user_id: userId,
+                org_id: orgId
+            });
+        }
 
-                    resolve({ userId, orgId, ...preferences });
-                }
-            );
-        });
-    },
+        return { userId, orgId, ...preferences };
+    }
 
     /**
      * Process queued notifications (cron job).
-     * For now, marks as SENT (actual email integration is out of scope).
-     * 
-     * @returns {Promise<Object>} Processing summary
      */
-    processQueue: async () => {
+    async processQueue() {
+        await this.init();
         console.log('[NotificationOutbox] Processing queue...');
         const startTime = Date.now();
 
@@ -186,140 +171,111 @@ const NotificationOutboxService = {
             skipped: 0
         };
 
-        return new Promise((resolve, reject) => {
-            db.all(
-                `SELECT * FROM notification_outbox 
-                 WHERE status = 'QUEUED' AND attempts < ?
-                 ORDER BY created_at ASC
-                 LIMIT 100`,
-                [MAX_ATTEMPTS],
-                async (err, rows) => {
-                    if (err) return reject(err);
+        const rows = await this.queryAll(
+            `SELECT * FROM notification_outbox 
+             WHERE status = 'QUEUED' AND attempts < ?
+             ORDER BY created_at ASC
+             LIMIT 100`,
+            [this.MAX_ATTEMPTS]
+        );
 
-                    for (const notification of (rows || [])) {
-                        summary.processed++;
+        for (const notification of (rows || [])) {
+            summary.processed++;
 
-                        try {
-                            // Simulate sending (provider integration deferred)
-                            // For now, simulate sending
-                            const success = await NotificationOutboxService._sendNotification(notification);
+            try {
+                // Simulate sending
+                const success = await this._sendNotification(notification);
 
-                            if (success) {
-                                await NotificationOutboxService._markSent(notification.id);
-                                summary.sent++;
-                            } else {
-                                await NotificationOutboxService._markFailed(notification.id, 'Send failed');
-                                summary.failed++;
-                            }
-                        } catch (sendErr) {
-                            await NotificationOutboxService._incrementAttempts(notification.id, sendErr.message);
-                            summary.failed++;
-                        }
-                    }
-
-                    const duration = Date.now() - startTime;
-                    console.log(`[NotificationOutbox] Queue processed in ${duration}ms:`, summary);
-
-                    resolve(summary);
+                if (success) {
+                    await this._markSent(notification.id);
+                    summary.sent++;
+                } else {
+                    await this._markFailed(notification.id, 'Send failed');
+                    summary.failed++;
                 }
-            );
-        });
-    },
+            } catch (sendErr) {
+                await this._incrementAttempts(notification.id, sendErr.message);
+                summary.failed++;
+            }
+        }
+
+        const duration = Date.now() - startTime;
+        console.log(`[NotificationOutbox] Queue processed in ${duration}ms:`, summary);
+
+        return summary;
+    }
 
     /**
      * Simulate sending a notification (placeholder for real integration).
      * @private
      */
-    _sendNotification: async (notification) => {
-        // Simulate email sending (External provider integration deferred to future phase)
+    async _sendNotification(notification) {
         console.log(`[NotificationOutbox] Would send ${notification.notification_type} to user ${notification.user_id}`);
-
-        // Simulate success (in production, this would call the email API)
         return true;
-    },
+    }
 
     /**
      * Mark notification as sent.
      * @private
      */
-    _markSent: async (id) => {
-        return new Promise((resolve, reject) => {
-            db.run(
-                `UPDATE notification_outbox 
-                 SET status = 'SENT', sent_at = CURRENT_TIMESTAMP, last_attempt_at = CURRENT_TIMESTAMP
-                 WHERE id = ?`,
-                [id],
-                (err) => {
-                    if (err) return reject(err);
-                    resolve(true);
-                }
-            );
-        });
-    },
+    async _markSent(id) {
+        await this.init();
+        return this.queryRun(
+            `UPDATE notification_outbox 
+             SET status = 'SENT', sent_at = CURRENT_TIMESTAMP, last_attempt_at = CURRENT_TIMESTAMP
+             WHERE id = ?`,
+            [id]
+        );
+    }
 
     /**
      * Increment attempt count and record error.
      * @private
      */
-    _incrementAttempts: async (id, errorMessage) => {
-        return new Promise((resolve, reject) => {
-            db.run(
-                `UPDATE notification_outbox 
-                 SET attempts = attempts + 1, last_attempt_at = CURRENT_TIMESTAMP, error_message = ?
-                 WHERE id = ?`,
-                [errorMessage, id],
-                (err) => {
-                    if (err) return reject(err);
-                    resolve(true);
-                }
-            );
-        });
-    },
+    async _incrementAttempts(id, errorMessage) {
+        await this.init();
+        return this.queryRun(
+            `UPDATE notification_outbox 
+             SET attempts = attempts + 1, last_attempt_at = CURRENT_TIMESTAMP, error_message = ?
+             WHERE id = ?`,
+            [errorMessage, id]
+        );
+    }
 
     /**
      * Mark notification as permanently failed.
      * @private
      */
-    _markFailed: async (id, errorMessage) => {
-        return new Promise((resolve, reject) => {
-            db.run(
-                `UPDATE notification_outbox 
-                 SET status = 'FAILED', error_message = ?, last_attempt_at = CURRENT_TIMESTAMP
-                 WHERE id = ?`,
-                [errorMessage, id],
-                (err) => {
-                    if (err) return reject(err);
-                    resolve(true);
-                }
-            );
-        });
-    },
+    async _markFailed(id, errorMessage) {
+        await this.init();
+        return this.queryRun(
+            `UPDATE notification_outbox 
+             SET status = 'FAILED', error_message = ?, last_attempt_at = CURRENT_TIMESTAMP
+             WHERE id = ?`,
+            [errorMessage, id]
+        );
+    }
 
     /**
      * Get outbox statistics for monitoring.
-     * 
-     * @param {string} orgId - Organization ID
-     * @returns {Promise<Object>} Outbox stats
      */
-    getOutboxStats: async (orgId) => {
-        return new Promise((resolve, reject) => {
-            db.get(
-                `SELECT 
-                    COUNT(*) as total,
-                    COALESCE(SUM(CASE WHEN status = 'QUEUED' THEN 1 ELSE 0 END), 0) as queued,
-                    COALESCE(SUM(CASE WHEN status = 'SENT' THEN 1 ELSE 0 END), 0) as sent,
-                    COALESCE(SUM(CASE WHEN status = 'FAILED' THEN 1 ELSE 0 END), 0) as failed
-                 FROM notification_outbox
-                 WHERE org_id = ?
-                 AND created_at > datetime('now', '-7 days')`,
-                [orgId],
-                (err, row) => {
-                    if (err) return reject(err);
-                    resolve(row || { total: 0, queued: 0, sent: 0, failed: 0 });
-                }
-            );
-        });
+    async getOutboxStats(orgId) {
+        await this.init();
+        const row = await this.queryOne(
+            `SELECT 
+                COUNT(*) as total,
+                COALESCE(SUM(CASE WHEN status = 'QUEUED' THEN 1 ELSE 0 END), 0) as queued,
+                COALESCE(SUM(CASE WHEN status = 'SENT' THEN 1 ELSE 0 END), 0) as sent,
+                COALESCE(SUM(CASE WHEN status = 'FAILED' THEN 1 ELSE 0 END), 0) as failed
+             FROM notification_outbox
+             WHERE org_id = ?
+             AND created_at > datetime('now', '-7 days')`,
+            [orgId]
+        );
+        return row || { total: 0, queued: 0, sent: 0, failed: 0 };
     }
-};
+}
 
-module.exports = NotificationOutboxService;
+const service = new NotificationOutboxService();
+export default service;
+

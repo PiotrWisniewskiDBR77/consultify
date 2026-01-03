@@ -1,19 +1,35 @@
-// Dependency injection container (for deterministic unit tests)
-const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+// Dependency injection for testing
+let deps = {
+    db: null,
+    uuidv4: null
 };
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps.db) {
+        const dbModule = await import('../database.js');
+        deps.db = dbModule.default || dbModule;
+    }
+
+    if (!deps.uuidv4) {
+        const uuidModule = await import('uuid');
+        deps.uuidv4 = uuidModule.v4;
+    }
+}
 
 const AssessmentService = {
     // For testing: allow overriding dependencies
-    setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
+    setDependencies: (newDeps) => {
+        deps = { ...deps, ...newDeps };
     },
     /**
      * Get or create assessment for a project
      * @param {string} projectId
      */
-    getAssessment: (projectId) => {
+    getAssessment: async (projectId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.get(`SELECT * FROM maturity_assessments WHERE project_id = ?`, [projectId], (err, row) => {
                 if (err) return reject(err);
@@ -36,7 +52,8 @@ const AssessmentService = {
      * @param {string} projectId
      * @param {Object} assessmentData
      */
-    saveAssessment: (projectId, assessmentData) => {
+    saveAssessment: async (projectId, assessmentData) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             const { axisScores, completedAxes } = assessmentData;
 
@@ -105,7 +122,8 @@ const AssessmentService = {
      * @param {string} projectId
      * @returns {Promise<string>} 'IN_PROGRESS' | 'FINALIZED'
      */
-    getAssessmentStatus: (projectId) => {
+    getAssessmentStatus: async (projectId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.get(
                 `SELECT assessment_status FROM maturity_assessments WHERE project_id = ?`,
@@ -142,7 +160,8 @@ const AssessmentService = {
      * @param {string} userId
      * @returns {Promise<Object>} Updated assessment with reportId
      */
-    finalizeAssessment: (projectId, userId) => {
+    finalizeAssessment: async (projectId, userId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             // First, validate that all axes are completed
             deps.db.get(
@@ -199,4 +218,4 @@ const AssessmentService = {
     }
 };
 
-module.exports = AssessmentService;
+export default AssessmentService;

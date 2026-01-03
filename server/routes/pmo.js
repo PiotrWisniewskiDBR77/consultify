@@ -1,15 +1,8 @@
-/**
- * PMO Health Routes
- * Step A: GET /api/pmo/health/:projectId endpoint
- * 
- * Provides canonical PMOHealthSnapshot as single source of truth
- * for both UI and AI context.
- */
+import express from 'express';
+import verifyToken from '../middleware/authMiddleware.js';
+import PMOHealthService from '../services/pmoHealthService.js';
 
-const express = require('express');
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
-const PMOHealthService = require('../services/pmoHealthService');
 
 /**
  * GET /api/pmo/health/:projectId
@@ -51,4 +44,4 @@ router.get('/health/:projectId', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

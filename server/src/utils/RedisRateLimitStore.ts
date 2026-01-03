@@ -26,8 +26,8 @@ interface RedisStoreOptions {
  * Redis store for express-rate-limit
  */
 export class RedisRateLimitStore implements Store {
-    private windowMs: number;
-    private prefix: string;
+    public windowMs: number;
+    public prefix: string;
 
     constructor(options: RedisStoreOptions) {
         this.windowMs = options.windowMs;

@@ -3,22 +3,40 @@
  * Handles PAYG usage tracking, cost calculation, and invoice generation
  */
 
-const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+// Dependency injection for testing
+let deps = {
+    db: null,
+    uuidv4: null
 };
 
 /**
- * Set dependencies (for testing)
+ * Initialize dependencies lazily
  */
-function setDependencies(newDeps = {}) {
-    Object.assign(deps, newDeps);
+async function initDeps() {
+    if (!deps.db) {
+        const dbModule = await import('../database.js');
+        deps.db = dbModule.default || dbModule;
+    }
+
+    if (!deps.uuidv4) {
+        const uuidModule = await import('uuid');
+        deps.uuidv4 = uuidModule.v4;
+    }
 }
+
+/**
+ * Set dependencies for testing
+ */
+function setDependencies(newDeps) {
+    deps = { ...deps, ...newDeps };
+}
+
 
 /**
  * Record usage for PAYG billing
  */
-function recordUsage(orgId, usageType, quantity, unitPrice, metadata = {}, userId = null, projectId = null) {
+async function recordUsage(orgId, usageType, quantity, unitPrice, metadata = {}, userId = null, projectId = null) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         if (!['tokens', 'storage', 'seats', 'api_calls'].includes(usageType)) {
             reject(new Error(`Invalid usage type: ${usageType}`));
@@ -52,7 +70,8 @@ function recordUsage(orgId, usageType, quantity, unitPrice, metadata = {}, userI
 /**
  * Get current period usage
  */
-function getCurrentPeriodUsage(orgId, periodStart = null, periodEnd = null) {
+async function getCurrentPeriodUsage(orgId, periodStart = null, periodEnd = null) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         const now = new Date();
         const start = periodStart || new Date(now.getFullYear(), now.getMonth(), 1);
@@ -103,7 +122,8 @@ function getCurrentPeriodUsage(orgId, periodStart = null, periodEnd = null) {
 /**
  * Generate PAYG invoice (mark usage as invoiced)
  */
-function generatePayAsYouGoInvoice(orgId, periodStart, periodEnd) {
+async function generatePayAsYouGoInvoice(orgId, periodStart, periodEnd) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         getCurrentPeriodUsage(orgId, periodStart, periodEnd)
             .then((usage) => {
@@ -143,7 +163,8 @@ function generatePayAsYouGoInvoice(orgId, periodStart, periodEnd) {
 /**
  * Calculate usage cost
  */
-function calculateUsageCost(orgId, usageType, quantity) {
+async function calculateUsageCost(orgId, usageType, quantity) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         // Get billing model and pricing from organization
         deps.db.get(
@@ -209,7 +230,8 @@ function calculateUsageCost(orgId, usageType, quantity) {
 /**
  * Check PAYG limits before usage
  */
-function checkPayAsYouGoLimits(orgId, usageType, quantity) {
+async function checkPayAsYouGoLimits(orgId, usageType, quantity) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         // For now, PAYG has no hard limits (can be extended with budget checks)
         // This method can be extended to check against budgets or org limits
@@ -220,7 +242,8 @@ function checkPayAsYouGoLimits(orgId, usageType, quantity) {
 /**
  * Get PAYG forecast (projected costs for current period)
  */
-function getPayAsYouGoForecast(orgId) {
+async function getPayAsYouGoForecast(orgId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         const now = new Date();
         const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -243,7 +266,7 @@ function getPayAsYouGoForecast(orgId) {
     });
 }
 
-module.exports = {
+export default {
     setDependencies,
     recordUsage,
     getCurrentPeriodUsage,

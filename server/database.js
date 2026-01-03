@@ -1,11 +1,11 @@
 import { createRequire } from 'module';
-import config from './config/database.config.js';
-import sqliteDb from './database.sqlite.active.js';
+import databaseConfig from './config/database.config.js';
 
 const require = createRequire(import.meta.url);
 
 let db;
 
+// Priority path: Check if we should use a mock database for tests
 if (process.env.MOCK_DB === 'true') {
     console.log('[Database] Mocking database for tests');
     db = global.__TEST_DB_MOCK__ || {
@@ -38,13 +38,25 @@ if (process.env.MOCK_DB === 'true') {
             if (cb) cb(null);
         }
     };
-} else if (config.type === 'postgres') {
+} else if (databaseConfig.type === 'postgres') {
     console.log('[Database] Selected: PostgreSQL');
+    // Using require for now as dynamic import would break synchronous export
+    // However, in our current environment (type: module), we should probably use await import()
+    // but this file exports db synchronously. For now, staying with require for CJS compatibility
+    // if it's safe, or we might need to migrate this to an async init pattern.
     db = require('./database.postgres.js');
-} else {
-    console.log('[Database] Selected: SQLite');
-    // We use the active sqlite implementation we just backed up
-    db = sqliteDb;
+    // console.log('[Database] Selected: SQLite');
+    // CRITICAL: We dynamic require/import here to avoid loading sqlite3 bindings 
+    // when MOCK_DB is true, which avoids native crashes in Vitest workers.
+    try {
+        // Use require (created via createRequire) to maintain synchronous behavior
+        const sqliteDb = require('./database.sqlite.active.js');
+        db = sqliteDb.default || sqliteDb;
+    } catch (e) {
+        console.error('[Database] Failed to load SQLite active database:', e);
+        throw e;
+    }
 }
+
 
 export default db;

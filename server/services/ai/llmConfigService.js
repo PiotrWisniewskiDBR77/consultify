@@ -14,9 +14,9 @@
  * @module server/services/ai/llmConfigService
  */
 
-const db = require('../../database');
-const { aiLogger } = require('./logger');
-const { v4: uuidv4 } = require('uuid');
+import BaseService from '../BaseService.js';
+import { aiLogger } from './logger.js';
+import { v4 as uuidv4 } from 'uuid';
 
 // ============================================================================
 // PROVIDER DEFINITIONS - Single Source of Truth
@@ -159,8 +159,9 @@ const DEFAULT_FALLBACK_CHAIN = ['openai', 'deepseek', 'google', 'anthropic', 'qw
 // LLM CONFIG SERVICE CLASS
 // ============================================================================
 
-class LLMConfigService {
+class LLMConfigService extends BaseService {
     constructor() {
+        super();
         this.providerCache = new Map();
         this.cacheExpiry = 0;
         this.cacheTTL = 5 * 60 * 1000; // 5 minutes
@@ -180,10 +181,9 @@ class LLMConfigService {
 
         aiLogger.info('LLMConfigService', 'Initializing...');
 
-        // Assign DB instance
-        this.db = db;
-
         try {
+            await this.init(); // Initialize BaseService (DB connection)
+
             // Ensure database table exists
             await this.ensureTableExists();
 
@@ -191,7 +191,7 @@ class LLMConfigService {
             await this.syncDatabaseWithEnv();
 
             // Create LLM logs table for analytics
-            await this.runAsync(`
+            await this.queryRun(`
                 CREATE TABLE IF NOT EXISTS llm_logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     trace_id TEXT,
@@ -208,8 +208,8 @@ class LLMConfigService {
             `);
 
             // Index for faster analytics
-            await this.runAsync(`CREATE INDEX IF NOT EXISTS idx_llm_logs_timestamp ON llm_logs(timestamp)`);
-            await this.runAsync(`CREATE INDEX IF NOT EXISTS idx_llm_logs_status ON llm_logs(status)`);
+            await this.queryRun(`CREATE INDEX IF NOT EXISTS idx_llm_logs_timestamp ON llm_logs(timestamp)`);
+            await this.queryRun(`CREATE INDEX IF NOT EXISTS idx_llm_logs_status ON llm_logs(status)`);
 
             this.initialized = true;
             aiLogger.info('LLMConfigService', 'LLM Config Service initialized with analytics storage');
@@ -219,90 +219,50 @@ class LLMConfigService {
         }
     }
 
-    // Database Promise Wrappers
-    runAsync(sql, params = []) {
-        return new Promise((resolve, reject) => {
-            this.db.run(sql, params, function (err) {
-                if (err) reject(err);
-                else resolve(this);
-            });
-        });
-    }
-
-    getAsync(sql, params = []) {
-        return new Promise((resolve, reject) => {
-            this.db.get(sql, params, (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-    }
-
-    allAsync(sql, params = []) {
-        return new Promise((resolve, reject) => {
-            this.db.all(sql, params, (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows);
-            });
-        });
-    }
-
     /**
      * Ensure llm_providers and organization_llm_settings tables exist
      */
     async ensureTableExists() {
-        return new Promise((resolve, reject) => {
-            const sql = `
-                CREATE TABLE IF NOT EXISTS llm_providers (
-                    id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    provider TEXT NOT NULL,
-                    description TEXT,
-                    api_key TEXT,
-                    endpoint TEXT,
-                    model_id TEXT,
-                    cost_per_1k REAL DEFAULT 0,
-                    markup_multiplier REAL DEFAULT 1.0,
-                    is_active INTEGER DEFAULT 1,
-                    is_default INTEGER DEFAULT 0,
-                    visibility TEXT DEFAULT 'public',
-                    priority INTEGER DEFAULT 0,
-                    tier TEXT DEFAULT 'STANDARD',
-                    last_health_check TEXT,
-                    health_status TEXT DEFAULT 'unknown',
-                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-                )
-            `;
+        const sql = `
+            CREATE TABLE IF NOT EXISTS llm_providers (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                provider TEXT NOT NULL,
+                description TEXT,
+                api_key TEXT,
+                endpoint TEXT,
+                model_id TEXT,
+                cost_per_1k REAL DEFAULT 0,
+                markup_multiplier REAL DEFAULT 1.0,
+                is_active INTEGER DEFAULT 1,
+                is_default INTEGER DEFAULT 0,
+                visibility TEXT DEFAULT 'public',
+                priority INTEGER DEFAULT 0,
+                tier TEXT DEFAULT 'STANDARD',
+                last_health_check TEXT,
+                health_status TEXT DEFAULT 'unknown',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        `;
 
-            db.run(sql, (err) => {
-                if (err) {
-                    aiLogger.error('LLMConfigService', `Table creation failed: ${err.message}`);
-                    reject(err);
-                } else {
-                    // Create organization settings table
-                    const orgSettingsSql = `
-                        CREATE TABLE IF NOT EXISTS organization_llm_settings (
-                            organization_id TEXT,
-                            provider_id TEXT,
-                            is_enabled INTEGER DEFAULT 1,
-                            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                            PRIMARY KEY (organization_id, provider_id)
-                        )
-                    `;
+        await this.queryRun(sql);
 
-                    db.run(orgSettingsSql, (err2) => {
-                        if (err2) {
-                            aiLogger.error('LLMConfigService', `Org settings table creation failed: ${err2.message}`);
-                            reject(err2);
-                        } else {
-                            // Run migrations
-                            this.migrateTable().then(resolve).catch(resolve);
-                        }
-                    });
-                }
-            });
-        });
+        // Create organization settings table
+        const orgSettingsSql = `
+            CREATE TABLE IF NOT EXISTS organization_llm_settings (
+                organization_id TEXT,
+                provider_id TEXT,
+                is_enabled INTEGER DEFAULT 1,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (organization_id, provider_id)
+            )
+        `;
+
+        await this.queryRun(orgSettingsSql);
+
+        // Run migrations
+        await this.migrateTable();
     }
 
     /**
@@ -319,15 +279,14 @@ class LLMConfigService {
         ];
 
         for (const sql of migrations) {
-            await new Promise((resolve) => {
-                db.run(sql, (err) => {
-                    // Ignore "duplicate column name" errors
-                    if (err && !err.message.includes('duplicate column')) {
-                        aiLogger.warn('LLMConfigService', `Migration warning: ${err.message}`);
-                    }
-                    resolve();
-                });
-            });
+            try {
+                await this.queryRun(sql);
+            } catch (err) {
+                // Ignore "duplicate column name" errors
+                if (err && err.message && !err.message.includes('duplicate column')) {
+                    aiLogger.warn('LLMConfigService', `Migration warning: ${err.message}`);
+                }
+            }
         }
     }
 
@@ -418,20 +377,16 @@ class LLMConfigService {
         }
 
         // 2. Deactivate Oprhans (Providers in DB but not in Code)
-        await new Promise((resolve) => {
-            db.all('SELECT provider FROM llm_providers', [], async (err, rows) => {
-                if (err || !rows) return resolve();
-
-                for (const row of rows) {
-                    if (!definedProviderIds.has(row.provider)) {
-                        // This is an orphan (e.g., removed provider type)
-                        await this.updateProviderInDb(row.provider, { is_active: 0 });
-                        aiLogger.warn('LLMConfigService', `Deactivated orphan provider: ${row.provider}`);
-                    }
+        const rows = await this.queryAll('SELECT provider FROM llm_providers');
+        if (rows) {
+            for (const row of rows) {
+                if (!definedProviderIds.has(row.provider)) {
+                    // This is an orphan (e.g., removed provider type)
+                    await this.updateProviderInDb(row.provider, { is_active: 0 });
+                    aiLogger.warn('LLMConfigService', `Deactivated orphan provider: ${row.provider}`);
                 }
-                resolve();
-            });
-        });
+            }
+        }
 
         // Clear cache after sync
         this.clearCache();
@@ -468,26 +423,14 @@ class LLMConfigService {
      * Get provider from database by provider type
      */
     async getProviderFromDb(providerId) {
-        return new Promise((resolve) => {
-            db.get(
-                'SELECT * FROM llm_providers WHERE provider = ? LIMIT 1',
-                [providerId],
-                (err, row) => resolve(err ? null : row)
-            );
-        });
+        return await this.queryOne('SELECT * FROM llm_providers WHERE provider = ? LIMIT 1', [providerId]);
     }
 
     /**
      * Get provider by ID from database
      */
     async getProviderById(id) {
-        return new Promise((resolve) => {
-            db.get(
-                'SELECT * FROM llm_providers WHERE id = ?',
-                [id],
-                (err, row) => resolve(err ? null : row)
-            );
-        });
+        return await this.queryOne('SELECT * FROM llm_providers WHERE id = ?', [id]);
     }
 
     /**
@@ -506,46 +449,36 @@ class LLMConfigService {
         values.push(new Date().toISOString());
         values.push(providerId);
 
-        return new Promise((resolve, reject) => {
-            db.run(
-                `UPDATE llm_providers SET ${setClauses.join(', ')} WHERE provider = ?`,
-                values,
-                function (err) {
-                    if (err) reject(err);
-                    else resolve(this.changes);
-                }
-            );
-        });
+        const result = await this.queryRun(
+            `UPDATE llm_providers SET ${setClauses.join(', ')} WHERE provider = ?`,
+            values
+        );
+        return result?.changes || 0;
     }
 
     /**
      * Create provider in database
      */
     async createProviderInDb(provider) {
-        return new Promise((resolve, reject) => {
-            db.run(
-                `INSERT INTO llm_providers 
-                (id, name, provider, api_key, endpoint, model_id, cost_per_1k, is_active, is_default, priority, tier)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    provider.id || uuidv4(),
-                    provider.name,
-                    provider.provider,
-                    provider.api_key,
-                    provider.endpoint,
-                    provider.model_id,
-                    provider.cost_per_1k || 0,
-                    provider.is_active ?? 1,
-                    provider.is_default ?? 0,
-                    provider.priority ?? 0,
-                    provider.tier || 'STANDARD'
-                ],
-                function (err) {
-                    if (err) reject(err);
-                    else resolve(this.lastID);
-                }
-            );
-        });
+        const result = await this.queryRun(
+            `INSERT INTO llm_providers 
+            (id, name, provider, api_key, endpoint, model_id, cost_per_1k, is_active, is_default, priority, tier)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                provider.id || uuidv4(),
+                provider.name,
+                provider.provider,
+                provider.api_key,
+                provider.endpoint,
+                provider.model_id,
+                provider.cost_per_1k || 0,
+                provider.is_active ?? 1,
+                provider.is_default ?? 0,
+                provider.priority ?? 0,
+                provider.tier || 'STANDARD'
+            ]
+        );
+        return result?.lastID;
     }
 
     // ========================================================================
@@ -559,55 +492,43 @@ class LLMConfigService {
         const providers = await this.getAllProviders();
         if (!organizationId) return providers;
 
-        return new Promise((resolve, reject) => {
-            db.all(
+        try {
+            const rows = await this.queryAll(
                 'SELECT provider_id, is_enabled FROM organization_llm_settings WHERE organization_id = ?',
-                [organizationId],
-                (err, rows) => {
-                    if (err) {
-                        aiLogger.error('LLMConfigService', `Failed to get org settings: ${err.message}`);
-                        // Fallback to all providers enabled
-                        resolve(providers.map(p => ({ ...p, is_enabled_for_org: true })));
-                        return;
-                    }
-
-                    const settingsMap = new Map();
-                    rows.forEach(r => settingsMap.set(r.provider_id, r.is_enabled === 1));
-
-                    // Merge settings
-                    const orgProviders = providers.map(p => ({
-                        ...p,
-                        // Enabled if not explicitly disabled (opt-out model)
-                        is_enabled_for_org: settingsMap.has(p.id) ? settingsMap.get(p.id) : true
-                    }));
-
-                    resolve(orgProviders);
-                }
+                [organizationId]
             );
-        });
+
+            const settingsMap = new Map();
+            rows.forEach(r => settingsMap.set(r.provider_id, r.is_enabled === 1));
+
+            // Merge settings
+            const orgProviders = providers.map(p => ({
+                ...p,
+                // Enabled if not explicitly disabled (opt-out model)
+                is_enabled_for_org: settingsMap.has(p.id) ? settingsMap.get(p.id) : true
+            }));
+
+            return orgProviders;
+        } catch (err) {
+            aiLogger.error('LLMConfigService', `Failed to get org settings: ${err.message}`);
+            // Fallback to all providers enabled
+            return providers.map(p => ({ ...p, is_enabled_for_org: true }));
+        }
     }
 
     /**
      * Toggle provider enabled status for an organization
      */
     async toggleOrganizationProvider(organizationId, providerId, isEnabled) {
-        return new Promise((resolve, reject) => {
-            const sql = `
-                INSERT INTO organization_llm_settings (organization_id, provider_id, is_enabled, created_at)
-                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-                ON CONFLICT(organization_id, provider_id) 
-                DO UPDATE SET is_enabled = excluded.is_enabled
-            `;
+        const sql = `
+            INSERT INTO organization_llm_settings (organization_id, provider_id, is_enabled, created_at)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(organization_id, provider_id) 
+            DO UPDATE SET is_enabled = excluded.is_enabled
+        `;
 
-            db.run(sql, [organizationId, providerId, isEnabled ? 1 : 0], (err) => {
-                if (err) {
-                    aiLogger.error('LLMConfigService', `Failed to toggle provider: ${err.message}`);
-                    reject(err);
-                } else {
-                    resolve({ success: true });
-                }
-            });
-        });
+        await this.queryRun(sql, [organizationId, providerId, isEnabled ? 1 : 0]);
+        return { success: true };
     }
 
     // ========================================================================
@@ -622,35 +543,23 @@ class LLMConfigService {
     async getAllProviders(useCache = true) {
         // Check cache
         if (useCache && this.cacheExpiry > Date.now()) {
-            // Refresh health status from live healthStatus map (may have been updated by health checks)
+            // Refresh health status from live healthStatus map
             return Array.from(this.providerCache.values()).map(p => ({
                 ...p,
                 healthStatus: this.healthStatus.get(p.provider) || p.healthStatus || 'unknown'
             }));
         }
 
-        return new Promise((resolve, reject) => {
-            db.all(
-                'SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY priority DESC, is_default DESC',
-                [],
-                (err, rows) => {
-                    if (err) {
-                        aiLogger.error('LLMConfigService', `Failed to get providers: ${err.message}`);
-                        reject(err);
-                        return;
-                    }
+        const rows = await this.queryAll('SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY priority DESC, is_default DESC');
 
-                    // Update cache
-                    this.providerCache.clear();
-                    for (const row of rows || []) {
-                        this.providerCache.set(row.provider, this.enrichProviderConfig(row));
-                    }
-                    this.cacheExpiry = Date.now() + this.cacheTTL;
+        // Update cache
+        this.providerCache.clear();
+        for (const row of rows || []) {
+            this.providerCache.set(row.provider, this.enrichProviderConfig(row));
+        }
+        this.cacheExpiry = Date.now() + this.cacheTTL;
 
-                    resolve(Array.from(this.providerCache.values()));
-                }
-            );
-        });
+        return Array.from(this.providerCache.values());
     }
 
     /**
@@ -693,26 +602,12 @@ class LLMConfigService {
      * @returns {Promise<Object|null>} Default provider configuration
      */
     async getDefaultProvider() {
-        return new Promise((resolve) => {
-            db.get(
-                'SELECT * FROM llm_providers WHERE is_default = 1 AND is_active = 1 LIMIT 1',
-                [],
-                (err, row) => {
-                    if (row) {
-                        resolve(this.enrichProviderConfig(row));
-                    } else {
-                        // Fallback: get any active provider
-                        db.get(
-                            'SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY priority DESC LIMIT 1',
-                            [],
-                            (err2, row2) => {
-                                resolve(row2 ? this.enrichProviderConfig(row2) : null);
-                            }
-                        );
-                    }
-                }
-            );
-        });
+        let row = await this.queryOne('SELECT * FROM llm_providers WHERE is_default = 1 AND is_active = 1 LIMIT 1');
+        if (!row) {
+            // Fallback: get any active provider
+            row = await this.queryOne('SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY priority DESC LIMIT 1');
+        }
+        return row ? this.enrichProviderConfig(row) : null;
     }
 
     /**
@@ -723,17 +618,13 @@ class LLMConfigService {
 
         return {
             ...dbRow,
-            // CRITICAL: Override 'id' to be model_id (the actual model name like 'gemini-2.0-flash')
-            // instead of database row ID (like 'google-01'). llmService.callStream uses config.id as the model name.
             id: dbRow.model_id || dbRow.id,
-            // Add definition properties
             supportsStreaming: definition.supportsStreaming ?? true,
             supportsVision: definition.supportsVision ?? false,
             supportsTools: definition.supportsTools ?? false,
-            tier: dbRow.tier || definition.tier || 'STANDARD', // DB tier takes precedence
+            tier: dbRow.tier || definition.tier || 'STANDARD',
             requiresJWT: definition.requiresJWT || false,
             isLocal: definition.isLocal || false,
-            // Computed properties
             isConfigured: !!dbRow.api_key,
             healthStatus: this.healthStatus.get(dbRow.provider) || 'unknown'
         };
@@ -755,7 +646,6 @@ class LLMConfigService {
         // Sort by: health status, tier match, priority
         return configured
             .sort((a, b) => {
-                // Healthy providers first
                 const healthScore = {
                     'healthy': 3,
                     'degraded': 2,
@@ -765,11 +655,9 @@ class LLMConfigService {
                 const healthDiff = (healthScore[b.healthStatus] || 1) - (healthScore[a.healthStatus] || 1);
                 if (healthDiff !== 0) return healthDiff;
 
-                // Same tier preference
                 if (a.tier === tier && b.tier !== tier) return -1;
                 if (b.tier === tier && a.tier !== tier) return 1;
 
-                // Then by priority
                 return (b.priority || 0) - (a.priority || 0);
             })
             .map(p => p.provider);
@@ -793,310 +681,7 @@ class LLMConfigService {
 
         return null;
     }
-
-    // ========================================================================
-    // HEALTH TRACKING
-    // ========================================================================
-
-    /**
-     * Log an LLM event for analytics
-     */
-    async logEvent(data) {
-        if (!this.initialized) await this.initialize();
-
-        try {
-            const {
-                traceId,
-                provider,
-                model,
-                status,
-                latencyMs,
-                tokensIn,
-                tokensOut,
-                cost,
-                errorMessage
-            } = data;
-
-            await this.runAsync(`
-                INSERT INTO llm_logs (
-                    trace_id, provider, model, status, latency_ms, 
-                    tokens_in, tokens_out, cost, error_message
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `, [
-                traceId || `trace_${Date.now()}`,
-                provider || 'unknown',
-                model || 'unknown',
-                status,
-                latencyMs || 0,
-                tokensIn || 0,
-                tokensOut || 0,
-                cost || 0,
-                errorMessage || null
-            ]);
-
-            // Keep log size manageable (retention policy: ~10k logs)
-            // Cleanup every 100th insert roughly
-            if (Math.random() < 0.01) {
-                this.cleanupOldLogs();
-            }
-
-        } catch (error) {
-            // Don't crash app if logging fails
-            aiLogger.error('LLMConfigService', 'Failed to save log event', error);
-        }
-    }
-
-    /**
-     * Cleanup old logs to prevent DB bloat
-     */
-    async cleanupOldLogs() {
-        try {
-            // Keep last 30 days
-            await this.runAsync(`
-                DELETE FROM llm_logs 
-                WHERE timestamp < datetime('now', '-30 days')
-            `);
-        } catch (e) {
-            aiLogger.error('LLMConfigService', 'Cleanup failed', e);
-        }
-    }
-
-    /**
-     * Get aggregated analytics stats
-     */
-    async getAnalyticsParams(days = 7) {
-        if (!this.initialized) await this.initialize();
-
-        try {
-            const timeFilter = `datetime('now', '-${days} days')`;
-
-            // Total Requests
-            const total = await this.getAsync(`
-                SELECT COUNT(*) as count FROM llm_logs 
-                WHERE timestamp > ${timeFilter}
-            `);
-
-            // Error Rate
-            const errors = await this.getAsync(`
-                SELECT COUNT(*) as count FROM llm_logs 
-                WHERE status = 'error' AND timestamp > ${timeFilter}
-            `);
-
-            // Avg Latency
-            const latency = await this.getAsync(`
-                SELECT AVG(latency_ms) as avg_ms FROM llm_logs 
-                WHERE status = 'success' AND timestamp > ${timeFilter}
-            `);
-
-            // Total Cost
-            const cost = await this.getAsync(`
-                SELECT SUM(cost) as total_cost FROM llm_logs 
-                WHERE timestamp > ${timeFilter}
-            `);
-
-            // Provider Breakdown
-            const providers = await this.allAsync(`
-                SELECT provider, COUNT(*) as count, SUM(cost) as total_cost
-                FROM llm_logs 
-                WHERE timestamp > ${timeFilter}
-                GROUP BY provider
-            `);
-
-            return {
-                total_requests: total?.count || 0,
-                error_count: errors?.count || 0,
-                error_rate: total?.count ? (errors.count / total.count) : 0,
-                avg_latency: Math.round(latency?.avg_ms || 0),
-                total_cost: cost?.total_cost || 0,
-                providers
-            };
-        } catch (error) {
-            aiLogger.error('LLMConfigService', 'Analytics fetch failed', error);
-            return null;
-        }
-    }
-
-    /**
-     * Get recent logs (paginated)
-     */
-    async getRecentLogs(limit = 50, offset = 0, onlyErrors = false) {
-        if (!this.initialized) await this.initialize();
-
-        try {
-            let query = `SELECT * FROM llm_logs`;
-            if (onlyErrors) {
-                query += ` WHERE status = 'error'`;
-            }
-            query += ` ORDER BY timestamp DESC LIMIT ? OFFSET ?`;
-
-            return await this.allAsync(query, [limit, offset]);
-        } catch (error) {
-            aiLogger.error('LLMConfigService', 'Logs fetch failed', error);
-            return [];
-        }
-    }
-    /**
-     * Update health status for a provider
-     * @param {string} providerId - Provider identifier
-     * @param {string} status - Health status ('healthy', 'degraded', 'unhealthy')
-     * @param {Object} details - Additional details
-     */
-    async updateHealthStatus(providerId, status, details = {}) {
-        this.healthStatus.set(providerId, status);
-
-        // Update database
-        await this.runAsync(
-            'UPDATE llm_providers SET health_status = ?, last_health_check = ? WHERE provider = ?',
-            [status, new Date().toISOString(), providerId]
-        );
-
-        aiLogger.info('LLMConfigService', `Health status updated: ${providerId} = ${status}`, details);
-    }
-
-    /**
-     * Get health status for all providers
-     * @returns {Object} Health status map
-     */
-    getHealthStatusMap() {
-        const status = {};
-        for (const [provider, health] of this.healthStatus) {
-            status[provider] = health;
-        }
-        return status;
-    }
-
-    // ========================================================================
-    // VALIDATION
-    // ========================================================================
-
-    /**
-     * Validate all configured API keys
-     * @returns {Promise<Object>} Validation results
-     */
-    async validateAllKeys() {
-        const results = {
-            timestamp: new Date().toISOString(),
-            providers: [],
-            summary: {
-                total: 0,
-                configured: 0,
-                valid: 0,
-                invalid: 0,
-                unconfigured: 0
-            }
-        };
-
-        for (const [providerId, definition] of Object.entries(PROVIDER_DEFINITIONS)) {
-            results.summary.total++;
-
-            const apiKey = this.getApiKeyFromEnv(providerId);
-            const providerResult = {
-                provider: providerId,
-                name: definition.name,
-                configured: !!apiKey,
-                valid: false,
-                error: null
-            };
-
-            if (!apiKey) {
-                providerResult.error = 'No API key configured';
-                results.summary.unconfigured++;
-            } else {
-                results.summary.configured++;
-                // Basic validation (format check)
-                if (this.isValidKeyFormat(providerId, apiKey)) {
-                    providerResult.valid = true;
-                    results.summary.valid++;
-                } else {
-                    providerResult.error = 'Invalid key format';
-                    results.summary.invalid++;
-                }
-            }
-
-            results.providers.push(providerResult);
-        }
-
-        return results;
-    }
-
-    /**
-     * Check if API key format is valid
-     * @param {string} providerId - Provider identifier
-     * @param {string} apiKey - API key to validate
-     * @returns {boolean} Whether format is valid
-     */
-    isValidKeyFormat(providerId, apiKey) {
-        if (!apiKey || typeof apiKey !== 'string') return false;
-
-        const patterns = {
-            openai: /^sk-[a-zA-Z0-9_-]{20,}$/,
-            anthropic: /^sk-ant-[a-zA-Z0-9_-]{20,}$/,
-            google: /^AIza[a-zA-Z0-9_-]{30,}$/,
-            deepseek: /^sk-[a-zA-Z0-9]{20,}$/,
-            nvidia: /^nvapi-[a-zA-Z0-9_-]{20,}$/,
-            cohere: /^[a-zA-Z0-9]{30,}$/,
-            qwen: /^sk-[a-zA-Z0-9]{20,}$/,
-            zai: /^[a-zA-Z0-9]{20,}\.[a-zA-Z0-9]{10,}$/,
-            ollama: /^(http|https):\/\/.+/
-        };
-
-        const pattern = patterns[providerId];
-        if (!pattern) return apiKey.length >= 10; // Generic fallback
-
-        return pattern.test(apiKey);
-    }
-
-    // ========================================================================
-    // UTILITY
-    // ========================================================================
-
-    /**
-     * Clear provider cache
-     */
-    clearCache() {
-        this.providerCache.clear();
-        this.cacheExpiry = 0;
-    }
-
-    /**
-     * Get provider definitions (for documentation/UI)
-     */
-    getProviderDefinitions() {
-        return { ...PROVIDER_DEFINITIONS };
-    }
-
-    /**
-     * Check if at least one provider is configured
-     */
-    async hasAnyProvider() {
-        const providers = await this.getAllProviders();
-        return providers.some(p => p.isConfigured);
-    }
-
-    /**
-     * Get recommended environment variable names
-     */
-    getRecommendedEnvVars() {
-        return Object.values(PROVIDER_DEFINITIONS).map(def => ({
-            provider: def.id,
-            envVar: def.envKey,
-            description: `API key for ${def.name}`
-        }));
-    }
 }
 
-// ============================================================================
-// SINGLETON INSTANCE
-// ============================================================================
-
-const llmConfigService = new LLMConfigService();
-
-module.exports = {
-    LLMConfigService,
-    llmConfigService,
-    PROVIDER_DEFINITIONS,
-    TIER_PRIORITY,
-    DEFAULT_FALLBACK_CHAIN
-};
-
-
+export const llmConfigService = new LLMConfigService();
+export default llmConfigService;

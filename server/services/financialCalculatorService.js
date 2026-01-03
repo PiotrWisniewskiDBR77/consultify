@@ -17,10 +17,38 @@
  * - PRINCE2 - Business Case Theme
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+// Dependency injection container
+const deps = {
+    _db: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
 
 const FinancialCalculatorService = {
+    // For testing: allow overriding dependencies
+    setDependencies: (newDeps = {}) => {
+        if (newDeps.db) deps.db = newDeps.db;
+        if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
+    },
     // ============================================
     // Core Financial Calculations
     // ============================================
@@ -375,8 +403,9 @@ const FinancialCalculatorService = {
      * Get financial analysis for an initiative
      */
     async getFinancials(initiativeId, organizationId) {
+        await initDeps();
         try {
-            const row = await db.get(
+            const row = await deps.db.get(
                 `SELECT * FROM initiative_financials 
                  WHERE initiative_id = ? AND organization_id = ?`,
                 [initiativeId, organizationId]
@@ -395,13 +424,15 @@ const FinancialCalculatorService = {
      * Create or update financial analysis
      */
     async createOrUpdateFinancials(initiativeId, data, organizationId, userId) {
+        await initDeps();
         const existing = await this.getFinancials(initiativeId, organizationId);
         
         if (existing) {
             return this.updateFinancials(initiativeId, data, organizationId, userId);
         }
         
-        const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
         const now = new Date().toISOString();
         
         // Calculate metrics
@@ -413,7 +444,7 @@ const FinancialCalculatorService = {
         const roi = this.calculateROI(projections.totalBenefits, projections.totalCosts);
         const tco = this.calculateTCO(data, data.analysisHorizonYears || 5);
         
-        await db.run(
+        await deps.db.run(
             `INSERT INTO initiative_financials (
                 id, initiative_id, analysis_id, organization_id,
                 initial_investment, implementation_cost, annual_operating_cost, training_cost, contingency_percent,
@@ -456,6 +487,7 @@ const FinancialCalculatorService = {
      * Update existing financial analysis
      */
     async updateFinancials(initiativeId, data, organizationId, userId) {
+        await initDeps();
         const existing = await this.getFinancials(initiativeId, organizationId);
         if (!existing) throw new Error('Financial analysis not found');
         
@@ -484,7 +516,7 @@ const FinancialCalculatorService = {
         
         const now = new Date().toISOString();
         
-        await db.run(
+        await deps.db.run(
             `UPDATE initiative_financials SET
                 initial_investment = ?, implementation_cost = ?, annual_operating_cost = ?, training_cost = ?,
                 contingency_percent = ?, annual_cost_savings = ?, annual_revenue_increase = ?,
@@ -527,6 +559,7 @@ const FinancialCalculatorService = {
      * Recalculate all metrics for an initiative
      */
     async recalculateMetrics(initiativeId, organizationId) {
+        await initDeps();
         const financials = await this.getFinancials(initiativeId, organizationId);
         if (!financials) throw new Error('Financial analysis not found');
         
@@ -547,6 +580,7 @@ const FinancialCalculatorService = {
      * Get cash flow projections for an initiative
      */
     async getCashFlowProjections(initiativeId, organizationId) {
+        await initDeps();
         const financials = await this.getFinancials(initiativeId, organizationId);
         if (!financials) return null;
         
@@ -557,10 +591,11 @@ const FinancialCalculatorService = {
      * Record assumptions history for audit trail
      */
     async recordAssumptionsHistory(financialId, data, changeType, userId) {
-        const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
         const now = new Date().toISOString();
         
-        await db.run(
+        await deps.db.run(
             `INSERT INTO financial_assumptions_history (
                 id, financial_id, assumptions_snapshot, change_type, changed_by, changed_at
             ) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -576,6 +611,7 @@ const FinancialCalculatorService = {
      * Get benefit tracking records for an initiative
      */
     async getBenefitTracking(initiativeId, filters = {}, organizationId) {
+        await initDeps();
         let query = `SELECT * FROM benefit_tracking WHERE initiative_id = ? AND organization_id = ?`;
         const params = [initiativeId, organizationId];
         
@@ -601,7 +637,8 @@ const FinancialCalculatorService = {
         
         query += ` ORDER BY period_start DESC`;
         
-        const rows = await db.all(query, params);
+        await initDeps();
+        const rows = await deps.db.all(query, params);
         return rows.map(this.transformBenefitRow);
     },
 
@@ -609,10 +646,12 @@ const FinancialCalculatorService = {
      * Record a benefit measurement
      */
     async recordBenefitMeasurement(initiativeId, data, organizationId, userId) {
+        await initDeps();
         const financials = await this.getFinancials(initiativeId, organizationId);
         if (!financials) throw new Error('Financial analysis not found for initiative');
         
-        const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
         const now = new Date().toISOString();
         
         // Calculate variances
@@ -633,7 +672,7 @@ const FinancialCalculatorService = {
             ? ((totalActual - totalPlanned) / totalPlanned) * 100 
             : null;
         
-        await db.run(
+        await deps.db.run(
             `INSERT INTO benefit_tracking (
                 id, financial_id, initiative_id, organization_id,
                 period_start, period_end, period_type,
@@ -669,7 +708,8 @@ const FinancialCalculatorService = {
      * Get a single benefit measurement
      */
     async getBenefitMeasurement(id) {
-        const row = await db.get('SELECT * FROM benefit_tracking WHERE id = ?', [id]);
+        await initDeps();
+        const row = await deps.db.get('SELECT * FROM benefit_tracking WHERE id = ?', [id]);
         return row ? this.transformBenefitRow(row) : null;
     },
 
@@ -677,6 +717,7 @@ const FinancialCalculatorService = {
      * Update benefit measurement
      */
     async updateBenefitMeasurement(id, data, organizationId, userId) {
+        await initDeps();
         const existing = await this.getBenefitMeasurement(id);
         if (!existing || existing.organization_id !== organizationId) {
             return null;
@@ -684,7 +725,7 @@ const FinancialCalculatorService = {
         
         const now = new Date().toISOString();
         
-        await db.run(
+        await deps.db.run(
             `UPDATE benefit_tracking SET
                 actual_cost_savings = COALESCE(?, actual_cost_savings),
                 actual_revenue_increase = COALESCE(?, actual_revenue_increase),
@@ -715,9 +756,10 @@ const FinancialCalculatorService = {
      * Verify a benefit measurement
      */
     async verifyBenefitMeasurement(id, userId) {
+        await initDeps();
         const now = new Date().toISOString();
         
-        await db.run(
+        await deps.db.run(
             `UPDATE benefit_tracking SET
                 verification_status = 'verified',
                 verified_by = ?,
@@ -734,6 +776,7 @@ const FinancialCalculatorService = {
      * Get benefit tracking summary
      */
     async getBenefitSummary(initiativeId, organizationId) {
+        await initDeps();
         const measurements = await this.getBenefitTracking(initiativeId, {}, organizationId);
         
         if (measurements.length === 0) {
@@ -781,6 +824,7 @@ const FinancialCalculatorService = {
      * Get variance analysis details
      */
     async getVarianceAnalysis(initiativeId, organizationId) {
+        await initDeps();
         const measurements = await this.getBenefitTracking(initiativeId, {}, organizationId);
         const financials = await this.getFinancials(initiativeId, organizationId);
         
@@ -870,6 +914,7 @@ const FinancialCalculatorService = {
      * Generate business case document data
      */
     async generateBusinessCase(initiativeId, options, organizationId) {
+        await initDeps();
         const financials = await this.getFinancials(initiativeId, organizationId);
         if (!financials) throw new Error('Financial analysis not found');
         
@@ -1069,7 +1114,7 @@ const FinancialCalculatorService = {
     }
 };
 
-module.exports = FinancialCalculatorService;
+export default FinancialCalculatorService;
 
 
 

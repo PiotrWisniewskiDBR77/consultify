@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const pmo_contextRoutesJS = require('../../routes/pmo-context.js');
+const pmo_contextRoutesJSPromise = (async () => {
+    const module = await import('../../routes/pmo-context.js');
+    return module.default || module;
+})();
+const pmo_contextRoutesJS = pmo_contextRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

@@ -38,6 +38,8 @@ const mockAIExplainabilityService = vi.hoisted(() => ({
     buildExplainabilityFooter: vi.fn(() => 'Confidence: HIGH')
 }));
 
+const mockAIResponsePostProcessor = vi.hoisted(() => vi.fn((text) => text));
+
 const mockAccessPolicyService = vi.hoisted(() => ({
     getAIAccessContext: vi.fn(),
     incrementUsage: vi.fn(() => Promise.resolve())
@@ -81,6 +83,10 @@ vi.mock('../../../server/services/tokenBillingService', () => ({
     default: mockTokenBillingService
 }));
 
+vi.mock('../../../server/services/aiResponsePostProcessor', () => ({
+    aiResponsePostProcessor: mockAIResponsePostProcessor
+}));
+
 vi.mock('uuid', () => ({
     v4: mockUuidv4
 }));
@@ -101,6 +107,7 @@ describe('AIOrchestrator', () => {
             AIExplainabilityService: mockAIExplainabilityService,
             AccessPolicyService: mockAccessPolicyService,
             TokenBillingService: mockTokenBillingService,
+            AIResponsePostProcessor: mockAIResponsePostProcessor,
             uuidv4: mockUuidv4
         });
 
@@ -307,7 +314,7 @@ describe('AIOrchestrator', () => {
     });
 
     describe('postProcessResponse', () => {
-        it('should add standard footer', () => {
+        it('should add standard footer', async () => {
             const rawResponse = 'Here is the analysis.';
             const responseContext = {
                 explanation: {
@@ -322,13 +329,13 @@ describe('AIOrchestrator', () => {
                 }
             };
 
-            const processed = AIOrchestrator.postProcessResponse(rawResponse, responseContext);
+            const processed = await AIOrchestrator.postProcessResponse(rawResponse, responseContext);
 
             expect(processed).toContain('Here is the analysis.');
             expect(processed).toContain('Confidence: HIGH');
         });
 
-        it('should handle missing explanation', () => {
+        it('should handle missing explanation', async () => {
             const rawResponse = 'Here is the analysis.';
             const responseContext = {
                 context: {
@@ -339,7 +346,7 @@ describe('AIOrchestrator', () => {
                 }
             };
 
-            const processed = AIOrchestrator.postProcessResponse(rawResponse, responseContext);
+            const processed = await AIOrchestrator.postProcessResponse(rawResponse, responseContext);
 
             expect(processed).toContain('Here is the analysis.');
         });

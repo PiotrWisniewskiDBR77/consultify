@@ -1,32 +1,9 @@
-/**
- * Workstreams API Routes
- * 
- * PMO Standards Compliant Work Package Grouping
- * 
- * Standards:
- * - ISO 21500:2021 - Work Breakdown Structure (Clause 4.4.3)
- * - PMI PMBOK 7th Edition - Work Package Grouping
- * - PRINCE2 - Work Package Cluster
- * 
- * Endpoints:
- * - POST   /api/projects/:projectId/workstreams     - Create workstream
- * - GET    /api/projects/:projectId/workstreams     - List project workstreams
- * - GET    /api/workstreams/:id                     - Get workstream details
- * - PATCH  /api/workstreams/:id                     - Update workstream
- * - DELETE /api/workstreams/:id                     - Delete workstream
- * - GET    /api/workstreams/:id/progress            - Get workstream progress
- * - POST   /api/workstreams/:id/initiatives/:initiativeId - Assign initiative
- * - DELETE /api/workstreams/:id/initiatives/:initiativeId - Unassign initiative
- * - POST   /api/projects/:projectId/workstreams/reorder - Reorder workstreams
- * 
- * @module routes/workstreams
- */
+import express from 'express';
+import verifyToken from '../middleware/authMiddleware.js';
+import WorkstreamService from '../services/workstreamService.js';
+import ProjectMemberService from '../services/projectMemberService.js';
 
-const express = require('express');
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
-const WorkstreamService = require('../services/workstreamService');
-const ProjectMemberService = require('../services/projectMemberService');
 
 /**
  * Create a new workstream
@@ -301,5 +278,5 @@ router.delete('/workstreams/:id/initiatives/:initiativeId', verifyToken, async (
   }
 });
 
-module.exports = router;
+export default router;
 

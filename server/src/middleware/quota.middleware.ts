@@ -47,7 +47,7 @@ let deps: Dependencies;
 
 const getDeps = (): Dependencies => {
     if (!deps) {
-        const defaultUsageService = require('../../services/usageService');
+        const { default: defaultUsageService } = await import('../../services/usageService.js');
         deps = { usageService: defaultUsageService };
     }
     return deps;

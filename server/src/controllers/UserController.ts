@@ -28,7 +28,8 @@ export class UserController {
         }
 
         let sql = 'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, license_plan_id, ai_config, is_owner, phone, linkedin_id FROM users WHERE organization_id = ?';
-        const params: unknown[] = [orgId];
+        type SQLParam = string | number | boolean | null | undefined;
+        const params: SQLParam[] = [orgId];
 
         // If canReview=true, filter to users with review permissions
         if (canReview === 'true') {

@@ -9,19 +9,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testProjects } from '../../fixtures/testData.js';
 
+import AIMemoryManager from '../../../server/services/aiMemoryManager.js';
+
 describe('AIMemoryManager', () => {
     let mockDb;
-    let AIMemoryManager;
     let uuidCounter;
 
     beforeEach(async () => {
-        vi.resetModules();
         uuidCounter = 0;
-        
         mockDb = createMockDb();
 
-        AIMemoryManager = (await import('../../../server/services/aiMemoryManager.js')).default;
-        
         AIMemoryManager.setDependencies({
             db: mockDb,
             uuidv4: () => `memory-uuid-${++uuidCounter}`
@@ -33,8 +30,8 @@ describe('AIMemoryManager', () => {
     });
 
     describe('createSession()', () => {
-        it('should create new session', () => {
-            const session = AIMemoryManager.createSession();
+        it('should create new session', async () => {
+            const session = await AIMemoryManager.createSession();
 
             expect(session).toBeDefined();
             expect(session.conversationId).toBeDefined();
@@ -42,17 +39,17 @@ describe('AIMemoryManager', () => {
             expect(session.startedAt).toBeDefined();
         });
 
-        it('should create unique session IDs', () => {
-            const session1 = AIMemoryManager.createSession();
-            const session2 = AIMemoryManager.createSession();
+        it('should create unique session IDs', async () => {
+            const session1 = await AIMemoryManager.createSession();
+            const session2 = await AIMemoryManager.createSession();
 
             expect(session1.conversationId).not.toBe(session2.conversationId);
         });
     });
 
     describe('addMessage()', () => {
-        it('should add message to session', () => {
-            const session = AIMemoryManager.createSession();
+        it('should add message to session', async () => {
+            const session = await AIMemoryManager.createSession();
             const updatedSession = AIMemoryManager.addMessage(session, 'user', 'Hello');
 
             expect(updatedSession.messages).toHaveLength(1);
@@ -61,8 +58,8 @@ describe('AIMemoryManager', () => {
             expect(updatedSession.messages[0].timestamp).toBeDefined();
         });
 
-        it('should add multiple messages', () => {
-            const session = AIMemoryManager.createSession();
+        it('should add multiple messages', async () => {
+            const session = await AIMemoryManager.createSession();
             AIMemoryManager.addMessage(session, 'user', 'Hello');
             AIMemoryManager.addMessage(session, 'assistant', 'Hi there');
 
@@ -78,7 +75,7 @@ describe('AIMemoryManager', () => {
             const userId = testUsers.user.id;
 
             let runCallCount = 0;
-            
+
             // Mock db.get to return organization_id - this is called from within db.run callback
             mockDb.get.mockImplementation((query, params, callback) => {
                 // Mock db.get to return organization_id
@@ -259,14 +256,14 @@ describe('AIMemoryManager', () => {
 
             // Reset mock to ensure clean state
             mockDb.all.mockClear();
-            
+
             mockDb.all.mockImplementation((query, params, callback) => {
                 // Verify query and params
                 expect(query).toContain('SELECT');
                 expect(query).toContain('ai_project_memory');
                 expect(params).toContain(projectId);
                 expect(params).toContain(20); // limit
-                
+
                 callback(null, [
                     {
                         id: 'mem-1',

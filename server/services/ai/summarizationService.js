@@ -5,10 +5,10 @@
  * to optimize context window usage.
  */
 
-const { LLMService } = require('./llmService');
-const { aiLogger } = require('./logger');
+import { LLMService } from './llmService.js';
+import { aiLogger } from './logger.js';
 
-class SummarizationService {
+export class SummarizationService {
     constructor(llmServiceInstance = null) {
         this.llmService = llmServiceInstance || new LLMService();
         // Default model for summarization tasks (efficient model)
@@ -84,9 +84,15 @@ class SummarizationService {
 }
 
 // Singleton instance
-const summarizationService = new SummarizationService();
+const instance = new SummarizationService();
 
-module.exports = {
-    SummarizationService,
-    summarizationService
+export const summarizationService = {
+    setDependencies(deps) {
+        if (deps.llmService) instance.llmService = deps.llmService;
+    },
+    summarizeConversation: (messages) => instance.summarizeConversation(messages),
+    summarizeText: (text, maxWords) => instance.summarizeText(text, maxWords)
 };
+
+export default summarizationService;
+

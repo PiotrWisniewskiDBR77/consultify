@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const webhookSubscriptionsRoutesJS = require('../../routes/webhookSubscriptions.js');
+const webhookSubscriptionsRoutesJSPromise = (async () => {
+    const module = await import('../../routes/webhookSubscriptions.js');
+    return module.default || module;
+})();
+const webhookSubscriptionsRoutesJS = webhookSubscriptionsRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

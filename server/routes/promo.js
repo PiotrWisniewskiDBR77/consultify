@@ -21,7 +21,7 @@ const router = express.Router();
 const rateLimit = require('express-rate-limit');
 const authMiddleware = require('../middleware/authMiddleware');
 const PromoCodeService = require('../services/promoCodeService');
-const AttributionService = require('../services/attributionService');
+import AttributionService from '../services/attributionService.js';
 
 // Rate limit promo validation: 10 per minute
 const promoValidateLimiter = rateLimit({

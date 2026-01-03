@@ -1,28 +1,8 @@
-/**
- * Project Members API Routes
- * 
- * PMO Standards Compliant Team Management
- * 
- * Standards:
- * - ISO 21500:2021 - Project Team (Clause 4.6.2)
- * - PMI PMBOK 7th Edition - Team Performance Domain
- * - PRINCE2 - Organization Theme (Project Roles)
- * 
- * Endpoints:
- * - POST   /api/projects/:projectId/members     - Add member to project
- * - GET    /api/projects/:projectId/members     - List project team
- * - PATCH  /api/projects/:projectId/members/:userId - Update member
- * - DELETE /api/projects/:projectId/members/:userId - Remove member
- * - GET    /api/projects/:projectId/raci-matrix - Get RACI matrix
- * - GET    /api/projects/:projectId/available-assignees - Get available task assignees
- * 
- * @module routes/project-members
- */
+import express from 'express';
+import verifyToken from '../middleware/authMiddleware.js';
+import ProjectMemberService from '../services/projectMemberService.js';
 
-const express = require('express');
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
-const ProjectMemberService = require('../services/projectMemberService');
 
 /**
  * Add a member to a project
@@ -174,8 +154,8 @@ router.delete('/:projectId/members/:userId', verifyToken, async (req, res) => {
       const team = await ProjectMemberService.getProjectTeam(projectId);
       const sameRoleMembers = team.filter(m => m.projectRole === member.projectRole);
       if (sameRoleMembers.length === 1) {
-        return res.status(400).json({ 
-          error: `Cannot remove the only ${member.projectRole} from the project` 
+        return res.status(400).json({
+          error: `Cannot remove the only ${member.projectRole} from the project`
         });
       }
     }
@@ -243,9 +223,9 @@ router.get('/:projectId/my-role', verifyToken, async (req, res) => {
     const userId = req.user.id;
 
     const member = await ProjectMemberService.getMember(projectId, userId);
-    
+
     if (!member) {
-      return res.json({ 
+      return res.json({
         isMember: false,
         projectRole: null,
         permissions: null
@@ -281,5 +261,5 @@ router.get('/me/projects', verifyToken, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
 

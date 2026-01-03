@@ -11,33 +11,59 @@
  * - Single Logout (SLO)
  */
 
-const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
-const db = require('../database');
-const AuditService = require('./auditService');
+import crypto from 'crypto';
+
+// Dependency injection for testing
+const deps = {
+    _uuidv4: null,
+    _db: null,
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; },
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+}
+import AuditService from './auditService.js';
 
 // Database helpers
-function dbGet(sql, params = []) {
+async function dbGet(sql, params = []) {
+    await initDeps();
     return new Promise((resolve, reject) => {
-        db.get(sql, params, (err, row) => {
+        deps.db.get(sql, params, (err, row) => {
             if (err) reject(err);
             else resolve(row);
         });
     });
 }
 
-function dbRun(sql, params = []) {
+async function dbRun(sql, params = []) {
     return new Promise((resolve, reject) => {
-        db.run(sql, params, function (err) {
+        deps.db.run(sql, params, function (err) {
             if (err) reject(err);
             else resolve({ lastID: this.lastID, changes: this.changes });
         });
     });
 }
 
-function dbAll(sql, params = []) {
+async function dbAll(sql, params = []) {
+    await initDeps();
     return new Promise((resolve, reject) => {
-        db.all(sql, params, (err, rows) => {
+        deps.db.all(sql, params, (err, rows) => {
             if (err) reject(err);
             else resolve(rows || []);
         });
@@ -145,7 +171,8 @@ const SSOService = {
             throw new Error('SSO configuration already exists. Use updateGoogleConfig instead.');
         }
 
-        const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
         const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
         
         await dbRun(
@@ -423,7 +450,8 @@ const SSOService = {
             throw new Error('SSO configuration already exists. Use updateConfiguration instead.');
         }
 
-        const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
 
         // SP configuration
         const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -798,7 +826,8 @@ const SSOService = {
             throw new Error('Azure AD configuration already exists. Use updateAzureADConfig instead.');
         }
 
-        const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
         const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
         
         // Azure AD endpoints - use v2.0 endpoints
@@ -1138,4 +1167,4 @@ const SSOService = {
     },
 };
 
-module.exports = SSOService;
+export default SSOService;

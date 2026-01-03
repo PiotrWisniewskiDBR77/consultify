@@ -14,12 +14,16 @@
  * - Restore: node scripts/restore-backup.js <backup-id>
  */
 
-const fs = require('fs').promises;
-const fsSync = require('fs');
-const path = require('path');
-const crypto = require('crypto');
-const { v4: uuidv4 } = require('uuid');
-const { execSync } = require('child_process');
+import { promises as fs } from 'fs';
+import fsSync from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
+import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configuration
 const CONFIG = {
@@ -387,4 +391,4 @@ const BackupService = {
     },
 };
 
-module.exports = BackupService;
+export default BackupService;

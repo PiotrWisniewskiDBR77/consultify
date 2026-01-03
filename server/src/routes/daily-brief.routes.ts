@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const daily_briefRoutesJS = require('../../routes/daily-brief.js');
+const daily_briefRoutesJSPromise = (async () => {
+    const module = await import('../../routes/daily-brief.js');
+    return module.default || module;
+})();
+const daily_briefRoutesJS = daily_briefRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

@@ -6,29 +6,24 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
+import AIPolicyEngine from '../../../server/services/aiPolicyEngine.js';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
 
-const require = createRequire(import.meta.url);
-
 describe('AIPolicyEngine', () => {
     let mockDb;
-    let AIPolicyEngine;
     let mockRegulatoryModeGuard;
     let mockAIRoleGuard;
 
     beforeEach(() => {
-        vi.resetModules();
-        
         mockDb = createMockDb();
-        
+
         // Mock dependencies
         mockRegulatoryModeGuard = {
             isEnabled: vi.fn().mockResolvedValue(false),
             getRegulatoryPrompt: vi.fn().mockReturnValue('Regulatory prompt')
         };
-        
+
         mockAIRoleGuard = {
             getProjectRole: vi.fn().mockResolvedValue('ADVISOR'),
             getRoleCapabilities: vi.fn().mockReturnValue({
@@ -39,36 +34,16 @@ describe('AIPolicyEngine', () => {
             getRoleDescription: vi.fn().mockReturnValue('Advisor role')
         };
 
-        // Mock database before importing
-        vi.doMock('../../../server/database', () => ({
-            default: mockDb
-        }));
-
-        vi.doMock('../../../server/services/regulatoryModeGuard', () => ({
-            default: mockRegulatoryModeGuard
-        }));
-
-        vi.doMock('../../../server/services/aiRoleGuard', () => ({
-            default: mockAIRoleGuard
-        }));
-
-        AIPolicyEngine = require('../../../server/services/aiPolicyEngine.js');
-        
-        // Inject dependencies if supported
-        if (AIPolicyEngine.setDependencies) {
-            AIPolicyEngine.setDependencies({
-                db: mockDb,
-                RegulatoryModeGuard: mockRegulatoryModeGuard,
-                AIRoleGuard: mockAIRoleGuard
-            });
-        }
+        // Inject dependencies
+        AIPolicyEngine.setDependencies({
+            db: mockDb,
+            RegulatoryModeGuard: mockRegulatoryModeGuard,
+            AIRoleGuard: mockAIRoleGuard
+        });
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
-        vi.doUnmock('../../../server/database');
-        vi.doUnmock('../../../server/services/regulatoryModeGuard');
-        vi.doUnmock('../../../server/services/aiRoleGuard');
+        vi.clearAllMocks();
     });
 
     describe('getEffectivePolicy()', () => {
@@ -93,17 +68,19 @@ describe('AIPolicyEngine', () => {
             const userId = testUsers.user.id;
 
             mockDb.get.mockImplementation((query, params, callback) => {
+                const cb = typeof params === 'function' ? params : callback;
                 if (query.includes('ai_policies')) {
-                    callback(null, {
+                    process.nextTick(() => cb(null, {
                         policy_level: 'ASSISTED',
                         max_policy_level: 'PROACTIVE',
                         internet_enabled: 1,
                         audit_required: 1,
                         default_ai_role: 'PMO_MANAGER'
-                    });
+                    }));
                 } else {
-                    callback(null, null);
+                    process.nextTick(() => cb(null, null));
                 }
+                return mockDb;
             });
 
             const policy = await AIPolicyEngine.getEffectivePolicy(orgId, null, userId);
@@ -120,20 +97,22 @@ describe('AIPolicyEngine', () => {
             const userId = testUsers.user.id;
 
             mockDb.get.mockImplementation((query, params, callback) => {
+                const cb = typeof params === 'function' ? params : callback;
                 if (query.includes('ai_policies')) {
-                    callback(null, {
+                    process.nextTick(() => cb(null, {
                         policy_level: 'PROACTIVE',
                         max_policy_level: 'AUTOPILOT'
-                    });
+                    }));
                 } else if (query.includes('projects')) {
-                    callback(null, {
+                    process.nextTick(() => cb(null, {
                         governance_settings: JSON.stringify({
                             aiPolicyOverride: 'ASSISTED'
                         })
-                    });
+                    }));
                 } else {
-                    callback(null, null);
+                    process.nextTick(() => cb(null, null));
                 }
+                return mockDb;
             });
 
             const policy = await AIPolicyEngine.getEffectivePolicy(orgId, projectId, userId);
@@ -148,20 +127,22 @@ describe('AIPolicyEngine', () => {
             const userId = testUsers.user.id;
 
             mockDb.get.mockImplementation((query, params, callback) => {
+                const cb = typeof params === 'function' ? params : callback;
                 if (query.includes('ai_policies')) {
-                    callback(null, {
+                    process.nextTick(() => cb(null, {
                         policy_level: 'ASSISTED',
                         max_policy_level: 'ASSISTED' // Max is ASSISTED
-                    });
+                    }));
                 } else if (query.includes('projects')) {
-                    callback(null, {
+                    process.nextTick(() => cb(null, {
                         governance_settings: JSON.stringify({
                             aiPolicyOverride: 'PROACTIVE' // Try to exceed max
                         })
-                    });
+                    }));
                 } else {
-                    callback(null, null);
+                    process.nextTick(() => cb(null, null));
                 }
+                return mockDb;
             });
 
             const policy = await AIPolicyEngine.getEffectivePolicy(orgId, projectId, userId);
@@ -175,16 +156,18 @@ describe('AIPolicyEngine', () => {
             const userId = testUsers.user.id;
 
             mockDb.get.mockImplementation((query, params, callback) => {
+                const cb = typeof params === 'function' ? params : callback;
                 if (query.includes('ai_policies')) {
-                    callback(null, { policy_level: 'ASSISTED' });
+                    process.nextTick(() => cb(null, { policy_level: 'ASSISTED' }));
                 } else if (query.includes('ai_user_preferences')) {
-                    callback(null, {
+                    process.nextTick(() => cb(null, {
                         preferred_tone: 'FRIENDLY',
                         education_mode: 1
-                    });
+                    }));
                 } else {
-                    callback(null, null);
+                    process.nextTick(() => cb(null, null));
                 }
+                return mockDb;
             });
 
             const policy = await AIPolicyEngine.getEffectivePolicy(orgId, null, userId);
@@ -200,7 +183,9 @@ describe('AIPolicyEngine', () => {
             const orgId = testOrganizations.org1.id;
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { policy_level: 'ADVISORY' });
+                const cb = typeof params === 'function' ? params : callback;
+                process.nextTick(() => cb(null, { policy_level: 'ADVISORY' }));
+                return mockDb;
             });
 
             const result = await AIPolicyEngine.canPerformAction(actionType, orgId);
@@ -213,7 +198,9 @@ describe('AIPolicyEngine', () => {
             const orgId = testOrganizations.org1.id;
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { policy_level: 'ASSISTED' });
+                const cb = typeof params === 'function' ? params : callback;
+                process.nextTick(() => cb(null, { policy_level: 'ASSISTED' }));
+                return mockDb;
             });
 
             const result = await AIPolicyEngine.canPerformAction(actionType, orgId);
@@ -226,7 +213,9 @@ describe('AIPolicyEngine', () => {
             const orgId = testOrganizations.org1.id;
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { policy_level: 'ADVISORY' });
+                const cb = typeof params === 'function' ? params : callback;
+                process.nextTick(() => cb(null, { policy_level: 'ADVISORY' }));
+                return mockDb;
             });
 
             const result = await AIPolicyEngine.canPerformAction(actionType, orgId);

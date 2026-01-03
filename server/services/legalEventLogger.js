@@ -3,24 +3,34 @@
  * 
  * Append-only audit trail for legal compliance events.
  * CRITICAL: This service only appends records - never updates or deletes.
- * 
- * Used for:
- * - ISO/SOC2 compliance audits
- * - Enterprise procurement due diligence
- * - Legal department reviews
  */
 
 // Dependency injection for testing
-const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+let deps = {
+    db: null,
+    uuidv4: null
 };
+
+/**
+ * Initialize dependencies
+ */
+async function initDeps() {
+    if (deps.db && deps.uuidv4) return;
+
+    const [dbModule, uuidModule] = await Promise.all([
+        import('../database.js'),
+        import('uuid')
+    ]);
+
+    deps.db = dbModule.default || dbModule;
+    deps.uuidv4 = uuidModule.v4;
+}
 
 /**
  * Legal Event Types
  * Exhaustive list of auditable legal compliance actions
  */
-const EVENT_TYPES = {
+export const EVENT_TYPES = {
     // Document lifecycle events
     PUBLISH: 'publish',
     ACTIVATE: 'activate',
@@ -38,28 +48,20 @@ const EVENT_TYPES = {
     LIFECYCLE_UPDATE: 'lifecycle_update'
 };
 
-const LegalEventLogger = {
+export const LegalEventLogger = {
     /**
      * Allow dependency injection for testing
      */
-    _setDependencies: (newDeps) => {
-        Object.assign(deps, newDeps);
+    setDependencies: (newDeps) => {
+        deps = { ...deps, ...newDeps };
     },
 
     /**
      * Log a legal event (append-only)
-     * 
-     * @param {Object} params - Event parameters
-     * @param {string} params.eventType - One of EVENT_TYPES
-     * @param {string} [params.documentId] - Related document ID
-     * @param {string} [params.documentVersion] - Related document version
-     * @param {string} [params.userId] - Affected user ID
-     * @param {string} [params.organizationId] - Affected organization ID
-     * @param {string} params.performedBy - Actor who triggered the event (userId or 'system')
-     * @param {Object} [params.metadata] - Additional event context
-     * @returns {Promise<string>} Event ID
      */
-    log: ({ eventType, documentId, documentVersion, userId, organizationId, performedBy, metadata = {} }) => {
+    log: async ({ eventType, documentId, documentVersion, userId, organizationId, performedBy, metadata = {} }) => {
+        await initDeps();
+
         return new Promise((resolve, reject) => {
             const eventId = deps.uuidv4();
 
@@ -98,7 +100,7 @@ const LegalEventLogger = {
     /**
      * Log document publish event
      */
-    logPublish: (documentId, documentVersion, performedBy, metadata = {}) => {
+    logPublish: async (documentId, documentVersion, performedBy, metadata = {}) => {
         return LegalEventLogger.log({
             eventType: EVENT_TYPES.PUBLISH,
             documentId,
@@ -114,7 +116,7 @@ const LegalEventLogger = {
     /**
      * Log document activation
      */
-    logActivate: (documentId, documentVersion, performedBy, metadata = {}) => {
+    logActivate: async (documentId, documentVersion, performedBy, metadata = {}) => {
         return LegalEventLogger.log({
             eventType: EVENT_TYPES.ACTIVATE,
             documentId,
@@ -130,7 +132,7 @@ const LegalEventLogger = {
     /**
      * Log document deactivation
      */
-    logDeactivate: (documentId, documentVersion, performedBy, metadata = {}) => {
+    logDeactivate: async (documentId, documentVersion, performedBy, metadata = {}) => {
         return LegalEventLogger.log({
             eventType: EVENT_TYPES.DEACTIVATE,
             documentId,
@@ -146,7 +148,7 @@ const LegalEventLogger = {
     /**
      * Log user acceptance
      */
-    logAccept: (documentId, documentVersion, userId, organizationId, performedBy, metadata = {}) => {
+    logAccept: async (documentId, documentVersion, userId, organizationId, performedBy, metadata = {}) => {
         return LegalEventLogger.log({
             eventType: EVENT_TYPES.ACCEPT,
             documentId,
@@ -164,7 +166,7 @@ const LegalEventLogger = {
     /**
      * Log organization acceptance completion
      */
-    logOrgAcceptComplete: (documentId, documentVersion, organizationId, performedBy, metadata = {}) => {
+    logOrgAcceptComplete: async (documentId, documentVersion, organizationId, performedBy, metadata = {}) => {
         return LegalEventLogger.log({
             eventType: EVENT_TYPES.ORG_ACCEPT_COMPLETE,
             documentId,
@@ -181,7 +183,7 @@ const LegalEventLogger = {
     /**
      * Log forced re-acceptance requirement
      */
-    logForceReaccept: (documentId, documentVersion, performedBy, reacceptFrom, metadata = {}) => {
+    logForceReaccept: async (documentId, documentVersion, performedBy, reacceptFrom, metadata = {}) => {
         return LegalEventLogger.log({
             eventType: EVENT_TYPES.FORCE_REACCEPT,
             documentId,
@@ -197,11 +199,10 @@ const LegalEventLogger = {
 
     /**
      * Get events with filters (for audit export)
-     * 
-     * @param {Object} filters - Query filters
-     * @returns {Promise<Array>} Matching events
      */
-    getEvents: ({ organizationId, userId, documentId, eventTypes, dateFrom, dateTo, limit = 1000 }) => {
+    getEvents: async ({ organizationId, userId, documentId, eventTypes, dateFrom, dateTo, limit = 1000 }) => {
+        await initDeps();
+
         return new Promise((resolve, reject) => {
             let sql = 'SELECT * FROM legal_events WHERE 1=1';
             const params = [];
@@ -249,7 +250,9 @@ const LegalEventLogger = {
     /**
      * Get event count by type (for dashboard)
      */
-    getEventStats: (organizationId = null, days = 30) => {
+    getEventStats: async (organizationId = null, days = 30) => {
+        await initDeps();
+
         return new Promise((resolve, reject) => {
             let sql = `
                 SELECT event_type, COUNT(*) as count
@@ -273,4 +276,5 @@ const LegalEventLogger = {
     }
 };
 
-module.exports = { LegalEventLogger, EVENT_TYPES };
+export default LegalEventLogger;
+

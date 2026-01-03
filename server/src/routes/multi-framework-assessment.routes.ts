@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const multi_framework_assessmentRoutesJS = require('../../routes/multi-framework-assessment.js');
+const multi_framework_assessmentRoutesJSPromise = (async () => {
+    const module = await import('../../routes/multi-framework-assessment.js');
+    return module.default || module;
+})();
+const multi_framework_assessmentRoutesJS = multi_framework_assessmentRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

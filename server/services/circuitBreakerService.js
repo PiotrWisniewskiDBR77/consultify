@@ -21,14 +21,15 @@
  * @version 2.0.0 - Consolidated from separate implementations
  */
 
-const { aiLogger } = require('./ai/logger');
+import { aiLogger } from './ai/logger.js';
 
 // Lazy-load alerting to avoid circular dependencies
 let alertsModule = null;
-function getAlerts() {
+async function getAlerts() {
     if (!alertsModule) {
         try {
-            alertsModule = require('./ai/alerting').alerts;
+            const mod = await import('./ai/alerting.js');
+            alertsModule = mod.alerts;
         } catch (e) {
             // Alerting not available
         }
@@ -38,10 +39,11 @@ function getAlerts() {
 
 // Lazy-load database for persistence
 let db = null;
-function getDb() {
+async function getDb() {
     if (!db) {
         try {
-            db = require('../database');
+            const mod = await import('../database.js');
+            db = mod.default || mod;
         } catch (e) {
             // Database not available
         }
@@ -49,7 +51,7 @@ function getDb() {
     return db;
 }
 
-const STATES = {
+export const STATES = {
     CLOSED: 'CLOSED',
     OPEN: 'OPEN',
     HALF_OPEN: 'HALF_OPEN'
@@ -66,8 +68,21 @@ const DEFAULT_CONFIG = {
     persistenceEnabled: false   // Enable database persistence (opt-in)
 };
 
-// Store circuit state per service
+// Global state trackers (not exported)
 const circuits = new Map();
+const healthCheckIntervals = new Map();
+const recoveryProgress = new Map();
+const PROVIDER_ROTATION = new Map([
+    ['openai', ['anthropic', 'google']],
+    ['anthropic', ['openai', 'google']],
+    ['google', ['openai', 'anthropic']]
+]);
+const HEALTH_CHECK_CONFIG = {
+    interval: 30000,
+    timeout: 5000,
+    minSuccessRate: 0.8,
+    gradualRecoverySteps: 5
+};
 
 // Track if we've restored state from database
 let stateRestored = false;
@@ -75,11 +90,11 @@ let stateRestored = false;
 /**
  * Circuit Breaker Class
  */
-class CircuitBreaker {
+export class CircuitBreaker {
     constructor(name, options = {}) {
         this.name = name;
         this.config = { ...DEFAULT_CONFIG, ...options };
-        
+
         this.state = STATES.CLOSED;
         this.failures = 0;
         this.successes = 0;
@@ -87,7 +102,7 @@ class CircuitBreaker {
         this.lastSuccessTime = null;
         this.openedAt = null;
         this.nextAttemptTime = null;
-        
+
         // Track error details for debugging
         this.lastError = null;
         this.totalFailures = 0;
@@ -131,7 +146,7 @@ class CircuitBreaker {
      */
     async execute(fn, options = {}) {
         const check = this.canExecute();
-        
+
         if (!check.allowed) {
             const err = new Error(check.reason);
             err.isCircuitOpen = true;
@@ -146,14 +161,14 @@ class CircuitBreaker {
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
             try {
                 const result = await fn();
-                this.recordSuccess();
+                await this.recordSuccess();
                 return result;
             } catch (error) {
                 lastError = error;
-                
+
                 // Only count "system" failures
                 if (this._isSystemFailure(error)) {
-                    this.recordFailure(error);
+                    await this.recordFailure(error);
                 }
 
                 // Don't retry on last attempt or non-retriable errors
@@ -177,7 +192,7 @@ class CircuitBreaker {
                     this.config.retryMaxDelay
                 );
                 await new Promise(resolve => setTimeout(resolve, delay));
-                
+
                 aiLogger.info('CircuitBreaker', `Retrying [${this.name}] in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
             }
         }
@@ -188,8 +203,7 @@ class CircuitBreaker {
     /**
      * Record a successful request
      */
-    recordSuccess() {
-        const previousState = this.state;
+    async recordSuccess() {
         this.lastSuccessTime = Date.now();
         this.failures = 0;
         this.totalSuccesses++;
@@ -200,17 +214,17 @@ class CircuitBreaker {
                 this.state = STATES.CLOSED;
                 this.openedAt = null;
                 this.nextAttemptTime = null;
-                
+
                 aiLogger.info('CircuitBreaker', `Circuit [${this.name}] CLOSED after recovery`);
 
                 // Send recovery alert
-                const alerts = getAlerts();
+                const alerts = await getAlerts();
                 if (alerts && alerts.circuitClosed) {
                     alerts.circuitClosed(this.name);
                 }
 
                 if (this.config.persistenceEnabled) {
-                    this._persistState();
+                    await this._persistState();
                 }
             }
         }
@@ -219,7 +233,7 @@ class CircuitBreaker {
     /**
      * Record a failed request
      */
-    recordFailure(error) {
+    async recordFailure(error) {
         this.failures++;
         this.totalFailures++;
         this.lastFailureTime = Date.now();
@@ -235,19 +249,19 @@ class CircuitBreaker {
             this.openedAt = Date.now();
             this.nextAttemptTime = this.openedAt + this.config.resetTimeout;
 
-            const logMsg = wasHalfOpen 
+            const logMsg = wasHalfOpen
                 ? `Circuit [${this.name}] REOPENED after half-open failure`
                 : `Circuit [${this.name}] OPENED after ${this.failures} failures`;
             aiLogger.error('CircuitBreaker', logMsg);
 
             // Send alert
-            const alerts = getAlerts();
+            const alerts = await getAlerts();
             if (alerts && alerts.circuitOpen) {
                 alerts.circuitOpen(this.name, this.failures, this.config.resetTimeout / 1000);
             }
 
             if (this.config.persistenceEnabled) {
-                this._persistState();
+                await this._persistState();
             }
         }
     }
@@ -255,18 +269,18 @@ class CircuitBreaker {
     /**
      * Reset circuit to closed state (admin function)
      */
-    reset() {
+    async reset() {
         this.state = STATES.CLOSED;
         this.failures = 0;
         this.successes = 0;
         this.openedAt = null;
         this.nextAttemptTime = null;
         this.lastError = null;
-        
+
         aiLogger.info('CircuitBreaker', `Circuit [${this.name}] manually reset to CLOSED`);
 
         if (this.config.persistenceEnabled) {
-            this._persistState();
+            await this._persistState();
         }
     }
 
@@ -301,13 +315,13 @@ class CircuitBreaker {
      */
     _isSystemFailure(error) {
         const msg = (error.message || '').toLowerCase();
-        
+
         // Don't trip for client/auth issues
         if (msg.includes('budget') || (msg.includes('limit exceeded') && !msg.includes('rate limit'))) return false;
         if (msg.includes('unauthorized') || msg.includes('auth') || msg.includes('key invalid')) return false;
         if (msg.includes('validation') || msg.includes('invalid argument')) return false;
         if (msg.includes('not found') || msg.includes('404')) return false;
-        
+
         return true;
     }
 
@@ -316,15 +330,15 @@ class CircuitBreaker {
      */
     _isRetriable(error) {
         const msg = (error.message || '').toLowerCase();
-        
+
         // Network/timeout errors are retriable
         if (msg.includes('timeout') || msg.includes('network') || msg.includes('econnreset')) return true;
         if (msg.includes('rate limit') || msg.includes('429') || msg.includes('503')) return true;
         if (msg.includes('server error') || msg.includes('500') || msg.includes('502')) return true;
-        
+
         // Don't retry client errors
         if (msg.includes('400') || msg.includes('401') || msg.includes('403') || msg.includes('404')) return false;
-        
+
         return true;
     }
 
@@ -332,7 +346,7 @@ class CircuitBreaker {
      * Persist state to database
      */
     async _persistState() {
-        const database = getDb();
+        const database = await getDb();
         if (!database) return;
 
         try {
@@ -360,43 +374,10 @@ class CircuitBreaker {
     }
 }
 
-// ============================================================================
-// AUTO-RECOVERY ENHANCEMENT (Phase 2.4)
-// ============================================================================
-
-/**
- * Provider rotation configuration
- */
-const PROVIDER_ROTATION = new Map([
-    ['openai', ['anthropic', 'google']],
-    ['anthropic', ['openai', 'google']],
-    ['google', ['openai', 'anthropic']]
-]);
-
-/**
- * Health check configurations per provider
- */
-const HEALTH_CHECK_CONFIG = {
-    interval: 30000,        // Health check every 30 seconds when in HALF_OPEN
-    timeout: 5000,          // Health check timeout
-    minSuccessRate: 0.8,    // 80% success rate required for full recovery
-    gradualRecoverySteps: 5 // Steps for gradual traffic increase
-};
-
-/**
- * Track health check intervals
- */
-const healthCheckIntervals = new Map();
-
-/**
- * Track recovery progress
- */
-const recoveryProgress = new Map();
-
 /**
  * Extended Circuit Breaker with Auto-Recovery
  */
-class EnhancedCircuitBreaker extends CircuitBreaker {
+export class EnhancedCircuitBreaker extends CircuitBreaker {
     constructor(name, options = {}) {
         super(name, options);
         this.healthCheckFn = options.healthCheckFn || null;
@@ -425,14 +406,14 @@ class EnhancedCircuitBreaker extends CircuitBreaker {
                 const startTime = Date.now();
                 await Promise.race([
                     this.healthCheckFn(),
-                    new Promise((_, reject) => 
+                    new Promise((_, reject) =>
                         setTimeout(() => reject(new Error('Health check timeout')), HEALTH_CHECK_CONFIG.timeout)
                     )
                 ]);
-                
+
                 const latency = Date.now() - startTime;
                 this.consecutiveHealthChecks++;
-                
+
                 aiLogger.debug('CircuitBreaker', `Health check OK for [${this.name}] (${latency}ms)`);
 
                 // If enough successful health checks, begin recovery
@@ -442,10 +423,10 @@ class EnhancedCircuitBreaker extends CircuitBreaker {
             } catch (error) {
                 aiLogger.warn('CircuitBreaker', `Health check failed for [${this.name}]: ${error.message}`);
                 this.consecutiveHealthChecks = 0;
-                
+
                 // If health check fails in HALF_OPEN, go back to OPEN
                 if (this.state === STATES.HALF_OPEN) {
-                    this.recordFailure(error);
+                    await this.recordFailure(error);
                 }
             }
         }, HEALTH_CHECK_CONFIG.interval);
@@ -473,24 +454,24 @@ class EnhancedCircuitBreaker extends CircuitBreaker {
 
         this.isRecovering = true;
         this.recoveryPercent = 20; // Start with 20% traffic
-        
+
         aiLogger.info('CircuitBreaker', `Beginning gradual recovery for [${this.name}] at ${this.recoveryPercent}%`);
 
         const recoverySteps = [];
         const stepIncrement = Math.floor(80 / HEALTH_CHECK_CONFIG.gradualRecoverySteps);
-        
+
         for (let i = 0; i < HEALTH_CHECK_CONFIG.gradualRecoverySteps; i++) {
             const stepTimeout = setTimeout(() => {
                 if (this.state === STATES.CLOSED || this.state === STATES.HALF_OPEN) {
                     this.recoveryPercent = Math.min(100, this.recoveryPercent + stepIncrement);
                     aiLogger.info('CircuitBreaker', `Recovery progress for [${this.name}]: ${this.recoveryPercent}%`);
-                    
+
                     if (this.recoveryPercent >= 100) {
                         this.completeRecovery();
                     }
                 }
             }, (i + 1) * 10000); // 10 seconds between steps
-            
+
             recoverySteps.push(stepTimeout);
         }
 
@@ -504,7 +485,7 @@ class EnhancedCircuitBreaker extends CircuitBreaker {
         this.isRecovering = false;
         this.recoveryPercent = 100;
         this.stopHealthChecks();
-        
+
         // Clear recovery timeouts
         const steps = recoveryProgress.get(this.name);
         if (steps) {
@@ -531,7 +512,7 @@ class EnhancedCircuitBreaker extends CircuitBreaker {
      */
     canExecute() {
         const baseCheck = super.canExecute();
-        
+
         if (baseCheck.allowed && this.isRecovering) {
             if (!this.shouldAllowDuringRecovery()) {
                 return {
@@ -553,9 +534,9 @@ class EnhancedCircuitBreaker extends CircuitBreaker {
     /**
      * Override recordSuccess for recovery tracking
      */
-    recordSuccess() {
-        super.recordSuccess();
-        
+    async recordSuccess() {
+        await super.recordSuccess();
+
         // If we were in recovery and circuit is now closed, complete recovery
         if (this.state === STATES.CLOSED && this.isRecovering) {
             this.completeRecovery();
@@ -565,8 +546,8 @@ class EnhancedCircuitBreaker extends CircuitBreaker {
     /**
      * Override reset to clean up recovery state
      */
-    reset() {
-        super.reset();
+    async reset() {
+        await super.reset();
         this.completeRecovery();
         this.consecutiveHealthChecks = 0;
     }
@@ -588,7 +569,7 @@ class EnhancedCircuitBreaker extends CircuitBreaker {
 /**
  * Circuit Breaker Service - Main API
  */
-const CircuitBreakerService = {
+export const CircuitBreakerService = {
     STATES,
 
     /**
@@ -603,9 +584,6 @@ const CircuitBreakerService = {
 
     /**
      * Execute function with circuit breaker protection
-     * @param {string} name - Circuit breaker name
-     * @param {Function} fn - Async function to execute
-     * @param {Object} options - { failureThreshold, resetTimeout, retries, ... }
      */
     execute: async (name, fn, options = {}) => {
         const breaker = CircuitBreakerService.getBreaker(name, options);
@@ -623,25 +601,25 @@ const CircuitBreakerService = {
     /**
      * Record a success for a circuit
      */
-    recordSuccess: (name) => {
+    recordSuccess: async (name) => {
         const breaker = circuits.get(name);
-        if (breaker) breaker.recordSuccess();
+        if (breaker) await breaker.recordSuccess();
     },
 
     /**
      * Record a failure for a circuit
      */
-    recordFailure: (name, error) => {
+    recordFailure: async (name, error) => {
         const breaker = circuits.get(name);
-        if (breaker) breaker.recordFailure(error);
+        if (breaker) await breaker.recordFailure(error);
     },
 
     /**
      * Reset a circuit to closed state
      */
-    reset: (name) => {
+    reset: async (name) => {
         const breaker = circuits.get(name);
-        if (breaker) breaker.reset();
+        if (breaker) await breaker.reset();
     },
 
     /**
@@ -664,8 +642,8 @@ const CircuitBreakerService = {
      */
     restoreStates: async () => {
         if (stateRestored) return;
-        
-        const database = getDb();
+
+        const database = await getDb();
         if (!database) return;
 
         try {
@@ -673,20 +651,18 @@ const CircuitBreakerService = {
                 database.all(
                     'SELECT * FROM circuit_breaker_state WHERE state = ?',
                     [STATES.OPEN],
-                    (err, rows) => {
+                    async (err, rows) => {
                         if (err) {
-                            // Table might not exist yet
                             resolve();
                             return;
                         }
 
                         const now = Date.now();
                         for (const row of (rows || [])) {
-                            // Only restore OPEN circuits that haven't expired
                             if (row.opened_at) {
                                 const openedAt = new Date(row.opened_at).getTime();
                                 const timeout = DEFAULT_CONFIG.resetTimeout;
-                                
+
                                 if (now - openedAt < timeout) {
                                     const breaker = CircuitBreakerService.getBreaker(row.provider_id, {
                                         persistenceEnabled: true
@@ -695,7 +671,7 @@ const CircuitBreakerService = {
                                     breaker.failures = row.failures;
                                     breaker.openedAt = openedAt;
                                     breaker.nextAttemptTime = openedAt + timeout;
-                                    
+
                                     aiLogger.info('CircuitBreaker', `Restored OPEN state for [${row.provider_id}]`);
                                 }
                             }
@@ -710,18 +686,12 @@ const CircuitBreakerService = {
         }
     },
 
-    // ========================================================================
-    // AUTO-RECOVERY & PROVIDER ROTATION (Phase 2.4)
-    // ========================================================================
-
     /**
      * Get fallback provider when primary is unavailable
-     * @param {string} primaryProvider - The primary provider that's failing
-     * @returns {string|null} Fallback provider name or null if none available
      */
     getFallbackProvider: (primaryProvider) => {
         const fallbacks = PROVIDER_ROTATION.get(primaryProvider) || [];
-        
+
         for (const fallback of fallbacks) {
             const breaker = circuits.get(fallback);
             if (!breaker || breaker.state === STATES.CLOSED) {
@@ -736,9 +706,6 @@ const CircuitBreakerService = {
 
     /**
      * Execute with automatic provider rotation
-     * @param {string} primaryProvider - Primary provider name
-     * @param {Function} createFn - Function that creates the execution function for a provider
-     * @param {Object} options - Circuit breaker options
      */
     executeWithRotation: async (primaryProvider, createFn, options = {}) => {
         const providers = [primaryProvider, ...(PROVIDER_ROTATION.get(primaryProvider) || [])];
@@ -760,20 +727,14 @@ const CircuitBreakerService = {
             } catch (error) {
                 lastError = error;
                 aiLogger.warn('CircuitBreaker', `Provider [${provider}] failed: ${error.message}`);
-                
-                // If circuit opened, it will be handled automatically
-                // Continue to next provider
             }
         }
 
-        // All providers failed
         throw lastError || new Error('All providers unavailable');
     },
 
     /**
      * Set health check function for a circuit
-     * @param {string} name - Circuit breaker name
-     * @param {Function} healthCheckFn - Async function that returns true if healthy
      */
     setHealthCheck: (name, healthCheckFn) => {
         const breaker = CircuitBreakerService.getBreaker(name);
@@ -819,7 +780,7 @@ const CircuitBreakerService = {
             aiLogger.debug('CircuitBreaker', `Cleaned up health check for [${name}]`);
         }
         healthCheckIntervals.clear();
-        
+
         for (const [name, steps] of recoveryProgress.entries()) {
             steps.forEach(clearTimeout);
         }
@@ -827,4 +788,4 @@ const CircuitBreakerService = {
     }
 };
 
-module.exports = CircuitBreakerService;
+export default CircuitBreakerService;

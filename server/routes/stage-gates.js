@@ -1,10 +1,9 @@
-// Stage Gates Routes - Phase transition control
-// Step 3: PMO Objects, Statuses & Stage Gates
+import express from 'express';
+import StageGateService from '../services/stageGateService.js';
+import verifyToken from '../middleware/authMiddleware.js';
+import db from '../database.js';
 
-const express = require('express');
 const router = express.Router();
-const StageGateService = require('../services/stageGateService');
-const verifyToken = require('../middleware/authMiddleware');
 
 // GET /api/stage-gates/:projectId/evaluate/:gateType
 router.get('/:projectId/evaluate/:gateType', verifyToken, async (req, res) => {
@@ -20,7 +19,6 @@ router.get('/:projectId/evaluate/:gateType', verifyToken, async (req, res) => {
 router.get('/:projectId/current', verifyToken, async (req, res) => {
     try {
         // Get project's current phase
-        const db = require('../database');
         db.get(`SELECT current_phase FROM projects WHERE id = ?`, [req.params.projectId], async (err, row) => {
             if (err) return res.status(500).json({ error: err.message });
             if (!row) return res.status(404).json({ error: 'Project not found' });
@@ -92,7 +90,6 @@ router.post('/:projectId/pass/:gateType', verifyToken, async (req, res) => {
 
 // GET /api/stage-gates/:projectId/history
 router.get('/:projectId/history', verifyToken, (req, res) => {
-    const db = require('../database');
     db.all(`SELECT * FROM stage_gates WHERE project_id = ? ORDER BY approved_at DESC`,
         [req.params.projectId], (err, rows) => {
             if (err) return res.status(500).json({ error: err.message });
@@ -100,4 +97,4 @@ router.get('/:projectId/history', verifyToken, (req, res) => {
         });
 });
 
-module.exports = router;
+export default router;

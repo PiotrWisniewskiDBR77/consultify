@@ -1,32 +1,14 @@
 /**
- * PasswordPolicyService Service
+ * Passwordpolicy Service
  * Enterprise SaaS Architecture - TypeScript Backend
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
 
-const require = createRequire(import.meta.url);
-
-// Import the JS implementation for now (will be fully migrated later)
-const passwordPolicyServiceServiceJS = require('../../services/passwordPolicyService.js');
-
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const passwordPolicyServiceService = passwordPolicyServiceServiceJS.default || passwordPolicyServiceServiceJS;
+// Lazy load the JS service module
+const loadPasswordpolicyservice = createCachedLazyService('../../services/passwordPolicyService.js');
 
 // Export default instance (for backward compatibility)
-export default passwordPolicyServiceService;
-
-// Also export named exports if they exist
-if (typeof passwordPolicyServiceServiceJS === 'object' && passwordPolicyServiceServiceJS !== null) {
-    Object.keys(passwordPolicyServiceServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = passwordPolicyServiceServiceJS[key];
-        }
-    });
-}
+export default loadPasswordpolicyservice();

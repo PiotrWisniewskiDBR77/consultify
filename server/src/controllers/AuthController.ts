@@ -7,13 +7,11 @@ import { Request, Response } from 'express';
 import type { AuthRequest, LoginRequest } from '../validators/auth.validators';
 import refreshTokenService from '../services/RefreshTokenService';
 import mfaService from '../services/MFAService';
+import type { IDatabase } from '../database/IDatabase.js';
 
 // Dependencies interface for dependency injection
 interface Dependencies {
-    db: {
-        get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
-        run: (sql: string, params: unknown[], callback?: (err: Error | null) => void) => void;
-    };
+    db: IDatabase;
     bcrypt: {
         compareSync: (password: string, hash: string) => boolean;
     };
@@ -35,20 +33,36 @@ interface Dependencies {
 }
 
 // Default dependencies (lazy loaded to avoid circular deps)
-let deps: Dependencies;
+let deps: Dependencies | null = null;
+let depsPromise: Promise<Dependencies> | null = null;
 
-const getDeps = (): Dependencies => {
-    if (!deps) {
-        deps = {
-            db: require('../../database'),
-            bcrypt: require('bcryptjs'),
-            ActivityService: require('../../services/activityService'),
-            MFAService: mfaService,
-            RefreshTokenService: refreshTokenService,
-            RedisStore: require('../../utils/redisRateLimitStore'),
-        };
+const getDeps = async (): Promise<Dependencies> => {
+    if (deps) {
+        return deps;
     }
-    return deps;
+    if (!depsPromise) {
+        depsPromise = (async () => {
+            const [dbModule, bcryptModule, activityModule, redisModule] = await Promise.all([
+                import('../../database.js'),
+                import('bcryptjs'),
+                import('../../services/activityService.js').then(m => m.default || m),
+                import('../../utils/redisRateLimitStore.js')
+            ]);
+            
+            deps = {
+                db: dbModule.default || dbModule,
+                bcrypt: bcryptModule.default || bcryptModule,
+                ActivityService: activityModule.default || activityModule,
+                MFAService: mfaService,
+                RefreshTokenService: refreshTokenService,
+                RedisStore: (redisModule.default || redisModule) as new (options: { windowMs: number }) => {
+                    resetKey: (key: string) => Promise<void>;
+                },
+            };
+            return deps;
+        })();
+    }
+    return depsPromise;
 };
 
 /**
@@ -67,7 +81,7 @@ const withTimeout = <T>(promise: Promise<T>, timeoutMs = 1000): Promise<T> => {
  * Handle User Login
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
-    const dependencies = getDeps();
+    const dependencies = await getDeps();
     const body = req.body as LoginRequest;
     
     console.log('[Auth] Login request received for:', body.email || 'no email');
@@ -295,7 +309,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 /**
  * Set dependencies (for testing)
  */
-export const setDependencies = (newDeps: Partial<Dependencies>): void => {
-    deps = { ...getDeps(), ...newDeps };
+export const setDependencies = async (newDeps: Partial<Dependencies>): Promise<void> => {
+    const currentDeps = await getDeps();
+    deps = { ...currentDeps, ...newDeps };
 };
 

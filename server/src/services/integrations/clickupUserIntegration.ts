@@ -1,32 +1,14 @@
 /**
- * Integrations/clickupUserIntegration Service
+ * Clickupuserintegration Service
  * Enterprise SaaS Architecture - TypeScript Backend
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
 
-const require = createRequire(import.meta.url);
-
-// Import the JS implementation for now (will be fully migrated later)
-const integrations/clickupUserIntegrationServiceJS = require('../../services/integrations/clickupUserIntegration.js');
-
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const integrations/clickupUserIntegrationService = integrations/clickupUserIntegrationServiceJS.default || integrations/clickupUserIntegrationServiceJS;
+// Lazy load the JS service module
+const loadClickupuserintegration = createCachedLazyService('../../services/integrations/clickupUserIntegration.js');
 
 // Export default instance (for backward compatibility)
-export default integrations/clickupUserIntegrationService;
-
-// Also export named exports if they exist
-if (typeof integrations/clickupUserIntegrationServiceJS === 'object' && integrations/clickupUserIntegrationServiceJS !== null) {
-    Object.keys(integrations/clickupUserIntegrationServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = integrations/clickupUserIntegrationServiceJS[key];
-        }
-    });
-}
+export default loadClickupuserintegration();

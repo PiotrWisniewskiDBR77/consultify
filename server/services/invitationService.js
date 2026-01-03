@@ -17,15 +17,77 @@
 
 // Dependency injection container (for deterministic unit tests)
 const deps = {
-    db: require('../database'),
-    crypto: require('crypto'),
-    bcrypt: require('bcryptjs'),
-    uuidv4: require('uuid').v4,
-    AccessPolicyService: require('./accessPolicyService'),
-    AttributionService: require('./attributionService'),
-    MetricsCollector: require('./metricsCollector'),
-    SeatManagementService: require('./seatManagementService')
+    _db: null,
+    _crypto: null,
+    _bcrypt: null,
+    _uuidv4: null,
+    _AccessPolicyService: null,
+    _AttributionService: null,
+    _MetricsCollector: null,
+    _SeatManagementService: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get crypto() { return this._crypto; },
+    set crypto(val) { this._crypto = val; },
+
+    get bcrypt() { return this._bcrypt; },
+    set bcrypt(val) { this._bcrypt = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; },
+
+    get AccessPolicyService() { return this._AccessPolicyService; },
+    set AccessPolicyService(val) { this._AccessPolicyService = val; },
+
+    get AttributionService() { return this._AttributionService; },
+    set AttributionService(val) { this._AttributionService = val; },
+
+    get MetricsCollector() { return this._MetricsCollector; },
+    set MetricsCollector(val) { this._MetricsCollector = val; },
+
+    get SeatManagementService() { return this._SeatManagementService; },
+    set SeatManagementService(val) { this._SeatManagementService = val; }
 };
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._crypto) {
+        const crypto = await import('crypto');
+        deps._crypto = crypto;
+    }
+    if (!deps._bcrypt) {
+        const bcrypt = await import('bcryptjs');
+        deps._bcrypt = bcrypt;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+    if (!deps._AccessPolicyService) {
+        const { default: service } = await import('./accessPolicyService.js');
+        deps._AccessPolicyService = service;
+    }
+    if (!deps._AttributionService) {
+        const { default: service } = await import('./attributionService.js');
+        deps._AttributionService = service;
+    }
+    if (!deps._MetricsCollector) {
+        const { default: service } = await import('./metricsCollector.js');
+        deps._MetricsCollector = service;
+    }
+    if (!deps._SeatManagementService) {
+        const { default: service } = await import('./seatManagementService.js');
+        deps._SeatManagementService = service;
+    }
+}
 
 // Constants
 const INVITATION_EXPIRY_DAYS = 7;
@@ -79,14 +141,22 @@ const InvitationService = {
 
     // For testing: allow overriding dependencies
     setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
+        if (newDeps.db) deps.db = newDeps.db;
+        if (newDeps.crypto) deps.crypto = newDeps.crypto;
+        if (newDeps.bcrypt) deps.bcrypt = newDeps.bcrypt;
+        if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
+        if (newDeps.AccessPolicyService) deps.AccessPolicyService = newDeps.AccessPolicyService;
+        if (newDeps.AttributionService) deps.AttributionService = newDeps.AttributionService;
+        if (newDeps.MetricsCollector) deps.MetricsCollector = newDeps.MetricsCollector;
+        if (newDeps.SeatManagementService) deps.SeatManagementService = newDeps.SeatManagementService;
     },
 
     /**
      * Generate a cryptographically secure token
      * @returns {string} 64-character hex string
      */
-    generateSecureToken: () => {
+    generateSecureToken: async () => {
+        await initDeps();
         return deps.crypto.randomBytes(TOKEN_LENGTH_BYTES).toString('hex');
     },
 
@@ -95,7 +165,8 @@ const InvitationService = {
      * @param {string} token - Plain token
      * @returns {string} SHA256 hash
      */
-    hashToken: (token) => {
+    hashToken: async (token) => {
+        await initDeps();
         return deps.crypto.createHash('sha256').update(token).digest('hex');
     },
 
@@ -117,6 +188,7 @@ const InvitationService = {
      * @param {object} requestInfo - { ipAddress, userAgent }
      */
     logEvent: async (invitationId, eventType, performedByUserId = null, metadata = {}, requestInfo = {}) => {
+        await initDeps();
         const id = deps.uuidv4();
         const { ipAddress, userAgent } = requestInfo;
 
@@ -145,6 +217,7 @@ const InvitationService = {
      * @returns {Promise<{allowed: boolean, reasonCode?: string, reason?: string, seatsRemaining?: number}>}
      */
     checkInvitePermission: async (organizationId, requestingUserId) => {
+        await initDeps();
         // Use AccessPolicyService as single source of truth
         const policyResult = await deps.AccessPolicyService.canInviteUsers(organizationId, requestingUserId);
 
@@ -184,6 +257,7 @@ const InvitationService = {
      * @returns {Promise<boolean>}
      */
     canInviteToOrg: async (userId, organizationId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.get(
                 `SELECT role FROM users WHERE id = ? AND organization_id = ?`,
@@ -206,6 +280,7 @@ const InvitationService = {
      * @returns {Promise<boolean>}
      */
     canInviteToProject: async (userId, projectId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             // Check if user is project admin/owner or org admin
             deps.db.get(
@@ -242,6 +317,7 @@ const InvitationService = {
      * @returns {Promise<object>} Created invitation
      */
     createOrgInvitation: async (params, requestInfo = {}) => {
+        await initDeps();
         const { organizationId, email, role = 'USER', invitedByUserId, metadata = {} } = params;
 
         // Validate email format
@@ -313,8 +389,8 @@ const InvitationService = {
 
         // Create invitation
         const id = deps.uuidv4();
-        const token = InvitationService.generateSecureToken();
-        const tokenHash = InvitationService.hashToken(token); // Store hash only
+        const token = await InvitationService.generateSecureToken();
+        const tokenHash = await InvitationService.hashToken(token); // Store hash only
         const expiresAt = InvitationService.calculateExpiryDate();
 
         return new Promise((resolve, reject) => {
@@ -379,6 +455,7 @@ const InvitationService = {
      * @returns {Promise<object>}
      */
     createProjectInvitation: async (params, requestInfo = {}) => {
+        await initDeps();
         const { organizationId, projectId, email, projectRole = 'member', orgRole = 'USER', invitedByUserId, metadata = {} } = params;
 
         // Validate email format
@@ -413,8 +490,8 @@ const InvitationService = {
 
         // Create invitation
         const id = deps.uuidv4();
-        const token = InvitationService.generateSecureToken();
-        const tokenHash = InvitationService.hashToken(token); // Store hash only
+        const token = await InvitationService.generateSecureToken();
+        const tokenHash = await InvitationService.hashToken(token); // Store hash only
         const expiresAt = InvitationService.calculateExpiryDate();
 
         const invitationMetadata = {
@@ -469,8 +546,9 @@ const InvitationService = {
      * @returns {Promise<object|null>}
      */
     getByToken: async (token) => {
+        await initDeps();
         // Hash the incoming token for comparison
-        const tokenHash = InvitationService.hashToken(token);
+        const tokenHash = await InvitationService.hashToken(token);
 
         return new Promise((resolve, reject) => {
             deps.db.get(
@@ -500,6 +578,7 @@ const InvitationService = {
      * @returns {Promise<object>} Created/updated user
      */
     acceptInvitation: async (params, requestInfo = {}) => {
+        await initDeps();
         const { token, email, firstName, lastName, password } = params;
 
         // Get invitation
@@ -559,7 +638,7 @@ const InvitationService = {
             // Create new user
             isNewUser = true;
             userId = deps.uuidv4();
-            const hashedPassword = deps.bcrypt.hashSync(password, 10);
+            const hashedPassword = deps.bcrypt.default ? deps.bcrypt.default.hashSync(password, 10) : deps.bcrypt.hashSync(password, 10);
 
             await new Promise((resolve, reject) => {
                 deps.db.run(
@@ -691,6 +770,7 @@ const InvitationService = {
      * @returns {Promise<object>}
      */
     resendInvitation: async (invitationId, performedByUserId, requestInfo = {}) => {
+        await initDeps();
         // Get current invitation
         const invitation = await new Promise((resolve, reject) => {
             deps.db.get(
@@ -728,8 +808,8 @@ const InvitationService = {
         }
 
         // Generate new token and expiry
-        const newToken = InvitationService.generateSecureToken();
-        const newTokenHash = InvitationService.hashToken(newToken);
+        const newToken = await InvitationService.generateSecureToken();
+        const newTokenHash = await InvitationService.hashToken(newToken);
         const newExpiresAt = InvitationService.calculateExpiryDate();
 
         // Store previous hash for audit (first 16 chars)
@@ -780,6 +860,7 @@ const InvitationService = {
      * @returns {Promise<object>}
      */
     revokeInvitation: async (invitationId, performedByUserId, reason = '', requestInfo = {}) => {
+        await initDeps();
         const invitation = await new Promise((resolve, reject) => {
             deps.db.get(
                 `SELECT * FROM invitations WHERE id = ?`,
@@ -827,6 +908,7 @@ const InvitationService = {
      * @returns {Promise<object[]>}
      */
     listOrgInvitations: async (organizationId, options = {}) => {
+        await initDeps();
         const { status, invitationType, limit = 50, offset = 0 } = options;
 
         let sql = `
@@ -869,6 +951,7 @@ const InvitationService = {
      * @returns {Promise<object[]>}
      */
     listProjectInvitations: async (projectId, options = {}) => {
+        await initDeps();
         const { status, limit = 50, offset = 0 } = options;
 
         let sql = `
@@ -903,6 +986,7 @@ const InvitationService = {
      * @returns {Promise<object[]>}
      */
     getPendingForEmail: async (email) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.all(
                 `SELECT i.*, o.name as organization_name, p.name as project_name
@@ -926,6 +1010,7 @@ const InvitationService = {
      * @returns {Promise<object[]>}
      */
     getAuditTrail: async (invitationId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.all(
                 `SELECT ie.*, u.first_name, u.last_name, u.email
@@ -943,4 +1028,4 @@ const InvitationService = {
     }
 };
 
-module.exports = InvitationService;
+export default InvitationService;

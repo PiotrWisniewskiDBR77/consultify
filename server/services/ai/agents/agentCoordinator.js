@@ -9,19 +9,19 @@
  * - Track agent performance and calibration
  */
 
-const { StrategyAgent } = require('./strategyAgent');
-const { FinanceAgent } = require('./financeAgent');
-const { ChangeAgent } = require('./changeAgent');
-const { RiskAgent } = require('./riskAgent');
-const { PMOAgent } = require('./pmoAgent');
-const llmService = require('../llmService');
-const { v4: uuidv4 } = require('uuid');
+import { StrategyAgent } from './strategyAgent.js';
+import { FinanceAgent } from './financeAgent.js';
+import { ChangeAgent } from './changeAgent.js';
+import { RiskAgent } from './riskAgent.js';
+import { PMOAgent } from './pmoAgent.js';
+import llmService from '../llmService.js';
+import { v4 as uuidv4 } from 'uuid';
 
-class AgentCoordinator {
+export class AgentCoordinator {
     constructor(config = {}) {
         this.id = uuidv4();
         this.name = 'AgentCoordinator';
-        
+
         // Initialize specialist agents
         this.agents = {
             strategy: new StrategyAgent(),
@@ -36,7 +36,7 @@ class AgentCoordinator {
         this.maxAgentsPerQuery = config.maxAgentsPerQuery || 3;
         this.debateRounds = config.debateRounds || 2;
         this.confidenceThreshold = config.confidenceThreshold || 0.7;
-        
+
         // Metrics tracking
         this.metrics = {
             queriesProcessed: 0,
@@ -65,15 +65,15 @@ class AgentCoordinator {
         try {
             // 1. Determine which agents should respond
             const relevantAgents = await this.selectAgents(query, context);
-            
+
             if (relevantAgents.length === 0) {
                 return this.getGeneralResponse(query, context);
             }
 
             // 2. Get responses from each relevant agent
             const agentResponses = await this.gatherAgentResponses(
-                query, 
-                context, 
+                query,
+                context,
                 relevantAgents
             );
 
@@ -81,8 +81,8 @@ class AgentCoordinator {
             let finalResponse;
             if (relevantAgents.length >= this.minAgentsForDebate && !options.skipDebate) {
                 finalResponse = await this.conductDebate(
-                    query, 
-                    agentResponses, 
+                    query,
+                    agentResponses,
                     context
                 );
                 this.metrics.debatesHeld++;
@@ -138,7 +138,7 @@ class AgentCoordinator {
 
         // Sort by confidence and take top N
         relevanceResults.sort((a, b) => b.confidence - a.confidence);
-        
+
         return relevanceResults
             .slice(0, this.maxAgentsPerQuery)
             .map(r => r.agent);
@@ -148,7 +148,7 @@ class AgentCoordinator {
      * Gather responses from selected agents in parallel
      */
     async gatherAgentResponses(query, context, agents) {
-        const responsePromises = agents.map(agent => 
+        const responsePromises = agents.map(agent =>
             agent.process(query, context)
                 .catch(error => ({
                     agentId: agent.id,
@@ -225,7 +225,7 @@ class AgentCoordinator {
      */
     async synthesizeDebate(debate, query, context) {
         const lastRound = debate.rounds[debate.rounds.length - 1];
-        
+
         // Weight contributions by confidence and agent weight
         const weightedInsights = lastRound.contributions
             .sort((a, b) => (b.confidence * b.weight) - (a.confidence * a.weight));
@@ -390,10 +390,10 @@ Provide a helpful, professional response. If the question would benefit from spe
      */
     updateMetrics(agents, processingTime) {
         this.metrics.queriesProcessed++;
-        
+
         // Update running average
         const n = this.metrics.queriesProcessed;
-        this.metrics.averageAgentsPerQuery = 
+        this.metrics.averageAgentsPerQuery =
             ((n - 1) * this.metrics.averageAgentsPerQuery + agents.length) / n;
 
         // Track agent usage
@@ -472,25 +472,19 @@ Provide a helpful, professional response. If the question would benefit from spe
 // Singleton instance
 let coordinatorInstance = null;
 
-const getCoordinator = (config = {}) => {
+export const getCoordinator = (config = {}) => {
     if (!coordinatorInstance) {
         coordinatorInstance = new AgentCoordinator(config);
     }
     return coordinatorInstance;
 };
 
-const resetCoordinator = () => {
+export const resetCoordinator = () => {
     coordinatorInstance = null;
 };
 
-module.exports = { 
-    AgentCoordinator, 
-    getCoordinator, 
-    resetCoordinator 
+export default {
+    AgentCoordinator,
+    getCoordinator,
+    resetCoordinator
 };
-
-
-
-
-
-

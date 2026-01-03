@@ -1,32 +1,14 @@
 /**
- * FacilityUserService Service
+ * Facilityuser Service
  * Enterprise SaaS Architecture - TypeScript Backend
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
 
-const require = createRequire(import.meta.url);
-
-// Import the JS implementation for now (will be fully migrated later)
-const facilityUserServiceServiceJS = require('../../services/facilityUserService.js');
-
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const facilityUserServiceService = facilityUserServiceServiceJS.default || facilityUserServiceServiceJS;
+// Lazy load the JS service module
+const loadFacilityuserservice = createCachedLazyService('../../services/facilityUserService.js');
 
 // Export default instance (for backward compatibility)
-export default facilityUserServiceService;
-
-// Also export named exports if they exist
-if (typeof facilityUserServiceServiceJS === 'object' && facilityUserServiceServiceJS !== null) {
-    Object.keys(facilityUserServiceServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = facilityUserServiceServiceJS[key];
-        }
-    });
-}
+export default loadFacilityuserservice();

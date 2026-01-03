@@ -7,9 +7,9 @@
 
 import * as cron from 'node-cron';
 import logger from '../utils/Logger.js';
-import { createRequire } from 'module';
 
-const require = createRequire(import.meta.url);
+
+
 
 // ==========================================
 // TYPES
@@ -33,7 +33,7 @@ class SnapshotMetricsCron {
 
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
-            metricsPersistenceService: deps?.metricsPersistenceService || require('../../services/metricsPersistenceService.js'),
+            metricsPersistenceService: deps?.metricsPersistenceService || await import('../../services/metricsPersistenceService.js').then(m => m.default || m),
         };
     }
 

@@ -6,10 +6,41 @@
  * All administrative actions are logged here for SOC2/ISO compliance.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
-const PiiRedactor = require('../utils/piiRedactor');
+import crypto from 'crypto';
+
+// Dependency injection for testing
+const deps = {
+    _db: null,
+    _uuidv4: null,
+    _PiiRedactor: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; },
+
+    get PiiRedactor() { return this._PiiRedactor; },
+    set PiiRedactor(val) { this._PiiRedactor = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+    if (!deps._PiiRedactor) {
+        const { default: PiiRedactor } = await import('../utils/piiRedactor.js');
+        deps._PiiRedactor = PiiRedactor;
+    }
+}
 
 // Valid action types for audit entries
 const AUDIT_ACTIONS = {
@@ -352,4 +383,4 @@ const GovernanceAuditService = {
     }
 };
 
-module.exports = GovernanceAuditService;
+export default GovernanceAuditService;

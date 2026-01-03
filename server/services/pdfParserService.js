@@ -5,8 +5,8 @@
  * Handles PDF parsing, table extraction, and framework-specific parsing.
  */
 
-const pdfParse = require('pdf-parse');
-const fs = require('fs').promises;
+import pdfParse from 'pdf-parse';
+import { promises as fs } from 'fs';
 
 class PDFParserService {
     /**
@@ -539,4 +539,4 @@ class PDFParserService {
     }
 }
 
-module.exports = PDFParserService;
+export default PDFParserService;

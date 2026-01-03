@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const raidRoutesJS = require('../../routes/raid.js');
+const raidRoutesJSPromise = (async () => {
+    const module = await import('../../routes/raid.js');
+    return module.default || module;
+})();
+const raidRoutesJS = raidRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

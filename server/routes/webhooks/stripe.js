@@ -5,8 +5,8 @@
 
 const express = require('express');
 const router = express.Router();
-const billingService = require('../../services/billingService');
-const db = require('../../database');
+import billingService from '../../services/billingService.js';
+import db from '../../database.js';
 
 // Stripe webhook secret for signature verification
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;

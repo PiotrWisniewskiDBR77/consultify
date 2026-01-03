@@ -6,45 +6,29 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
+import BillingWebhookService, { BillingWebhookService as BillingWebhookServiceClass, BILLING_EVENT_TYPES } from '../../../server/services/billingWebhookService.js';
 
 describe('BillingWebhookService', () => {
     let mockDb;
-    let billingWebhookService;
-    let BillingWebhookServiceClass;
-    let BILLING_EVENT_TYPES;
     let mockWebhookService;
 
     beforeEach(async () => {
-        vi.resetModules();
-        
         mockDb = createMockDb();
-        
+
         // Mock webhook service
         mockWebhookService = {
             trigger: vi.fn().mockResolvedValue({ triggered: 1, results: [{ success: true }] })
         };
-        
-        // Mock database
-        vi.doMock('../../../server/database', () => ({
-            default: mockDb
-        }));
 
-        // Mock webhook service
-        vi.doMock('../../../server/services/webhookService', () => ({
-            default: mockWebhookService
-        }));
-        
-        // Import after mocks
-        const service = await import('../../../server/services/billingWebhookService.js');
-        billingWebhookService = service.default;
-        BillingWebhookServiceClass = service.BillingWebhookService;
-        BILLING_EVENT_TYPES = service.BILLING_EVENT_TYPES;
+        // Inject mock dependencies
+        BillingWebhookServiceClass.setDependencies({
+            db: mockDb,
+            webhookService: mockWebhookService
+        });
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../server/database');
-        vi.doUnmock('../../../server/services/webhookService');
     });
 
     describe('BILLING_EVENT_TYPES', () => {
@@ -224,28 +208,28 @@ describe('BillingWebhookService', () => {
         it('subscriptionCreated() should trigger correct event', async () => {
             const service = new BillingWebhookServiceClass(mockDb);
             const result = await service.subscriptionCreated('org-123', { id: 'sub-456', plan: 'pro' });
-            
+
             expect(result.recorded).toBe(true);
         });
 
         it('invoicePaid() should trigger correct event', async () => {
             const service = new BillingWebhookServiceClass(mockDb);
             const result = await service.invoicePaid('org-123', { id: 'inv-456', amount: 1000 });
-            
+
             expect(result.recorded).toBe(true);
         });
 
         it('paymentFailed() should include error information', async () => {
             const service = new BillingWebhookServiceClass(mockDb);
             const result = await service.paymentFailed('org-123', { id: 'pay-456' }, 'Card declined');
-            
+
             expect(result.recorded).toBe(true);
         });
 
         it('creditNoteIssued() should trigger correct event', async () => {
             const service = new BillingWebhookServiceClass(mockDb);
             const result = await service.creditNoteIssued('org-123', { id: 'cn-456', amount: 500 });
-            
+
             expect(result.recorded).toBe(true);
         });
     });

@@ -2,22 +2,42 @@
  * Legal Service
  * Manages legal documents, versions, and user/organization acceptances.
  * Provides audit-friendly acceptance tracking for compliance.
- * 
- * Enterprise+ Extensions:
- * - Lifecycle control (effective_from, expires_at, reaccept_required_from)
- * - Scope applicability (global, region, product, license_tier)
- * - Immutable audit logging via LegalEventLogger
  */
 
 // Dependency injection for testing
-const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4,
-    crypto: require('crypto'),
-    LegalEventLogger: require('./legalEventLogger').LegalEventLogger
+let deps = {
+    db: null,
+    uuidv4: null,
+    crypto: null,
+    LegalEventLogger: null,
+    EVENT_TYPES: null
 };
 
-const { EVENT_TYPES } = require('./legalEventLogger');
+/**
+ * Initialize dependencies
+ */
+async function initDeps() {
+    if (!deps.db) {
+        const dbModule = await import('../database.js');
+        deps.db = dbModule.default || dbModule;
+    }
+
+    if (!deps.uuidv4) {
+        const uuidModule = await import('uuid');
+        deps.uuidv4 = uuidModule.v4;
+    }
+
+    if (!deps.crypto) {
+        const cryptoModule = await import('crypto');
+        deps.crypto = cryptoModule.default || cryptoModule;
+    }
+
+    if (!deps.LegalEventLogger || !deps.EVENT_TYPES) {
+        const loggerModule = await import('./legalEventLogger.js');
+        deps.LegalEventLogger = loggerModule.LegalEventLogger || loggerModule.default;
+        deps.EVENT_TYPES = loggerModule.EVENT_TYPES;
+    }
+}
 
 // Document types that require individual user acceptance
 const USER_REQUIRED_DOC_TYPES = ['TOS', 'PRIVACY', 'COOKIES', 'AUP', 'AI_POLICY'];
@@ -28,21 +48,20 @@ const ORG_REQUIRED_DOC_TYPES = ['DPA'];
 // Valid scope types
 const SCOPE_TYPES = ['global', 'region', 'product', 'license_tier'];
 
-const LegalService = {
+export const LegalService = {
     /**
      * Allow dependency injection for testing
      */
-    _setDependencies: (newDeps) => {
-        Object.assign(deps, newDeps);
+    setDependencies: (newDeps) => {
+        deps = { ...deps, ...newDeps };
     },
 
     /**
      * Get all active legal documents (one per type, metadata only)
-     * Respects lifecycle: only returns docs where effective_from <= now AND (expires_at IS NULL OR expires_at > now)
-     * @param {Object} userContext - Optional user context for scope filtering
-     * @returns {Promise<Array>} Active documents
      */
-    getActiveDocuments: (userContext = null) => {
+    getActiveDocuments: async (userContext = null) => {
+        await initDeps();
+
         return new Promise((resolve, reject) => {
             const now = new Date().toISOString();
             const sql = `
@@ -72,10 +91,10 @@ const LegalService = {
 
     /**
      * Get active document by type (with full content)
-     * @param {string} docType - Document type (TOS, PRIVACY, etc.)
-     * @returns {Promise<Object|null>} Document or null
      */
-    getActiveDocument: (docType) => {
+    getActiveDocument: async (docType) => {
+        await initDeps();
+
         return new Promise((resolve, reject) => {
             const sql = `
                 SELECT id, doc_type, version, title, content_md, effective_from, is_active, created_at
@@ -92,11 +111,10 @@ const LegalService = {
 
     /**
      * Get user's acceptance records
-     * @param {string} userId - User ID
-     * @param {string} orgId - Organization ID (optional)
-     * @returns {Promise<Array>} Acceptance records
      */
-    getUserAcceptances: (userId, orgId = null) => {
+    getUserAcceptances: async (userId, orgId = null) => {
+        await initDeps();
+
         return new Promise((resolve, reject) => {
             let sql = `
                 SELECT la.*, ld.title as doc_title
@@ -105,14 +123,14 @@ const LegalService = {
                 WHERE la.user_id = ?
             `;
             const params = [userId];
-            
+
             if (orgId) {
                 sql += ` AND la.organization_id = ?`;
                 params.push(orgId);
             }
-            
+
             sql += ` ORDER BY la.accepted_at DESC`;
-            
+
             deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows || []);
@@ -122,12 +140,11 @@ const LegalService = {
 
     /**
      * Get organization's DPA acceptance
-     * @param {string} orgId - Organization ID
-     * @returns {Promise<Object|null>} DPA acceptance or null
      */
-    getOrgDPAAcceptance: (orgId) => {
+    getOrgDPAAcceptance: async (orgId) => {
+        await initDeps();
+
         return new Promise((resolve, reject) => {
-            const now = new Date().toISOString();
             const sql = `
                 SELECT la.*, ld.version as current_version, ld.reaccept_required_from
                 FROM legal_acceptances la
@@ -148,9 +165,6 @@ const LegalService = {
 
     /**
      * Check if a document is applicable to a user based on scope
-     * @param {Object} doc - Document with scope_type and scope_value
-     * @param {Object} userContext - User context (region, products, tier)
-     * @returns {boolean} True if document applies
      */
     isDocumentApplicable: (doc, userContext) => {
         // Global scope applies to everyone
@@ -188,9 +202,6 @@ const LegalService = {
 
     /**
      * Check if an acceptance is still valid
-     * @param {Object} acceptance - Acceptance record
-     * @param {Object} document - Document with reaccept_required_from
-     * @returns {boolean} True if acceptance is valid
      */
     isAcceptanceValid: (acceptance, document) => {
         if (!document.reaccept_required_from) return true;
@@ -203,14 +214,10 @@ const LegalService = {
 
     /**
      * Check which documents are pending acceptance for a user
-     * Respects lifecycle and scope rules
-     * @param {string} userId - User ID
-     * @param {string} orgId - Organization ID (optional)
-     * @param {string} userRole - User's role (for DPA check)
-     * @param {Object} userContext - Optional scope context
-     * @returns {Promise<Object>} Pending documents info
      */
     checkPendingAcceptances: async (userId, orgId, userRole, userContext = null) => {
+        await initDeps();
+
         try {
             // Get all active documents (lifecycle and scope filtered)
             const activeDocs = await LegalService.getActiveDocuments(userContext);
@@ -225,7 +232,6 @@ const LegalService = {
             });
 
             // Determine which user-required docs are pending
-            // Check both version match AND re-acceptance requirement
             const pendingUserDocs = activeDocs.filter(doc => {
                 if (!USER_REQUIRED_DOC_TYPES.includes(doc.doc_type)) return false;
 
@@ -268,17 +274,10 @@ const LegalService = {
 
     /**
      * Record document acceptance(s)
-     * @param {Object} params - Acceptance parameters
-     * @param {string} params.userId - User ID
-     * @param {string} params.orgId - Organization ID (optional)
-     * @param {Array<string>} params.docTypes - Document types to accept
-     * @param {string} params.scope - 'USER' or 'ORG_ADMIN'
-     * @param {string} params.ip - Client IP address
-     * @param {string} params.userAgent - Client user agent
-     * @param {string} params.userRole - User's role (for ORG_ADMIN validation)
-     * @returns {Promise<Object>} Result with created acceptances
      */
     acceptDocuments: async ({ userId, orgId, docTypes, scope = 'USER', ip, userAgent, userRole }) => {
+        await initDeps();
+
         // Validate docTypes is an array
         if (!Array.isArray(docTypes)) {
             throw new Error('docTypes must be an array');
@@ -373,11 +372,10 @@ const LegalService = {
 
     /**
      * Publish a new document version (SuperAdmin only)
-     * Extended with lifecycle and scope parameters
-     * @param {Object} params - Document parameters
-     * @returns {Promise<Object>} Created document
      */
     publishDocument: async ({ docType, version, title, contentMd, effectiveFrom, createdBy, expiresAt, reacceptRequiredFrom, scopeType, scopeValue, changeSummary, previousVersionId }) => {
+        await initDeps();
+
         const docId = deps.uuidv4();
 
         const result = await new Promise((resolve, reject) => {
@@ -438,9 +436,10 @@ const LegalService = {
 
     /**
      * Get all document versions (SuperAdmin)
-     * @returns {Promise<Array>} All documents
      */
-    getAllDocuments: () => {
+    getAllDocuments: async () => {
+        await initDeps();
+
         return new Promise((resolve, reject) => {
             const sql = `
                 SELECT id, doc_type, version, title, effective_from, is_active, created_at, created_by
@@ -456,10 +455,10 @@ const LegalService = {
 
     /**
      * Get acceptance status for all users in an organization
-     * @param {string} orgId - Organization ID
-     * @returns {Promise<Array>} User acceptance matrix
      */
     getOrgAcceptanceStatus: async (orgId) => {
+        await initDeps();
+
         try {
             // Get all users in org
             const users = await new Promise((resolve, reject) => {
@@ -528,11 +527,10 @@ const LegalService = {
 
     /**
      * Toggle document active status (SuperAdmin)
-     * @param {string} docId - Document ID
-     * @param {boolean} isActive - New active state
-     * @returns {Promise<Object>} Result
      */
     toggleDocumentActive: async (docId, isActive) => {
+        await initDeps();
+
         return new Promise((resolve, reject) => {
             deps.db.serialize(() => {
                 // If activating, first deactivate others of same type
@@ -571,12 +569,10 @@ const LegalService = {
 
     /**
      * Check if acceptance is required for a specific document type
-     * @param {string} userId - User ID
-     * @param {string} docType - Document type
-     * @param {string} orgId - Organization ID (optional)
-     * @returns {Promise<Object>} Result with required flag
      */
     checkAcceptanceRequired: async (userId, docType, orgId = null) => {
+        await initDeps();
+
         try {
             // Get active document
             const doc = await LegalService.getActiveDocument(docType);
@@ -603,4 +599,5 @@ const LegalService = {
     }
 };
 
-module.exports = LegalService;
+export default LegalService;
+

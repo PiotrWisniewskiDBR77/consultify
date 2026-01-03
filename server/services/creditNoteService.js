@@ -4,45 +4,76 @@
  * Integrates with Stripe Credit Notes API
  */
 
+// Dependency injection container
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4,
-    billingWebhookService: null // Lazy-loaded to avoid circular dependencies
+    _db: null,
+    _uuidv4: null,
+    _billingWebhookService: null,
+    _stripe: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; },
+
+    get billingWebhookService() { return this._billingWebhookService; },
+    set billingWebhookService(val) { this._billingWebhookService = val; },
+
+    get stripe() { return this._stripe; },
+    set stripe(val) { this._stripe = val; }
 };
 
-// Lazy load billing webhook service
-function getBillingWebhookService() {
-    if (!deps.billingWebhookService) {
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+    if (!deps._stripe && process.env.STRIPE_SECRET_KEY) {
         try {
-            deps.billingWebhookService = require('./billingWebhookService');
+            const { default: Stripe } = await import('stripe');
+            deps._stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        } catch (e) {
+            console.log('[CreditNote] Stripe not initialized');
+        }
+    }
+}
+
+// Lazy load billing webhook service
+async function getBillingWebhookService() {
+    if (!deps._billingWebhookService) {
+        try {
+            const module = await import('./billingWebhookService.js');
+            deps._billingWebhookService = module.default || module;
         } catch (e) {
             console.warn('[CreditNote] Billing webhook service not available');
         }
     }
-    return deps.billingWebhookService;
-}
-
-// Stripe initialization
-let stripe = null;
-try {
-    if (process.env.STRIPE_SECRET_KEY) {
-        stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    }
-} catch (e) {
-    console.log('[CreditNote] Stripe not initialized');
+    return deps._billingWebhookService;
 }
 
 /**
  * Set dependencies (for testing)
  */
 function setDependencies(newDeps = {}) {
-    Object.assign(deps, newDeps);
+    if (newDeps.db) deps.db = newDeps.db;
+    if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
+    if (newDeps.billingWebhookService) deps.billingWebhookService = newDeps.billingWebhookService;
+    if (newDeps.stripe) deps.stripe = newDeps.stripe;
 }
 
 /**
  * Generate unique credit note number
  */
 async function generateCreditNoteNumber() {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             `SELECT COUNT(*) as count FROM credit_notes WHERE credit_note_number LIKE 'CN-${new Date().getFullYear()}%'`,
@@ -73,6 +104,7 @@ async function generateCreditNoteNumber() {
  * @param {string} [options.createdBy] - User ID who created the note
  */
 async function createCreditNote(options) {
+    await initDeps();
     const {
         organizationId,
         invoiceId = null,
@@ -140,7 +172,7 @@ async function createCreditNote(options) {
                 });
 
                 // Trigger billing webhook
-                const webhookService = getBillingWebhookService();
+                const webhookService = await getBillingWebhookService();
                 if (webhookService) {
                     webhookService.creditNoteIssued(organizationId, {
                         id: creditNoteId,
@@ -170,7 +202,8 @@ async function createCreditNote(options) {
 /**
  * Insert credit note line item
  */
-function insertCreditNoteItem(creditNoteId, itemId, item) {
+async function insertCreditNoteItem(creditNoteId, itemId, item) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         const amount = item.quantity * item.unitPrice;
         deps.db.run(
@@ -188,7 +221,8 @@ function insertCreditNoteItem(creditNoteId, itemId, item) {
 /**
  * Get credit note by ID
  */
-function getCreditNoteById(creditNoteId) {
+async function getCreditNoteById(creditNoteId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             `SELECT cn.*, o.name as organization_name
@@ -207,7 +241,8 @@ function getCreditNoteById(creditNoteId) {
 /**
  * Get credit notes for organization
  */
-function getCreditNotes(organizationId, options = {}) {
+async function getCreditNotes(organizationId, options = {}) {
+    await initDeps();
     const { status, limit = 50, offset = 0 } = options;
     
     let query = `SELECT * FROM credit_notes WHERE organization_id = ?`;
@@ -232,7 +267,8 @@ function getCreditNotes(organizationId, options = {}) {
 /**
  * Get all credit notes (admin)
  */
-function getAllCreditNotes(options = {}) {
+async function getAllCreditNotes(options = {}) {
+    await initDeps();
     const { status, organizationId, limit = 100, offset = 0 } = options;
     
     let query = `SELECT cn.*, o.name as organization_name 
@@ -265,7 +301,8 @@ function getAllCreditNotes(options = {}) {
 /**
  * Get credit note items
  */
-function getCreditNoteItems(creditNoteId) {
+async function getCreditNoteItems(creditNoteId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.all(
             'SELECT * FROM credit_note_items WHERE credit_note_id = ?',
@@ -282,6 +319,7 @@ function getCreditNoteItems(creditNoteId) {
  * Apply credit note to invoice
  */
 async function applyCreditToInvoice(creditNoteId, invoiceId, amount = null) {
+    await initDeps();
     const creditNote = await getCreditNoteById(creditNoteId);
     if (!creditNote) {
         throw new Error('Credit note not found');
@@ -369,6 +407,7 @@ async function applyCreditToInvoice(creditNoteId, invoiceId, amount = null) {
  * Refund credit note (issue refund to customer)
  */
 async function refundCreditNote(creditNoteId, amount = null) {
+    await initDeps();
     const creditNote = await getCreditNoteById(creditNoteId);
     if (!creditNote) {
         throw new Error('Credit note not found');
@@ -386,9 +425,9 @@ async function refundCreditNote(creditNoteId, amount = null) {
     let stripeRefundId = null;
 
     // Process Stripe refund if configured
-    if (stripe && creditNote.stripe_credit_note_id) {
+    if (deps.stripe && creditNote.stripe_credit_note_id) {
         try {
-            const refund = await stripe.refunds.create({
+            const refund = await deps.stripe.refunds.create({
                 amount: refundAmount,
                 metadata: {
                     credit_note_id: creditNoteId,
@@ -432,6 +471,7 @@ async function refundCreditNote(creditNoteId, amount = null) {
  * Void a credit note
  */
 async function voidCreditNote(creditNoteId, voidedBy = null) {
+    await initDeps();
     const creditNote = await getCreditNoteById(creditNoteId);
     if (!creditNote) {
         throw new Error('Credit note not found');
@@ -446,9 +486,9 @@ async function voidCreditNote(creditNoteId, voidedBy = null) {
     }
 
     // Void in Stripe if exists
-    if (stripe && creditNote.stripe_credit_note_id) {
+    if (deps.stripe && creditNote.stripe_credit_note_id) {
         try {
-            await stripe.creditNotes.voidCreditNote(creditNote.stripe_credit_note_id);
+            await deps.stripe.creditNotes.voidCreditNote(creditNote.stripe_credit_note_id);
         } catch (e) {
             console.warn('[CreditNote] Could not void in Stripe:', e.message);
         }
@@ -471,7 +511,8 @@ async function voidCreditNote(creditNoteId, voidedBy = null) {
 /**
  * Get credit note statistics
  */
-function getCreditNoteStats(organizationId = null) {
+async function getCreditNoteStats(organizationId = null) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         let query = `
             SELECT 
@@ -513,7 +554,8 @@ function getCreditNoteStats(organizationId = null) {
 /**
  * Get available credit balance for organization
  */
-function getAvailableCreditBalance(organizationId) {
+async function getAvailableCreditBalance(organizationId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             `SELECT COALESCE(SUM(amount_remaining), 0) as available_credit
@@ -529,7 +571,8 @@ function getAvailableCreditBalance(organizationId) {
 }
 
 // Helper functions
-function getInvoice(invoiceId) {
+async function getInvoice(invoiceId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get('SELECT * FROM invoices WHERE id = ?', [invoiceId], (err, row) => {
             if (err) reject(err);

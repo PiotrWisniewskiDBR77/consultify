@@ -24,14 +24,14 @@ import { login } from '../controllers/AuthController';
 import refreshTokenService from '../services/RefreshTokenService';
 import mfaService from '../services/MFAService';
 import emailVerificationService from '../services/EmailVerificationService';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import bcrypt from 'bcryptjs';
 
 const router = Router();
-const db = require('../../database');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('uuid');
-const config = require('../../config');
-const ActivityService = require('../../services/activityService');
+import jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
+import config from '../../config.js';
+import ActivityService from '../../services/activityService.js';
 
 // Helper to add timeout to promises
 const withTimeout = <T>(promise: Promise<T>, timeoutMs = 1000): Promise<T> => {
@@ -246,7 +246,7 @@ router.post('/revert-impersonation', verifyToken, asyncHandler(async (req: AuthR
         return;
     }
 
-    db.get('SELECT * FROM users WHERE id = ?', [impersonatorId], (err: Error | null, adminUser: {
+    const adminUser = await dbGet<{
         id: string;
         email: string;
         role: string;
@@ -254,17 +254,18 @@ router.post('/revert-impersonation', verifyToken, asyncHandler(async (req: AuthR
         first_name: string;
         last_name: string;
         status: string;
-    } | null) => {
-        if (err || !adminUser) {
-            res.status(404).json({ error: 'Original admin not found' });
-            return;
-        }
+    }>('SELECT * FROM users WHERE id = ?', [impersonatorId]);
 
-        // Verify the original user is indeed an admin/superadmin (security check)
-        if (adminUser.role !== 'SUPERADMIN' && adminUser.role !== 'ADMIN') {
-            res.status(403).json({ error: 'Original user is not an admin' });
-            return;
-        }
+    if (!adminUser) {
+        res.status(404).json({ error: 'Original admin not found' });
+        return;
+    }
+
+    // Verify the original user is indeed an admin/superadmin (security check)
+    if (adminUser.role !== 'SUPERADMIN' && adminUser.role !== 'ADMIN') {
+        res.status(403).json({ error: 'Original user is not an admin' });
+        return;
+    }
 
         // Generate new token for the admin
         const jti = uuidv4();
@@ -298,7 +299,6 @@ router.post('/revert-impersonation', verifyToken, asyncHandler(async (req: AuthR
         };
 
         res.json({ user: safeUser, token });
-    });
 }));
 
 // DEMO LOGIN - Auto-login as demo@legolex.com
@@ -309,7 +309,7 @@ router.post('/demo-login', asyncHandler(async (req: AuthRequest, res: Response) 
     console.log('[Auth] Demo login request');
 
     try {
-        const user = await new Promise<{
+        const user = await dbGet<{
             id: string;
             email: string;
             role: string;
@@ -317,12 +317,7 @@ router.post('/demo-login', asyncHandler(async (req: AuthRequest, res: Response) 
             first_name: string;
             last_name: string;
             status: string;
-        } | null>((resolve, reject) => {
-            db.get('SELECT * FROM users WHERE email = ?', [DEMO_EMAIL], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
+        }>('SELECT * FROM users WHERE email = ?', [DEMO_EMAIL]);
 
         if (!user) {
             console.error('[Auth] Demo user not found - please run seed script');
@@ -333,15 +328,10 @@ router.post('/demo-login', asyncHandler(async (req: AuthRequest, res: Response) 
             return;
         }
 
-        const org = await new Promise<{
+        const org = await dbGet<{
             id: string;
             name: string;
-        } | null>((resolve, reject) => {
-            db.get('SELECT * FROM organizations WHERE id = ?', [user.organization_id], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
+        }>('SELECT * FROM organizations WHERE id = ?', [user.organization_id]);
 
         const tokenResult = await refreshTokenService.generateTokenPair(user, {
             deviceInfo: 'Demo Session',
@@ -392,8 +382,8 @@ router.post('/register', validateBody(RegisterRequestSchema), asyncHandler(async
         promoCode, utm_campaign, utm_medium, partner_code
     } = req.body;
 
-    const PromoCodeService = require('../../services/promoCodeService');
-    const AttributionService = require('../../services/attributionService');
+    const { default: PromoCodeService } = await import('../../services/promoCodeService.js');
+    const { default: AttributionService } = await import('../../services/attributionService.js');
 
     let promoValidation: { valid: boolean; reason?: string; codeId?: string; partnerCode?: string; discountType?: string; discountValue?: number } | null = null;
     if (promoCode) {
@@ -413,34 +403,37 @@ router.post('/register', validateBody(RegisterRequestSchema), asyncHandler(async
         }
     }
 
-    db.get('SELECT id FROM users WHERE email = ?', [email], async (err: Error | null, row: { id: string } | null) => {
-        if (row) {
-            res.status(400).json({ error: 'Email already in use' });
-            return;
-        }
+    const existingUser = await dbGet<{ id: string }>('SELECT id FROM users WHERE email = ?', [email]);
+    if (existingUser) {
+        res.status(400).json({ error: 'Email already in use' });
+        return;
+    }
 
         const orgId = uuidv4();
         const userId = uuidv4();
         const hashedPassword = bcrypt.hashSync(password, 8);
 
         const proceedWithRegistration = async (finalStatus: string, finalPlan: string) => {
-            const insertOrg = db.prepare(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`);
-            insertOrg.run(orgId, companyName || 'My Company', finalPlan, finalStatus, async (err: Error | null) => {
-                if (err) {
-                    if (process.env.NODE_ENV !== 'production') console.error('Register Org Error:', err);
+            try {
+                // Create organization
+                const orgResult = await dbRun(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`,
+                    [orgId, companyName || 'My Company', finalPlan, finalStatus]);
+                
+                if (!orgResult.success) {
+                    if (process.env.NODE_ENV !== 'production') console.error('Register Org Error:', orgResult.error);
                     res.status(500).json({ error: 'Failed to create organization' });
                     return;
                 }
-                insertOrg.finalize();
 
-                const insertUser = db.prepare(`INSERT INTO users (id, organization_id, email, password, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-                insertUser.run(userId, orgId, email, hashedPassword, firstName, lastName, 'ADMIN', async (err: Error | null) => {
-                    if (err) {
-                        if (process.env.NODE_ENV !== 'production') console.error('Register User Error:', err);
-                        res.status(500).json({ error: 'Failed to create user' });
-                        return;
-                    }
-                    insertUser.finalize();
+                // Create user
+                const userResult = await dbRun(`INSERT INTO users (id, organization_id, email, password, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [userId, orgId, email, hashedPassword, firstName, lastName, 'ADMIN']);
+                
+                if (!userResult.success) {
+                    if (process.env.NODE_ENV !== 'production') console.error('Register User Error:', userResult.error);
+                    res.status(500).json({ error: 'Failed to create user' });
+                    return;
+                }
 
                     try {
                         await AttributionService.recordAttribution({
@@ -472,51 +465,55 @@ router.post('/register', validateBody(RegisterRequestSchema), asyncHandler(async
                         }
                     }
 
-                    if (finalStatus === 'pending') {
-                        const insertRequest = db.prepare(`INSERT INTO access_requests (id, email, first_name, last_name, organization_id, organization_name, status) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-                        insertRequest.run(uuidv4(), email, firstName, lastName, orgId, companyName || 'My Company', 'pending', (err: Error | null) => {
-                            if (err) console.error("Error logging access request:", err);
-                            insertRequest.finalize();
-                            res.json({
-                                status: 'pending',
-                                message: 'Registration successful. Waiting for approval.'
-                            });
-                        });
-                        return;
+                if (finalStatus === 'pending') {
+                    const requestResult = await dbRun(`INSERT INTO access_requests (id, email, first_name, last_name, organization_id, organization_name, status) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        [uuidv4(), email, firstName, lastName, orgId, companyName || 'My Company', 'pending']);
+                    
+                    if (!requestResult.success) {
+                        console.error("Error logging access request:", requestResult.error);
                     }
-
-                    const jti = uuidv4();
-                    const token = jwt.sign({
-                        id: userId,
-                        email: email,
-                        role: 'ADMIN',
-                        organizationId: orgId,
-                        jti: jti
-                    }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
-
-                    ActivityService.log({
-                        organizationId: orgId,
-                        userId: userId,
-                        action: 'registered',
-                        entityType: 'organization',
-                        entityId: orgId,
-                        entityName: companyName
-                    });
-
+                    
                     res.json({
-                        user: {
-                            id: userId, email, firstName, lastName, role: 'ADMIN',
-                            companyName: companyName, organizationId: orgId
-                        },
-                        token,
-                        promoApplied: promoCode ? {
-                            code: promoCode,
-                            discountType: promoValidation?.discountType,
-                            discountValue: promoValidation?.discountValue
-                        } : null
+                        status: 'pending',
+                        message: 'Registration successful. Waiting for approval.'
                     });
+                    return;
+                }
+
+                const jti = uuidv4();
+                const token = jwt.sign({
+                    id: userId,
+                    email: email,
+                    role: 'ADMIN',
+                    organizationId: orgId,
+                    jti: jti
+                }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
+
+                ActivityService.log({
+                    organizationId: orgId,
+                    userId: userId,
+                    action: 'registered',
+                    entityType: 'organization',
+                    entityId: orgId,
+                    entityName: companyName
                 });
-            });
+
+                res.json({
+                    user: {
+                        id: userId, email, firstName, lastName, role: 'ADMIN',
+                        companyName: companyName, organizationId: orgId
+                    },
+                    token,
+                    promoApplied: promoCode ? {
+                        code: promoCode,
+                        discountType: promoValidation?.discountType,
+                        discountValue: promoValidation?.discountValue
+                    } : null
+                });
+            } catch (regErr) {
+                console.error('[Auth] Registration error:', regErr);
+                res.status(500).json({ error: 'Registration failed' });
+            }
         };
 
         if (isDemo) {
@@ -525,30 +522,29 @@ router.post('/register', validateBody(RegisterRequestSchema), asyncHandler(async
         }
 
         if (accessCode) {
-            db.get('SELECT * FROM access_codes WHERE code = ? AND is_active = 1', [accessCode], (err: Error | null, codeRow: {
+            const codeRow = await dbGet<{
                 id: string;
                 expires_at: string | null;
                 max_uses: number;
                 current_uses: number;
-            } | null) => {
-                if (err || !codeRow) {
+            }>('SELECT * FROM access_codes WHERE code = ? AND is_active = 1', [accessCode]);
+            
+            if (!codeRow) {
+                proceedWithRegistration('pending', 'free');
+            } else {
+                if (codeRow.expires_at && new Date(codeRow.expires_at) < new Date()) {
+                    proceedWithRegistration('pending', 'free');
+                } else if (codeRow.max_uses > 0 && codeRow.current_uses >= codeRow.max_uses) {
                     proceedWithRegistration('pending', 'free');
                 } else {
-                    if (codeRow.expires_at && new Date(codeRow.expires_at) < new Date()) {
-                        proceedWithRegistration('pending', 'free');
-                    } else if (codeRow.max_uses > 0 && codeRow.current_uses >= codeRow.max_uses) {
-                        proceedWithRegistration('pending', 'free');
-                    } else {
-                        db.run('UPDATE access_codes SET current_uses = current_uses + 1 WHERE id = ?', [codeRow.id]);
-                        db.run(`INSERT INTO access_code_usage (id, code_id, user_id) VALUES (?, ?, ?)`, [uuidv4(), codeRow.id, userId]);
-                        proceedWithRegistration('active', 'pro');
-                    }
+                    await dbRun('UPDATE access_codes SET current_uses = current_uses + 1 WHERE id = ?', [codeRow.id]);
+                    await dbRun(`INSERT INTO access_code_usage (id, code_id, user_id) VALUES (?, ?, ?)`, [uuidv4(), codeRow.id, userId]);
+                    proceedWithRegistration('active', 'pro');
                 }
-            });
+            }
         } else {
             proceedWithRegistration('pending', 'free');
         }
-    });
 }));
 
 // Revoke all tokens for a user (admin action)
@@ -580,19 +576,19 @@ router.post('/revoke-all', verifyToken, validateBody(RevokeAllTokensRequestSchem
     };
 
     if (req.user!.role !== 'SUPERADMIN' && userId && userId !== req.user!.id) {
-        db.get('SELECT organization_id FROM users WHERE id = ?', [userId], (err: Error | null, targetUser: {
+        const targetUser = await dbGet<{
             organization_id: string;
-        } | null) => {
-            if (err || !targetUser) {
-                res.status(404).json({ error: 'User not found' });
-                return;
-            }
-            if (targetUser.organization_id !== req.user!.organizationId) {
-                res.status(403).json({ error: 'Not authorized to revoke tokens for users outside your organization' });
-                return;
-            }
-            performRevocation(targetUserId);
-        });
+        }>('SELECT organization_id FROM users WHERE id = ?', [userId]);
+        
+        if (!targetUser) {
+            res.status(404).json({ error: 'User not found' });
+            return;
+        }
+        if (targetUser.organization_id !== req.user!.organizationId) {
+            res.status(403).json({ error: 'Not authorized to revoke tokens for users outside your organization' });
+            return;
+        }
+        performRevocation(targetUserId);
     } else {
         performRevocation(targetUserId);
     }
@@ -604,15 +600,10 @@ router.post('/change-password', verifyToken, validateBody(ChangePasswordRequestS
     const userId = req.user!.id;
 
     try {
-        const user = await new Promise<{
+        const user = await dbGet<{
             id: string;
             password: string;
-        } | null>((resolve, reject) => {
-            db.get('SELECT id, password FROM users WHERE id = ?', [userId], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
+        }>('SELECT id, password FROM users WHERE id = ?', [userId]);
 
         if (!user) {
             res.status(404).json({ error: 'User not found' });
@@ -632,12 +623,10 @@ router.post('/change-password', verifyToken, validateBody(ChangePasswordRequestS
 
         const hashedPassword = bcrypt.hashSync(newPassword, 10);
 
-        await new Promise<void>((resolve, reject) => {
-            db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId], function (err: Error | null) {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
+        const result = await dbRun('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId]);
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to update password');
+        }
 
         ActivityService.log({
             userId,
@@ -664,36 +653,31 @@ router.post('/change-password', verifyToken, validateBody(ChangePasswordRequestS
 router.post('/reset-password', validateBody(ResetPasswordRequestSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
     const { token, newPassword } = req.body;
 
-    db.get('SELECT * FROM password_resets WHERE token = ?', [token], (err: Error | null, resetData: {
+    const resetData = await dbGet<{
         user_id: string;
         expires_at: string;
-    } | null) => {
-        if (err) {
-            res.status(500).json({ error: 'Database error' });
-            return;
-        }
-        if (!resetData) {
-            res.status(400).json({ error: 'Invalid or expired token' });
-            return;
-        }
+    }>('SELECT * FROM password_resets WHERE token = ?', [token]);
+    
+    if (!resetData) {
+        res.status(400).json({ error: 'Invalid or expired token' });
+        return;
+    }
 
-        if (new Date(resetData.expires_at) < new Date()) {
-            res.status(400).json({ error: 'Token has expired' });
-            return;
-        }
+    if (new Date(resetData.expires_at) < new Date()) {
+        res.status(400).json({ error: 'Token has expired' });
+        return;
+    }
 
-        const hashedPassword = bcrypt.hashSync(newPassword, 8);
+    const hashedPassword = bcrypt.hashSync(newPassword, 8);
 
-        db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, resetData.user_id], function (err: Error | null) {
-            if (err) {
-                res.status(500).json({ error: 'Failed to update password' });
-                return;
-            }
+    const updateResult = await dbRun('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, resetData.user_id]);
+    if (!updateResult.success) {
+        res.status(500).json({ error: 'Failed to update password' });
+        return;
+    }
 
-            db.run('DELETE FROM password_resets WHERE token = ?', [token]);
-            res.json({ message: 'Password updated successfully' });
-        });
-    });
+    await dbRun('DELETE FROM password_resets WHERE token = ?', [token]);
+    res.json({ message: 'Password updated successfully' });
 }));
 
 // EMAIL VERIFICATION
@@ -701,12 +685,10 @@ router.post('/verify-email', validateBody(VerifyEmailRequestSchema), asyncHandle
     const { token } = req.body;
 
     try {
-        const user = await new Promise<{
+        const user = await dbGet<{
             id: string;
             email_verification_expires_at: string;
-        } | null>((resolve) => {
-            db.get('SELECT * FROM users WHERE email_verification_token = ?', [token], (err, row) => resolve(row));
-        });
+        }>('SELECT * FROM users WHERE email_verification_token = ?', [token]);
 
         if (!user) {
             res.status(400).json({ error: 'Invalid token' });
@@ -718,16 +700,18 @@ router.post('/verify-email', validateBody(VerifyEmailRequestSchema), asyncHandle
             return;
         }
 
-        await new Promise<void>((resolve) => {
-            db.run(
-                `UPDATE users SET 
-                 email_verified = 1, 
-                 email_verification_token = NULL, 
-                 email_verification_expires_at = NULL 
-                 WHERE id = ?`,
-                [user.id], () => resolve()
-            );
-        });
+        const runResult = await dbRun(
+            `UPDATE users SET 
+             email_verified = 1, 
+             email_verification_token = NULL, 
+             email_verification_expires_at = NULL 
+             WHERE id = ?`,
+            [user.id]
+        );
+        
+        if (!runResult.success) {
+            throw new Error(runResult.error || 'Failed to verify email');
+        }
 
         res.json({ success: true, message: 'Email verified successfully' });
     } catch (error) {
@@ -738,8 +722,7 @@ router.post('/verify-email', validateBody(VerifyEmailRequestSchema), asyncHandle
 
 router.post('/resend-verification', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id;
-    const EmailService = require('../../services/emailService');
-    const crypto = require('crypto');
+    const { default: EmailService } = await import('../../services/emailService.js');
 
     try {
         const token = crypto.randomBytes(32).toString('hex');

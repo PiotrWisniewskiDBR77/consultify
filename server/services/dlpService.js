@@ -3,18 +3,38 @@
  * Manages DLP policies and violations
  */
 
-const { v4: uuidv4 } = require('uuid');
-
 // Dependency injection for testing
 const deps = {
-    db: require('../database')
+    _db: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
 };
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
 
 /**
  * Set dependencies for testing
  */
 const setDependencies = (newDeps) => {
-    Object.assign(deps, newDeps);
+    if (newDeps.db) deps.db = newDeps.db;
+    if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
 };
 
 /**
@@ -60,7 +80,8 @@ const SEVERITY_LEVELS = {
  * Create a new DLP policy
  */
 const createPolicy = async ({ name, description, policyType, rules = [], enforcementAction, createdBy }) => {
-    const id = uuidv4();
+    await initDeps();
+    const id = deps.uuidv4();
     
     const sql = `
         INSERT INTO dlp_policies (
@@ -96,6 +117,7 @@ const createPolicy = async ({ name, description, policyType, rules = [], enforce
  * Get policy by ID
  */
 const getPolicyById = async (id) => {
+    await initDeps();
     const sql = `
         SELECT p.*, u.email as created_by_email
         FROM dlp_policies p
@@ -125,6 +147,7 @@ const getPolicyById = async (id) => {
  * Get all DLP policies
  */
 const getPolicies = async ({ policyType, isActive, limit = 100, offset = 0 } = {}) => {
+    await initDeps();
     let sql = `
         SELECT p.*, u.email as created_by_email
         FROM dlp_policies p
@@ -166,6 +189,7 @@ const getPolicies = async ({ policyType, isActive, limit = 100, offset = 0 } = {
  * Update a DLP policy
  */
 const updatePolicy = async (id, updates) => {
+    await initDeps();
     const allowedFields = ['name', 'description', 'policy_type', 'rules_json', 'enforcement_action', 'is_active'];
     const setClauses = [];
     const params = [];
@@ -209,6 +233,7 @@ const updatePolicy = async (id, updates) => {
  * Toggle policy active status
  */
 const togglePolicyActive = async (id, isActive) => {
+    await initDeps();
     const sql = `UPDATE dlp_policies SET is_active = ?, updated_at = datetime('now') WHERE id = ?`;
     const result = await deps.db.run(sql, [isActive ? 1 : 0, id]);
     return result.changes > 0;
@@ -218,6 +243,7 @@ const togglePolicyActive = async (id, isActive) => {
  * Delete a DLP policy
  */
 const deletePolicy = async (id) => {
+    await initDeps();
     const sql = `DELETE FROM dlp_policies WHERE id = ?`;
     const result = await deps.db.run(sql, [id]);
     return result.changes > 0;
@@ -231,7 +257,8 @@ const deletePolicy = async (id) => {
  * Record a DLP violation
  */
 const recordViolation = async ({ policyId, resourceType, resourceId, violationType, severity }) => {
-    const id = uuidv4();
+    await initDeps();
+    const id = deps.uuidv4();
     
     const sql = `
         INSERT INTO dlp_violations (
@@ -264,6 +291,7 @@ const recordViolation = async ({ policyId, resourceType, resourceId, violationTy
  * Get violation by ID
  */
 const getViolationById = async (id) => {
+    await initDeps();
     const sql = `
         SELECT v.*, p.name as policy_name, p.policy_type, u.email as resolved_by_email
         FROM dlp_violations v
@@ -296,6 +324,7 @@ const getViolationById = async (id) => {
  * Get all violations
  */
 const getViolations = async ({ policyId, severity, isResolved, limit = 100, offset = 0 } = {}) => {
+    await initDeps();
     let sql = `
         SELECT v.*, p.name as policy_name, p.policy_type, u.email as resolved_by_email
         FROM dlp_violations v
@@ -347,6 +376,7 @@ const getViolations = async ({ policyId, severity, isResolved, limit = 100, offs
  * Resolve a violation
  */
 const resolveViolation = async (id, resolvedBy) => {
+    await initDeps();
     const sql = `UPDATE dlp_violations SET resolved_at = datetime('now'), resolved_by = ? WHERE id = ?`;
     const result = await deps.db.run(sql, [resolvedBy, id]);
     return result.changes > 0;
@@ -356,6 +386,7 @@ const resolveViolation = async (id, resolvedBy) => {
  * Get DLP statistics
  */
 const getStats = async () => {
+    await initDeps();
     const policySql = `
         SELECT 
             COUNT(*) as total_policies,
@@ -402,6 +433,7 @@ const getStats = async () => {
  * This is a simplified implementation - in production, this would use more sophisticated scanning
  */
 const scanResource = async (resourceType, resourceId, content) => {
+    await initDeps();
     const activePolicies = await getPolicies({ isActive: true });
     const violations = [];
     
@@ -450,7 +482,7 @@ const scanResource = async (resourceType, resourceId, content) => {
     };
 };
 
-module.exports = {
+export default {
     setDependencies,
     // Policies
     createPolicy,

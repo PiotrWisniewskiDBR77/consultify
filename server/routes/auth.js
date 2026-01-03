@@ -344,8 +344,8 @@ router.post('/register', async (req, res) => {
     } = req.body;
 
     // Import services (lazy load to avoid circular deps)
-    const PromoCodeService = require('../services/promoCodeService');
-    const AttributionService = require('../services/attributionService');
+    const PromoCodeService = (await import('../services/promoCodeService.js')).default;
+    const AttributionService = (await import('../services/attributionService.js')).default;
 
     // Step 4: Validate promo code if provided (before any DB operations)
     let promoValidation = null;

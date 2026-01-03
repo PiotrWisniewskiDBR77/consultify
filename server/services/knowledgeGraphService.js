@@ -11,8 +11,31 @@
  * For production, consider Neo4j, TypeDB, or Amazon Neptune.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection for testing
+const deps = {
+    _db: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
 
 // In-memory graph structure (for fast queries)
 let graphCache = {
@@ -60,7 +83,7 @@ const KnowledgeGraphService = {
         return new Promise((resolve, reject) => {
             // Create tables if not exist
             db.serialize(() => {
-                db.run(`
+                deps.db.run(`
                     CREATE TABLE IF NOT EXISTS kg_nodes (
                         id TEXT PRIMARY KEY,
                         name TEXT NOT NULL,
@@ -73,7 +96,7 @@ const KnowledgeGraphService = {
                     )
                 `);
 
-                db.run(`
+                deps.db.run(`
                     CREATE TABLE IF NOT EXISTS kg_edges (
                         id TEXT PRIMARY KEY,
                         source_id TEXT NOT NULL,
@@ -87,11 +110,11 @@ const KnowledgeGraphService = {
                     )
                 `);
 
-                db.run(`CREATE INDEX IF NOT EXISTS idx_kg_nodes_name ON kg_nodes(name)`);
-                db.run(`CREATE INDEX IF NOT EXISTS idx_kg_nodes_type ON kg_nodes(type)`);
-                db.run(`CREATE INDEX IF NOT EXISTS idx_kg_edges_source ON kg_edges(source_id)`);
-                db.run(`CREATE INDEX IF NOT EXISTS idx_kg_edges_target ON kg_edges(target_id)`);
-                db.run(`CREATE INDEX IF NOT EXISTS idx_kg_edges_relation ON kg_edges(relation)`);
+                deps.db.run(`CREATE INDEX IF NOT EXISTS idx_kg_nodes_name ON kg_nodes(name)`);
+                deps.db.run(`CREATE INDEX IF NOT EXISTS idx_kg_nodes_type ON kg_nodes(type)`);
+                deps.db.run(`CREATE INDEX IF NOT EXISTS idx_kg_edges_source ON kg_edges(source_id)`);
+                deps.db.run(`CREATE INDEX IF NOT EXISTS idx_kg_edges_target ON kg_edges(target_id)`);
+                deps.db.run(`CREATE INDEX IF NOT EXISTS idx_kg_edges_relation ON kg_edges(relation)`);
             });
 
             // Load graph into memory cache
@@ -509,7 +532,7 @@ const KnowledgeGraphService = {
     }
 };
 
-module.exports = KnowledgeGraphService;
+export default KnowledgeGraphService;
 
 
 

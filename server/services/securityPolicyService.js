@@ -10,32 +10,58 @@
  * - Account lockouts
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
-const AuditService = require('./auditService');
+// Dependency injection for testing
+const deps = {
+    _uuidv4: null,
+    _db: null,
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; },
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+}
+import AuditService from './auditService.js';
 
 // Database helpers
-function dbGet(sql, params = []) {
+async function dbGet(sql, params = []) {
+    await initDeps();
     return new Promise((resolve, reject) => {
-        db.get(sql, params, (err, row) => {
+        deps.db.get(sql, params, (err, row) => {
             if (err) reject(err);
             else resolve(row);
         });
     });
 }
 
-function dbRun(sql, params = []) {
+async function dbRun(sql, params = []) {
+    await initDeps();
     return new Promise((resolve, reject) => {
-        db.run(sql, params, function (err) {
+        deps.db.run(sql, params, function (err) {
             if (err) reject(err);
             else resolve({ lastID: this.lastID, changes: this.changes });
         });
     });
 }
 
-function dbAll(sql, params = []) {
+async function dbAll(sql, params = []) {
+    await initDeps();
     return new Promise((resolve, reject) => {
-        db.all(sql, params, (err, rows) => {
+        deps.db.all(sql, params, (err, rows) => {
             if (err) reject(err);
             else resolve(rows || []);
         });
@@ -683,7 +709,7 @@ const SecurityPolicyService = {
     },
 };
 
-module.exports = SecurityPolicyService;
+export default SecurityPolicyService;
 
 
 

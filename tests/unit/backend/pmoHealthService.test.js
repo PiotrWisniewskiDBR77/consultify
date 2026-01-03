@@ -1,16 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
-
-// Mock modules before importing service
-vi.mock('../../../server/database.js', () => ({
-    default: null // Will be set in beforeEach
-}));
-
-vi.mock('../../../server/services/stageGateService.js', () => ({
-    default: null // Will be set in beforeEach
-}));
-
-// Import service after mocks are set up
 import PMOHealthService from '../../../server/services/pmoHealthService.js';
 
 describe('PMOHealthService', () => {
@@ -18,8 +7,6 @@ describe('PMOHealthService', () => {
     let mockStageGateService;
 
     beforeEach(async () => {
-        vi.resetModules();
-
         mockDb = createMockDb();
         mockStageGateService = {
             getGateType: vi.fn(),
@@ -28,14 +15,6 @@ describe('PMOHealthService', () => {
             PHASE_ORDER: ['Context', 'Planning', 'Execution']
         };
 
-        // Update mocks
-        const dbModule = await import('../../../server/database.js');
-        const stageGateModule = await import('../../../server/services/stageGateService.js');
-        
-        // Replace module exports with mocks
-        Object.assign(dbModule, { default: mockDb });
-        Object.assign(stageGateModule, { default: mockStageGateService });
-        
         // Inject mock dependencies
         PMOHealthService.setDependencies({
             db: mockDb,
@@ -45,8 +24,6 @@ describe('PMOHealthService', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../server/database');
-        vi.doUnmock('../../../server/services/stageGateService');
     });
 
     describe('getHealthSnapshot', () => {
@@ -69,9 +46,9 @@ describe('PMOHealthService', () => {
                 .mockImplementationOnce((sql, params, cb) => cb(null, []));
 
             mockStageGateService.getGateType.mockReturnValue('GATE_1');
-            mockStageGateService.evaluateGate.mockResolvedValue({ 
-                status: 'READY', 
-                completionCriteria: [] 
+            mockStageGateService.evaluateGate.mockResolvedValue({
+                status: 'READY',
+                completionCriteria: []
             });
 
             const snapshot = await PMOHealthService.getHealthSnapshot('proj1');

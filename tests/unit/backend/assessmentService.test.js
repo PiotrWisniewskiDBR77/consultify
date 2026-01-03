@@ -1,23 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
-
-const require = createRequire(import.meta.url);
+import AssessmentService from '../../../server/services/assessmentService.js';
 
 describe('Assessment Service', () => {
-    let AssessmentService;
     let mockDb;
 
     beforeEach(() => {
-        vi.resetModules();
-
         mockDb = createMockDb();
 
-        vi.doMock('../../../server/database', () => ({ default: mockDb }));
-
-        AssessmentService = require('../../../server/services/assessmentService.js');
-        
-        // Inject mock dependencies
         AssessmentService.setDependencies({
             db: mockDb,
             uuidv4: () => 'mock-uuid-assessment'
@@ -26,7 +16,6 @@ describe('Assessment Service', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../server/database');
     });
 
     describe('Logic: generateGapSummary', () => {
@@ -39,13 +28,6 @@ describe('Assessment Service', () => {
                 ]
             };
 
-            // If AssessmentService is not loaded correctly (due to CJS), this might fail. 
-            // We need to handle that.
-            if (!AssessmentService) {
-                // Fallback for direct testing if import failed in environment
-                const imported = await import('../../../server/services/assessmentService.js');
-                AssessmentService = imported.default || imported;
-            }
 
             const result = AssessmentService.generateGapSummary(assessment);
             expect(result.prioritizedGaps).toContain('Planning');
@@ -134,8 +116,8 @@ describe('Assessment Service', () => {
                     { axis: 'cybersecurity', asIs: 3, toBe: 5 },
                     { axis: 'aiMaturity', asIs: 3, toBe: 5 }
                 ],
-                completedAxes: ['processes', 'digitalProducts', 'businessModels', 
-                               'dataManagement', 'culture', 'cybersecurity', 'aiMaturity']
+                completedAxes: ['processes', 'digitalProducts', 'businessModels',
+                    'dataManagement', 'culture', 'cybersecurity', 'aiMaturity']
             };
 
             const result = await AssessmentService.saveAssessment('p-1', data);

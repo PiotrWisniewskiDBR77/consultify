@@ -38,7 +38,7 @@ const ExecutionService = {
      */
     getBlockedTasks: (projectId) => {
         return new Promise((resolve, reject) => {
-            db.all(`SELECT id, title, blocked_reason, assignee_id FROM tasks WHERE project_id = ? AND status = 'blocked'`,
+            deps.db.all(`SELECT id, title, blocked_reason, assignee_id FROM tasks WHERE project_id = ? AND status = 'blocked'`,
                 [projectId], (err, rows) => {
                     if (err) return reject(err);
                     resolve(rows || []);
@@ -75,4 +75,4 @@ const ExecutionService = {
     }
 };
 
-module.exports = ExecutionService;
+export default ExecutionService;

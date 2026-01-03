@@ -39,8 +39,8 @@ const INJECTION_PATTERNS = [
 // Base64 pattern - detects Base64 encoded strings
 const BASE64_PATTERN = /(?:[A-Za-z0-9+/]{4}){2,}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?/g;
 
-const { aiLogger } = require('./logger');
-const { rateLimiter } = require('./rateLimiter');
+import { aiLogger } from './logger.js';
+import { rateLimiter } from './rateLimiter.js';
 
 class AIGateway {
     constructor() {
@@ -82,7 +82,7 @@ class AIGateway {
      */
     async checkBudgetThreshold(request) {
         try {
-            const { quotaService } = require('./quotaService');
+            const { quotaService } = await import('./quotaService.js');
             const usage = await quotaService.getUsage('organization', request.organizationId);
 
             if (!usage) return; // No quota = no limit (for now)
@@ -293,4 +293,4 @@ class AIGateway {
     }
 }
 
-module.exports = { AIGateway };
+export { AIGateway };

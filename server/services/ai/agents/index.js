@@ -6,7 +6,7 @@
  * 
  * Usage:
  * ```javascript
- * const { getCoordinator } = require('./agents');
+ * import { getCoordinator } from './agents';
  * 
  * const coordinator = getCoordinator();
  * const result = await coordinator.processQuery(
@@ -17,22 +17,22 @@
  * 
  * Direct agent access:
  * ```javascript
- * const { StrategyAgent } = require('./agents');
+ * import { StrategyAgent } from './agents';
  * const strategy = new StrategyAgent();
  * const analysis = await strategy.process(query, context);
  * ```
  */
 
-const { BaseAgent } = require('./baseAgent');
-const { StrategyAgent } = require('./strategyAgent');
-const { FinanceAgent } = require('./financeAgent');
-const { ChangeAgent } = require('./changeAgent');
-const { RiskAgent } = require('./riskAgent');
-const { PMOAgent } = require('./pmoAgent');
-const { AgentCoordinator, getCoordinator, resetCoordinator } = require('./agentCoordinator');
+import { BaseAgent } from './baseAgent.js';
+import { StrategyAgent } from './strategyAgent.js';
+import { FinanceAgent } from './financeAgent.js';
+import { ChangeAgent } from './changeAgent.js';
+import { RiskAgent } from './riskAgent.js';
+import { PMOAgent } from './pmoAgent.js';
+import { AgentCoordinator, getCoordinator, resetCoordinator } from './agentCoordinator.js';
 
 // Agent registry for dynamic access
-const AGENT_REGISTRY = {
+export const AGENT_REGISTRY = {
     strategy: StrategyAgent,
     finance: FinanceAgent,
     change: ChangeAgent,
@@ -46,7 +46,7 @@ const AGENT_REGISTRY = {
  * @param {object} config - Agent configuration
  * @returns {BaseAgent} Agent instance
  */
-const createAgent = (domain, config = {}) => {
+export const createAgent = (domain, config = {}) => {
     const AgentClass = AGENT_REGISTRY[domain];
     if (!AgentClass) {
         throw new Error(`Unknown agent domain: ${domain}. Available: ${Object.keys(AGENT_REGISTRY).join(', ')}`);
@@ -58,13 +58,13 @@ const createAgent = (domain, config = {}) => {
  * Get all available agent domains
  * @returns {string[]} List of domain names
  */
-const getAvailableDomains = () => Object.keys(AGENT_REGISTRY);
+export const getAvailableDomains = () => Object.keys(AGENT_REGISTRY);
 
 /**
  * Get agent metadata for all agents
  * @returns {object[]} Array of agent metadata
  */
-const getAllAgentMetadata = () => {
+export const getAllAgentMetadata = () => {
     return Object.entries(AGENT_REGISTRY).map(([domain, AgentClass]) => {
         const instance = new AgentClass();
         return {
@@ -74,31 +74,30 @@ const getAllAgentMetadata = () => {
     });
 };
 
-module.exports = {
-    // Base class
+export {
     BaseAgent,
-    
-    // Specialist agents
     StrategyAgent,
     FinanceAgent,
     ChangeAgent,
     RiskAgent,
     PMOAgent,
-    
-    // Coordinator
+    AgentCoordinator,
+    getCoordinator,
+    resetCoordinator
+};
+
+export default {
+    BaseAgent,
+    StrategyAgent,
+    FinanceAgent,
+    ChangeAgent,
+    RiskAgent,
+    PMOAgent,
     AgentCoordinator,
     getCoordinator,
     resetCoordinator,
-    
-    // Registry utilities
     AGENT_REGISTRY,
     createAgent,
     getAvailableDomains,
     getAllAgentMetadata
 };
-
-
-
-
-
-

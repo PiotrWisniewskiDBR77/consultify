@@ -6,21 +6,15 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testOrganizations } from '../../fixtures/testData.js';
-
-const require = createRequire(import.meta.url);
+import WebhookService from '../../../server/services/webhookService.js';
 
 describe('WebhookService', () => {
     let mockDb;
     let mockFetch;
-    let WebhookService;
-    let WebhookServiceClass;
 
     beforeEach(() => {
-        vi.resetModules();
-
         // Initialize mocks
         mockDb = createMockDb();
 
@@ -31,12 +25,11 @@ describe('WebhookService', () => {
             statusText: 'OK'
         });
 
-        // Import the REAL service (now exposing the class)
-        const WebhookServiceModule = require('../../../server/services/webhookService.js');
-        WebhookServiceClass = WebhookServiceModule.WebhookService;
-
-        // Create service with injected fetch mock
-        WebhookService = new WebhookServiceClass(mockDb, { fetch: mockFetch });
+        // Inject mock dependencies
+        WebhookService.constructor.setDependencies({
+            db: mockDb,
+            fetch: mockFetch
+        });
     });
 
     afterEach(() => {

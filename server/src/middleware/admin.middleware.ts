@@ -34,8 +34,8 @@ let deps: Dependencies;
 
 const getDeps = (): Dependencies => {
     if (!deps) {
-        const defaultJwt = require('jsonwebtoken');
-        const defaultConfig = require('../../config');
+        const defaultJwt = await import('jsonwebtoken.js').then(m => m.default || m);
+        const defaultConfig = await import('../../config.js').then(m => m.default || m);
         
         deps = {
             jwt: defaultJwt,

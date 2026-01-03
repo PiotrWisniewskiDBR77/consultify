@@ -43,6 +43,36 @@ describe('PayAsYouGoService', () => {
     describe('Service Methods', () => {
         it('should have required methods', () => {
             expect(PayAsYouGoService).toBeDefined();
+            expect(PayAsYouGoService.recordUsage).toBeDefined();
+        });
+
+        it('should record usage in database', async () => {
+            (mockDb.run as any).mockImplementation(function (sql: any, params: any, callback: any) {
+                callback.call({ lastID: 1, changes: 1 }, null);
+            });
+
+            const result = await PayAsYouGoService.recordUsage({
+                orgId: 'org-1',
+                usageType: 'tokens',
+                quantity: 100,
+                unitPrice: 0.01
+            });
+
+            expect(result).toBeDefined();
+            expect(result.totalCost).toBe(1);
+        });
+
+        it('should get current period usage', async () => {
+            const mockUsageRows = [
+                { usage_type: 'tokens', total_quantity: 100, avg_unit_price: 0.01, total_cost: 1, usage_count: 1 }
+            ];
+            (mockDb.all as any).mockImplementation((sql: any, params: any, callback: any) => {
+                callback(null, mockUsageRows);
+            });
+
+            const summary = await PayAsYouGoService.getCurrentPeriodUsage('org-1');
+            expect(summary.totalCost).toBe(1);
+            expect(summary.byType.tokens).toBeDefined();
         });
     });
 

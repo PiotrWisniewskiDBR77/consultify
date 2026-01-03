@@ -29,9 +29,11 @@ import {
     UpdateScheduledEventBodySchema,
 } from '../validators/admin-data.validators.js';
 
+import { getDatabase } from '../database/Database.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { v4 as uuidv4 } from 'uuid';
+
 const router = Router();
-const db = require('../../database');
-const { v4: uuidv4 } = require('uuid');
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
@@ -51,39 +53,27 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { orgId } = req.params;
         
-        const users = await new Promise<Array<{
+        const users = await dbAll<{
             userId: string;
             userName: string;
             email: string;
             currentTier: string;
             usage: number;
             cost: number;
-        }>>((resolve, reject) => {
-            db.all(`
-                SELECT 
-                    u.id as userId,
-                    u.first_name || ' ' || u.last_name as userName,
-                    u.email,
-                    COALESCE(aus.tier, 'STANDARD') as currentTier,
-                    COALESCE(aus.requests_count, 0) as usage,
-                    COALESCE(aus.cost_usd, 0) as cost
-                FROM users u
-                LEFT JOIN ai_usage_stats aus ON u.id = aus.user_id 
-                    AND aus.period_start >= date('now', '-7 days')
-                WHERE u.organization_id = ?
-                ORDER BY aus.cost_usd DESC NULLS LAST
-            `, [orgId], (err: Error | null, rows: unknown[]) => {
-                if (err) reject(err);
-                else resolve((rows || []) as Array<{
-                    userId: string;
-                    userName: string;
-                    email: string;
-                    currentTier: string;
-                    usage: number;
-                    cost: number;
-                }>);
-            });
-        });
+        }>(`
+            SELECT 
+                u.id as userId,
+                u.first_name || ' ' || u.last_name as userName,
+                u.email,
+                COALESCE(aus.tier, 'STANDARD') as currentTier,
+                COALESCE(aus.requests_count, 0) as usage,
+                COALESCE(aus.cost_usd, 0) as cost
+            FROM users u
+            LEFT JOIN ai_usage_stats aus ON u.id = aus.user_id 
+                AND aus.period_start >= date('now', '-7 days')
+            WHERE u.organization_id = ?
+            ORDER BY aus.cost_usd DESC NULLS LAST
+        `, [orgId]);
 
         res.json(users);
     })
@@ -101,16 +91,15 @@ router.put(
         const { orgId, userId } = req.params;
         const { tier } = req.body;
         
-        await new Promise<void>((resolve, reject) => {
-            db.run(`
-                INSERT INTO ai_usage_stats (id, organization_id, user_id, tier, period_start, period_end)
-                VALUES (?, ?, ?, ?, date('now', '-7 days'), date('now'))
-                ON CONFLICT(user_id, period_start) DO UPDATE SET tier = ?
-            `, [uuidv4(), orgId, userId, tier, tier], (err: Error | null) => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
+        const runResult = await dbRun(`
+            INSERT INTO ai_usage_stats (id, organization_id, user_id, tier, period_start, period_end)
+            VALUES (?, ?, ?, ?, date('now', '-7 days'), date('now'))
+            ON CONFLICT(user_id, period_start) DO UPDATE SET tier = ?
+        `, [uuidv4(), orgId, userId, tier, tier]);
+        
+        if (!runResult.success) {
+            throw new Error(runResult.error || 'Failed to update user tier');
+        }
 
         res.json({ success: true, tier });
     })
@@ -126,79 +115,55 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { orgId } = req.params;
         
-        const userCosts = await new Promise<Array<{
+        const userCosts = await dbAll<{
             entityType: string;
             entityId: string;
             entityName: string;
             requests: number;
             tokens: number;
             cost: number;
-        }>>((resolve, reject) => {
-            db.all(`
-                SELECT 
-                    'user' as entityType,
-                    aus.user_id as entityId,
-                    u.first_name || ' ' || u.last_name as entityName,
-                    SUM(aus.requests_count) as requests,
-                    SUM(aus.tokens_used) as tokens,
-                    SUM(aus.cost_usd) as cost
-                FROM ai_usage_stats aus
-                JOIN users u ON aus.user_id = u.id
-                WHERE aus.organization_id = ?
-                    AND aus.period_start >= date('now', '-7 days')
-                    AND aus.user_id IS NOT NULL
-                GROUP BY aus.user_id
-                ORDER BY cost DESC
-                LIMIT 10
-            `, [orgId], (err: Error | null, rows: unknown[]) => {
-                if (err) reject(err);
-                else resolve((rows || []) as Array<{
-                    entityType: string;
-                    entityId: string;
-                    entityName: string;
-                    requests: number;
-                    tokens: number;
-                    cost: number;
-                }>);
-            });
-        });
+        }>(`
+            SELECT 
+                'user' as entityType,
+                aus.user_id as entityId,
+                u.first_name || ' ' || u.last_name as entityName,
+                SUM(aus.requests_count) as requests,
+                SUM(aus.tokens_used) as tokens,
+                SUM(aus.cost_usd) as cost
+            FROM ai_usage_stats aus
+            JOIN users u ON aus.user_id = u.id
+            WHERE aus.organization_id = ?
+                AND aus.period_start >= date('now', '-7 days')
+                AND aus.user_id IS NOT NULL
+            GROUP BY aus.user_id
+            ORDER BY cost DESC
+            LIMIT 10
+        `, [orgId]);
 
-        const projectCosts = await new Promise<Array<{
+        const projectCosts = await dbAll<{
             entityType: string;
             entityId: string;
             entityName: string;
             requests: number;
             tokens: number;
             cost: number;
-        }>>((resolve, reject) => {
-            db.all(`
-                SELECT 
-                    'project' as entityType,
-                    aus.project_id as entityId,
-                    p.name as entityName,
-                    SUM(aus.requests_count) as requests,
-                    SUM(aus.tokens_used) as tokens,
-                    SUM(aus.cost_usd) as cost
-                FROM ai_usage_stats aus
-                JOIN projects p ON aus.project_id = p.id
-                WHERE aus.organization_id = ?
-                    AND aus.period_start >= date('now', '-7 days')
-                    AND aus.project_id IS NOT NULL
-                GROUP BY aus.project_id
-                ORDER BY cost DESC
-                LIMIT 10
-            `, [orgId], (err: Error | null, rows: unknown[]) => {
-                if (err) reject(err);
-                else resolve((rows || []) as Array<{
-                    entityType: string;
-                    entityId: string;
-                    entityName: string;
-                    requests: number;
-                    tokens: number;
-                    cost: number;
-                }>);
-            });
-        });
+        }>(`
+            SELECT 
+                'project' as entityType,
+                aus.project_id as entityId,
+                p.name as entityName,
+                SUM(aus.requests_count) as requests,
+                SUM(aus.tokens_used) as tokens,
+                SUM(aus.cost_usd) as cost
+            FROM ai_usage_stats aus
+            JOIN projects p ON aus.project_id = p.id
+            WHERE aus.organization_id = ?
+                AND aus.period_start >= date('now', '-7 days')
+                AND aus.project_id IS NOT NULL
+            GROUP BY aus.project_id
+            ORDER BY cost DESC
+            LIMIT 10
+        `, [orgId]);
 
         const allCosts = [...userCosts, ...projectCosts];
         const totalCost = allCosts.reduce((sum, item) => sum + (item.cost || 0), 0);
@@ -387,11 +352,14 @@ router.get(
 router.get(
     '/system-health',
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
-        const dbHealthy = await new Promise<boolean>((resolve) => {
-            db.get('SELECT 1 as ok', (err: Error | null) => {
-                resolve(!err);
-            });
-        });
+        const dbHealthy = await (async () => {
+            try {
+                await dbGet('SELECT 1 as ok', []);
+                return true;
+            } catch {
+                return false;
+            }
+        })();
 
         const health = {
             status: dbHealthy ? 'healthy' : 'degraded',
@@ -546,12 +514,10 @@ router.delete(
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { sessionId } = req.params;
         
-        await new Promise<void>((resolve, reject) => {
-            db.run('DELETE FROM user_sessions WHERE id = ?', [sessionId], (err: Error | null) => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
+        const result = await dbRun('DELETE FROM user_sessions WHERE id = ?', [sessionId]);
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to delete session');
+        }
 
         res.json({ success: true });
     })
@@ -932,12 +898,10 @@ router.delete(
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { eventId } = req.params;
         
-        await new Promise<void>((resolve, reject) => {
-            db.run('DELETE FROM scheduled_events WHERE id = ?', [eventId], (err: Error | null) => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
+        const result = await dbRun('DELETE FROM scheduled_events WHERE id = ?', [eventId]);
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to delete event');
+        }
 
         res.json({ success: true });
     })

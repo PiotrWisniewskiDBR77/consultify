@@ -1,32 +1,40 @@
 /**
- * EscalationService Service
+ * Escalation Service Proxy
  * Enterprise SaaS Architecture - TypeScript Backend
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Standardized PascalCase wrapper for EscalationService
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
 
-const require = createRequire(import.meta.url);
+// Lazy load the JS service module
+const loadEscalationService = createCachedLazyService('../../services/escalationService.js');
 
-// Import the JS implementation for now (will be fully migrated later)
-const escalationServiceServiceJS = require('../../services/escalationService.js');
+/**
+ * Export a proxy object that awaits the service on each call.
+ * This ensures that methods are only called once the service is loaded.
+ */
+const EscalationService = {
+    getEscalations: async (projectId: string, status: string | null = null) => {
+        const service = await loadEscalationService();
+        return (service as any).getEscalations(projectId, status);
+    },
+    acknowledgeEscalation: async (escalationId: string, userId: string) => {
+        const service = await loadEscalationService();
+        return (service as any).acknowledgeEscalation(escalationId, userId);
+    },
+    resolveEscalation: async (escalationId: string) => {
+        const service = await loadEscalationService();
+        return (service as any).resolveEscalation(escalationId);
+    },
+    runAutoEscalation: async (projectId: string) => {
+        const service = await loadEscalationService();
+        return (service as any).runAutoEscalation(projectId);
+    },
+    createEscalation: async (data: any) => {
+        const service = await loadEscalationService();
+        return (service as any).createEscalation(data);
+    }
+};
 
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const escalationServiceService = escalationServiceServiceJS.default || escalationServiceServiceJS;
-
-// Export default instance (for backward compatibility)
-export default escalationServiceService;
-
-// Also export named exports if they exist
-if (typeof escalationServiceServiceJS === 'object' && escalationServiceServiceJS !== null) {
-    Object.keys(escalationServiceServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = escalationServiceServiceJS[key];
-        }
-    });
-}
+export default EscalationService;

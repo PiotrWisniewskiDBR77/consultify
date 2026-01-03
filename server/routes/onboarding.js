@@ -15,7 +15,7 @@ const authenticate = require('../middleware/authMiddleware');
 const orgContextMiddleware = require('../middleware/orgContextMiddleware');
 const { requireOrgAccess } = require('../middleware/rbac');
 const OnboardingService = require('../services/onboardingService');
-const auditService = require('../services/auditService');
+import auditService from '../services/auditService.js';
 const { getAsync } = require('../db/sqliteAsync');
 const db = require('../database');
 

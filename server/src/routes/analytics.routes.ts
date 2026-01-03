@@ -9,11 +9,9 @@
 import { Router, Response } from 'express';
 import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { getDatabase } from '../database/Database.js';
-import type { IDatabase } from '../database/IDatabase.js';
+import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
 
 const router = Router();
-const db = getDatabase();
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
@@ -46,12 +44,7 @@ router.get(
             GROUP BY status
         `;
 
-        const rows = await new Promise<unknown[]>((resolve, reject) => {
-            db.all(sql, [orgId], (err: Error | null, result: unknown[]) => {
-                if (err) return reject(err);
-                resolve(result || []);
-            });
-        });
+        const rows = await dbAll(sql, [orgId]);
 
         // Also get Tasks overdue count
         const taskSql = `
@@ -62,12 +55,7 @@ router.get(
             AND due_date < DATE('now')
         `;
 
-        const taskRow = await new Promise<{ overdue_count: number } | null>((resolve, reject) => {
-            db.get(taskSql, [orgId], (err: Error | null, row: { overdue_count: number } | null) => {
-                if (err) return reject(err);
-                resolve(row);
-            });
-        });
+        const taskRow = await dbGet<{ overdue_count: number }>(taskSql, [orgId]);
 
         res.json({
             initiativesByStatus: rows,
@@ -101,12 +89,7 @@ router.get(
             GROUP BY u.id
         `;
 
-        const rows = await new Promise<unknown[]>((resolve, reject) => {
-            db.all(sql, [orgId], (err: Error | null, result: unknown[]) => {
-                if (err) return reject(err);
-                resolve(result || []);
-            });
-        });
+        const rows = await dbAll(sql, [orgId]);
 
         res.json(rows);
     })
@@ -135,17 +118,12 @@ router.get(
             WHERE organization_id = ?
         `;
 
-        const row = await new Promise<{
+        const row = await dbGet<{
             total_capex: number;
             total_opex: number;
             expected_benefit: number;
             total_cost: number;
-        } | null>((resolve, reject) => {
-            db.get(sql, [orgId], (err: Error | null, result: unknown) => {
-                if (err) return reject(err);
-                resolve(result as typeof row);
-            });
-        });
+        }>(sql, [orgId]);
 
         // Also get actual spend from Tasks
         const spendSql = `
@@ -154,12 +132,7 @@ router.get(
             WHERE organization_id = ?
         `;
 
-        const spendRow = await new Promise<{ actual_spend: number } | null>((resolve, reject) => {
-            db.get(spendSql, [orgId], (err: Error | null, result: unknown) => {
-                if (err) return reject(err);
-                resolve(result as typeof spendRow);
-            });
-        });
+        const spendRow = await dbGet<{ actual_spend: number }>(spendSql, [orgId]);
 
         res.json({
             ...row,

@@ -6,7 +6,7 @@
 
 const express = require('express');
 const router = express.Router();
-const apiKeyService = require('../services/apiKeyService');
+import apiKeyService from '../services/apiKeyService.js';
 const authMiddleware = require('../middleware/authMiddleware');
 const verifySuperAdmin = require('../middleware/superAdminMiddleware');
 

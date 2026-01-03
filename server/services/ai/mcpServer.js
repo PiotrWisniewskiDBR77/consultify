@@ -1,18 +1,15 @@
-/**
- * MCP Server - Central Tool Registry
- * Model Context Protocol implementation for AI Tool Calling
- */
-
-const { z } = require('zod');
+import { z } from 'zod';
+import BaseService from '../BaseService.js';
+import { aiLogger } from './logger.js';
 
 // Tool Type Constants
-const TOOL_TYPE = {
+export const TOOL_TYPE = {
     READ: 'READ',           // Safe, auto-approved
     MUTATION: 'MUTATION'    // Requires user approval
 };
 
 // Tool schemas using Zod
-const ToolSchemas = {
+export const ToolSchemas = {
     get_project_details: {
         name: 'get_project_details',
         description: 'Retrieve full project details including status, team, timeline, and metrics',
@@ -105,10 +102,9 @@ const ToolSchemas = {
     }
 };
 
-const { aiLogger } = require('./logger');
-
-class MCPServer {
+export class MCPServer extends BaseService {
     constructor() {
+        super();
         this.tools = new Map();
         this.registerDefaultTools();
     }
@@ -130,13 +126,13 @@ class MCPServer {
      */
     registerHandler(toolName, handler) {
         if (!this.tools.has(toolName)) {
-            aiLogger.error('MCP', `Attempted to register handler for unknown tool: ${toolName}`);
+            this.logError(`Attempted to register handler for unknown tool: ${toolName}`);
             throw new Error(`Unknown tool: ${toolName}`);
         }
         const tool = this.tools.get(toolName);
         tool.handler = handler;
         this.tools.set(toolName, tool);
-        aiLogger.debug('MCP', `Handler registered for: ${toolName}`);
+        this.logInfo(`Handler registered for: ${toolName}`);
     }
 
     /**
@@ -209,7 +205,7 @@ class MCPServer {
         const tool = this.tools.get(toolName);
 
         if (!tool) {
-            aiLogger.error('MCP', `Execution failed: Unknown tool ${toolName}`);
+            this.logError(`Execution failed: Unknown tool ${toolName}`);
             return { status: 'ERROR', error: `Unknown tool: ${toolName}` };
         }
 
@@ -230,7 +226,7 @@ class MCPServer {
 
             // Execute READ tools directly
             if (!tool.handler) {
-                aiLogger.error('MCP', `No handler for tool ${toolName}`);
+                this.logError(`No handler for tool ${toolName}`);
                 return { status: 'ERROR', error: `No handler registered for tool: ${toolName}` };
             }
 
@@ -244,7 +240,7 @@ class MCPServer {
             };
 
         } catch (error) {
-            aiLogger.error('MCP', `Execution failed for ${toolName}`, error);
+            this.logError(`Execution failed for ${toolName}`, error);
             return {
                 status: 'ERROR',
                 error: error.message
@@ -254,11 +250,5 @@ class MCPServer {
 }
 
 // Singleton instance
-const mcpServer = new MCPServer();
-
-module.exports = {
-    MCPServer,
-    mcpServer,
-    TOOL_TYPE,
-    ToolSchemas
-};
+export const mcpServer = new MCPServer();
+export default mcpServer;

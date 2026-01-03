@@ -11,13 +11,92 @@
  * Step 2 Finalization: Enterprise+ Ready
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const AccessPolicyService = require('./accessPolicyService');
-const ActivityService = require('./activityService');
-const NotificationService = require('./notificationService');
-const OrganizationEventService = require('./organizationEventService');
-const MetricsCollector = require('./metricsCollector');
+const deps = {
+    _db: null,
+    _uuidv4: null,
+    _accessPolicyService: null,
+    _activityService: null,
+    _notificationService: null,
+    _organizationEventService: null,
+    _metricsCollector: null,
+    _organizationService: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; },
+
+    get accessPolicyService() { return this._accessPolicyService; },
+    set accessPolicyService(val) { this._accessPolicyService = val; },
+
+    get activityService() { return this._activityService; },
+    set activityService(val) { this._activityService = val; },
+
+    get notificationService() { return this._notificationService; },
+    set notificationService(val) { this._notificationService = val; },
+
+    get organizationEventService() { return this._organizationEventService; },
+    set organizationEventService(val) { this._organizationEventService = val; },
+
+    get metricsCollector() { return this._metricsCollector; },
+    set metricsCollector(val) { this._metricsCollector = val; },
+
+    get organizationService() { return this._organizationService; },
+    set organizationService(val) { this._organizationService = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+    if (!deps._accessPolicyService) {
+        const { default: s } = await import('./accessPolicyService.js');
+        deps._accessPolicyService = s;
+    }
+    if (!deps._activityService) {
+        const { default: s } = await import('./activityService.js');
+        deps._activityService = s;
+    }
+    if (!deps._notificationService) {
+        const { default: s } = await import('./notificationService.js');
+        deps._notificationService = s;
+    }
+    if (!deps._organizationEventService) {
+        const { default: s } = await import('./organizationEventService.js');
+        deps._organizationEventService = s;
+    }
+    if (!deps._metricsCollector) {
+        const { default: s } = await import('./metricsCollector.js');
+        deps._metricsCollector = s;
+    }
+    if (!deps._organizationService) {
+        const { default: s } = await import('./organizationService.js');
+        deps._organizationService = s;
+    }
+}
+
+/**
+ * Set dependencies (for testing)
+ */
+function setDependencies(newDeps = {}) {
+    if (newDeps.db) deps.db = newDeps.db;
+    if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
+    if (newDeps.accessPolicyService) deps.accessPolicyService = newDeps.accessPolicyService;
+    if (newDeps.activityService) deps.activityService = newDeps.activityService;
+    if (newDeps.notificationService) deps.notificationService = newDeps.notificationService;
+    if (newDeps.organizationEventService) deps.organizationEventService = newDeps.organizationEventService;
+    if (newDeps.metricsCollector) deps.metricsCollector = newDeps.metricsCollector;
+    if (newDeps.organizationService) deps.organizationService = newDeps.organizationService;
+}
 
 const TrialService = {
     /**
@@ -27,15 +106,19 @@ const TrialService = {
      * @param {number} durationDays - Trial duration (default 14)
      * @returns {Promise<Object>}
      */
-    createTrialOrganization: async (userId, orgName, durationDays = AccessPolicyService.TRIAL_DURATION_DAYS) => {
-        const orgId = uuidv4();
+    createTrialOrganization: async (userId, orgName, durationDays) => {
+        await initDeps();
+        if (durationDays === undefined) {
+            durationDays = deps.accessPolicyService.TRIAL_DURATION_DAYS;
+        }
+        const orgId = deps.uuidv4();
         const now = new Date();
         const expiresAt = new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000);
 
         return new Promise((resolve, reject) => {
-            db.serialize(() => {
+            deps.db.serialize(() => {
                 // Create trial organization
-                db.run(
+                deps.db.run(
                     `INSERT INTO organizations (id, name, plan, status, organization_type, trial_started_at, trial_expires_at, is_active, created_by_user_id, created_at)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
@@ -43,7 +126,7 @@ const TrialService = {
                         orgName,
                         'trial',
                         'active',
-                        AccessPolicyService.ORG_TYPES.TRIAL,
+                        deps.accessPolicyService.ORG_TYPES.TRIAL,
                         now.toISOString(),
                         expiresAt.toISOString(),
                         1,
@@ -56,10 +139,10 @@ const TrialService = {
                         try {
                             // Add creator as OWNER
                             await new Promise((resolveMember, rejectMember) => {
-                                db.run(
+                                deps.db.run(
                                     `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
                                      VALUES (?, ?, ?, 'OWNER', 'ACTIVE', ?)`,
-                                    [uuidv4(), orgId, userId, now.toISOString()],
+                                    [deps.uuidv4(), orgId, userId, now.toISOString()],
                                     (memberErr) => {
                                         if (memberErr) rejectMember(memberErr);
                                         else resolveMember();
@@ -68,21 +151,21 @@ const TrialService = {
                             });
 
                             // Create default trial limits
-                            await AccessPolicyService.createDefaultLimits(orgId, AccessPolicyService.ORG_TYPES.TRIAL);
+                            await deps.accessPolicyService.createDefaultLimits(orgId, deps.accessPolicyService.ORG_TYPES.TRIAL);
 
                             // Log audit event
-                            await OrganizationEventService.logEvent(
+                            await deps.organizationEventService.logEvent(
                                 orgId,
-                                OrganizationEventService.EVENT_TYPES.TRIAL_STARTED,
+                                deps.organizationEventService.EVENT_TYPES.TRIAL_STARTED,
                                 userId,
                                 { durationDays, orgName }
                             );
 
                             // Step 7: Record metrics event for conversion intelligence
-                            await MetricsCollector.recordEvent(MetricsCollector.EVENT_TYPES.TRIAL_STARTED, {
+                            await deps.metricsCollector.recordEvent(deps.metricsCollector.EVENT_TYPES.TRIAL_STARTED, {
                                 userId,
                                 organizationId: orgId,
-                                source: MetricsCollector.SOURCE_TYPES.TRIAL,
+                                source: deps.metricsCollector.SOURCE_TYPES.TRIAL,
                                 context: { durationDays, orgName }
                             });
 
@@ -107,8 +190,9 @@ const TrialService = {
      * @returns {Promise<Object>}
      */
     getTrialStatus: async (organizationId) => {
-        const trialStatus = await AccessPolicyService.checkTrialStatus(organizationId);
-        const orgInfo = await AccessPolicyService.getOrganizationType(organizationId);
+        await initDeps();
+        const trialStatus = await deps.accessPolicyService.checkTrialStatus(organizationId);
+        const orgInfo = await deps.accessPolicyService.getOrganizationType(organizationId);
 
         // Get extension count
         const extensionCount = await TrialService._getExtensionCount(organizationId);
@@ -118,7 +202,7 @@ const TrialService = {
             trialStartedAt: orgInfo?.trialStartedAt,
             trialExpiresAt: orgInfo?.trialExpiresAt,
             extensionsUsed: extensionCount,
-            extensionsRemaining: Math.max(0, AccessPolicyService.MAX_TRIAL_EXTENSIONS - extensionCount),
+            extensionsRemaining: Math.max(0, deps.accessPolicyService.MAX_TRIAL_EXTENSIONS - extensionCount),
             ...trialStatus
         };
     },
@@ -132,31 +216,32 @@ const TrialService = {
      * @returns {Promise<Object>}
      */
     upgradeToPaid: async (organizationId, planType = 'PRO', upgradedByUserId = null) => {
-        const orgInfo = await AccessPolicyService.getOrganizationType(organizationId);
+        await initDeps();
+        const orgInfo = await deps.accessPolicyService.getOrganizationType(organizationId);
 
         if (!orgInfo) {
             throw new Error('Organization not found');
         }
 
         // IDEMPOTENT: Already PAID, return success
-        if (orgInfo.organizationType === AccessPolicyService.ORG_TYPES.PAID) {
+        if (orgInfo.organizationType === deps.accessPolicyService.ORG_TYPES.PAID) {
             console.log(`[TrialService] Org ${organizationId} already PAID, returning idempotent success`);
             return {
                 success: true,
-                organizationType: AccessPolicyService.ORG_TYPES.PAID,
+                organizationType: deps.accessPolicyService.ORG_TYPES.PAID,
                 plan: orgInfo.plan,
                 alreadyUpgraded: true
             };
         }
 
         return new Promise((resolve, reject) => {
-            db.serialize(() => {
+            deps.db.serialize(() => {
                 // Transaction: Update organization
-                db.run(
+                deps.db.run(
                     `UPDATE organizations 
                      SET organization_type = ?, plan = ?, trial_expires_at = NULL, is_active = 1
                      WHERE id = ?`,
-                    [AccessPolicyService.ORG_TYPES.PAID, planType.toLowerCase(), organizationId],
+                    [deps.accessPolicyService.ORG_TYPES.PAID, planType.toLowerCase(), organizationId],
                     async function (err) {
                         if (err) return reject(err);
                         if (this.changes === 0) {
@@ -165,12 +250,12 @@ const TrialService = {
 
                         try {
                             // Remove trial limits
-                            await AccessPolicyService.removeLimits(organizationId);
+                            await deps.accessPolicyService.removeLimits(organizationId);
 
                             // Log audit event
-                            await OrganizationEventService.logEvent(
+                            await deps.organizationEventService.logEvent(
                                 organizationId,
-                                OrganizationEventService.EVENT_TYPES.TRIAL_UPGRADED,
+                                deps.organizationEventService.EVENT_TYPES.TRIAL_UPGRADED,
                                 upgradedByUserId,
                                 {
                                     planType,
@@ -188,10 +273,10 @@ const TrialService = {
                             });
 
                             // Step 7: Record metrics event for conversion intelligence
-                            await MetricsCollector.recordEvent(MetricsCollector.EVENT_TYPES.UPGRADED_TO_PAID, {
+                            await deps.metricsCollector.recordEvent(deps.metricsCollector.EVENT_TYPES.UPGRADED_TO_PAID, {
                                 userId: upgradedByUserId,
                                 organizationId,
-                                source: MetricsCollector.SOURCE_TYPES.TRIAL,
+                                source: deps.metricsCollector.SOURCE_TYPES.TRIAL,
                                 context: {
                                     planType,
                                     previousType: orgInfo.organizationType,
@@ -201,7 +286,7 @@ const TrialService = {
 
                             resolve({
                                 success: true,
-                                organizationType: AccessPolicyService.ORG_TYPES.PAID,
+                                organizationType: deps.accessPolicyService.ORG_TYPES.PAID,
                                 plan: planType,
                                 alreadyUpgraded: false
                             });
@@ -220,26 +305,27 @@ const TrialService = {
      * @returns {Promise<void>}
      */
     lockExpiredTrial: async (organizationId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE organizations SET is_active = 0 WHERE id = ? AND organization_type = ?`,
-                [organizationId, AccessPolicyService.ORG_TYPES.TRIAL],
+                [organizationId, deps.accessPolicyService.ORG_TYPES.TRIAL],
                 async function (err) {
                     if (err) return reject(err);
 
                     if (this.changes > 0) {
                         // Log audit event
-                        await OrganizationEventService.logEvent(
+                        await deps.organizationEventService.logEvent(
                             organizationId,
-                            OrganizationEventService.EVENT_TYPES.TRIAL_EXPIRED_LOCKED,
+                            deps.organizationEventService.EVENT_TYPES.TRIAL_EXPIRED_LOCKED,
                             null,
                             { lockedAt: new Date().toISOString() }
                         );
 
                         // Step 7: Record metrics event for conversion intelligence
-                        await MetricsCollector.recordEvent(MetricsCollector.EVENT_TYPES.TRIAL_EXPIRED, {
+                        await deps.metricsCollector.recordEvent(deps.metricsCollector.EVENT_TYPES.TRIAL_EXPIRED, {
                             organizationId,
-                            source: MetricsCollector.SOURCE_TYPES.TRIAL,
+                            source: deps.metricsCollector.SOURCE_TYPES.TRIAL,
                             context: { lockedAt: new Date().toISOString() }
                         });
                     }
@@ -257,19 +343,20 @@ const TrialService = {
      * @returns {Promise<number>} - Number of warnings sent
      */
     sendTrialWarnings: async () => {
+        await initDeps();
         const warningDays = 7;
         const warningDate = new Date(Date.now() + warningDays * 24 * 60 * 60 * 1000);
         const warningDateStr = warningDate.toISOString().split('T')[0];
 
         return new Promise((resolve, reject) => {
             // Find trial orgs expiring in exactly 7 days AND not already warned
-            db.all(
+            deps.db.all(
                 `SELECT id, name, trial_expires_at FROM organizations 
                  WHERE organization_type = ? 
                  AND is_active = 1
                  AND date(trial_expires_at) = ?
                  AND trial_warning_sent_at IS NULL`,
-                [AccessPolicyService.ORG_TYPES.TRIAL, warningDateStr],
+                [deps.accessPolicyService.ORG_TYPES.TRIAL, warningDateStr],
                 async (err, rows) => {
                     if (err) return reject(err);
                     if (!rows || rows.length === 0) return resolve(0);
@@ -290,7 +377,7 @@ const TrialService = {
 
                             // ANTI-SPAM: Mark as warned
                             await new Promise((res, rej) => {
-                                db.run(
+                                deps.db.run(
                                     `UPDATE organizations SET trial_warning_sent_at = datetime('now') WHERE id = ?`,
                                     [org.id],
                                     (err) => err ? rej(err) : res()
@@ -298,9 +385,9 @@ const TrialService = {
                             });
 
                             // Log audit event
-                            await OrganizationEventService.logEvent(
+                            await deps.organizationEventService.logEvent(
                                 org.id,
-                                OrganizationEventService.EVENT_TYPES.TRIAL_WARNING_SENT,
+                                deps.organizationEventService.EVENT_TYPES.TRIAL_WARNING_SENT,
                                 null,
                                 { daysRemaining: 7, warningSentAt: new Date().toISOString() }
                             );
@@ -323,15 +410,16 @@ const TrialService = {
      * @returns {Promise<number>} - Number of trials locked
      */
     processExpiredTrials: async () => {
+        await initDeps();
         const now = new Date().toISOString();
 
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT id, name FROM organizations 
                  WHERE organization_type = ? 
                  AND is_active = 1
                  AND trial_expires_at < ?`,
-                [AccessPolicyService.ORG_TYPES.TRIAL, now],
+                [deps.accessPolicyService.ORG_TYPES.TRIAL, now],
                 async (err, rows) => {
                     if (err) return reject(err);
                     if (!rows || rows.length === 0) return resolve(0);
@@ -378,7 +466,8 @@ const TrialService = {
      * @returns {Promise<Object>}
      */
     extendTrial: async (organizationId, additionalDays, extendedByUserId = null, reason = '') => {
-        const orgInfo = await AccessPolicyService.getOrganizationType(organizationId);
+        await initDeps();
+        const orgInfo = await deps.accessPolicyService.getOrganizationType(organizationId);
 
         if (!orgInfo) {
             const error = new Error('Organization not found');
@@ -387,7 +476,7 @@ const TrialService = {
             throw error;
         }
 
-        if (orgInfo.organizationType !== AccessPolicyService.ORG_TYPES.TRIAL) {
+        if (orgInfo.organizationType !== deps.accessPolicyService.ORG_TYPES.TRIAL) {
             const error = new Error('Only trial organizations can be extended');
             error.errorCode = 'NOT_TRIAL';
             error.status = 400;
@@ -396,16 +485,16 @@ const TrialService = {
 
         // Check extension count
         const extensionCount = await TrialService._getExtensionCount(organizationId);
-        if (extensionCount >= AccessPolicyService.MAX_TRIAL_EXTENSIONS) {
-            const error = new Error(`Maximum trial extensions (${AccessPolicyService.MAX_TRIAL_EXTENSIONS}) reached`);
+        if (extensionCount >= deps.accessPolicyService.MAX_TRIAL_EXTENSIONS) {
+            const error = new Error(`Maximum trial extensions (${deps.accessPolicyService.MAX_TRIAL_EXTENSIONS}) reached`);
             error.errorCode = 'EXTENSION_LIMIT_REACHED';
             error.status = 403;
             throw error;
         }
 
         // Validate days
-        if (additionalDays > AccessPolicyService.MAX_EXTENSION_DAYS) {
-            const error = new Error(`Maximum extension is ${AccessPolicyService.MAX_EXTENSION_DAYS} days`);
+        if (additionalDays > deps.accessPolicyService.MAX_EXTENSION_DAYS) {
+            const error = new Error(`Maximum extension is ${deps.accessPolicyService.MAX_EXTENSION_DAYS} days`);
             error.errorCode = 'INVALID_DAYS';
             error.status = 400;
             throw error;
@@ -415,8 +504,8 @@ const TrialService = {
         const newExpiry = new Date(Math.max(currentExpiry.getTime(), Date.now()) + additionalDays * 24 * 60 * 60 * 1000);
 
         return new Promise((resolve, reject) => {
-            db.serialize(() => {
-                db.run(
+            deps.db.serialize(() => {
+                deps.db.run(
                     `UPDATE organizations 
                      SET trial_expires_at = ?, is_active = 1, trial_extension_count = trial_extension_count + 1 
                      WHERE id = ?`,
@@ -426,9 +515,9 @@ const TrialService = {
 
                         try {
                             // Log audit event with reason
-                            await OrganizationEventService.logEvent(
+                            await deps.organizationEventService.logEvent(
                                 organizationId,
-                                OrganizationEventService.EVENT_TYPES.TRIAL_EXTENDED,
+                                deps.organizationEventService.EVENT_TYPES.TRIAL_EXTENDED,
                                 extendedByUserId,
                                 {
                                     additionalDays,
@@ -440,10 +529,10 @@ const TrialService = {
                             );
 
                             // Step 7: Record metrics event for conversion intelligence
-                            await MetricsCollector.recordEvent(MetricsCollector.EVENT_TYPES.TRIAL_EXTENDED, {
+                            await deps.metricsCollector.recordEvent(deps.metricsCollector.EVENT_TYPES.TRIAL_EXTENDED, {
                                 userId: extendedByUserId,
                                 organizationId,
-                                source: MetricsCollector.SOURCE_TYPES.TRIAL,
+                                source: deps.metricsCollector.SOURCE_TYPES.TRIAL,
                                 context: {
                                     additionalDays,
                                     reason,
@@ -456,7 +545,7 @@ const TrialService = {
                                 newExpiresAt: newExpiry.toISOString(),
                                 daysRemaining: Math.ceil((newExpiry - new Date()) / (1000 * 60 * 60 * 24)),
                                 extensionsUsed: extensionCount + 1,
-                                extensionsRemaining: AccessPolicyService.MAX_TRIAL_EXTENSIONS - extensionCount - 1
+                                extensionsRemaining: deps.accessPolicyService.MAX_TRIAL_EXTENSIONS - extensionCount - 1
                             });
                         } catch (auditErr) {
                             reject(auditErr);
@@ -469,8 +558,9 @@ const TrialService = {
 
     // Private helper to get extension count
     _getExtensionCount: async (organizationId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT trial_extension_count FROM organizations WHERE id = ?`,
                 [organizationId],
                 (err, row) => {
@@ -483,8 +573,9 @@ const TrialService = {
 
     // Private helper to notify organization admins
     _notifyOrgAdmins: async (organizationId, notification) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
-            db.all(
+            deps.db.all(
                 `SELECT id FROM users WHERE organization_id = ? AND role IN ('ADMIN', 'SUPERADMIN')`,
                 [organizationId],
                 async (err, admins) => {
@@ -492,7 +583,7 @@ const TrialService = {
 
                     for (const admin of admins || []) {
                         try {
-                            await NotificationService.create({
+                            await deps.notificationService.create({
                                 userId: admin.id,
                                 organizationId: organizationId,
                                 type: notification.type,
@@ -528,24 +619,23 @@ const TrialService = {
      * @returns {Promise<Object>} { newOrganizationId }
      */
     convertTrialToOrg: async (trialOrgId, userId, newOrgName) => {
-        const OrganizationService = require('./organizationService');
-
+        await initDeps();
         // 1. Verify Trial
-        const trialOrg = await AccessPolicyService.getOrganizationType(trialOrgId);
-        if (!trialOrg || trialOrg.organizationType !== AccessPolicyService.ORG_TYPES.TRIAL) {
+        const trialOrg = await deps.accessPolicyService.getOrganizationType(trialOrgId);
+        if (!trialOrg || trialOrg.organizationType !== deps.accessPolicyService.ORG_TYPES.TRIAL) {
             throw new Error("Invalid trial organization");
         }
 
         // Verify Ownership
-        const members = await OrganizationService.getMembers(trialOrgId);
+        const members = await deps.organizationService.getMembers(trialOrgId);
         const owner = members.find(m => m.role === 'OWNER' && m.user_id === userId);
         if (!owner) {
             throw new Error("Only the Trial Owner can convert to a permanent organization");
         }
 
         return new Promise((resolve, reject) => {
-            db.serialize(async () => {
-                db.run('BEGIN TRANSACTION');
+            deps.db.serialize(async () => {
+                deps.db.run('BEGIN TRANSACTION');
 
                 try {
                     // 2. Create NEW Organization using Service (Handle standard setup)
@@ -554,12 +644,12 @@ const TrialService = {
                     // However, SQLite doesn't support nested transactions easily. 
                     // To stay safe, we will manually insert here to ensure atomicity with migration.
 
-                    const newOrgId = uuidv4();
+                    const newOrgId = deps.uuidv4();
                     const now = new Date().toISOString();
 
                     // Insert New Org
                     await new Promise((res, rej) => {
-                        db.run(
+                        deps.db.run(
                             `INSERT INTO organizations (
                                 id, name, status, billing_status, organization_type, plan,
                                 token_balance, created_by_user_id, created_at, is_active,
@@ -572,10 +662,10 @@ const TrialService = {
 
                     // Add Owner
                     await new Promise((res, rej) => {
-                        db.run(
+                        deps.db.run(
                             `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
                              VALUES (?, ?, ?, 'OWNER', 'ACTIVE', ?)`,
-                            [uuidv4(), newOrgId, userId, now],
+                            [deps.uuidv4(), newOrgId, userId, now],
                             (err) => err ? rej(err) : res()
                         );
                     });
@@ -583,7 +673,7 @@ const TrialService = {
                     // 3. Migrate Context (Direct DB Copy)
                     // Copy client_context
                     await new Promise((res, rej) => {
-                        db.run(
+                        deps.db.run(
                             `INSERT INTO client_context (id, organization_id, key, value, confidence, source, created_at)
                              SELECT lower(hex(randomblob(16))), ?, key, value, confidence, source, ?
                              FROM client_context WHERE organization_id = ?`,
@@ -594,7 +684,7 @@ const TrialService = {
 
                     // Copy Facilities
                     await new Promise((res, rej) => {
-                        db.run(
+                        deps.db.run(
                             `INSERT INTO organization_facilities (id, organization_id, name, location, headcount, activity_profile, created_at)
                              SELECT lower(hex(randomblob(16))), ?, name, location, headcount, activity_profile, ?
                              FROM organization_facilities WHERE organization_id = ?`,
@@ -605,24 +695,24 @@ const TrialService = {
 
                     // 4. Freeze Old Trial
                     await new Promise((res, rej) => {
-                        db.run(
+                        deps.db.run(
                             `UPDATE organizations SET status = 'CONVERTED', is_active = 0, trial_expires_at = ? WHERE id = ?`,
                             [now, trialOrgId],
                             (err) => err ? rej(err) : res()
                         );
                     });
 
-                    db.run('COMMIT', async (err) => {
+                    deps.db.run('COMMIT', async (err) => {
                         if (err) return reject(err);
 
                         // Log Event (Outside Transaction ok)
-                        await OrganizationEventService.logEvent(trialOrgId, 'TRIAL_CONVERTED', userId, { newOrgId });
+                        await deps.organizationEventService.logEvent(trialOrgId, 'TRIAL_CONVERTED', userId, { newOrgId });
 
                         resolve({ newOrganizationId: newOrgId });
                     });
 
                 } catch (e) {
-                    db.run('ROLLBACK');
+                    deps.db.run('ROLLBACK');
                     reject(e);
                 }
             });
@@ -643,10 +733,11 @@ const TrialService = {
      * @returns {Promise<Object>}
      */
     enterTrialPhase: async (userId, accessCodeData = {}) => {
+        await initDeps();
         const now = new Date().toISOString();
 
         return new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE users 
                  SET user_status = 'TRIAL_ENTRY',
                      trial_entry_started_at = ?,
@@ -661,7 +752,7 @@ const TrialService = {
 
                     try {
                         // Log audit event
-                        await MetricsCollector.recordEvent('TRIAL_ENTERED', {
+                        await deps.metricsCollector.recordEvent('TRIAL_ENTERED', {
                             userId,
                             source: accessCodeData.type || 'DIRECT',
                             codeId: accessCodeData.codeId,
@@ -696,8 +787,9 @@ const TrialService = {
      * @returns {Promise<Object>}
      */
     getTrialEntryStatus: async (userId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
-            db.get(
+            deps.db.get(
                 `SELECT id, user_status, trial_entry_started_at, trial_entry_source_code_id, organization_id
                  FROM users WHERE id = ?`,
                 [userId],
@@ -731,6 +823,7 @@ const TrialService = {
      * @returns {Promise<Object>}
      */
     promoteToTrialOrg: async (userId, orgName) => {
+        await initDeps();
         // First check if user is in TRIAL_ENTRY
         const entryStatus = await TrialService.getTrialEntryStatus(userId);
 
@@ -751,7 +844,7 @@ const TrialService = {
 
         // Update user status to TRIAL_ORG
         await new Promise((resolve, reject) => {
-            db.run(
+            deps.db.run(
                 `UPDATE users 
                  SET user_status = 'TRIAL_ORG',
                      organization_id = ?
@@ -765,7 +858,7 @@ const TrialService = {
         });
 
         // Log the transition
-        await MetricsCollector.recordEvent('TRIAL_ORG_CREATED', {
+        await deps.metricsCollector.recordEvent('TRIAL_ORG_CREATED', {
             userId,
             organizationId: trialResult.organizationId,
             context: {
@@ -782,7 +875,8 @@ const TrialService = {
             message: 'Organizacja została utworzona. Witamy w fazie Trial!'
         };
     },
+    setDependencies
 };
 
-module.exports = TrialService;
+export default TrialService;
 

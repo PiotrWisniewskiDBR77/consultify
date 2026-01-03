@@ -1,34 +1,121 @@
 /**
  * SystemHealth Routes
- * API endpoints for systemHealth
+ * API endpoints for system health monitoring
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript
+ * Fully migrated to TypeScript ES modules
  */
 
-import { Router } from 'express';
-import { createRequire } from 'module';
+import { Router, Response } from 'express';
+import { verifySuperAdmin, type AuthRequest } from '../middleware/superAdmin.middleware.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
-const require = createRequire(import.meta.url);
-
-// Import the JS implementation for now (will be fully migrated later)
-const systemHealthRoutesJS = require('../../routes/systemHealth.js');
-
-// Create router and apply JS routes
 const router = Router();
 
-// Re-export the JS router (maintains backward compatibility)
-// The JS route file exports a router that we can use directly
-if (typeof systemHealthRoutesJS === 'function') {
-    // If it's a router function, use it
-    router.use(systemHealthRoutesJS);
-} else if (systemHealthRoutesJS.default) {
-    // If it has a default export
-    router.use(systemHealthRoutesJS.default);
-} else {
-    // If it's the router itself
-    router.use(systemHealthRoutesJS);
+// Service interfaces
+interface SystemHealthServiceInterface {
+    getDetailedHealth?: () => Promise<unknown>;
+    getMetrics?: () => Promise<unknown>;
+    getServiceStatus?: () => Promise<unknown>;
 }
+
+// Dynamic import for SystemHealthService (may not be migrated yet)
+let SystemHealthService: SystemHealthServiceInterface | null = null;
+
+try {
+    const healthModule = await import('../../services/systemHealthService.js');
+    SystemHealthService = (healthModule.default || healthModule) as SystemHealthServiceInterface;
+} catch {
+    console.warn('[SystemHealth Routes] SystemHealthService not available');
+}
+
+/**
+ * GET /api/system-health
+ * Basic health check (public)
+ */
+router.get('/', asyncHandler(async (_req, res: Response) => {
+    if (!SystemHealthService?.getDetailedHealth) {
+        return res.status(503).json({ error: 'System health service not available' });
+    }
+
+    try {
+        const health = await SystemHealthService.getDetailedHealth();
+        res.json(health);
+    } catch (error: unknown) {
+        console.error('[SystemHealth] Error:', error);
+        res.status(500).json({ error: 'Health check failed' });
+    }
+}));
+
+/**
+ * GET /api/system-health/detailed
+ * Detailed health check (SuperAdmin only)
+ */
+router.get('/detailed', verifySuperAdmin, asyncHandler(async (_req: AuthRequest, res: Response) => {
+    if (!SystemHealthService?.getDetailedHealth) {
+        return res.status(503).json({ error: 'System health service not available' });
+    }
+
+    try {
+        const health = await SystemHealthService.getDetailedHealth();
+        res.json(health);
+    } catch (error: unknown) {
+        console.error('[SystemHealth] Error:', error);
+        res.status(500).json({ error: 'Health check failed' });
+    }
+}));
+
+/**
+ * GET /api/system-health/metrics
+ * Get system metrics (SuperAdmin only)
+ */
+router.get('/metrics', verifySuperAdmin, asyncHandler(async (_req: AuthRequest, res: Response) => {
+    if (!SystemHealthService?.getMetrics) {
+        return res.status(503).json({ error: 'System health service not available' });
+    }
+
+    try {
+        const metrics = await SystemHealthService.getMetrics();
+        res.json(metrics);
+    } catch (error: unknown) {
+        console.error('[SystemHealth] Error fetching metrics:', error);
+        res.status(500).json({ error: 'Failed to fetch system metrics' });
+    }
+}));
+
+/**
+ * GET /api/system-health/services
+ * Get service status (SuperAdmin only)
+ */
+router.get('/services', verifySuperAdmin, asyncHandler(async (_req: AuthRequest, res: Response) => {
+    if (!SystemHealthService?.getServiceStatus) {
+        return res.status(503).json({ error: 'System health service not available' });
+    }
+
+    try {
+        const status = await SystemHealthService.getServiceStatus();
+        res.json(status);
+    } catch (error: unknown) {
+        console.error('[SystemHealth] Error fetching service status:', error);
+        res.status(500).json({ error: 'Failed to fetch service status' });
+    }
+}));
+
+/**
+ * POST /api/system-health/refresh
+ * Force refresh health data (SuperAdmin only)
+ */
+router.post('/refresh', verifySuperAdmin, asyncHandler(async (_req: AuthRequest, res: Response) => {
+    if (!SystemHealthService?.getDetailedHealth) {
+        return res.status(503).json({ error: 'System health service not available' });
+    }
+
+    try {
+        const health = await SystemHealthService.getDetailedHealth();
+        res.json(health);
+    } catch (error: unknown) {
+        console.error('[SystemHealth] Error refreshing:', error);
+        res.status(500).json({ error: 'Failed to refresh health data' });
+    }
+}));
 
 export default router;

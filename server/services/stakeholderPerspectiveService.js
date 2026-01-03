@@ -9,9 +9,39 @@
  * - COO: Operational efficiency, process, execution
  */
 
-const { getCoordinator } = require('./ai/agents');
-const llmService = require('./ai/llmService');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection for testing
+const deps = {
+    _getCoordinator: null,
+    _llmService: null,
+    _uuidv4: null,
+
+    get getCoordinator() { return this._getCoordinator; },
+    set getCoordinator(val) { this._getCoordinator = val; },
+
+    get llmService() { return this._llmService; },
+    set llmService(val) { this._llmService = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._getCoordinator) {
+        const { getCoordinator } = await import('./ai/agents/index.js');
+        deps._getCoordinator = getCoordinator;
+    }
+    if (!deps._llmService) {
+        const { default: llmService } = await import('./ai/llmService.js');
+        deps._llmService = llmService;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
 
 // Stakeholder personas
 const PERSONAS = {
@@ -177,7 +207,7 @@ const StakeholderPerspectiveService = {
         const prompt = StakeholderPerspectiveService.buildPrompt(persona, topic, context);
 
         try {
-            const response = await llmService.generateResponse({
+            const response = await deps.llmService.generateResponse({
                 prompt,
                 maxTokens: 1500,
                 temperature: 0.7
@@ -313,7 +343,7 @@ Provide a unified synthesis that:
 Be balanced and acknowledge all viewpoints.`;
 
         try {
-            const response = await llmService.generateResponse({
+            const response = await deps.llmService.generateResponse({
                 prompt: synthesisPrompt,
                 maxTokens: 800,
                 temperature: 0.6
@@ -378,7 +408,7 @@ Expected ROI: ${initiative.expectedROI || 'Not calculated'}%`;
     }
 };
 
-module.exports = StakeholderPerspectiveService;
+export default StakeholderPerspectiveService;
 
 
 

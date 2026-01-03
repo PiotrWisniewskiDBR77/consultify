@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const pricingRoutesJS = require('../../routes/pricing.js');
+const pricingRoutesJSPromise = (async () => {
+    const module = await import('../../routes/pricing.js');
+    return module.default || module;
+})();
+const pricingRoutesJS = pricingRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

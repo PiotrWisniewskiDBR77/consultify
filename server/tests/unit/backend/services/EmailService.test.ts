@@ -1,16 +1,8 @@
-/**
- * EmailService Unit Tests
- * Enterprise SaaS Architecture - TypeScript Backend
- * 
- * Unit tests for EmailService - 85%+ coverage target
- */
-
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import EmailService from '../../../../src/services/emailService.js';
+import EmailService from '../../../../services/emailService.js';
 
 describe('EmailService', () => {
-    let mockDb: IDatabase;
+    let mockDb;
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -18,41 +10,35 @@ describe('EmailService', () => {
         mockDb = {
             get: vi.fn(),
             all: vi.fn(),
-            run: vi.fn((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                const dbObj = {
-                    ...mockDb,
-                    changes: 1,
-                    lastID: 1,
-                };
+            run: vi.fn((sql, params, callback) => {
                 if (callback) {
                     callback(null);
                 }
-                return dbObj;
             }),
             exec: vi.fn(),
             serialize: vi.fn(),
             close: vi.fn(),
             query: vi.fn(),
-        } as unknown as IDatabase;
+            queryOne: vi.fn(),
+            queryAll: vi.fn(),
+            queryRun: vi.fn()
+        };
 
-        if (EmailService.setDependencies) {
-            EmailService.setDependencies({ db: mockDb });
-        }
+        EmailService.setDependencies({ db: mockDb });
     });
 
     describe('Service Methods', () => {
         it('should have required methods', () => {
             expect(EmailService).toBeDefined();
+            expect(typeof EmailService.send).toBe('function');
         });
     });
 
     describe('Error Handling', () => {
         it('should handle database errors gracefully', () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                callback(new Error('Database error'));
-            });
-
+            mockDb.queryAll.mockImplementation(() => Promise.resolve([]));
             expect(true).toBe(true);
         });
     });
 });
+

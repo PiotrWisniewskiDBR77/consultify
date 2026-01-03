@@ -11,10 +11,10 @@
  * - PMBOK, PRINCE2, Agile methodologies
  */
 
-const { BaseAgent } = require('./baseAgent');
-const llmService = require('../llmService');
+import { BaseAgent } from './baseAgent.js';
+import llmService from '../llmService.js';
 
-class PMOAgent extends BaseAgent {
+export class PMOAgent extends BaseAgent {
     constructor(config = {}) {
         super({
             name: 'PMOAgent',
@@ -457,10 +457,4 @@ Provide:
     }
 }
 
-module.exports = { PMOAgent };
-
-
-
-
-
-
+export default PMOAgent;

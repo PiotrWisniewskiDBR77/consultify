@@ -1,19 +1,32 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { TestDatabaseFactory } from '../../utils/TestDatabaseFactory.js';
 
 /**
  * Integration tests for RagService
- * Uses real database - skips tests requiring external APIs
+ * Uses isolated in-memory database via TestDatabaseFactory
  */
 describe('RagService - Integration', () => {
     let RagService;
+    let testDb;
 
     beforeAll(async () => {
-        // Clear any mock flags
-        delete process.env.MOCK_DB;
+        // Create isolated test database
+        testDb = await TestDatabaseFactory.create();
 
-        // Import the real service (no mocks)
+        // Import the service and inject test database
         const mod = await import('../../../server/services/ragService.js');
         RagService = mod.default;
+
+        // Inject test database if service supports DI
+        if (RagService.setDependencies) {
+            RagService.setDependencies({ db: testDb });
+        }
+    });
+
+    afterAll(async () => {
+        if (testDb && testDb.destroy) {
+            await testDb.destroy();
+        }
     });
 
     describe('generateEmbedding', () => {

@@ -12,9 +12,48 @@
  * @module responseQualityService
  */
 
-const db = require('../../database');
-const { aiLogger } = require('./logger');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection for testing
+const deps = {
+    _db: null,
+    _aiLogger: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get aiLogger() { return this._aiLogger; },
+    set aiLogger(val) { this._aiLogger = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../../database.js');
+        deps._db = db;
+    }
+    if (!deps._aiLogger) {
+        const { aiLogger } = await import('./logger.js');
+        deps._aiLogger = aiLogger;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
+
+/**
+ * Set dependencies (for testing)
+ */
+function setDependencies(newDeps = {}) {
+    if (newDeps.db) deps.db = newDeps.db;
+    if (newDeps.aiLogger) deps.aiLogger = newDeps.aiLogger;
+    if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
+}
 
 // Quality levels
 const QUALITY_LEVELS = {
@@ -41,6 +80,7 @@ const ResponseQualityService = {
      * @returns {Promise<object>} Quality metrics
      */
     calculateQuality: async ({ query, response, context = {}, sources = [] }) => {
+        await initDeps();
         const startTime = Date.now();
 
         try {
@@ -87,7 +127,7 @@ const ResponseQualityService = {
             return metrics;
 
         } catch (error) {
-            aiLogger.error('ResponseQuality', `Error calculating quality: ${error.message}`);
+            deps.aiLogger.error('ResponseQuality', `Error calculating quality: ${error.message}`);
             return {
                 relevance: 0.5,
                 groundedness: 0.5,
@@ -382,8 +422,9 @@ const ResponseQualityService = {
      * Log quality metrics for analysis
      */
     _logQualityMetrics: async (metrics, query, context) => {
+        await initDeps();
         return new Promise((resolve) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO ai_quality_metrics (
                     id, organization_id, project_id,
                     relevance, groundedness, completeness, coherence, overall,
@@ -391,7 +432,7 @@ const ResponseQualityService = {
                     created_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
-                uuidv4(),
+                deps.uuidv4(),
                 context.organizationId || null,
                 context.projectId || null,
                 metrics.relevance,
@@ -405,7 +446,7 @@ const ResponseQualityService = {
                 new Date().toISOString()
             ], (err) => {
                 if (err) {
-                    aiLogger.error('ResponseQuality', `Failed to log quality metrics: ${err.message}`);
+                    deps.aiLogger.error('ResponseQuality', `Failed to log quality metrics: ${err.message}`);
                 }
                 resolve();
             });
@@ -416,8 +457,9 @@ const ResponseQualityService = {
      * Get aggregate quality metrics for reporting
      */
     getAggregateMetrics: async (organizationId, days = 30) => {
+        await initDeps();
         return new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT 
                     AVG(relevance) as avgRelevance,
                     AVG(groundedness) as avgGroundedness,
@@ -434,7 +476,7 @@ const ResponseQualityService = {
                   AND created_at >= datetime('now', '-' || ? || ' days')
             `, [organizationId, days], (err, row) => {
                 if (err) {
-                    aiLogger.error('ResponseQuality', `Failed to get aggregate metrics: ${err.message}`);
+                    deps.aiLogger.error('ResponseQuality', `Failed to get aggregate metrics: ${err.message}`);
                     return resolve(null);
                 }
                 resolve(row);
@@ -446,8 +488,9 @@ const ResponseQualityService = {
      * Get quality trends over time
      */
     getQualityTrends: async (organizationId, days = 30) => {
+        await initDeps();
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT 
                     DATE(created_at) as date,
                     AVG(overall) as avgQuality,
@@ -459,15 +502,20 @@ const ResponseQualityService = {
                 ORDER BY date ASC
             `, [organizationId, days], (err, rows) => {
                 if (err) {
-                    aiLogger.error('ResponseQuality', `Failed to get quality trends: ${err.message}`);
+                    deps.aiLogger.error('ResponseQuality', `Failed to get quality trends: ${err.message}`);
                     return resolve([]);
                 }
                 resolve(rows || []);
             });
         });
-    }
+    },
+
+    /**
+     * Set dependencies (for testing)
+     */
+    setDependencies
 };
 
-module.exports = ResponseQualityService;
+export default ResponseQualityService;
 
 

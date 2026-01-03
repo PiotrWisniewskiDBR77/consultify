@@ -429,7 +429,7 @@ const ReportEmailService = {
     }
 };
 
-module.exports = ReportEmailService;
+export default ReportEmailService;
 
 
 

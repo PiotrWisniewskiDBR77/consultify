@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const notification_rulesRoutesJS = require('../../routes/notification-rules.js');
+const notification_rulesRoutesJSPromise = (async () => {
+    const module = await import('../../routes/notification-rules.js');
+    return module.default || module;
+})();
+const notification_rulesRoutesJS = notification_rulesRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

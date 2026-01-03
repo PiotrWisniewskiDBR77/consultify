@@ -10,8 +10,31 @@
  * - Timeline slip detection
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection for testing
+const deps = {
+    _db: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
 
 // Thresholds for warnings
 const THRESHOLDS = {
@@ -145,7 +168,7 @@ const PredictiveService = {
 
     getInitiatives: (projectId) => {
         return new Promise((resolve) => {
-            db.all(`SELECT * FROM initiatives WHERE project_id = ?`, [projectId], (err, rows) => {
+            deps.db.all(`SELECT * FROM initiatives WHERE project_id = ?`, [projectId], (err, rows) => {
                 resolve(rows || []);
             });
         });
@@ -153,7 +176,7 @@ const PredictiveService = {
 
     getTasks: (projectId) => {
         return new Promise((resolve) => {
-            db.all(`SELECT * FROM tasks WHERE project_id = ?`, [projectId], (err, rows) => {
+            deps.db.all(`SELECT * FROM tasks WHERE project_id = ?`, [projectId], (err, rows) => {
                 resolve(rows || []);
             });
         });
@@ -161,7 +184,7 @@ const PredictiveService = {
 
     getMilestones: (projectId) => {
         return new Promise((resolve) => {
-            db.all(`SELECT * FROM milestones WHERE project_id = ?`, [projectId], (err, rows) => {
+            deps.db.all(`SELECT * FROM milestones WHERE project_id = ?`, [projectId], (err, rows) => {
                 resolve(rows || []);
             });
         });
@@ -169,7 +192,7 @@ const PredictiveService = {
 
     getResources: (projectId) => {
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT pm.*, u.first_name, u.last_name, u.email
                 FROM project_members pm
                 JOIN users u ON pm.user_id = u.id
@@ -182,7 +205,7 @@ const PredictiveService = {
 
     getRecentActivities: (projectId) => {
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT * FROM activity_logs 
                 WHERE entity_id = ? OR new_value LIKE ?
                 ORDER BY created_at DESC
@@ -697,7 +720,7 @@ const PredictiveService = {
      */
     storeAnalysis: async (projectId, analysis) => {
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO predictive_analyses (id, project_id, signals, predictions, overall_risk, analyzed_at)
                 VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             `, [
@@ -720,7 +743,7 @@ const PredictiveService = {
      */
     getHistoricalAnalyses: async (projectId, limit = 10) => {
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT * FROM predictive_analyses 
                 WHERE project_id = ?
                 ORDER BY analyzed_at DESC
@@ -742,7 +765,7 @@ const PredictiveService = {
      */
     initialize: async () => {
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 CREATE TABLE IF NOT EXISTS predictive_analyses (
                     id TEXT PRIMARY KEY,
                     project_id TEXT NOT NULL,
@@ -753,13 +776,13 @@ const PredictiveService = {
                 )
             `, (err) => {
                 if (err) return reject(err);
-                db.run(`CREATE INDEX IF NOT EXISTS idx_pa_project ON predictive_analyses(project_id)`, resolve);
+                deps.db.run(`CREATE INDEX IF NOT EXISTS idx_pa_project ON predictive_analyses(project_id)`, resolve);
             });
         });
     }
 };
 
-module.exports = PredictiveService;
+export default PredictiveService;
 
 
 

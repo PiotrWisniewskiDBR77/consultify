@@ -8,9 +8,9 @@
 import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
 import logger from '../utils/Logger.js';
-import { createRequire } from 'module';
 
-const require = createRequire(import.meta.url);
+
+
 
 // ==========================================
 // TYPES
@@ -62,10 +62,10 @@ class BillingCron {
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
             db: deps?.db || getDatabase(),
-            budgetManagementService: deps?.budgetManagementService || require('../../services/budgetManagementService.js'),
-            adminAlertService: deps?.adminAlertService || require('../../services/adminAlertService.js'),
-            payAsYouGoService: deps?.payAsYouGoService || require('../../services/payAsYouGoService.js'),
-            seatManagementService: deps?.seatManagementService || require('../../services/seatManagementService.js'),
+            budgetManagementService: deps?.budgetManagementService || await import('../../services/budgetManagementService.js').then(m => m.default || m),
+            adminAlertService: deps?.adminAlertService || await import('../../services/adminAlertService.js').then(m => m.default || m),
+            payAsYouGoService: deps?.payAsYouGoService || await import('../../services/payAsYouGoService.js').then(m => m.default || m),
+            seatManagementService: deps?.seatManagementService || await import('../../services/seatManagementService.js').then(m => m.default || m),
         };
     }
 

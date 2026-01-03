@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const performance_metricsRoutesJS = require('../../routes/performance-metrics.js');
+const performance_metricsRoutesJSPromise = (async () => {
+    const module = await import('../../routes/performance-metrics.js');
+    return module.default || module;
+})();
+const performance_metricsRoutesJS = performance_metricsRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

@@ -132,9 +132,10 @@ export function AIPerformanceDashboard() {
 
     useEffect(() => {
         if (autoRefresh) {
-            const interval = setInterval(loadMetrics, 30000); // Refresh every 30s
+            const interval = setInterval(() => void loadMetrics(), 30000); // Refresh every 30s
             return () => clearInterval(interval);
         }
+        return undefined;
     }, [autoRefresh, loadMetrics]);
 
     const generateMockMetrics = (): PerformanceMetrics => ({

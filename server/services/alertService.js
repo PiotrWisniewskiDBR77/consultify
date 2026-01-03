@@ -94,4 +94,4 @@ const AlertService = {
     }
 };
 
-module.exports = AlertService;
+export default AlertService;

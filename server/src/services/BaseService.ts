@@ -11,7 +11,9 @@
 
 import type { IDatabase, RunResult } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
 // TYPES
@@ -98,50 +100,25 @@ export abstract class BaseService<T extends { id: string }> {
         sql: string,
         params: unknown[] = []
     ): Promise<RunResult> {
-        return new Promise((resolve, reject) => {
-            this.db.run(sql, params, (err) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                // Get result from context (SQLite) or from query result (PostgreSQL)
-                const result: RunResult = {
-                    lastID: (this.db as unknown as { lastID?: number }).lastID,
-                    changes: (this.db as unknown as { changes?: number }).changes || 0,
-                };
-                resolve(result);
-            });
-        });
+        const result = await DbPromise.run(sql, params);
+        return {
+            lastID: result.lastID,
+            changes: result.changes || 0,
+        };
     }
 
     /**
      * Internal query all implementation
      */
     private async queryAllInternal<R = unknown>(sql: string, params: unknown[]): Promise<R[]> {
-        return new Promise((resolve, reject) => {
-            this.db.all<R>(sql, params, (err, rows) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                resolve(rows || []);
-            });
-        });
+        return await DbPromise.all<R>(sql, params);
     }
 
     /**
      * Internal query one implementation
      */
     private async queryOneInternal<R = unknown>(sql: string, params: unknown[]): Promise<R | null> {
-        return new Promise((resolve, reject) => {
-            this.db.get<R>(sql, params, (err, row) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                resolve(row || null);
-            });
-        });
+        return await DbPromise.get<R>(sql, params);
     }
 
     /**

@@ -1,13 +1,28 @@
 // AI Memory Manager - Handles 4-layer memory system
 // AI Core Layer — Enterprise PMO Brain
 
-// Dependency injection container (for deterministic unit tests)
-const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+// Dependency injection container
+let deps = {
+    db: null,
+    uuidv4: null
 };
 
-const MEMORY_TYPES = {
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (deps.db && deps.uuidv4) return;
+
+    const [dbModule, uuidModule] = await Promise.all([
+        import('../database.js'),
+        import('uuid')
+    ]);
+
+    deps.db = dbModule.default || dbModule;
+    deps.uuidv4 = uuidModule.v4;
+}
+
+export const MEMORY_TYPES = {
     DECISION: 'DECISION',
     PHASE_TRANSITION: 'PHASE_TRANSITION',
     RECOMMENDATION: 'RECOMMENDATION',
@@ -15,7 +30,7 @@ const MEMORY_TYPES = {
 };
 
 // Token limits per model (conservative estimates)
-const MODEL_TOKEN_LIMITS = {
+export const MODEL_TOKEN_LIMITS = {
     'gpt-4': 8192,
     'gpt-4-turbo': 128000,
     'gpt-4o': 128000,
@@ -27,25 +42,29 @@ const MODEL_TOKEN_LIMITS = {
     'default': 8192
 };
 
-const AIMemoryManager = {
+export const AIMemoryManager = {
     MEMORY_TYPES,
 
     // For testing: allow overriding dependencies
     setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
+        deps = { ...deps, ...newDeps };
     },
 
     // ==================== SESSION MEMORY ====================
     // (Handled in-memory, not persisted to DB)
 
-    createSession: () => ({
-        conversationId: deps.uuidv4(),
-        messages: [],
-        currentScreen: null,
-        startedAt: new Date().toISOString()
-    }),
+    createSession: async () => {
+        await initDeps();
+        return {
+            conversationId: deps.uuidv4(),
+            messages: [],
+            currentScreen: null,
+            startedAt: new Date().toISOString()
+        };
+    },
 
     addMessage: (session, role, content) => {
+
         session.messages.push({
             role,
             content,
@@ -61,6 +80,7 @@ const AIMemoryManager = {
      * GAP-08: Added audit logging
      */
     recordProjectMemory: async (projectId, memoryType, content, userId) => {
+        await initDeps();
         const id = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
@@ -108,6 +128,7 @@ const AIMemoryManager = {
      * Record a decision with rationale
      */
     recordDecision: async (projectId, decisionId, title, outcome, rationale, userId) => {
+        await initDeps();
         return AIMemoryManager.recordProjectMemory(projectId, MEMORY_TYPES.DECISION, {
             decisionId,
             title,
@@ -121,6 +142,7 @@ const AIMemoryManager = {
      * Record phase transition
      */
     recordPhaseTransition: async (projectId, fromPhase, toPhase, reason, userId) => {
+        await initDeps();
         return AIMemoryManager.recordProjectMemory(projectId, MEMORY_TYPES.PHASE_TRANSITION, {
             from: fromPhase,
             to: toPhase,
@@ -133,6 +155,7 @@ const AIMemoryManager = {
      * Record AI recommendation and user response
      */
     recordRecommendation: async (projectId, recommendation, accepted, userFeedback, userId) => {
+        await initDeps();
         return AIMemoryManager.recordProjectMemory(projectId, MEMORY_TYPES.RECOMMENDATION, {
             recommendation,
             accepted,
@@ -145,6 +168,7 @@ const AIMemoryManager = {
      * Get project memory
      */
     getProjectMemory: async (projectId, memoryType = null, limit = 20) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             let sql = `SELECT * FROM ai_project_memory WHERE project_id = ?`;
             const params = [projectId];
@@ -176,6 +200,7 @@ const AIMemoryManager = {
      * Build project memory summary for AI context
      */
     buildProjectMemorySummary: async (projectId) => {
+        await initDeps();
         const decisions = await AIMemoryManager.getProjectMemory(projectId, MEMORY_TYPES.DECISION, 5);
         const transitions = await AIMemoryManager.getProjectMemory(projectId, MEMORY_TYPES.PHASE_TRANSITION, 3);
         const recommendations = await AIMemoryManager.getProjectMemory(projectId, MEMORY_TYPES.RECOMMENDATION, 5);
@@ -200,31 +225,31 @@ const AIMemoryManager = {
      */
     calculateRelevance: (content, query) => {
         if (!content || !query) return 0;
-        
+
         // Normalize both strings
         const normalizedContent = (typeof content === 'string' ? content : JSON.stringify(content)).toLowerCase();
         const normalizedQuery = query.toLowerCase();
-        
+
         // Extract keywords from query (ignore common words)
-        const stopWords = new Set(['the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 
-            'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 
-            'should', 'may', 'might', 'must', 'shall', 'can', 'need', 'to', 'of', 'in', 
-            'for', 'on', 'with', 'at', 'by', 'from', 'as', 'or', 'and', 'but', 'if', 
-            'then', 'than', 'so', 'that', 'this', 'these', 'those', 'what', 'which', 
-            'who', 'whom', 'whose', 'when', 'where', 'why', 'how', 'all', 'each', 
-            'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 
+        const stopWords = new Set(['the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been',
+            'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+            'should', 'may', 'might', 'must', 'shall', 'can', 'need', 'to', 'of', 'in',
+            'for', 'on', 'with', 'at', 'by', 'from', 'as', 'or', 'and', 'but', 'if',
+            'then', 'than', 'so', 'that', 'this', 'these', 'those', 'what', 'which',
+            'who', 'whom', 'whose', 'when', 'where', 'why', 'how', 'all', 'each',
+            'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no',
             'not', 'only', 'same', 'just', 'also', 'very', 'it', 'its', 'my', 'your']);
-        
+
         const queryWords = normalizedQuery
             .split(/\s+/)
             .filter(word => word.length > 2 && !stopWords.has(word));
-        
+
         if (queryWords.length === 0) return 0.5; // Default score for empty query
-        
+
         // Calculate matches
         let exactMatches = 0;
         let partialMatches = 0;
-        
+
         queryWords.forEach(word => {
             // Exact word match (bounded by word boundaries or special characters)
             const exactRegex = new RegExp(`\\b${word}\\b`, 'gi');
@@ -237,19 +262,19 @@ const AIMemoryManager = {
                 }
             }
         });
-        
+
         // Calculate score
         const exactScore = exactMatches / queryWords.length;
         const partialScore = partialMatches / queryWords.length;
-        
+
         // Weight: exact matches are worth more
         const score = (exactScore * 0.7) + (partialScore * 0.3);
-        
+
         // Boost for phrase match
         if (normalizedContent.includes(normalizedQuery)) {
             return Math.min(1, score + 0.3);
         }
-        
+
         return score;
     },
 
@@ -263,44 +288,45 @@ const AIMemoryManager = {
      * @returns {Array} Relevance-sorted memory items
      */
     getRelevantMemory: async (projectId, query, limit = 10, minRelevance = 0.1) => {
+        await initDeps();
         // Fetch more items than needed for filtering
         const fetchLimit = Math.max(limit * 3, 50);
         const allMemory = await AIMemoryManager.getProjectMemory(projectId, null, fetchLimit);
-        
+
         if (!allMemory || allMemory.length === 0) {
             return [];
         }
-        
+
         // Calculate relevance for each item
         const scoredMemory = allMemory.map(item => {
-            const contentString = typeof item.content === 'string' 
-                ? item.content 
+            const contentString = typeof item.content === 'string'
+                ? item.content
                 : JSON.stringify(item.content);
-            
+
             const relevanceScore = AIMemoryManager.calculateRelevance(contentString, query);
-            
+
             // Type weight: decisions are generally more important
             let typeWeight = 1.0;
             if (item.memory_type === MEMORY_TYPES.DECISION) typeWeight = 1.2;
             else if (item.memory_type === MEMORY_TYPES.PHASE_TRANSITION) typeWeight = 1.1;
-            
+
             // Recency weight: more recent items get slight boost
             const ageInDays = (Date.now() - new Date(item.created_at).getTime()) / (1000 * 60 * 60 * 24);
             const recencyWeight = Math.max(0.8, 1 - (ageInDays / 365)); // Decay over 1 year
-            
+
             return {
                 ...item,
                 relevanceScore,
                 weightedScore: relevanceScore * typeWeight * recencyWeight
             };
         });
-        
+
         // Filter by minimum relevance and sort by weighted score
         const relevantMemory = scoredMemory
             .filter(item => item.relevanceScore >= minRelevance)
             .sort((a, b) => b.weightedScore - a.weightedScore)
             .slice(0, limit);
-        
+
         return relevantMemory;
     },
 
@@ -312,13 +338,14 @@ const AIMemoryManager = {
      * @returns {object} Memory summary with relevance info
      */
     buildRelevantMemorySummary: async (projectId, query) => {
+        await initDeps();
         if (!query) {
             // Fallback to standard summary if no query
             return AIMemoryManager.buildProjectMemorySummary(projectId);
         }
-        
+
         const relevantMemory = await AIMemoryManager.getRelevantMemory(projectId, query, 15, 0.1);
-        
+
         // Group by type
         const decisions = relevantMemory
             .filter(m => m.memory_type === MEMORY_TYPES.DECISION)
@@ -329,7 +356,7 @@ const AIMemoryManager = {
         const recommendations = relevantMemory
             .filter(m => m.memory_type === MEMORY_TYPES.RECOMMENDATION)
             .slice(0, 5);
-        
+
         return {
             projectId,
             majorDecisions: decisions.map(d => ({
@@ -356,6 +383,7 @@ const AIMemoryManager = {
      * Get or create organization memory
      */
     getOrganizationMemory: async (organizationId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.get(`SELECT * FROM ai_organization_memory WHERE organization_id = ?`,
                 [organizationId], (err, row) => {
@@ -388,6 +416,7 @@ const AIMemoryManager = {
      * Update organization memory
      */
     updateOrganizationMemory: async (organizationId, updates) => {
+        await initDeps();
         const { governanceStyle, aiStrictness, pmoMaturity, patterns } = updates;
 
         return new Promise((resolve, reject) => {
@@ -410,6 +439,7 @@ const AIMemoryManager = {
      * Add recurring pattern
      */
     addRecurringPattern: async (organizationId, pattern) => {
+        await initDeps();
         const memory = await AIMemoryManager.getOrganizationMemory(organizationId);
         const patterns = memory.recurringPatterns || [];
         patterns.push(pattern);
@@ -423,6 +453,7 @@ const AIMemoryManager = {
      * Get or create user preferences
      */
     getUserPreferences: async (userId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.get(`SELECT * FROM ai_user_preferences WHERE user_id = ?`, [userId], (err, row) => {
                 if (err) return reject(err);
@@ -450,6 +481,7 @@ const AIMemoryManager = {
      * Update user preferences
      */
     updateUserPreferences: async (userId, updates) => {
+        await initDeps();
         const { preferredTone, educationMode, proactiveNotifications, preferredLanguage } = updates;
 
         return new Promise((resolve, reject) => {
@@ -480,6 +512,7 @@ const AIMemoryManager = {
      * Clear project memory
      */
     clearProjectMemory: async (projectId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.run(`DELETE FROM ai_project_memory WHERE project_id = ?`, [projectId], function (err) {
                 if (err) return reject(err);
@@ -492,6 +525,7 @@ const AIMemoryManager = {
      * Clear organization memory
      */
     clearOrganizationMemory: async (organizationId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.run(`DELETE FROM ai_organization_memory WHERE organization_id = ?`,
                 [organizationId], function (err) {
@@ -511,20 +545,21 @@ const AIMemoryManager = {
      * @returns {object} Cleanup result
      */
     cleanupOldMemory: async (projectId = null, maxAgeDays = 90) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             let sql = `DELETE FROM ai_project_memory WHERE created_at < datetime('now', '-' || ? || ' days')`;
             const params = [maxAgeDays];
-            
+
             if (projectId) {
                 sql += ` AND project_id = ?`;
                 params.push(projectId);
             }
-            
+
             deps.db.run(sql, params, function (err) {
                 if (err) return reject(err);
-                
+
                 console.log(`[AIMemoryManager] Cleaned up ${this.changes} old memory entries (older than ${maxAgeDays} days)`);
-                resolve({ 
+                resolve({
                     deleted: this.changes,
                     maxAgeDays,
                     projectId: projectId || 'all'
@@ -539,6 +574,7 @@ const AIMemoryManager = {
      * @returns {object} Cleanup result
      */
     cleanupPartialResponses: async (maxAgeHours = 1) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.run(
                 `DELETE FROM ai_partial_responses WHERE updated_at < datetime('now', '-' || ? || ' hours')`,
@@ -551,7 +587,7 @@ const AIMemoryManager = {
                         }
                         return reject(err);
                     }
-                    
+
                     if (this.changes > 0) {
                         console.log(`[AIMemoryManager] Cleaned up ${this.changes} old partial responses`);
                     }
@@ -567,6 +603,7 @@ const AIMemoryManager = {
      * @returns {object} Cleanup result
      */
     cleanupOldFeedback: async (maxAgeDays = 365) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.run(
                 `DELETE FROM ai_feedback WHERE created_at < datetime('now', '-' || ? || ' days')`,
@@ -578,7 +615,7 @@ const AIMemoryManager = {
                         }
                         return reject(err);
                     }
-                    
+
                     if (this.changes > 0) {
                         console.log(`[AIMemoryManager] Cleaned up ${this.changes} old feedback entries`);
                     }
@@ -593,32 +630,33 @@ const AIMemoryManager = {
      * @returns {object} Memory statistics
      */
     getMemoryStats: async () => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             const stats = {};
-            
+
             // Get project memory count
             deps.db.get(`SELECT COUNT(*) as count FROM ai_project_memory`, [], (err, row) => {
                 stats.projectMemoryCount = row?.count || 0;
-                
+
                 // Get organization memory count
                 deps.db.get(`SELECT COUNT(*) as count FROM ai_organization_memory`, [], (err, row) => {
                     stats.orgMemoryCount = row?.count || 0;
-                    
+
                     // Get user preferences count
                     deps.db.get(`SELECT COUNT(*) as count FROM ai_user_preferences`, [], (err, row) => {
                         stats.userPreferencesCount = row?.count || 0;
-                        
+
                         // Get oldest memory entry
                         deps.db.get(`SELECT MIN(created_at) as oldest FROM ai_project_memory`, [], (err, row) => {
                             stats.oldestMemoryEntry = row?.oldest || null;
-                            
+
                             // Get memory by type
                             deps.db.all(`SELECT memory_type, COUNT(*) as count FROM ai_project_memory GROUP BY memory_type`, [], (err, rows) => {
                                 stats.memoryByType = {};
                                 (rows || []).forEach(r => {
                                     stats.memoryByType[r.memory_type] = r.count;
                                 });
-                                
+
                                 resolve(stats);
                             });
                         });
@@ -634,6 +672,7 @@ const AIMemoryManager = {
      * @returns {object} Combined cleanup results
      */
     runCleanupCycle: async () => {
+        await initDeps();
         const startTime = Date.now();
         const results = {
             timestamp: new Date().toISOString(),
@@ -643,29 +682,29 @@ const AIMemoryManager = {
             stats: null,
             duration: 0
         };
-        
+
         try {
             // 1. Cleanup old project memory (90 days)
             results.projectMemory = await AIMemoryManager.cleanupOldMemory(null, 90);
-            
+
             // 2. Cleanup partial responses (1 hour)
             results.partialResponses = await AIMemoryManager.cleanupPartialResponses(1);
-            
+
             // 3. Cleanup old feedback (365 days)
             results.feedback = await AIMemoryManager.cleanupOldFeedback(365);
-            
+
             // 4. Get current stats
             results.stats = await AIMemoryManager.getMemoryStats();
-            
+
             results.duration = Date.now() - startTime;
-            
+
             console.log('[AIMemoryManager] Cleanup cycle complete:', {
                 projectMemoryDeleted: results.projectMemory.deleted,
                 partialResponsesDeleted: results.partialResponses.deleted,
                 feedbackDeleted: results.feedback.deleted,
                 duration: `${results.duration}ms`
             });
-            
+
             return results;
         } catch (error) {
             console.error('[AIMemoryManager] Cleanup cycle failed:', error);
@@ -686,7 +725,7 @@ const AIMemoryManager = {
      */
     estimateTokens: (text) => {
         if (!text || typeof text !== 'string') return 0;
-        
+
         // GPT tokenization approximation:
         // - Average ~4 characters per token for English
         // - ~3.5 characters per token for code/technical content
@@ -703,16 +742,16 @@ const AIMemoryManager = {
      */
     getModelTokenLimit: (modelName) => {
         if (!modelName) return MODEL_TOKEN_LIMITS.default;
-        
+
         // Normalize model name for lookup
         const normalizedName = modelName.toLowerCase();
-        
+
         for (const [key, limit] of Object.entries(MODEL_TOKEN_LIMITS)) {
             if (normalizedName.includes(key)) {
                 return limit;
             }
         }
-        
+
         return MODEL_TOKEN_LIMITS.default;
     },
 
@@ -728,7 +767,7 @@ const AIMemoryManager = {
 
         const estimateTokens = AIMemoryManager.estimateTokens;
         let currentTokens = estimateTokens(JSON.stringify(memory));
-        
+
         // If already under budget, return as-is
         if (currentTokens <= maxTokens) {
             return memory;
@@ -781,11 +820,11 @@ const AIMemoryManager = {
         }
 
         // Update memory count
-        trimmedMemory.memoryCount = 
+        trimmedMemory.memoryCount =
             (trimmedMemory.majorDecisions?.length || 0) +
             (trimmedMemory.phaseTransitions?.length || 0) +
             (trimmedMemory.aiRecommendations?.length || 0);
-        
+
         trimmedMemory._trimmed = true;
         trimmedMemory._originalTokens = estimateTokens(JSON.stringify(memory));
         trimmedMemory._trimmedTokens = estimateTokens(JSON.stringify(trimmedMemory));
@@ -832,7 +871,7 @@ const AIMemoryManager = {
         for (let i = conversationMessages.length - 1; i >= 0; i--) {
             const msg = conversationMessages[i];
             const msgTokens = estimateTokens(msg.content || '');
-            
+
             if (conversationTokens + msgTokens <= availableForConversation) {
                 trimmedConversation.unshift(msg);
                 conversationTokens += msgTokens;
@@ -875,16 +914,16 @@ const AIMemoryManager = {
     analyzeContextTokens: (systemPrompt, userMessage, history, memory, modelName = 'gpt-4') => {
         const estimateTokens = AIMemoryManager.estimateTokens;
         const modelLimit = AIMemoryManager.getModelTokenLimit(modelName);
-        
+
         const systemTokens = estimateTokens(systemPrompt || '');
         const userTokens = estimateTokens(userMessage || '');
         const historyTokens = (history || []).reduce((sum, msg) => sum + estimateTokens(msg.content || ''), 0);
         const memoryTokens = estimateTokens(JSON.stringify(memory || {}));
-        
+
         const totalTokens = systemTokens + userTokens + historyTokens + memoryTokens;
         const responseBuffer = Math.floor(modelLimit * 0.2); // Reserve 20% for response
         const availableForContext = modelLimit - responseBuffer;
-        
+
         return {
             breakdown: {
                 system: systemTokens,
@@ -924,7 +963,7 @@ const AIMemoryManager = {
      */
     autoTrimContext: ({ systemPrompt, userMessage, history, memory, modelName = 'gpt-4' }) => {
         const analysis = AIMemoryManager.analyzeContextTokens(systemPrompt, userMessage, history, memory, modelName);
-        
+
         if (analysis.status.withinLimits) {
             return {
                 history,
@@ -937,7 +976,7 @@ const AIMemoryManager = {
         // Calculate budget allocations (system prompt and user message are fixed)
         const fixedTokens = analysis.breakdown.system + analysis.breakdown.user;
         const availableForDynamic = analysis.limits.availableForContext - fixedTokens;
-        
+
         // Allocate: 60% history, 40% memory (history is usually more immediately relevant)
         const historyBudget = Math.floor(availableForDynamic * 0.6);
         const memoryBudget = Math.floor(availableForDynamic * 0.4);
@@ -982,6 +1021,7 @@ const AIMemoryManager = {
      * @returns {Promise<object>} User's personalization profile
      */
     getPersonalizationProfile: async (userId) => {
+        await initDeps();
         if (!userId) {
             return { ...AIMemoryManager.DEFAULT_PERSONALIZATION };
         }
@@ -1016,6 +1056,7 @@ const AIMemoryManager = {
      * @param {object} preferences - Preferences to update
      */
     updatePersonalizationProfile: async (userId, preferences) => {
+        await initDeps();
         if (!userId) return { success: false, error: 'User ID required' };
 
         const id = deps.uuidv4();
@@ -1032,7 +1073,7 @@ const AIMemoryManager = {
                 ON CONFLICT(user_id) DO UPDATE SET
                     preferences = excluded.preferences,
                     updated_at = excluded.updated_at
-            `, [id, userId, JSON.stringify(merged), now], function(err) {
+            `, [id, userId, JSON.stringify(merged), now], function (err) {
                 if (err) {
                     return reject(err);
                 }
@@ -1047,6 +1088,7 @@ const AIMemoryManager = {
      * @param {object} interaction - Interaction data { messageLength, feedback, responseTime }
      */
     learnFromInteraction: async (userId, interaction) => {
+        await initDeps();
         if (!userId) return;
 
         const { messageLength, feedback, responseTime, usedCodeSnippets } = interaction;
@@ -1085,6 +1127,7 @@ const AIMemoryManager = {
      * @returns {Promise<string>} Personalization prompt additions
      */
     buildPersonalizedPrompt: async (userId) => {
+        await initDeps();
         const profile = await AIMemoryManager.getPersonalizationProfile(userId);
         const parts = [];
 
@@ -1165,6 +1208,7 @@ const AIMemoryManager = {
      * @param {string} userId - User ID
      */
     getPersonalizationAnalytics: async (userId) => {
+        await initDeps();
         const profile = await AIMemoryManager.getPersonalizationProfile(userId);
 
         return new Promise((resolve) => {
@@ -1189,4 +1233,4 @@ const AIMemoryManager = {
     }
 };
 
-module.exports = AIMemoryManager;
+export default AIMemoryManager;

@@ -1,32 +1,52 @@
 /**
- * NotificationService Service
+ * Notification Service Proxy
  * Enterprise SaaS Architecture - TypeScript Backend
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Standardized PascalCase wrapper for NotificationService
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
 
-const require = createRequire(import.meta.url);
+// Lazy load the JS service module
+const loadNotificationService = createCachedLazyService('../../services/notificationService.js');
 
-// Import the JS implementation for now (will be fully migrated later)
-const notificationServiceServiceJS = require('../../services/notificationService.js');
+/**
+ * Export a proxy object that awaits the service on each call.
+ * This ensures that methods are only called once the service is loaded.
+ */
+const NotificationService = {
+    create: async (notification: any) => {
+        const service = await loadNotificationService();
+        return (service as any).create(notification);
+    },
+    getForUser: async (userId: string, options: any = {}) => {
+        const service = await loadNotificationService();
+        return (service as any).getForUser(userId, options);
+    },
+    markRead: async (notificationId: string, userId: string) => {
+        const service = await loadNotificationService();
+        return (service as any).markRead(notificationId, userId);
+    },
+    markAllRead: async (userId: string) => {
+        const service = await loadNotificationService();
+        return (service as any).markAllRead(userId);
+    },
+    delete: async (notificationId: string, userId: string) => {
+        const service = await loadNotificationService();
+        return (service as any).delete(notificationId, userId);
+    },
+    getCounts: async (userId: string) => {
+        const service = await loadNotificationService();
+        return (service as any).getCounts(userId);
+    },
+    deliverNotification: async (userId: string, notification: any) => {
+        const service = await loadNotificationService();
+        return (service as any).deliverNotification(userId, notification);
+    },
+    notifyTaskAssigned: async (userId: string, orgId: string, projectId: string, taskId: string, taskTitle: string) => {
+        const service = await loadNotificationService();
+        return (service as any).notifyTaskAssigned(userId, orgId, projectId, taskId, taskTitle);
+    }
+};
 
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const notificationServiceService = notificationServiceServiceJS.default || notificationServiceServiceJS;
-
-// Export default instance (for backward compatibility)
-export default notificationServiceService;
-
-// Also export named exports if they exist
-if (typeof notificationServiceServiceJS === 'object' && notificationServiceServiceJS !== null) {
-    Object.keys(notificationServiceServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = notificationServiceServiceJS[key];
-        }
-    });
-}
+export default NotificationService;

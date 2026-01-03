@@ -31,9 +31,8 @@ export class OrganizationController {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const OrganizationService = require('../../services/organizationService');
-        const orgs = await OrganizationService.getUserOrganizations(userId);
+        const { getUserOrganizations } = await import('../../services/organizationService.js');
+        const orgs = await getUserOrganizations(userId);
 
         res.json(orgs);
     });
@@ -54,9 +53,8 @@ export class OrganizationController {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const OrganizationService = require('../../services/organizationService');
-        const org = await OrganizationService.createOrganization({ userId, name });
+        const { createOrganization } = await import('../../services/organizationService.js');
+        const org = await createOrganization({ userId, name });
 
         res.status(201).json(org);
     });
@@ -72,18 +70,17 @@ export class OrganizationController {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const OrganizationService = require('../../services/organizationService');
+        const { getMembers, getOrganization } = await import('../../services/organizationService.js');
 
         // Security check: User must be member
-        const members = await OrganizationService.getMembers(orgId);
-        const isMember = members.some((m: { user_id: string }) => m.user_id === userId);
+        const members = await getMembers(orgId);
+        const isMember = members.some((m) => m.user_id === userId);
         if (!isMember && req.user?.role !== 'SUPERADMIN') {
             res.status(403).json({ error: 'Access denied' });
             return;
         }
 
-        const org = await OrganizationService.getOrganization(orgId);
+        const org = await getOrganization(orgId);
         res.json(org);
     });
 
@@ -109,12 +106,11 @@ export class OrganizationController {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const OrganizationService = require('../../services/organizationService');
+        const { getMembers } = await import('../../services/organizationService.js');
 
         // Security check
-        const members = await OrganizationService.getMembers(orgId);
-        const isMember = members.some((m: { user_id: string }) => m.user_id === userId);
+        const members = await getMembers(orgId);
+        const isMember = members.some((m) => m.user_id === userId);
         if (!isMember && req.user?.role !== 'SUPERADMIN') {
             res.status(403).json({ error: 'Access denied' });
             return;
@@ -135,12 +131,11 @@ export class OrganizationController {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const OrganizationService = require('../../services/organizationService');
+        const { getMembers, addMember: addMemberService } = await import('../../services/organizationService.js');
 
         // Security check: Only OWNER or ADMIN can add members
-        const members = await OrganizationService.getMembers(orgId);
-        const currentUserMember = members.find((m: { user_id: string }) => m.user_id === userId);
+        const members = await getMembers(orgId);
+        const currentUserMember = members.find((m) => m.user_id === userId);
 
         if (!currentUserMember || !['OWNER', 'ADMIN'].includes(currentUserMember.role)) {
             if (req.user?.role !== 'SUPERADMIN') {
@@ -149,8 +144,14 @@ export class OrganizationController {
             }
         }
 
-        // TODO: Implement add member logic
-        res.json({ message: 'Member added' });
+        const result = await addMemberService({
+            organizationId: orgId,
+            userId: targetUserId,
+            role: (role || 'MEMBER') as 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT',
+            invitedBy: userId
+        });
+
+        res.json(result);
     });
 
     /**
@@ -159,9 +160,21 @@ export class OrganizationController {
     static updateMemberRole = asyncHandler(async (req: AuthenticatedRequest<UpdateMemberRoleRequest>, res: Response): Promise<void> => {
         const { orgId, memberId } = req.params;
         const { role } = req.body;
+        const userId = req.user?.id;
         
-        // TODO: Implement update member role logic
-        res.json({ id: memberId, role, message: 'Member role updated' });
+        if (!userId) {
+            res.status(401).json({ error: 'Unauthorized' });
+            return;
+        }
+
+        const { updateMemberRole } = await import('../../services/organizationService.js');
+        const result = await updateMemberRole({
+            organizationId: orgId,
+            userId: memberId,
+            role: role as 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT'
+        });
+
+        res.json(result);
     });
 
     /**
@@ -169,8 +182,19 @@ export class OrganizationController {
      */
     static removeMember = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { orgId, memberId } = req.params;
+        const userId = req.user?.id;
         
-        // TODO: Implement remove member logic
+        if (!userId) {
+            res.status(401).json({ error: 'Unauthorized' });
+            return;
+        }
+
+        const { removeMember } = await import('../../services/organizationService.js');
+        await removeMember({
+            organizationId: orgId,
+            userId: memberId
+        });
+
         res.json({ message: 'Member removed' });
     });
 }

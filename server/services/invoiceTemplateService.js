@@ -3,16 +3,32 @@
  * Handles invoice template management, customization, and PDF generation
  */
 
-const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+// Dependency injection for testing
+let deps = {
+    db: null,
+    uuidv4: null
 };
+
+/**
+ * Initialize dependencies
+ */
+async function initDeps() {
+    if (deps.db && deps.uuidv4) return;
+
+    const [dbModule, uuidModule] = await Promise.all([
+        import('../database.js'),
+        import('uuid')
+    ]);
+
+    deps.db = dbModule.default || dbModule;
+    deps.uuidv4 = uuidModule.v4;
+}
 
 /**
  * Set dependencies (for testing)
  */
-function setDependencies(newDeps = {}) {
-    Object.assign(deps, newDeps);
+export function setDependencies(newDeps = {}) {
+    deps = { ...deps, ...newDeps };
 }
 
 // ==========================================
@@ -22,7 +38,8 @@ function setDependencies(newDeps = {}) {
 /**
  * Get all templates for an organization (including system templates)
  */
-function getTemplates(organizationId = null) {
+export async function getTemplates(organizationId = null) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.all(
             `SELECT * FROM invoice_templates 
@@ -40,7 +57,8 @@ function getTemplates(organizationId = null) {
 /**
  * Get template by ID
  */
-function getTemplateById(templateId) {
+export async function getTemplateById(templateId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             'SELECT * FROM invoice_templates WHERE id = ?',
@@ -56,7 +74,8 @@ function getTemplateById(templateId) {
 /**
  * Get default template for organization
  */
-function getDefaultTemplate(organizationId, templateType = 'standard') {
+export async function getDefaultTemplate(organizationId, templateType = 'standard') {
+    await initDeps();
     return new Promise((resolve, reject) => {
         // First try organization's default
         deps.db.get(
@@ -66,7 +85,7 @@ function getDefaultTemplate(organizationId, templateType = 'standard') {
             (err, row) => {
                 if (err) return reject(err);
                 if (row) return resolve(row);
-                
+
                 // Fall back to system default
                 deps.db.get(
                     `SELECT * FROM invoice_templates 
@@ -85,9 +104,10 @@ function getDefaultTemplate(organizationId, templateType = 'standard') {
 /**
  * Create a new template
  */
-function createTemplate(organizationId, data) {
+export async function createTemplate(organizationId, data) {
+    await initDeps();
     const id = `tpl-${deps.uuidv4()}`;
-    
+
     return new Promise((resolve, reject) => {
         deps.db.run(
             `INSERT INTO invoice_templates (
@@ -134,14 +154,14 @@ function createTemplate(organizationId, data) {
                 data.paper_size || 'A4',
                 JSON.stringify(data.metadata || {})
             ],
-            async function(err) {
+            async function (err) {
                 if (err) return reject(err);
-                
+
                 // If this is default, unset other defaults
                 if (data.is_default) {
                     await unsetOtherDefaults(organizationId, data.template_type, id);
                 }
-                
+
                 resolve({ id, ...data });
             }
         );
@@ -151,7 +171,8 @@ function createTemplate(organizationId, data) {
 /**
  * Update template
  */
-function updateTemplate(templateId, updates) {
+export async function updateTemplate(templateId, updates) {
+    await initDeps();
     return new Promise(async (resolve, reject) => {
         // Check if it's a system template
         const template = await getTemplateById(templateId);
@@ -161,10 +182,10 @@ function updateTemplate(templateId, updates) {
         if (template.is_system) {
             return reject(new Error('Cannot modify system templates'));
         }
-        
+
         const fields = [];
         const values = [];
-        
+
         const allowedFields = [
             'name', 'description', 'template_type', 'is_default',
             'logo_url', 'header_html', 'footer_html', 'custom_css',
@@ -181,9 +202,9 @@ function updateTemplate(templateId, updates) {
                 fields.push(`${field} = ?`);
                 if (field === 'metadata') {
                     values.push(JSON.stringify(updates[field]));
-                } else if (['is_default', 'show_company_info', 'show_customer_info', 
-                           'show_payment_terms', 'show_due_date', 'show_tax_breakdown',
-                           'show_currency_conversion'].includes(field)) {
+                } else if (['is_default', 'show_company_info', 'show_customer_info',
+                    'show_payment_terms', 'show_due_date', 'show_tax_breakdown',
+                    'show_currency_conversion'].includes(field)) {
                     values.push(updates[field] ? 1 : 0);
                 } else {
                     values.push(updates[field]);
@@ -199,18 +220,18 @@ function updateTemplate(templateId, updates) {
         deps.db.run(
             `UPDATE invoice_templates SET ${fields.join(', ')} WHERE id = ?`,
             values,
-            async function(err) {
+            async function (err) {
                 if (err) return reject(err);
-                
+
                 // If setting as default, unset other defaults
                 if (updates.is_default) {
                     await unsetOtherDefaults(
-                        template.organization_id, 
-                        updates.template_type || template.template_type, 
+                        template.organization_id,
+                        updates.template_type || template.template_type,
                         templateId
                     );
                 }
-                
+
                 resolve({ id: templateId, changes: this.changes });
             }
         );
@@ -220,7 +241,8 @@ function updateTemplate(templateId, updates) {
 /**
  * Delete template
  */
-function deleteTemplate(templateId) {
+export async function deleteTemplate(templateId) {
+    await initDeps();
     return new Promise(async (resolve, reject) => {
         const template = await getTemplateById(templateId);
         if (!template) {
@@ -229,11 +251,11 @@ function deleteTemplate(templateId) {
         if (template.is_system) {
             return reject(new Error('Cannot delete system templates'));
         }
-        
+
         deps.db.run(
             'DELETE FROM invoice_templates WHERE id = ? AND is_system = 0',
             [templateId],
-            function(err) {
+            function (err) {
                 if (err) reject(err);
                 else resolve({ deleted: this.changes > 0 });
             }
@@ -244,24 +266,24 @@ function deleteTemplate(templateId) {
 /**
  * Clone a template
  */
-async function cloneTemplate(templateId, organizationId, newName) {
+export async function cloneTemplate(templateId, organizationId, newName) {
     const source = await getTemplateById(templateId);
     if (!source) {
         throw new Error('Source template not found');
     }
-    
+
     const cloneData = {
         ...source,
         name: newName || `${source.name} (Copy)`,
         is_default: false
     };
-    
+
     // Remove IDs and system flag
     delete cloneData.id;
     delete cloneData.is_system;
     delete cloneData.created_at;
     delete cloneData.updated_at;
-    
+
     return createTemplate(organizationId, cloneData);
 }
 
@@ -272,29 +294,29 @@ async function cloneTemplate(templateId, organizationId, newName) {
 /**
  * Generate invoice HTML from template
  */
-async function generateInvoiceHTML(invoiceId, templateId = null) {
+export async function generateInvoiceHTML(invoiceId, templateId = null) {
     // Get invoice data
     const invoice = await getInvoiceWithDetails(invoiceId);
     if (!invoice) {
         throw new Error('Invoice not found');
     }
-    
+
     // Get template
-    const template = templateId 
+    const template = templateId
         ? await getTemplateById(templateId)
         : await getDefaultTemplate(invoice.organization_id, 'standard');
-    
+
     if (!template) {
         throw new Error('No template available');
     }
-    
+
     // Get organization and customer data
     const organization = await getOrganization(invoice.organization_id);
     const taxSettings = await getTaxSettings(invoice.organization_id);
-    
+
     // Build HTML
     const html = buildInvoiceHTML(invoice, template, organization, taxSettings);
-    
+
     return {
         html,
         template: template.name,
@@ -305,20 +327,20 @@ async function generateInvoiceHTML(invoiceId, templateId = null) {
 /**
  * Build invoice HTML from template and data
  */
-function buildInvoiceHTML(invoice, template, organization, taxSettings) {
+export function buildInvoiceHTML(invoice, template, organization, taxSettings) {
     const formatCurrency = (amount, currency) => {
         return new Intl.NumberFormat(template.number_format || 'en-US', {
             style: 'currency',
             currency: currency || template.default_currency || 'USD'
         }).format(amount / 100);
     };
-    
+
     const formatDate = (dateStr) => {
         if (!dateStr) return '';
         const date = new Date(dateStr);
         return date.toLocaleDateString(template.locale || 'en');
     };
-    
+
     // Build line items HTML
     const itemsHTML = (invoice.items || []).map(item => `
         <tr>
@@ -328,7 +350,7 @@ function buildInvoiceHTML(invoice, template, organization, taxSettings) {
             <td class="text-right">${formatCurrency(item.amount, invoice.currency)}</td>
         </tr>
     `).join('');
-    
+
     // Build the full HTML document
     const html = `
 <!DOCTYPE html>
@@ -559,7 +581,7 @@ function buildInvoiceHTML(invoice, template, organization, taxSettings) {
     ${template.footer_html || ''}
 </body>
 </html>`;
-    
+
     return html;
 }
 
@@ -570,15 +592,15 @@ function buildInvoiceHTML(invoice, template, organization, taxSettings) {
 /**
  * Generate template preview with sample data
  */
-async function generatePreview(templateId) {
+export async function generatePreview(templateId) {
     const template = await getTemplateById(templateId);
     if (!template) {
         throw new Error('Template not found');
     }
-    
+
     // Sample invoice data for preview
     const sampleInvoice = {
-        invoice_number: 'INV-2026-000001',
+        invoice_numbers: 'INV-2026-000001',
         status: 'open',
         invoice_date: new Date().toISOString(),
         due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -598,11 +620,11 @@ async function generatePreview(templateId) {
             { description: 'AI Token Package - 1M tokens', quantity: 1, unit_price: 180000, amount: 180000 }
         ]
     };
-    
+
     const sampleOrganization = {
         name: 'Consultify Inc.'
     };
-    
+
     const sampleTaxSettings = {
         billing_name: 'Acme Corporation',
         billing_email: 'billing@acme.example.com',
@@ -612,9 +634,9 @@ async function generatePreview(templateId) {
         billing_country: 'United States',
         tax_id: 'US123456789'
     };
-    
+
     const html = buildInvoiceHTML(sampleInvoice, template, sampleOrganization, sampleTaxSettings);
-    
+
     return {
         html,
         template: template.name,
@@ -626,7 +648,8 @@ async function generatePreview(templateId) {
 // HELPER FUNCTIONS
 // ==========================================
 
-function unsetOtherDefaults(organizationId, templateType, excludeId) {
+async function unsetOtherDefaults(organizationId, templateType, excludeId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.run(
             `UPDATE invoice_templates 
@@ -641,7 +664,8 @@ function unsetOtherDefaults(organizationId, templateType, excludeId) {
     });
 }
 
-function getInvoiceWithDetails(invoiceId) {
+async function getInvoiceWithDetails(invoiceId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get(
             'SELECT * FROM invoices WHERE id = ?',
@@ -649,7 +673,7 @@ function getInvoiceWithDetails(invoiceId) {
             (err, invoice) => {
                 if (err) return reject(err);
                 if (!invoice) return resolve(null);
-                
+
                 deps.db.all(
                     'SELECT * FROM invoice_items WHERE invoice_id = ?',
                     [invoiceId],
@@ -664,7 +688,8 @@ function getInvoiceWithDetails(invoiceId) {
     });
 }
 
-function getOrganization(orgId) {
+async function getOrganization(orgId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get('SELECT * FROM organizations WHERE id = ?', [orgId], (err, row) => {
             if (err) reject(err);
@@ -673,7 +698,8 @@ function getOrganization(orgId) {
     });
 }
 
-function getTaxSettings(orgId) {
+async function getTaxSettings(orgId) {
+    await initDeps();
     return new Promise((resolve, reject) => {
         deps.db.get('SELECT * FROM billing_tax_settings WHERE organization_id = ?', [orgId], (err, row) => {
             if (err) reject(err);
@@ -682,7 +708,7 @@ function getTaxSettings(orgId) {
     });
 }
 
-module.exports = {
+export default {
     setDependencies,
     // CRUD
     getTemplates,
@@ -697,6 +723,7 @@ module.exports = {
     generatePreview,
     buildInvoiceHTML
 };
+
 
 
 

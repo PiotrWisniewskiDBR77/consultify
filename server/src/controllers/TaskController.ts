@@ -9,7 +9,10 @@ import type { Response } from 'express';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { v4 as uuidv4 } from 'uuid';
-import * as queryHelpers from '../utils/queryHelpers.js';
+import DbPromise from '../utils/DbPromise.js';
+import NotificationService from '../services/NotificationService.js';
+import ActivityService from '../services/ActivityService.js';
+import { PMO_DOMAIN_IDS } from '../services/pmoDomainRegistry.js';
 import type {
     CreateTaskRequest,
     UpdateTaskRequest,
@@ -81,6 +84,12 @@ interface TaskRow {
     initiative_name?: string;
     progress?: number;
     blocked_reason?: string;
+    // SLA / Escalation
+    sla_hours?: number;
+    sla_due_at?: string;
+    escalation_level?: number;
+    escalated_to_id?: string;
+    last_escalated_at?: string;
 }
 
 // ==========================================
@@ -88,6 +97,9 @@ interface TaskRow {
 // ==========================================
 
 export class TaskController {
+    /**
+     * Get all tasks with filters
+     */
     /**
      * Get all tasks with filters
      */
@@ -99,7 +111,8 @@ export class TaskController {
             return;
         }
 
-        const { projectId, status, assigneeId, priority, initiativeId } = req.query as GetTasksQuery;
+        const query = req.query as unknown as GetTasksQuery;
+        const { projectId, status, assigneeId, priority, initiativeId } = query;
 
         let sql = `
             SELECT 
@@ -119,7 +132,8 @@ export class TaskController {
             LEFT JOIN initiatives i ON t.initiative_id = i.id
             WHERE t.organization_id = ?
         `;
-        const params: unknown[] = [orgId];
+        type SQLParam = string | number | boolean | null | undefined;
+        const params: SQLParam[] = [orgId];
 
         // Apply filters
         if (projectId) {
@@ -144,7 +158,7 @@ export class TaskController {
         }
 
         // For regular users, show only tasks assigned to them or reported by them
-        if (req.user?.role === 'USER') {
+        if (req.user?.role === 'team_member' || req.user?.role === 'viewer') {
             sql += ` AND (t.assignee_id = ? OR t.reporter_id = ?)`;
             params.push(userId, userId);
         }
@@ -152,6 +166,7 @@ export class TaskController {
         sql += ` ORDER BY 
             CASE t.priority 
                 WHEN 'urgent' THEN 1 
+                WHEN 'critical' THEN 1
                 WHEN 'high' THEN 2 
                 WHEN 'medium' THEN 3 
                 WHEN 'low' THEN 4 
@@ -159,7 +174,7 @@ export class TaskController {
             t.due_date ASC,
             t.created_at DESC`;
 
-        const rows = await queryHelpers.queryAll<TaskRow>(sql, params);
+        const rows = await DbPromise.all<TaskRow>(sql, params);
 
         const tasks = rows.map(t => ({
             id: t.id,
@@ -208,7 +223,13 @@ export class TaskController {
             initiativeId: t.initiative_id,
             initiativeName: t.initiative_name,
             progress: t.progress || 0,
-            blockedReason: t.blocked_reason || ''
+            blockedReason: t.blocked_reason || '',
+            // SLA / Escalation
+            slaHours: t.sla_hours,
+            slaDueAt: t.sla_due_at,
+            escalationLevel: t.escalation_level || 0,
+            escalatedToId: t.escalated_to_id,
+            lastEscalatedAt: t.last_escalated_at
         }));
 
         res.json(tasks);
@@ -244,7 +265,7 @@ export class TaskController {
             WHERE t.id = ? AND t.organization_id = ?
         `;
 
-        const t = await queryHelpers.queryOne<TaskRow>(sql, [id, orgId]);
+        const t = await DbPromise.get<TaskRow>(sql, [id, orgId]);
         if (!t) {
             res.status(404).json({ error: 'Task not found' });
             return;
@@ -297,7 +318,13 @@ export class TaskController {
             initiativeId: t.initiative_id,
             initiativeName: t.initiative_name,
             progress: t.progress || 0,
-            blockedReason: t.blocked_reason || ''
+            blockedReason: t.blocked_reason || '',
+            // SLA / Escalation
+            slaHours: t.sla_hours,
+            slaDueAt: t.sla_due_at,
+            escalationLevel: t.escalation_level || 0,
+            escalatedToId: t.escalated_to_id,
+            lastEscalatedAt: t.last_escalated_at
         };
 
         res.json(task);
@@ -306,7 +333,10 @@ export class TaskController {
     /**
      * Create a new task
      */
-    static createTask = asyncHandler(async (req: AuthenticatedRequest<CreateTaskRequest>, res: Response): Promise<void> => {
+    /**
+     * Create a new task
+     */
+    static createTask = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const orgId = req.user?.organizationId;
         const userId = req.user?.id;
         if (!orgId || !userId) {
@@ -314,6 +344,7 @@ export class TaskController {
             return;
         }
 
+        const body = req.body as CreateTaskRequest;
         const {
             projectId, title, description,
             status, priority, assigneeId,
@@ -323,7 +354,7 @@ export class TaskController {
             evidenceRequired, strategicContribution,
             roadmapInitiativeId, kpiId, raidItemId, assignees,
             progress, blockedReason
-        } = req.body;
+        } = body;
 
         if (!projectId) {
             res.status(400).json({ error: 'projectId is required' });
@@ -355,10 +386,10 @@ export class TaskController {
                 progress, blocked_reason,
                 created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
-        await queryHelpers.queryRun(sql, [
+        await DbPromise.run(sql, [
             id, projectId, orgId, title, description,
             finalStatus, finalPriority, assigneeId, userId,
             dueDate, estimatedHours, tags ? JSON.stringify(tags) : '[]',
@@ -369,19 +400,60 @@ export class TaskController {
             now, now,
         ]);
 
-        // TODO: Notifications, Activity logging, Cache invalidation, Initiative progress recalculation
-        // These will be handled by services that need to be migrated
+        // Notifications
+        if (assigneeId && assigneeId !== userId) {
+            (NotificationService as any).create({
+                userId: assigneeId,
+                organizationId: orgId,
+                projectId,
+                type: 'task_assigned',
+                title: 'New Task Assignment',
+                message: `You have been assigned to task "${title}"`,
+                relatedObjectType: 'TASK',
+                relatedObjectId: id
+            }).catch((err: any) => console.error('[TaskController] Notification failed:', err));
+        }
 
-        const createdTask = await queryHelpers.queryOne<TaskRow>(`SELECT * FROM tasks WHERE id = ?`, [id]);
+        // Activity logging
+        (ActivityService as any).log({
+            organizationId: orgId,
+            userId: userId,
+            action: 'created',
+            entityType: 'TASK',
+            entityId: id,
+            entityName: title,
+            newValue: body
+        }).catch((err: any) => console.error('[TaskController] Activity log failed:', err));
+
+        // Audit Trail (PMO Standard)
+        await DbPromise.run(
+            `INSERT INTO pmo_audit_trail (id, project_id, pmo_domain_id, object_type, object_id, action, actor_id, metadata, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [uuidv4(), projectId, PMO_DOMAIN_IDS.SCOPE_CHANGE_CONTROL, 'TASK', id, 'TASK_CREATED', userId, JSON.stringify(body), now]
+        ).catch(err => console.error('[TaskController] PMO Audit log failed:', err));
+
+        // Recalculate Initiative Progress
+        if (initiativeId) {
+            // Lazy load for now to avoid circular dependency
+            const InitiativeService = await import('../services/initiativeService.js').then(m => m.default || m);
+            if (InitiativeService && (InitiativeService as any).recalculateProgress) {
+                (InitiativeService as any).recalculateProgress({ organizationId: orgId, initiativeId }).catch((err: any) => console.error('[TaskController] Recalc failed:', err));
+            }
+        }
+
+        const createdTask = await DbPromise.get<TaskRow>(`SELECT * FROM tasks WHERE id = ?`, [id]);
         res.status(201).json(createdTask);
     });
 
     /**
      * Update task
      */
-    static updateTask = asyncHandler(async (req: AuthenticatedRequest<UpdateTaskRequest>, res: Response): Promise<void> => {
+    /**
+     * Update task
+     */
+    static updateTask = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
-        const updates = req.body;
+        const updates = req.body as UpdateTaskRequest;
         const userId = req.user?.id;
         const orgId = req.user?.organizationId;
         if (!userId || !orgId) {
@@ -390,7 +462,7 @@ export class TaskController {
         }
 
         // Get current task
-        const currentTask = await queryHelpers.queryOne<TaskRow>(
+        const currentTask = await DbPromise.get<TaskRow>(
             `SELECT * FROM tasks WHERE id = ? AND organization_id = ?`,
             [id, orgId]
         );
@@ -400,12 +472,144 @@ export class TaskController {
             return;
         }
 
-        // TODO: Implement full update logic with field mapping, history logging, notifications
-        // This is complex and will require migration of TaskAssignmentService, ActivityService, etc.
-        // For now, return current task
-        res.json(currentTask);
+        const allowedFields = [
+            'title', 'description', 'status', 'priority',
+            'assignee_id', 'due_date', 'estimated_hours',
+            'checklist', 'attachments', 'tags', 'custom_status_id',
+            'task_type', 'initiative_id', 'why',
+            'expected_outcome', 'decision_impact', 'evidence_required',
+            'strategic_contribution', 'roadmap_initiative_id', 'kpi_id',
+            'raid_item_id', 'assignees', 'progress', 'blocked_reason'
+        ];
+
+        const fieldMap: Record<string, string> = {
+            assigneeId: 'assignee_id',
+            dueDate: 'due_date',
+            estimatedHours: 'estimated_hours',
+            customStatusId: 'custom_status_id',
+            taskType: 'task_type',
+            initiativeId: 'initiative_id',
+            expectedOutcome: 'expected_outcome',
+            decisionImpact: 'decision_impact',
+            evidenceRequired: 'evidence_required',
+            strategicContribution: 'strategic_contribution',
+            roadmapInitiativeId: 'roadmap_initiative_id',
+            kpiId: 'kpi_id',
+            raidItemId: 'raid_item_id',
+            blockedReason: 'blocked_reason'
+        };
+
+        const sqlUpdates: string[] = [];
+        const params: SQLParam[] = [];
+        const historyEntries: any[] = [];
+        const now = new Date().toISOString();
+
+        Object.keys(updates).forEach(key => {
+            const dbKey = fieldMap[key] || key;
+            if (allowedFields.includes(dbKey)) {
+                let value = (updates as any)[key];
+
+                // Serialize JSON fields
+                if (['checklist', 'attachments', 'tags', 'decision_impact', 'evidence_required', 'strategic_contribution', 'assignees'].includes(dbKey)) {
+                    if (typeof value === 'object') value = JSON.stringify(value);
+                }
+
+                // Check for change
+                const oldValue = (currentTask as any)[dbKey];
+                if (value != oldValue) {
+                    sqlUpdates.push(`${dbKey} = ?`);
+                    params.push(value);
+
+                    historyEntries.push({
+                        taskId: id,
+                        field: dbKey,
+                        oldValue: oldValue ? String(oldValue) : '',
+                        newValue: value ? String(value) : '',
+                        changedBy: userId
+                    });
+                }
+            }
+        });
+
+        if (sqlUpdates.length === 0) {
+            res.json(currentTask);
+            return;
+        }
+
+        // Status change side effects
+        if (updates.status === 'done' && currentTask.status !== 'done') {
+            sqlUpdates.push(`completed_at = ?`);
+            params.push(now);
+            if (!updates.progress || updates.progress < 100) {
+                sqlUpdates.push(`progress = ?`);
+                params.push(100);
+            }
+        }
+
+        if (updates.status === 'blocked' && (updates.blockedReason || currentTask.blocked_reason) === '') {
+            res.status(400).json({ error: 'Blocked reason is required' });
+            return;
+        }
+
+        sqlUpdates.push(`updated_at = ?`);
+        params.push(now);
+
+        const sql = `UPDATE tasks SET ${sqlUpdates.join(', ')} WHERE id = ?`;
+        params.push(id);
+
+        await DbPromise.run(sql, params);
+
+        // History logs
+        if (historyEntries.length > 0) {
+            for (const entry of historyEntries) {
+                await DbPromise.run(
+                    `INSERT INTO task_history (id, task_id, field, old_value, new_value, changed_by) VALUES (?, ?, ?, ?, ?, ?)`,
+                    [uuidv4(), entry.taskId, entry.field, entry.oldValue, entry.newValue, entry.changedBy]
+                ).catch(err => console.error('[TaskController] History log failed:', err));
+            }
+        }
+
+        // Activity log
+        (ActivityService as any).log({
+            organizationId: orgId,
+            userId: userId,
+            action: 'updated',
+            entityType: 'TASK',
+            entityId: id,
+            entityName: currentTask.title,
+            newValue: updates
+        }).catch((err: any) => console.error('[TaskController] Activity log failed:', err));
+
+        // Notifications
+        const affectedUserId = (updates as any).assigneeId || currentTask.assignee_id;
+        if (affectedUserId && affectedUserId !== userId) {
+            (NotificationService as any).create({
+                userId: affectedUserId,
+                organizationId: orgId,
+                type: 'task_updated',
+                title: 'Task Updated',
+                message: `Task "${currentTask.title}" has been updated`,
+                relatedObjectType: 'TASK',
+                relatedObjectId: id
+            }).catch((err: any) => console.error('[TaskController] Notification failed:', err));
+        }
+
+        // Initiative Progress Recalc
+        const initiativeId = updates.initiativeId || currentTask.initiative_id;
+        if (initiativeId) {
+            const InitiativeService = await import('../services/initiativeService.js').then(m => m.default || m);
+            if (InitiativeService && InitiativeService.recalculateProgress) {
+                InitiativeService.recalculateProgress({ organizationId: orgId, initiativeId }).catch(err => console.error('[TaskController] Recalc failed:', err));
+            }
+        }
+
+        const updatedTask = await DbPromise.get<TaskRow>(`SELECT * FROM tasks WHERE id = ?`, [id]);
+        res.json(updatedTask);
     });
 
+    /**
+     * Delete task
+     */
     /**
      * Delete task
      */
@@ -419,8 +623,8 @@ export class TaskController {
         }
 
         // Check permission - only Admin/SuperAdmin or task reporter can delete
-        const task = await queryHelpers.queryOne<{ reporter_id?: string }>(
-            'SELECT reporter_id FROM tasks WHERE id = ? AND organization_id = ?',
+        const task = await DbPromise.get<TaskRow>(
+            'SELECT reporter_id, initiative_id, title FROM tasks WHERE id = ? AND organization_id = ?',
             [id, orgId]
         );
 
@@ -429,23 +633,42 @@ export class TaskController {
             return;
         }
 
-        if (req.user?.role === 'USER' && task.reporter_id !== userId) {
+        if (req.user?.role === 'team_member' && task.reporter_id !== userId) {
             res.status(403).json({ error: 'You can only delete tasks you created' });
             return;
         }
 
-        // Delete task comments first
-        await queryHelpers.queryRun('DELETE FROM task_comments WHERE task_id = ?', [id]);
+        // Delete task comments
+        await DbPromise.run('DELETE FROM task_comments WHERE task_id = ?', [id]);
+
+        // Delete task history
+        await DbPromise.run('DELETE FROM task_history WHERE task_id = ?', [id]);
 
         // Delete task
-        const result = await queryHelpers.queryRun('DELETE FROM tasks WHERE id = ? AND organization_id = ?', [id, orgId]);
+        const result = await DbPromise.run('DELETE FROM tasks WHERE id = ? AND organization_id = ?', [id, orgId]);
 
         if (result.changes === 0) {
             res.status(404).json({ error: 'Task not found' });
             return;
         }
 
-        // TODO: Activity logging, Initiative progress recalculation
+        // Activity log
+        (ActivityService as any).log({
+            organizationId: orgId,
+            userId: userId,
+            action: 'deleted',
+            entityType: 'TASK',
+            entityId: id,
+            entityName: task.title
+        }).catch((err: any) => console.error('[TaskController] Activity log failed:', err));
+
+        // Recalculate Initiative Progress
+        if (task.initiative_id) {
+            const InitiativeService = await import('../services/initiativeService.js').then(m => m.default || m);
+            if (InitiativeService && (InitiativeService as any).recalculateProgress) {
+                (InitiativeService as any).recalculateProgress({ organizationId: orgId, initiativeId: task.initiative_id }).catch((err: any) => console.error('[TaskController] Recalc failed:', err));
+            }
+        }
 
         res.json({ message: 'Task deleted' });
     });
@@ -480,7 +703,7 @@ export class TaskController {
             ORDER BY c.created_at ASC
         `;
 
-        const rows = await queryHelpers.queryAll(sql, [taskId]);
+        const rows = await DbPromise.all<any>(sql, [taskId]);
 
         const comments = rows.map((c: {
             id: string;
@@ -513,8 +736,8 @@ export class TaskController {
     /**
      * Add comment to task
      */
-    static addTaskComment = asyncHandler(async (req: AuthenticatedRequest<AddTaskCommentRequest>, res: Response): Promise<void> => {
-        const { taskId } = req.params;
+    static addComment = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+        const { id: taskId } = req.params;
         const orgId = req.user?.organizationId;
         const userId = req.user?.id;
         const { content } = req.body;
@@ -529,7 +752,7 @@ export class TaskController {
         }
 
         // Verify task belongs to org
-        const task = await queryHelpers.queryOne<{ id: string }>(
+        const task = await DbPromise.get<{ id: string }>(
             'SELECT id FROM tasks WHERE id = ? AND organization_id = ?',
             [taskId, orgId]
         );
@@ -544,7 +767,7 @@ export class TaskController {
 
         const sql = `INSERT INTO task_comments (id, task_id, user_id, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`;
 
-        await queryHelpers.queryRun(sql, [id, taskId, userId, content, now, now]);
+        await DbPromise.run(sql, [id, taskId, userId, content, now, now]);
 
         res.json({
             id,
@@ -591,14 +814,14 @@ export class TaskController {
     /**
      * Assign task (uses TaskAssignmentService - will be migrated later)
      */
-    static assignTask = asyncHandler(async (req: AuthenticatedRequest<AssignTaskRequest>, res: Response): Promise<void> => {
-        const { id } = req.params;
-        const { assigneeId } = req.body;
-        
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const TaskAssignmentService = require('../../services/taskAssignmentService');
-        const result = await TaskAssignmentService.assignTask(id, assigneeId, {
+    static assignTask = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+        const { id: taskId } = req.params;
+        const { assigneeId, slaHours } = req.body as AssignTaskRequest;
+
+        const { assignTask } = await import('../../services/taskAssignmentService.js');
+        const result = await assignTask(taskId, assigneeId, {
             assignedById: req.user?.id,
+            slaHours
         });
 
         res.json(result);
@@ -607,17 +830,15 @@ export class TaskController {
     /**
      * Reassign task
      */
-    static reassignTask = asyncHandler(async (req: AuthenticatedRequest<ReassignTaskRequest>, res: Response): Promise<void> => {
-        const { id } = req.params;
-        const { fromAssigneeId, toAssigneeId, reason } = req.body;
-        
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const TaskAssignmentService = require('../../services/taskAssignmentService');
-        const result = await TaskAssignmentService.reassignTask(id, {
-            fromAssigneeId,
-            toAssigneeId,
-            reason,
+    static reassignTask = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+        const { id: taskId } = req.params;
+        const { newAssigneeId, reason } = req.body as ReassignTaskRequest;
+
+        const { reassignTask } = await import('../../services/taskAssignmentService.js');
+        const result = await reassignTask(taskId, newAssigneeId, {
             reassignedById: req.user?.id,
+            reason,
+            resetSla: true
         });
 
         res.json(result);
@@ -628,10 +849,9 @@ export class TaskController {
      */
     static unassignTask = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
-        
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const TaskAssignmentService = require('../../services/taskAssignmentService');
-        const result = await TaskAssignmentService.unassignTask(id);
+
+        const { unassignTask } = await import('../../services/taskAssignmentService.js');
+        const result = await unassignTask(id);
 
         res.json(result);
     });
@@ -639,17 +859,15 @@ export class TaskController {
     /**
      * Escalate task
      */
-    static escalateTask = asyncHandler(async (req: AuthenticatedRequest<EscalateTaskRequest>, res: Response): Promise<void> => {
-        const { id } = req.params;
-        const { reason, priority } = req.body;
-        
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const TaskAssignmentService = require('../../services/taskAssignmentService');
-        const result = await TaskAssignmentService.escalateTask(id, {
+    static escalateTask = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+        const { id: taskId } = req.params;
+        const { reason, triggerType } = req.body as any;
+
+        const { escalateTask, ESCALATION_TRIGGERS } = await import('../../services/taskAssignmentService.js');
+        const result = await escalateTask(taskId, {
             reason: reason || 'Manual escalation',
-            triggerType: 'MANUAL',
+            triggerType: ESCALATION_TRIGGERS.MANUAL,
             escalatedById: req.user?.id,
-            priority,
         });
 
         res.json(result);
@@ -658,14 +876,13 @@ export class TaskController {
     /**
      * Resolve escalation
      */
-    static resolveEscalation = asyncHandler(async (req: AuthenticatedRequest<ResolveEscalationRequest>, res: Response): Promise<void> => {
+    static resolveEscalation = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { escalationId } = req.params;
-        const { resolution } = req.body;
-        
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const TaskAssignmentService = require('../../services/taskAssignmentService');
-        const result = await TaskAssignmentService.resolveEscalation(escalationId, {
-            resolutionNote: resolution,
+        const { resolutionNote } = req.body as ResolveEscalationRequest;
+
+        const { resolveEscalation } = await import('../../services/taskAssignmentService.js');
+        const result = await resolveEscalation(escalationId, {
+            resolutionNote: resolutionNote,
             resolvedById: req.user?.id,
         });
 
@@ -677,10 +894,9 @@ export class TaskController {
      */
     static getTaskEscalations = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
-        
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const TaskAssignmentService = require('../../services/taskAssignmentService');
-        const escalations = await TaskAssignmentService.getTaskEscalationHistory(id);
+
+        const { getTaskEscalationHistory } = await import('../../services/taskAssignmentService.js');
+        const escalations = await getTaskEscalationHistory(id);
 
         res.json(escalations);
     });
@@ -690,15 +906,14 @@ export class TaskController {
      */
     static getOverdueTasks = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { projectId, escalationLevel, limit } = req.query;
-        
+
         if (!projectId || typeof projectId !== 'string') {
             res.status(400).json({ error: 'projectId is required' });
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const TaskAssignmentService = require('../../services/taskAssignmentService');
-        const tasks = await TaskAssignmentService.getOverdueTasks(projectId, {
+        const { getOverdueTasks } = await import('../../services/taskAssignmentService.js');
+        const tasks = await getOverdueTasks(projectId, {
             escalationLevel: escalationLevel ? parseInt(String(escalationLevel)) : undefined,
             limit: limit ? parseInt(String(limit)) : undefined
         });
@@ -711,15 +926,14 @@ export class TaskController {
      */
     static getTasksAtRisk = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { projectId, hoursAhead } = req.query;
-        
+
         if (!projectId || typeof projectId !== 'string') {
             res.status(400).json({ error: 'projectId is required' });
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const TaskAssignmentService = require('../../services/taskAssignmentService');
-        const tasks = await TaskAssignmentService.getTasksApproachingSLA(
+        const { getTasksApproachingSLA } = await import('../../services/taskAssignmentService.js');
+        const tasks = await getTasksApproachingSLA(
             projectId,
             hoursAhead ? parseInt(String(hoursAhead)) : 4
         );
@@ -733,10 +947,9 @@ export class TaskController {
     static getUserWorkload = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { userId } = req.params;
         const { projectId } = req.query;
-        
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const TaskAssignmentService = require('../../services/taskAssignmentService');
-        const workload = await TaskAssignmentService.getUserWorkload(userId, {
+
+        const { getUserWorkload } = await import('../../services/taskAssignmentService.js');
+        const workload = await getUserWorkload(userId, {
             projectId: projectId as string | undefined
         });
 
@@ -754,9 +967,8 @@ export class TaskController {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const TaskAssignmentService = require('../../services/taskAssignmentService');
-        const workload = await TaskAssignmentService.getUserWorkload(userId, {
+        const { getUserWorkload } = await import('../../services/taskAssignmentService.js');
+        const workload = await getUserWorkload(userId, {
             projectId: projectId as string | undefined
         });
 

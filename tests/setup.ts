@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import { beforeAll, vi, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'module';
 import { mockLLMApi } from './__mocks__/llmApi.js';
-import { setupAutoCleanup, resetAllMocks } from './helpers/testCleanup.js';
+import { setupAutoCleanup } from './helpers/testCleanup.js';
 
 const require = createRequire(import.meta.url);
 
@@ -184,7 +184,9 @@ vi.mock('jsonwebtoken', () => ({
 beforeEach(() => {
     mockLLMApi.reset();
     // Ensure all mocks are reset
-    resetAllMocks();
+    vi.clearAllMocks();
+    vi.resetAllMocks();
+    vi.restoreAllMocks();
 });
 
 // REMOVED: Schema Initialization. Integration tests must use TestDatabaseFactory.create()

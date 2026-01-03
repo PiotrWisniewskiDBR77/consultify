@@ -8,9 +8,9 @@
  * - Provide confidence scores for its recommendations
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
-class BaseAgent {
+export class BaseAgent {
     constructor(config = {}) {
         this.id = uuidv4();
         this.name = config.name || 'BaseAgent';
@@ -245,10 +245,4 @@ Respond in a structured, actionable format.`;
     }
 }
 
-module.exports = { BaseAgent };
-
-
-
-
-
-
+export default BaseAgent;

@@ -122,7 +122,8 @@ class SystemConfigService {
             serializedValue = String(config_value);
         }
 
-        const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
         const updatedAt = new Date().toISOString();
 
         return new Promise((resolve, reject) => {

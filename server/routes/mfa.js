@@ -16,11 +16,12 @@
  * - DELETE /api/mfa/devices - Revoke all trusted devices
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const MFAService = require('../services/mfaService');
-const AuditService = require('../services/auditService');
+import authMiddleware from '../middleware/authMiddleware.js';
+import MFAService from '../services/mfaService.js';
+import AuditService from '../services/auditService.js';
+import SMSService from '../services/smsService.js';
 
 // All routes require authentication
 router.use(authMiddleware);
@@ -567,7 +568,6 @@ router.post('/sms/disable', async (req, res) => {
 router.get('/phone-status', async (req, res) => {
     try {
         const userId = req.user.id;
-        const SMSService = require('../services/smsService');
         const status = await SMSService.getPhoneStatus(userId);
         res.json(status);
     } catch (error) {
@@ -576,4 +576,4 @@ router.get('/phone-status', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

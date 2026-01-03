@@ -4,16 +4,47 @@
  * Integrates with StatusMachine for transition rules
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const StatusMachine = require('./statusMachine');
-const queryHelpers = require('../utils/queryHelpers');
-
 // Dependency injection for testing
 const deps = {
-    db,
-    uuidv4
+    _db: null,
+    _uuidv4: null,
+    _StatusMachine: null,
+    _queryHelpers: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; },
+
+    get StatusMachine() { return this._StatusMachine; },
+    set StatusMachine(val) { this._StatusMachine = val; },
+
+    get queryHelpers() { return this._queryHelpers; },
+    set queryHelpers(val) { this._queryHelpers = val; }
 };
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+    if (!deps._StatusMachine) {
+        const { default: StatusMachine } = await import('./statusMachine.js');
+        deps._StatusMachine = StatusMachine;
+    }
+    if (!deps._queryHelpers) {
+        const queryHelpers = await import('../utils/queryHelpers.js');
+        deps._queryHelpers = queryHelpers;
+    }
+}
 
 /**
  * Calculate charter completeness percentage
@@ -387,7 +418,7 @@ const InitiativeStatusService = {
     }
 };
 
-module.exports = InitiativeStatusService;
+export default InitiativeStatusService;
 
 
 

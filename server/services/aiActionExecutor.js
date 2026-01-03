@@ -2,36 +2,76 @@
 // AI Core Layer — Enterprise PMO Brain
 // Enhanced with HITL Learning System - learns from user approval/rejection patterns
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const AIPolicyEngine = require('./aiPolicyEngine');
-const AIRoleGuard = require('./aiRoleGuard');
-const RegulatoryModeGuard = require('./regulatoryModeGuard');
-const ApprovalPatternService = require('./approvalPatternService');
-
-// Lazy-load NotificationService to avoid circular dependencies
-let NotificationService = null;
-const getNotificationService = () => {
-    if (!NotificationService) {
-        try {
-            NotificationService = require('./notificationService');
-        } catch (e) {
-            console.warn('[AIActionExecutor] NotificationService not available');
-        }
-    }
-    return NotificationService;
-};
-
 // Dependency injection container (for deterministic unit tests)
 const deps = {
-    db,
-    uuidv4,
-    AIPolicyEngine,
-    AIRoleGuard,
-    RegulatoryModeGuard,
-    ApprovalPatternService,
-    getNotificationService
+    _db: null,
+    _uuidv4: null,
+    _AIPolicyEngine: null,
+    _AIRoleGuard: null,
+    _RegulatoryModeGuard: null,
+    _ApprovalPatternService: null,
+    _NotificationService: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; },
+
+    get AIPolicyEngine() { return this._AIPolicyEngine; },
+    set AIPolicyEngine(val) { this._AIPolicyEngine = val; },
+
+    get AIRoleGuard() { return this._AIRoleGuard; },
+    set AIRoleGuard(val) { this._AIRoleGuard = val; },
+
+    get RegulatoryModeGuard() { return this._RegulatoryModeGuard; },
+    set RegulatoryModeGuard(val) { this._RegulatoryModeGuard = val; },
+
+    get ApprovalPatternService() { return this._ApprovalPatternService; },
+    set ApprovalPatternService(val) { this._ApprovalPatternService = val; },
+
+    getNotificationService: async () => {
+        if (!deps._NotificationService) {
+            try {
+                const { default: service } = await import('./notificationService.js');
+                deps._NotificationService = service;
+            } catch (e) {
+                console.warn('[AIActionExecutor] NotificationService not available');
+            }
+        }
+        return deps._NotificationService;
+    }
 };
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+    if (!deps._AIPolicyEngine) {
+        const { default: service } = await import('./aiPolicyEngine.js');
+        deps._AIPolicyEngine = service;
+    }
+    if (!deps._AIRoleGuard) {
+        const { default: service } = await import('./aiRoleGuard.js');
+        deps._AIRoleGuard = service;
+    }
+    if (!deps._RegulatoryModeGuard) {
+        const { default: service } = await import('./regulatoryModeGuard.js');
+        deps._RegulatoryModeGuard = service;
+    }
+    if (!deps._ApprovalPatternService) {
+        const { default: service } = await import('./approvalPatternService.js');
+        deps._ApprovalPatternService = service;
+    }
+}
 
 const ACTION_TYPES = {
     CREATE_DRAFT_TASK: 'CREATE_DRAFT_TASK',
@@ -56,13 +96,20 @@ const AIActionExecutor = {
 
     // For testing: allow overriding dependencies
     setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
+        if (newDeps.db) deps.db = newDeps.db;
+        if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
+        if (newDeps.AIPolicyEngine) deps.AIPolicyEngine = newDeps.AIPolicyEngine;
+        if (newDeps.AIRoleGuard) deps.AIRoleGuard = newDeps.AIRoleGuard;
+        if (newDeps.RegulatoryModeGuard) deps.RegulatoryModeGuard = newDeps.RegulatoryModeGuard;
+        if (newDeps.ApprovalPatternService) deps.ApprovalPatternService = newDeps.ApprovalPatternService;
+        if (newDeps.NotificationService) deps._NotificationService = newDeps.NotificationService;
     },
 
     /**
      * Request an AI action
      */
     requestAction: async (actionType, payload, userId, organizationId, projectId = null) => {
+        await initDeps();
         // 0. REGULATORY MODE: Block ALL mutation actions (highest priority)
         if (projectId) {
             const regulatoryCheck = await deps.RegulatoryModeGuard.enforceRegulatoryMode(
@@ -156,6 +203,7 @@ const AIActionExecutor = {
             }
         }
 
+        await initDeps();
         const id = deps.uuidv4();
         const finalStatus = requiresApproval ? ACTION_STATUS.PENDING : ACTION_STATUS.APPROVED;
 
@@ -204,6 +252,7 @@ const AIActionExecutor = {
      * Create a draft (task/initiative)
      */
     createDraft: async (draftType, draftContent, userId, organizationId, projectId) => {
+        await initDeps();
         const actionType = draftType === 'task'
             ? ACTION_TYPES.CREATE_DRAFT_TASK
             : ACTION_TYPES.CREATE_DRAFT_INITIATIVE;
@@ -235,6 +284,7 @@ const AIActionExecutor = {
      * @param {object} options - Options: { alwaysApprove: boolean } - Enable auto-apply for similar actions
      */
     approveAction: async (actionId, userId, options = {}) => {
+        await initDeps();
         // First, get the action details for pattern learning
         const action = await AIActionExecutor.getAction(actionId);
         if (!action) {
@@ -294,6 +344,7 @@ const AIActionExecutor = {
      * @param {object} options - Options: { alwaysReject: boolean } - Enable auto-reject for similar actions
      */
     rejectAction: async (actionId, userId, reason = null, options = {}) => {
+        await initDeps();
         // First, get the action details for pattern learning
         const action = await AIActionExecutor.getAction(actionId);
         if (!action) {
@@ -352,6 +403,7 @@ const AIActionExecutor = {
      * Execute an approved action
      */
     executeAction: async (actionId, userId) => {
+        await initDeps();
         // Get action
         const action = await new Promise((resolve, reject) => {
             deps.db.get(`SELECT * FROM ai_actions WHERE id = ?`, [actionId], (err, row) => {
@@ -407,6 +459,7 @@ const AIActionExecutor = {
      * Get pending actions for user/project
      */
     getPendingActions: async (userId = null, projectId = null, organizationId = null) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             let sql = `SELECT * FROM ai_actions WHERE status = 'PENDING'`;
             const params = [];
@@ -446,6 +499,7 @@ const AIActionExecutor = {
      * Get a single action by ID
      */
     getAction: async (actionId) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.get(`SELECT * FROM ai_actions WHERE id = ?`, [actionId], (err, row) => {
                 if (err) return reject(err);
@@ -464,6 +518,7 @@ const AIActionExecutor = {
      * List actions for a project
      */
     listActions: async (projectId, filters = {}) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             let sql = `SELECT * FROM ai_actions WHERE project_id = ?`;
             const params = [projectId];
@@ -503,6 +558,7 @@ const AIActionExecutor = {
      * @returns {Promise<object>} - Pattern info or null
      */
     getPatternInfo: async (userId, actionType, payload) => {
+        await initDeps();
         try {
             const pattern = await deps.ApprovalPatternService.findMatchingPattern(userId, actionType, payload);
             if (!pattern) return null;
@@ -527,6 +583,7 @@ const AIActionExecutor = {
      * Get user's approval patterns statistics
      */
     getUserPatternStats: async (userId) => {
+        await initDeps();
         return deps.ApprovalPatternService.getPatternStats(userId);
     },
 
@@ -534,6 +591,7 @@ const AIActionExecutor = {
      * Get user's approval patterns list
      */
     getUserPatterns: async (userId, actionType = null) => {
+        await initDeps();
         return deps.ApprovalPatternService.getUserPatterns(userId, actionType);
     },
 
@@ -541,6 +599,7 @@ const AIActionExecutor = {
      * Toggle auto-apply for a pattern
      */
     setPatternAutoApply: async (patternId, enabled, userId) => {
+        await initDeps();
         return deps.ApprovalPatternService.setAutoApply(patternId, enabled, userId);
     },
 
@@ -548,12 +607,14 @@ const AIActionExecutor = {
      * Delete a learned pattern
      */
     deletePattern: async (patternId, userId) => {
+        await initDeps();
         return deps.ApprovalPatternService.deletePattern(patternId, userId);
     },
 
     // ==================== INTERNAL EXECUTORS ====================
 
     _executeCreateTask: async (draftContent, action) => {
+        await initDeps();
         const taskId = deps.uuidv4();
         const { title, description, assigneeId, dueDate } = draftContent;
 
@@ -570,6 +631,7 @@ const AIActionExecutor = {
     },
 
     _executeCreateInitiative: async (draftContent, action) => {
+        await initDeps();
         const initiativeId = deps.uuidv4();
         const { name, description, ownerId, priority } = draftContent;
 
@@ -590,7 +652,8 @@ const AIActionExecutor = {
      * @private
      */
     _sendPendingActionNotification: async (actionId, userId, organizationId, projectId, actionType, payload) => {
-        const NotificationSvc = deps.getNotificationService();
+        await initDeps();
+        const NotificationSvc = await deps.getNotificationService();
         if (!NotificationSvc) return;
 
         // Get action type description
@@ -632,7 +695,8 @@ const AIActionExecutor = {
      * @private
      */
     _sendAutoDecisionNotification: async (actionId, userId, organizationId, decision, patternInfo) => {
-        const NotificationSvc = deps.getNotificationService();
+        await initDeps();
+        const NotificationSvc = await deps.getNotificationService();
         if (!NotificationSvc) return;
 
         const isApproval = decision === 'APPROVED';
@@ -656,6 +720,7 @@ const AIActionExecutor = {
     },
 
     _logAudit: async (actionId, userId, decision, feedback = null) => {
+        await initDeps();
         // Get action for context
         const action = await new Promise((resolve, reject) => {
             deps.db.get(`SELECT * FROM ai_actions WHERE id = ?`, [actionId], (err, row) => {
@@ -684,4 +749,4 @@ const AIActionExecutor = {
     }
 };
 
-module.exports = AIActionExecutor;
+export default AIActionExecutor;

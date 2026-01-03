@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const workspace_defaultsRoutesJS = require('../../routes/workspace-defaults.js');
+const workspace_defaultsRoutesJSPromise = (async () => {
+    const module = await import('../../routes/workspace-defaults.js');
+    return module.default || module;
+})();
+const workspace_defaultsRoutesJS = workspace_defaultsRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

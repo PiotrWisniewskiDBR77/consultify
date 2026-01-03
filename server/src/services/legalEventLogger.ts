@@ -1,32 +1,14 @@
 /**
- * LegalEventLogger Service
+ * Legaleventlogger Service
  * Enterprise SaaS Architecture - TypeScript Backend
  * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
 
-const require = createRequire(import.meta.url);
-
-// Import the JS implementation for now (will be fully migrated later)
-const legalEventLoggerServiceJS = require('../../services/legalEventLogger.js');
-
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const legalEventLoggerService = legalEventLoggerServiceJS.default || legalEventLoggerServiceJS;
+// Lazy load the JS service module
+const loadLegaleventlogger = createCachedLazyService('../../services/legalEventLogger.js');
 
 // Export default instance (for backward compatibility)
-export default legalEventLoggerService;
-
-// Also export named exports if they exist
-if (typeof legalEventLoggerServiceJS === 'object' && legalEventLoggerServiceJS !== null) {
-    Object.keys(legalEventLoggerServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = legalEventLoggerServiceJS[key];
-        }
-    });
-}
+export default loadLegaleventlogger();

@@ -1,12 +1,10 @@
-// PMO Context Routes - Consolidated PMO awareness endpoint
-// Exposes phase, gate, and execution status in a single call for UI behavior
+import express from 'express';
+import db from '../database.js';
+import verifyToken from '../middleware/authMiddleware.js';
+import StageGateService from '../services/stageGateService.js';
+import ExecutionMonitorService from '../services/executionMonitorService.js';
 
-const express = require('express');
 const router = express.Router();
-const db = require('../database');
-const verifyToken = require('../middleware/authMiddleware');
-const StageGateService = require('../services/stageGateService');
-const ExecutionMonitorService = require('../services/executionMonitorService');
 
 /**
  * Phase-specific allowed actions mapping
@@ -370,4 +368,4 @@ router.get('/:projectId/task-labels', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

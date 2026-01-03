@@ -26,7 +26,7 @@ export class SuperAdminController {
      */
     static getOrganizations = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const superAdminController = require('../../controllers/superAdminController');
+        const superAdminController = await import('../../controllers/superAdminController.js').then(m => m.default || m);
         const orgs = await superAdminController.getOrganizations(req, res);
         res.json(orgs);
     });
@@ -36,7 +36,7 @@ export class SuperAdminController {
      */
     static getDashboardStats = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const superAdminController = require('../../controllers/superAdminController');
+        const superAdminController = await import('../../controllers/superAdminController.js').then(m => m.default || m);
         const stats = await superAdminController.getDashboardStats(req, res);
         res.json(stats);
     });
@@ -46,7 +46,7 @@ export class SuperAdminController {
      */
     static getActivities = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const superAdminController = require('../../controllers/superAdminController');
+        const superAdminController = await import('../../controllers/superAdminController.js').then(m => m.default || m);
         const activities = await superAdminController.getActivities(req, res);
         res.json(activities);
     });
@@ -59,7 +59,7 @@ export class SuperAdminController {
         const updates = req.body;
         
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const superAdminController = require('../../controllers/superAdminController');
+        const superAdminController = await import('../../controllers/superAdminController.js').then(m => m.default || m);
         await superAdminController.updateOrganization({ ...req, params: { id }, body: updates }, res);
     });
 
@@ -70,7 +70,7 @@ export class SuperAdminController {
         const { id } = req.params;
         
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const superAdminController = require('../../controllers/superAdminController');
+        const superAdminController = await import('../../controllers/superAdminController.js').then(m => m.default || m);
         await superAdminController.deleteOrganization({ ...req, params: { id } }, res);
     });
 
@@ -81,7 +81,7 @@ export class SuperAdminController {
         const { id } = req.params;
         
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const superAdminController = require('../../controllers/superAdminController');
+        const superAdminController = await import('../../controllers/superAdminController.js').then(m => m.default || m);
         const billing = await superAdminController.getOrgBilling({ ...req, params: { id } }, res);
         res.json(billing);
     });
@@ -91,7 +91,7 @@ export class SuperAdminController {
      */
     static getUsers = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const superAdminController = require('../../controllers/superAdminController');
+        const superAdminController = await import('../../controllers/superAdminController.js').then(m => m.default || m);
         const users = await superAdminController.getUsers(req, res);
         res.json(users);
     });
@@ -101,7 +101,7 @@ export class SuperAdminController {
      */
     static createUser = asyncHandler(async (req: AuthenticatedRequest<CreateUserAdminRequest>, res: Response): Promise<void> => {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const superAdminController = require('../../controllers/superAdminController');
+        const superAdminController = await import('../../controllers/superAdminController.js').then(m => m.default || m);
         await superAdminController.createUser(req, res);
     });
 
@@ -112,7 +112,7 @@ export class SuperAdminController {
         const { id } = req.params;
         
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const superAdminController = require('../../controllers/superAdminController');
+        const superAdminController = await import('../../controllers/superAdminController.js').then(m => m.default || m);
         await superAdminController.updateUser({ ...req, params: { id } }, res);
     });
 
@@ -121,7 +121,7 @@ export class SuperAdminController {
      */
     static impersonateUser = asyncHandler(async (req: AuthenticatedRequest<ImpersonateUserRequest>, res: Response): Promise<void> => {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const superAdminController = require('../../controllers/superAdminController');
+        const superAdminController = await import('../../controllers/superAdminController.js').then(m => m.default || m);
         await superAdminController.impersonateUser(req, res);
     });
 
@@ -130,7 +130,7 @@ export class SuperAdminController {
      */
     static getSystemHealth = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const superAdminController = require('../../controllers/superAdminController');
+        const superAdminController = await import('../../controllers/superAdminController.js').then(m => m.default || m);
         const health = await superAdminController.getSystemHealth(req, res);
         res.json(health);
     });

@@ -10,7 +10,8 @@ class GdprService {
      * Request a data export for a user
      */
     async requestExport(userId, orgId) {
-        const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
         await new Promise((resolve, reject) => {
             db.run(
                 `INSERT INTO gdpr_requests (id, organization_id, user_id, type, status) VALUES (?, ?, ?, 'EXPORT', 'PENDING')`,
@@ -65,7 +66,7 @@ class GdprService {
 
         } catch (error) {
             console.error(`[GDPR] Failed export ${requestId}`, error);
-            db.run(`UPDATE gdpr_requests SET status = 'FAILED' WHERE id = ?`, [requestId]);
+            deps.db.run(`UPDATE gdpr_requests SET status = 'FAILED' WHERE id = ?`, [requestId]);
         }
     }
 
@@ -106,8 +107,8 @@ class GdprService {
                 );
 
                 // 2. Remove Session
-                db.run(`DELETE FROM sessions WHERE user_id = ?`, [userId]);
-                db.run(`DELETE FROM refresh_tokens WHERE user_id = ?`, [userId]);
+                deps.db.run(`DELETE FROM sessions WHERE user_id = ?`, [userId]);
+                deps.db.run(`DELETE FROM refresh_tokens WHERE user_id = ?`, [userId]);
 
                 // 3. Log Deletion (Compliance)
                 db.run(

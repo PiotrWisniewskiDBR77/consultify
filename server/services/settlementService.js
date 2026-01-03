@@ -17,12 +17,53 @@
 
 // Dependency injection container (for deterministic unit tests)
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4,
-    AttributionService: require('./attributionService'),
-    PartnerService: require('./partnerService'),
-    MetricsCollector: require('./metricsCollector')
+    _db: null,
+    _uuidv4: null,
+    _AttributionService: null,
+    _PartnerService: null,
+    _MetricsCollector: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; },
+
+    get AttributionService() { return this._AttributionService; },
+    set AttributionService(val) { this._AttributionService = val; },
+
+    get PartnerService() { return this._PartnerService; },
+    set PartnerService(val) { this._PartnerService = val; },
+
+    get MetricsCollector() { return this._MetricsCollector; },
+    set MetricsCollector(val) { this._MetricsCollector = val; }
 };
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+    if (!deps._AttributionService) {
+        const { default: AttributionService } = await import('./attributionService.js');
+        deps._AttributionService = AttributionService;
+    }
+    if (!deps._PartnerService) {
+        const { default: PartnerService } = await import('./partnerService.js');
+        deps._PartnerService = PartnerService;
+    }
+    if (!deps._MetricsCollector) {
+        const { default: MetricsCollector } = await import('./metricsCollector.js');
+        deps._MetricsCollector = MetricsCollector;
+    }
+}
 
 const PERIOD_STATUS = {
     OPEN: 'OPEN',
@@ -41,7 +82,11 @@ const SettlementService = {
 
     // For testing: allow overriding dependencies
     setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
+        if (newDeps.db) deps.db = newDeps.db;
+        if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
+        if (newDeps.AttributionService) deps.AttributionService = newDeps.AttributionService;
+        if (newDeps.PartnerService) deps.PartnerService = newDeps.PartnerService;
+        if (newDeps.MetricsCollector) deps.MetricsCollector = newDeps.MetricsCollector;
     },
 
     /**
@@ -52,6 +97,7 @@ const SettlementService = {
      * @returns {Promise<Object>} Created period
      */
     async createPeriod(params) {
+        await initDeps();
         const { periodStart, periodEnd } = params;
 
         if (!periodStart || !periodEnd) {
@@ -117,6 +163,7 @@ const SettlementService = {
      * @returns {Promise<Object|null>}
      */
     async checkOverlappingPeriod(start, end) {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.get(
                 `SELECT * FROM settlement_periods 
@@ -137,6 +184,7 @@ const SettlementService = {
      * @returns {Promise<Object|null>}
      */
     async getOpenPeriod() {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.get(
                 `SELECT * FROM settlement_periods WHERE status = ? LIMIT 1`,
@@ -166,6 +214,7 @@ const SettlementService = {
      * @returns {Promise<Object|null>}
      */
     async getPeriod(periodId) {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.get(
                 `SELECT sp.*, u1.email as calculated_by_email, u2.email as locked_by_email
@@ -205,6 +254,7 @@ const SettlementService = {
      * @returns {Promise<Array>}
      */
     async listPeriods(options = {}) {
+        await initDeps();
         const { status, limit = 50, offset = 0 } = options;
 
         let sql = `SELECT * FROM settlement_periods WHERE 1=1`;
@@ -254,6 +304,7 @@ const SettlementService = {
      * @returns {Promise<Object>} Calculation result
      */
     async calculateSettlements(periodId, calculatedByUserId) {
+        await initDeps();
         const period = await this.getPeriod(periodId);
 
         if (!period) {
@@ -401,6 +452,7 @@ const SettlementService = {
      * @returns {Promise<number>}
      */
     async getRevenueForAttribution(attribution) {
+        await initDeps();
         // Check if revenue_amount is already in attribution metadata
         if (attribution.metadata?.revenueAmount) {
             return attribution.metadata.revenueAmount;
@@ -429,6 +481,7 @@ const SettlementService = {
      * @returns {Promise<void>}
      */
     async insertSettlement(settlement) {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.run(
                 `INSERT INTO partner_settlements 
@@ -475,6 +528,7 @@ const SettlementService = {
      * @returns {Promise<Object>} Created adjustment entry
      */
     async createAdjustment(params) {
+        await initDeps();
         const { originalSettlementId, periodId, adjustmentAmount, reason, createdByUserId } = params;
 
         if (!originalSettlementId || !periodId || adjustmentAmount === undefined || !reason) {
@@ -562,6 +616,7 @@ const SettlementService = {
      * @returns {Promise<void>}
      */
     async clearPeriodSettlements(periodId) {
+        await initDeps();
         const period = await this.getPeriod(periodId);
 
         if (period.status === PERIOD_STATUS.LOCKED) {
@@ -588,6 +643,7 @@ const SettlementService = {
      * @returns {Promise<void>}
      */
     async updatePeriodStatus(periodId, updates) {
+        await initDeps();
         const fields = [];
         const params = [];
 
@@ -650,6 +706,7 @@ const SettlementService = {
      * @returns {Promise<Object>}
      */
     async lockPeriod(periodId, lockedByUserId) {
+        await initDeps();
         const period = await this.getPeriod(periodId);
 
         if (!period) {
@@ -699,6 +756,7 @@ const SettlementService = {
      * @returns {Promise<Array>}
      */
     async getPeriodSettlements(periodId) {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.all(
                 `SELECT ps.*, p.name as partner_name, o.name as organization_name
@@ -739,6 +797,7 @@ const SettlementService = {
      * @returns {Promise<Object>}
      */
     async getPartnerReport(partnerId, periodId) {
+        await initDeps();
         const period = await this.getPeriod(periodId);
         if (!period) {
             throw { errorCode: 'NOT_FOUND', message: 'Settlement period not found' };
@@ -805,6 +864,7 @@ const SettlementService = {
      * @returns {Promise<Array>}
      */
     async getPartnerSettlements(partnerId) {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.all(
                 `SELECT ps.*, sp.period_start, sp.period_end, sp.status as period_status, o.name as organization_name
@@ -843,6 +903,7 @@ const SettlementService = {
      * @returns {Promise<Object>}
      */
     async exportSettlements(periodId, format = 'json') {
+        await initDeps();
         const period = await this.getPeriod(periodId);
         if (!period) {
             throw { errorCode: 'NOT_FOUND', message: 'Settlement period not found' };
@@ -908,4 +969,4 @@ const SettlementService = {
     }
 };
 
-module.exports = SettlementService;
+export default SettlementService;

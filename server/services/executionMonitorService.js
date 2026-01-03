@@ -1,27 +1,75 @@
-// Execution Monitor Service - AI-powered execution oversight
-// Step 5: Execution Control, My Work & Notifications
+/**
+ * Execution Monitor Service - AI-powered execution oversight
+ * Step 5: Execution Control, My Work & Notifications
+ */
 
-// Dependency injection container (for deterministic unit tests)
+/**
+ * Dependency injection container
+ */
 const deps = {
-    db: require('../database'),
-    NotificationService: require('./notificationService')
+    _db: null,
+    _notificationService: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get notificationService() { return this._notificationService; },
+    set notificationService(val) { this._notificationService = val; }
 };
 
-const ExecutionMonitorService = {
-    // For testing: allow overriding dependencies
-    setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
-    },
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: dbInstance } = await import('../database.js');
+        deps._db = dbInstance;
+    }
+    if (!deps._notificationService) {
+        const { default: notificationService } = await import('./notificationService.js');
+        deps._notificationService = notificationService;
+    }
+}
+
+class ExecutionMonitorService {
+    constructor() {
+        this._db = null;
+    }
+
+    get db() {
+        if (!this._db) {
+            throw new Error('ExecutionMonitorService: Database not initialized. Call init() first.');
+        }
+        return this._db;
+    }
+
+    /**
+     * Initialize service dependencies
+     */
+    async init() {
+        await initDeps();
+        this._db = deps.db;
+        return this;
+    }
+
+    /**
+     * Set dependencies for testing
+     */
+    setDependencies(mockDeps) {
+        Object.assign(deps, mockDeps);
+        this._db = deps.db;
+    }
 
     /**
      * Run daily execution monitoring for a project
      */
-    runDailyMonitor: async (projectId) => {
+    async runDailyMonitor(projectId) {
+        await this.init();
         const issues = [];
         const notifications = [];
 
         // 1. Detect stalled tasks (no update in 7+ days, still active)
-        const stalledTasks = await ExecutionMonitorService._detectStalledTasks(projectId);
+        const stalledTasks = await this._detectStalledTasks(projectId);
         if (stalledTasks.length > 0) {
             issues.push({
                 type: 'STALLED_TASKS',
@@ -32,7 +80,7 @@ const ExecutionMonitorService = {
         }
 
         // 2. Detect overdue tasks
-        const overdueTasks = await ExecutionMonitorService._detectOverdueTasks(projectId);
+        const overdueTasks = await this._detectOverdueTasks(projectId);
         if (overdueTasks.length > 0) {
             issues.push({
                 type: 'OVERDUE_TASKS',
@@ -58,7 +106,7 @@ const ExecutionMonitorService = {
         }
 
         // 3. Detect decision inertia (pending for 7+ days)
-        const overdueDecisions = await ExecutionMonitorService._detectOverdueDecisions(projectId);
+        const overdueDecisions = await this._detectOverdueDecisions(projectId);
         if (overdueDecisions.length > 0) {
             issues.push({
                 type: 'DECISION_INERTIA',
@@ -82,7 +130,7 @@ const ExecutionMonitorService = {
         }
 
         // 4. Detect stalled initiatives
-        const stalledInitiatives = await ExecutionMonitorService._detectStalledInitiatives(projectId);
+        const stalledInitiatives = await this._detectStalledInitiatives(projectId);
         if (stalledInitiatives.length > 0) {
             issues.push({
                 type: 'STALLED_INITIATIVES',
@@ -93,7 +141,7 @@ const ExecutionMonitorService = {
         }
 
         // 5. Detect silent blockers (blocked without reason)
-        const silentBlockers = await ExecutionMonitorService._detectSilentBlockers(projectId);
+        const silentBlockers = await this._detectSilentBlockers(projectId);
         if (silentBlockers.length > 0) {
             issues.push({
                 type: 'SILENT_BLOCKERS',
@@ -111,14 +159,15 @@ const ExecutionMonitorService = {
             notificationsGenerated: notifications.length,
             notifications
         };
-    },
+    }
 
     /**
      * Detect stalled tasks (no progress in 7+ days)
      */
-    _detectStalledTasks: async (projectId) => {
+    async _detectStalledTasks(projectId) {
+        await this.init();
         return new Promise((resolve, reject) => {
-            deps.db.all(`SELECT t.*, u.first_name, u.last_name
+            this.db.all(`SELECT t.*, u.first_name, u.last_name
                     FROM tasks t
                     LEFT JOIN users u ON t.assignee_id = u.id
                     WHERE t.project_id = ? 
@@ -129,14 +178,15 @@ const ExecutionMonitorService = {
                     resolve(rows || []);
                 });
         });
-    },
+    }
 
     /**
      * Detect overdue tasks
      */
-    _detectOverdueTasks: async (projectId) => {
+    async _detectOverdueTasks(projectId) {
+        await this.init();
         return new Promise((resolve, reject) => {
-            deps.db.all(`SELECT t.*, u.first_name, u.last_name
+            this.db.all(`SELECT t.*, u.first_name, u.last_name
                     FROM tasks t
                     LEFT JOIN users u ON t.assignee_id = u.id
                     WHERE t.project_id = ? 
@@ -147,14 +197,15 @@ const ExecutionMonitorService = {
                     resolve(rows || []);
                 });
         });
-    },
+    }
 
     /**
      * Detect overdue decisions (pending for 7+ days)
      */
-    _detectOverdueDecisions: async (projectId) => {
+    async _detectOverdueDecisions(projectId) {
+        await this.init();
         return new Promise((resolve, reject) => {
-            deps.db.all(`SELECT * FROM decisions 
+            this.db.all(`SELECT * FROM decisions 
                     WHERE project_id = ? 
                     AND status = 'PENDING'
                     AND created_at < datetime('now', '-7 days')`,
@@ -163,14 +214,15 @@ const ExecutionMonitorService = {
                     resolve(rows || []);
                 });
         });
-    },
+    }
 
     /**
      * Detect stalled initiatives
      */
-    _detectStalledInitiatives: async (projectId) => {
+    async _detectStalledInitiatives(projectId) {
+        await this.init();
         return new Promise((resolve, reject) => {
-            deps.db.all(`SELECT * FROM initiatives
+            this.db.all(`SELECT * FROM initiatives
                     WHERE project_id = ? 
                     AND status IN ('EXECUTING', 'APPROVED')
                     AND updated_at < datetime('now', '-7 days')`,
@@ -179,14 +231,15 @@ const ExecutionMonitorService = {
                     resolve(rows || []);
                 });
         });
-    },
+    }
 
     /**
      * Detect silent blockers
      */
-    _detectSilentBlockers: async (projectId) => {
+    async _detectSilentBlockers(projectId) {
+        await this.init();
         return new Promise((resolve, reject) => {
-            deps.db.all(`SELECT t.id, t.title, 'TASK' as type FROM tasks t
+            this.db.all(`SELECT t.id, t.title, 'TASK' as type FROM tasks t
                     WHERE t.project_id = ? AND t.status = 'BLOCKED' AND (t.blocked_reason IS NULL OR t.blocked_reason = '')
                     UNION ALL
                     SELECT i.id, i.title, 'INITIATIVE' as type FROM initiatives i
@@ -196,13 +249,13 @@ const ExecutionMonitorService = {
                     resolve(rows || []);
                 });
         });
-    },
+    }
 
     /**
      * Generate AI execution summary
      */
-    generateExecutionSummary: async (projectId) => {
-        const monitorResult = await ExecutionMonitorService.runDailyMonitor(projectId);
+    async generateExecutionSummary(projectId) {
+        const monitorResult = await this.runDailyMonitor(projectId);
 
         const summary = [];
 
@@ -239,6 +292,7 @@ const ExecutionMonitorService = {
             generatedAt: new Date().toISOString()
         };
     }
-};
+}
 
-module.exports = ExecutionMonitorService;
+const executionMonitorServiceInstance = new ExecutionMonitorService();
+export default executionMonitorServiceInstance;

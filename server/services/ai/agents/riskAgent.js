@@ -10,10 +10,10 @@
  * - Compliance and regulatory risks
  */
 
-const { BaseAgent } = require('./baseAgent');
-const llmService = require('../llmService');
+import { BaseAgent } from './baseAgent.js';
+import llmService from '../llmService.js';
 
-class RiskAgent extends BaseAgent {
+export class RiskAgent extends BaseAgent {
     constructor(config = {}) {
         super({
             name: 'RiskAgent',
@@ -162,6 +162,7 @@ ANALYSIS REQUIREMENTS:
 3. Assess probability (1-5) and impact (1-5)
 4. Recommend specific mitigation actions
 5. Define early warning indicators
+6. Provide structured risk metrics
 
 FORMAT YOUR RESPONSE AS:
 ## Risk Assessment Summary
@@ -211,9 +212,9 @@ FORMAT YOUR RESPONSE AS:
             : [];
 
         // Extract contingency plans
-        const contingencyMatch = text.match(/## Contingency Plans\s*([\s\S]*?)(?=##|$)/i);
-        const contingencies = contingencyMatch
-            ? contingencyMatch[1].trim().split('\n').filter(l => l.match(/^\d+\./)).map(l => l.replace(/^\d+\.\s*/, ''))
+        const contingenciesMatch = text.match(/## Contingency Plans\s*([\s\S]*?)(?=##|$)/i);
+        const contingencies = contingenciesMatch
+            ? contingenciesMatch[1].trim().split('\n').filter(l => l.match(/^\d+\./)).map(l => l.replace(/^\d+\.\s*/, ''))
             : [];
 
         // Extract recommendations
@@ -394,10 +395,4 @@ For each risk provide:
     }
 }
 
-module.exports = { RiskAgent };
-
-
-
-
-
-
+export default RiskAgent;

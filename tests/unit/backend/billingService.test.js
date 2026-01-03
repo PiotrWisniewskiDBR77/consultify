@@ -6,37 +6,25 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testOrganizations, testUsers } from '../../fixtures/testData.js';
-
-const require = createRequire(import.meta.url);
+import BillingService from '../../../server/services/billingService.js';
 
 describe('BillingService', () => {
     let mockDb;
-    let BillingService;
 
     beforeEach(() => {
-        vi.resetModules();
-
         mockDb = createMockDb();
-
-        // Mock database before import
-        vi.doMock('../../../server/database', () => ({
-            default: mockDb
-        }));
 
         // Clear env to simulate Stripe not configured
         const originalEnv = process.env.STRIPE_SECRET_KEY;
         delete process.env.STRIPE_SECRET_KEY;
 
-        // Import service after mocking
-        BillingService = require('../../../server/services/billingService.js');
-
         // Inject mock dependencies
         BillingService.setDependencies({
             db: mockDb,
-            uuidv4: () => 'test-uuid-1234'
+            uuidv4: () => 'test-uuid-1234',
+            stripe: null
         });
 
         // Restore env
@@ -47,7 +35,6 @@ describe('BillingService', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../server/database');
     });
 
     describe('getPlans()', () => {
@@ -621,33 +608,31 @@ describe('BillingService', () => {
     });
 
     describe('Stripe Integration (Mocked)', () => {
-        let StripeBillingService;
+        let StripeBillingService = BillingService;
         const mockStripe = {
             customers: {
-                retrieve: vi.fn(),
-                create: vi.fn(),
-                update: vi.fn()
+                retrieve: vi.fn().mockResolvedValue({ id: 'cus_default', email: 'default@example.com' }),
+                create: vi.fn().mockResolvedValue({ id: 'cus_new', email: 'default@example.com' }),
+                update: vi.fn().mockResolvedValue({ id: 'cus_updated' })
             },
             subscriptions: {
-                create: vi.fn(),
-                update: vi.fn(),
-                retrieve: vi.fn()
+                create: vi.fn().mockResolvedValue({ id: 'sub_default', status: 'active' }),
+                update: vi.fn().mockResolvedValue({ id: 'sub_updated', status: 'active' }),
+                retrieve: vi.fn().mockResolvedValue({ id: 'sub_default', status: 'active' })
             },
             paymentMethods: {
-                attach: vi.fn(),
-                detach: vi.fn(),
-                retrieve: vi.fn()
+                attach: vi.fn().mockResolvedValue({ id: 'pm_default' }),
+                detach: vi.fn().mockResolvedValue({ id: 'pm_default' }),
+                retrieve: vi.fn().mockResolvedValue({ id: 'pm_default', card: { brand: 'visa', last4: '4242' } })
             },
             setupIntents: {
-                create: vi.fn()
+                create: vi.fn().mockResolvedValue({ id: 'seti_default', client_secret: 'secret' })
             }
         };
 
         beforeEach(() => {
-            vi.resetModules();
             process.env.STRIPE_SECRET_KEY = 'sk_test_mock';
 
-            StripeBillingService = require('../../../server/services/billingService.js');
             StripeBillingService.setDependencies({
                 db: mockDb,
                 uuidv4: () => 'test-uuid-stripe',
@@ -657,7 +642,6 @@ describe('BillingService', () => {
 
         afterEach(() => {
             delete process.env.STRIPE_SECRET_KEY;
-            vi.doUnmock('stripe');
         });
 
         it('should retrieve existing Stripe customer', async () => {
@@ -709,6 +693,7 @@ describe('BillingService', () => {
 
         it('should create setup intent', async () => {
             mockDb.get.mockImplementation((query, params, callback) => callback(null, { stripe_customer_id: 'cus_123' }));
+            mockStripe.customers.retrieve.mockResolvedValue({ id: 'cus_123' });
             mockStripe.setupIntents.create.mockResolvedValue({ id: 'seti_123', client_secret: 'secret' });
 
             const intent = await StripeBillingService.createSetupIntent('org-1', 'a@b.com', 'Org');

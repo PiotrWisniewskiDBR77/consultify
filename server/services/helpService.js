@@ -7,9 +7,32 @@
  * Step 6: Enterprise+ Ready
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const MetricsCollector = require('./metricsCollector');
+// Dependency injection for testing
+const deps = {
+    _db: null,
+    _uuidv4: null,
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; },
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+}
+import MetricsCollector from './metricsCollector.js';
 
 /**
  * Event types for help interactions (append-only)
@@ -188,7 +211,8 @@ const HelpService = {
             throw new Error(`Invalid event type: ${eventType}`);
         }
 
-        const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
         const contextJson = JSON.stringify(context);
 
         return new Promise((resolve, reject) => {
@@ -334,7 +358,8 @@ const HelpService = {
             throw new Error(`Invalid target_org_type: ${targetOrgType}`);
         }
 
-        const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
 
         return new Promise((resolve, reject) => {
             db.run(
@@ -432,7 +457,8 @@ const HelpService = {
             throw new Error(`Invalid action_type: ${actionType}`);
         }
 
-        const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
         const payloadJson = JSON.stringify(actionPayload);
 
         return new Promise((resolve, reject) => {
@@ -493,4 +519,4 @@ const HelpService = {
     }
 };
 
-module.exports = HelpService;
+export default HelpService;

@@ -5,7 +5,7 @@
  * Three modes: REACTIVE, BALANCED, PROACTIVE
  */
 
-const AISettingsService = require('./aiSettingsService');
+import BaseService from './BaseService.js';
 
 /**
  * Proactivity Mode Definitions
@@ -37,6 +37,15 @@ const PROACTIVITY_BEHAVIORS = {
         showRecommendations: true,   // Show recommendations
         autoAnalyze: true,           // Analyze context in background
         suggestNextSteps: true       // Suggest next steps when appropriate
+    },
+    BALANCED_V2: { // Legacy or alternative? Keeping original BALANCED
+        autoSuggest: true,
+        nudges: true,
+        contextualHints: true,
+        initiateConversation: false,
+        showRecommendations: true,
+        autoAnalyze: true,
+        suggestNextSteps: true
     },
     PROACTIVE: {
         autoSuggest: true,           // Active auto-suggestions
@@ -108,86 +117,98 @@ const NUDGE_TYPES = {
     BUDGET_WARNING: 'BUDGET_WARNING'
 };
 
-const AIProactivityEngine = {
-    MODES: PROACTIVITY_MODES,
-    BEHAVIORS: PROACTIVITY_BEHAVIORS,
-    DESCRIPTIONS: PROACTIVITY_DESCRIPTIONS,
-    NUDGE_TYPES,
+export class AIProactivityEngine extends BaseService {
+    constructor() {
+        super();
+        this.MODES = PROACTIVITY_MODES;
+        this.BEHAVIORS = PROACTIVITY_BEHAVIORS;
+        this.DESCRIPTIONS = PROACTIVITY_DESCRIPTIONS;
+        this.NUDGE_TYPES = NUDGE_TYPES;
+    }
+
+    async getAISettingsService() {
+        if (!this._aiSettingsService) {
+            const { default: aiSettingsService } = await import('./aiSettingsService.js');
+            this._aiSettingsService = aiSettingsService;
+        }
+        return this._aiSettingsService;
+    }
 
     /**
      * Get behavior flags for a given mode
      */
-    getBehaviors: (mode) => {
+    getBehaviors(mode) {
         return PROACTIVITY_BEHAVIORS[mode] || PROACTIVITY_BEHAVIORS.BALANCED;
-    },
+    }
 
     /**
      * Get mode description for UI
      */
-    getModeDescription: (mode) => {
+    getModeDescription(mode) {
         return PROACTIVITY_DESCRIPTIONS[mode] || PROACTIVITY_DESCRIPTIONS.BALANCED;
-    },
+    }
 
     /**
      * Get all modes with descriptions for UI
      */
-    getAllModes: () => {
+    getAllModes() {
         return Object.entries(PROACTIVITY_MODES).map(([key, value]) => ({
             id: value,
             ...PROACTIVITY_DESCRIPTIONS[key],
             behaviors: PROACTIVITY_BEHAVIORS[key]
         }));
-    },
+    }
 
     /**
      * Get effective proactivity for a user
      */
-    getEffectiveProactivity: async (userId, organizationId) => {
-        const settings = await AISettingsService.getEffectiveSettings(userId, organizationId);
+    async getEffectiveProactivity(userId, organizationId) {
+        const aiSettingsService = await this.getAISettingsService();
+        const settings = await aiSettingsService.getEffectiveSettings(userId, organizationId);
         return {
             mode: settings.proactivityMode,
             behaviors: settings.proactivityBehavior,
             description: PROACTIVITY_DESCRIPTIONS[settings.proactivityMode]
         };
-    },
+    }
 
     /**
      * Check if a specific behavior is enabled
      */
-    isBehaviorEnabled: async (userId, organizationId, behaviorKey) => {
-        const { behaviors } = await AIProactivityEngine.getEffectiveProactivity(userId, organizationId);
+    async isBehaviorEnabled(userId, organizationId, behaviorKey) {
+        const { behaviors } = await this.getEffectiveProactivity(userId, organizationId);
         return behaviors[behaviorKey] || false;
-    },
+    }
 
     /**
      * Check if nudges are enabled
      */
-    areNudgesEnabled: async (userId, organizationId) => {
-        return AIProactivityEngine.isBehaviorEnabled(userId, organizationId, 'nudges');
-    },
+    async areNudgesEnabled(userId, organizationId) {
+        return this.isBehaviorEnabled(userId, organizationId, 'nudges');
+    }
 
     /**
      * Check if auto-suggestions are enabled
      */
-    areAutoSuggestionsEnabled: async (userId, organizationId) => {
-        return AIProactivityEngine.isBehaviorEnabled(userId, organizationId, 'autoSuggest');
-    },
+    async areAutoSuggestionsEnabled(userId, organizationId) {
+        return this.isBehaviorEnabled(userId, organizationId, 'autoSuggest');
+    }
 
     /**
      * Check if AI can initiate conversations
      */
-    canInitiateConversation: async (userId, organizationId) => {
-        return AIProactivityEngine.isBehaviorEnabled(userId, organizationId, 'initiateConversation');
-    },
+    async canInitiateConversation(userId, organizationId) {
+        return this.isBehaviorEnabled(userId, organizationId, 'initiateConversation');
+    }
 
     /**
      * Determine if a nudge should be shown based on type and user settings
      */
-    shouldShowNudge: async (userId, organizationId, nudgeType, urgency = 'normal') => {
-        const { mode, behaviors } = await AIProactivityEngine.getEffectiveProactivity(userId, organizationId);
-        
+    async shouldShowNudge(userId, organizationId, nudgeType, urgency = 'normal') {
+        const { mode, behaviors } = await this.getEffectiveProactivity(userId, organizationId);
+
         if (!behaviors.nudges) return false;
-        
+
         // In BALANCED mode, only show high-urgency nudges
         if (mode === 'BALANCED' && urgency !== 'high') {
             // Still show critical nudges
@@ -196,14 +217,14 @@ const AIProactivityEngine = {
                 return false;
             }
         }
-        
+
         return true;
-    },
+    }
 
     /**
      * Get prompt modifier based on proactivity mode
      */
-    getProactivityPromptModifier: (mode) => {
+    getProactivityPromptModifier(mode) {
         const modifiers = {
             REACTIVE: `
 You are in REACTIVE mode. Important guidelines:
@@ -230,15 +251,15 @@ You are in PROACTIVE mode. Guidelines:
 - Provide rich, detailed responses with actionable insights
 - Feel free to anticipate user needs and offer relevant information`
         };
-        
+
         return modifiers[mode] || modifiers.BALANCED;
-    },
+    }
 
     /**
      * Calculate engagement score based on user's recent interactions
      * Used to potentially adjust proactivity
      */
-    calculateEngagementScore: async (userId, organizationId) => {
+    async calculateEngagementScore(userId, organizationId) {
         // This would query recent activity - placeholder implementation
         // Could be used to dynamically adjust proactivity within bounds
         return {
@@ -248,7 +269,7 @@ You are in PROACTIVE mode. Guidelines:
             suggestModeChange: null
         };
     }
-};
+}
 
-module.exports = AIProactivityEngine;
-
+const aiProactivityEngine = new AIProactivityEngine();
+export default aiProactivityEngine;

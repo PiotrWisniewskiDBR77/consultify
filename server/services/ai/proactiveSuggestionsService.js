@@ -12,9 +12,48 @@
  * @module proactiveSuggestionsService
  */
 
-const db = require('../../database');
-const { aiLogger } = require('./logger');
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection for testing
+const deps = {
+    _db: null,
+    _aiLogger: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get aiLogger() { return this._aiLogger; },
+    set aiLogger(val) { this._aiLogger = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../../database.js');
+        deps._db = db;
+    }
+    if (!deps._aiLogger) {
+        const { aiLogger } = await import('./logger.js');
+        deps._aiLogger = aiLogger;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
+
+/**
+ * Set dependencies (for testing)
+ */
+function setDependencies(newDeps = {}) {
+    if (newDeps.db) deps.db = newDeps.db;
+    if (newDeps.aiLogger) deps.aiLogger = newDeps.aiLogger;
+    if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
+}
 
 // Suggestion types
 const SUGGESTION_TYPES = {
@@ -110,7 +149,8 @@ const ProactiveSuggestionsService = {
             return suggestions.slice(0, 5);
 
         } catch (error) {
-            aiLogger.error('ProactiveSuggestions', `Failed to generate suggestions: ${error.message}`);
+            await initDeps();
+            deps.aiLogger.error('ProactiveSuggestions', `Failed to generate suggestions: ${error.message}`);
             return [];
         }
     },
@@ -186,10 +226,11 @@ const ProactiveSuggestionsService = {
      * Get suggestions based on project state
      */
     _getProjectStateSuggestions: async (projectId, organizationId) => {
+        await initDeps();
         const suggestions = [];
 
         return new Promise((resolve) => {
-            db.get(`
+            deps.db.get(`
                 SELECT 
                     p.name, p.status, p.phase,
                     (SELECT COUNT(*) FROM tasks WHERE project_id = p.id AND status = 'overdue') as overdue_tasks,
@@ -354,13 +395,14 @@ const ProactiveSuggestionsService = {
      * Get time-based suggestions (deadlines, reminders)
      */
     _getTimeBasedSuggestions: async (projectId, organizationId) => {
+        await initDeps();
         const suggestions = [];
         const now = new Date();
         const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
         const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT title, due_date, priority
                 FROM tasks
                 WHERE (project_id = ? OR organization_id = ?)
@@ -407,8 +449,9 @@ const ProactiveSuggestionsService = {
      * Find similar past queries
      */
     _findSimilarPastQueries: async (query, userId, projectId) => {
+        await initDeps();
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT prompt as fullQuery, substr(prompt, 1, 50) as snippet
                 FROM ai_interactions
                 WHERE user_id = ?
@@ -428,9 +471,10 @@ const ProactiveSuggestionsService = {
      * Record when a suggestion is shown
      */
     recordSuggestionShown: async (suggestionId, userId, context) => {
-        const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
         return new Promise((resolve) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO ai_suggestion_events (id, suggestion_id, user_id, event_type, context, created_at)
                 VALUES (?, ?, ?, 'shown', ?, ?)
             `, [id, suggestionId, userId, JSON.stringify(context), new Date().toISOString()], (err) => {
@@ -443,9 +487,10 @@ const ProactiveSuggestionsService = {
      * Record when a suggestion is accepted/dismissed
      */
     recordSuggestionAction: async (suggestionId, userId, action, feedback = null) => {
-        const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
         return new Promise((resolve) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO ai_suggestion_events (id, suggestion_id, user_id, event_type, context, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)
             `, [id, suggestionId, userId, action, JSON.stringify({ feedback }), new Date().toISOString()], (err) => {
@@ -458,8 +503,9 @@ const ProactiveSuggestionsService = {
      * Get suggestion effectiveness metrics
      */
     getSuggestionMetrics: async (organizationId, days = 30) => {
+        await initDeps();
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT 
                     event_type,
                     COUNT(*) as count
@@ -483,9 +529,14 @@ const ProactiveSuggestionsService = {
                 resolve(metrics);
             });
         });
-    }
+    },
+
+    /**
+     * Set dependencies (for testing)
+     */
+    setDependencies
 };
 
-module.exports = ProactiveSuggestionsService;
+export default ProactiveSuggestionsService;
 
 

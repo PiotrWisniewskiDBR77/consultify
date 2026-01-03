@@ -8,12 +8,12 @@
  */
 
 import { Router } from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
 // Import the JS implementation for now (will be fully migrated later)
-const user_contactRoutesJS = require('../../routes/user-contact.js');
+const user_contactRoutesJSPromise = (async () => {
+    const module = await import('../../routes/user-contact.js');
+    return module.default || module;
+})();
+const user_contactRoutesJS = user_contactRoutesJSPromise;;
 
 // Create router and apply JS routes
 const router = Router();

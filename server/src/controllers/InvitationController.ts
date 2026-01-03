@@ -29,8 +29,7 @@ export class InvitationController {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const InvitationService = require('../../services/invitationService');
+        const InvitationService = (await import('../services/invitationService.js')).default;
         const invitations = await InvitationService.getInvitations(orgId);
 
         res.json(invitations);
@@ -47,8 +46,7 @@ export class InvitationController {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const InvitationService = require('../../services/invitationService');
+        const InvitationService = (await import('../services/invitationService.js')).default;
         const invitation = await InvitationService.createInvitation({
             email,
             role,
@@ -66,9 +64,8 @@ export class InvitationController {
     static resendInvitation = asyncHandler(async (req: AuthenticatedRequest<ResendInvitationRequest>, res: Response): Promise<void> => {
         const { invitationId } = req.body;
         
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const InvitationService = require('../../services/invitationService');
-        const invitation = await InvitationService.resendInvitation(invitationId);
+        const InvitationService = (await import('../services/invitationService.js')).default;
+        const invitation = await InvitationService.resendInvitation(invitationId, req.user?.id || '');
 
         res.json(invitation);
     });
@@ -77,11 +74,10 @@ export class InvitationController {
      * Accept invitation
      */
     static acceptInvitation = asyncHandler(async (req: AuthenticatedRequest<AcceptInvitationRequest>, res: Response): Promise<void> => {
-        const { token } = req.body;
+        const { token, email, firstName, lastName, password } = req.body;
         
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const InvitationService = require('../../services/invitationService');
-        const result = await InvitationService.acceptInvitation(token);
+        const { acceptInvitation } = await import('../services/invitationService.js');
+        const result = await acceptInvitation({ token, email, firstName, lastName, password });
 
         res.json(result);
     });
@@ -92,9 +88,8 @@ export class InvitationController {
     static cancelInvitation = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
         
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const InvitationService = require('../../services/invitationService');
-        await InvitationService.cancelInvitation(id);
+        const InvitationService = (await import('../services/invitationService.js')).default;
+        await InvitationService.cancelInvitation(id, req.user?.id);
 
         res.json({ message: 'Invitation cancelled' });
     });

@@ -3,24 +3,71 @@
  * Handles saved reports, scheduled reports, and report execution for SuperAdmin Analytics
  */
 
-const defaultDb = require('../database.sqlite.active').db;
-const { v4: uuidv4 } = require('uuid');
+// Dependency injection container
+const deps = {
+    _db: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        try {
+            const dbModule = await import('../database.sqlite.active.js');
+            deps._db = dbModule.db || dbModule.default?.db;
+        } catch {
+            // Fallback to regular database
+            const { default: db } = await import('../database.js');
+            deps._db = db;
+        }
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
 
 class ReportService {
     constructor() {
-        this.db = defaultDb;
+        // Will be initialized lazily
+        this._db = null;
+    }
+
+    get db() {
+        if (!this._db) {
+            throw new Error('Database not initialized. Call initDeps() first.');
+        }
+        return this._db;
+    }
+
+    /**
+     * Initialize database connection
+     */
+    async init() {
+        await initDeps();
+        this._db = deps.db;
     }
 
     /**
      * Inject dependencies for testing
      */
     setDependencies(deps) {
-        if (deps.db) this.db = deps.db;
+        if (deps.db) this._db = deps.db;
+        if (deps.uuidv4) deps.uuidv4 = deps.uuidv4;
     }
     /**
      * Get all saved reports with optional filters
      */
     async getReports(filters = {}) {
+        await this.init();
         return new Promise((resolve, reject) => {
             let query = `
                 SELECT 
@@ -66,6 +113,7 @@ class ReportService {
      * Get a single report by ID
      */
     async getReportById(reportId) {
+        await this.init();
         return new Promise((resolve, reject) => {
             this.db.get(
                 `SELECT r.*, u.email as created_by_email
@@ -85,7 +133,9 @@ class ReportService {
      * Create a new saved report
      */
     async createReport(data, userId) {
-        const id = uuidv4();
+        await this.init();
+        await initDeps();
+        const id = deps.uuidv4();
         const now = new Date().toISOString();
 
         return new Promise((resolve, reject) => {
@@ -117,6 +167,7 @@ class ReportService {
      * Update an existing report
      */
     async updateReport(reportId, data) {
+        await this.init();
         const now = new Date().toISOString();
         const updates = [];
         const params = [];
@@ -166,6 +217,7 @@ class ReportService {
      * Delete a report
      */
     async deleteReport(reportId) {
+        await this.init();
         return new Promise((resolve, reject) => {
             this.db.run(
                 'DELETE FROM admin_saved_reports WHERE id = ?',
@@ -182,12 +234,14 @@ class ReportService {
      * Execute a report and store results
      */
     async executeReport(reportId) {
+        await this.init();
+        await initDeps();
         const report = await this.getReportById(reportId);
         if (!report) {
             throw new Error('Report not found');
         }
 
-        const executionId = uuidv4();
+        const executionId = deps.uuidv4();
         const now = new Date().toISOString();
 
         // Create execution record
@@ -265,6 +319,7 @@ class ReportService {
     }
 
     async generateUsersReport(filters, columns) {
+        await this.init();
         return new Promise((resolve, reject) => {
             let query = `
                 SELECT 
@@ -308,6 +363,7 @@ class ReportService {
     }
 
     async generateOrganizationsReport(filters, columns) {
+        await this.init();
         return new Promise((resolve, reject) => {
             let query = `
                 SELECT 
@@ -342,6 +398,7 @@ class ReportService {
     }
 
     async generateRevenueReport(filters, columns) {
+        await this.init();
         return new Promise((resolve, reject) => {
             let query = `
                 SELECT 
@@ -385,6 +442,7 @@ class ReportService {
     }
 
     async generateActivityReport(filters, columns) {
+        await this.init();
         return new Promise((resolve, reject) => {
             let query = `
                 SELECT 
@@ -428,6 +486,7 @@ class ReportService {
     }
 
     async generateAIUsageReport(filters, columns) {
+        await this.init();
         return new Promise((resolve, reject) => {
             let query = `
                 SELECT 
@@ -476,6 +535,7 @@ class ReportService {
      * Get report execution history
      */
     async getReportExecutions(reportId, limit = 20) {
+        await this.init();
         return new Promise((resolve, reject) => {
             this.db.all(
                 `SELECT * FROM admin_report_executions 
@@ -495,6 +555,7 @@ class ReportService {
      * Get scheduled reports that need to be executed
      */
     async getScheduledReportsToRun() {
+        await this.init();
         return new Promise((resolve, reject) => {
             this.db.all(
                 `SELECT * FROM admin_saved_reports 
@@ -536,4 +597,5 @@ class ReportService {
     }
 }
 
-module.exports = new ReportService();
+const reportServiceInstance = new ReportService();
+export default reportServiceInstance;

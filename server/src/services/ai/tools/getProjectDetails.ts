@@ -1,32 +1,82 @@
 /**
- * Ai/tools/getProjectDetails Service
- * Enterprise SaaS Architecture - TypeScript Backend
- * 
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript with proper types
+ * Tool: get_project_details
+ * Fetches full project data from the database.
  */
 
-import { createRequire } from 'module';
-import logger from '../utils/Logger.js';
+import * as DbPromise from '../../../utils/DbPromise.js';
 
-const require = createRequire(import.meta.url);
+type ProjectParams = {
+    projectId: string;
+};
 
-// Import the JS implementation for now (will be fully migrated later)
-const ai/tools/getProjectDetailsServiceJS = require('../../services/ai/tools/getProjectDetails.js');
+type ProjectRow = {
+    id: string;
+    name: string;
+    description?: string;
+    status?: string;
+    progress?: number;
+    start_date?: string | null;
+    end_date?: string | null;
+    owner_id?: string;
+    organization_id?: string;
+    created_at?: string;
+    updated_at?: string;
+};
 
-// Re-export all functions/properties from the JS service
-// This maintains backward compatibility while providing TypeScript types
-const ai/tools/getProjectDetailsService = ai/tools/getProjectDetailsServiceJS.default || ai/tools/getProjectDetailsServiceJS;
+type TeamRow = {
+    id: string;
+    name: string;
+    email?: string;
+    role?: string;
+};
 
-// Export default instance (for backward compatibility)
-export default ai/tools/getProjectDetailsService;
+export async function getProjectDetails(params: ProjectParams): Promise<Record<string, unknown>> {
+    const { projectId } = params;
 
-// Also export named exports if they exist
-if (typeof ai/tools/getProjectDetailsServiceJS === 'object' && ai/tools/getProjectDetailsServiceJS !== null) {
-    Object.keys(ai/tools/getProjectDetailsServiceJS).forEach(key => {
-        if (key !== 'default') {
-            (exports as any)[key] = ai/tools/getProjectDetailsServiceJS[key];
+    const project = await DbPromise.get<ProjectRow>(
+        `SELECT 
+            p.id, p.name, p.description, p.status, p.progress,
+            p.start_date, p.end_date, p.owner_id, p.organization_id,
+            p.created_at, p.updated_at
+         FROM projects p 
+         WHERE p.id = ?`,
+        [projectId],
+        { fallback: false }
+    );
+
+    if (!project) {
+        return { error: 'Project not found', id: projectId };
+    }
+
+    let team: TeamRow[] = [];
+    try {
+        team = await DbPromise.all<TeamRow>(
+            `SELECT u.id, u.name, u.email, pm.role
+             FROM project_members pm
+             JOIN users u ON pm.user_id = u.id
+             WHERE pm.project_id = ?`,
+            [projectId],
+            { fallback: true }
+        );
+    } catch {
+        team = [];
+    }
+
+    return {
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        status: project.status || 'active',
+        progress: project.progress || 0,
+        startDate: project.start_date,
+        endDate: project.end_date,
+        team: team || [],
+        metrics: {
+            daysRemaining: project.end_date
+                ? Math.ceil((new Date(project.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                : null
         }
-    });
+    };
 }
+
+export default { getProjectDetails };

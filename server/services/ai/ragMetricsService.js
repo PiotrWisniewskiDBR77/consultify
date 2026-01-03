@@ -12,9 +12,57 @@
  * @version 1.0.0
  */
 
-const db = require('../../database');
-const { v4: uuidv4 } = require('uuid');
-const { aiLogger } = require('./logger');
+// Dependency injection for testing
+const deps = {
+    _db: null,
+    _uuidv4: null,
+    _aiLogger: null,
+    _OpenAI: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; },
+
+    get aiLogger() { return this._aiLogger; },
+    set aiLogger(val) { this._aiLogger = val; },
+
+    get OpenAI() { return this._OpenAI; },
+    set OpenAI(val) { this._OpenAI = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+    if (!deps._aiLogger) {
+        const { aiLogger } = await import('./logger.js');
+        deps._aiLogger = aiLogger;
+    }
+    if (!deps._OpenAI) {
+        const { OpenAI } = await import('openai');
+        deps._OpenAI = OpenAI;
+    }
+}
+
+/**
+ * Set dependencies (for testing)
+ */
+function setDependencies(newDeps = {}) {
+    if (newDeps.db) deps.db = newDeps.db;
+    if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
+    if (newDeps.aiLogger) deps.aiLogger = newDeps.aiLogger;
+    if (newDeps.OpenAI) deps.OpenAI = newDeps.OpenAI;
+}
 
 // RAG quality thresholds
 const THRESHOLDS = {
@@ -40,7 +88,8 @@ const RAGMetricsService = {
             userFeedback = null
         } = queryData;
 
-        const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
         const now = new Date().toISOString();
 
         // Calculate automatic metrics
@@ -52,7 +101,7 @@ const RAGMetricsService = {
         });
 
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 INSERT INTO rag_quality_metrics (
                     id, organization_id, project_id, user_id,
                     query_hash, query_length,
@@ -84,11 +133,11 @@ const RAGMetricsService = {
                 now
             ], function(err) {
                 if (err) {
-                    aiLogger.error('RAGMetrics', `Failed to record query: ${err.message}`);
+                    deps.aiLogger.error('RAGMetrics', `Failed to record query: ${err.message}`);
                     return reject(err);
                 }
                 
-                aiLogger.info('RAGMetrics', `Recorded query metrics: precision=${metrics.precision.toFixed(2)}, relevance=${metrics.contextRelevance.toFixed(2)}`);
+                deps.aiLogger.info('RAGMetrics', `Recorded query metrics: precision=${metrics.precision.toFixed(2)}, relevance=${metrics.contextRelevance.toFixed(2)}`);
                 resolve({ id, ...metrics });
             });
         });
@@ -195,11 +244,12 @@ const RAGMetricsService = {
      * Get aggregated metrics for dashboard
      */
     getAggregatedMetrics: async (organizationId, periodDays = 7) => {
+        await initDeps();
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - periodDays);
 
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT 
                     DATE(created_at) as date,
                     COUNT(*) as total_queries,
@@ -266,8 +316,9 @@ const RAGMetricsService = {
      * Update user feedback for a query
      */
     updateUserFeedback: async (queryId, feedback) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
-            db.run(`
+            deps.db.run(`
                 UPDATE rag_quality_metrics 
                 SET user_rating = ?, user_feedback = ?, updated_at = ?
                 WHERE id = ?
@@ -299,8 +350,9 @@ const RAGMetricsService = {
      * Get problematic queries for review
      */
     getProblematicQueries: async (organizationId, limit = 20) => {
+        await initDeps();
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT id, query_hash, query_length, 
                        retrieval_precision, context_relevance_score, 
                        answer_groundedness, user_rating,
@@ -454,8 +506,9 @@ const RAGMetricsService = {
     _verifyWithLLM: async (claim, sourceContent) => {
         try {
             // Get OpenAI config
+            await initDeps();
             const openaiConfig = await new Promise((resolve) => {
-                db.get("SELECT * FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1",
+                deps.db.get("SELECT * FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1",
                     (err, row) => resolve(row || null));
             });
 
@@ -463,7 +516,8 @@ const RAGMetricsService = {
                 return RAGMetricsService._verifyWithKeywords(claim, sourceContent);
             }
 
-            const { OpenAI } = require('openai');
+            await initDeps();
+            const OpenAI = deps.OpenAI;
             const openai = new OpenAI({ apiKey: openaiConfig.api_key });
 
             // Truncate source content for context window
@@ -625,11 +679,12 @@ Analyze the claim and respond with ONLY a JSON object:
      * Get hallucination detection statistics for organization
      */
     getHallucinationStats: async (organizationId, periodDays = 7) => {
+        await initDeps();
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - periodDays);
 
         return new Promise((resolve) => {
-            db.all(`
+            deps.db.all(`
                 SELECT 
                     DATE(created_at) as date,
                     AVG(answer_groundedness) as avg_groundedness,
@@ -754,8 +809,13 @@ Analyze the claim and respond with ONLY a JSON object:
         }
 
         return issues.join('; ');
-    }
+    },
+
+    /**
+     * Set dependencies (for testing)
+     */
+    setDependencies
 };
 
-module.exports = RAGMetricsService;
+export default RAGMetricsService;
 

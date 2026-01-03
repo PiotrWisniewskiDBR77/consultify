@@ -1,0 +1,48 @@
+{
+  "entries": [
+    "server/services/ragService.js",
+    "server/services/ragEnhancedService.js"
+  ],
+  "summary": {
+    "wrapper": 4,
+    "migrated": 2
+  },
+  "rows": [
+    {
+      "js": "server/services/ragService.js",
+      "ts": "server/src/services/ragService.ts",
+      "status": "wrapper"
+    },
+    {
+      "js": "server/services/ragEnhancedService.js",
+      "ts": "server/src/services/ragEnhancedService.ts",
+      "status": "wrapper"
+    },
+    {
+      "js": "server/services/ai/embeddingService.js",
+      "ts": "server/src/services/ai/embeddingService.ts",
+      "status": "migrated"
+    },
+    {
+      "js": "server/services/ai/ingestionPipeline.js",
+      "ts": "server/src/services/ai/ingestionPipeline.ts",
+      "status": "migrated"
+    },
+    {
+      "js": "server/services/knowledgeGraphService.js",
+      "ts": "server/src/services/knowledgeGraphService.ts",
+      "status": "wrapper"
+    },
+    {
+      "js": "server/services/ai/logger.js",
+      "ts": "server/src/services/ai/logger.ts",
+      "status": "wrapper"
+    }
+  ],
+  "drafts": [
+    "scripts/migration-drafts/rag-cluster/server/src/services/ragService.ts",
+    "scripts/migration-drafts/rag-cluster/server/src/services/ragEnhancedService.ts",
+    "scripts/migration-drafts/rag-cluster/server/src/services/knowledgeGraphService.ts",
+    "scripts/migration-drafts/rag-cluster/server/src/services/ai/logger.ts"
+  ]
+}

@@ -2,21 +2,36 @@
 // AI Roles Model: ADVISOR < MANAGER < OPERATOR
 // This is the central service for AI role enforcement in SCMS
 
-// Dependency injection container (for deterministic unit tests)
+/**
+ * Dependency injection container (for deterministic unit tests)
+ */
 const deps = {
-    db: require('../database')
+    _db: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; }
 };
 
-const AI_PROJECT_ROLES = {
+/**
+ * Initialize all dependencies dynamically
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+}
+
+export const AI_PROJECT_ROLES = {
     ADVISOR: 'ADVISOR',
     MANAGER: 'MANAGER',
     OPERATOR: 'OPERATOR'
 };
 
-const ROLE_HIERARCHY = ['ADVISOR', 'MANAGER', 'OPERATOR'];
+export const ROLE_HIERARCHY = ['ADVISOR', 'MANAGER', 'OPERATOR'];
 
 // Capability matrix per role - defines what each role can and cannot do
-const ROLE_CAPABILITIES = {
+export const ROLE_CAPABILITIES = {
     ADVISOR: {
         canExplain: true,
         canSuggest: true,
@@ -47,7 +62,7 @@ const ROLE_CAPABILITIES = {
 };
 
 // Map action types to required capabilities
-const ACTION_CAPABILITY_REQUIREMENTS = {
+export const ACTION_CAPABILITY_REQUIREMENTS = {
     // Read-only actions - allowed for all roles
     EXPLAIN_CONTEXT: 'canExplain',
     ANALYZE_RISKS: 'canAnalyze',
@@ -69,20 +84,20 @@ const ACTION_CAPABILITY_REQUIREMENTS = {
     DELETE_ENTITY: 'canModifyEntities'
 };
 
-const ROLE_DESCRIPTIONS = {
+export const ROLE_DESCRIPTIONS = {
     ADVISOR: 'AI explains, suggests, and warns. Cannot modify any data.',
     MANAGER: 'AI prepares drafts and proposals. All actions require explicit approval.',
     OPERATOR: 'AI executes approved actions within governance rules.'
 };
 
-const AIRoleGuard = {
+export const AIRoleGuard = {
     AI_PROJECT_ROLES,
     ROLE_CAPABILITIES,
     ROLE_HIERARCHY,
 
     // For testing: allow overriding dependencies
     setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
+        if (newDeps.db) deps.db = newDeps.db;
     },
 
     /**
@@ -94,8 +109,9 @@ const AIRoleGuard = {
         if (!projectId) {
             return 'ADVISOR'; // Default to safest role
         }
+        await initDeps();
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             deps.db.get(`SELECT ai_role FROM projects WHERE id = ?`, [projectId], (err, row) => {
                 if (err) {
                     console.error('[AIRoleGuard] Error fetching project role:', err);
@@ -117,6 +133,7 @@ const AIRoleGuard = {
         if (!ROLE_HIERARCHY.includes(role)) {
             throw new Error(`Invalid AI role: ${role}. Must be one of: ${ROLE_HIERARCHY.join(', ')}`);
         }
+        await initDeps();
 
         return new Promise((resolve, reject) => {
             deps.db.run(
@@ -287,4 +304,4 @@ const AIRoleGuard = {
     }
 };
 
-module.exports = AIRoleGuard;
+export default AIRoleGuard;

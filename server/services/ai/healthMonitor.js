@@ -14,9 +14,35 @@
  * - Alert system for critical issues
  */
 
-const dbPromise = require('../../utils/dbPromise');
-const { aiLogger } = require('./logger');
-const dbConfig = require('../../config/database.config');
+const deps = {
+    _dbPromise: null,
+    _aiLogger: null,
+    _dbConfig: null,
+    _NotificationService: null
+};
+
+async function initDeps() {
+    if (!deps._dbPromise) {
+        const dbPromise = await import('../../utils/dbPromise.js');
+        deps._dbPromise = dbPromise.default || dbPromise;
+    }
+    if (!deps._aiLogger) {
+        const { aiLogger } = await import('./logger.js');
+        deps._aiLogger = aiLogger;
+    }
+    if (!deps._dbConfig) {
+        const dbConfig = await import('../../config/database.config.js');
+        deps._dbConfig = dbConfig.default || dbConfig;
+    }
+}
+
+async function getNotificationService() {
+    if (!deps._NotificationService) {
+        const { default: NotificationService } = await import('../notificationService.js');
+        deps._NotificationService = NotificationService;
+    }
+    return deps._NotificationService;
+}
 
 // Health check configuration
 const CONFIG = {
@@ -26,8 +52,8 @@ const CONFIG = {
     providerTimeoutMs: 5000,         // 5 seconds timeout for provider checks
 };
 
-// Detect database type
-const isPostgres = dbConfig.type === 'postgres';
+// Detect database type - will be initialized after deps are loaded
+let isPostgres = false;
 
 // Helper to get proper timestamp syntax
 const getTimestampDefault = () => isPostgres ? 'DEFAULT NOW()' : 'DEFAULT CURRENT_TIMESTAMP';
@@ -276,29 +302,39 @@ class AIHealthMonitor {
         this.consecutiveFailures = 0;
         this.repairAttempts = new Map();
         this.listeners = [];
+        this._initialized = false;
+    }
+
+    async ensureInitialized() {
+        if (!this._initialized) {
+            await initDeps();
+            isPostgres = deps._dbConfig.type === 'postgres';
+            this._initialized = true;
+        }
     }
 
     /**
      * Start periodic health monitoring
      */
-    start(intervalMs = CONFIG.checkIntervalMs) {
+    async start(intervalMs = CONFIG.checkIntervalMs) {
+        await this.ensureInitialized();
         if (this.isRunning) {
-            aiLogger.info('HealthMonitor', 'Already running');
+            deps._aiLogger.info('HealthMonitor', 'Already running');
             return;
         }
 
         this.isRunning = true;
-        aiLogger.info('HealthMonitor', `Starting with ${intervalMs}ms interval`);
+        deps._aiLogger.info('HealthMonitor', `Starting with ${intervalMs}ms interval`);
 
         // Run initial check immediately
         this.runDiagnostics().catch(err => {
-            aiLogger.error('HealthMonitor', `Initial check failed: ${err.message}`);
+            deps._aiLogger.error('HealthMonitor', `Initial check failed: ${err.message}`);
         });
 
         // Schedule periodic checks
         this.checkInterval = setInterval(() => {
             this.runDiagnostics().catch(err => {
-                aiLogger.error('HealthMonitor', `Periodic check failed: ${err.message}`);
+                deps._aiLogger.error('HealthMonitor', `Periodic check failed: ${err.message}`);
             });
         }, intervalMs);
     }
@@ -312,13 +348,16 @@ class AIHealthMonitor {
             this.checkInterval = null;
         }
         this.isRunning = false;
-        aiLogger.info('HealthMonitor', 'Stopped');
+        if (deps._aiLogger) {
+            deps._aiLogger.info('HealthMonitor', 'Stopped');
+        }
     }
 
     /**
      * Run full diagnostics
      */
     async runDiagnostics() {
+        await this.ensureInitialized();
         const startTime = Date.now();
         const results = {
             timestamp: new Date().toISOString(),
@@ -388,7 +427,7 @@ class AIHealthMonitor {
                 try {
                     const criticalFailure = results.checks.find(c => !c.healthy);
                     if (criticalFailure) {
-                        const notificationService = require('../notificationService');
+                        const notificationService = await getNotificationService();
                         // Use a static debounce map to avoid spamming the DB every minute
                         const alertKey = `health_${criticalFailure.name}`;
                         const lastSent = this._lastAlertTime?.[alertKey] || 0;
@@ -407,7 +446,7 @@ class AIHealthMonitor {
                                 message: `Automated Watchdog detected critical failure in ${criticalFailure.name}: ${criticalFailure.message || 'Unknown Error'}. Urgent attention required.`,
                                 isActionable: false
                             }).then(() => {
-                                aiLogger.info('HealthMonitor', `Sent SYSTEM_ALERT for ${criticalFailure.name}`);
+                                deps._aiLogger.info('HealthMonitor', `Sent SYSTEM_ALERT for ${criticalFailure.name}`);
                                 if (!this._lastAlertTime) this._lastAlertTime = {};
                                 this._lastAlertTime[alertKey] = now;
                             }).catch(err => console.error('Failed to send watchdog alert:', err));
@@ -421,14 +460,14 @@ class AIHealthMonitor {
         } catch (error) {
             results.overall = 'error';
             results.error = error.message;
-            aiLogger.error('HealthMonitor', `Diagnostics failed: ${error.message}`);
+            deps._aiLogger.error('HealthMonitor', `Diagnostics failed: ${error.message}`);
         }
 
         results.duration = Date.now() - startTime;
         this.lastCheck = results;
 
         // Log summary
-        aiLogger.info('HealthMonitor',
+        deps._aiLogger.info('HealthMonitor',
             `Diagnostics complete: ${results.overall} (${results.duration}ms, ${results.checks.length} checks, ${results.repairs.length} repairs)`
         );
 
@@ -439,6 +478,7 @@ class AIHealthMonitor {
      * Check database connectivity
      */
     async checkDatabase() {
+        await this.ensureInitialized();
         const check = {
             name: 'database',
             healthy: false,
@@ -450,7 +490,7 @@ class AIHealthMonitor {
         const startTime = Date.now();
 
         try {
-            const result = await dbPromise.get('SELECT 1 as ok');
+            const result = await deps._dbPromise.get('SELECT 1 as ok');
             check.healthy = result?.ok === 1;
             check.message = check.healthy ? 'Database is responsive' : 'Database query returned unexpected result';
         } catch (error) {
@@ -466,6 +506,7 @@ class AIHealthMonitor {
      * Check if required tables exist
      */
     async checkRequiredTables() {
+        await this.ensureInitialized();
         const check = {
             name: 'required_tables',
             healthy: true,
@@ -479,7 +520,7 @@ class AIHealthMonitor {
 
         try {
             for (const table of REQUIRED_TABLES) {
-                const exists = await dbPromise.tableExists(table.name);
+                const exists = await deps._dbPromise.tableExists(table.name);
                 if (!exists) {
                     check.missingTables.push(table.name);
                     check.healthy = false;
@@ -615,6 +656,7 @@ class AIHealthMonitor {
      * Attempt to repair a failed check
      */
     async attemptRepair(check) {
+        await this.ensureInitialized();
         const repair = {
             check: check.name,
             success: false,
@@ -630,7 +672,7 @@ class AIHealthMonitor {
         }
 
         this.repairAttempts.set(check.name, Date.now());
-        aiLogger.info('HealthMonitor', `Attempting repair: ${check.name}`);
+        deps._aiLogger.info('HealthMonitor', `Attempting repair: ${check.name}`);
 
         try {
             switch (check.name) {
@@ -646,7 +688,7 @@ class AIHealthMonitor {
             }
         } catch (error) {
             repair.message = `Repair failed: ${error.message}`;
-            aiLogger.error('HealthMonitor', `Repair failed for ${check.name}: ${error.message}`);
+            deps._aiLogger.error('HealthMonitor', `Repair failed for ${check.name}: ${error.message}`);
         }
 
         return repair;
@@ -656,11 +698,12 @@ class AIHealthMonitor {
      * Create missing tables
      */
     async repairMissingTables(missingTables) {
+        await this.ensureInitialized();
         for (const tableName of missingTables) {
             const tableConfig = REQUIRED_TABLES.find(t => t.name === tableName);
             if (tableConfig) {
-                aiLogger.info('HealthMonitor', `Creating table: ${tableName}`);
-                await dbPromise.run(tableConfig.createSql);
+                deps._aiLogger.info('HealthMonitor', `Creating table: ${tableName}`);
+                await deps._dbPromise.run(tableConfig.createSql);
             }
         }
     }
@@ -680,7 +723,9 @@ class AIHealthMonitor {
             try {
                 listener(alert);
             } catch (error) {
-                aiLogger.error('HealthMonitor', `Alert listener error: ${error.message}`);
+                if (deps._aiLogger) {
+                    deps._aiLogger.error('HealthMonitor', `Alert listener error: ${error.message}`);
+                }
             }
         }
     }
@@ -707,14 +752,15 @@ class AIHealthMonitor {
     /**
      * Mark provider as failed (called by LLM service on error)
      */
-    markProviderFailed(providerName, error) {
+    async markProviderFailed(providerName, error) {
+        await this.ensureInitialized();
         const status = providerStatus[providerName];
         if (status) {
             status.healthy = false;
             status.failures++;
             status.lastError = error?.message || 'Unknown error';
             status.lastCheck = new Date().toISOString();
-            aiLogger.warn('HealthMonitor', `Provider ${providerName} marked as failed: ${status.lastError}`);
+            deps._aiLogger.warn('HealthMonitor', `Provider ${providerName} marked as failed: ${status.lastError}`);
         }
     }
 

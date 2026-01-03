@@ -16,7 +16,7 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const EmailVerificationService = require('../services/emailVerificationService');
-const AuditService = require('../services/auditService');
+import AuditService from '../services/auditService.js';
 
 /**
  * GET /api/verify/status

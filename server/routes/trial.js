@@ -3,7 +3,7 @@ const router = express.Router();
 const TrialService = require('../services/trialService');
 const auth = require('../middleware/authMiddleware');
 const demoGuard = require('../middleware/demoGuard');
-const AuditService = require('../services/auditService');
+import AuditService from '../services/auditService.js';
 
 // POST /api/trial/:trialId/convert
 router.post('/:trialId/convert', auth, demoGuard, async (req, res) => {

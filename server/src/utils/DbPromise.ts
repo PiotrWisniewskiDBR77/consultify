@@ -25,7 +25,7 @@ interface QueryOptions {
     fallback?: boolean;
 }
 
-interface RunResult {
+export interface RunResult {
     success: boolean;
     lastID?: number;
     changes?: number;
@@ -82,8 +82,10 @@ const dbLogger: DbLogger = {
 // DATABASE INSTANCE
 // ==========================================
 
+import { getDatabase } from '../database/Database.js';
+
 const getDb = (): Database => {
-    return require('../../database');
+    return getDatabase() as unknown as Database;
 };
 
 // ==========================================
@@ -95,11 +97,39 @@ const getDb = (): Database => {
  */
 export function all<T = unknown>(
     sql: string,
-    params: unknown[] = [],
-    options: QueryOptions = {}
+    params?: unknown[],
+    options?: QueryOptions
+): Promise<T[]>;
+export function all<T = unknown>(
+    db: any,
+    sql: string,
+    params?: unknown[],
+    options?: QueryOptions
+): Promise<T[]>;
+export function all<T = unknown>(
+    dbOrSql: any,
+    sqlOrParams?: any,
+    paramsOrOptions?: any,
+    options?: any
 ): Promise<T[]> {
-    const { timeout = DEFAULT_TIMEOUT, fallback = true } = options;
-    const db = getDb();
+    let db: any;
+    let sql: string;
+    let params: unknown[];
+    let queryOptions: QueryOptions;
+
+    if (typeof dbOrSql === 'string') {
+        db = getDb();
+        sql = dbOrSql;
+        params = sqlOrParams || [];
+        queryOptions = paramsOrOptions || {};
+    } else {
+        db = dbOrSql || getDb();
+        sql = sqlOrParams;
+        params = paramsOrOptions || [];
+        queryOptions = options || {};
+    }
+
+    const { timeout = DEFAULT_TIMEOUT, fallback = true } = queryOptions;
 
     return new Promise<T[]>((resolve, reject) => {
         // Timeout protection
@@ -115,7 +145,7 @@ export function all<T = unknown>(
         try {
             db.all(sql, params, (err: Error | null, rows: unknown[]) => {
                 clearTimeout(timeoutId);
-                
+
                 if (err) {
                     dbLogger.warn('Query error', { error: err.message, sql: sql.substring(0, 100) });
                     if (fallback) {
@@ -145,11 +175,39 @@ export function all<T = unknown>(
  */
 export function get<T = unknown>(
     sql: string,
-    params: unknown[] = [],
-    options: QueryOptions = {}
+    params?: unknown[],
+    options?: QueryOptions
+): Promise<T | null>;
+export function get<T = unknown>(
+    db: any,
+    sql: string,
+    params?: unknown[],
+    options?: QueryOptions
+): Promise<T | null>;
+export function get<T = unknown>(
+    dbOrSql: any,
+    sqlOrParams?: any,
+    paramsOrOptions?: any,
+    options?: any
 ): Promise<T | null> {
-    const { timeout = DEFAULT_TIMEOUT, fallback = true } = options;
-    const db = getDb();
+    let db: any;
+    let sql: string;
+    let params: unknown[];
+    let queryOptions: QueryOptions;
+
+    if (typeof dbOrSql === 'string') {
+        db = getDb();
+        sql = dbOrSql;
+        params = sqlOrParams || [];
+        queryOptions = paramsOrOptions || {};
+    } else {
+        db = dbOrSql || getDb();
+        sql = sqlOrParams;
+        params = paramsOrOptions || [];
+        queryOptions = options || {};
+    }
+
+    const { timeout = DEFAULT_TIMEOUT, fallback = true } = queryOptions;
 
     return new Promise<T | null>((resolve, reject) => {
         const timeoutId = setTimeout(() => {
@@ -164,7 +222,7 @@ export function get<T = unknown>(
         try {
             db.get(sql, params, (err: Error | null, row: unknown) => {
                 clearTimeout(timeoutId);
-                
+
                 if (err) {
                     dbLogger.warn('Query error', { error: err.message, sql: sql.substring(0, 100) });
                     if (fallback) {
@@ -194,11 +252,39 @@ export function get<T = unknown>(
  */
 export function run(
     sql: string,
-    params: unknown[] = [],
-    options: QueryOptions = {}
+    params?: unknown[],
+    options?: QueryOptions
+): Promise<RunResult>;
+export function run(
+    db: any,
+    sql: string,
+    params?: unknown[],
+    options?: QueryOptions
+): Promise<RunResult>;
+export function run(
+    dbOrSql: any,
+    sqlOrParams?: any,
+    paramsOrOptions?: any,
+    options?: any
 ): Promise<RunResult> {
-    const { timeout = DEFAULT_TIMEOUT, fallback = true } = options;
-    const db = getDb();
+    let db: any;
+    let sql: string;
+    let params: unknown[];
+    let queryOptions: QueryOptions;
+
+    if (typeof dbOrSql === 'string') {
+        db = getDb();
+        sql = dbOrSql;
+        params = sqlOrParams || [];
+        queryOptions = paramsOrOptions || {};
+    } else {
+        db = dbOrSql || getDb();
+        sql = sqlOrParams;
+        params = paramsOrOptions || [];
+        queryOptions = options || {};
+    }
+
+    const { timeout = DEFAULT_TIMEOUT, fallback = true } = queryOptions;
 
     return new Promise<RunResult>((resolve, reject) => {
         const timeoutId = setTimeout(() => {
@@ -211,9 +297,9 @@ export function run(
         }, timeout);
 
         try {
-            db.run(sql, params, function(this: { lastID?: number; changes: number }, err: Error | null) {
+            db.run(sql, params, function (this: { lastID?: number; changes: number }, err: Error | null) {
                 clearTimeout(timeoutId);
-                
+
                 if (err) {
                     dbLogger.warn('Statement error', { error: err.message, sql: sql.substring(0, 100) });
                     if (fallback) {
@@ -222,10 +308,10 @@ export function run(
                         reject(err);
                     }
                 } else {
-                    resolve({ 
-                        success: true, 
-                        lastID: this.lastID, 
-                        changes: this.changes 
+                    resolve({
+                        success: true,
+                        lastID: this.lastID,
+                        changes: this.changes
                     });
                 }
             });
@@ -248,13 +334,13 @@ export function run(
 export async function transaction(statements: TransactionStatement[]): Promise<TransactionResult> {
     try {
         await run('BEGIN TRANSACTION', [], { fallback: false });
-        
+
         const results: RunResult[] = [];
         for (const stmt of statements) {
             const result = await run(stmt.sql, stmt.params, { fallback: false });
             results.push(result);
         }
-        
+
         await run('COMMIT', [], { fallback: false });
         return { success: true, results };
     } catch (error) {
@@ -286,7 +372,7 @@ export async function tableExists(tableName: string): Promise<boolean> {
  */
 export async function exec(sql: string): Promise<ExecResult> {
     const db = getDb();
-    
+
     return new Promise<ExecResult>((resolve) => {
         db.exec(sql, (err: Error | null) => {
             if (err) {
@@ -316,6 +402,18 @@ export async function count(table: string, where = '1=1', params: unknown[] = []
     return result?.count || 0;
 }
 
-// Export logger for external use
-export { dbLogger as logger };
+// Export as a namespace object for convenient usage (as a "DbPromise" object)
+export const DbPromise = {
+    all,
+    get,
+    run,
+    transaction,
+    tableExists,
+    exec,
+    safeAll,
+    count,
+    logger: dbLogger
+};
+
+export default DbPromise;
 

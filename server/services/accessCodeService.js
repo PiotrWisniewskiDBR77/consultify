@@ -12,11 +12,11 @@
  * @module AccessCodeService
  */
 
-const db = require('../database');
-const crypto = require('crypto');
-const { v4: uuidv4 } = require('uuid');
-const AttributionService = require('./attributionService');
-const MetricsCollector = require('./metricsCollector');
+import db from '../database.js';
+import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
+import AttributionService from './attributionService.js';
+import MetricsCollector from './metricsCollector.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -374,4 +374,4 @@ const AccessCodeService = {
     }
 };
 
-module.exports = AccessCodeService;
+export default AccessCodeService;

@@ -9,6 +9,7 @@ import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
+import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
 // TYPES
@@ -126,52 +127,38 @@ export class WebhookService {
 
         query += ' ORDER BY created_at DESC';
 
-        return new Promise<Webhook[]>((resolve, reject) => {
-            this.db.all(query, params, (err, rows) => {
-                if (err) {
-                    console.error('[Webhook] Error fetching webhooks:', err);
-                    return reject(err);
-                }
+        const rows = await DbPromise.all<Record<string, unknown>>(query, params);
+        
+        const webhooks = (rows || []).map((row: Record<string, unknown>) => ({
+            ...row,
+            events: row.events ? JSON.parse(row.events as string) : [],
+            retry_policy: row.retry_policy ? JSON.parse(row.retry_policy as string) : null,
+            headers: row.headers ? JSON.parse(row.headers as string) : null,
+            payload_template: row.payload_template ? JSON.parse(row.payload_template as string) : null,
+            is_active: row.is_active === 1,
+        })) as Webhook[];
 
-                const webhooks = (rows || []).map((row: Record<string, unknown>) => ({
-                    ...row,
-                    events: row.events ? JSON.parse(row.events as string) : [],
-                    retry_policy: row.retry_policy ? JSON.parse(row.retry_policy as string) : null,
-                    headers: row.headers ? JSON.parse(row.headers as string) : null,
-                    payload_template: row.payload_template ? JSON.parse(row.payload_template as string) : null,
-                    is_active: row.is_active === 1,
-                })) as Webhook[];
-
-                resolve(webhooks);
-            });
-        });
+        return webhooks;
     }
 
     /**
      * Get webhook by ID
      */
     async getWebhookById(id: string): Promise<Webhook | null> {
-        return new Promise<Webhook | null>((resolve, reject) => {
-            this.db.get('SELECT * FROM webhooks WHERE id = ?', [id], (err, row) => {
-                if (err) {
-                    console.error('[Webhook] Error fetching webhook:', err);
-                    return reject(err);
-                }
+        const row = await DbPromise.get<Record<string, unknown>>('SELECT * FROM webhooks WHERE id = ?', [id]);
+        
+        if (!row) {
+            return null;
+        }
 
-                if (!row) {
-                    return resolve(null);
-                }
-
-                resolve({
-                    ...row,
-                    events: (row as Record<string, unknown>).events ? JSON.parse((row as Record<string, unknown>).events as string) : [],
-                    retry_policy: (row as Record<string, unknown>).retry_policy ? JSON.parse((row as Record<string, unknown>).retry_policy as string) : null,
-                    headers: (row as Record<string, unknown>).headers ? JSON.parse((row as Record<string, unknown>).headers as string) : null,
-                    payload_template: (row as Record<string, unknown>).payload_template ? JSON.parse((row as Record<string, unknown>).payload_template as string) : null,
-                    is_active: (row as Record<string, unknown>).is_active === 1,
-                } as Webhook);
-            });
-        });
+        return {
+            ...row,
+            events: row.events ? JSON.parse(row.events as string) : [],
+            retry_policy: row.retry_policy ? JSON.parse(row.retry_policy as string) : null,
+            headers: row.headers ? JSON.parse(row.headers as string) : null,
+            payload_template: row.payload_template ? JSON.parse(row.payload_template as string) : null,
+            is_active: row.is_active === 1,
+        } as Webhook;
     }
 
     /**
@@ -195,35 +182,33 @@ export class WebhookService {
         const id = uuidv4();
         const now = new Date().toISOString();
 
-        return new Promise<Webhook>((resolve, reject) => {
-            this.db.run(
-                `INSERT INTO webhooks (
-                    id, organization_id, name, description, url, events, secret,
-                    is_active, retry_policy, headers, payload_template,
-                    created_at, updated_at, created_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    id, organization_id, name, description, url,
-                    JSON.stringify(events), secret,
-                    is_active ? 1 : 0,
-                    JSON.stringify(retry_policy),
-                    JSON.stringify(headers),
-                    payload_template ? JSON.stringify(payload_template) : null,
-                    now, now, created_by
-                ],
-                async (err) => {
-                    if (err) {
-                        console.error('[Webhook] Error creating webhook:', err);
-                        return reject(err);
-                    }
-                    const webhook = await this.getWebhookById(id);
-                    if (!webhook) {
-                        return reject(new Error('Failed to retrieve created webhook'));
-                    }
-                    resolve(webhook);
-                }
-            );
-        });
+        const runResult = await DbPromise.run(
+            `INSERT INTO webhooks (
+                id, organization_id, name, description, url, events, secret,
+                is_active, retry_policy, headers, payload_template,
+                created_at, updated_at, created_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                id, organization_id, name, description, url,
+                JSON.stringify(events), secret,
+                is_active ? 1 : 0,
+                JSON.stringify(retry_policy),
+                JSON.stringify(headers),
+                payload_template ? JSON.stringify(payload_template) : null,
+                now, now, created_by
+            ]
+        );
+        
+        if (!runResult.success) {
+            throw new Error(runResult.error || 'Failed to create webhook');
+        }
+        
+        const webhook = await this.getWebhookById(id);
+        if (!webhook) {
+            throw new Error('Failed to retrieve created webhook');
+        }
+        
+        return webhook;
     }
 
     /**
@@ -294,38 +279,32 @@ export class WebhookService {
         params.push(new Date().toISOString());
         params.push(id);
 
-        return new Promise<Webhook>((resolve, reject) => {
-            this.db.run(
-                `UPDATE webhooks SET ${updatesList.join(', ')} WHERE id = ?`,
-                params,
-                async (err) => {
-                    if (err) {
-                        console.error('[Webhook] Error updating webhook:', err);
-                        return reject(err);
-                    }
-                    const webhook = await this.getWebhookById(id);
-                    if (!webhook) {
-                        return reject(new Error('Failed to retrieve updated webhook'));
-                    }
-                    resolve(webhook);
-                }
-            );
-        });
+        const runResult = await DbPromise.run(
+            `UPDATE webhooks SET ${updatesList.join(', ')} WHERE id = ?`,
+            params
+        );
+        
+        if (!runResult.success) {
+            throw new Error(runResult.error || 'Failed to update webhook');
+        }
+        
+        const webhook = await this.getWebhookById(id);
+        if (!webhook) {
+            throw new Error('Failed to retrieve updated webhook');
+        }
+        
+        return webhook;
     }
 
     /**
      * Delete a webhook
      */
     async deleteWebhook(id: string): Promise<{ deleted: boolean }> {
-        return new Promise<{ deleted: boolean }>((resolve, reject) => {
-            this.db.run('DELETE FROM webhooks WHERE id = ?', [id], function (err) {
-                if (err) {
-                    console.error('[Webhook] Error deleting webhook:', err);
-                    return reject(err);
-                }
-                resolve({ deleted: this.changes > 0 });
-            });
-        });
+        const result = await DbPromise.run('DELETE FROM webhooks WHERE id = ?', [id]);
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to delete webhook');
+        }
+        return { deleted: (result.changes || 0) > 0 };
     }
 
     /**
@@ -375,21 +354,14 @@ export class WebhookService {
         query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
         params.push(pageSize, offset);
 
-        return new Promise<WebhookDelivery[]>((resolve, reject) => {
-            this.db.all(query, params, (err, rows) => {
-                if (err) {
-                    console.error('[Webhook] Error fetching deliveries:', err);
-                    return reject(err);
-                }
+        const rows = await DbPromise.all<Record<string, unknown>>(query, params);
+        
+        const deliveries = (rows || []).map((row: Record<string, unknown>) => ({
+            ...row,
+            payload: row.payload ? JSON.parse(row.payload as string) : null
+        })) as WebhookDelivery[];
 
-                const deliveries = (rows || []).map((row: Record<string, unknown>) => ({
-                    ...row,
-                    payload: row.payload ? JSON.parse(row.payload as string) : null
-                })) as WebhookDelivery[];
-
-                resolve(deliveries);
-            });
-        });
+        return deliveries;
     }
 
     /**
@@ -399,21 +371,18 @@ export class WebhookService {
         const id = uuidv4();
         const now = new Date().toISOString();
 
-        return new Promise<{ id: string; webhook_id: string; status: string }>((resolve, reject) => {
-            this.db.run(
-                `INSERT INTO webhook_deliveries (
-                    id, webhook_id, event_type, payload, status, attempts, created_at
-                ) VALUES (?, ?, ?, ?, ?, 0, ?)`,
-                [id, webhookId, eventType, JSON.stringify(payload), status, now],
-                function (err) {
-                    if (err) {
-                        console.error('[Webhook] Error recording delivery:', err);
-                        return reject(err);
-                    }
-                    resolve({ id, webhook_id: webhookId, status });
-                }
-            );
-        });
+        const runResult = await DbPromise.run(
+            `INSERT INTO webhook_deliveries (
+                id, webhook_id, event_type, payload, status, attempts, created_at
+            ) VALUES (?, ?, ?, ?, ?, 0, ?)`,
+            [id, webhookId, eventType, JSON.stringify(payload), status, now]
+        );
+        
+        if (!runResult.success) {
+            throw new Error(runResult.error || 'Failed to record delivery');
+        }
+        
+        return { id, webhook_id: webhookId, status };
     }
 
     /**
@@ -438,31 +407,23 @@ export class WebhookService {
 
         params.push(deliveryId);
 
-        return new Promise<{ updated: boolean }>((resolve, reject) => {
-            this.db.run(
-                `UPDATE webhook_deliveries SET ${updates.join(', ')} WHERE id = ?`,
-                params,
-                function (err) {
-                    if (err) {
-                        console.error('[Webhook] Error updating delivery:', err);
-                        return reject(err);
-                    }
-                    resolve({ updated: this.changes > 0 });
-                }
-            );
-        });
+        const runResult = await DbPromise.run(
+            `UPDATE webhook_deliveries SET ${updates.join(', ')} WHERE id = ?`,
+            params
+        );
+        
+        if (!runResult.success) {
+            throw new Error(runResult.error || 'Failed to update delivery status');
+        }
+        
+        return { updated: (runResult.changes || 0) > 0 };
     }
 
     /**
      * Retry a failed delivery
      */
     async retryDelivery(deliveryId: string): Promise<{ success: boolean; result?: { status: number; statusText: string } }> {
-        const delivery = await new Promise<Record<string, unknown>>((resolve, reject) => {
-            this.db.get('SELECT * FROM webhook_deliveries WHERE id = ?', [deliveryId], (err, row) => {
-                if (err) return reject(err);
-                resolve(row || {});
-            });
-        });
+        const delivery = await DbPromise.get<Record<string, unknown>>('SELECT * FROM webhook_deliveries WHERE id = ?', [deliveryId]) || {};
 
         if (!delivery || !delivery.webhook_id) {
             throw new Error('Delivery not found');
@@ -490,40 +451,41 @@ export class WebhookService {
      * Trigger webhooks for a specific event
      */
     async trigger(organizationId: string, eventType: string, data: Record<string, unknown>): Promise<{ triggered: number; results: Array<{ webhookId: string; success: boolean; result?: { status: number; statusText: string }; error?: string }> }> {
-        return new Promise<{ triggered: number; results: Array<{ webhookId: string; success: boolean; result?: { status: number; statusText: string }; error?: string }> }>((resolve, reject) => {
-            this.db.all(
-                `SELECT * FROM webhooks 
-                 WHERE organization_id = ? 
-                 AND is_active = 1 
-                 AND events LIKE ?`,
-                [organizationId, `%${eventType}%`],
-                async (err, webhooks) => {
-                    if (err) {
-                        console.error('[Webhook] Query error:', err);
-                        return reject(err);
-                    }
+        const webhooks = await DbPromise.all<Record<string, unknown>>(
+            `SELECT * FROM webhooks 
+             WHERE organization_id = ? 
+             AND is_active = 1 
+             AND events LIKE ?`,
+            [organizationId, `%${eventType}%`]
+        );
 
-                    if (!webhooks || webhooks.length === 0) {
-                        return resolve({ triggered: 0, results: [] });
-                    }
+        if (!webhooks || webhooks.length === 0) {
+            return { triggered: 0, results: [] };
+        }
 
-                    const results: Array<{ webhookId: string; success: boolean; result?: { status: number; statusText: string }; error?: string }> = [];
+        const results: Array<{ webhookId: string; success: boolean; result?: { status: number; statusText: string }; error?: string }> = [];
 
-                    for (const webhook of webhooks as Webhook[]) {
-                        try {
-                            const result = await this.sendWebhook(webhook, eventType, data);
-                            results.push({ webhookId: webhook.id, success: true, result });
-                        } catch (error) {
-                            const err = error as Error;
-                            results.push({ webhookId: webhook.id, success: false, error: err.message });
-                            console.error(`[Webhook] Failed to send to ${webhook.url}:`, err.message);
-                        }
-                    }
+        for (const webhookRow of webhooks) {
+            const webhook = {
+                ...webhookRow,
+                events: webhookRow.events ? JSON.parse(webhookRow.events as string) : [],
+                retry_policy: webhookRow.retry_policy ? JSON.parse(webhookRow.retry_policy as string) : null,
+                headers: webhookRow.headers ? JSON.parse(webhookRow.headers as string) : null,
+                payload_template: webhookRow.payload_template ? JSON.parse(webhookRow.payload_template as string) : null,
+                is_active: webhookRow.is_active === 1,
+            } as Webhook;
+            
+            try {
+                const result = await this.sendWebhook(webhook, eventType, data);
+                results.push({ webhookId: webhook.id, success: true, result });
+            } catch (error) {
+                const err = error as Error;
+                results.push({ webhookId: webhook.id, success: false, error: err.message });
+                console.error(`[Webhook] Failed to send to ${webhook.url}:`, err.message);
+            }
+        }
 
-                    resolve({ triggered: results.length, results });
-                }
-            );
-        });
+        return { triggered: results.length, results };
     }
 
     /**

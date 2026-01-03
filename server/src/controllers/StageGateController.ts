@@ -9,7 +9,9 @@ import type { Response } from 'express';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import * as DbPromise from '../utils/DbPromise.js';
 import type { PassGateRequest } from '../validators/stageGate.validators.js';
+import StageGateService, { GATE_TYPES, PHASE_ORDER, getGateType, evaluateGate, passGate } from '../services/stageGateService.js';
 
 // ==========================================
 // CONTROLLER METHODS
@@ -22,9 +24,7 @@ export class StageGateController {
     static evaluateGate = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { projectId, gateType } = req.params;
         
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const StageGateService = require('../../services/stageGateService');
-        const result = await StageGateService.evaluateGate(projectId, gateType);
+        const result = await evaluateGate(projectId, gateType as typeof GATE_TYPES[keyof typeof GATE_TYPES]);
 
         res.json(result);
     });
@@ -34,18 +34,11 @@ export class StageGateController {
      */
     static getCurrentGate = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { projectId } = req.params;
-        
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const StageGateService = require('../../services/stageGateService');
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const db = require('../../database');
 
-        const project = await new Promise<{ current_phase?: string } | null>((resolve, reject) => {
-            db.get(`SELECT current_phase FROM projects WHERE id = ?`, [projectId], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
+        const project = await DbPromise.get<{ current_phase?: string }>(
+            `SELECT current_phase FROM projects WHERE id = ?`,
+            [projectId]
+        );
 
         if (!project) {
             res.status(404).json({ error: 'Project not found' });
@@ -53,9 +46,9 @@ export class StageGateController {
         }
 
         const currentPhase = project.current_phase || 'Context';
-        const phaseIndex = StageGateService.PHASE_ORDER.indexOf(currentPhase);
+        const phaseIndex = PHASE_ORDER.indexOf(currentPhase as typeof PHASE_ORDER[number]);
 
-        if (phaseIndex >= StageGateService.PHASE_ORDER.length - 1) {
+        if (phaseIndex >= PHASE_ORDER.length - 1) {
             res.json({
                 currentPhase,
                 nextGate: null,
@@ -64,15 +57,15 @@ export class StageGateController {
             return;
         }
 
-        const nextPhase = StageGateService.PHASE_ORDER[phaseIndex + 1];
-        const gateType = StageGateService.getGateType(currentPhase, nextPhase);
+        const nextPhase = PHASE_ORDER[phaseIndex + 1];
+        const gateType = getGateType(currentPhase, nextPhase);
 
         if (!gateType) {
             res.json({ currentPhase, nextGate: null });
             return;
         }
 
-        const evaluation = await StageGateService.evaluateGate(projectId, gateType);
+        const evaluation = await evaluateGate(projectId, gateType);
 
         res.json({
             currentPhase,
@@ -100,11 +93,8 @@ export class StageGateController {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const StageGateService = require('../../services/stageGateService');
-
         // First evaluate
-        const evaluation = await StageGateService.evaluateGate(projectId, gateType);
+        const evaluation = await evaluateGate(projectId, gateType as typeof GATE_TYPES[keyof typeof GATE_TYPES]);
 
         if (evaluation.status !== 'READY') {
             res.status(400).json({
@@ -115,7 +105,7 @@ export class StageGateController {
         }
 
         // Pass the gate
-        const result = await StageGateService.passGate(projectId, gateType, userId, notes);
+        const result = await passGate(projectId, gateType as typeof GATE_TYPES[keyof typeof GATE_TYPES], userId, notes);
 
         res.json(result);
     });

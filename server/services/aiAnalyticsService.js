@@ -650,4 +650,4 @@ const AIAnalyticsService = {
     }
 };
 
-module.exports = AIAnalyticsService;
+export default AIAnalyticsService;

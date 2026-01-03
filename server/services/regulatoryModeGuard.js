@@ -8,14 +8,39 @@
  * AI Core Layer — Enterprise PMO Brain
  */
 
-// Dependency injection container (for deterministic unit tests)
+/**
+ * Dependency injection container (for deterministic unit tests)
+ */
 const deps = {
-    db: require('../database'),
-    AIAuditLogger: require('./aiAuditLogger')
+    _db: null,
+    _AIAuditLogger: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get AIAuditLogger() { return this._AIAuditLogger; },
+    set AIAuditLogger(val) { this._AIAuditLogger = val; }
 };
 
+/**
+ * Initialize all dependencies dynamically
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const [
+            { default: db },
+            { default: aiAuditLogger }
+        ] = await Promise.all([
+            import('../database.js'),
+            import('./aiAuditLogger.js')
+        ]);
+        deps._db = db;
+        deps._AIAuditLogger = aiAuditLogger;
+    }
+}
+
 // Actions that are ALWAYS allowed in regulatory mode
-const ALLOWED_ACTIONS = [
+export const ALLOWED_ACTIONS = [
     'EXPLAIN_CONTEXT',
     'ANALYZE_RISKS',
     'PREPARE_DECISION_SUMMARY',
@@ -28,7 +53,7 @@ const ALLOWED_ACTIONS = [
 ];
 
 // Actions that are ALWAYS blocked in regulatory mode
-const BLOCKED_ACTIONS = [
+export const BLOCKED_ACTIONS = [
     'CREATE_DRAFT_TASK',
     'CREATE_DRAFT_INITIATIVE',
     'SUGGEST_ROADMAP_CHANGE',
@@ -44,20 +69,20 @@ const BLOCKED_ACTIONS = [
 ];
 
 // Verbs that indicate action intent (used for prompt filtering)
-const FORBIDDEN_VERBS = [
+export const FORBIDDEN_VERBS = [
     'create', 'execute', 'update', 'delete', 'assign',
     'modify', 'change', 'add', 'remove', 'submit',
     'approve', 'reject', 'complete', 'start', 'finish'
 ];
 
 // Advisory language that should be used
-const ADVISORY_PHRASES = [
+export const ADVISORY_PHRASES = [
     'consider', 'you may want to', 'we recommend evaluating',
     'it would be advisable to', 'you should review',
     'it is suggested that', 'you might consider'
 ];
 
-const RegulatoryModeGuard = {
+export const RegulatoryModeGuard = {
     ALLOWED_ACTIONS,
     BLOCKED_ACTIONS,
     FORBIDDEN_VERBS,
@@ -65,7 +90,8 @@ const RegulatoryModeGuard = {
 
     // For testing: allow overriding dependencies
     setDependencies: (newDeps = {}) => {
-        Object.assign(deps, newDeps);
+        if (newDeps.db) deps.db = newDeps.db;
+        if (newDeps.AIAuditLogger) deps.AIAuditLogger = newDeps.AIAuditLogger;
     },
 
     /**
@@ -75,8 +101,9 @@ const RegulatoryModeGuard = {
      */
     isEnabled: async (projectId) => {
         if (!projectId) return false;
+        await initDeps();
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             deps.db.get(
                 `SELECT regulatory_mode_enabled FROM projects WHERE id = ?`,
                 [projectId],
@@ -106,6 +133,7 @@ const RegulatoryModeGuard = {
      * @returns {Promise<{success: boolean}>}
      */
     setEnabled: async (projectId, enabled) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.run(
                 `UPDATE projects SET regulatory_mode_enabled = ? WHERE id = ?`,
@@ -190,6 +218,7 @@ const RegulatoryModeGuard = {
      * @param {string} reason - Reason for blocking
      */
     logBlockedAttempt: async (context, attemptedAction, reason) => {
+        await initDeps();
         const { userId, organizationId, projectId } = context;
 
         try {
@@ -300,4 +329,4 @@ This is a legal and compliance requirement. Violations may result in regulatory 
     }
 };
 
-module.exports = RegulatoryModeGuard;
+export default RegulatoryModeGuard;

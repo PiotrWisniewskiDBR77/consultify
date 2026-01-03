@@ -1,8 +1,46 @@
-const db = require('../database');
-const { OpenAI } = require('openai'); // Assuming openai package is available
+const deps = {
+    _db: null,
+    _OpenAI: null,
+    _embeddingService: null,
+    _uuidv4: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get OpenAI() { return this._OpenAI; },
+    set OpenAI(val) { this._OpenAI = val; },
+
+    get embeddingService() { return this._embeddingService; },
+    set embeddingService(val) { this._embeddingService = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._OpenAI) {
+        const { OpenAI } = await import('openai');
+        deps._OpenAI = OpenAI;
+    }
+    if (!deps._embeddingService) {
+        const { embeddingService } = await import('./ai/embeddingService.js');
+        deps._embeddingService = embeddingService;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+}
+
 
 // Import new embedding service
-const { embeddingService } = require('./ai/embeddingService');
 
 // ============================================================================
 // Similarity Functions
@@ -63,18 +101,18 @@ const termFrequency = (term, tokens) => {
 const bm25Score = (queryTokens, docTokens, avgDocLength, idf) => {
     let score = 0;
     const docLength = docTokens.length;
-    
+
     for (const term of queryTokens) {
         const tf = termFrequency(term, docTokens);
         const termIdf = idf[term] || 0;
-        
+
         // BM25 formula
         const numerator = tf * (BM25_K1 + 1);
         const denominator = tf + BM25_K1 * (1 - BM25_B + BM25_B * (docLength / avgDocLength));
-        
+
         score += termIdf * (numerator / denominator);
     }
-    
+
     return score;
 };
 
@@ -86,14 +124,14 @@ const bm25Score = (queryTokens, docTokens, avgDocLength, idf) => {
 const calculateIDF = (terms, documents) => {
     const N = documents.length;
     const idf = {};
-    
+
     for (const term of terms) {
         // Count documents containing term
         const docsWithTerm = documents.filter(doc => doc.includes(term)).length;
         // IDF formula: log((N - n + 0.5) / (n + 0.5) + 1)
         idf[term] = Math.log((N - docsWithTerm + 0.5) / (docsWithTerm + 0.5) + 1);
     }
-    
+
     return idf;
 };
 
@@ -110,19 +148,28 @@ const HYBRID_CONFIG = {
 
 const RagService = {
     /**
+     * For testing: allow overriding dependencies
+     */
+    setDependencies: (newDeps = {}) => {
+        if (newDeps.db) deps.db = newDeps.db;
+        if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
+        if (newDeps.embeddingService) deps.embeddingService = newDeps.embeddingService;
+    },
+    /**
      * Generates an embedding for the given text using the configured provider (default: OpenAI).
      */
     generateEmbedding: async (text) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             // 1. Get embedding provider
-            db.get("SELECT * FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1", async (err, row) => {
+            deps.db.get("SELECT * FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1", async (err, row) => {
                 if (err || !row) {
                     // Fallback - no embedding provider configured
                     return resolve(null);
                 }
 
                 try {
-                    const openai = new OpenAI({ apiKey: row.api_key });
+                    const openai = new deps.OpenAI({ apiKey: row.api_key });
                     const response = await openai.embeddings.create({
                         model: "text-embedding-3-small",
                         input: text,
@@ -144,6 +191,7 @@ const RagService = {
      * @param {Object} filterOptions - { organizationId, screenContext }
      */
     getContext: async (query, limit = 3, filterOptions = {}) => {
+        await initDeps();
         const { organizationId, screenContext } = filterOptions;
 
         // 0. Contextual Query Expansion
@@ -179,7 +227,7 @@ const RagService = {
             }
 
             // Optimization: In a real DB, use a Vector Index. 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return resolve('');
 
                 if (!rows || rows.length === 0) {
@@ -212,9 +260,9 @@ const RagService = {
                 // GAP-13: Log RAG query for audit
                 // Only log if organizationId is available (required by NOT NULL constraint)
                 if (organizationId) {
-                    db.run(`INSERT INTO activity_logs (id, organization_id, user_id, action, entity_type, entity_id, new_value, created_at)
+                    deps.db.run(`INSERT INTO activity_logs (id, organization_id, user_id, action, entity_type, entity_id, new_value, created_at)
                             VALUES (?, ?, NULL, 'rag_query', 'knowledge', NULL, ?, CURRENT_TIMESTAMP)`,
-                        [require('uuid').v4(), organizationId, JSON.stringify({
+                        [deps.uuidv4(), organizationId, JSON.stringify({
                             query: query.substring(0, 200),
                             resultsCount: topChunks.filter(c => c.score > 0.5).length,
                             topScore: topChunks[0]?.score
@@ -233,7 +281,8 @@ const RagService = {
     /**
      * Legacy Keyword Search (Fallback)
      */
-    getContextKeyword: (query, limit = 3, organizationId = null) => {
+    getContextKeyword: async (query, limit = 3, organizationId = null) => {
+        await initDeps();
         return new Promise((resolve, reject) => {
             if (!query) return resolve('');
             const keywords = query.split(' ').map(w => w.trim().replace(/[^\w\s]/gi, '')).filter(w => w.length > 3);
@@ -256,7 +305,7 @@ const RagService = {
 
             sql += ` LIMIT ${limit}`;
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err) return resolve('');
                 const context = (rows || []).map(r => `[Source: ${r.filename}]\n${r.content}`).join('\n\n');
                 resolve(context);
@@ -268,8 +317,9 @@ const RagService = {
      * Store processed chunks for a document
      */
     storeChunks: async (docId, chunks) => {
+        await initDeps();
         // Prepare statement
-        const stmt = db.prepare(`
+        const stmt = deps.db.prepare(`
             INSERT INTO knowledge_chunks (id, doc_id, content, embedding)
             VALUES (?, ?, ?, ?)
         `);
@@ -309,11 +359,12 @@ const RagService = {
      * @param {Object} options - { limit, organizationId, minSimilarity }
      */
     searchRelevantChunks: async (query, options = {}) => {
+        await initDeps();
         const { limit = 5, organizationId, minSimilarity = 0.5 } = options;
 
         try {
             // Use new embedding service for vector search
-            const results = await embeddingService.search(query, {
+            const results = await deps.embeddingService.search(query, {
                 limit,
                 organizationId,
                 minSimilarity
@@ -360,11 +411,11 @@ const RagService = {
      * @param {Object} params - { content, filename, mimeType, organizationId }
      */
     ingestDocument: async (params) => {
+        await initDeps();
         const { content, filename, mimeType, organizationId } = params;
-        const { v4: uuidv4 } = require('uuid');
-        const { ingestionPipeline } = require('./ai/ingestionPipeline');
+        const { ingestionPipeline } = await import('./ai/ingestionPipeline.js');
 
-        const documentId = uuidv4();
+        const documentId = deps.uuidv4();
 
         // 1. Process document into chunks
         const { chunks } = await ingestionPipeline.process({
@@ -379,8 +430,8 @@ const RagService = {
         let successCount = 0;
         for (const chunk of chunks) {
             try {
-                const embedding = await embeddingService.generateEmbedding(chunk.content);
-                await embeddingService.storeChunk(chunk, embedding);
+                const embedding = await deps.embeddingService.generateEmbedding(chunk.content);
+                await deps.embeddingService.storeChunk(chunk, embedding);
                 successCount++;
             } catch (e) {
                 console.error(`[RagService] Failed to embed chunk ${chunk.chunkIndex}:`, e.message);
@@ -407,6 +458,7 @@ const RagService = {
      * @returns {Promise<Array>} Scored results with BM25 scores
      */
     bm25Search: async (query, limit = 10, organizationId = null) => {
+        await initDeps();
         return new Promise((resolve) => {
             // Build SQL to fetch all candidate chunks
             let sql = `
@@ -422,7 +474,7 @@ const RagService = {
                 params.push(organizationId);
             }
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err || !rows || rows.length === 0) {
                     return resolve([]);
                 }
@@ -479,6 +531,7 @@ const RagService = {
      * @returns {Promise<Array>} Combined and ranked results
      */
     hybridSearch: async (query, options = {}) => {
+        await initDeps();
         const {
             limit = 5,
             organizationId = null,
@@ -517,7 +570,7 @@ const RagService = {
         for (const result of vectorResults) {
             const key = result.id || result.content.substring(0, 100);
             const existing = resultMap.get(key);
-            
+
             if (existing) {
                 // Result found in both - combine scores
                 existing.vectorScore = result.vectorScore || result.score || 0;
@@ -537,7 +590,7 @@ const RagService = {
         const combined = Array.from(resultMap.values()).map(result => {
             // Weighted combination: alpha * vector + (1-alpha) * bm25
             const hybridScore = alpha * result.vectorScore + (1 - alpha) * result.bm25Score;
-            
+
             return {
                 ...result,
                 hybridScore,
@@ -559,7 +612,7 @@ const RagService = {
         // Optional: Apply LLM re-ranking (implemented in Phase 1.2)
         if (enableReranking && finalResults.length > 1) {
             try {
-                const RerankerService = require('./ai/rerankerService');
+                const { default: RerankerService } = await import('./ai/rerankerService.js');
                 finalResults = await RerankerService.rerankDocuments(query, finalResults, limit);
                 console.log(`[RagService] Re-ranked ${finalResults.length} results`);
             } catch (e) {
@@ -584,6 +637,7 @@ const RagService = {
      * Internal vector search helper
      */
     _vectorSearch: async (query, limit, organizationId) => {
+        await initDeps();
         const queryEmbedding = await RagService.generateEmbedding(query);
         if (!queryEmbedding) return [];
 
@@ -601,7 +655,7 @@ const RagService = {
                 params.push(organizationId);
             }
 
-            db.all(sql, params, (err, rows) => {
+            deps.db.all(sql, params, (err, rows) => {
                 if (err || !rows) return resolve([]);
 
                 const scored = rows.map(row => {
@@ -631,14 +685,15 @@ const RagService = {
     /**
      * Log search metrics for analysis
      */
-    _logSearchMetrics: (query, organizationId, metrics) => {
+    _logSearchMetrics: async (query, organizationId, metrics) => {
         if (!organizationId) return;
+        await initDeps();
 
-        db.run(
+        deps.db.run(
             `INSERT INTO activity_logs (id, organization_id, user_id, action, entity_type, entity_id, new_value, created_at)
              VALUES (?, ?, NULL, 'hybrid_search', 'knowledge', NULL, ?, CURRENT_TIMESTAMP)`,
             [
-                require('uuid').v4(),
+                deps.uuidv4(),
                 organizationId,
                 JSON.stringify({
                     query: query.substring(0, 200),
@@ -706,4 +761,4 @@ const RagService = {
     }
 };
 
-module.exports = RagService;
+export default RagService;
