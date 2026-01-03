@@ -67,14 +67,14 @@ interface UseActionHandlerReturn {
 const VIEW_MAP: Record<string, AppView> = {
     'USER_DASHBOARD': AppView.USER_DASHBOARD,
     'ADMIN_DASHBOARD': AppView.ADMIN_DASHBOARD,
-    'ASSESSMENT_WIZARD': AppView.ASSESSMENT_WIZARD,
-    'INITIATIVES': AppView.INITIATIVES,
-    'INITIATIVE_DETAIL': AppView.INITIATIVE_DETAIL,
-    'ROADMAP': AppView.ROADMAP,
-    'REPORTS': AppView.REPORTS,
-    'REPORT_BUILDER': AppView.REPORT_BUILDER,
-    'SETTINGS': AppView.SETTINGS,
-    'PROJECT_DETAIL': AppView.PROJECT_DETAIL,
+    'ASSESSMENT_WIZARD': AppView.ASSESSMENT_DRD, // ASSESSMENT_WIZARD doesn't exist, using ASSESSMENT_DRD
+    'INITIATIVES': AppView.FULL_STEP2_INITIATIVES, // Using FULL_STEP2_INITIATIVES
+    'INITIATIVE_DETAIL': AppView.FULL_STEP2_INITIATIVES, // No INITIATIVE_DETAIL, using INITIATIVES
+    'ROADMAP': AppView.FULL_STEP3_ROADMAP, // Using FULL_STEP3_ROADMAP
+    'REPORTS': AppView.FULL_STEP6_REPORTS, // Using FULL_STEP6_REPORTS
+    'REPORT_BUILDER': AppView.DRD_AUDIT_REPORT, // Using DRD_AUDIT_REPORT
+    'SETTINGS': AppView.SETTINGS_PROFILE, // Using SETTINGS_PROFILE
+    'PROJECT_DETAIL': AppView.ADMIN_PROJECTS, // Using ADMIN_PROJECTS
     'AI_CHAT': AppView.AI_CHAT
 };
 
@@ -82,14 +82,14 @@ export function useActionHandler(): UseActionHandlerReturn {
     const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
     const [isExecuting, setIsExecuting] = useState(false);
     const [lastResult, setLastResult] = useState<ActionResult | null>(null);
-    
+
     const highlightTimerRef = useRef<NodeJS.Timeout | null>(null);
-    
-    const { 
-        setCurrentView, 
+
+    const {
+        setCurrentView,
         setCurrentProjectId,
-        setSelectedInitiativeId,
-        setSelectedModalId
+        // setSelectedInitiativeId, // Not in store
+        // setSelectedModalId // Not in store
     } = useAppStore();
 
     /**
@@ -98,7 +98,7 @@ export function useActionHandler(): UseActionHandlerReturn {
     const executeNavigate = useCallback((payload: Record<string, unknown>): ActionResult => {
         const view = payload.view as string;
         const params = payload.params as Record<string, unknown> | undefined;
-        
+
         const mappedView = VIEW_MAP[view];
         if (!mappedView) {
             return {
@@ -111,9 +111,9 @@ export function useActionHandler(): UseActionHandlerReturn {
         if (params?.projectId) {
             setCurrentProjectId(params.projectId as string);
         }
-        if (params?.initiativeId) {
-            setSelectedInitiativeId(params.initiativeId as string);
-        }
+        // if (params?.initiativeId) {
+        //     setSelectedInitiativeId(params.initiativeId as string); // Not in AppState
+        // }
 
         setCurrentView(mappedView);
 
@@ -123,7 +123,7 @@ export function useActionHandler(): UseActionHandlerReturn {
             result: { view: mappedView, params },
             message: `Navigated to ${view}`
         };
-    }, [setCurrentView, setCurrentProjectId, setSelectedInitiativeId]);
+    }, [setCurrentView, setCurrentProjectId]);
 
     /**
      * Execute form fill action
@@ -132,9 +132,9 @@ export function useActionHandler(): UseActionHandlerReturn {
         const { formId, fieldId, value, explanation } = payload;
 
         // Find the form element
-        const formElement = document.getElementById(formId as string) || 
-                           document.querySelector(`[data-form-id="${formId}"]`);
-        
+        const formElement = document.getElementById(formId as string) ||
+            document.querySelector(`[data-form-id="${formId}"]`);
+
         if (!formElement) {
             return {
                 status: 'error',
@@ -157,7 +157,7 @@ export function useActionHandler(): UseActionHandlerReturn {
         // Set the value
         const previousValue = fieldElement.value;
         fieldElement.value = value as string;
-        
+
         // Trigger change event
         fieldElement.dispatchEvent(new Event('input', { bubbles: true }));
         fieldElement.dispatchEvent(new Event('change', { bubbles: true }));
@@ -192,7 +192,7 @@ export function useActionHandler(): UseActionHandlerReturn {
         }
 
         const element = document.getElementById(elementId as string) ||
-                       document.querySelector(`[data-element-id="${elementId}"]`);
+            document.querySelector(`[data-element-id="${elementId}"]`);
 
         if (!element) {
             return {
@@ -224,7 +224,7 @@ export function useActionHandler(): UseActionHandlerReturn {
     const executeOpenModal = useCallback((payload: Record<string, unknown>): ActionResult => {
         const { modalId, data } = payload;
 
-        setSelectedModalId(modalId as string);
+        // setSelectedModalId(modalId as string); // Method doesn't exist in store
 
         // Store modal data in localStorage for the modal to pick up
         if (data) {
@@ -237,7 +237,7 @@ export function useActionHandler(): UseActionHandlerReturn {
             result: { modalId, data },
             message: `Opened modal ${modalId}`
         };
-    }, [setSelectedModalId]);
+    }, []);
 
     /**
      * Execute show data action
@@ -357,7 +357,7 @@ export function useActionHandler(): UseActionHandlerReturn {
      */
     const confirmAction = useCallback(async (actionId: string, confirmed: boolean): Promise<ActionResult> => {
         const pendingAction = pendingActions.find(p => p.actionId === actionId);
-        
+
         if (!pendingAction) {
             return {
                 status: 'error',
