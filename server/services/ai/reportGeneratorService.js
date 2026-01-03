@@ -4,53 +4,18 @@
  * Uses RAG, Visual Context, and Project Data
  */
 
-const { AIPipeline } = require('./aiPipeline');
-const { z } = require('zod');
-
-// Analysis Phase Schema (ANALYST role)
-const AnalysisSchema = z.object({
-    executiveSummary: z.object({
-        currentState: z.string(),
-        targetState: z.string(),
-        gapAnalysis: z.string()
-    }),
-    dimensions: z.array(z.object({
-        name: z.string(),
-        currentLevel: z.number(),
-        targetLevel: z.number(),
-        gap: z.number(),
-        keyFindings: z.array(z.string())
-    })),
-    dataQuality: z.object({
-        completeness: z.number(),
-        concerns: z.array(z.string())
-    })
-});
-
-// Strategy Phase Schema (STRATEGIST role)
-const StrategySchema = z.object({
-    executiveSummary: z.string().describe('One-paragraph executive summary for C-level'),
-    strategicRecommendations: z.array(z.object({
-        priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']),
-        title: z.string(),
-        description: z.string(),
-        expectedImpact: z.string(),
-        timeframe: z.string()
-    })),
-    roadmap: z.object({
-        phase1: z.object({ title: z.string(), initiatives: z.array(z.string()) }),
-        phase2: z.object({ title: z.string(), initiatives: z.array(z.string()) }),
-        phase3: z.object({ title: z.string(), initiatives: z.array(z.string()) })
-    }),
-    riskFactors: z.array(z.object({
-        risk: z.string(),
-        mitigation: z.string()
-    }))
-});
+import { AIPipeline } from './aiPipeline.js';
+import { AnalysisSchema, StrategySchema } from './reportGeneratorSchemas.js';
+import { createReportGeneratorPhases } from './reportGeneratorPhases.js';
 
 class ReportGeneratorService {
     constructor() {
         this.pipeline = new AIPipeline();
+        this.phases = createReportGeneratorPhases({
+            pipeline: this.pipeline,
+            AnalysisSchema,
+            StrategySchema
+        });
     }
 
     /**
@@ -76,7 +41,7 @@ class ReportGeneratorService {
         try {
             // Phase 1: ANALYST - Structure the data
             console.log('[ReportGenerator] Phase 1: ANALYST');
-            const analysis = await this.runAnalystPhase({
+            const analysis = await this.phases.runAnalystPhase({
                 assessmentData,
                 projectData,
                 screenContext,
@@ -86,7 +51,7 @@ class ReportGeneratorService {
 
             // Phase 2: STRATEGIST - Generate executive content
             console.log('[ReportGenerator] Phase 2: STRATEGIST');
-            const strategy = await this.runStrategistPhase({
+            const strategy = await this.phases.runStrategistPhase({
                 analysis,
                 assessmentData,
                 projectData,
@@ -120,114 +85,28 @@ class ReportGeneratorService {
      * Phase 1: ANALYST - Structure and analyze the assessment data
      */
     async runAnalystPhase(params) {
-        const { assessmentData, projectData, screenContext, userId, organizationId } = params;
-
-        const prompt = `Analyze the following digital transformation assessment data.
-Your task is to structure the findings and identify gaps.
-
-## Assessment Data
-${JSON.stringify(assessmentData, null, 2)}
-
-## Project Context
-${projectData ? JSON.stringify(projectData, null, 2) : 'No project context available'}
-
-## Instructions
-1. Summarize the current state vs target state
-2. Analyze each dimension's gap
-3. Identify key findings per dimension
-4. Rate data quality and note any concerns
-
-Be precise and data-driven. Use numbers and percentages.`;
-
-        const response = await this.pipeline.process({
-            type: 'structured',
-            capability: 'analysis',
-            role: 'ANALYST',
-            schema: AnalysisSchema,
-            prompt,
-            screenContext,
-            userId,
-            organizationId,
-            enableTools: false
-        });
-
-        return response.object || response.content;
+        return this.phases.runAnalystPhase(params);
     }
 
     /**
      * Phase 2: STRATEGIST - Generate executive-level recommendations
      */
     async runStrategistPhase(params) {
-        const { analysis, assessmentData, projectData, userId, organizationId } = params;
-
-        const prompt = `Based on the following analysis, create an executive-level strategic report.
-
-## Analysis Results
-${JSON.stringify(analysis, null, 2)}
-
-## Original Assessment
-${JSON.stringify(assessmentData, null, 2)}
-
-## Instructions (McKinsey Pyramid Principle)
-1. Start with the answer: One-paragraph executive summary
-2. Prioritize recommendations (CRITICAL → HIGH → MEDIUM → LOW)
-3. Create a 3-phase roadmap
-4. Identify risks and mitigations
-
-Write for a CEO audience. Be decisive and action-oriented.`;
-
-        const response = await this.pipeline.process({
-            type: 'structured',
-            capability: 'strategic',
-            role: 'STRATEGIST',
-            schema: StrategySchema,
-            prompt,
-            userId,
-            organizationId,
-            enableTools: false
-        });
-
-        return response.object || response.content;
+        return this.phases.runStrategistPhase(params);
     }
 
     /**
      * Generate a single section of a report
      */
     async generateSection(params) {
-        const { sectionType, data, userId, organizationId } = params;
-
-        const sectionPrompts = {
-            executive_summary: 'Write a concise executive summary for this transformation assessment.',
-            gap_analysis: 'Perform a detailed gap analysis for each dimension.',
-            recommendations: 'Generate prioritized recommendations based on the assessment.',
-            roadmap: 'Create a phased implementation roadmap.',
-            risk_analysis: 'Identify risks and mitigation strategies.'
-        };
-
-        const prompt = `${sectionPrompts[sectionType] || 'Generate content for this section.'}
-
-## Data
-${JSON.stringify(data, null, 2)}`;
-
-        const response = await this.pipeline.process({
-            capability: 'report_section',
-            role: 'STRATEGIST',
-            prompt,
-            userId,
-            organizationId
-        });
-
-        return {
-            section: sectionType,
-            content: response.content
-        };
+        return this.phases.generateSection(params);
     }
 }
 
 // Singleton
 const reportGeneratorService = new ReportGeneratorService();
 
-module.exports = {
+export default {
     ReportGeneratorService,
     reportGeneratorService,
     AnalysisSchema,
