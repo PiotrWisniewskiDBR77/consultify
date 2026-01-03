@@ -260,10 +260,12 @@ class PerformanceOptimizer {
 // Singleton instance
 const performanceOptimizer = new PerformanceOptimizer();
 
-module.exports = {
+export default {
     PerformanceOptimizer,
     performanceOptimizer
 };
+
+
 
 
 

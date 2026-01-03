@@ -6,7 +6,7 @@
  * If any is missing, feature must not ship.
  */
 
-const UserStateMachine = require('../services/userStateMachine');
+const UserStateMachine = import('userStateMachine.js');
 
 /**
  * Feature gate configuration
@@ -252,7 +252,7 @@ function getAccessibleFeatures(context) {
     );
 }
 
-module.exports = {
+export default {
     FEATURE_REQUIREMENTS,
     requireFeature,
     requireAccess,

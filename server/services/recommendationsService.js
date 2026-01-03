@@ -4,9 +4,13 @@
  * Implements: Development, Balance, and Stabilization recommendations
  */
 
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+    db,
+    uuidv4,
 };
 
 const RecommendationsService = {
@@ -295,5 +299,5 @@ const RecommendationsService = {
     }
 };
 
-module.exports = RecommendationsService;
+export default RecommendationsService;
 

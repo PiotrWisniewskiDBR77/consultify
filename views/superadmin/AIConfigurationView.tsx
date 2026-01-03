@@ -38,7 +38,7 @@ import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { SuperAdminAISettings } from '../../types';
-import { LLMProviderConfig } from '../../types/domain/ai';
+import { LLMProviderConfig, LLMProvider } from '../../types/domain/ai';
 import { SettingsCard, SettingsToggle, SettingsSlider, AuditLogViewer } from '../../components/AISettings';
 
 // AI Capability definitions with their prompt keys
@@ -315,10 +315,10 @@ Help leaders develop change management competencies.`
         e.preventDefault();
         try {
             if (editingProviderId) {
-                await Api.updateLLMProvider(editingProviderId, providerForm);
+                await Api.updateLLMProvider(editingProviderId, providerForm as any);
                 toast.success('Provider updated');
             } else {
-                await Api.addLLMProvider(providerForm);
+                await Api.addLLMProvider(providerForm as any);
                 toast.success('Provider added');
             }
             setShowProviderModal(false);
@@ -343,7 +343,7 @@ Help leaders develop change management competencies.`
         });
     };
 
-    const handleEditProvider = (p: LLMProvider) => {
+    const handleEditProvider = (p: LLMProviderConfig) => {
         setEditingProviderId(p.id);
         setProviderForm(p);
         setShowProviderModal(true);
@@ -411,10 +411,10 @@ Help leaders develop change management competencies.`
         }
     };
 
-    const handleTestConnection = async (config: Partial<LLMProvider>) => {
+    const handleTestConnection = async (config: Partial<LLMProviderConfig>) => {
         setTestingConnection(true);
         try {
-            const result = await Api.testLLMConnection(config);
+            const result = await Api.testLLMConnection(config as any);
             if (result.success) {
                 toast.success(result.message);
             } else {

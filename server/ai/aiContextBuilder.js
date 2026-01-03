@@ -1,4 +1,5 @@
-const db = require('../database');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 /**
  * AIContextBuilder
@@ -181,4 +182,4 @@ const AIContextBuilder = {
     }
 };
 
-module.exports = AIContextBuilder;
+export default AIContextBuilder;

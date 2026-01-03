@@ -9,8 +9,10 @@
  * - Error handling and retry logic
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 class IntegrationService {
     /**
@@ -394,7 +396,10 @@ class IntegrationService {
     }
 }
 
-module.exports = new IntegrationService();
+const integrationServiceInstance = new IntegrationService();
+export default integrationServiceInstance;
+
+
 
 
 

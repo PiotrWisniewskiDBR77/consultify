@@ -367,7 +367,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                             </button>
                             <button
                                 onClick={handleCreate}
-                                disabled={!selectedAssessmentId || !reportName.trim() || creating || (projectId && !canGenerateReport)}
+                                disabled={!selectedAssessmentId || !reportName.trim() || creating || (projectId ? !canGenerateReport : false)}
                                 className={`
                                     flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
                                     ${selectedAssessmentId && reportName.trim() && !creating && (!projectId || canGenerateReport)

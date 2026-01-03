@@ -209,7 +209,7 @@ setInterval(() => {
     }
 }, 300000);
 
-module.exports = {
+export default {
     securityHeaders,
     createRateLimiter,
     rateLimitPresets,

@@ -4,10 +4,10 @@
  * API endpoints for framework benchmark comparisons.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authenticateToken = require('../middleware/authMiddleware');
-const { FrameworkBenchmarkService } = require('../services/frameworkBenchmarkService');
+import authenticateToken from '../middleware/authMiddleware.js';
+const { FrameworkBenchmarkService } = import('frameworkBenchmarkService.js');
 
 /**
  * GET /api/benchmark/compare
@@ -129,7 +129,9 @@ router.get('/data/:framework', authenticateToken, (req, res) => {
     res.json({ framework, data });
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

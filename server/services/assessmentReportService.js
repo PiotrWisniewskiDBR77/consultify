@@ -4,12 +4,14 @@
  * Generates professional consulting-quality outputs
  */
 
-const PDFDocument = require('pdfkit');
-const ExcelJS = require('exceljs');
-const fs = require('fs');
-const path = require('path');
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import PDFDocument from 'pdfkit';
+import ExcelJS from 'exceljs';
+import fs from 'fs';
+import path from 'path';
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // DRD Axis Configuration
 const DRD_AXES = {
@@ -872,5 +874,6 @@ using a 7-level scale from Basic (1) to World-Class (7). Each level represents d
     }
 }
 
-module.exports = new AssessmentReportService();
+const assessmentReportServiceInstance = new AssessmentReportService();
+export default assessmentReportServiceInstance;
 

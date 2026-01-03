@@ -5,11 +5,11 @@
  * SuperAdmin can manage branding for all organizations.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
-const BrandingService = require('../services/brandingService');
+import authMiddleware from '../middleware/authMiddleware.js';
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
+const BrandingService = import('brandingService.js');
 
 // ==========================================
 // SUPERADMIN ROUTES
@@ -139,5 +139,5 @@ router.post('/:orgId/clone', authMiddleware, verifySuperAdmin, async (req, res) 
     }
 });
 
-module.exports = router;
+export default router;
 

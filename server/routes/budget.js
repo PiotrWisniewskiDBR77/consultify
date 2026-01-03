@@ -9,10 +9,10 @@
  * PMO Domain: RESOURCE_RESPONSIBILITY, PERFORMANCE_MONITORING
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const BudgetService = require('../services/budgetService');
-const verifyToken = require('../middleware/authMiddleware');
+const BudgetService = import('budgetService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 const { asyncHandler } = require('../utils/errorHandler');
 
 router.use(verifyToken);
@@ -102,7 +102,8 @@ router.put('/:budgetId', asyncHandler(async (req, res) => {
     params.push(budgetId);
     params.push(orgId);
 
-    const db = require('../database');
+    import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
     await new Promise((resolve, reject) => {
         db.run(
             `UPDATE initiative_budgets SET ${setClauses.join(', ')} 
@@ -168,7 +169,8 @@ router.put('/:budgetId/line-items/:itemId', asyncHandler(async (req, res) => {
     params.push(itemId);
     params.push(budgetId);
 
-    const db = require('../database');
+    import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
     await new Promise((resolve, reject) => {
         db.run(
             `UPDATE budget_line_items SET ${setClauses.join(', ')} 
@@ -187,7 +189,8 @@ router.put('/:budgetId/line-items/:itemId', asyncHandler(async (req, res) => {
 router.delete('/:budgetId/line-items/:itemId', asyncHandler(async (req, res) => {
     const { budgetId, itemId } = req.params;
 
-    const db = require('../database');
+    import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
     await new Promise((resolve, reject) => {
         db.run(
             `DELETE FROM budget_line_items WHERE id = ? AND budget_id = ?`,
@@ -415,7 +418,9 @@ router.get('/metadata/categories', asyncHandler(async (req, res) => {
     });
 }));
 
-module.exports = router;
+export default router;
+
+
 
 
 

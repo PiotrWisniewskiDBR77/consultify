@@ -7,7 +7,9 @@
  * PMO Standards: ISO 21500, PMBOK 7, PRINCE2 (Checkpoint Report)
  */
 
-const db = require('../database');
+import db from '../database.js';
+
+
 
 /**
  * Database helper for async queries
@@ -293,7 +295,9 @@ const TeamMeetingAggregator = {
     }
 };
 
-module.exports = TeamMeetingAggregator;
+export default TeamMeetingAggregator;
+
+
 
 
 

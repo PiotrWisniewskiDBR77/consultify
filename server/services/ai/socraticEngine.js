@@ -584,7 +584,7 @@ class SocraticEngine {
 // Singleton instance
 const socraticEngine = new SocraticEngine();
 
-module.exports = {
+export default {
     SocraticEngine,
     socraticEngine,
     SOCRATIC_PATTERNS,

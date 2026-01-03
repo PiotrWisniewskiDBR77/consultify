@@ -1,10 +1,10 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const DocumentService = require('../services/documentService');
-const authenticateToken = require('../middleware/authMiddleware');
+const DocumentService = import('documentService.js');
+import authenticateToken from '../middleware/authMiddleware.js';
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, '../../uploads/documents');
@@ -208,4 +208,4 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

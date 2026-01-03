@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { upload, fileFilter } from '../../../src/middleware/fileUpload.middleware.js';
+import { upload, fileFilter } from '../../../../src/middleware/fileUpload.middleware.js';
 
 describe('File Upload Middleware', () => {
     let mockReq: Partial<{ user?: { organizationId?: string } }>;
@@ -77,4 +77,6 @@ describe('File Upload Middleware', () => {
         });
     });
 });
+
+
 

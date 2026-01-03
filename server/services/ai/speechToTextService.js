@@ -450,7 +450,7 @@ class SpeechToTextService {
 
 const speechToTextService = new SpeechToTextService();
 
-module.exports = {
+export default {
     SpeechToTextService,
     speechToTextService,
     STT_CONFIG

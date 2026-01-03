@@ -168,7 +168,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
     const loadProviders = async () => {
         try {
             const data = await Api.getLLMProviders(true);
-            setProviders(data);
+            setProviders(data as any);
             setLoading(false);
         } catch (err) {
             toast.error('Failed to load providers');

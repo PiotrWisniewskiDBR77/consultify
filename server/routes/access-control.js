@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 const bcrypt = require('bcryptjs');
-const verifyToken = require('../middleware/authMiddleware');
+import verifyToken from '../middleware/authMiddleware.js';
 
 // Middleware to check if user is Admin
 const requireAdmin = (req, res, next) => {
@@ -390,4 +391,4 @@ router.delete('/codes/:id', verifyToken, requireAdmin, (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

@@ -180,7 +180,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss, isTop }) => {
     <motion.div
       layout
       custom={isTop}
-      variants={toastVariants}
+      variants={toastVariants as any}
       initial="hidden"
       animate="visible"
       exit="exit"
@@ -249,15 +249,17 @@ export const toast = {
 // Toast Initializer component (put in App root)
 export const ToastInitializer: React.FC = () => {
   const { addToast } = useToast();
-  
+
   React.useEffect(() => {
     setGlobalToastHandler(addToast);
-    return () => setGlobalToastHandler(null);
+    return () => setGlobalToastHandler(null as any);
   }, [addToast]);
 
   return null;
 };
 
 export default ToastProvider;
+
+
 
 

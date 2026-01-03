@@ -1,5 +1,6 @@
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 const auditLogger = require('../utils/auditLogger');
 const aiQueue = require('../queues/aiQueue');
 const { ACTION_ERROR_CODES } = require('./actionErrors');
@@ -553,4 +554,4 @@ const AsyncJobService = {
     }
 };
 
-module.exports = AsyncJobService;
+export default AsyncJobService;

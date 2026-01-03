@@ -168,4 +168,4 @@ const ActionProposalMapper = {
     }
 };
 
-module.exports = ActionProposalMapper;
+export default ActionProposalMapper;

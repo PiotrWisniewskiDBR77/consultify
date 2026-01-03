@@ -11,10 +11,12 @@
  * - Audit trail
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
-const path = require('path');
-const fs = require('fs').promises;
+import db from '../database.js';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import { promises as fs } from 'fs';
+
+
 
 // Upload directory configuration
 const UPLOAD_DIR = path.join(__dirname, '../../uploads/evidence');
@@ -470,5 +472,5 @@ const EvidenceService = {
     }
 };
 
-module.exports = EvidenceService;
+export default EvidenceService;
 

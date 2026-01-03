@@ -1143,7 +1143,7 @@ Kluczowe trendy: ${(research.trends?.trends || industry.keyTransformationAreas |
 // Export singleton
 const comprehensiveReportGenerator = new ComprehensiveReportGenerator();
 
-module.exports = {
+export default {
     ComprehensiveReportGenerator,
     comprehensiveReportGenerator,
     REPORT_SECTIONS

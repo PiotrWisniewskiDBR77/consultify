@@ -10,11 +10,12 @@
  * - GET /api/organization-profiles/:orgId/completeness - Get profile completeness score
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
-const verifyToken = require('../middleware/authMiddleware');
+import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import verifyToken from '../middleware/authMiddleware.js';
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -674,7 +675,9 @@ function identifyOpportunities(profile) {
     return opportunities;
 }
 
-module.exports = router;
+export default router;
+
+
 
 
 

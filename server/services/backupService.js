@@ -81,7 +81,8 @@ const BackupService = {
 
         try {
             // 1. Create SQLite backup (using VACUUM INTO for consistent snapshot)
-            const db = require('../database');
+            import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
             await new Promise((resolve, reject) => {
                 db.run(`VACUUM INTO ?`, [backupPath], (err) => {

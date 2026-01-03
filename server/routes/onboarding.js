@@ -8,16 +8,17 @@
  * - Rate limiting (per-org)
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const authenticate = require('../middleware/authMiddleware');
-const orgContextMiddleware = require('../middleware/orgContextMiddleware');
+import authenticate from '../middleware/authMiddleware.js';
+import orgContextMiddleware from '../middleware/orgContextMiddleware.js';
 const { requireOrgAccess } = require('../middleware/rbac');
-const OnboardingService = require('../services/onboardingService');
+const OnboardingService = import('onboardingService.js');
 import auditService from '../services/auditService.js';
-const { getAsync } = require('../db/sqliteAsync');
-const db = require('../database');
+const { getAsync } = getDatabase();
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // Apply auth + org context to all routes
 router.use(authenticate);
@@ -183,4 +184,4 @@ router.post('/accept-plan',
     }
 );
 
-module.exports = router;
+export default router;

@@ -1,6 +1,6 @@
 const { Worker } = require('bullmq');
 const redisConfig = require('../config/queue.config');
-const AiService = require('../services/aiService');
+const AiService = import('aiService.js');
 const AsyncJobProcessor = require('./asyncJobProcessor');
 
 const workerName = 'ai-tasks-worker';
@@ -73,4 +73,4 @@ const initWorker = () => {
     }
 };
 
-module.exports = { initWorker };
+export default { initWorker };

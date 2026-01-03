@@ -122,7 +122,7 @@ export const FullInitiativesView: React.FC = () => {
         contextSufficiency: fullSession.contextSufficiency
       };
       // 1. Try AI Generation with Deep Context
-      let newInitiatives = await Api.aiRecommend(generationContext);
+      let newInitiatives = await Api.aiRecommend(generationContext as any) as any[];
       // 2. Fallback if AI fails or returns empty
       if (!newInitiatives || newInitiatives.length === 0) {
         console.warn("AI returned empty initiatives, using deterministic engine fallback.");
@@ -134,10 +134,14 @@ export const FullInitiativesView: React.FC = () => {
       // engineGenerate likely generates string IDs.
       // We must save them to DB.
 
-      const initiativesWithRealIds = await Promise.all(newInitiatives.map(async (init) => {
+      const initiativesWithRealIds = await Promise.all(newInitiatives.map(async (init: any) => {
         try {
           // Ensure it has a project ID
-          const payload = { ...init, projectId: currentProjectId || undefined };
+          const payload = { 
+            ...init, 
+            name: init.name || init.title || 'Untitled Initiative',
+            projectId: currentProjectId || undefined 
+          };
           // Use Api to create. Note: Api.createInitiative returns the created object with ID
           // But engine generated initiatives might strictly be formatted for frontend.
           // We need to match backend schema.

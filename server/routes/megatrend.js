@@ -1,9 +1,9 @@
 // server/routes/megatrend.js
 // API endpoints for the Megatrend Scanner module
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
+import verifyToken from '../middleware/authMiddleware.js';
 const MegatrendService = require('../models/megatrend');
 
 // All routes require authentication
@@ -70,4 +70,4 @@ router.put('/custom/:id', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

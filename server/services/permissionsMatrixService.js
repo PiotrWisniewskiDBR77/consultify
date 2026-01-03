@@ -5,11 +5,15 @@
  * inheritance, and bulk operations.
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
+
+import db from '../database.js';
+
+
 
 // Dependency injection for testing
 const deps = {
-    db: require('../database')
+    db,
 };
 
 /**
@@ -375,7 +379,7 @@ const getStats = async () => {
     };
 };
 
-module.exports = {
+export default {
     setDependencies,
     PERMISSION_CATEGORIES,
     ROLE_HIERARCHY,
@@ -391,6 +395,8 @@ module.exports = {
     compareRoles,
     getStats
 };
+
+
 
 
 

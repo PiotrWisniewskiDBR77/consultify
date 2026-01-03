@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const WebhookDeliveryService = require('../services/webhookDeliveryService');
+import authMiddleware from '../middleware/authMiddleware.js';
+const WebhookDeliveryService = import('webhookDeliveryService.js');
 
 // All routes require auth
 router.use(authMiddleware);
@@ -226,7 +226,7 @@ router.get('/:id/deliveries', async (req, res) => {
         }
         
         // Use IntegrationAnalyticsService for new analytics table
-        const IntegrationAnalyticsService = require('../services/integrationAnalyticsService');
+        const IntegrationAnalyticsService = import('integrationAnalyticsService.js');
         const deliveries = await IntegrationAnalyticsService.getWebhookDeliveries(id, parseInt(limit));
         
         res.json({ deliveries });
@@ -288,7 +288,8 @@ router.post('/:id/retry', async (req, res) => {
         }
         
         // Get failed delivery and retry
-        const db = require('../database');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
         const delivery = await new Promise((resolve, reject) => {
             db.get('SELECT * FROM webhook_delivery_logs WHERE id = ? AND webhook_id = ?', 
                 [deliveryId, id], (err, row) => {
@@ -317,4 +318,4 @@ router.post('/:id/retry', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

@@ -6,9 +6,11 @@
  * Now uses Enterprise Templates for BCG/McKinsey-style reports
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
-const EnterpriseTemplates = require('./enterpriseReportTemplates');
+import db from '../database.js';
+import EnterpriseTemplates from './enterpriseReportTemplates.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // DRD Axis Configuration
 const DRD_AXES = {
@@ -1579,7 +1581,8 @@ ${isPolish ? 'Szczegółowe tabele ocen dla wszystkich 7 osi i ponad 30 obszaró
 }
 
 // Export singleton
-module.exports = new ReportContentService();
-module.exports.DRD_AXES = DRD_AXES;
-module.exports.SECTION_TYPES = SECTION_TYPES;
+const reportContentServiceInstance = new ReportContentService();
+export default reportContentServiceInstance;
+export { DRD_AXES };
+export { SECTION_TYPES };
 

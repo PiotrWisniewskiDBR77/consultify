@@ -86,4 +86,4 @@ const AICoach = {
     }
 };
 
-module.exports = AICoach;
+export default AICoach;

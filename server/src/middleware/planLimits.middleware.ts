@@ -5,7 +5,7 @@
  * Enforces subscription plan limits (projects, storage, members, etc.)
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import type { AuthRequest } from './auth.middleware.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 import { getDatabase } from '../database/Database.js';
@@ -70,14 +70,8 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
 // DEPENDENCIES (injectable for testing)
 // ==========================================
 
-let deps: Dependencies;
-
-const getDeps = (): Dependencies => {
-    if (!deps) {
-        const defaultDb = await import('../../database.js').then(m => m.default || m);
-        deps = { db: defaultDb };
-    }
-    return deps;
+let deps: Dependencies = {
+    db: getDatabase() as unknown as Database
 };
 
 // ==========================================
@@ -93,7 +87,7 @@ const getDeps = (): Dependencies => {
 export const checkPlanLimit = (limitKey: keyof PlanLimits) => {
     return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const orgId = req.user?.organizationId || req.user?.organization_id;
+            const orgId = req.user?.organizationId;
             if (!orgId) {
                 res.status(403).json({ error: 'No organization found' });
                 return;
@@ -152,6 +146,6 @@ export const checkPlanLimit = (limitKey: keyof PlanLimits) => {
 // ==========================================
 
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
-    deps = { ...getDeps(), ...newDeps };
+    deps = { ...deps, ...newDeps };
 };
 

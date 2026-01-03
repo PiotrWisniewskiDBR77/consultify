@@ -920,7 +920,7 @@ class ModelRouter {
 // Singleton instance
 const modelRouter = new ModelRouter();
 
-module.exports = {
+export default {
     ModelRouter,
     modelRouter,
     CAPABILITY_TIERS,

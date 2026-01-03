@@ -736,7 +736,7 @@ export class TaskController {
     /**
      * Add comment to task
      */
-    static addComment = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    static addTaskComment = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id: taskId } = req.params;
         const orgId = req.user?.organizationId;
         const userId = req.user?.id;

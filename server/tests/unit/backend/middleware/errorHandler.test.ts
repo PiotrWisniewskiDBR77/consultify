@@ -6,8 +6,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { errorHandler, notFoundHandler, validationErrorHandler } from '../../../src/middleware/errorHandler.js';
-import { AppError, ValidationError, AuthenticationError, AuthorizationError, NotFoundError } from '../../../src/types/index.js';
+import { errorHandler, notFoundHandler, validationErrorHandler } from '../../../../src/middleware/errorHandler.js';
+import { AppError, ValidationError, AuthenticationError, AuthorizationError, NotFoundError } from '../../../../src/types/index.js';
 
 describe('Error Handler Middleware', () => {
     let mockReq: Partial<Request>;

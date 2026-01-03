@@ -4,14 +4,14 @@
  * Manages user goal preferences for personalized onboarding.
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 // Lazy-loaded database
 let db = null;
 const getDb = () => {
     if (!db) {
         try {
-            db = require('../db/sqliteAsync');
+            db = getDatabase();
         } catch (e) {
             db = require('../database');
         }
@@ -143,4 +143,4 @@ const UserGoalsService = {
     },
 };
 
-module.exports = UserGoalsService;
+export default UserGoalsService;

@@ -9,10 +9,10 @@
  * - Critical notification bypass
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const BaseService = require('./BaseService');
-const NotificationService = require('./notificationService');
+import db from '../database.js';
+import BaseService from './BaseService.js';
+import NotificationService from './notificationService.js';
+import { v4 as uuidv4 } from 'uuid';
 
 const NotificationBatchingService = Object.assign({}, BaseService, {
 
@@ -472,7 +472,9 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
     }
 });
 
-module.exports = NotificationBatchingService;
+export default NotificationBatchingService;
+
+
 
 
 

@@ -8,9 +8,9 @@
  * while providing new organized endpoints.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
+import verifyToken from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
 
 // Import existing route handlers
@@ -168,7 +168,9 @@ router.get('/health/alerts', verifyToken, async (req, res, next) => {
     return llmRoutes.handle(req, res, next) || llmRoutes(req, res, next);
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

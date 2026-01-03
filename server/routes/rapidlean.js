@@ -2,15 +2,16 @@
  * RapidLean Assessment API Routes
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const RapidLeanService = require('../services/rapidLeanService');
-const RapidLeanObservationMapper = require('../services/rapidLeanObservationMapper');
-const RapidLeanReportService = require('../services/rapidLeanReportService');
-const verifyToken = require('../middleware/authMiddleware');
+const RapidLeanService = import('rapidLeanService.js');
+const RapidLeanObservationMapper = import('rapidLeanObservationMapper.js');
+const RapidLeanReportService = import('rapidLeanReportService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 const { rapidLeanPhotoUpload } = require('../middleware/rapidLeanUploadMiddleware');
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 const path = require('path');
 
 router.use(verifyToken);
@@ -354,4 +355,4 @@ async function updateAssessmentObservationCount(assessmentId, count) {
     });
 }
 
-module.exports = router;
+export default router;

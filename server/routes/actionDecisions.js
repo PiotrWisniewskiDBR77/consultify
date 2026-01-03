@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 const ActionDecisionService = require('../ai/actionDecisionService');
-const authMiddleware = require('../middleware/authMiddleware');
+import authMiddleware from '../middleware/authMiddleware.js';
 
 // Apply auth to all routes in this file
 router.use(authMiddleware);
@@ -405,7 +405,7 @@ router.post('/proposals/:id/evaluate-policy', async (req, res) => {
 // ==========================================
 
 const AsyncJobService = require('../ai/asyncJobService');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * @route POST /api/ai/actions/decisions/:id/execute-async
@@ -594,5 +594,5 @@ router.get('/jobs/stats', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

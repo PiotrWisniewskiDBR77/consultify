@@ -13,10 +13,10 @@
  * AI Transparency: AI NEVER hides bad news
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
-const PMOHealthService = require('./pmoHealthService');
-const AIExecutiveReporting = require('./aiExecutiveReporting');
+import db from '../database.js';
+import PMOHealthService from './pmoHealthService.js';
+import AIExecutiveReporting from './aiExecutiveReporting.js';
+import { v4 as uuidv4 } from 'uuid';
 
 // Report type constants
 const REPORT_TYPES = {
@@ -1806,7 +1806,6 @@ const ManagementReportsService = {
      */
     addComment: async (reportId, sectionId, content, userId, options = {}) => {
         const { mentions = [], parentCommentId = null } = options;
-        const { v4: uuidv4 } = require('uuid');
         const commentId = uuidv4();
 
         // Get current version ID
@@ -2044,5 +2043,5 @@ const ManagementReportsService = {
     }
 };
 
-module.exports = ManagementReportsService;
+export default ManagementReportsService;
 

@@ -4,11 +4,12 @@
  * Endpoints for monitoring AI usage, costs, and performance metrics.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
-const db = require('../database');
-const { aiLogger } = require('../services/ai/logger');
+import verifyToken from '../middleware/authMiddleware.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+const { aiLogger } = import('ai/logger.js');
 
 // All routes require authentication
 router.use(verifyToken);
@@ -397,7 +398,9 @@ async function getOrganizationBudget(organizationId) {
     });
 }
 
-module.exports = router;
+export default router;
+
+
 
 
 

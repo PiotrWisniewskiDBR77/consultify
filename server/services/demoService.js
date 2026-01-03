@@ -5,10 +5,10 @@
  * Demo orgs are ephemeral, read-only, and expire after 24 hours.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const AccessPolicyService = require('./accessPolicyService');
-const ActivityService = require('./activityService');
+import db from '../database.js';
+import AccessPolicyService from './accessPolicyService.js';
+import ActivityService from './activityService.js';
+import { v4 as uuidv4 } from 'uuid';
 
 const DemoService = {
     /**
@@ -356,4 +356,4 @@ const DemoService = {
     }
 };
 
-module.exports = DemoService;
+export default DemoService;

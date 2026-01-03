@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const SystemHealthService = require('../services/systemHealthService');
-const metricsService = require('../services/metricsService');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
+const SystemHealthService = import('systemHealthService.js');
+const metricsService = import('metricsService.js');
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
 /**
  * GET /api/system-health
@@ -74,4 +74,4 @@ router.post('/refresh', verifySuperAdmin, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

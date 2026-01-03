@@ -5,11 +5,11 @@
  * Includes analytics, pattern management, and admin controls.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { learningSystem } = require('../services/ai/learningSystem');
-const verifyToken = require('../middleware/authMiddleware');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
+const { learningSystem } = import('ai/learningSystem.js');
+import verifyToken from '../middleware/authMiddleware.js';
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
 /**
  * Helper middleware to require specific roles
@@ -179,7 +179,8 @@ router.get('/interactions', verifyToken, async (req, res) => {
         const sinceDate = new Date();
         sinceDate.setDate(sinceDate.getDate() - days);
         
-        const db = require('../database');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
         const interactions = await new Promise((resolve, reject) => {
             const sql = organizationId 
                 ? `SELECT * FROM ai_logs WHERE user_id IN (SELECT id FROM users WHERE organization_id = ?) AND created_at >= ? ORDER BY created_at DESC LIMIT ?`
@@ -231,7 +232,8 @@ router.get('/metrics', verifyToken, async (req, res) => {
         const sinceDate = new Date();
         sinceDate.setDate(sinceDate.getDate() - days);
         
-        const db = require('../database');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
         const analytics = await learningSystem.getAnalytics(organizationId);
         
         // Get quality trends
@@ -409,7 +411,7 @@ router.get('/jobs', verifyToken, requireRole(['ADMIN', 'SUPERADMIN', 'OWNER']), 
  */
 router.get('/config', verifySuperAdmin, async (req, res) => {
     try {
-        const { CONFIG } = require('../services/ai/learningSystem');
+        const { CONFIG } = import('ai/learningSystem.js');
         
         res.json({
             success: true,
@@ -479,4 +481,4 @@ router.get('/health', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

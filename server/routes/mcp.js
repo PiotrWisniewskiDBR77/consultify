@@ -10,9 +10,9 @@
  * Part of: User-Level Notifications & Integrations System
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
+import authMiddleware from '../middleware/authMiddleware.js';
 const MCPServer = require('../mcp/mcpServer');
 
 // All MCP routes require authentication
@@ -244,7 +244,9 @@ router.get('/health', async (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

@@ -1,5 +1,5 @@
 const db = require('../../database');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const ActivityService = require('../../services/activityService');
 const InitiativeService = require('../../services/initiativeService');
 
@@ -85,4 +85,4 @@ const TaskExecutor = {
     }
 };
 
-module.exports = TaskExecutor;
+export default TaskExecutor;

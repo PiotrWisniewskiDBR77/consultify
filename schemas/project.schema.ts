@@ -86,6 +86,7 @@ export const ProjectSchema = z.object({
     id: z.string().uuid(),
     name: z.string(),
     description: z.string().optional().nullable(),
+    goal: z.string().optional().nullable(),
     status: z.enum(['draft', 'active', 'on_hold', 'completed', 'cancelled', 'archived']),
     phase: z.enum(['initiation', 'planning', 'execution', 'monitoring', 'closure']).optional(),
     organizationId: z.string().uuid(),

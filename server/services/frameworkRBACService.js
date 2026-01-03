@@ -142,7 +142,8 @@ class FrameworkRBACService {
      * @returns {Promise<boolean>} Has permission
      */
     static async hasPermission(userId, framework, action, context = {}) {
-        const db = require('../database');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
         
         // Get user roles
         const userRoles = await this.getUserRoles(userId);
@@ -191,7 +192,8 @@ class FrameworkRBACService {
      * @returns {Promise<Array>} Role IDs
      */
     static async getUserRoles(userId) {
-        const db = require('../database');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
         
         return new Promise((resolve, reject) => {
             const sql = `
@@ -216,8 +218,9 @@ class FrameworkRBACService {
      * @returns {Promise<void>}
      */
     static async assignRole(userId, roleId, assignedBy) {
-        const db = require('../database');
-        const { v4: uuidv4 } = require('uuid');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+        import { v4 as uuidv4 } from 'uuid';
         
         if (!FRAMEWORK_ROLES[roleId]) {
             throw new Error(`Invalid role: ${roleId}`);
@@ -244,7 +247,8 @@ class FrameworkRBACService {
      * @returns {Promise<void>}
      */
     static async removeRole(userId, roleId) {
-        const db = require('../database');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
         
         return new Promise((resolve, reject) => {
             const sql = `DELETE FROM user_framework_roles WHERE user_id = ? AND role_id = ?`;
@@ -302,7 +306,8 @@ class FrameworkRBACService {
      * @returns {Promise<Array>} Users with approval rights
      */
     static async getApprovers(framework, organizationId) {
-        const db = require('../database');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
         
         const approverRoles = Object.entries(FRAMEWORK_ROLES)
             .filter(([, role]) => 
@@ -386,11 +391,13 @@ class FrameworkRBACService {
     }
 }
 
-module.exports = {
+export default {
     FrameworkRBACService,
     FRAMEWORK_ROLES,
     ACTION_PERMISSIONS,
 };
+
+
 
 
 

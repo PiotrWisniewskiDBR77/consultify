@@ -11,7 +11,8 @@
  * - Can be globally disabled by SUPERADMIN
  */
 
-const db = require('../database');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 const PolicyEngine = {
     /**
@@ -313,7 +314,7 @@ const PolicyEngine = {
      * @returns {Promise<Object>}
      */
     createRule: async (data) => {
-        const { v4: uuidv4 } = require('uuid');
+        import { v4 as uuidv4 } from 'uuid';
         const id = `pr-${uuidv4()}`;
 
         return new Promise((resolve, reject) => {
@@ -364,4 +365,4 @@ const PolicyEngine = {
     }
 };
 
-module.exports = PolicyEngine;
+export default PolicyEngine;

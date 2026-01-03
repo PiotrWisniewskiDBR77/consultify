@@ -5,8 +5,9 @@
  * Run with: node server/seed/studioTemplates.js
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 // Helper functions
 const dbRun = (sql, params = []) => new Promise((resolve, reject) => {
@@ -330,7 +331,9 @@ if (require.main === module) {
     }, 1000);
 }
 
-module.exports = { seedTemplates, TEMPLATES };
+export default { seedTemplates, TEMPLATES };
+
+
 
 
 

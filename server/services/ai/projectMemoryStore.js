@@ -9,7 +9,7 @@
  */
 
 const db = require('../../database');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const { aiLogger } = require('./logger');
 
 // Memory types with importance defaults
@@ -436,11 +436,13 @@ class ProjectMemoryStore {
 // Singleton instance
 const projectMemoryStore = new ProjectMemoryStore();
 
-module.exports = {
+export default {
     ProjectMemoryStore,
     projectMemoryStore,
     MEMORY_TYPES
 };
+
+
 
 
 

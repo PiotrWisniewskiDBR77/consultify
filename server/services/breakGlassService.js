@@ -6,9 +6,11 @@
  * Allows SUPERADMIN to temporarily bypass security controls.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const GovernanceAuditService = require('./governanceAuditService');
+import db from '../database.js';
+import GovernanceAuditService from './governanceAuditService.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Dependency injection container (for deterministic unit tests)
 const deps = {
@@ -308,4 +310,4 @@ const BreakGlassService = {
     }
 };
 
-module.exports = BreakGlassService;
+export default BreakGlassService;

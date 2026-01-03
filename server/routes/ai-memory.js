@@ -5,11 +5,12 @@
  * Supports explicit user-set memories and AI-inferred memories.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import verifyToken from '../middleware/authMiddleware.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 // Helper: Promisify db.all
 const dbAll = (sql, params = []) => new Promise((resolve, reject) => {
@@ -336,7 +337,9 @@ router.post('/parse', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

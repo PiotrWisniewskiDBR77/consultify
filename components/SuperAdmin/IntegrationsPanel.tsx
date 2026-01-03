@@ -51,7 +51,7 @@ export const IntegrationsPanel: React.FC = () => {
                 const orgId = 'current'; // Get from context/store
                 const data = await Api.getIntegrations(orgId);
                 setIntegrations(data);
-                const types = await Api.getAvailableIntegrationTypes();
+                const types = await (Api as any).getAvailableIntegrationTypes();
                 setAvailableTypes(types);
             } else {
                 const orgId = 'current'; // Get from context/store
@@ -68,7 +68,7 @@ export const IntegrationsPanel: React.FC = () => {
 
     const handleSync = async (id: string) => {
         try {
-            await Api.syncIntegration(id);
+            await (Api as any).syncIntegration(id);
             toast.success('Sync started');
             fetchData();
         } catch (error) {
@@ -82,9 +82,9 @@ export const IntegrationsPanel: React.FC = () => {
 
         try {
             if (type === 'integration') {
-                await Api.deleteIntegration(id);
+                await (Api as any).deleteIntegration(id);
             } else {
-                await Api.deleteWebhook(id);
+                await (Api as any).deleteWebhook(id);
             }
             toast.success(`${type} deleted`);
             fetchData();
@@ -125,21 +125,19 @@ export const IntegrationsPanel: React.FC = () => {
             <div className="flex gap-2 border-b border-white/10">
                 <button
                     onClick={() => setActiveTab('integrations')}
-                    className={`px-4 py-2 font-medium transition-colors ${
-                        activeTab === 'integrations'
+                    className={`px-4 py-2 font-medium transition-colors ${activeTab === 'integrations'
                             ? 'text-cyan-400 border-b-2 border-cyan-400'
                             : 'text-slate-400 hover:text-white'
-                    }`}
+                        }`}
                 >
                     Integrations
                 </button>
                 <button
                     onClick={() => setActiveTab('webhooks')}
-                    className={`px-4 py-2 font-medium transition-colors ${
-                        activeTab === 'webhooks'
+                    className={`px-4 py-2 font-medium transition-colors ${activeTab === 'webhooks'
                             ? 'text-cyan-400 border-b-2 border-cyan-400'
                             : 'text-slate-400 hover:text-white'
-                    }`}
+                        }`}
                 >
                     Webhooks
                 </button>
@@ -176,9 +174,8 @@ export const IntegrationsPanel: React.FC = () => {
                                             <p className="text-xs text-slate-500">
                                                 Last sync: {new Date(integration.last_sync_at).toLocaleString()}
                                                 {integration.last_sync_status && (
-                                                    <span className={`ml-2 ${
-                                                        integration.last_sync_status === 'success' ? 'text-green-400' : 'text-red-400'
-                                                    }`}>
+                                                    <span className={`ml-2 ${integration.last_sync_status === 'success' ? 'text-green-400' : 'text-red-400'
+                                                        }`}>
                                                         ({integration.last_sync_status})
                                                     </span>
                                                 )}

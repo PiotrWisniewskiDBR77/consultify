@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
+import authMiddleware from '../middleware/authMiddleware.js';
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 const AIPlaybookService = require('../ai/aiPlaybookService');
 const AIPlaybookEngine = require('../ai/aiPlaybookEngine');
 const AIPlaybookExecutor = require('../ai/aiPlaybookExecutor');
@@ -448,7 +448,7 @@ router.post('/templates/import', async (req, res) => {
 // ==========================================
 
 const AsyncJobService = require('../ai/asyncJobService');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * @route POST /api/ai/playbooks/runs/:id/advance-async
@@ -573,4 +573,4 @@ router.post('/jobs/:jobId/cancel', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

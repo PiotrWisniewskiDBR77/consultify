@@ -14,7 +14,7 @@
  */
 
 const db = require('../../database');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 // ============================================================================
 // Block Category Definitions
@@ -901,7 +901,7 @@ class PromptBlockLibrary {
 // Singleton instance
 const promptBlockLibrary = new PromptBlockLibrary();
 
-module.exports = {
+export default {
     PromptBlockLibrary,
     promptBlockLibrary,
     BLOCK_CATEGORIES,

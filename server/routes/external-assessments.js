@@ -3,11 +3,11 @@
  * Handles SIRI, ADMA, CMMI, and other framework uploads
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const ExternalAssessmentService = require('../services/externalAssessmentService');
+const ExternalAssessmentService = import('externalAssessmentService.js');
 const { upload } = require('../middleware/fileUploadMiddleware');
-const verifyToken = require('../middleware/authMiddleware');
+import verifyToken from '../middleware/authMiddleware.js';
 
 router.use(verifyToken);
 
@@ -82,7 +82,8 @@ router.get('/organization/:orgId', async (req, res) => {
         }
 
         // Fetch all external assessments for this org
-        const db = require('../database');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
         const sql = `
             SELECT id, framework_type, framework_version, assessment_date, 
                    processing_status, uploaded_at, file_name
@@ -122,7 +123,8 @@ router.post('/:id/remap', async (req, res) => {
         const updatedMapping = { ...assessment.drd_axis_mapping, ...customMapping };
 
         // Save updated mapping
-        const db = require('../database');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
         const sql = `
             UPDATE external_digital_assessments
             SET drd_axis_mapping = ?, mapping_confidence = 1.0
@@ -145,4 +147,4 @@ router.post('/:id/remap', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

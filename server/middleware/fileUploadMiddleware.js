@@ -60,7 +60,7 @@ const upload = multer({
     fileFilter
 });
 
-module.exports = {
+export default {
     upload,
     fileFilter
 };

@@ -304,7 +304,9 @@ const TeamsUserIntegration = {
     }
 };
 
-module.exports = TeamsUserIntegration;
+export default TeamsUserIntegration;
+
+
 
 
 

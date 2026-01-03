@@ -7,11 +7,11 @@
  * - User: Personal preferences
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const AISettingsService = require('../services/aiSettingsService');
-const AIProactivityEngine = require('../services/aiProactivityEngine');
-const authenticateToken = require('../middleware/authMiddleware');
+const AISettingsService = import('aiSettingsService.js');
+const AIProactivityEngine = import('aiProactivityEngine.js');
+import authenticateToken from '../middleware/authMiddleware.js';
 const { requireRole, requireOrgRole } = require('../middleware/rbac');
 
 // ==========================================
@@ -519,5 +519,5 @@ router.post('/compliance/generate', authenticateToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

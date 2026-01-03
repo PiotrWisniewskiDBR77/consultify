@@ -4,11 +4,11 @@
  * API endpoints for security events and compliance management
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const securityService = require('../services/securityService');
-const complianceService = require('../services/complianceService');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
+const securityService = import('securityService.js');
+const complianceService = import('complianceService.js');
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
 /**
  * GET /api/security/events
@@ -149,4 +149,4 @@ router.get('/compliance/frameworks', verifySuperAdmin, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

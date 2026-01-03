@@ -238,4 +238,4 @@ orgContextMiddleware.getUserOrganizations = getUserOrganizations;
 orgContextMiddleware.resolveUserOrgAccess = resolveUserOrgAccess;
 orgContextMiddleware.setDependencies = setDependencies;
 
-module.exports = orgContextMiddleware;
+export default orgContextMiddleware;

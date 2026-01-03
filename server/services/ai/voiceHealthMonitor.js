@@ -468,7 +468,7 @@ class VoiceHealthMonitor {
 
 const voiceHealthMonitor = new VoiceHealthMonitor();
 
-module.exports = {
+export default {
     VoiceHealthMonitor,
     voiceHealthMonitor
 };

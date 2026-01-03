@@ -216,7 +216,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
 
     const handleSync = async (id: string) => {
         try {
-            await Api.syncIntegration(id);
+            await (Api as any).syncIntegration(id);
             toast.success('Sync started');
             fetchIntegrations();
         } catch (error) {
@@ -238,7 +238,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
     const handleDeleteWebhook = async (id: string) => {
         if (!confirm('Are you sure you want to delete this webhook?')) return;
         try {
-            await Api.deleteWebhook(id);
+            await (Api as any).deleteWebhook(id);
             toast.success('Webhook deleted');
             fetchWebhooks();
         } catch (error) {
@@ -325,11 +325,10 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                     <button
                         key={id}
                         onClick={() => setActiveTab(id as any)}
-                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
-                            activeTab === id
-                                ? 'bg-white/10 text-white border-b-2 border-cyan-500'
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
-                        }`}
+                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${activeTab === id
+                            ? 'bg-white/10 text-white border-b-2 border-cyan-500'
+                            : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            }`}
                     >
                         <Icon className="w-4 h-4" />
                         {label}
@@ -554,11 +553,10 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                     return (
                                         <div
                                             key={connector.id}
-                                            className={`p-4 rounded-xl border transition-colors ${
-                                                isConnected
-                                                    ? 'bg-emerald-500/10 border-emerald-500/30'
-                                                    : 'bg-white/5 border-white/10 hover:border-white/20'
-                                            }`}
+                                            className={`p-4 rounded-xl border transition-colors ${isConnected
+                                                ? 'bg-emerald-500/10 border-emerald-500/30'
+                                                : 'bg-white/5 border-white/10 hover:border-white/20'
+                                                }`}
                                         >
                                             <div className="flex items-start justify-between mb-3">
                                                 <div className="flex items-center gap-3">
@@ -589,16 +587,15 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                                 <div className="flex items-center gap-1 text-xs text-slate-500">
                                                     <Lock className="w-3 h-3" />
                                                     {connector.auth_type === 'oauth' ? 'OAuth' :
-                                                     connector.auth_type === 'api_key' ? 'API Key' :
-                                                     connector.auth_type === 'basic' ? 'Basic Auth' : 'None'}
+                                                        connector.auth_type === 'api_key' ? 'API Key' :
+                                                            connector.auth_type === 'basic' ? 'Basic Auth' : 'None'}
                                                 </div>
                                                 {connector.status === 'available' && (
                                                     <button
-                                                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                                                            isConnected
-                                                                ? 'bg-slate-700 text-slate-300'
-                                                                : 'bg-cyan-600 hover:bg-cyan-700 text-white'
-                                                        }`}
+                                                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${isConnected
+                                                            ? 'bg-slate-700 text-slate-300'
+                                                            : 'bg-cyan-600 hover:bg-cyan-700 text-white'
+                                                            }`}
                                                         disabled={isConnected}
                                                     >
                                                         {isConnected ? 'Connected' : 'Connect'}
@@ -795,9 +792,8 @@ const DeliveriesModal: React.FC<{
                                     )}
                                     <span className="text-sm text-white">{delivery.event_type}</span>
                                     {delivery.response_code && (
-                                        <span className={`text-xs ${
-                                            delivery.response_code < 300 ? 'text-emerald-400' : 'text-red-400'
-                                        }`}>
+                                        <span className={`text-xs ${delivery.response_code < 300 ? 'text-emerald-400' : 'text-red-400'
+                                            }`}>
                                             HTTP {delivery.response_code}
                                         </span>
                                     )}
@@ -815,6 +811,8 @@ const DeliveriesModal: React.FC<{
 );
 
 export default EnterpriseIntegrationsHub;
+
+
 
 
 

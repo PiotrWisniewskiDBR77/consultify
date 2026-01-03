@@ -317,7 +317,7 @@ function quickValidate(template) {
     return { canSave: true, warnings };
 }
 
-module.exports = {
+export default {
     ERROR_CODES,
     validate,
     validateGraph,

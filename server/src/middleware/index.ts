@@ -15,19 +15,19 @@ export {
     type AuthRequest,
     type AuthenticatedUser,
     type JWTPayload,
-} from './auth.middleware';
+} from './auth.middleware.js';
 
 // Admin & Security Middleware
 export {
     verifyAdmin,
     checkPermission,
     setDependencies as setAdminDependencies,
-} from './admin.middleware';
+} from './admin.middleware.js';
 
 export {
     verifySuperAdmin,
     setDependencies as setSuperAdminDependencies,
-} from './superAdmin.middleware';
+} from './superAdmin.middleware.js';
 
 export {
     requirePermission as requirePermissionPBAC,
@@ -35,7 +35,7 @@ export {
     requireAllPermissions,
     auditAction,
     setDependencies as setPermissionDependencies,
-} from './permission.middleware';
+} from './permission.middleware.js';
 
 export {
     requireOrgAccess,
@@ -46,27 +46,27 @@ export {
     requireConsultantScope,
     requireOwnerOrSuperadmin,
     ORG_ROLE_HIERARCHY,
-} from './rbac.middleware';
+} from './rbac.middleware.js';
 
 export {
     securityHeaders,
     createRateLimiter,
     rateLimitPresets,
     validateRequest,
-} from './securityHeaders.middleware';
+} from './securityHeaders.middleware.js';
 
 // Business Middleware
 export {
     default as orgContextMiddleware,
     getUserOrganizations,
     resolveUserOrgAccess,
-} from './orgContext.middleware';
+} from './orgContext.middleware.js';
 
 export {
     checkPlanLimit,
     PLAN_LIMITS,
     setDependencies as setPlanLimitsDependencies,
-} from './planLimits.middleware';
+} from './planLimits.middleware.js';
 
 export {
     enforceTokenQuota,
@@ -74,12 +74,12 @@ export {
     recordTokenUsageAfterResponse,
     recordStorageAfterUpload,
     setDependencies as setQuotaDependencies,
-} from './quota.middleware';
+} from './quota.middleware.js';
 
 export {
     enforceProjectQuota,
     setDependencies as setProjectQuotaDependencies,
-} from './projectQuota.middleware';
+} from './projectQuota.middleware.js';
 
 export {
     requireFeature,
@@ -87,14 +87,14 @@ export {
     isFeatureAccessible,
     getAccessibleFeatures,
     FEATURE_REQUIREMENTS,
-} from './featureGate.middleware';
+} from './featureGate.middleware.js';
 
-export { validateBody } from './validation.middleware';
+export { validateBody } from './validation.middleware.js';
 
-export { upload, fileFilter } from './fileUpload.middleware';
+export { upload, fileFilter } from './fileUpload.middleware.js';
 
 // Specialized Middleware
-export { demoGuard } from './demoGuard.middleware';
+export { demoGuard } from './demoGuard.middleware.js';
 
 export {
     trialEntryGuard,
@@ -102,7 +102,7 @@ export {
     isTrialEntryUser,
     BLOCKED_ROUTES,
     setDependencies as setTrialEntryDependencies,
-} from './trialEntryGuard.middleware';
+} from './trialEntryGuard.middleware.js';
 
 export {
     validateInitiative,
@@ -111,7 +111,7 @@ export {
     validateTaskStatus,
     logStatusChange,
     setDependencies as setPMOValidationDependencies,
-} from './pmoValidation.middleware';
+} from './pmoValidation.middleware.js';
 
 export {
     attachUserState,
@@ -122,9 +122,9 @@ export {
     USER_STATES,
     PHASES,
     setDependencies as setUserStateDependencies,
-} from './userStateGuard.middleware';
+} from './userStateGuard.middleware.js';
 
 // Re-export error handler from existing location
-export { default as errorHandler } from './errorHandler';
+export { errorHandler } from './errorHandler.js';
 
 

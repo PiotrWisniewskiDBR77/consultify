@@ -1,4 +1,5 @@
-const db = require('../database');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 const PIIRedactor = require('../utils/piiRedactor');
 
@@ -141,4 +142,4 @@ const AuditExportService = {
     }
 };
 
-module.exports = AuditExportService;
+export default AuditExportService;

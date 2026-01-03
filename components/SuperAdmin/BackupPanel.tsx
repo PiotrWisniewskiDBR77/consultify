@@ -19,7 +19,7 @@ export const BackupPanel: React.FC = () => {
     const fetchBackups = async () => {
         setLoading(true);
         try {
-            const data = await Api.getBackups();
+            const data = await (Api as any).getBackups();
             setBackups(data);
         } catch (error) {
             console.error('Failed to fetch backups:', error);
@@ -32,7 +32,7 @@ export const BackupPanel: React.FC = () => {
     const handleCreateBackup = async () => {
         setCreating(true);
         try {
-            await Api.createBackup('full', 'manual');
+            await (Api as any).createBackup('full', 'manual');
             toast.success('Backup created successfully');
             fetchBackups();
         } catch (error) {
@@ -47,7 +47,7 @@ export const BackupPanel: React.FC = () => {
         if (!confirm('Are you sure you want to delete this backup?')) return;
 
         try {
-            await Api.deleteBackup(id);
+            await (Api as any).deleteBackup(id);
             toast.success('Backup deleted');
             fetchBackups();
         } catch (error) {
@@ -99,11 +99,10 @@ export const BackupPanel: React.FC = () => {
                                         <span className="text-white font-medium">
                                             {backup.backup_type} Backup
                                         </span>
-                                        <span className={`px-2 py-1 text-xs rounded ${
-                                            backup.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                                        <span className={`px-2 py-1 text-xs rounded ${backup.status === 'completed' ? 'bg-green-500/20 text-green-400' :
                                             backup.status === 'failed' ? 'bg-red-500/20 text-red-400' :
-                                            'bg-yellow-500/20 text-yellow-400'
-                                        }`}>
+                                                'bg-yellow-500/20 text-yellow-400'
+                                            }`}>
                                             {backup.status}
                                         </span>
                                         {backup.status === 'completed' ? (
@@ -148,6 +147,8 @@ export const BackupPanel: React.FC = () => {
 };
 
 export default BackupPanel;
+
+
 
 
 

@@ -121,6 +121,6 @@ class AssessmentAuditLogger {
 }
 
 // Export singleton instance
-module.exports = new AssessmentAuditLogger();
+export default new AssessmentAuditLogger();
 
 

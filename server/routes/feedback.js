@@ -1,10 +1,11 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
-const whatsappService = require('../services/whatsappService');
-const notificationService = require('../services/notificationService');
+const whatsappService = import('whatsappService.js');
+const notificationService = import('notificationService.js');
 
 // POST /api/feedback - Submit new feedback
 router.post('/', (req, res) => {
@@ -173,4 +174,4 @@ router.get('/stats/summary', (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

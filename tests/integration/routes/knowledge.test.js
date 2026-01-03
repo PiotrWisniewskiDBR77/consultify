@@ -1,11 +1,9 @@
 // @vitest-environment node
 import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-const app = require('../../../server/index.js');
-const db = require('../../../server/database.js');
+import app from '../../../server/src/index.js';
+import db from '../../../server/src/database/Database.js';
+import bcrypt from 'bcryptjs';
 
 /**
  * Level 2: Integration Tests - Knowledge
@@ -19,9 +17,6 @@ describe('Integration Test: Knowledge Routes', () => {
     const testEmail = `know-${testId}@test.com`;
 
     beforeAll(async () => {
-        await db.initPromise;
-
-        const bcrypt = require('bcryptjs');
         const hash = bcrypt.hashSync('test123', 8);
 
         await new Promise((resolve) => {

@@ -496,7 +496,7 @@ class VariableResolver {
 // Singleton instance
 const variableResolver = new VariableResolver();
 
-module.exports = {
+export default {
     VariableResolver,
     variableResolver,
     RUNTIME_FUNCTIONS,

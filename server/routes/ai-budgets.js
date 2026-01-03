@@ -5,10 +5,10 @@
  * Includes budgets, alerts, and model permissions
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const aiBudgetService = require('../services/aiBudgetService');
-const verifyToken = require('../middleware/authMiddleware');
+const aiBudgetService = import('aiBudgetService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
 
 // ====== BUDGET MANAGEMENT ======
@@ -556,5 +556,5 @@ router.post('/estimate-cost', verifyToken, (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;
 

@@ -11,10 +11,11 @@
  * Designed to run every 15-30 minutes in production.
  */
 
-const db = require('../database');
-const PredictiveService = require('../services/predictiveService');
-const { getCoordinator } = require('../services/ai/agents');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+const PredictiveService = import('predictiveService.js');
+const { getCoordinator } = import('ai/agents.js');
+import { v4 as uuidv4 } from 'uuid';
 
 // Alert severity levels
 const ALERT_SEVERITY = {
@@ -700,7 +701,9 @@ const AIWatchdog = {
     }
 };
 
-module.exports = AIWatchdog;
+export default AIWatchdog;
+
+
 
 
 

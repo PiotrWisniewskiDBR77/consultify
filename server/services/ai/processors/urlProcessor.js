@@ -478,7 +478,7 @@ function needsJsRendering(url) {
     }
 }
 
-module.exports = {
+export default {
     process,
     fetchWithFetch,
     fetchWithPuppeteer,
@@ -489,6 +489,8 @@ module.exports = {
     extractMainContent,
     cleanText
 };
+
+
 
 
 

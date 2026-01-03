@@ -113,7 +113,7 @@ export const RACIMatrix: React.FC<RACIMatrixProps> = ({ projectId }) => {
 
   // Collect all unique users from the matrix
   const allUsers = new Set<string>();
-  Object.values(matrix.matrix).forEach(raciByType => {
+  Object.values((matrix as any).matrix).forEach(raciByType => {
     Object.values(raciByType).forEach((users: any[]) => {
       users.forEach(user => allUsers.add(JSON.stringify(user)));
     });
@@ -193,7 +193,7 @@ export const RACIMatrix: React.FC<RACIMatrixProps> = ({ projectId }) => {
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {OBJECT_TYPES.map(objectType => {
-              const raciData = matrix.matrix[objectType] || {};
+              const raciData = (matrix as any).matrix[objectType] || {};
               
               return (
                 <tr key={objectType} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
@@ -242,6 +242,8 @@ export const RACIMatrix: React.FC<RACIMatrixProps> = ({ projectId }) => {
 };
 
 export default RACIMatrix;
+
+
 
 
 

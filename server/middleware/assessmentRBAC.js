@@ -4,7 +4,7 @@
  * Extended for multi-framework assessments (SIRI, ADMA, CMMI, LEAN)
  */
 
-const { FrameworkRBACService } = require('../services/frameworkRBACService');
+const { FrameworkRBACService } = import('frameworkRBACService.js');
 
 // Base permissions for general roles
 const hasPermission = (user, action, resource) => {
@@ -216,7 +216,7 @@ const validateWorkflowTransition = async (req, res, next) => {
     }
 };
 
-module.exports = {
+export default {
     assessmentRBAC,
     hasPermission,
     multiFrameworkRBAC,

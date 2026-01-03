@@ -6,7 +6,8 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import type { AuthRequest } from './auth.middleware';
+import type { AuthRequest } from './auth.middleware.js';
+import usageService from '../../services/usageService.js';
 
 // ==========================================
 // TYPES
@@ -43,15 +44,7 @@ interface Dependencies {
 // DEPENDENCIES (injectable for testing)
 // ==========================================
 
-let deps: Dependencies;
-
-const getDeps = (): Dependencies => {
-    if (!deps) {
-        const { default: defaultUsageService } = await import('../../services/usageService.js');
-        deps = { usageService: defaultUsageService };
-    }
-    return deps;
-};
+let deps: Dependencies = { usageService };
 
 // ==========================================
 // MIDDLEWARE
@@ -66,9 +59,9 @@ export async function enforceTokenQuota(
     next: NextFunction
 ): Promise<void> {
     try {
-        const { usageService } = getDeps();
-        
-        const orgId = req.user?.organizationId || req.user?.organization_id;
+        const { usageService } = deps;
+
+        const orgId = req.user?.organizationId;
 
         if (!orgId) {
             res.status(401).json({ error: 'Unauthorized - no organization' });
@@ -118,9 +111,9 @@ export async function enforceStorageQuota(
     next: NextFunction
 ): Promise<void> {
     try {
-        const { usageService } = getDeps();
-        
-        const orgId = req.user?.organizationId || req.user?.organization_id;
+        const { usageService } = deps;
+
+        const orgId = req.user?.organizationId;
 
         if (!orgId) {
             res.status(401).json({ error: 'Unauthorized - no organization' });
@@ -164,9 +157,9 @@ export async function recordTokenUsageAfterResponse(
     action: string
 ): Promise<void> {
     try {
-        const { usageService } = getDeps();
-        
-        const orgId = req.user?.organizationId || req.user?.organization_id;
+        const { usageService } = deps;
+
+        const orgId = req.user?.organizationId;
         const userId = req.user?.id;
 
         if (orgId && tokens > 0) {
@@ -189,9 +182,9 @@ export async function recordStorageAfterUpload(
     action = 'upload'
 ): Promise<void> {
     try {
-        const { usageService } = getDeps();
-        
-        const orgId = (req as AuthRequest).user?.organization_id;
+        const { usageService } = deps;
+
+        const orgId = (req as AuthRequest).user?.organizationId;
 
         if (orgId && bytes > 0) {
             await usageService.recordStorageUsage(orgId, bytes, action, {
@@ -209,6 +202,6 @@ export async function recordStorageAfterUpload(
 // ==========================================
 
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
-    deps = { ...getDeps(), ...newDeps };
+    deps = { ...deps, ...newDeps };
 };
 

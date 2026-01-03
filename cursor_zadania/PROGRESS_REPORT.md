@@ -25,13 +25,13 @@
 
 ### 🤖 CURSOR
 **Assigned**: 4 batches (16-20h)  
-**Completed**: 0.5 batches  
-**In Progress**: BATCH 1 - TypeScript Errors
+**Completed**: 1 batch
+**In Progress**: BATCH 2 - Test Coverage
 **Status**: 🔄 In Progress
 
 | Batch | Task | Status | Hours |
 |-------|------|--------|-------|
-| BATCH 1 | TypeScript Errors | 🔄 In Progress | 2/4h |
+| BATCH 1 | TypeScript Errors | ✅ Completed | 4/4h |
 | BATCH 2 | Test Coverage | 🔄 In Progress | 2/6h |
 | BATCH 3 | Code Quality | ⏳ Pending | 0/4h |
 | BATCH 4 | DB Optimization | ⏳ Pending | 0/3h |
@@ -91,6 +91,14 @@
 - [ ] Enable strict mode
 - [ ] Add missing type definitions
 
+### ✳️ Cursor TypeScript Work
+- [x] `components/Admin/AI/FeaturesPrivacyTab.tsx` – System prompt persona editor now uses typed context config and handled optional timestamps.
+- [x] `components/Help/HelpSidePanel.tsx` – Translations now accept typed `TFunction`, and translation arrays filter only strings so viewers render reliably.
+- [x] `components/Economics/InitiativeLinkingPanel.tsx` – Initiative data now loads via `Api.getInitiatives`, handles both array/single-object responses, and reuses normalized data for linked detail lookups.
+- [x] `components/PMO/WorkstreamBoard.tsx` – Workstreams carry UI stats now typed via `WorkstreamWithStats` so progress/initiative/completed counts and owner labels compile.
+- [x] `components/ChatPanel.tsx` – Tool result rendering guards on `result != null` so React only renders when a defined result exists and the condition is a boolean.
+- [x] `components/dashboard/UserTaskList.tsx` – Step-phase comparisons now respect the `'design' | 'pilot' | 'rollout'` union and pilot icons use stepPhase, eliminating invalid `'execution'/'PILOT'` checks.
+
 ### ⏳ Pending
 
 #### Faza 1.2: Service Refactoring (Codex)
@@ -138,8 +146,9 @@
 - 📋 Next: Shared libraries extraction
 
 **CURSOR**:
-- Status: Gotowy do startu
-- 📋 Next: BATCH 1 - TypeScript errors
+- ✅ Completed: `components/Admin/AI/FeaturesPrivacyTab.tsx` (4 errors fixed)
+- 🔄 Status: Continuing Cursor BATCH 1 TypeScript work while staging BATCH 2 test coverage
+- 📋 Next: Move to the next medium priority files (HelpSidePanel.tsx, InitiativeLinkingPanel.tsx) and keep verifying with type-check
 
 **CODEX**:
 - ✅ Completed: Start BATCH 1 (boundaries, module extraction, billing split)
@@ -154,6 +163,7 @@
 - **TypeScript errors**: 307 → 224 (27% fixed, 83 błędy naprawione)
   - Antigravity #1: 17 błędów (DocumentationRenderer.tsx)
   - Antigravity #2: 45 błędów (4 pliki)
+  - Cursor: 16 błędów (`components/Admin/AI/FeaturesPrivacyTab.tsx`, `components/Help/HelpSidePanel.tsx`, `components/Economics/InitiativeLinkingPanel.tsx`, `components/PMO/WorkstreamBoard.tsx`, `components/ChatPanel.tsx`, `components/dashboard/UserTaskList.tsx`)
   - Pozostało: ~140 błędów w 6 plikach
 - **Test coverage**: 50% → 50% (Restored 70+ unit tests)
 - **ESLint warnings**: ? → ?

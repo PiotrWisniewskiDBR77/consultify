@@ -87,7 +87,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
       value={{
         open,
         setOpen,
-        triggerRef,
+        triggerRef: triggerRef as any,
         selectedValue: value,
         onSelect: onValueChange ? handleSelect : undefined,
       }}
@@ -164,15 +164,15 @@ export interface DropdownContentProps extends React.HTMLAttributes<HTMLDivElemen
 
 const contentVariants = {
   hidden: { opacity: 0, scale: 0.95, y: -4 },
-  visible: { 
-    opacity: 1, 
-    scale: 1, 
+  visible: {
+    opacity: 1,
+    scale: 1,
     y: 0,
     transition: { type: 'spring', stiffness: 500, damping: 30 }
   },
-  exit: { 
-    opacity: 0, 
-    scale: 0.95, 
+  exit: {
+    opacity: 0,
+    scale: 0.95,
     y: -4,
     transition: { duration: 0.1 }
   },
@@ -208,10 +208,10 @@ export const DropdownContent: React.FC<DropdownContentProps> = ({
       left = rect.right;
     }
 
-    setPosition({ 
-      top, 
-      left, 
-      width: width === 'trigger' ? rect.width : 0 
+    setPosition({
+      top,
+      left,
+      width: width === 'trigger' ? rect.width : 0
     });
   }, [align, side, width, triggerRef]);
 
@@ -292,11 +292,11 @@ export const DropdownContent: React.FC<DropdownContentProps> = ({
             maxHeight,
             overflowY: 'auto',
           }}
-          variants={contentVariants}
+          variants={contentVariants as any}
           initial="hidden"
           animate="visible"
           exit="exit"
-          {...props}
+          {...(props as any)}
         >
           {children}
         </motion.div>
@@ -342,8 +342,8 @@ export const DropdownItem = React.forwardRef<HTMLButtonElement, DropdownItemProp
           ${destructive
             ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
             : isSelected
-            ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
-            : 'text-navy-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+              ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
+              : 'text-navy-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5'
           }
           ${className}
         `}

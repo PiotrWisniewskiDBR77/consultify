@@ -3,8 +3,9 @@
  * Populates test data for all new tables
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 async function seedEnterpriseCustomers() {
     console.log('🌱 Seeding Enterprise Customers Module...');
@@ -206,5 +207,5 @@ if (require.main === module) {
         });
 }
 
-module.exports = { seedEnterpriseCustomers };
+export default { seedEnterpriseCustomers };
 

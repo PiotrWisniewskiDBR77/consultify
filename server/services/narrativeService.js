@@ -1,7 +1,9 @@
 // Narrative Service - AI-generated briefings
 // Step 6: Stabilization, Reporting & Economics
 
-const db = require('../database');
+import db from '../database.js';
+
+
 
 const NarrativeService = {
     /**
@@ -204,4 +206,4 @@ const NarrativeService = {
     }
 };
 
-module.exports = NarrativeService;
+export default NarrativeService;

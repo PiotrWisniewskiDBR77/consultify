@@ -3,48 +3,48 @@ const { AppError, asyncHandler: catchAsync } = require('../utils/errorHandler');
 // Default Dependencies
 const deps = {
     db: require('../database'),
-    ActivityService: require('../services/activityService'),
+    ActivityService: import('activityService.js'),
     BillingService: null, // Lazy loaded
-    UsageService: require('../services/usageService'),
-    RealtimeService: require('../services/realtimeService'),
-    StorageService: require('../services/storageService'),
-    LegalService: require('../services/legalService'),
-    LegalEventLogger: require('../services/legalEventLogger').LegalEventLogger,
+    UsageService: import('usageService.js'),
+    RealtimeService: import('realtimeService.js'),
+    StorageService: import('storageService.js'),
+    LegalService: import('legalService.js'),
+    LegalEventLogger: import('legalEventLogger.js').LegalEventLogger,
     AttributionService: null, // Lazy loaded
     jwt: require('jsonwebtoken'),
     bcrypt: require('bcryptjs'),
     config: require('../config'),
     uuid: require('uuid'),
-    InvitationService: require('../services/invitationService'),
-    RefreshTokenService: require('../services/refreshTokenService'),
+    InvitationService: import('invitationService.js'),
+    RefreshTokenService: import('refreshTokenService.js'),
     // Enterprise Customers Module Services
-    OrganizationMetadataService: require('../services/organizationMetadataService'),
-    OrganizationTagService: require('../services/organizationTagService'),
-    OrganizationHealthService: require('../services/organizationHealthService'),
-    OrganizationRelationshipService: require('../services/organizationRelationshipService'),
-    OrganizationSegmentService: require('../services/organizationSegmentService'),
-    OrganizationAnalyticsService: require('../services/organizationAnalyticsService'),
-    UserActivityService: require('../services/userActivityService'),
-    UserSessionService: require('../services/userSessionService'),
-    UserGroupService: require('../services/userGroupService'),
-    UserLicenseService: require('../services/userLicenseService'),
-    IPWhitelistService: require('../services/ipWhitelistService'),
-    DeviceManagementService: require('../services/deviceManagementService'),
-    PasswordPolicyService: require('../services/passwordPolicyService'),
-    SecurityEventService: require('../services/securityEventService'),
-    SupportTicketService: require('../services/supportTicketService'),
-    CustomerSuccessService: require('../services/customerSuccessService'),
-    FeedbackService: require('../services/feedbackService'),
-    UserAdoptionService: require('../services/userAdoptionService'),
-    DataRetentionService: require('../services/dataRetentionService'),
-    ConsentManagementService: require('../services/consentManagementService'),
-    AutomationEngineService: require('../services/automationEngineService'),
-    EmailTemplateService: require('../services/emailTemplateService'),
-    EmailCampaignService: require('../services/emailCampaignService'),
-    SecurityIncidentService: require('../services/securityIncidentService'),
-    ThreatIntelligenceService: require('../services/threatIntelligenceService'),
-    DLPService: require('../services/dlpService'),
-    DashboardBuilderService: require('../services/dashboardBuilderService')
+    OrganizationMetadataService: import('organizationMetadataService.js'),
+    OrganizationTagService: import('organizationTagService.js'),
+    OrganizationHealthService: import('organizationHealthService.js'),
+    OrganizationRelationshipService: import('organizationRelationshipService.js'),
+    OrganizationSegmentService: import('organizationSegmentService.js'),
+    OrganizationAnalyticsService: import('organizationAnalyticsService.js'),
+    UserActivityService: import('userActivityService.js'),
+    UserSessionService: import('userSessionService.js'),
+    UserGroupService: import('userGroupService.js'),
+    UserLicenseService: import('userLicenseService.js'),
+    IPWhitelistService: import('ipWhitelistService.js'),
+    DeviceManagementService: import('deviceManagementService.js'),
+    PasswordPolicyService: import('passwordPolicyService.js'),
+    SecurityEventService: import('securityEventService.js'),
+    SupportTicketService: import('supportTicketService.js'),
+    CustomerSuccessService: import('customerSuccessService.js'),
+    FeedbackService: import('feedbackService.js'),
+    UserAdoptionService: import('userAdoptionService.js'),
+    DataRetentionService: import('dataRetentionService.js'),
+    ConsentManagementService: import('consentManagementService.js'),
+    AutomationEngineService: import('automationEngineService.js'),
+    EmailTemplateService: import('emailTemplateService.js'),
+    EmailCampaignService: import('emailCampaignService.js'),
+    SecurityIncidentService: import('securityIncidentService.js'),
+    ThreatIntelligenceService: import('threatIntelligenceService.js'),
+    DLPService: import('dlpService.js'),
+    DashboardBuilderService: import('dashboardBuilderService.js')
 };
 
 /**
@@ -1880,7 +1880,7 @@ const updateNotificationPreferences = catchAsync(async (req, res, next) => {
 // =========================================
 
 // Import Admin Session Service
-const AdminSessionService = require('../services/adminSessionService');
+const AdminSessionService = import('adminSessionService.js');
 
 // Admin Sessions
 const getAdminSessions = catchAsync(async (req, res, next) => {
@@ -2139,13 +2139,13 @@ const deleteAdminPermission = catchAsync(async (req, res, next) => {
 });
 
 const getPermissionsMatrix = catchAsync(async (req, res, next) => {
-    const PermissionsMatrixService = require('../services/permissionsMatrixService');
+    const PermissionsMatrixService = import('permissionsMatrixService.js');
     const matrix = await PermissionsMatrixService.getMatrix();
     res.json(matrix);
 });
 
 const updateRolePermissions = catchAsync(async (req, res, next) => {
-    const PermissionsMatrixService = require('../services/permissionsMatrixService');
+    const PermissionsMatrixService = import('permissionsMatrixService.js');
     const { roleId } = req.params;
     const { permissions } = req.body;
 
@@ -2158,7 +2158,7 @@ const updateRolePermissions = catchAsync(async (req, res, next) => {
 });
 
 const toggleRolePermission = catchAsync(async (req, res, next) => {
-    const PermissionsMatrixService = require('../services/permissionsMatrixService');
+    const PermissionsMatrixService = import('permissionsMatrixService.js');
     const { roleId, permissionKey } = req.params;
     const { enabled } = req.body;
 
@@ -2167,7 +2167,7 @@ const toggleRolePermission = catchAsync(async (req, res, next) => {
 });
 
 const copyRolePermissions = catchAsync(async (req, res, next) => {
-    const PermissionsMatrixService = require('../services/permissionsMatrixService');
+    const PermissionsMatrixService = import('permissionsMatrixService.js');
     const { sourceRole, targetRole } = req.body;
 
     if (!sourceRole || !targetRole) {
@@ -2179,7 +2179,7 @@ const copyRolePermissions = catchAsync(async (req, res, next) => {
 });
 
 const compareRoles = catchAsync(async (req, res, next) => {
-    const PermissionsMatrixService = require('../services/permissionsMatrixService');
+    const PermissionsMatrixService = import('permissionsMatrixService.js');
     const { role1, role2 } = req.query;
 
     if (!role1 || !role2) {
@@ -2191,7 +2191,7 @@ const compareRoles = catchAsync(async (req, res, next) => {
 });
 
 const getPermissionsStats = catchAsync(async (req, res, next) => {
-    const PermissionsMatrixService = require('../services/permissionsMatrixService');
+    const PermissionsMatrixService = import('permissionsMatrixService.js');
     const stats = await PermissionsMatrixService.getStats();
     res.json(stats);
 });
@@ -4298,7 +4298,7 @@ const getDashboardWidgetData = catchAsync(async (req, res, next) => {
     res.json(data);
 });
 
-module.exports = {
+export default {
     setDependencies,
     getOrganizations,
     getActivities,

@@ -4,11 +4,11 @@
  * API endpoints for audit log management and compliance reporting
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const auditLogService = require('../services/auditLogService');
-const authMiddleware = require('../middleware/authMiddleware');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
+const auditLogService = import('auditLogService.js');
+import authMiddleware from '../middleware/authMiddleware.js';
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
 /**
  * GET /api/audit-logs
@@ -173,7 +173,9 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

@@ -20,7 +20,7 @@
 
 const path = require('path');
 const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const crypto = require('crypto');
 const sqlite3 = require('sqlite3').verbose();
 
@@ -645,5 +645,5 @@ if (require.main === module) {
     main();
 }
 
-module.exports = { seedAll, cleanup, verify };
+export default { seedAll, cleanup, verify };
 

@@ -222,7 +222,7 @@ function clearUser() {
     Sentry.setUser(null);
 }
 
-module.exports = {
+export default {
     initSentry,
     captureException,
     captureMessage,

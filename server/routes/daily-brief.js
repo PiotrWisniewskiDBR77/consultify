@@ -6,10 +6,11 @@
  * and upcoming milestones into a structured summary.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
-const db = require('../database');
+import verifyToken from '../middleware/authMiddleware.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // Helper: Promisify db.all
 const dbAll = (sql, params = []) => new Promise((resolve, reject) => {
@@ -344,7 +345,7 @@ router.get('/', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 
 
 

@@ -613,7 +613,7 @@ function recordSubscriptionEvent(organizationId, eventType, data) {
     });
 }
 
-module.exports = {
+export default {
     setDependencies,
     createCreditNote,
     getCreditNoteById,

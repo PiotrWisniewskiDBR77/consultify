@@ -41,4 +41,4 @@ if (process.env.MOCK_REDIS === 'true' || !bullmqAvailable) {
     };
 }
 
-module.exports = aiQueue;
+export default aiQueue;

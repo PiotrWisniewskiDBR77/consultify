@@ -24,10 +24,10 @@ describe('AISimulationEngine', () => {
     let engine;
     let AISimulationEngine;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.resetAllMocks(); // Use reset instead of clear to remove implementations
         vi.resetModules();
-        AISimulationEngine = require('../../../server/ai/simulationEngine');
+        AISimulationEngine = (await import('../../../server/ai/simulationEngine.js')).default;
         // Inject mocks via constructor
         engine = new AISimulationEngine({
             db: mockDb,

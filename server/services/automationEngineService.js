@@ -3,8 +3,10 @@
  * Manages automation rules and execution
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 const AutomationEngineService = {
     /**
@@ -153,7 +155,9 @@ const AutomationEngineService = {
     }
 };
 
-module.exports = AutomationEngineService;
+export default AutomationEngineService;
+
+
 
 
 

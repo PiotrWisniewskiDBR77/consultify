@@ -10,8 +10,10 @@
  * - Energy & Utilities (smart grid, sustainability)
  */
 
-const llmService = require('./ai/llmService');
-const { v4: uuidv4 } = require('uuid');
+import llmService from './ai/llmService.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Industry configurations
 const INDUSTRIES = {
@@ -453,7 +455,9 @@ For each initiative provide:
     }
 };
 
-module.exports = IndustryAIModelsService;
+export default IndustryAIModelsService;
+
+
 
 
 

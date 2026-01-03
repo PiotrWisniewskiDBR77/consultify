@@ -4,11 +4,11 @@
  * Endpoints for managing A/B test experiments.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
+import verifyToken from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
-const { abTestingService } = require('../services/ai/abTesting');
+const { abTestingService } = import('ai/abTesting.js');
 
 /**
  * GET /api/ai-ab-testing/experiments
@@ -114,5 +114,5 @@ router.post('/record-outcome', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

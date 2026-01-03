@@ -1,6 +1,9 @@
 // Dependency injection container (for deterministic unit tests)
+import db from '../database.js';
+
+
 const deps = {
-    db: require('../database')
+    db,
 };
 
 /**
@@ -91,4 +94,4 @@ const SystemIntegrity = {
     }
 };
 
-module.exports = SystemIntegrity;
+export default SystemIntegrity;

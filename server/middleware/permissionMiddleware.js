@@ -6,8 +6,8 @@
  * Uses PBAC (Permission-Based Access Control) with org-user overrides.
  */
 
-const defaultPermissionService = require('../services/permissionService');
-const defaultGovernanceAuditService = require('../services/governanceAuditService');
+const defaultPermissionService = import('permissionService.js');
+const defaultGovernanceAuditService = import('governanceAuditService.js');
 
 // Dependencies object to allow injection
 const deps = {
@@ -228,7 +228,7 @@ function setDependencies(newDeps) {
     Object.assign(deps, newDeps);
 }
 
-module.exports = {
+export default {
     requirePermission,
     requireAnyPermission,
     requireAllPermissions,

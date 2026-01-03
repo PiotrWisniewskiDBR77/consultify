@@ -33,8 +33,15 @@ class SnapshotMetricsCron {
 
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
-            metricsPersistenceService: deps?.metricsPersistenceService || await import('../../services/metricsPersistenceService.js').then(m => m.default || m),
+            metricsPersistenceService: deps?.metricsPersistenceService,
         };
+    }
+
+    private async ensureDeps(): Promise<Dependencies> {
+        if (!this.deps.metricsPersistenceService) {
+            this.deps.metricsPersistenceService = await import('../../services/metricsPersistenceService.js').then(m => m.default || m);
+        }
+        return this.deps as Dependencies;
     }
 
     /**
@@ -44,9 +51,10 @@ class SnapshotMetricsCron {
     init(): void {
         // Schedule task for top of every hour
         this.job = cron.schedule('0 * * * *', async () => {
+            const deps = await this.ensureDeps();
             logger.info('[Cron] Running scheduled metrics snapshot...');
             try {
-                await this.deps.metricsPersistenceService.saveSnapshot(true); // Save and reset
+                await deps.metricsPersistenceService.saveSnapshot(true); // Save and reset
             } catch (err) {
                 logger.error('[Cron] Metrics snapshot failed:', err);
             }
@@ -89,4 +97,6 @@ export const initMetricsSnapshotJob = (deps?: Partial<Dependencies>): void => {
 };
 
 export default SnapshotMetricsCron;
+
+
 

@@ -156,4 +156,4 @@ const SignalEngine = {
     }
 };
 
-module.exports = SignalEngine;
+export default SignalEngine;

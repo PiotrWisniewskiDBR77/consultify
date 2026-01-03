@@ -167,3 +167,5 @@ export default ExampleService;
 3. **Incremental testing:** Dodawać testy podczas migracji
 4. **Code review:** Wszystkie zmiany wymagają code review przed merge
 
+
+

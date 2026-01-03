@@ -251,7 +251,7 @@ function getServiceHealth() {
     return speechToTextService.getHealthStatus();
 }
 
-module.exports = {
+export default {
     process,
     processBuffer,
     isSupported,
@@ -263,6 +263,8 @@ module.exports = {
     formatTimestamp,
     SUPPORTED_FORMATS
 };
+
+
 
 
 

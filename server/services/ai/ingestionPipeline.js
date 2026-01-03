@@ -8,7 +8,7 @@
 const { embeddingService } = require('./embeddingService');
 const { aiLogger } = require('./logger');
 const db = require('../../database');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const path = require('path');
 const fs = require('fs').promises;
 
@@ -424,7 +424,7 @@ class IngestionPipeline {
 // Singleton instance
 const ingestionPipeline = new IngestionPipeline();
 
-module.exports = {
+export default {
     IngestionPipeline,
     ingestionPipeline,
     CHUNK_CONFIG,

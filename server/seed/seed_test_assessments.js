@@ -6,8 +6,9 @@
  * - 1 Approved assessment (can create report)
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 async function seedTestAssessments() {
     console.log('[Seed] Starting test assessments seeding...');
@@ -218,4 +219,4 @@ if (require.main === module) {
         });
 }
 
-module.exports = seedTestAssessments;
+export default seedTestAssessments;

@@ -1,9 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const InitiativeGeneratorService = require('../services/initiativeGeneratorService');
-const AICharterGeneratorService = require('../services/aiCharterGeneratorService');
-const InitiativeTemplateService = require('../services/initiativeTemplateService');
-const verifyToken = require('../middleware/authMiddleware');
+const InitiativeGeneratorService = import('initiativeGeneratorService.js');
+const AICharterGeneratorService = import('aiCharterGeneratorService.js');
+const InitiativeTemplateService = import('initiativeTemplateService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 
 router.use(verifyToken);
 
@@ -510,4 +510,4 @@ router.post('/templates/:id/apply', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

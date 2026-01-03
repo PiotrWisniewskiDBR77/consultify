@@ -4,11 +4,12 @@
  * API endpoints for backup management
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const BackupService = require('../services/backupService');
-const db = require('../database');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
+const BackupService = import('backupService.js');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
 /**
  * GET /api/backups
@@ -52,7 +53,7 @@ router.post('/', verifySuperAdmin, async (req, res) => {
         const backup = await BackupService.createBackup(type, reason);
 
         // Record in database
-        const { v4: uuidv4 } = require('uuid');
+        import { v4 as uuidv4 } from 'uuid';
         const backupId = uuidv4();
         const now = new Date().toISOString();
 
@@ -141,7 +142,9 @@ router.delete('/:id', verifySuperAdmin, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

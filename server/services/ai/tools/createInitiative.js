@@ -4,7 +4,7 @@
  */
 
 const db = require('../../../database');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 async function createInitiative(params, context) {
     const { projectId, title, description, priority, estimatedEffort } = params;
@@ -41,7 +41,9 @@ async function createInitiative(params, context) {
     });
 }
 
-module.exports = { createInitiative };
+export default { createInitiative };
+
+
 
 
 

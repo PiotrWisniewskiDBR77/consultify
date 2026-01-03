@@ -1,6 +1,8 @@
 // Simple WebSocket implementation without external dependencies
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+
+
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey_change_this_in_production';
 
 class RealtimeServiceSimple {
@@ -317,4 +319,5 @@ class RealtimeServiceSimple {
     }
 }
 
-module.exports = new RealtimeServiceSimple();
+const realtimeServiceSimpleInstance = new RealtimeServiceSimple();
+export default realtimeServiceSimpleInstance;

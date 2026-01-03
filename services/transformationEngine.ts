@@ -40,8 +40,9 @@ export const generateInitiatives = (session: FullSession): FullInitiative[] => {
                     complexity: nextLevel.level > 4 ? 'High' : (nextLevel.level > 2 ? 'Medium' : 'Low'),
                     status: InitiativeStatus.DRAFT,
                     estimatedCost: nextLevel.level * 10000,
-                    estimatedAnnualBenefit: nextLevel.level * 20000
-                });
+                    estimatedAnnualBenefit: nextLevel.level * 20000,
+                    projectId: '' // Required field
+                } as any);
             }
         });
     });

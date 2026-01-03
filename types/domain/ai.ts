@@ -472,10 +472,26 @@ export interface TopPromptStats {
 // ==========================================
 
 /**
+ * System prompt configuration context helpers
+ */
+export interface SystemPromptContextConfig {
+    include_project_context?: boolean;
+    include_user_context?: boolean;
+    include_org_context?: boolean;
+    include_user_profile?: boolean;
+    include_assessment_data?: boolean;
+    include_kb_articles?: boolean;
+    include_task_history?: boolean;
+    max_context_tokens?: number;
+    [key: string]: boolean | number | string | undefined;
+}
+
+/**
  * System prompt configuration
  */
 export interface SystemPrompt {
     id: string;
+    key: string;
     name: string;
     description?: string;
     content: string;
@@ -484,8 +500,10 @@ export interface SystemPrompt {
     version: number;
     variables?: PromptVariable[];
     metadata?: Record<string, unknown>;
+    context_config?: SystemPromptContextConfig | string;
     createdAt: string;
     updatedAt: string;
+    updated_at?: string;
 }
 
 export interface PromptVariable {
@@ -494,5 +512,4 @@ export interface PromptVariable {
     defaultValue?: string;
     required: boolean;
 }
-
 

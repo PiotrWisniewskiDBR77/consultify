@@ -1,5 +1,6 @@
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 const ActionDecisionService = require('./actionDecisionService');
 const auditLogger = require('../utils/auditLogger');
 const { ACTION_ERROR_CODES, classifyError } = require('./actionErrors');
@@ -311,4 +312,4 @@ const ActionExecutionAdapter = {
     }
 };
 
-module.exports = ActionExecutionAdapter;
+export default ActionExecutionAdapter;

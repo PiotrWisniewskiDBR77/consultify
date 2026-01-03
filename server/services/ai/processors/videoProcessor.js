@@ -293,7 +293,7 @@ function formatDuration(seconds) {
     return `${secs}s`;
 }
 
-module.exports = {
+export default {
     process,
     extractAudio,
     extractKeyFrames,
@@ -306,6 +306,8 @@ module.exports = {
     formatDuration,
     SUPPORTED_FORMATS
 };
+
+
 
 
 

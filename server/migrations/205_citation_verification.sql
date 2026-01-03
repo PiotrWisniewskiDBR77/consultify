@@ -22,3 +22,5 @@ CREATE INDEX IF NOT EXISTS idx_citation_verification_created_at ON citation_veri
 CREATE INDEX IF NOT EXISTS idx_citation_verification_quality ON citation_verification_logs (quality_level);
 
 
+
+

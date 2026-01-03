@@ -390,7 +390,7 @@ function getStatus() {
     };
 }
 
-module.exports = {
+export default {
     initLangfuse,
     createTrace,
     calculateCost,
@@ -400,6 +400,8 @@ module.exports = {
     TracingContext,
     MODEL_PRICING
 };
+
+
 
 
 

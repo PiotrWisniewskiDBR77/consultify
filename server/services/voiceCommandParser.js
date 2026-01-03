@@ -367,7 +367,9 @@ const VoiceCommandParser = {
     }
 };
 
-module.exports = VoiceCommandParser;
+export default VoiceCommandParser;
+
+
 
 
 

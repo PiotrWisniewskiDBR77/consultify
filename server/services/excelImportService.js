@@ -5,9 +5,11 @@
  * Supports the standard "Basic Digitization Project Evaluation Form" template
  */
 
-const ExcelJS = require('exceljs');
-const path = require('path');
-const fs = require('fs').promises;
+import ExcelJS from 'exceljs';
+import path from 'path';
+import { promises as fs } from 'fs';
+
+
 
 // Axis mappings from Polish to internal IDs
 const AXIS_MAPPINGS = {
@@ -399,7 +401,9 @@ const ExcelImportService = {
     },
 };
 
-module.exports = ExcelImportService;
+export default ExcelImportService;
+
+
 
 
 

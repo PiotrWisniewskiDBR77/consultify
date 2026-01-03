@@ -16,7 +16,7 @@ const imageProcessor = require('./imageProcessor');
 const urlProcessor = require('./urlProcessor');
 
 // Export all processors
-module.exports = {
+export default {
     // Document Processors
     docxProcessor,
     spreadsheetProcessor,
@@ -87,6 +87,8 @@ module.exports = {
         );
     }
 };
+
+
 
 
 

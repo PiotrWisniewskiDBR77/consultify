@@ -4,12 +4,12 @@
  * API endpoints for 3-tier token billing system
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const TokenBillingService = require('../services/tokenBillingService');
-const authenticateToken = require('../middleware/authMiddleware');
+const TokenBillingService = import('tokenBillingService.js');
+import authenticateToken from '../middleware/authMiddleware.js';
 const { verifyAdmin: requireAdmin } = require('../middleware/adminMiddleware');
-const requireSuperAdmin = require('../middleware/superAdminMiddleware');
+import requireSuperAdmin from '../middleware/superAdminMiddleware.js';
 
 // ==========================================
 // PUBLIC ROUTES (Authenticated Users)
@@ -222,7 +222,7 @@ router.get('/costs', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
         // Lazily require usageService to avoid circular dependency issues if any
-        const UsageService = require('../services/usageService');
+        const UsageService = import('usageService.js');
         const costs = await UsageService.getOperationalCosts(startDate, endDate);
         res.json({ success: true, costs });
     } catch (error) {
@@ -241,4 +241,4 @@ router.post('/packages', authenticateToken, requireSuperAdmin, async (req, res) 
     }
 });
 
-module.exports = router;
+export default router;

@@ -7,8 +7,10 @@
  * - Phase: transition (requires gate approval)
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 class DecisionTriggerService {
     /**
@@ -262,7 +264,9 @@ class DecisionTriggerService {
     }
 }
 
-module.exports = DecisionTriggerService;
+export default DecisionTriggerService;
+
+
 
 
 

@@ -1,4 +1,4 @@
-const notificationService = require('../services/notificationService');
+const notificationService = import('notificationService.js');
 
 /**
  * Alert Watchdog Middleware
@@ -47,4 +47,4 @@ const alertWatchdog = async (err, req, res, next) => {
     next(err);
 };
 
-module.exports = alertWatchdog;
+export default alertWatchdog;

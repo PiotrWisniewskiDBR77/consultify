@@ -9,9 +9,9 @@
  * - Urgency classification
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const BaseService = require('./BaseService');
+import db from '../database.js';
+import BaseService from './BaseService.js';
+import { v4 as uuidv4 } from 'uuid';
 
 const INBOX_ITEM_TYPES = {
     NEW_ASSIGNMENT: 'new_assignment',
@@ -385,7 +385,9 @@ const InboxService = Object.assign({}, BaseService, {
     }
 });
 
-module.exports = InboxService;
+export default InboxService;
+
+
 
 
 

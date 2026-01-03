@@ -71,7 +71,7 @@ function classifyError(error, defaultCode = ACTION_ERROR_CODES.EXECUTION_ERROR) 
     return defaultCode;
 }
 
-module.exports = {
+export default {
     ACTION_ERROR_CODES,
     classifyError
 };

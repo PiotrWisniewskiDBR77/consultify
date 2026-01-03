@@ -270,7 +270,7 @@ const requireOwnerOrSuperadmin = () => {
     };
 };
 
-module.exports = {
+export default {
     // Primary guard (recommended for new code)
     requireOrgAccess,
 

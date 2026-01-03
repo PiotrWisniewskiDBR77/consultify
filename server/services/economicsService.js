@@ -5,9 +5,11 @@
  * Provides CRUD operations and scoring calculations
  */
 
-const uuidv4 = require('uuid').v4;
-const queryHelpers = require('../utils/queryHelpers');
-let db = require('../database');
+import queryHelpers from '../utils/queryHelpers.js';
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 const EconomicsService = {
     VALUE_TYPES: {
@@ -964,4 +966,4 @@ const EconomicsService = {
     },
 };
 
-module.exports = EconomicsService;
+export default EconomicsService;

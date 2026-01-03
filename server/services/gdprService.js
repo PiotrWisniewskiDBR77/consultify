@@ -1,7 +1,8 @@
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const fs = require('fs');
-const path = require('path');
+import db from '../database.js';
+import fs from 'fs';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+
 const archiver = require('archiver'); // Requires 'archiver' package
 
 class GdprService {
@@ -125,4 +126,5 @@ class GdprService {
     }
 }
 
-module.exports = new GdprService();
+const gdprServiceInstance = new GdprService();
+export default gdprServiceInstance;

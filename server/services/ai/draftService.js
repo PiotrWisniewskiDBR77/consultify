@@ -6,7 +6,7 @@
  */
 
 const db = require('../../database');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const { aiLogger } = require('./logger');
 
 // Draft types and their default configurations
@@ -421,11 +421,13 @@ setInterval(() => {
     draftService.expireOldDrafts().catch(console.error);
 }, 60 * 60 * 1000); // Every hour
 
-module.exports = {
+export default {
     DraftService,
     draftService,
     DRAFT_TYPES
 };
+
+
 
 
 

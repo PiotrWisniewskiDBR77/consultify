@@ -3,9 +3,13 @@
  * Handles advanced alerting for billing anomalies, cost spikes, and budget issues
  */
 
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+    db,
+    uuidv4,
 };
 
 /**
@@ -410,7 +414,7 @@ function updateAlertCooldown(alertId, cooldownHours) {
     });
 }
 
-module.exports = {
+export default {
     setDependencies,
     createAdminAlert,
     checkAndTriggerAlerts,
@@ -418,6 +422,8 @@ module.exports = {
     getAlertHistory,
     updateAlertCooldown
 };
+
+
 
 
 

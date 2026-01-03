@@ -5,11 +5,12 @@
  * Handles documents, snapshots, templates, and AI diagram generation.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import verifyToken from '../middleware/authMiddleware.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 const crypto = require('crypto');
 
 // Helper: Promisify db.all
@@ -783,7 +784,7 @@ router.post('/templates', verifyToken, async (req, res) => {
 
 // ==================== AI ====================
 
-const studioAIService = require('../services/studioAIService');
+const studioAIService = import('studioAIService.js');
 
 /**
  * POST /api/studio/ai/generate
@@ -1038,5 +1039,5 @@ router.post('/documents/:id/link', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

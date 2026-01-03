@@ -374,7 +374,7 @@ function invalidateCache(userId, projectId) {
     suggestionCache.delete(cacheKey);
 }
 
-module.exports = {
+export default {
     getSuggestions,
     getCachedSuggestions,
     invalidateCache,

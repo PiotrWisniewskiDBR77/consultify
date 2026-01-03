@@ -165,4 +165,4 @@ const PiiRedactor = {
     }
 };
 
-module.exports = PiiRedactor;
+export default PiiRedactor;

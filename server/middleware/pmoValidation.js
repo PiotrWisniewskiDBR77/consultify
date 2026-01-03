@@ -2,7 +2,7 @@
 // Step 3: Enforces PMO rules for initiatives and tasks
 
 let db = require('../database');
-let StatusMachine = require('../services/statusMachine');
+let StatusMachine = import('statusMachine.js');
 
 const PMOValidation = {
     /**
@@ -127,7 +127,7 @@ const PMOValidation = {
                         (id, organization_id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)
                         VALUES (?, ?, ?, 'status_changed', ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
 
-                    const { v4: uuidv4 } = require('uuid');
+                    import { v4 as uuidv4 } from 'uuid';
                     db.run(logSql, [
                         uuidv4(),
                         req.organizationId || 'unknown',
@@ -151,4 +151,4 @@ const PMOValidation = {
 PMOValidation._setDb = (mock) => { db = mock; };
 PMOValidation._setStatusMachine = (mock) => { StatusMachine = mock; };
 
-module.exports = PMOValidation;
+export default PMOValidation;

@@ -2,10 +2,10 @@
  * Gamification API Routes
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const GamificationService = require('../services/gamificationService');
-const auth = require('../middleware/authMiddleware');
+const GamificationService = import('gamificationService.js');
+import auth from '../middleware/authMiddleware.js';
 
 // GET /api/gamification/me — Get current user's stats
 router.get('/me', auth, async (req, res) => {
@@ -27,4 +27,4 @@ router.get('/me', auth, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

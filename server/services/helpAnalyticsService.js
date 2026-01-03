@@ -4,7 +4,9 @@
  * Provides analytics and reporting for help system usage.
  */
 
-const db = require('../database');
+import db from '../database.js';
+
+
 
 /**
  * Get help content performance metrics
@@ -352,7 +354,7 @@ async function getDashboardData(options = {}) {
     };
 }
 
-module.exports = {
+export default {
     getContentPerformance,
     getSearchAnalytics,
     getFeedbackSummary,
@@ -360,6 +362,8 @@ module.exports = {
     getUserEngagement,
     getDashboardData
 };
+
+
 
 
 

@@ -328,7 +328,7 @@ const validateAddEvidence = [
     handleValidationErrors
 ];
 
-module.exports = {
+export default {
     // Analysis
     validateCreateAnalysis,
     validateUpdateAnalysis,
@@ -356,6 +356,8 @@ module.exports = {
     // Utility
     handleValidationErrors
 };
+
+
 
 
 

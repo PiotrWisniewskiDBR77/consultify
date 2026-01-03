@@ -180,7 +180,7 @@ function sanitizeString(input) {
         .replace(/\//g, '&#x2F;');
 }
 
-module.exports = {
+export default {
     validateOrganization,
     validateUserRole,
     validateResourceAccess,
@@ -191,6 +191,8 @@ module.exports = {
     validateUUID,
     sanitizeString
 };
+
+
 
 
 

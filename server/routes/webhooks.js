@@ -1,10 +1,10 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const DunningService = require('../services/dunningService');
-const InvoiceService = require('../services/invoiceService');
-const webhookService = require('../services/webhookService');
-const authMiddleware = require('../middleware/authMiddleware');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
+const DunningService = import('dunningService.js');
+const InvoiceService = import('invoiceService.js');
+const webhookService = import('webhookService.js');
+import authMiddleware from '../middleware/authMiddleware.js';
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
 /**
  * GET /api/webhooks
@@ -201,4 +201,4 @@ router.post('/stripe', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

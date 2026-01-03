@@ -9,8 +9,10 @@
  * - Security event resolution
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 class SecurityService {
     /**
@@ -269,7 +271,10 @@ class SecurityService {
     }
 }
 
-module.exports = new SecurityService();
+const securityServiceInstance = new SecurityService();
+export default securityServiceInstance;
+
+
 
 
 

@@ -4,12 +4,13 @@
  * Endpoints for collecting and managing user feedback on AI responses.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const { aiLogger } = require('../services/ai/logger');
+import verifyToken from '../middleware/authMiddleware.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
+const { aiLogger } = import('ai/logger.js');
 
 // All routes require authentication
 router.use(verifyToken);
@@ -299,7 +300,7 @@ function generateSuggestion(area) {
 // Response Feedback Endpoints (AI Response Personalization)
 // =====================================================
 
-const { adaptiveResponseService } = require('../services/ai/adaptiveResponseService');
+const { adaptiveResponseService } = import('ai/adaptiveResponseService.js');
 
 /**
  * POST /api/ai-feedback/response
@@ -435,5 +436,5 @@ router.get('/response/preferences', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

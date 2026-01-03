@@ -143,4 +143,4 @@ class QueryAdapter {
     }
 }
 
-module.exports = QueryAdapter;
+export default QueryAdapter;

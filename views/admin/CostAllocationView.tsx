@@ -332,7 +332,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
                   outerRadius={80}
                   paddingAngle={2}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  label={({ name, percent }: any) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
                   labelLine={false}
                 >
                   {pieData.map((entry, index) => (
@@ -346,7 +346,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
                     borderRadius: '8px',
                     color: '#fff'
                   }}
-                  formatter={(value: number) => [`$${value.toFixed(2)}`, 'Spend']}
+                  formatter={(value: number) => [`$${value.toFixed(2)}`, 'Spend'] as [string, string]}
                 />
               </RechartsPieChart>
             </ResponsiveContainer>
@@ -607,6 +607,8 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
 };
 
 export default CostAllocationView;
+
+
 
 
 

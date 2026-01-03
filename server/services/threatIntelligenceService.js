@@ -3,11 +3,15 @@
  * Manages threat intelligence data including IP reputation and domain blocking
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
+
+import db from '../database.js';
+
+
 
 // Dependency injection for testing
 const deps = {
-    db: require('../database')
+    db,
 };
 
 /**
@@ -401,7 +405,7 @@ const getBlockedDomains = async () => {
     }));
 };
 
-module.exports = {
+export default {
     setDependencies,
     addThreat,
     getThreatById,
@@ -420,6 +424,8 @@ module.exports = {
     THREAT_LEVELS,
     THREAT_TYPES
 };
+
+
 
 
 

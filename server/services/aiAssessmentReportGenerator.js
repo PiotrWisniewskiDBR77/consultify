@@ -4,7 +4,9 @@
  * Builds on aiAssessmentPartnerService but focuses on report-specific functionality
  */
 
-const { aiAssessmentPartner, DRD_AXES } = require('./aiAssessmentPartnerService');
+import { aiAssessmentPartner, DRD_AXES } from './aiAssessmentPartnerService.js';
+
+
 
 // Report types
 const REPORT_TYPES = {
@@ -601,7 +603,7 @@ class AIAssessmentReportGenerator {
 // Export singleton instance
 const aiAssessmentReportGenerator = new AIAssessmentReportGenerator();
 
-module.exports = {
+export default {
     AIAssessmentReportGenerator,
     aiAssessmentReportGenerator,
     REPORT_TYPES,

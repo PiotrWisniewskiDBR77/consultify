@@ -3,9 +3,13 @@
  * Handles seat purchasing, auto-adding, releasing, and seat pool management
  */
 
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+    db,
+    uuidv4,
 };
 
 /**
@@ -359,7 +363,7 @@ function toggleAutoAddSeats(orgId, enabled, threshold = 80) {
     });
 }
 
-module.exports = {
+export default {
     setDependencies,
     getSeatConfiguration,
     initializeSeatConfiguration,
@@ -371,6 +375,8 @@ module.exports = {
     getSeatHistory,
     toggleAutoAddSeats
 };
+
+
 
 
 

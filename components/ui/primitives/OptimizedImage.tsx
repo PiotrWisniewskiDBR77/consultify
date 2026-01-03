@@ -293,3 +293,5 @@ export const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
 
 export default OptimizedImage;
 
+
+

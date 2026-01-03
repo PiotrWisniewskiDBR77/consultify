@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const RoadmapService = require('../services/roadmapService');
-const verifyToken = require('../middleware/authMiddleware');
+const RoadmapService = import('roadmapService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 
 // GET /api/roadmap/:projectId/waves
 router.get('/:projectId/waves', verifyToken, async (req, res) => {
@@ -66,4 +66,4 @@ router.post('/:projectId/baseline', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

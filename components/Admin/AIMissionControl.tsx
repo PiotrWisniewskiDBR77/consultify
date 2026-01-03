@@ -148,9 +148,10 @@ export const AIMissionControl: React.FC = () => {
                                 )}
                                 <Button 
                                     onClick={() => testCapability(cap.id)} 
-                                    loading={loading[cap.id]}
+                                    loading={loading[cap.id] as any}
                                     variant={results[cap.id]?.status === 'FAILED' ? 'danger' : 'primary'}
                                     size="sm"
+                                    {...({} as any)}
                                 >
                                     Run Test
                                 </Button>

@@ -1138,7 +1138,7 @@ ${language === 'pl' ?
 // Export singleton and config
 const webResearchService = new WebResearchService();
 
-module.exports = {
+export default {
     WebResearchService,
     webResearchService,
     INDUSTRY_KEYWORDS,

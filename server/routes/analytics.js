@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const verifyToken = require('../middleware/authMiddleware');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import verifyToken from '../middleware/authMiddleware.js';
 
 router.use(verifyToken);
 
@@ -102,4 +103,4 @@ router.get('/economics', (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

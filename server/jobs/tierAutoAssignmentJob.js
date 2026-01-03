@@ -11,8 +11,9 @@
  * - REASONING: 200000+ tokens/month (manual only by default)
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 // Default tier thresholds (can be overridden per org)
 const DEFAULT_TIER_THRESHOLDS = {
@@ -438,7 +439,9 @@ class TierAutoAssignmentJob {
 // Singleton instance
 const tierAutoAssignmentJob = new TierAutoAssignmentJob();
 
-module.exports = tierAutoAssignmentJob;
+export default tierAutoAssignmentJob;
+
+
 
 
 

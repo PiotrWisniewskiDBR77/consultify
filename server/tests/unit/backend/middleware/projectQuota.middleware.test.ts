@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { enforceProjectQuota, setDependencies } from '../../../src/middleware/projectQuota.middleware.js';
+import { enforceProjectQuota, setDependencies } from '../../../../src/middleware/projectQuota.middleware.js';
 
 describe('Project Quota Middleware', () => {
     let mockReq: Partial<Request>;
@@ -95,4 +95,6 @@ describe('Project Quota Middleware', () => {
         });
     });
 });
+
+
 

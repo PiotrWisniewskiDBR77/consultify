@@ -9,12 +9,13 @@
  * - Billing stats
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import authMiddleware from '../middleware/authMiddleware.js';
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 // Billing access middleware - allows admins and billing managers
 const requireBillingAccess = (req, res, next) => {
@@ -1063,7 +1064,7 @@ router.get('/addons', authMiddleware, async (req, res) => {
 // ==========================================
 // BILLING WEBHOOK EVENTS ROUTES
 // ==========================================
-const billingWebhookService = require('../services/billingWebhookService');
+const billingWebhookService = import('billingWebhookService.js');
 const { BILLING_EVENT_TYPES } = billingWebhookService;
 
 /**
@@ -1183,4 +1184,4 @@ router.get('/admin/webhook-events/pending', authMiddleware, verifySuperAdmin, as
     }
 });
 
-module.exports = router;
+export default router;

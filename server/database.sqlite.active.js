@@ -1,15 +1,13 @@
-import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 const dbPath = process.env.NODE_ENV === 'test'
     ? ':memory:'
@@ -3684,7 +3682,7 @@ function initDb() {
 
         // SEED PRICING DATA
         const seedPricing = async () => {
-            const { v4: uuidv4 } = require('uuid');
+            import { v4 as uuidv4 } from 'uuid';
 
             // ORG PLANS
             const orgPlans = [
@@ -7678,4 +7676,4 @@ db.runAsync = db.run;
 db.getAsync = db.get;
 db.allAsync = db.all;
 
-module.exports = db;
+export default db;

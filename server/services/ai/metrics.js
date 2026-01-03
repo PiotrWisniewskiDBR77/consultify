@@ -250,7 +250,7 @@ function getSummary() {
     };
 }
 
-module.exports = {
+export default {
     incCounter,
     setGauge,
     observeHistogram,
@@ -261,6 +261,8 @@ module.exports = {
     reset,
     getSummary
 };
+
+
 
 
 

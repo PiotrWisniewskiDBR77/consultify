@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { demoGuard, type AuthRequest } from '../../../src/middleware/demoGuard.middleware.js';
+import { demoGuard, type AuthRequest } from '../../../../src/middleware/demoGuard.middleware.js';
 
 describe('Demo Guard Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -195,4 +195,6 @@ describe('Demo Guard Middleware', () => {
         });
     });
 });
+
+
 

@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 // Queue operations still use legacy aiService.js as they integrate with BullMQ
 // TODO: Migrate queue logic to dedicated queueService.js
-const AiService = require('../services/aiService');
+const AiService = import('aiService.js');
 
 // Submit a job
 router.post('/jobs', async (req, res) => {
@@ -39,4 +39,4 @@ router.get('/jobs/:id', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

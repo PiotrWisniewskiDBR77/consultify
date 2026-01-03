@@ -9,9 +9,9 @@
  * PMO Domain: PERFORMANCE_MONITORING
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const queryHelpers = require('../utils/queryHelpers');
+import db from '../database.js';
+import queryHelpers from '../utils/queryHelpers.js';
+import { v4 as uuidv4 } from 'uuid';
 
 // Report Status (RAG)
 const RAG_STATUS = {
@@ -640,7 +640,7 @@ const StatusReportService = {
     PERIOD_TYPES
 };
 
-module.exports = StatusReportService;
+export default StatusReportService;
 
 
 

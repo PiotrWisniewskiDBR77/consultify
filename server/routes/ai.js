@@ -1,15 +1,15 @@
 // AI Routes - Complete AI API
 // AI Core Layer — Enterprise PMO Brain
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const AIContextBuilder = require('../services/aiContextBuilder');
-const AIPolicyEngine = require('../services/aiPolicyEngine');
-const AIMemoryManager = require('../services/aiMemoryManager');
-const AIOrchestrator = require('../services/aiOrchestrator');
-const AIActionExecutor = require('../services/aiActionExecutor');
-const AIAuditLogger = require('../services/aiAuditLogger');
-const verifyToken = require('../middleware/authMiddleware');
+const AIContextBuilder = import('aiContextBuilder.js');
+const AIPolicyEngine = import('aiPolicyEngine.js');
+const AIMemoryManager = import('aiMemoryManager.js');
+const AIOrchestrator = import('aiOrchestrator.js');
+const AIActionExecutor = import('aiActionExecutor.js');
+const AIAuditLogger = import('aiAuditLogger.js');
+import verifyToken from '../middleware/authMiddleware.js';
 
 // ==================== CONTEXT ====================
 
@@ -77,7 +77,7 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
     const enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
 
     // Use New Professional AIPipeline
-    const { AIPipeline } = require('../services/ai/aiPipeline');
+    const { AIPipeline } = import('ai/aiPipeline.js');
     const aiPipeline = new AIPipeline();
 
     // Set headers for SSE BEFORE any data is written
@@ -106,8 +106,9 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
 
     // Helper: Save partial response to database
     const savePartialResponse = async (sessionId, content, userId, orgId) => {
-        const db = require('../database');
-        const { v4: uuidv4 } = require('uuid');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+        import { v4 as uuidv4 } from 'uuid';
         
         return new Promise((resolve, reject) => {
             db.run(`
@@ -126,7 +127,8 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
     try {
         // RESUME FROM PARTIAL: Check if we should resume from saved partial
         if (resumeFromPartial && conversationId) {
-            const db = require('../database');
+            import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
             const partial = await new Promise((resolve) => {
                 db.get(`SELECT content FROM ai_partial_responses WHERE session_id = ? AND user_id = ?`,
                     [conversationId, req.userId], (err, row) => {
@@ -199,7 +201,8 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
                 res.write('data: [DONE]\n\n');
                 
                 // Delete partial response on successful completion
-                const db = require('../database');
+                import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
                 db.run(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId], () => {});
             }
             res.end();
@@ -238,7 +241,8 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
 
 // GET /api/ai/stream/partial/:sessionId - Get partial response for resume
 router.get('/stream/partial/:sessionId', verifyToken, async (req, res) => {
-    const db = require('../database');
+    import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
     
     db.get(`
         SELECT content, updated_at 
@@ -495,7 +499,7 @@ router.get('/actions/proposals', verifyToken, async (req, res) => {
         });
 
         // Use the correct paths for AI components
-        const AIContextBuilder = require('../services/aiContextBuilder');
+        const AIContextBuilder = import('aiContextBuilder.js');
         const ActionProposalEngine = require('../ai/actionProposalEngine');
 
         const context = await AIContextBuilder.buildContext(null, organizationId);
@@ -524,7 +528,7 @@ router.post('/recommend', verifyToken, async (req, res) => {
     }
 
     try {
-        const { AIPipeline } = require('../services/ai/aiPipeline');
+        const { AIPipeline } = import('ai/aiPipeline.js');
         const aiPipeline = new AIPipeline();
 
         // Build a rich prompt for initiative generation
@@ -584,7 +588,7 @@ Return as a JSON array of initiatives.`;
         }
 
         // Ensure each initiative has required fields and a unique ID
-        const { v4: uuidv4 } = require('uuid');
+        import { v4 as uuidv4 } from 'uuid';
         initiatives = initiatives.map((init, idx) => ({
             id: init.id || uuidv4(),
             name: init.name || `Initiative ${idx + 1}`,
@@ -618,7 +622,7 @@ Return as a JSON array of initiatives.`;
 
 // Fallback initiative generator
 function generateFallbackInitiatives(assessment, goals, industry) {
-    const { v4: uuidv4 } = require('uuid');
+    import { v4 as uuidv4 } from 'uuid';
     const axes = ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'];
 
     const templates = {
@@ -666,7 +670,7 @@ router.post('/roadmap', verifyToken, async (req, res) => {
     }
 
     try {
-        const { AIPipeline } = require('../services/ai/aiPipeline');
+        const { AIPipeline } = import('ai/aiPipeline.js');
         const aiPipeline = new AIPipeline();
 
         // Format initiatives for the prompt
@@ -887,7 +891,7 @@ router.get('/explanations/export', verifyToken, async (req, res) => {
 // GET /api/ai/health - AI System Health Status
 router.get('/health', async (req, res) => {
     try {
-        const { healthMonitor } = require('../services/ai/healthMonitor');
+        const { healthMonitor } = import('ai/healthMonitor.js');
         const status = healthMonitor.getStatus();
 
         res.json({
@@ -909,7 +913,7 @@ router.get('/health', async (req, res) => {
 // POST /api/ai/health/diagnose - Run Full Diagnostics
 router.post('/health/diagnose', verifyToken, async (req, res) => {
     try {
-        const { healthMonitor } = require('../services/ai/healthMonitor');
+        const { healthMonitor } = import('ai/healthMonitor.js');
         const results = await healthMonitor.runDiagnostics();
 
         res.json(results);
@@ -927,7 +931,7 @@ router.post('/health/diagnose', verifyToken, async (req, res) => {
 router.get('/suggestions', verifyToken, async (req, res) => {
     try {
         const { projectId } = req.query;
-        const smartSuggestions = require('../services/ai/smartSuggestions');
+        const smartSuggestions = import('ai/smartSuggestions.js');
 
         const suggestions = await smartSuggestions.getCachedSuggestions(
             req.userId,
@@ -949,7 +953,7 @@ router.get('/suggestions', verifyToken, async (req, res) => {
 router.post('/suggestions', verifyToken, async (req, res) => {
     try {
         const { projectId, conversationContext } = req.body;
-        const smartSuggestions = require('../services/ai/smartSuggestions');
+        const smartSuggestions = import('ai/smartSuggestions.js');
 
         const suggestions = await smartSuggestions.getSuggestions(
             req.userId,
@@ -969,7 +973,7 @@ router.post('/suggestions', verifyToken, async (req, res) => {
 
 // ==================== APPROVAL PATTERNS (HITL Learning) ====================
 
-const ApprovalPatternService = require('../services/approvalPatternService');
+const ApprovalPatternService = import('approvalPatternService.js');
 
 // GET /api/ai/patterns - Get user's approval patterns
 router.get('/patterns', verifyToken, async (req, res) => {
@@ -1102,7 +1106,7 @@ router.post('/feedback', verifyToken, async (req, res) => {
         
         // Store in audit log for tracking (non-blocking)
         try {
-            const aiLogger = require('../services/ai/logger');
+            const aiLogger = import('ai/logger.js');
             await aiLogger.log('feedback', {
                 userId,
                 messageId,
@@ -1134,7 +1138,7 @@ router.post('/report', verifyToken, async (req, res) => {
         
         // Store in audit log for review (non-blocking)
         try {
-            const aiLogger = require('../services/ai/logger');
+            const aiLogger = import('ai/logger.js');
             await aiLogger.log('report', {
                 userId,
                 messageId,
@@ -1161,7 +1165,7 @@ router.post('/report', verifyToken, async (req, res) => {
  */
 router.get('/memory/metrics', verifyToken, async (req, res) => {
     try {
-        const AIMemoryMetricsService = require('../services/ai/aiMemoryMetricsService');
+        const AIMemoryMetricsService = import('ai/aiMemoryMetricsService.js');
         const { period = 7 } = req.query;
         
         const metrics = await AIMemoryMetricsService.getDashboardMetrics(
@@ -1182,7 +1186,7 @@ router.get('/memory/metrics', verifyToken, async (req, res) => {
  */
 router.get('/memory/current', verifyToken, async (req, res) => {
     try {
-        const AIMemoryMetricsService = require('../services/ai/aiMemoryMetricsService');
+        const AIMemoryMetricsService = import('ai/aiMemoryMetricsService.js');
         const { projectId } = req.query;
         
         const state = await AIMemoryMetricsService.getCurrentMemoryState(
@@ -1203,7 +1207,7 @@ router.get('/memory/current', verifyToken, async (req, res) => {
  */
 router.get('/memory/latency', verifyToken, async (req, res) => {
     try {
-        const AIMemoryMetricsService = require('../services/ai/aiMemoryMetricsService');
+        const AIMemoryMetricsService = import('ai/aiMemoryMetricsService.js');
         const { hours = 24 } = req.query;
         
         const latency = await AIMemoryMetricsService.getLatencyPercentiles(
@@ -1350,5 +1354,5 @@ router.get('/quality/trends', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

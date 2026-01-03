@@ -10,11 +10,12 @@
  * - Multi-project assignment
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
-const authMiddleware = require('../middleware/authMiddleware');
+import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import authMiddleware from '../middleware/authMiddleware.js';
 const crypto = require('crypto');
 
 // Helper functions
@@ -585,5 +586,5 @@ router.get('/permission-definitions', (req, res) => {
     res.json(definitions);
 });
 
-module.exports = router;
+export default router;
 

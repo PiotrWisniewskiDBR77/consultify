@@ -719,7 +719,7 @@ class EnterpriseSecurityService {
 // Singleton instance
 const enterpriseSecurity = new EnterpriseSecurityService();
 
-module.exports = {
+export default {
     EnterpriseSecurityService,
     enterpriseSecurity,
     PII_PATTERNS,

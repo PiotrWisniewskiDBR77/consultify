@@ -101,7 +101,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
 
     const fetchConfigs = useCallback(async () => {
         try {
-            const data = await Api.getSystemConfigs('current');
+            const data = await (Api as any).getSystemConfigs('current');
             setConfigs(data);
         } catch (error) {
             // Mock data
@@ -130,7 +130,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
 
     const handleSaveConfig = async (config: ConfigItem, newValue: string) => {
         try {
-            await Api.updateSystemConfig(config.id, { value: newValue });
+            await (Api as any).updateSystemConfig(config.id, { value: newValue });
             toast.success(`Configuration "${config.key}" updated`);
             setUnsavedChanges((prev) => {
                 const next = { ...prev };
@@ -147,7 +147,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
     const handleDeleteConfig = async (id: string) => {
         if (!confirm('Are you sure you want to delete this configuration?')) return;
         try {
-            await Api.deleteSystemConfig(id);
+            await (Api as any).deleteSystemConfig(id);
             toast.success('Configuration deleted');
             fetchConfigs();
         } catch (error) {
@@ -591,7 +591,7 @@ const ConfigAddModal: React.FC<{
         e.preventDefault();
         setSaving(true);
         try {
-            await Api.createSystemConfig({ ...formData, organization_id: 'current' });
+            await (Api as any).createSystemConfig({ ...formData, organization_id: 'current' });
             toast.success('Configuration created');
             onSave();
         } catch (error) {
@@ -788,6 +788,8 @@ const ConfigHistoryModal: React.FC<{
 );
 
 export default EnterpriseConfigurationPanel;
+
+
 
 
 

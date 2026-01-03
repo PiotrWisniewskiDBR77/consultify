@@ -16,11 +16,12 @@
  * - POST /api/gdpr/cancel-deletion
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const verifyToken = require('../middleware/authMiddleware');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import verifyToken from '../middleware/authMiddleware.js';
+import { v4 as uuidv4 } from 'uuid';
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
@@ -559,4 +560,4 @@ async function collectUserData(userId) {
     return data;
 }
 
-module.exports = router;
+export default router;

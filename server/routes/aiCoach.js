@@ -1,4 +1,4 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 const AICoach = require('../ai/aiCoach');
 // Assuming userMiddleware or similar exists for auth
@@ -41,4 +41,4 @@ router.get('/signals/:orgId', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

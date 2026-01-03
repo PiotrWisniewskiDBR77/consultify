@@ -5,9 +5,10 @@
  * Includes initiatives across all statuses, roadmap waves, and dependencies.
  */
 
-const db = require('../database');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 const queryHelpers = require('../utils/queryHelpers');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 // ============================================
 // INITIATIVE DATA
@@ -436,5 +437,5 @@ if (require.main === module) {
         .catch(() => process.exit(1));
 }
 
-module.exports = { seedPortfolioDemo };
+export default { seedPortfolioDemo };
 

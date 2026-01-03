@@ -1,7 +1,7 @@
 const { Pool } = require('pg');
 const config = require('./config/database.config');
 const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 console.log('[Postgres] Initializing connection pool...');
 console.log('[Postgres] Config:', {
@@ -1230,4 +1230,4 @@ async function safeRun(sql) {
 // Initialize on load
 initDb();
 
-module.exports = db;
+export default db;

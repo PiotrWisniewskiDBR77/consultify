@@ -347,7 +347,7 @@ function isVisionAvailable() {
     return !!process.env.OPENAI_API_KEY;
 }
 
-module.exports = {
+export default {
     process,
     processWithTesseract,
     processWithVision,
@@ -360,6 +360,8 @@ module.exports = {
     SUPPORTED_FORMATS,
     TESSERACT_LANGUAGES
 };
+
+
 
 
 

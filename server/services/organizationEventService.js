@@ -13,8 +13,10 @@
  * - trial_upgraded
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 const EVENT_TYPES = {
     DEMO_STARTED: 'demo_started',
@@ -132,4 +134,4 @@ const OrganizationEventService = {
     }
 };
 
-module.exports = OrganizationEventService;
+export default OrganizationEventService;

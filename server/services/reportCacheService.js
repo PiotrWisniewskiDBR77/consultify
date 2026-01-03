@@ -7,7 +7,9 @@
  * PMO Standards: ISO 21500, PMBOK 7, PRINCE2
  */
 
-const NodeCache = require('node-cache');
+import NodeCache from 'node-cache';
+
+
 
 // Cache configuration
 const DEFAULT_TTL = 300; // 5 minutes default TTL
@@ -250,7 +252,9 @@ const ReportCacheService = {
     keys: CacheKeys
 };
 
-module.exports = ReportCacheService;
+export default ReportCacheService;
+
+
 
 
 

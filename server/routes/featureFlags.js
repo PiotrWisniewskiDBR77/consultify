@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const FeatureFlagService = require('../services/featureFlagService');
-const authMiddleware = require('../middleware/authMiddleware');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
+const FeatureFlagService = import('featureFlagService.js');
+import authMiddleware from '../middleware/authMiddleware.js';
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
 /**
  * GET /api/feature-flags
@@ -187,4 +187,4 @@ router.get('/evaluate/context', verifySuperAdmin, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

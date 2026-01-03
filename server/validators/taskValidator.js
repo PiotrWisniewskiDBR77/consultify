@@ -36,7 +36,7 @@ const createTaskSchema = z.object({
 
 const updateTaskSchema = createTaskSchema.partial().omit({ organizationId: true });
 
-module.exports = {
+export default {
     createTaskSchema,
     updateTaskSchema
 };

@@ -402,7 +402,7 @@ const alerts = {
         alertingService.send(ALERT_TYPE.ERROR_SPIKE, { errorCount, errorRate, windowMinutes })
 };
 
-module.exports = {
+export default {
     AlertingService,
     alertingService,
     alerts,

@@ -8,11 +8,12 @@
  * - Regional settings (timezone, date format, etc.)
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const authMiddleware = require('../middleware/authMiddleware');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import authMiddleware from '../middleware/authMiddleware.js';
+import { v4 as uuidv4 } from 'uuid';
 
 // ==========================================
 // DEFAULT VALUES
@@ -292,7 +293,9 @@ router.put('/:orgId', authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

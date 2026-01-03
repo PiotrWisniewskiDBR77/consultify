@@ -1,4 +1,6 @@
-const axios = require('axios');
+import axios from 'axios';
+
+
 
 class SlackService {
     constructor() {
@@ -236,4 +238,5 @@ class SlackService {
     }
 }
 
-module.exports = new SlackService();
+const slackServiceInstance = new SlackService();
+export default slackServiceInstance;

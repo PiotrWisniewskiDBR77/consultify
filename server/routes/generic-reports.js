@@ -3,11 +3,11 @@
  * Handles generic assessment report uploads (ISO, consulting, compliance, etc.)
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const GenericReportService = require('../services/genericReportService');
+const GenericReportService = import('genericReportService.js');
 const { upload } = require('../middleware/fileUploadMiddleware');
-const verifyToken = require('../middleware/authMiddleware');
+import verifyToken from '../middleware/authMiddleware.js';
 
 router.use(verifyToken);
 
@@ -162,7 +162,8 @@ router.delete('/:id', async (req, res) => {
         const { id } = req.params;
         const organizationId = req.user.organizationId;
 
-        const db = require('../database');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
         const sql = `DELETE FROM generic_assessment_reports WHERE id = ? AND organization_id = ?`;
 
         db.run(sql, [id, organizationId], function (err) {
@@ -182,4 +183,4 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

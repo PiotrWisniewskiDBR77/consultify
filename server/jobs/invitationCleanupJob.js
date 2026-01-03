@@ -10,8 +10,9 @@
  * Or schedule with cron: 0 2 * * * (daily at 2 AM)
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 // Configuration
 const CLEANUP_OLD_INVITATIONS_AFTER_DAYS = 0; // 0 = disabled, set to e.g. 365 to clean after 1 year
@@ -150,7 +151,7 @@ async function runCleanup() {
 }
 
 // Export for programmatic use
-module.exports = {
+export default {
     runCleanup,
     expirePendingInvitations,
     cleanupOldInvitations

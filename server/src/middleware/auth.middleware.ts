@@ -8,6 +8,12 @@ import jwt from 'jsonwebtoken';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 
+import {
+    AuthenticatedUser as GlobalUser,
+    AuthenticatedRequest,
+    UserRole
+} from '../types/index.js';
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -15,10 +21,10 @@ import { get as dbGet } from '../utils/DbPromise.js';
 export interface JWTPayload {
     id: string;
     email?: string;
+    name?: string;
     role?: string;
     userRole?: string;
     organizationId?: string;
-    organization_id?: string;
     isSuperAdmin?: boolean;
     impersonatorId?: string;
     jti?: string;
@@ -26,16 +32,12 @@ export interface JWTPayload {
     exp?: number;
 }
 
-export interface AuthenticatedUser {
-    id: string;
-    email?: string;
-    role: string;
-    organizationId?: string;
-    isSuperAdmin: boolean;
+export interface AuthenticatedUser extends GlobalUser {
+    isDemo?: boolean;
     impersonatorId?: string;
 }
 
-export interface AuthRequest extends Request {
+export interface AuthRequest extends AuthenticatedRequest {
     userId?: string;
     userRole?: string;
     organizationId?: string;
@@ -54,6 +56,7 @@ interface Dependencies {
     PermissionService: {
         can: (user: AuthenticatedUser, capability: string, context?: { organizationId?: string }) => boolean;
     };
+    dbGet: <T>(sql: string, params?: any[]) => Promise<T | undefined>;
 }
 
 let deps: Dependencies;
@@ -69,6 +72,7 @@ const getDeps = async (): Promise<Dependencies> => {
             jwt: defaultJwt,
             config: defaultConfig,
             PermissionService: defaultPermissionService,
+            dbGet: dbGet,
         };
     }
     return deps;
@@ -103,6 +107,22 @@ const extractToken = (req: AuthRequest): string | null => {
 };
 
 /**
+ * Map legacy role strings to standardized UserRole enum
+ */
+const mapRole = (role?: string): UserRole => {
+    if (!role) return 'team_member';
+    const r = role.toLowerCase();
+    switch (r) {
+        case 'admin': return 'administrator';
+        case 'superadmin': return 'owner';
+        case 'user': return 'team_member';
+        case 'client': return 'guest';
+        case 'manager': return 'project_manager';
+        default: return role as UserRole;
+    }
+};
+
+/**
  * Attach user data to request
  */
 const attachUser = async (
@@ -114,14 +134,16 @@ const attachUser = async (
 
     req.userId = decoded.id;
     req.userRole = decoded.role || decoded.userRole;
-    req.organizationId = decoded.organizationId || decoded.organization_id;
+    req.organizationId = decoded.organizationId;
 
     const user: AuthenticatedUser = {
         id: decoded.id,
-        email: decoded.email,
-        role: req.userRole || 'user',
-        organizationId: req.organizationId,
+        email: decoded.email || '',
+        name: decoded.name || 'User',
+        role: mapRole(req.userRole),
+        organizationId: req.organizationId || '',
         isSuperAdmin: decoded.isSuperAdmin || false,
+        isDemo: (decoded as any).isDemo || false,
         impersonatorId: decoded.impersonatorId,
     };
 
@@ -146,6 +168,8 @@ const checkTokenRevocation = async (
     res: Response,
     next: NextFunction
 ): Promise<void> => {
+    const { dbGet } = await getDeps();
+
     if (!decoded.jti) {
         // No jti - older token format, just continue
         await attachUser(decoded, req, next);
@@ -213,9 +237,12 @@ export const verifyToken = asyncHandler(async (
         if (process.env.NODE_ENV === 'test' && process.env.ENABLE_TEST_AUTH_BYPASS === 'true') {
             req.user = {
                 id: 'test-user-id',
-                role: 'client',
+                name: 'Test User',
+                email: 'test@example.com',
+                role: 'guest',
                 organizationId: 'test-org-id',
                 isSuperAdmin: false,
+                isDemo: false,
             };
             req.userId = 'test-user-id';
             req.organizationId = 'test-org-id';
@@ -226,18 +253,23 @@ export const verifyToken = asyncHandler(async (
         return;
     }
 
-    jwtLib.verify(token, config.JWT_SECRET, async (err, decoded) => {
-        if (err) {
-            if (err.name === 'TokenExpiredError') {
-                res.status(401).json({ error: 'Token expired' });
-                return;
-            }
-            res.status(401).json({ error: 'Unauthorized' });
+    try {
+        const decoded = await new Promise<JWTPayload>((resolve, reject) => {
+            jwtLib.verify(token, config.JWT_SECRET, (err, decoded) => {
+                if (err) return reject(err);
+                resolve(decoded as JWTPayload);
+            });
+        });
+
+        await checkTokenRevocation(decoded, req, res, next);
+    } catch (err: any) {
+        if (err.name === 'TokenExpiredError') {
+            res.status(401).json({ error: 'Token expired' });
             return;
         }
-
-        await checkTokenRevocation(decoded as JWTPayload, req, res, next);
-    });
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+    }
 });
 
 /**

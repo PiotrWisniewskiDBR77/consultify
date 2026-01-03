@@ -22,4 +22,4 @@ const flags = {
     ENABLE_HELP_SYSTEM: process.env.ENABLE_HELP_SYSTEM !== 'false' // Default true
 };
 
-module.exports = flags;
+export default flags;

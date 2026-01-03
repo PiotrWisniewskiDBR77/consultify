@@ -11,7 +11,7 @@
  * - /api/health (health checks)
  */
 
-const LegalService = require('../services/legalService');
+const LegalService = import('legalService.js');
 
 // Routes exempt from legal compliance check
 const EXEMPT_ROUTES = [
@@ -87,4 +87,4 @@ const createMiddleware = (service) => async (req, res, next) => {
 const defaultMiddleware = createMiddleware(LegalService);
 defaultMiddleware.factory = createMiddleware;
 
-module.exports = defaultMiddleware;
+export default defaultMiddleware;

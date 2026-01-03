@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { verifyAdmin, checkPermission, setDependencies, type AuthRequest } from '../../../src/middleware/admin.middleware.js';
+import { verifyAdmin, checkPermission, setDependencies, type AuthRequest } from '../../../../src/middleware/admin.middleware.js';
 import jwt from 'jsonwebtoken';
 
 describe('Admin Middleware', () => {
@@ -114,4 +114,6 @@ describe('Admin Middleware', () => {
         });
     });
 });
+
+
 

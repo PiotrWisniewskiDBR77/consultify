@@ -10,7 +10,7 @@
  */
 
 const db = require('../../database');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const NotificationService = require('../notificationService');
 const SlackService = require('../slackService');
 const { aiLogger } = require('./logger');
@@ -344,7 +344,9 @@ const AIHealthAlertService = {
     }
 };
 
-module.exports = AIHealthAlertService;
+export default AIHealthAlertService;
+
+
 
 
 

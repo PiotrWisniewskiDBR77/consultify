@@ -5,10 +5,11 @@
  * Super Admin only access.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const verifyToken = require('../middleware/authMiddleware');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import verifyToken from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
 
 /**
@@ -323,5 +324,5 @@ router.post('/:id/restore-version', verifyToken, requireRole(['super_admin']), a
     }
 });
 
-module.exports = router;
+export default router;
 

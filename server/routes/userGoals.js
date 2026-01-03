@@ -2,10 +2,10 @@
  * User Goals API Routes
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const UserGoalsService = require('../services/userGoals');
-const auth = require('../middleware/authMiddleware');
+const UserGoalsService = import('userGoals.js');
+import auth from '../middleware/authMiddleware.js';
 
 // GET /api/user/goals — Get user's current goal
 router.get('/goals', auth, async (req, res) => {
@@ -81,4 +81,4 @@ router.get('/goals/history', auth, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

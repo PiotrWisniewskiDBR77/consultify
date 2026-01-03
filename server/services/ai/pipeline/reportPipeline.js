@@ -7,7 +7,7 @@
  * Part of the Enterprise AI Consulting System.
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const db = require('../../../database');
 const { getAgentsInOrder, getAgentPrompt, validateAgentOutput, getAgent } = require('./reportAgents');
 const IndustryIntelligenceService = require('../intelligence/industryIntelligenceService');
@@ -591,7 +591,9 @@ Transform this into a compelling executive report following the output schema.`;
     }
 }
 
-module.exports = ReportPipeline;
+export default ReportPipeline;
+
+
 
 
 

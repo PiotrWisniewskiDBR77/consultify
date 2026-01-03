@@ -5,13 +5,13 @@
  * with AI-powered framework detection and score extraction.
  */
 
-const express = require('express');
+import express from 'express';
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
-const authMiddleware = require('../middleware/authMiddleware');
-const pdfParserService = require('../services/pdfParserService');
+import { v4 as uuidv4 } from 'uuid';
+import authMiddleware from '../middleware/authMiddleware.js';
+const pdfParserService = import('pdfParserService.js');
 
 const router = express.Router();
 
@@ -224,9 +224,10 @@ router.post('/confirm', authMiddleware, async (req, res) => {
         }
 
         // Save to database
-        const db = require('../database');
-        const { calculateFrameworkScore } = require('../services/frameworkScoreCalculators');
-        const multiFrameworkAuditService = require('../services/multiFrameworkAuditService');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+        const { calculateFrameworkScore } = import('frameworkScoreCalculators.js');
+        const multiFrameworkAuditService = import('multiFrameworkAuditService.js');
         
         // Calculate scores
         let overallScore = null;
@@ -327,5 +328,5 @@ router.get('/supported-frameworks', authMiddleware, (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;
 

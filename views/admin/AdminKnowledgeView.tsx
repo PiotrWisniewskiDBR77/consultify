@@ -277,7 +277,7 @@ export const AdminKnowledgeView: React.FC = () => {
         setLoading(true);
         try {
             const data = await Api.generateGlobalBrainObservations();
-            setObservations(data);
+            setObservations(data as any);
             toast.success('Analysis Complete');
         } catch (err) {
             toast.error('Failed to generate observations');

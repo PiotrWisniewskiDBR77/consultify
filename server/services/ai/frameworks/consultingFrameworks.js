@@ -730,7 +730,7 @@ function recommendFrameworks(analysisContext) {
     return recommendations.sort((a, b) => a.priority - b.priority);
 }
 
-module.exports = {
+export default {
     CONSULTING_FRAMEWORKS,
     getFramework,
     getFrameworkIds,
@@ -745,6 +745,8 @@ module.exports = {
     VALUE_CHAIN,
     SWOT
 };
+
+
 
 
 

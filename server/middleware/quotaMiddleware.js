@@ -3,7 +3,7 @@
  * Enforces token and storage quotas before allowing API requests
  */
 
-const usageService = require('../services/usageService');
+const usageService = import('usageService.js');
 
 /**
  * Middleware to enforce token quota on AI endpoints
@@ -123,7 +123,7 @@ async function recordStorageAfterUpload(req, bytes, action = 'upload') {
     }
 }
 
-module.exports = {
+export default {
     enforceTokenQuota,
     enforceStorageQuota,
     recordTokenUsageAfterResponse,

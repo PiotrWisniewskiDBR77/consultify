@@ -6,8 +6,8 @@
  * Respects sandbox mode and dry-run flags.
  */
 
-const connectorService = require('../services/connectorService');
-const connectorRegistry = require('../services/connectorRegistry');
+const connectorService = import('connectorService.js');
+const connectorRegistry = import('connectorRegistry.js');
 const auditLogger = require('../utils/auditLogger');
 
 // Dependency injection container (for deterministic unit tests)
@@ -276,4 +276,4 @@ const ConnectorAdapter = {
     }
 };
 
-module.exports = ConnectorAdapter;
+export default ConnectorAdapter;

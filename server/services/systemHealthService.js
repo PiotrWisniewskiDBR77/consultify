@@ -1,5 +1,7 @@
-const os = require('os');
-const db = require('../database');
+import os from 'os';
+import db from '../database.js';
+
+
 
 class SystemHealthService {
 
@@ -236,4 +238,5 @@ class SystemHealthService {
     }
 }
 
-module.exports = new SystemHealthService();
+const systemHealthServiceInstance = new SystemHealthService();
+export default systemHealthServiceInstance;

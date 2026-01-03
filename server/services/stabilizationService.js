@@ -1,8 +1,10 @@
 // Stabilization Service - Phase 6 management
 // Step 6: Stabilization, Reporting & Economics
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 const STABILIZATION_STATUSES = {
     STABILIZED: 'STABILIZED',
@@ -241,4 +243,4 @@ const StabilizationService = {
     }
 };
 
-module.exports = StabilizationService;
+export default StabilizationService;

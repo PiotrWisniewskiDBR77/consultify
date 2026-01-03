@@ -5,15 +5,15 @@
  * Includes SuperAdmin routes for managing all organization SSO configs.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { v4: uuidv4 } = require('uuid');
-const jwt = require('jsonwebtoken');
+import { v4 as uuidv4 } from 'uuid';
+import jwt from 'jsonwebtoken';
 const config = require('../config');
-const authMiddleware = require('../middleware/authMiddleware');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
+import authMiddleware from '../middleware/authMiddleware.js';
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 const { requireOrgAccess } = require('../middleware/rbac');
-const SSOService = require('../services/ssoService');
+const SSOService = import('ssoService.js');
 import AuditService from '../services/auditService.js';
 
 // ==========================================
@@ -609,4 +609,4 @@ function parseSAMLResponse(samlResponse) {
     };
 }
 
-module.exports = router;
+export default router;

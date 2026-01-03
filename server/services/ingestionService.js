@@ -1,11 +1,16 @@
-const pdf = require('pdf-parse');
-const fs = require('fs');
-const path = require('path');
+import pdf from 'pdf-parse';
+import fs from 'fs';
+import path from 'path';
+
+import db from '../database.js';
+import RagService from './ragService.js';
+
+
 
 // Dependency injection container (for deterministic unit tests)
 const deps = {
-    db: require('../database'),
-    RagService: require('./ragService')
+    db,
+    RagService,
 };
 
 const IngestionService = {
@@ -115,4 +120,4 @@ const IngestionService = {
     }
 };
 
-module.exports = IngestionService;
+export default IngestionService;

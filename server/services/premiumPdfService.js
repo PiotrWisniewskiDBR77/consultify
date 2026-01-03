@@ -5,11 +5,13 @@
  * Uses Handlebars templates for pixel-perfect output.
  */
 
-const puppeteer = require('puppeteer');
-const Handlebars = require('handlebars');
-const fs = require('fs').promises;
-const path = require('path');
-const db = require('../database');
+import puppeteer from 'puppeteer';
+import Handlebars from 'handlebars';
+import path from 'path';
+import db from '../database.js';
+import { promises as fs } from 'fs';
+
+
 
 // Register Handlebars helpers
 Handlebars.registerHelper('formatDate', function (date) {
@@ -489,4 +491,4 @@ process.on('SIGINT', () => {
     process.exit();
 });
 
-module.exports = premiumPdfService;
+export default premiumPdfService;

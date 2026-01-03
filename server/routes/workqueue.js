@@ -4,13 +4,14 @@
  * Step 16: API endpoints for Human Workflow, Approvals, and Operations Dashboard.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const auth = require('../middleware/authMiddleware');
-const db = require('../database');
-const WorkqueueService = require('../services/workqueueService');
-const SLAService = require('../services/slaService');
-const NotificationOutboxService = require('../services/notificationOutboxService');
+import auth from '../middleware/authMiddleware.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+const WorkqueueService = import('workqueueService.js');
+const SLAService = import('slaService.js');
+const NotificationOutboxService = import('notificationOutboxService.js');
 const AsyncJobService = require('../ai/asyncJobService');
 
 /**
@@ -290,4 +291,4 @@ router.post('/sla/check', auth, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

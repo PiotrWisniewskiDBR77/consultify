@@ -1,8 +1,9 @@
 // server/seed/seed_megatrends.js
 // Seed script to populate default megatrends for supported industries
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 // Example data – in a real project this would be exhaustive and possibly loaded from a JSON file
 const defaultMegatrends = [
@@ -94,4 +95,4 @@ function seedMegatrends() {
     });
 }
 
-module.exports = { seedMegatrends };
+export default { seedMegatrends };

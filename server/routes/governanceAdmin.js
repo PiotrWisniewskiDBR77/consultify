@@ -8,14 +8,14 @@
  * - Break-glass sessions
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
+import authMiddleware from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
 const { requirePermission, auditAction } = require('../middleware/permissionMiddleware');
-const GovernanceAuditService = require('../services/governanceAuditService');
-const BreakGlassService = require('../services/breakGlassService');
-const PermissionService = require('../services/permissionService');
+const GovernanceAuditService = import('governanceAuditService.js');
+const BreakGlassService = import('breakGlassService.js');
+const PermissionService = import('permissionService.js');
 
 // All routes require authentication
 router.use(authMiddleware);
@@ -182,7 +182,8 @@ router.get('/users/:id/permissions', requirePermission('PERMISSION_VIEW'), async
         const orgId = req.organizationId;
 
         // Fetch user role (simplified - would normally come from users table)
-        const db = require('../database');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
         const user = await new Promise((resolve, reject) => {
             db.get('SELECT role FROM users WHERE id = ?', [userId], (err, row) => {
                 if (err) reject(err);
@@ -396,4 +397,4 @@ function getBreakGlassScopeDescription(scope) {
     return descriptions[scope] || 'No description available';
 }
 
-module.exports = router;
+export default router;

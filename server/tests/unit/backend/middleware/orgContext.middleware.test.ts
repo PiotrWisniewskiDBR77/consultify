@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import orgContextMiddleware, { resolveUserOrgAccess, setDependencies, type AuthRequest } from '../../../src/middleware/orgContext.middleware.js';
+import orgContextMiddleware, { resolveUserOrgAccess, setDependencies, type AuthRequest } from '../../../../src/middleware/orgContext.middleware.js';
 
 describe('Organization Context Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -144,4 +144,6 @@ describe('Organization Context Middleware', () => {
         });
     });
 });
+
+
 

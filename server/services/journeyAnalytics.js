@@ -8,17 +8,14 @@
  * - Funnel drop-off analysis
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '../database/Database.js';
 
 // Lazy-loaded database
 let db = null;
 const getDb = () => {
     if (!db) {
-        try {
-            db = require('../db/sqliteAsync');
-        } catch (e) {
-            db = require('../database');
-        }
+        db = getDatabase();
     }
     return db;
 };
@@ -319,4 +316,4 @@ const JourneyAnalytics = {
     },
 };
 
-module.exports = JourneyAnalytics;
+export default JourneyAnalytics;

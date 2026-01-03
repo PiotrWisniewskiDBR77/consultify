@@ -11,7 +11,7 @@
  * - No implicit upgrades allowed
  */
 
-const USER_STATES = {
+export const USER_STATES = {
     ANON: 'ANON',
     DEMO_SESSION: 'DEMO_SESSION',
     TRIAL_TRUSTED: 'TRIAL_TRUSTED',
@@ -21,7 +21,7 @@ const USER_STATES = {
     ECOSYSTEM_NODE: 'ECOSYSTEM_NODE'
 };
 
-const PHASES = {
+export const PHASES = {
     A: 'A', // PRE-ENTRY
     B: 'B', // DEMO SESSION
     C: 'C', // TRIAL ENTRY
@@ -32,7 +32,7 @@ const PHASES = {
 };
 
 // State → Phase mapping (canonical)
-const STATE_TO_PHASE = {
+export const STATE_TO_PHASE = {
     [USER_STATES.ANON]: PHASES.A,
     [USER_STATES.DEMO_SESSION]: PHASES.B,
     [USER_STATES.TRIAL_TRUSTED]: PHASES.C,
@@ -43,7 +43,7 @@ const STATE_TO_PHASE = {
 };
 
 // Valid transitions per 01_USER_STATE_MACHINE.md
-const VALID_TRANSITIONS = {
+export const VALID_TRANSITIONS = {
     [USER_STATES.ANON]: [USER_STATES.DEMO_SESSION],
     [USER_STATES.DEMO_SESSION]: [USER_STATES.TRIAL_TRUSTED, USER_STATES.ANON],
     [USER_STATES.TRIAL_TRUSTED]: [USER_STATES.ORG_CREATOR],
@@ -54,7 +54,7 @@ const VALID_TRANSITIONS = {
 };
 
 // State permissions per documentation
-const STATE_PERMISSIONS = {
+export const STATE_PERMISSIONS = {
     [USER_STATES.ANON]: {
         canViewPublicNarrative: true,
         canSeeCategoryFraming: true,
@@ -266,4 +266,4 @@ const UserStateMachine = {
     }
 };
 
-module.exports = UserStateMachine;
+export default UserStateMachine;

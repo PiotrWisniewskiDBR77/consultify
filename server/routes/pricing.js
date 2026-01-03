@@ -3,10 +3,10 @@
  * API endpoints for subscription pricing from legal-metadata.json
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const pricingService = require('../services/pricingService');
-const authMiddleware = require('../middleware/authMiddleware');
+const pricingService = import('pricingService.js');
+import authMiddleware from '../middleware/authMiddleware.js';
 
 /**
  * GET /api/pricing/plans
@@ -190,7 +190,9 @@ router.get('/metadata', authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

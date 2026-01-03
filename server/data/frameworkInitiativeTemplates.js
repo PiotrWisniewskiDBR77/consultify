@@ -497,7 +497,7 @@ function selectBestTemplate(templates, gap) {
 // EXPORTS
 // ============================================
 
-module.exports = {
+export default {
     SIRI_TEMPLATES,
     ADMA_TEMPLATES,
     CMMI_TEMPLATES,
@@ -505,6 +505,8 @@ module.exports = {
     getTemplatesForGap,
     selectBestTemplate,
 };
+
+
 
 
 

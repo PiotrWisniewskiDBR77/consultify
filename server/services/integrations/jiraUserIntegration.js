@@ -381,7 +381,9 @@ const JiraUserIntegration = {
     }
 };
 
-module.exports = JiraUserIntegration;
+export default JiraUserIntegration;
+
+
 
 
 

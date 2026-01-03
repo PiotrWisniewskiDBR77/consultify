@@ -12,7 +12,7 @@
 
 import React, { useState, useRef, useEffect, cloneElement } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 
 export type TooltipPlacement = 
   | 'top' 
@@ -64,7 +64,7 @@ const placementMap: Record<TooltipPlacement, { x: string; y: string; origin: str
   'right-end': { x: '0%', y: '-100%', origin: 'left bottom' },
 };
 
-const tooltipVariants = {
+const tooltipVariants: Variants = {
   hidden: { 
     opacity: 0, 
     scale: 0.95,
@@ -192,26 +192,34 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
   const { x, y, origin } = placementMap[placement];
 
-  // Clone child with ref and handlers
-  const trigger = cloneElement(children, {
-    ref: triggerRef,
-    onMouseEnter: (e: React.MouseEvent) => {
-      handleShow();
-      children.props.onMouseEnter?.(e);
-    },
-    onMouseLeave: (e: React.MouseEvent) => {
-      handleHide();
-      children.props.onMouseLeave?.(e);
-    },
-    onFocus: (e: React.FocusEvent) => {
-      handleShow();
-      children.props.onFocus?.(e);
-    },
-    onBlur: (e: React.FocusEvent) => {
-      handleHide();
-      children.props.onBlur?.(e);
-    },
-  });
+const child = children as React.ReactElement;
+const childHandlers = child.props as {
+  onMouseEnter?: React.MouseEventHandler;
+  onMouseLeave?: React.MouseEventHandler;
+  onFocus?: React.FocusEventHandler;
+  onBlur?: React.FocusEventHandler;
+};
+
+// Clone child with ref and handlers
+const trigger = cloneElement(child, {
+  ref: triggerRef,
+  onMouseEnter: (e: React.MouseEvent) => {
+    handleShow();
+    childHandlers.onMouseEnter?.(e);
+  },
+  onMouseLeave: (e: React.MouseEvent) => {
+    handleHide();
+    childHandlers.onMouseLeave?.(e);
+  },
+  onFocus: (e: React.FocusEvent) => {
+    handleShow();
+    childHandlers.onFocus?.(e);
+  },
+  onBlur: (e: React.FocusEvent) => {
+    handleHide();
+    childHandlers.onBlur?.(e);
+  },
+});
 
   return (
     <>
@@ -260,5 +268,4 @@ export const Tooltip: React.FC<TooltipProps> = ({
 };
 
 export default Tooltip;
-
 

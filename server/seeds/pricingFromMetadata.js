@@ -9,7 +9,8 @@
 
 const fs = require('fs');
 const path = require('path');
-const db = require('../database');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // Path to legal metadata
 const METADATA_PATH = path.resolve(__dirname, '../../Legal/config/legal-metadata.json');
@@ -266,5 +267,5 @@ if (require.main === module) {
     }, 1000);
 }
 
-module.exports = { seedPricingPlans, loadPricingMetadata, verifyPlans, seedTrialConfig };
+export default { seedPricingPlans, loadPricingMetadata, verifyPlans, seedTrialConfig };
 

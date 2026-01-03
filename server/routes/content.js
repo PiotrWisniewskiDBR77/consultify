@@ -5,11 +5,11 @@
  * Base path: /api/content
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const EmailTemplateService = require('../services/emailTemplateService');
-const ContentService = require('../services/contentService');
+import authMiddleware from '../middleware/authMiddleware.js';
+const EmailTemplateService = import('emailTemplateService.js');
+const ContentService = import('contentService.js');
 const AIPlaybookService = require('../ai/aiPlaybookService');
 
 // ==========================================
@@ -1059,7 +1059,9 @@ router.use((err, req, res, next) => {
     });
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

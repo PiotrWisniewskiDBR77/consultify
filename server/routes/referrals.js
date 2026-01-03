@@ -4,10 +4,10 @@
  * Phase G: Ecosystem Participation referral endpoints.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const ReferralService = require('../services/referralService');
+import authMiddleware from '../middleware/authMiddleware.js';
+const ReferralService = import('referralService.js');
 
 /**
  * POST /api/referrals/generate
@@ -143,4 +143,4 @@ router.get('/stats', authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

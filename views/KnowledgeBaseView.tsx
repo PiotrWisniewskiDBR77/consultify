@@ -294,7 +294,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                                             {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                                             <DynamicIcon name={module.icon} size={18} />
                                             <span className="font-medium truncate">
-                                                {lang === 'pl' ? module.name.pl : module.name.en}
+                                                {lang === 'pl' ? module.name?.pl : module.name?.en}
                                             </span>
                                         </button>
 
@@ -391,7 +391,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                                                         <DynamicIcon name={module.icon} size={24} className="text-purple-600 dark:text-purple-400" />
                                                     </div>
                                                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                                        {lang === 'pl' ? module.name.pl : module.name.en}
+                                                        {lang === 'pl' ? module.name?.pl : module.name?.en}
                                                     </span>
                                                 </button>
                                             ))}
@@ -415,6 +415,8 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
 };
 
 export default KnowledgeBaseView;
+
+
 
 
 

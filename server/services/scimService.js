@@ -11,10 +11,12 @@
  * - Sync logging
  */
 
-const { v4: uuidv4 } = require('uuid');
-const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
-const db = require('../database');
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // SCIM 2.0 Core Schemas
 const SCIM_SCHEMAS = {
@@ -856,7 +858,10 @@ class SCIMService {
     }
 }
 
-module.exports = new SCIMService();
+const sCIMServiceInstance = new SCIMService();
+export default sCIMServiceInstance;
+
+
 
 
 

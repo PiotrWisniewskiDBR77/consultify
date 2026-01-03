@@ -16,7 +16,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import type { AuthRequest } from './auth.middleware';
+import type { AuthRequest } from './auth.middleware.js';
 import { get as dbGet, all as dbAll } from '../utils/DbPromise.js';
 
 // ==========================================
@@ -59,8 +59,8 @@ interface OrgContext {
 }
 
 interface OrgRequest extends AuthRequest {
-    org?: OrgContext;
-    orgContext?: OrgContext;
+    org?: OrgContext | null;
+    orgContext?: OrgContext | null;
 }
 
 interface OrgContextOptions {
@@ -79,14 +79,7 @@ interface Dependencies {
 // DEPENDENCIES (injectable for testing)
 // ==========================================
 
-let deps: Dependencies;
-
-const getDeps = (): Dependencies => {
-    if (!deps) {
-        deps = {};
-    }
-    return deps;
-};
+// No dependencies needed
 
 // ==========================================
 // UTILITY FUNCTIONS
@@ -172,7 +165,7 @@ async function getUserOrganizations(userId: string): Promise<Array<{ id: string;
     const uniqueOrgs = Array.from(
         new Map(orgs.map(o => [o.id, o])).values()
     );
-    
+
     return uniqueOrgs;
 }
 
@@ -232,8 +225,8 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
             }
             // 3. User's last selected org (only for reads when strictWrite is enabled)
             else if (!isWrite || !strictWrite) {
-                if (req.user.organization_id) {
-                    orgId = req.user.organization_id;
+                if (req.user?.organizationId) {
+                    orgId = req.user.organizationId;
                     orgSource = 'user_default';
                 } else if ((req.user as { last_selected_org?: string }).last_selected_org) {
                     orgId = (req.user as { last_selected_org?: string }).last_selected_org || null;
@@ -312,14 +305,7 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
     resolveUserOrgAccess: typeof resolveUserOrgAccess;
     setDependencies: (newDeps: Partial<Dependencies>) => void;
 }).resolveUserOrgAccess = resolveUserOrgAccess;
-(orgContextMiddleware as typeof orgContextMiddleware & {
-    getUserOrganizations: typeof getUserOrganizations;
-    resolveUserOrgAccess: typeof resolveUserOrgAccess;
-    setDependencies: (newDeps: Partial<Dependencies>) => void;
-}).setDependencies = (_newDeps: Partial<Dependencies>): void => {
-    // No longer needed - using DbPromise directly
-    deps = getDeps();
-};
+// No dependencies needed
 
 export default orgContextMiddleware;
 export { getUserOrganizations, resolveUserOrgAccess };

@@ -4,11 +4,11 @@
  * API endpoints for managing third-party integrations
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const integrationService = require('../services/integrationService');
-const authMiddleware = require('../middleware/authMiddleware');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
+const integrationService = import('integrationService.js');
+import authMiddleware from '../middleware/authMiddleware.js';
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
 /**
  * GET /api/integrations
@@ -169,7 +169,9 @@ router.get('/available/types', authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

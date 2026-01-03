@@ -5,12 +5,13 @@
  * Supports AI-powered comment processing and section regeneration.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
-const verifyToken = require('../middleware/authMiddleware');
-const ReportContentGenerator = require('../services/ai/reportContentGenerator');
+import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import verifyToken from '../middleware/authMiddleware.js';
+const ReportContentGenerator = import('ai/reportContentGenerator.js');
 
 /**
  * GET /api/report-comments/:reportId
@@ -425,5 +426,5 @@ router.post('/:reportId/regenerate-section', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

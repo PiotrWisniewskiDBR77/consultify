@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { enforceTokenQuota, enforceStorageQuota, setDependencies, type AuthRequest } from '../../../src/middleware/quota.middleware.js';
+import { enforceTokenQuota, enforceStorageQuota, setDependencies, type AuthRequest } from '../../../../src/middleware/quota.middleware.js';
 
 describe('Quota Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -136,4 +136,6 @@ describe('Quota Middleware', () => {
         });
     });
 });
+
+
 

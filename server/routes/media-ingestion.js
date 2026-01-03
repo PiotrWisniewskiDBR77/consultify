@@ -9,12 +9,12 @@
  * @version 1.0.0
  */
 
-const express = require('express');
+import express from 'express';
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { mediaIngestionService } = require('../services/ai/mediaIngestionService');
-const requireAuth = require('../middleware/authMiddleware');
+const { mediaIngestionService } = import('ai/mediaIngestionService.js');
+import requireAuth from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -447,5 +447,5 @@ router.use((error, req, res, next) => {
     next(error);
 });
 
-module.exports = router;
+export default router;
 

@@ -561,7 +561,7 @@ class TextToSpeechService {
 
 const textToSpeechService = new TextToSpeechService();
 
-module.exports = {
+export default {
     TextToSpeechService,
     textToSpeechService,
     TTS_CONFIG,

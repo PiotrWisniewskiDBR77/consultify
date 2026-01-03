@@ -283,7 +283,7 @@ class CoThinkerOrchestrator {
 // Singleton instance
 const coThinkerOrchestrator = new CoThinkerOrchestrator();
 
-module.exports = {
+export default {
     // Main orchestrator
     CoThinkerOrchestrator,
     coThinkerOrchestrator,

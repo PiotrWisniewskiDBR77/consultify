@@ -12,7 +12,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import type { AuthRequest } from './auth.middleware';
+import type { AuthRequest } from './auth.middleware.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 
 // ==========================================
@@ -78,14 +78,7 @@ export const BLOCKED_ROUTES: BlockedRoute[] = [
 // DEPENDENCIES (injectable for testing)
 // ==========================================
 
-let deps: Dependencies;
-
-const getDeps = (): Dependencies => {
-    if (!deps) {
-        deps = {};
-    }
-    return deps;
-};
+// No dependencies needed
 
 // ==========================================
 // HELPER FUNCTIONS
@@ -99,7 +92,7 @@ export async function isTrialEntryUser(userId: string): Promise<boolean> {
         `SELECT user_status FROM users WHERE id = ?`,
         [userId]
     );
-    
+
     return userRow?.user_status === 'TRIAL_ENTRY';
 }
 
@@ -186,7 +179,7 @@ export const requireOrgContext = async (
         return;
     }
 
-    if (!req.user?.organization_id) {
+    if (!req.user?.organizationId) {
         res.status(403).json({
             error: 'ORG_REQUIRED',
             message: 'Brak kontekstu organizacji.'
@@ -203,6 +196,5 @@ export const requireOrgContext = async (
 
 export const setDependencies = (_newDeps: Partial<Dependencies>): void => {
     // No longer needed - using DbPromise directly
-    deps = getDeps();
 };
 

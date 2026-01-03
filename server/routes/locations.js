@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const auth = require('../middleware/authMiddleware');
+import auth from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
-const db = require('../database');
-const FacilityUserService = require('../services/facilityUserService');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+const FacilityUserService = import('facilityUserService.js');
 
 /**
  * CRIT-04: Locations API
@@ -328,4 +329,4 @@ router.get('/me/primary-facility', auth, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

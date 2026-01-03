@@ -12,8 +12,10 @@
  * - Customer legal reviews
  */
 
-const db = require('../database');
-const { LegalEventLogger } = require('./legalEventLogger');
+import db from '../database.js';
+import { LegalEventLogger } from './legalEventLogger.js';
+
+
 
 const LegalExportService = {
     /**
@@ -248,4 +250,4 @@ const LegalExportService = {
     }
 };
 
-module.exports = LegalExportService;
+export default LegalExportService;

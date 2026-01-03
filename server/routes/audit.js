@@ -5,10 +5,10 @@
  * Requires authentication and organization context.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 import AuditService from '../services/auditService.js';
-const auth = require('../middleware/authMiddleware');
+import auth from '../middleware/authMiddleware.js';
 const { orgContextMiddleware } = require('../middleware/orgContextMiddleware');
 
 // GET /api/audit — List audit events for organization
@@ -111,5 +111,5 @@ router.get('/export', auth, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

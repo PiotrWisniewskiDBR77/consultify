@@ -9,15 +9,15 @@
  * - GET /api/performance-metrics/health - Health check with metrics
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
+import verifyToken from '../middleware/authMiddleware.js';
 const { asyncHandler } = require('../utils/errorHandler');
 const {
     getMetricsSummary,
     getMemoryMetrics
 } = require('../middleware/performanceMetrics');
-const metricsPersistenceService = require('../services/metricsPersistenceService');
+const metricsPersistenceService = import('metricsPersistenceService.js');
 import alertService from '../services/alertService.js';
 
 // GET /api/performance-metrics/summary
@@ -84,7 +84,7 @@ router.get('/health', verifyToken, asyncHandler(async (req, res) => {
     });
 }));
 
-module.exports = router;
+export default router;
 
 
 

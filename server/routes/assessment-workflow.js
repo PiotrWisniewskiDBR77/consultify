@@ -3,11 +3,11 @@
  * Enterprise workflow management for assessments
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
+import authMiddleware from '../middleware/authMiddleware.js';
 const { assessmentRBAC } = require('../middleware/assessmentRBAC');
-const { AssessmentWorkflowService, WORKFLOW_STATES } = require('../services/assessmentWorkflowService');
+const { AssessmentWorkflowService, WORKFLOW_STATES } = import('assessmentWorkflowService.js');
 const AssessmentAuditLogger = require('../utils/assessmentAuditLogger');
 
 /**
@@ -351,7 +351,7 @@ router.post('/:assessmentId/restore/:version', authMiddleware, assessmentRBAC('u
 // Enterprise Report Generation Endpoints
 // =====================================================
 
-const assessmentReportService = require('../services/assessmentReportService');
+const assessmentReportService = import('assessmentReportService.js');
 
 /**
  * @route POST /api/assessment-workflow/:assessmentId/export/pdf
@@ -590,5 +590,5 @@ function getAvatarColor(userId) {
     return colors[Math.abs(hash) % colors.length];
 }
 
-module.exports = router;
+export default router;
 

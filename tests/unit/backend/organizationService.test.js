@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations } from '../../fixtures/testData.js';
 
-describe.skip('OrganizationService', () => {
+describe('OrganizationService', () => {
     let mockDb;
     let OrganizationService;
 
@@ -17,8 +17,9 @@ describe.skip('OrganizationService', () => {
         vi.resetModules();
 
         mockDb = createMockDb();
+        global.__TEST_DB_MOCK__ = mockDb;
 
-        OrganizationService = (await import('../../../server/services/organizationService.js')).default;
+        OrganizationService = (await import('../../../server/src/services/organizationService.ts')).default;
         OrganizationService.setDependencies({
             db: mockDb,
             uuidv4: () => 'org-uuid-1'
@@ -41,13 +42,15 @@ describe.skip('OrganizationService', () => {
 
             // Mock run to handle transaction steps
             mockDb.run.mockImplementation(function (query, params, callback) {
+                const cb = typeof params === 'function' ? params : callback;
+                const context = { changes: 1, lastID: 1 };
                 // Handle different query types
                 if (query === 'BEGIN TRANSACTION') {
-                    // No callback needed or immediate return
+                    if (cb) cb.call(context, null);
                 } else if (query === 'COMMIT') {
-                    if (callback) callback(null);
+                    if (cb) cb.call(context, null);
                 } else if (query === 'ROLLBACK') {
-                    if (callback) callback(null);
+                    if (cb) cb.call(context, null);
                 } else {
                     // Insert queries
                     if (query.includes('INSERT INTO organizations')) {
@@ -58,8 +61,8 @@ describe.skip('OrganizationService', () => {
                         expect(params).toContain(userId);
                     }
 
-                    if (callback) {
-                        callback.call({ changes: 1 }, null);
+                    if (cb) {
+                        cb.call(context, null);
                     }
                 }
             });
@@ -83,14 +86,16 @@ describe.skip('OrganizationService', () => {
             });
 
             mockDb.run.mockImplementation((query, params, callback) => {
+                const cb = typeof params === 'function' ? params : callback;
+                const context = { changes: 0, lastID: 0 };
                 if (query === 'BEGIN TRANSACTION') {
-                    // Pass
+                    if (cb) cb.call(context, null);
                 } else if (query.includes('INSERT INTO organizations')) {
-                    if (callback) callback(new Error('DB Error'));
+                    if (cb) cb.call(context, new Error('DB Error'));
                 } else if (query === 'ROLLBACK') {
-                    if (callback) callback(null);
+                    if (cb) cb.call(context, null);
                 } else {
-                    if (callback) callback(null);
+                    if (cb) cb.call(context, null);
                 }
             });
 

@@ -5,7 +5,9 @@
  * Implements BCG/McKinsey-level context requirements for professional outputs.
  */
 
-const db = require('../database');
+import db from '../database.js';
+
+
 
 // Context readiness levels for assessment finalization
 const CONTEXT_LEVELS = {
@@ -399,4 +401,4 @@ const ContextService = {
     }
 };
 
-module.exports = ContextService;
+export default ContextService;

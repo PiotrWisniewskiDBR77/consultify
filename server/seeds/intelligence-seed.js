@@ -4,7 +4,7 @@
  * Creates sample insights, sessions, and messages for testing
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 const SAMPLE_PROJECT_ID = 'demo-project-1'; // Replace with actual project ID
 const SAMPLE_USER_ID = 'admin-user-1'; // Replace with actual user ID
@@ -356,7 +356,9 @@ async function seedIntelligenceData(db, projectId, userId) {
     return { sessionId: session.id, insightCount: SAMPLE_INSIGHTS.length };
 }
 
-module.exports = { seedIntelligenceData, SAMPLE_INSIGHTS, SAMPLE_MESSAGES };
+export default { seedIntelligenceData, SAMPLE_INSIGHTS, SAMPLE_MESSAGES };
+
+
 
 
 

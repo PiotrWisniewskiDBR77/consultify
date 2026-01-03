@@ -4,8 +4,9 @@
  * 
  * Unified with AIPipeline for generative capabilities.
  */
-const { aiPipeline } = require('../services/ai/aiPipeline');
-const db = require('../database');
+const { aiPipeline } = import('ai/aiPipeline.js');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // In-memory cache for request coalescing
 const _cache = new Map();
@@ -283,4 +284,4 @@ const RecommendationEngine = {
     }
 };
 
-module.exports = RecommendationEngine;
+export default RecommendationEngine;

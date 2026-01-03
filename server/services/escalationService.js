@@ -2,10 +2,15 @@
 // Step 5: Execution Control, My Work & Notifications
 
 // Dependency injection container (for deterministic unit tests)
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+import NotificationService from './notificationService.js';
+
+
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4,
-    NotificationService: require('./notificationService')
+    db,
+    uuidv4,
+    NotificationService,
 };
 
 const EscalationService = {
@@ -220,4 +225,4 @@ const EscalationService = {
     }
 };
 
-module.exports = EscalationService;
+export default EscalationService;

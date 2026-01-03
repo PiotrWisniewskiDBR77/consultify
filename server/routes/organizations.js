@@ -1,14 +1,14 @@
 /**
  * Organization Routes
  */
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const OrganizationService = require('../services/organizationService');
-const TrialService = require('../services/trialService');
-const PermissionService = require('../services/permissionService');
+const OrganizationService = import('organizationService.js');
+const TrialService = import('trialService.js');
+const PermissionService = import('permissionService.js');
 
 // Middleware to check if user is authenticated
-const verifyToken = require('../middleware/authMiddleware');
+import verifyToken from '../middleware/authMiddleware.js';
 
 router.use(verifyToken);
 
@@ -209,7 +209,7 @@ router.patch('/:orgId/settings/ai', async (req, res) => {
 // TOKEN LEDGER ROUTES
 // ==========================================
 
-const TokenBillingService = require('../services/tokenBillingService');
+const TokenBillingService = import('tokenBillingService.js');
 
 // GET /api/organizations/:orgId/tokens/balance
 router.get('/:orgId/tokens/balance', async (req, res) => {
@@ -309,8 +309,9 @@ router.post('/:orgId/tokens/credit', async (req, res) => {
 // OWNERSHIP TRANSFER ROUTES
 // ==========================================
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * POST /api/organizations/transfer-ownership
@@ -529,7 +530,7 @@ router.get('/owner', async (req, res) => {
     }
 });
 
-const roleService = require('../services/pmoRoleService');
+const roleService = import('pmoRoleService.js');
 
 /**
  * GET /api/organizations/:orgId/roles
@@ -546,5 +547,5 @@ router.get('/:orgId/roles', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

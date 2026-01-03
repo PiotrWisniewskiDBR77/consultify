@@ -9,11 +9,11 @@
  * - Email from body for email-match validation
  */
 
-const express = require('express');
+import express from 'express';
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
 import AccessCodeService from '../services/accessCodeService.js';
-const authenticateToken = require('../middleware/authMiddleware');
+import authenticateToken from '../middleware/authMiddleware.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RATE LIMITERS
@@ -213,4 +213,4 @@ router.post('/:id/revoke', authenticateToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

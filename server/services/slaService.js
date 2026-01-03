@@ -6,6 +6,8 @@
  */
 
 // Dependency injection for testing
+import auditLogger from '../utils/auditLogger.js';
+
 const deps = {
     _db: null,
     _uuidv4: null,
@@ -30,7 +32,6 @@ async function initDeps() {
         deps._uuidv4 = v4;
     }
 }
-const auditLogger = require('../utils/auditLogger');
 
 // Configuration
 const SLA_CHECK_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
@@ -276,4 +277,4 @@ const SLAService = {
     }
 };
 
-module.exports = SLAService;
+export default SLAService;

@@ -2,9 +2,11 @@
 // Step 5: Execution Control, My Work & Notifications
 // REFACTORED: Uses BaseService for common functionality
 
-const BaseService = require('./BaseService');
-const queryHelpers = require('../utils/queryHelpers');
-const WorkModeService = require('./workModeService');
+import BaseService from './BaseService.js';
+import queryHelpers from '../utils/queryHelpers.js';
+import WorkModeService from './workModeService.js';
+
+
 
 const MyWorkService = Object.assign({}, BaseService, {
     /**
@@ -249,4 +251,4 @@ const MyWorkService = Object.assign({}, BaseService, {
     }
 });
 
-module.exports = MyWorkService;
+export default MyWorkService;

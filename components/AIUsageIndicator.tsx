@@ -33,7 +33,13 @@ export const AIUsageIndicator: React.FC<AIUsageIndicatorProps> = ({
             try {
                 setLoading(true);
                 const data = await Api.getUserAIUsage();
-                setUsage(data);
+                setUsage({
+                    daily: data.tokensUsed,
+                    monthly: data.tokensUsed, // Fallback if monthly not available
+                    dailyLimit: data.tokensLimit,
+                    monthlyLimit: data.tokensLimit * 30, // Fallback
+                    percentage: (data.tokensUsed / data.tokensLimit) * 100
+                });
                 setError(null);
             } catch (err) {
                 console.error('Failed to fetch AI usage:', err);

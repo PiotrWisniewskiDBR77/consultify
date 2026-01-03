@@ -3,7 +3,7 @@
  * Enforces storage limits per project
  */
 
-const usageService = require('../services/usageService');
+const usageService = import('usageService.js');
 
 async function enforceProjectQuota(req, res, next) {
     try {
@@ -43,4 +43,4 @@ async function enforceProjectQuota(req, res, next) {
     }
 }
 
-module.exports = enforceProjectQuota;
+export default enforceProjectQuota;

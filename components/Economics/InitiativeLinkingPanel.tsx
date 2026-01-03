@@ -33,6 +33,15 @@ interface InitiativeLinkingPanelProps {
     onUnlink?: () => Promise<void>;
 }
 
+const normalizeInitiativesPayload = (payload: unknown): Initiative[] => {
+    if (Array.isArray(payload)) return payload as Initiative[];
+    if (payload && typeof payload === 'object' && 'initiatives' in payload) {
+        const candidate = (payload as { initiatives?: Initiative[] }).initiatives;
+        if (Array.isArray(candidate)) return candidate;
+    }
+    return [];
+};
+
 export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
     analysisId,
     linkedInitiativeId,
@@ -51,9 +60,9 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
         const loadInitiatives = async () => {
             setIsLoading(true);
             try {
-                // Assuming there's an initiatives API endpoint
-                const response = await Api.getInitiatives?.({ limit: 100 }) || { initiatives: [] };
-                setInitiatives(response.initiatives || []);
+                const response = await (Api as any).getInitiatives?.() || [];
+                const normalized = normalizeInitiativesPayload((response as any).initiatives || response);
+                setInitiatives(normalized);
             } catch (error) {
                 console.error('Failed to load initiatives:', error);
                 // Mock data for development
@@ -74,22 +83,30 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
 
     // Load linked initiative details
     useEffect(() => {
-        if (linkedInitiativeId) {
-            const loadLinkedInitiative = async () => {
-                try {
-                    const initiative = await Api.getInitiative?.(linkedInitiativeId);
-                    setLinkedInitiative(initiative);
-                } catch (error) {
-                    console.error('Failed to load linked initiative:', error);
-                    // Try to find in local list
-                    const found = initiatives.find(i => i.id === linkedInitiativeId);
-                    if (found) setLinkedInitiative(found);
-                }
-            };
-            loadLinkedInitiative();
-        } else {
+        if (!linkedInitiativeId) {
             setLinkedInitiative(null);
+            return;
         }
+
+        const loadLinkedInitiative = async () => {
+            try {
+                let source = initiatives;
+                if (source.length === 0) {
+                    const response = await (Api as any).getInitiatives?.() || [];
+                    source = normalizeInitiativesPayload((response as any).initiatives || response);
+                    setInitiatives(source);
+                }
+                const initiative = source.find(i => i.id === linkedInitiativeId);
+                if (initiative) {
+                    setLinkedInitiative(initiative);
+                }
+            } catch (error) {
+                console.error('Failed to load linked initiative:', error);
+                const found = initiatives.find(i => i.id === linkedInitiativeId);
+                if (found) setLinkedInitiative(found);
+            }
+        };
+        loadLinkedInitiative();
     }, [linkedInitiativeId, initiatives]);
 
     const filteredInitiatives = initiatives.filter(initiative => 
@@ -344,6 +361,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
 };
 
 export default InitiativeLinkingPanel;
+
 
 
 

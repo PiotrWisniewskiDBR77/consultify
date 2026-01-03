@@ -13,7 +13,7 @@
  *   node server/seed/seed_demo_complete.js
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const bcrypt = require('bcryptjs');
 
 // Detect database type
@@ -515,5 +515,5 @@ if (require.main === module) {
         });
 }
 
-module.exports = seedDemoData;
+export default seedDemoData;
 

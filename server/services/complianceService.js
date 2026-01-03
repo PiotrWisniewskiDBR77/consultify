@@ -9,8 +9,10 @@
  * - Compliance reporting
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 class ComplianceService {
     /**
@@ -248,7 +250,10 @@ class ComplianceService {
     }
 }
 
-module.exports = new ComplianceService();
+const complianceServiceInstance = new ComplianceService();
+export default complianceServiceInstance;
+
+
 
 
 

@@ -488,7 +488,7 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
                                     formatter={(value: number) => [
                                         value > 0 ? `+${value}` : value,
                                         'Gap'
-                                    ]}
+                                    ] as [string | number, string]}
                                 />
                                 <Bar dataKey="gap" radius={[0, 4, 4, 0]}>
                                     {barData.map((entry, index) => (

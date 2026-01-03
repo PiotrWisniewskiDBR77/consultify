@@ -95,7 +95,7 @@ export const FullRoadmapView: React.FC = () => {
 
     try {
       // CALL AI ROADMAP ENGINE
-      const roadmapData = await Api.aiRoadmap(fullSession.initiatives);
+      const roadmapData = await Api.aiRoadmap(fullSession.initiatives as any) as any;
 
       // Map AI result (Year/Quarter structure) back to Initiative objects
       // AI returns { year1: { q1: ["Title 1"], ... } }

@@ -10,7 +10,7 @@
  */
 
 const db = require('../../database');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const { promptBlockLibrary, DEFAULT_BLOCKS } = require('./promptBlockLibrary');
 const { variableResolver } = require('./variableResolver');
 
@@ -641,7 +641,7 @@ FORMALITY: Match formality conventions appropriate for the detected language cul
 // Singleton instance
 const promptTemplateService = new PromptTemplateService();
 
-module.exports = {
+export default {
     PromptTemplateService,
     promptTemplateService,
     DEFAULT_TEMPLATES

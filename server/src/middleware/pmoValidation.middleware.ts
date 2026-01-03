@@ -5,11 +5,12 @@
  * Enforces PMO rules for initiatives and tasks
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import type { AuthRequest } from './auth.middleware.js';
 import { getDatabase } from '../database/Database.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import StatusMachine from '../services/statusMachine.js';
 
 // ==========================================
 // TYPES
@@ -72,19 +73,9 @@ interface Dependencies {
 // DEPENDENCIES (injectable for testing)
 // ==========================================
 
-let deps: Dependencies;
-
-const getDeps = async (): Promise<Dependencies> => {
-    if (!deps) {
-        const defaultDb = getDatabase();
-        const defaultStatusMachineModule = await import('../services/statusMachine.js');
-        const defaultStatusMachine = defaultStatusMachineModule.default || defaultStatusMachineModule;
-        deps = {
-            db: defaultDb as unknown as Database,
-            StatusMachine: defaultStatusMachine as StatusMachine,
-        };
-    }
-    return deps;
+let deps: Dependencies = {
+    db: getDatabase() as unknown as Database,
+    StatusMachine: StatusMachine as unknown as StatusMachine,
 };
 
 // ==========================================
@@ -157,9 +148,8 @@ export const validateInitiativeStatus = async (
     res: Response,
     next: NextFunction
 ): Promise<void> => {
-    const deps = await getDeps();
     const { StatusMachine } = deps;
-    
+
     const { status, blockedReason, blocked_reason } = req.body;
 
     if (!status) {
@@ -206,9 +196,8 @@ export const validateTaskStatus = async (
     res: Response,
     next: NextFunction
 ): Promise<void> => {
-    const deps = await getDeps();
     const { StatusMachine } = deps;
-    
+
     const { status, blockedReason, blocked_reason, blockerType, blocker_type } = req.body;
 
     if (!status) {
@@ -254,7 +243,7 @@ export const logStatusChange = (entityType: string) => {
     return (req: PMORequest, res: Response, next: NextFunction): void => {
         const originalSend = res.json.bind(res);
 
-        res.json = async (data: unknown) => {
+        (res.json as any) = (async (data: unknown) => {
             // Only log if successful and status changed
             if (res.statusCode < 400 && req.previousStatus && req.body.status) {
                 const logSql = `INSERT INTO activity_logs 
@@ -278,7 +267,7 @@ export const logStatusChange = (entityType: string) => {
             }
 
             return originalSend(data);
-        };
+        });
 
         next();
     };
@@ -288,7 +277,6 @@ export const logStatusChange = (entityType: string) => {
 // DEPENDENCY INJECTION (for testing)
 // ==========================================
 
-export const setDependencies = async (newDeps: Partial<Dependencies>): Promise<void> => {
-    const currentDeps = await getDeps();
-    deps = { ...currentDeps, ...newDeps };
+export const setDependencies = (newDeps: Partial<Dependencies>): void => {
+    deps = { ...deps, ...newDeps };
 };

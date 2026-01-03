@@ -1,6 +1,8 @@
-const db = require('../database');
-const fs = require('fs');
-const path = require('path');
+import db from '../database.js';
+import fs from 'fs';
+import path from 'path';
+
+
 
 // Retention period in days (e.g., 30 days for GDPR/trash)
 const VISIBLE_RETENTION_DAYS = 30;
@@ -77,4 +79,4 @@ const RetentionPolicyService = {
     }
 };
 
-module.exports = RetentionPolicyService;
+export default RetentionPolicyService;

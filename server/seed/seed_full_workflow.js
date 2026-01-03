@@ -14,7 +14,7 @@
  *   node server/seed/seed_full_workflow.js
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 // Detect database type
 const isPostgres = process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres');
@@ -395,5 +395,5 @@ if (require.main === module) {
         });
 }
 
-module.exports = seedFullWorkflow;
+export default seedFullWorkflow;
 

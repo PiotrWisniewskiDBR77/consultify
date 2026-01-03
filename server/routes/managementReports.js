@@ -8,12 +8,12 @@
  * PMO Standards: ISO 21500, PMBOK 7, PRINCE2
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 const Joi = require('joi');
-const authMiddleware = require('../middleware/authMiddleware');
-const ManagementReportsService = require('../services/managementReportsService');
-const BrandingService = require('../services/brandingService');
+import authMiddleware from '../middleware/authMiddleware.js';
+const ManagementReportsService = import('managementReportsService.js');
+const BrandingService = import('brandingService.js');
 
 // ==========================================
 // VALIDATION SCHEMAS
@@ -87,7 +87,7 @@ let PptxGeneratorService;
 const getPdfGenerator = () => {
     if (!PdfGeneratorService) {
         try {
-            PdfGeneratorService = require('../services/pdfGeneratorService');
+            PdfGeneratorService = import('pdfGeneratorService.js');
         } catch (e) {
             console.warn('[ManagementReports] PDF Generator not available:', e.message);
         }
@@ -98,7 +98,7 @@ const getPdfGenerator = () => {
 const getPptxGenerator = () => {
     if (!PptxGeneratorService) {
         try {
-            PptxGeneratorService = require('../services/pptxGeneratorService');
+            PptxGeneratorService = import('pptxGeneratorService.js');
         } catch (e) {
             console.warn('[ManagementReports] PPTX Generator not available:', e.message);
         }
@@ -595,7 +595,7 @@ router.get('/types', authMiddleware, (req, res) => {
 let ReportApprovalService;
 const getApprovalService = () => {
     if (!ReportApprovalService) {
-        ReportApprovalService = require('../services/reportApprovalService');
+        ReportApprovalService = import('reportApprovalService.js');
     }
     return ReportApprovalService;
 };
@@ -750,7 +750,7 @@ router.get('/:id/approval-history', authMiddleware, async (req, res) => {
 let ReportVersionService;
 const getVersionService = () => {
     if (!ReportVersionService) {
-        ReportVersionService = require('../services/reportVersionService');
+        ReportVersionService = import('reportVersionService.js');
     }
     return ReportVersionService;
 };
@@ -909,7 +909,7 @@ router.get('/:id/verify-integrity', authMiddleware, async (req, res) => {
 let ReportAuditService;
 const getAuditService = () => {
     if (!ReportAuditService) {
-        ReportAuditService = require('../services/reportAuditService');
+        ReportAuditService = import('reportAuditService.js');
     }
     return ReportAuditService;
 };
@@ -991,7 +991,7 @@ router.get('/:id/activity-summary', authMiddleware, async (req, res) => {
 let ReportCommentsService;
 const getCommentsService = () => {
     if (!ReportCommentsService) {
-        ReportCommentsService = require('../services/reportCommentsService');
+        ReportCommentsService = import('reportCommentsService.js');
     }
     return ReportCommentsService;
 };
@@ -1169,5 +1169,5 @@ router.delete('/:id/comments/:commentId', authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

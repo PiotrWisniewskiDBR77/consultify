@@ -311,7 +311,7 @@ function getAuditableObjectTypes() {
     return Object.keys(PMO_STANDARDS_MAPPING);
 }
 
-module.exports = {
+export default {
     LOG_LEVELS,
     PMO_STANDARDS_MAPPING,
     log,

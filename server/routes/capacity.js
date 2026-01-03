@@ -1,10 +1,10 @@
 // Capacity Routes - Workload management
 // Step 4: Roadmap, Sequencing & Capacity
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const CapacityService = require('../services/capacityService');
-const verifyToken = require('../middleware/authMiddleware');
+const CapacityService = import('capacityService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 
 // GET /api/capacity/user/:userId
 router.get('/user/:userId', verifyToken, async (req, res) => {
@@ -44,4 +44,4 @@ router.get('/project/:projectId/summary', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

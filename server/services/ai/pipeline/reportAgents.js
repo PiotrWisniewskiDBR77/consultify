@@ -334,7 +334,7 @@ function getAllAgentsMetadata() {
     }));
 }
 
-module.exports = {
+export default {
     REPORT_AGENTS,
     getAgent,
     getAgentsInOrder,
@@ -343,6 +343,8 @@ module.exports = {
     getAgentMetadata,
     getAllAgentsMetadata
 };
+
+
 
 
 

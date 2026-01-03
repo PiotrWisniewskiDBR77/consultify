@@ -5,7 +5,7 @@
  * Can be applied to specific routes or globally.
  */
 
-const adminAuditService = require('../services/adminAuditService');
+const adminAuditService = import('adminAuditService.js');
 
 /**
  * Extract resource info from request
@@ -237,7 +237,7 @@ const auditDataExport = createAuditMiddleware({
     })
 });
 
-module.exports = {
+export default {
     createAuditMiddleware,
     auditLogin,
     auditLogout,
@@ -247,6 +247,8 @@ module.exports = {
     auditBulkAction,
     auditDataExport
 };
+
+
 
 
 

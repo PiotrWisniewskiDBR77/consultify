@@ -2,8 +2,9 @@ const AIPlaybookService = require('./aiPlaybookService');
 const AIPlaybookRoutingEngine = require('./aiPlaybookRoutingEngine');
 const ActionExecutionAdapter = require('./actionExecutionAdapter');
 const ActionDecisionService = require('./actionDecisionService');
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 /**
  * AI Playbook Executor
@@ -471,4 +472,4 @@ const AIPlaybookExecutor = {
     }
 };
 
-module.exports = AIPlaybookExecutor;
+export default AIPlaybookExecutor;

@@ -216,6 +216,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
                     onSendMessage={handleSendMessage}
                     onOptionSelect={handleOptionSelect}
                     showThinking={showThinking}
+                    {...({} as any)}
                 />
             </div>
         </div>

@@ -9,10 +9,10 @@
  * PMO Domain: PERFORMANCE_MONITORING
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const StatusReportService = require('../services/statusReportService');
-const verifyToken = require('../middleware/authMiddleware');
+const StatusReportService = import('statusReportService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 const { asyncHandler } = require('../utils/errorHandler');
 
 router.use(verifyToken);
@@ -181,7 +181,7 @@ router.get('/:reportId/export/:format', asyncHandler(async (req, res) => {
 
     try {
         if (format.toLowerCase() === 'pdf') {
-            const PdfExportService = require('../services/pdfExportService');
+            const PdfExportService = import('pdfExportService.js');
             
             // Generate PDF buffer
             const pdfBuffer = await PdfExportService.generateStatusReportPdf(report);
@@ -191,7 +191,7 @@ router.get('/:reportId/export/:format', asyncHandler(async (req, res) => {
                 `attachment; filename="status-report-${report.periodLabel.replace(/[^a-zA-Z0-9]/g, '-')}.pdf"`);
             res.send(pdfBuffer);
         } else {
-            const PptxExportService = require('../services/pptxExportService');
+            const PptxExportService = import('pptxExportService.js');
             
             // Generate PPTX buffer
             const pptxBuffer = await PptxExportService.generateStatusReportPptx(report);
@@ -240,7 +240,9 @@ router.get('/initiative/:initiativeId/latest', asyncHandler(async (req, res) => 
     res.json({ report });
 }));
 
-module.exports = router;
+export default router;
+
+
 
 
 

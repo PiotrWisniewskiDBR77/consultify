@@ -87,4 +87,4 @@ const FinancialService = {
     }
 };
 
-module.exports = FinancialService;
+export default FinancialService;

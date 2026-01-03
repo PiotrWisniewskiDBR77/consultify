@@ -11,7 +11,9 @@
  * - Appendix slides for data tables
  */
 
-const PptxGenJS = require('pptxgenjs');
+import PptxGenJS from 'pptxgenjs';
+
+
 
 // DRD Brand Colors (hex without #)
 const COLORS = {
@@ -712,5 +714,5 @@ class PPTXExportService {
     }
 }
 
-module.exports = PPTXExportService;
+export default PPTXExportService;
 

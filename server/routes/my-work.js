@@ -2,13 +2,13 @@
 // Step 5: Execution Control, My Work & Notifications
 // Enhanced with PMO Focus, Inbox, and Dashboard endpoints
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const MyWorkService = require('../services/myWorkService');
-const ExecutionMonitorService = require('../services/executionMonitorService');
-const FocusService = require('../services/focusService');
-const InboxService = require('../services/inboxService');
-const verifyToken = require('../middleware/authMiddleware');
+const MyWorkService = import('myWorkService.js');
+const ExecutionMonitorService = import('executionMonitorService.js');
+const FocusService = import('focusService.js');
+const InboxService = import('inboxService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 
 // GET /api/my-work
 router.get('/', verifyToken, async (req, res) => {
@@ -446,7 +446,8 @@ router.get('/workload', verifyToken, async (req, res) => {
 router.get('/stats', verifyToken, async (req, res) => {
     try {
         const { period } = req.query; // 'week', 'month', 'quarter'
-        const db = require('../database');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
         
         // Calculate date range based on period
         const now = new Date();
@@ -589,7 +590,8 @@ router.get('/stats', verifyToken, async (req, res) => {
 router.get('/team-workload', verifyToken, async (req, res) => {
     try {
         const { projectId } = req.query;
-        const db = require('../database');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
         
         // Get team members and their task counts
         const teamData = await new Promise((resolve, reject) => {
@@ -655,4 +657,4 @@ router.get('/team-workload', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

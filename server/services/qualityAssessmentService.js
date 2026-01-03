@@ -10,8 +10,8 @@
  * - PRINCE2 - Quality Theme
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../db');
+import db from '../db.js';
+import { v4 as uuidv4 } from 'uuid';
 
 const QualityAssessmentService = {
     // ============================================
@@ -842,7 +842,9 @@ const QualityAssessmentService = {
     }
 };
 
-module.exports = QualityAssessmentService;
+export default QualityAssessmentService;
+
+
 
 
 

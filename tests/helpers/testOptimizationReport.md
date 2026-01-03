@@ -100,3 +100,5 @@
 - Można używać starych i nowych helpers równolegle
 - Optymalizacje są opcjonalne - istniejące testy działają bez zmian
 
+
+

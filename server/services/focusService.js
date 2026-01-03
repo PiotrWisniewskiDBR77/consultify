@@ -9,9 +9,11 @@
  * - Max 5 tasks enforcement
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const BaseService = require('./BaseService');
+import db from '../database.js';
+import BaseService from './BaseService.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 const MAX_FOCUS_TASKS = 5;
 
@@ -378,7 +380,7 @@ const FocusService = Object.assign({}, BaseService, {
     }
 });
 
-module.exports = FocusService;
+export default FocusService;
 
 
 

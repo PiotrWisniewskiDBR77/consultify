@@ -34,3 +34,5 @@ CREATE INDEX IF NOT EXISTS idx_secret_audit_action ON secret_rotation_audit (act
 CREATE INDEX IF NOT EXISTS idx_secret_audit_created ON secret_rotation_audit (created_at);
 
 
+
+

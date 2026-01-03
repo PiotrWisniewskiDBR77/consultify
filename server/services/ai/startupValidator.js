@@ -268,7 +268,7 @@ async function testCohere(apiKey, endpoint) {
 
 async function testZAI(apiKey, model) {
     // z.ai requires JWT signing
-    const jwt = require('jsonwebtoken');
+    import jwt from 'jsonwebtoken';
     const [id, secret] = apiKey.split('.');
 
     if (!id || !secret) {
@@ -587,13 +587,15 @@ async function testSingleProvider(providerId) {
     return testProviderConnection(config);
 }
 
-module.exports = {
+export default {
     validateOnStartup,
     testProviderConnection,
     testSingleProvider,
     generateQuickHealthReport,
     HEALTH_CHECK_TIMEOUT
 };
+
+
 
 
 

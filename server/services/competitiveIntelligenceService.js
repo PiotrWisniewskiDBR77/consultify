@@ -9,8 +9,10 @@
  * - Benchmark comparisons
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Trend categories
 const TREND_CATEGORIES = {
@@ -470,7 +472,9 @@ const CompetitiveIntelligenceService = {
     }
 };
 
-module.exports = CompetitiveIntelligenceService;
+export default CompetitiveIntelligenceService;
+
+
 
 
 

@@ -4,11 +4,12 @@
  * Routes for managing Risks, Assumptions, Issues, and Dependencies
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const verifyToken = require('../middleware/authMiddleware');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
+import verifyToken from '../middleware/authMiddleware.js';
 const { asyncHandler } = require('../utils/errorHandler');
 const queryHelpers = require('../utils/queryHelpers');
 
@@ -290,7 +291,7 @@ router.get('/summary', asyncHandler(async (req, res) => {
     }
 }));
 
-module.exports = router;
+export default router;
 
 
 

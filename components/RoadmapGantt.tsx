@@ -162,7 +162,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
         currentStart.setMonth(currentStart.getMonth() + monthsMoved);
         currentEnd.setMonth(currentEnd.getMonth() + monthsMoved);
 
-        onUpdateInitiative({
+        onUpdateInitiative({...(init as any),
             ...init,
             plannedStartDate: currentStart.toISOString(),
             plannedEndDate: currentEnd.toISOString()
@@ -187,7 +187,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
             if (currentEnd <= currentStart) return;
         }
 
-        onUpdateInitiative({
+        onUpdateInitiative({...(init as any),
             ...init,
             plannedStartDate: currentStart.toISOString(),
             plannedEndDate: currentEnd.toISOString()
@@ -348,7 +348,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                                 {/* Info Column */}
                                 <div 
                                     className="w-72 min-w-[288px] p-3 text-sm border-r border-slate-200 dark:border-white/5 z-10 bg-inherit relative shrink-0 cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5"
-                                    onClick={() => onInitiativeClick?.(init)}
+                                    onClick={() => onInitiativeClick?.(init as FullInitiative)}
                                 >
                                     <div className="flex items-center gap-2">
                                         <div className={`w-2 h-2 rounded-full ${barColor}`} />

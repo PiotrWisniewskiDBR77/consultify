@@ -33,3 +33,5 @@ describe('ActivityService', () => {
         expect(typeof ActivityService.getRecent).toBe('function');
     });
 });
+
+

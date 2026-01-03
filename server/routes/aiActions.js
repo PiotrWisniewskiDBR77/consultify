@@ -5,10 +5,10 @@
  * Part of the Harvard-Level Co-Thinker AI System
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { actionExecutor, ACTION_TYPES } = require('../services/ai/actionExecutor');
-const { aiLogger } = require('../services/ai/logger');
+const { actionExecutor, ACTION_TYPES } = import('ai/actionExecutor.js');
+const { aiLogger } = import('ai/logger.js');
 
 // Middleware to extract user context
 const getUserContext = (req) => ({
@@ -145,5 +145,5 @@ router.get('/types', (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;
 

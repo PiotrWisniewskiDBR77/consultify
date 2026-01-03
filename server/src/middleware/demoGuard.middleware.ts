@@ -6,8 +6,8 @@
  * Blocks state-changing methods (POST, PUT, DELETE, PATCH) unless explicitly allowed.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import type { AuthRequest } from './auth.middleware';
+import { Response, NextFunction } from 'express';
+import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
 // TYPES
@@ -116,4 +116,6 @@ export const demoGuard = (
         isDemoRestriction: true
     });
 };
+
+
 

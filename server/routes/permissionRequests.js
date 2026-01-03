@@ -10,12 +10,13 @@
  * Admins can approve/reject requests with notifications.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const verifyToken = require('../middleware/authMiddleware');
-const NotificationService = require('../services/notificationService');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
+import verifyToken from '../middleware/authMiddleware.js';
+const NotificationService = import('notificationService.js');
 const auditLogger = require('../utils/auditLogger');
 
 // Request type definitions
@@ -588,7 +589,9 @@ router.get('/stats', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

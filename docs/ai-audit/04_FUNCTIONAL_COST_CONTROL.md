@@ -128,3 +128,5 @@ const allowed = remaining >= estimatedCost || mostRestrictive.auto_downgrade ===
 **Następny krok:** Task 4.3 - Memory Management Audit
 
 
+
+

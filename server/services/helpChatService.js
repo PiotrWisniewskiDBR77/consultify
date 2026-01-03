@@ -5,8 +5,8 @@
  * to answer user questions.
  */
 
-const { OpenAI } = require('openai');
-const db = require('../database');
+import db from '../database.js';
+import { OpenAI } from 'openai';
 
 // Lazy initialize OpenAI client
 let openai = null;
@@ -266,7 +266,7 @@ async function logInteraction(userId, sessionId, message, response) {
     }
 }
 
-module.exports = {
+export default {
     processMessage,
     logInteraction,
     findRelevantContent,

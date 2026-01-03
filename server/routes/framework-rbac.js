@@ -4,10 +4,10 @@
  * API endpoints for framework-specific role-based access control.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authenticateToken = require('../middleware/authMiddleware');
-const { FrameworkRBACService, FRAMEWORK_ROLES } = require('../services/frameworkRBACService');
+import authenticateToken from '../middleware/authMiddleware.js';
+const { FrameworkRBACService, FRAMEWORK_ROLES } = import('frameworkRBACService.js');
 
 /**
  * GET /api/framework-rbac/permissions
@@ -167,7 +167,9 @@ router.post('/validate-transition', authenticateToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

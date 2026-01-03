@@ -195,10 +195,11 @@ export async function addMember(params: AddMemberParams): Promise<AddMemberResul
     const id = uuidv4();
 
     try {
-        await DbPromise.run(
+        const result = await DbPromise.run(
             `INSERT INTO organization_members (id, organization_id, user_id, role, status, invited_by_user_id)
              VALUES (?, ?, ?, ?, 'ACTIVE', ?)`,
-            [id, organizationId, userId, role, invitedBy || null]
+            [id, organizationId, userId, role, invitedBy || null],
+            { fallback: false }
         );
 
         return { id, organizationId, userId, role };

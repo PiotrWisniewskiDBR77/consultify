@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // GET Settings
 router.get('/', (req, res) => {
@@ -82,8 +83,8 @@ router.post('/notifications', (req, res) => {
 // STEP 16: USER NOTIFICATION PREFERENCES (Workflow Events)
 // ==========================================
 
-const auth = require('../middleware/authMiddleware');
-const NotificationOutboxService = require('../services/notificationOutboxService');
+import auth from '../middleware/authMiddleware.js';
+const NotificationOutboxService = import('notificationOutboxService.js');
 
 /**
  * @route GET /api/settings/workflow-notifications
@@ -176,7 +177,7 @@ router.get('/integrations', (req, res) => {
 // ADD/UPDATE Integration
 router.post('/integrations', (req, res) => {
     const { organizationId, provider, config } = req.body;
-    const { v4: uuidv4 } = require('uuid');
+    import { v4 as uuidv4 } from 'uuid';
 
     if (!organizationId || !provider) return res.status(400).json({ error: 'Org ID and Provider required' });
 
@@ -210,7 +211,7 @@ router.delete('/integrations/:id', (req, res) => {
 // INTEGRATION ANALYTICS & MONITORING
 // ==========================================
 
-const IntegrationAnalyticsService = require('../services/integrationAnalyticsService');
+const IntegrationAnalyticsService = import('integrationAnalyticsService.js');
 
 // GET Integration Analytics - aggregated stats
 router.get('/integrations/analytics', auth, async (req, res) => {
@@ -392,7 +393,7 @@ router.put('/user/api-keys/:id/rotate', auth, async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
-        const { v4: uuidv4 } = require('uuid');
+        import { v4 as uuidv4 } from 'uuid';
         const crypto = require('crypto');
 
         // Verify key belongs to user
@@ -708,7 +709,7 @@ router.put('/preferences/:category', auth, async (req, res) => {
 // USER NOTIFICATION PREFERENCES V2 (User-Level)
 // ==========================================
 
-const UserNotificationPreferencesService = require('../services/userNotificationPreferencesService');
+const UserNotificationPreferencesService = import('userNotificationPreferencesService.js');
 
 /**
  * @route GET /api/settings/notifications/preferences
@@ -923,7 +924,7 @@ router.get('/watchers/check/:objectType/:objectId', auth, async (req, res) => {
 // PERSONAL API KEYS
 // ==========================================
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const crypto = require('crypto');
 
 /**
@@ -2528,4 +2529,4 @@ router.put('/preferences/appearance', auth, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

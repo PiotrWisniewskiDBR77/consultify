@@ -2,11 +2,13 @@
 // Step 6: Stabilization, Reporting & Economics
 // REFACTORED: Uses BaseService for common functionality
 
-const BaseService = require('./BaseService');
-const queryHelpers = require('../utils/queryHelpers');
-const db = require('../database');
-const StabilizationService = require('./stabilizationService');
-const EconomicsService = require('./economicsService');
+import BaseService from './BaseService.js';
+import queryHelpers from '../utils/queryHelpers.js';
+import db from '../database.js';
+import StabilizationService from './stabilizationService.js';
+import EconomicsService from './economicsService.js';
+
+
 
 const ReportingService = Object.assign({}, BaseService, {
     /**

@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { attachUserState, requireState, requirePhase, requirePermission, setDependencies, type AuthRequest } from '../../../src/middleware/userStateGuard.middleware.js';
+import { attachUserState, requireState, requirePhase, requirePermission, setDependencies, type AuthRequest } from '../../../../src/middleware/userStateGuard.middleware.js';
 
 describe('User State Guard Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -172,4 +172,6 @@ describe('User State Guard Middleware', () => {
         });
     });
 });
+
+
 

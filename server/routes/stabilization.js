@@ -1,10 +1,10 @@
 // Stabilization Routes - Phase 6 management
 // Step 6: Stabilization, Reporting & Economics
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const StabilizationService = require('../services/stabilizationService');
-const verifyToken = require('../middleware/authMiddleware');
+const StabilizationService = import('stabilizationService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 
 // GET /api/stabilization/:projectId/entry-criteria
 router.get('/:projectId/entry-criteria', verifyToken, async (req, res) => {
@@ -74,5 +74,5 @@ router.post('/:projectId/close', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

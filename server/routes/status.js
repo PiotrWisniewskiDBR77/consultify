@@ -4,9 +4,9 @@
  * Public endpoints for system status, incidents, and health checks.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const statusService = require('../services/statusService');
+const statusService = import('statusService.js');
 
 /**
  * GET /api/status
@@ -128,7 +128,9 @@ router.get('/health', (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

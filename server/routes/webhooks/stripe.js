@@ -3,7 +3,7 @@
  * Processes Stripe events for subscription lifecycle management
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 import billingService from '../../services/billingService.js';
 import db from '../../database.js';
@@ -231,7 +231,7 @@ function createNotification(orgId, type, title, message, priority = 'normal') {
             (err, users) => {
                 if (err) return reject(err);
 
-                const { v4: uuidv4 } = require('uuid');
+                import { v4 as uuidv4 } from 'uuid';
                 const stmt = db.prepare(
                     'INSERT INTO notifications (id, user_id, type, title, message, data) VALUES (?, ?, ?, ?, ?, ?)'
                 );
@@ -251,4 +251,4 @@ function createNotification(orgId, type, title, message, priority = 'normal') {
     });
 }
 
-module.exports = router;
+export default router;

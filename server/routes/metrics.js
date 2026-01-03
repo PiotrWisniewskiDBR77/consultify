@@ -14,17 +14,18 @@
  * @module routes/metrics
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 import MetricsCollector from '../services/metricsCollector.js';
-const MetricsAggregator = require('../services/metricsAggregator');
-const verifyToken = require('../middleware/authMiddleware');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
-const seatManagementService = require('../services/seatManagementService');
+const MetricsAggregator = import('metricsAggregator.js');
+import verifyToken from '../middleware/authMiddleware.js';
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
+const seatManagementService = import('seatManagementService.js');
 import payAsYouGoService from '../services/payAsYouGoService.js';
 import budgetManagementService from '../services/budgetManagementService.js';
-const usageService = require('../services/usageService');
-const db = require('../database');
+const usageService = import('usageService.js');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // ==========================================
 // SUPERADMIN ENDPOINTS (Global Metrics)
@@ -592,7 +593,7 @@ router.get('/org/ai-analytics', verifyToken, async (req, res) => {
         let successRate = 0;
         let avgResponseTime = 0;
         try {
-            const aiAnalyticsService = require('../services/aiAnalyticsService');
+            const aiAnalyticsService = import('aiAnalyticsService.js');
             const analytics = await aiAnalyticsService.getDashboardData(organizationId);
             successRate = analytics?.actions?.success_rate || 0;
             // Estimate response time (would need actual timing data)
@@ -650,4 +651,4 @@ router.get('/org/events', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

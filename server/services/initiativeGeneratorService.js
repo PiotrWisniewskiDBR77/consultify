@@ -5,10 +5,10 @@
  * Converts multi-source assessment data (DRD, Lean, SIRI/ADMA) into actionable initiatives.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const RapidLeanService = require('./rapidLeanService');
-const ExternalAssessmentService = require('./externalAssessmentService');
+import db from '../database.js';
+import RapidLeanService from './rapidLeanService.js';
+import ExternalAssessmentService from './externalAssessmentService.js';
+import { v4 as uuidv4 } from 'uuid';
 
 class InitiativeGeneratorService {
     /**
@@ -1506,4 +1506,4 @@ class InitiativeGeneratorService {
     }
 }
 
-module.exports = InitiativeGeneratorService;
+export default InitiativeGeneratorService;

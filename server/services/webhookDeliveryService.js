@@ -1,7 +1,39 @@
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
-const axios = require('axios');
+// Dependency injection for testing
+import axios from 'axios';
+
+
+const deps = {
+    _db: null,
+    _uuidv4: null,
+    _crypto: null,
+
+    get db() { return this._db; },
+    set db(val) { this._db = val; },
+
+    get uuidv4() { return this._uuidv4; },
+    set uuidv4(val) { this._uuidv4 = val; },
+
+    get crypto() { return this._crypto; },
+    set crypto(val) { this._crypto = val; }
+};
+
+/**
+ * Initialize dependencies lazily
+ */
+async function initDeps() {
+    if (!deps._db) {
+        const { default: db } = await import('../database.js');
+        deps._db = db;
+    }
+    if (!deps._uuidv4) {
+        const { v4 } = await import('uuid');
+        deps._uuidv4 = v4;
+    }
+    if (!deps._crypto) {
+        const crypto = await import('crypto');
+        deps._crypto = crypto.default;
+    }
+}
 
 class WebhookDeliveryService {
 
@@ -321,4 +353,5 @@ class WebhookDeliveryService {
     }
 }
 
-module.exports = new WebhookDeliveryService();
+const webhookDeliveryServiceInstance = new WebhookDeliveryService();
+export default webhookDeliveryServiceInstance;

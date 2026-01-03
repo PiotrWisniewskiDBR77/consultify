@@ -223,3 +223,5 @@ Po naprawie błędów z ETAPU 11.1:
 - Niektóre testy wymagają aktualizacji po migracji do TypeScript
 - Priorytet 1 (ES Modules) powinien być wykonany najpierw, ponieważ naprawi większość problemów
 
+
+

@@ -6,9 +6,11 @@
  * All external queries are logged for audit.
  */
 
-const db = require('../database');
-const WebSearchService = require('./webSearchService');
-const { v4: uuidv4 } = require('uuid');
+import db from '../database.js';
+import WebSearchService from './webSearchService.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Supported external data providers
 const EXTERNAL_PROVIDERS = {
@@ -381,4 +383,4 @@ const AIExternalDataControl = {
     }
 };
 
-module.exports = AIExternalDataControl;
+export default AIExternalDataControl;

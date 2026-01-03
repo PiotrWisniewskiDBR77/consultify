@@ -70,5 +70,5 @@ const MeetingExecutor = {
     }
 };
 
-module.exports = MeetingExecutor;
+export default MeetingExecutor;
 

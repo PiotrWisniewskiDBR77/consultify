@@ -1,11 +1,11 @@
 // Scenarios Routes - What-if analysis
 // Step 4: Roadmap, Sequencing & Capacity
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const ScenarioService = require('../services/scenarioService');
-const CriticalPathService = require('../services/criticalPathService');
-const verifyToken = require('../middleware/authMiddleware');
+const ScenarioService = import('scenarioService.js');
+const CriticalPathService = import('criticalPathService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 
 // POST /api/scenarios/:projectId
 router.post('/:projectId', verifyToken, async (req, res) => {
@@ -81,4 +81,4 @@ router.get('/:projectId/conflicts', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

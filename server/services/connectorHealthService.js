@@ -5,9 +5,11 @@
  * Health monitoring for connector integrations.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const connectorService = require('./connectorService');
+import db from '../database.js';
+import connectorService from './connectorService.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 const ConnectorHealthService = {
     /**
@@ -197,4 +199,4 @@ const ConnectorHealthService = {
     }
 };
 
-module.exports = ConnectorHealthService;
+export default ConnectorHealthService;

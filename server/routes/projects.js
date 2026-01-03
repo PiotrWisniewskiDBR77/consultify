@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const verifyToken = require('../middleware/authMiddleware');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
+import verifyToken from '../middleware/authMiddleware.js';
 const { asyncHandler } = require('../utils/errorHandler');
 const queryHelpers = require('../utils/queryHelpers');
 
@@ -231,8 +232,8 @@ router.put('/:id/notification-settings', asyncHandler(async (req, res) => {
 // AI Roles Model: Project AI Governance API
 // ==========================================
 
-const AIRoleGuard = require('../services/aiRoleGuard');
-const AIAuditLogger = require('../services/aiAuditLogger');
+const AIRoleGuard = import('aiRoleGuard.js');
+const AIAuditLogger = import('aiAuditLogger.js');
 
 // GET AI Role for a project
 // REFACTORED: Uses asyncHandler
@@ -308,7 +309,7 @@ router.put('/:id/ai-role', asyncHandler(async (req, res) => {
 // Regulatory Mode: Strict Compliance API
 // ==========================================
 
-const RegulatoryModeGuard = require('../services/regulatoryModeGuard');
+const RegulatoryModeGuard = import('regulatoryModeGuard.js');
 
 // GET Regulatory Mode status for a project
 // REFACTORED: Uses asyncHandler
@@ -384,4 +385,4 @@ router.put('/:id/regulatory-mode', asyncHandler(async (req, res) => {
     });
 }));
 
-module.exports = router;
+export default router;

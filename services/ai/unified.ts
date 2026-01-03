@@ -12,7 +12,7 @@ export const UnifiedAI = {
     ): Promise<string> => {
         // ALWAYS route through backend API ('system')
         // This ensures the AIPipeline (Server) handles RAG, Memory, Thinking, and Artifacts.
-        return Api.chatWithAI(message, history, systemInstruction, roleName, {
+        return (Api as any).chatWithAI(message, history, systemInstruction, roleName, {
             model: config?.modelId,
             temperature: 0.7
         });
@@ -29,7 +29,7 @@ export const UnifiedAI = {
     ): Promise<void> => {
         // ALWAYS route through backend API ('system')
         // This ensures the AIPipeline (Server) handles RAG, Memory, Thinking, and Artifacts.
-        return Api.chatWithAIStream(
+        return (Api as any).chatWithAIStream(
             message,
             history,
             onChunk,

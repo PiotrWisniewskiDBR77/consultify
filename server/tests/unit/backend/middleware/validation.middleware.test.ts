@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { validateBody, validateQuery, validateParams } from '../../../src/middleware/validation.middleware.js';
+import { validateBody, validateQuery, validateParams } from '../../../../src/middleware/validation.middleware.js';
 import { z } from 'zod';
 
 describe('Validation Middleware', () => {
@@ -99,8 +99,8 @@ describe('Validation Middleware', () => {
                 value: z.string(),
             });
             // Mock safeParse to throw
-            const originalSafeParse = z.ZodSchema.prototype.safeParse;
-            z.ZodSchema.prototype.safeParse = vi.fn().mockImplementation(() => {
+            const originalSafeParse = z.ZodType.prototype.safeParse;
+            z.ZodType.prototype.safeParse = vi.fn().mockImplementation(() => {
                 throw new Error('Parse error');
             });
 
@@ -110,7 +110,7 @@ describe('Validation Middleware', () => {
             expect(mockRes.status).toHaveBeenCalledWith(500);
             expect(mockRes.json).toHaveBeenCalledWith({ error: 'Internal Server Error during validation' });
 
-            z.ZodSchema.prototype.safeParse = originalSafeParse;
+            z.ZodType.prototype.safeParse = originalSafeParse;
         });
     });
 
@@ -153,8 +153,8 @@ describe('Validation Middleware', () => {
             const InvalidSchema = z.object({
                 value: z.string(),
             });
-            const originalSafeParse = z.ZodSchema.prototype.safeParse;
-            z.ZodSchema.prototype.safeParse = vi.fn().mockImplementation(() => {
+            const originalSafeParse = z.ZodType.prototype.safeParse;
+            z.ZodType.prototype.safeParse = vi.fn().mockImplementation(() => {
                 throw new Error('Parse error');
             });
 
@@ -163,7 +163,7 @@ describe('Validation Middleware', () => {
 
             expect(mockRes.status).toHaveBeenCalledWith(500);
 
-            z.ZodSchema.prototype.safeParse = originalSafeParse;
+            z.ZodType.prototype.safeParse = originalSafeParse;
         });
     });
 
@@ -174,7 +174,7 @@ describe('Validation Middleware', () => {
         });
 
         it('should pass validation for valid params', () => {
-            mockReq.params = { 
+            mockReq.params = {
                 id: '123e4567-e89b-12d3-a456-426614174000',
                 slug: 'test-slug',
             };
@@ -197,8 +197,8 @@ describe('Validation Middleware', () => {
             const InvalidSchema = z.object({
                 value: z.string(),
             });
-            const originalSafeParse = z.ZodSchema.prototype.safeParse;
-            z.ZodSchema.prototype.safeParse = vi.fn().mockImplementation(() => {
+            const originalSafeParse = z.ZodType.prototype.safeParse;
+            z.ZodType.prototype.safeParse = vi.fn().mockImplementation(() => {
                 throw new Error('Parse error');
             });
 
@@ -207,8 +207,7 @@ describe('Validation Middleware', () => {
 
             expect(mockRes.status).toHaveBeenCalledWith(500);
 
-            z.ZodSchema.prototype.safeParse = originalSafeParse;
+            z.ZodType.prototype.safeParse = originalSafeParse;
         });
     });
 });
-

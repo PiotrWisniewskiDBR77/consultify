@@ -21,10 +21,10 @@
  * - DELETE /tokens/:id
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const scimService = require('../services/scimService');
-const verifyToken = require('../middleware/authMiddleware');
+const scimService = import('scimService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
 
 // ====== SCIM TOKEN AUTHENTICATION MIDDLEWARE ======
@@ -498,5 +498,5 @@ router.get('/admin/sync-logs', verifyToken, requireRole(['super_admin', 'admin']
     }
 });
 
-module.exports = router;
+export default router;
 

@@ -1,11 +1,11 @@
 // Reports Routes - Executive reporting
 // Step 6: Stabilization, Reporting & Economics
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const ReportingService = require('../services/reportingService');
-const NarrativeService = require('../services/narrativeService');
-const verifyToken = require('../middleware/authMiddleware');
+const ReportingService = import('reportingService.js');
+const NarrativeService = import('narrativeService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 const { asyncHandler } = require('../utils/errorHandler');
 
 // GET /api/reports/executive-overview
@@ -55,8 +55,8 @@ router.get('/narrative/progress/:projectId', verifyToken, asyncHandler(async (re
 
 // ==================== ORGANIZATION & INITIATIVE REPORTS ====================
 
-const ShareLinkService = require('../services/shareLinkService');
-const PermissionService = require('../services/permissionService');
+const ShareLinkService = import('shareLinkService.js');
+const PermissionService = import('permissionService.js');
 
 // GET /api/reports/org-overview
 // REFACTORED: Uses asyncHandler
@@ -260,6 +260,6 @@ router.get('/export-status', verifyToken, asyncHandler(async (req, res) => {
     });
 }));
 
-module.exports = router;
+export default router;
 
 

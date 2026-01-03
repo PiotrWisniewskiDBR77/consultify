@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { validateInitiative, validateTask, validateInitiativeStatus, validateTaskStatus, setDependencies, type AuthRequest } from '../../../src/middleware/pmoValidation.middleware.js';
+import { validateInitiative, validateTask, validateInitiativeStatus, validateTaskStatus, setDependencies, type AuthRequest } from '../../../../src/middleware/pmoValidation.middleware.js';
 
 describe('PMO Validation Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -167,4 +167,6 @@ describe('PMO Validation Middleware', () => {
         });
     });
 });
+
+
 

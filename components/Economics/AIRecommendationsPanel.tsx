@@ -6,8 +6,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    Sparkles, Zap, Target, ArrowRight, 
+import {
+    Sparkles, Zap, Target, ArrowRight,
     CheckCircle, XCircle, Loader2, RefreshCw,
     TrendingUp, Clock, Award, Lightbulb,
     ChevronDown, ChevronUp
@@ -59,9 +59,9 @@ const IMPACT_CONFIG = {
     high: { label: 'Wysoki', color: 'emerald' }
 };
 
-export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({ 
+export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
     analysis,
-    onCreateInitiative 
+    onCreateInitiative
 }) => {
     const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -72,7 +72,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
     const generateRecommendations = useCallback(async () => {
         setIsGenerating(true);
         try {
-            const result = await Api.generateDigitizationRecommendations(analysis.id);
+            const result = await (Api as any).generateDigitizationRecommendations(analysis.id);
             setRecommendations(result.recommendations || []);
             toast.success('Rekomendacje wygenerowane');
         } catch (err: any) {
@@ -94,15 +94,15 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
 
     const handleAccept = async (rec: Recommendation) => {
         try {
-            await Api.updateRecommendationStatus(rec.id, 'accepted');
-            setRecommendations(prev => 
+            await (Api as any).updateRecommendationStatus(rec.id, 'accepted');
+            setRecommendations(prev =>
                 prev.map(r => r.id === rec.id ? { ...r, status: 'accepted' } : r)
             );
             toast.success('Rekomendacja zaakceptowana');
             onCreateInitiative?.(rec);
         } catch (err) {
             // Update locally anyway
-            setRecommendations(prev => 
+            setRecommendations(prev =>
                 prev.map(r => r.id === rec.id ? { ...r, status: 'accepted' } : r)
             );
         }
@@ -110,12 +110,12 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
 
     const handleReject = async (rec: Recommendation) => {
         try {
-            await Api.updateRecommendationStatus(rec.id, 'rejected');
-            setRecommendations(prev => 
+            await (Api as any).updateRecommendationStatus(rec.id, 'rejected');
+            setRecommendations(prev =>
                 prev.map(r => r.id === rec.id ? { ...r, status: 'rejected' } : r)
             );
         } catch (err) {
-            setRecommendations(prev => 
+            setRecommendations(prev =>
                 prev.map(r => r.id === rec.id ? { ...r, status: 'rejected' } : r)
             );
         }
@@ -205,32 +205,29 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                 <div className="flex gap-2 mt-4">
                     <button
                         onClick={() => setFilter('all')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                            filter === 'all'
-                                ? 'bg-white dark:bg-navy-700 text-purple-600 shadow-sm'
-                                : 'text-slate-500 hover:bg-white/50'
-                        }`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'all'
+                            ? 'bg-white dark:bg-navy-700 text-purple-600 shadow-sm'
+                            : 'text-slate-500 hover:bg-white/50'
+                            }`}
                     >
                         Wszystkie ({recommendations.length})
                     </button>
                     <button
                         onClick={() => setFilter('quick_wins')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
-                            filter === 'quick_wins'
-                                ? 'bg-white dark:bg-navy-700 text-amber-600 shadow-sm'
-                                : 'text-slate-500 hover:bg-white/50'
-                        }`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${filter === 'quick_wins'
+                            ? 'bg-white dark:bg-navy-700 text-amber-600 shadow-sm'
+                            : 'text-slate-500 hover:bg-white/50'
+                            }`}
                     >
                         <Lightbulb size={12} />
                         Quick Wins ({quickWinCount})
                     </button>
                     <button
                         onClick={() => setFilter('strategic')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
-                            filter === 'strategic'
-                                ? 'bg-white dark:bg-navy-700 text-emerald-600 shadow-sm'
-                                : 'text-slate-500 hover:bg-white/50'
-                        }`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${filter === 'strategic'
+                            ? 'bg-white dark:bg-navy-700 text-emerald-600 shadow-sm'
+                            : 'text-slate-500 hover:bg-white/50'
+                            }`}
                     >
                         <Target size={12} />
                         Strategiczne ({strategicCount})
@@ -246,7 +243,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                     const isExpanded = expandedId === rec.id;
 
                     return (
-                        <div 
+                        <div
                             key={rec.id}
                             className={`p-4 ${rec.status === 'rejected' ? 'opacity-50' : ''}`}
                         >
@@ -412,12 +409,12 @@ function generateLocalRecommendations(analysis: DigitizationAnalysis): Recommend
     // Find axes with gaps
     Object.entries(axisScores).forEach(([axisId, score]: [string, any]) => {
         const gap = (score.targetScore || 0) - (score.currentScore || 0);
-        
+
         if (gap > 0) {
             const axisTemplates = templates[axisId] || [];
-            
+
             axisTemplates.forEach((template, idx) => {
-                const priorityScore = Math.round(gap * 10 * 
+                const priorityScore = Math.round(gap * 10 *
                     (template.effort === 'low' ? 1.5 : template.effort === 'medium' ? 1 : 0.7) *
                     (template.impact === 'high' ? 1.5 : template.impact === 'medium' ? 1 : 0.5)
                 );
@@ -449,6 +446,8 @@ function generateLocalRecommendations(analysis: DigitizationAnalysis): Recommend
 }
 
 export default AIRecommendationsPanel;
+
+
 
 
 

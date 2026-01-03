@@ -505,7 +505,9 @@ Respond in JSON: { "response": string, "suggestedEdits": string[] }`;
     }
 }
 
-module.exports = new ReportContentGenerator();
+export default new ReportContentGenerator();
+
+
 
 
 

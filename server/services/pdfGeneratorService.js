@@ -1,5 +1,5 @@
-const fs = require('fs').promises;
-const path = require('path');
+import path from 'path';
+import { promises as fs } from 'fs';
 
 // Try to require puppeteer, fallback to PDFKit if not available
 let puppeteer;
@@ -1390,4 +1390,4 @@ PdfGeneratorService.generateMultiFrameworkPDF = async (reportData, options = {})
     }
 };
 
-module.exports = PdfGeneratorService;
+export default PdfGeneratorService;

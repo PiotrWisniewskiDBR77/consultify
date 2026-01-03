@@ -4,11 +4,11 @@
  * Endpoints for managing AI-generated drafts in the Draft-Review-Approve pattern.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
-const { draftService, DRAFT_TYPES } = require('../services/ai/draftService');
-const { aiLogger } = require('../services/ai/logger');
+import verifyToken from '../middleware/authMiddleware.js';
+const { draftService, DRAFT_TYPES } = import('ai/draftService.js');
+const { aiLogger } = import('ai/logger.js');
 
 // All routes require authentication
 router.use(verifyToken);
@@ -250,5 +250,5 @@ router.delete('/expired', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

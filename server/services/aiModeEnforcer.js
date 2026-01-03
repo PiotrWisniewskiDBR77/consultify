@@ -9,16 +9,16 @@
  *   const response = await AIModeEnforcer.chat(message, history, userId, phase);
  */
 
-const AIModeResolver = require('./aiModeResolver');
-const AiService = require('./aiService');
-const AiContextValidator = require('./aiContextValidator');
+import AIModeResolver from './aiModeResolver.js';
+import AiService from './aiService.js';
+import AiContextValidator from './aiContextValidator.js';
 
 // Lazy-loaded database
 let db = null;
 const getDb = () => {
     if (!db) {
         try {
-            db = require('../db/sqliteAsync');
+            db = getDatabase();
         } catch (e) {
             db = require('../database');
         }
@@ -222,4 +222,4 @@ const AIModeEnforcer = {
     }
 };
 
-module.exports = AIModeEnforcer;
+export default AIModeEnforcer;

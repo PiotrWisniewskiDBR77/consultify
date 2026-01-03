@@ -303,7 +303,7 @@ async function processResponse(response, context = {}) {
     };
 }
 
-module.exports = {
+export default {
     extractCitations,
     processResponse,
     extractAssessmentCitations,
@@ -312,6 +312,8 @@ module.exports = {
     extractReportCitations,
     generateActions
 };
+
+
 
 
 

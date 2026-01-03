@@ -4,11 +4,11 @@
  * API endpoints for API key management
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 import apiKeyService from '../services/apiKeyService.js';
-const authMiddleware = require('../middleware/authMiddleware');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
+import authMiddleware from '../middleware/authMiddleware.js';
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
 /**
  * GET /api/api-keys
@@ -97,7 +97,7 @@ router.get('/:id/usage', authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 
 
 

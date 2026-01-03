@@ -9,7 +9,9 @@
  * - SLA metrics
  */
 
-const defaultDb = require('../database');
+import defaultDb from '../database.js';
+
+
 
 const deps = {
     db: defaultDb

@@ -2,8 +2,10 @@
 // Critical Path Service - Dependency-aware sequencing
 // Step 4: Roadmap, Sequencing & Capacity
 
-let db = require('../database');
-const DependencyService = require('./dependencyService');
+import db from '../database.js';
+import DependencyService from './dependencyService.js';
+
+
 
 // Dependency injection container (for deterministic unit tests)
 const deps = {
@@ -246,4 +248,4 @@ const CriticalPathService = {
     _setDb: (mockDb) => { db = mockDb; }
 };
 
-module.exports = CriticalPathService;
+export default CriticalPathService;

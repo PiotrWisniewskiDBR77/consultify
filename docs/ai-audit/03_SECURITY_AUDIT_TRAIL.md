@@ -105,3 +105,5 @@ System implementuje **kompleksowy audit trail** z explainability:
 **Następny krok:** Faza 4 - Audyt Funkcjonalności
 
 
+
+

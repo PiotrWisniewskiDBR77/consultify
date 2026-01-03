@@ -351,4 +351,4 @@ Apply these learned patterns to improve response quality.`;
     }
 }
 
-module.exports = { PromptAssembler, ROLE_INSTRUCTIONS, FALLBACK_ROLES };
+export default { PromptAssembler, ROLE_INSTRUCTIONS, FALLBACK_ROLES };

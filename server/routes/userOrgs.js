@@ -3,10 +3,10 @@
  * Provides endpoint for fetching user's accessible organizations.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const orgContextMiddleware = require('../middleware/orgContextMiddleware');
-const authenticate = require('../middleware/authMiddleware');
+import orgContextMiddleware from '../middleware/orgContextMiddleware.js';
+import authenticate from '../middleware/authMiddleware.js';
 
 /**
  * GET /api/users/me/organizations
@@ -55,4 +55,4 @@ router.put('/me/current-org', authenticate, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

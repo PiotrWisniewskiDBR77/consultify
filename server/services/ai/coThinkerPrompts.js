@@ -240,7 +240,7 @@ function getFollowUpSuggestions(context = 'general') {
     return FOLLOW_UP_TEMPLATES[context] || FOLLOW_UP_TEMPLATES.general;
 }
 
-module.exports = {
+export default {
     CO_THINKER_PROMPT,
     GREETING_PROMPTS,
     CONTEXT_ENHANCEMENTS,
@@ -251,6 +251,8 @@ module.exports = {
     getQuickActionPrompt,
     getFollowUpSuggestions
 };
+
+
 
 
 

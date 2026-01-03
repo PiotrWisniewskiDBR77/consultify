@@ -349,4 +349,4 @@ const StatusMachine = {
     }
 };
 
-module.exports = StatusMachine;
+export default StatusMachine;

@@ -24,3 +24,5 @@ CREATE INDEX IF NOT EXISTS idx_partial_responses_user ON ai_partial_responses(us
 -- DELETE FROM ai_partial_responses WHERE updated_at < datetime('now', '-1 hour');
 
 
+
+

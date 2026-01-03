@@ -4,14 +4,14 @@
  */
 
 import type { Response, NextFunction } from 'express';
-import type { AuthenticatedRequest, AsyncHandler } from '../types';
+import type { AuthenticatedRequest, AsyncHandler } from '../types/index.js';
 
 /**
  * Wraps an async route handler to catch errors and pass them to Express error handler
  */
 export const asyncHandler = (fn: AsyncHandler) => {
-    return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
-        Promise.resolve(fn(req, res, next)).catch(next);
+    return (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void | Response> => {
+        return Promise.resolve(fn(req, res, next)).catch(next);
     };
 };
 
@@ -21,7 +21,7 @@ export const asyncHandler = (fn: AsyncHandler) => {
 export const createAsyncHandler = <T>(
     fn: (req: AuthenticatedRequest, res: Response) => Promise<T>
 ): AsyncHandler => {
-    return async (req, res, next) => {
+    return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
         try {
             const result = await fn(req, res);
             if (result !== undefined && !res.headersSent) {

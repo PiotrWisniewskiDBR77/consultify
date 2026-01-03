@@ -9,7 +9,9 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import type { AuthRequest } from './auth.middleware';
+import type { AuthRequest } from './auth.middleware.js';
+import UserStateMachine from '../../services/userStateMachine.js';
+import db from '../../db/sqliteAsync.js';
 
 // ==========================================
 // TYPES
@@ -49,24 +51,9 @@ interface Dependencies {
 // DEPENDENCIES (injectable for testing)
 // ==========================================
 
-let deps: Dependencies;
-
-const getDeps = (): Dependencies => {
-    if (!deps) {
-        const defaultUserStateMachine = await import('../../services/userStateMachine.js').then(m => m.default || m);
-        let defaultDb: Database | null = null;
-        try {
-            defaultDb = await import('../../db/sqliteAsync.js').then(m => m.default || m);
-        } catch (e) {
-            console.warn('userStateGuard: Database not available');
-        }
-        
-        deps = {
-            UserStateMachine: defaultUserStateMachine,
-            db: defaultDb,
-        };
-    }
-    return deps;
+let deps: Dependencies = {
+    UserStateMachine,
+    db: db as unknown as Database
 };
 
 // ==========================================
@@ -83,8 +70,8 @@ export async function attachUserState(
     next: NextFunction
 ): Promise<void> {
     try {
-        const { UserStateMachine, db } = getDeps();
-        
+        const { UserStateMachine, db } = deps;
+
         // Skip if no user
         if (!req.user?.id) {
             req.userState = UserStateMachine.USER_STATES.ANON;
@@ -120,7 +107,7 @@ export async function attachUserState(
         next();
     } catch (error) {
         console.error('attachUserState error:', error);
-        const { UserStateMachine } = getDeps();
+        const { UserStateMachine } = deps;
         // Fail closed - treat as ANON
         req.userState = UserStateMachine.USER_STATES.ANON;
         req.currentPhase = UserStateMachine.PHASES.A;
@@ -195,8 +182,8 @@ export function requirePhase(allowedPhases: string | string[]) {
  */
 export function requirePermission(permission: string) {
     return (req: UserStateRequest, res: Response, next: NextFunction): void => {
-        const { UserStateMachine } = getDeps();
-        
+        const { UserStateMachine } = deps;
+
         const hasPermission = UserStateMachine.hasPermission(req.userState || '', permission);
 
         if (!hasPermission) {
@@ -227,8 +214,8 @@ export async function transitionState(
     toState: string,
     context: Record<string, unknown> = {}
 ): Promise<{ success: boolean; error?: string }> {
-    const { UserStateMachine, db } = getDeps();
-    
+    const { UserStateMachine, db } = deps;
+
     // Validate transition
     const validation = UserStateMachine.validateTransition(fromState, toState, context);
     if (!validation.valid) {
@@ -256,7 +243,7 @@ export async function transitionState(
         // Log to audit (if auditService available)
         try {
             const AuditService = await import('../../services/auditService.js').then(m => m.default || m);
-            await AuditService.log({
+            await (AuditService as any).log({
                 eventType: 'USER_STATE_TRANSITION',
                 userId,
                 metadata: {
@@ -282,22 +269,16 @@ export async function transitionState(
 // EXPORTS
 // ==========================================
 
-// Re-export constants for convenience
-export const USER_STATES = (() => {
-    const { UserStateMachine } = getDeps();
-    return UserStateMachine.USER_STATES;
-})();
-
-export const PHASES = (() => {
-    const { UserStateMachine } = getDeps();
-    return UserStateMachine.PHASES;
-})();
+export const USER_STATES = UserStateMachine.USER_STATES;
+export const PHASES = UserStateMachine.PHASES;
 
 // ==========================================
 // DEPENDENCY INJECTION (for testing)
 // ==========================================
 
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
-    deps = { ...getDeps(), ...newDeps };
+    deps = { ...deps, ...newDeps };
 };
+
+
 

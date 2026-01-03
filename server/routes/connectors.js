@@ -5,12 +5,12 @@
  * REST API for connector management.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
+import verifyToken from '../middleware/authMiddleware.js';
 const { verifyAdmin } = require('../middleware/adminMiddleware');
-const connectorService = require('../services/connectorService');
-const connectorHealthService = require('../services/connectorHealthService');
+const connectorService = import('connectorService.js');
+const connectorHealthService = import('connectorHealthService.js');
 
 /**
  * Permission check middleware for CONNECTORS_MANAGE.
@@ -210,4 +210,4 @@ router.get('/health', verifyToken, verifyAdmin, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

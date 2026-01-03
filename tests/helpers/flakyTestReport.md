@@ -102,3 +102,5 @@
 - Nowe narzędzia mogą być używane opcjonalnie
 - Istniejące testy działają bez zmian (z poprawkami)
 
+
+

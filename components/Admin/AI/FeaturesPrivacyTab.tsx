@@ -31,33 +31,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAppStore } from '../../../store/useAppStore';
+import type { SystemPrompt, SystemPromptContextConfig } from '../../../types/domain/ai';
 import { OrgAISettings } from '../../../types';
 import {
     SettingsCard,
     SettingsToggle
 } from '../../AISettings';
 import { Api } from '../../../services/api';
-
-interface SystemPrompt {
-    id: string;
-    key: string;
-    name: string;
-    description?: string;
-    content: string;
-    category?: 'default' | 'persona' | 'focus_mode' | 'custom';
-    isActive?: boolean;
-    version?: number;
-    updated_at?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    context_config?: {
-        include_project_context?: boolean;
-        include_user_context?: boolean;
-        include_org_context?: boolean;
-        max_context_tokens?: number;
-    };
-    variables?: Array<{ name: string; description?: string; defaultValue?: string; required: boolean }>;
-}
 
 // Data retention options
 const RETENTION_OPTIONS = [
@@ -88,6 +68,11 @@ export const FeaturesPrivacyTab: React.FC = () => {
     const [dataRetention, setDataRetention] = useState('30d');
     const [aiLearningEnabled, setAILearningEnabled] = useState(false);
     const [externalDataEnabled, setExternalDataEnabled] = useState(false);
+
+    const formatPromptDate = (prompt: SystemPrompt) => {
+        const timestamp = prompt.updated_at ?? prompt.updatedAt;
+        return timestamp ? new Date(timestamp).toLocaleDateString() : '—';
+    };
 
     useEffect(() => {
         if (currentOrganization?.id) {
@@ -573,7 +558,7 @@ Example:
                                 <div className="flex justify-between items-center mb-2">
                                     <h3 className="font-bold text-white">{p.key}</h3>
                                     <span className="text-xs text-slate-400">
-                                        {new Date(p.updated_at).toLocaleDateString()}
+                                        {formatPromptDate(p)}
                                     </span>
                                 </div>
                                 <p className="text-xs text-slate-400 line-clamp-2">{p.description}</p>
@@ -617,8 +602,8 @@ Example:
                                                 { id: 'include_kb_articles', label: 'Knowledge Base' },
                                                 { id: 'include_task_history', label: 'Task History' }
                                             ].map(opt => {
-                                                const config = typeof editingPrompt.context_config === 'string'
-                                                    ? JSON.parse(editingPrompt.context_config || '{}')
+                                                const config: SystemPromptContextConfig = typeof editingPrompt.context_config === 'string'
+                                                    ? (JSON.parse(editingPrompt.context_config || '{}') as SystemPromptContextConfig)
                                                     : (editingPrompt.context_config || {});
 
                                                 return (
@@ -627,7 +612,7 @@ Example:
                                                             type="checkbox"
                                                             checked={!!config[opt.id]}
                                                             onChange={e => {
-                                                                const newConfig = { ...config, [opt.id]: e.target.checked };
+                                                                const newConfig: SystemPromptContextConfig = { ...config, [opt.id]: e.target.checked };
                                                                 setEditingPrompt({ ...editingPrompt, context_config: newConfig });
                                                             }}
                                                             className="w-4 h-4 rounded border-slate-600 text-violet-500 focus:ring-violet-500 bg-slate-700"
@@ -672,4 +657,3 @@ Example:
 };
 
 export default FeaturesPrivacyTab;
-

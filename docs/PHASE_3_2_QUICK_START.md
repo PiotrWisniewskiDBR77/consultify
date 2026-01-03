@@ -77,3 +77,5 @@ Zobacz sekcję 3 w `docs/PHASE_3_2_IMPLEMENTATION_PLAN.md` dla pełnego template
 - Kategoryzacja: `node scripts/categorize-wrappers.cjs`
 - Weryfikacja: `node scripts/verify-migration.cjs <file>`
 
+
+

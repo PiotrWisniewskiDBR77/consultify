@@ -77,7 +77,7 @@ function validateOrFallback(data, schema, fallback) {
     }
 }
 
-module.exports = {
+export default {
     GapAnalysisSchema,
     EvidenceSchema,
     InitiativeListSchema,

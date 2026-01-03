@@ -3,10 +3,11 @@
  * Handles audit log of settings changes
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const requireAuth = require('../middleware/authMiddleware');
-const db = require('../database');
+import requireAuth from '../middleware/authMiddleware.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 router.use(requireAuth);
 
@@ -93,7 +94,7 @@ router.post('/:id/restore', async (req, res) => {
 
         // In production, apply the old value to the appropriate settings table
         // And log the restore action
-        const { v4: uuidv4 } = require('uuid');
+        import { v4 as uuidv4 } from 'uuid';
         await new Promise((resolve, reject) => {
             db.run(
                 `INSERT INTO user_settings_history (
@@ -131,7 +132,7 @@ router.post('/:id/restore', async (req, res) => {
  * Utility function to log settings changes (exported for use in other routes)
  */
 async function logSettingsChange(userId, category, setting, action, oldValue, newValue, device, ipAddress) {
-    const { v4: uuidv4 } = require('uuid');
+    import { v4 as uuidv4 } from 'uuid';
     return new Promise((resolve, reject) => {
         db.run(
             `INSERT INTO user_settings_history (
@@ -149,7 +150,9 @@ async function logSettingsChange(userId, category, setting, action, oldValue, ne
 
 router.logSettingsChange = logSettingsChange;
 
-module.exports = router;
+export default router;
+
+
 
 
 

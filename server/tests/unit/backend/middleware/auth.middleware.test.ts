@@ -6,16 +6,16 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { 
-    verifyToken, 
-    optionalAuth, 
-    requireRole, 
-    requireSuperAdmin, 
-    requireOrganization, 
+import {
+    verifyToken,
+    optionalAuth,
+    requireRole,
+    requireSuperAdmin,
+    requireOrganization,
     requirePermission,
     setDependencies,
-    type AuthRequest 
-} from '../../../src/middleware/auth.middleware.js';
+    type AuthRequest
+} from '../../../../src/middleware/auth.middleware.js';
 import jwt from 'jsonwebtoken';
 
 describe('Auth Middleware', () => {
@@ -23,9 +23,7 @@ describe('Auth Middleware', () => {
     let mockRes: Partial<Response>;
     let mockNext: NextFunction;
     let mockJwt: typeof jwt;
-    let mockDb: {
-        get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
-    };
+    let mockDbGet: ReturnType<typeof vi.fn>;
     let mockPermissionService: {
         can: (user: unknown, capability: string, context?: unknown) => boolean;
     };
@@ -41,9 +39,7 @@ describe('Auth Middleware', () => {
             verify: vi.fn(),
         } as unknown as typeof jwt;
 
-        mockDb = {
-            get: vi.fn((_sql, _params, callback) => callback(null, null)),
-        };
+        mockDbGet = vi.fn().mockResolvedValue(null);
 
         mockPermissionService = {
             can: vi.fn().mockReturnValue(true),
@@ -52,7 +48,7 @@ describe('Auth Middleware', () => {
         setDependencies({
             jwt: mockJwt,
             config: { JWT_SECRET: 'test-secret' },
-            db: mockDb,
+            dbGet: mockDbGet as any,
             PermissionService: mockPermissionService,
         });
 
@@ -64,60 +60,60 @@ describe('Auth Middleware', () => {
     });
 
     describe('verifyToken', () => {
-        it('should return 403 when no token provided', () => {
-            verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+        it('should return 403 when no token provided', async () => {
+            await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockRes.status).toHaveBeenCalledWith(403);
             expect(mockRes.json).toHaveBeenCalledWith({ error: 'No token provided' });
             expect(mockNext).not.toHaveBeenCalled();
         });
 
-        it('should extract token from Authorization header with Bearer prefix', () => {
+        it('should extract token from Authorization header with Bearer prefix', async () => {
             mockReq.headers = { authorization: 'Bearer test-token' };
             (mockJwt.verify as unknown as ReturnType<typeof vi.fn>).mockImplementation((_token, _secret, callback) => {
-                callback(null, { id: 'user-123', role: 'user' });
+                callback(null, { id: 'user-123', role: 'team_member', name: 'Test User' });
             });
 
-            verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+            await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockJwt.verify).toHaveBeenCalled();
             expect(mockNext).toHaveBeenCalled();
         });
 
-        it('should extract token from Authorization header without Bearer prefix', () => {
+        it('should extract token from Authorization header without Bearer prefix', async () => {
             mockReq.headers = { authorization: 'test-token' };
             (mockJwt.verify as unknown as ReturnType<typeof vi.fn>).mockImplementation((_token, _secret, callback) => {
-                callback(null, { id: 'user-123', role: 'user' });
+                callback(null, { id: 'user-123', role: 'team_member', name: 'Test User' });
             });
 
-            verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+            await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockJwt.verify).toHaveBeenCalled();
         });
 
-        it('should extract token from body', () => {
+        it('should extract token from body', async () => {
             mockReq.body = { token: 'body-token' };
             (mockJwt.verify as unknown as ReturnType<typeof vi.fn>).mockImplementation((_token, _secret, callback) => {
-                callback(null, { id: 'user-123', role: 'user' });
+                callback(null, { id: 'user-123', role: 'team_member', name: 'Test User' });
             });
 
-            verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+            await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockJwt.verify).toHaveBeenCalled();
         });
 
-        it('should extract token from query', () => {
+        it('should extract token from query', async () => {
             mockReq.query = { token: 'query-token' };
             (mockJwt.verify as unknown as ReturnType<typeof vi.fn>).mockImplementation((_token, _secret, callback) => {
-                callback(null, { id: 'user-123', role: 'user' });
+                callback(null, { id: 'user-123', role: 'team_member', name: 'Test User' });
             });
 
-            verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+            await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockJwt.verify).toHaveBeenCalled();
         });
 
-        it('should return 401 when token is expired', () => {
+        it('should return 401 when token is expired', async () => {
             mockReq.headers = { authorization: 'Bearer expired-token' };
             const expiredError = new Error('Token expired');
             expiredError.name = 'TokenExpiredError';
@@ -125,31 +121,32 @@ describe('Auth Middleware', () => {
                 callback(expiredError, null);
             });
 
-            verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+            await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockRes.status).toHaveBeenCalledWith(401);
             expect(mockRes.json).toHaveBeenCalledWith({ error: 'Token expired' });
             expect(mockNext).not.toHaveBeenCalled();
         });
 
-        it('should return 401 when token is invalid', () => {
+        it('should return 401 when token is invalid', async () => {
             mockReq.headers = { authorization: 'Bearer invalid-token' };
             (mockJwt.verify as unknown as ReturnType<typeof vi.fn>).mockImplementation((_token, _secret, callback) => {
                 callback(new Error('Invalid token'), null);
             });
 
-            verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+            await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockRes.status).toHaveBeenCalledWith(401);
             expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
         });
 
-        it('should attach user to request when token is valid', () => {
+        it('should attach user to request when token is valid', async () => {
             mockReq.headers = { authorization: 'Bearer valid-token' };
-            const decoded = { 
-                id: 'user-123', 
+            const decoded = {
+                id: 'user-123',
                 email: 'test@example.com',
-                role: 'admin',
+                name: 'Test User',
+                role: 'administrator',
                 organizationId: 'org-123',
                 isSuperAdmin: false,
             };
@@ -157,7 +154,7 @@ describe('Auth Middleware', () => {
                 callback(null, decoded);
             });
 
-            verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+            await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockReq.user).toBeDefined();
             expect(mockReq.user?.id).toBe('user-123');
@@ -166,10 +163,10 @@ describe('Auth Middleware', () => {
             expect(mockNext).toHaveBeenCalled();
         });
 
-        it('should check token revocation when jti is present', () => {
+        it('should check token revocation when jti is present', async () => {
             mockReq.headers = { authorization: 'Bearer valid-token' };
-            const decoded = { 
-                id: 'user-123', 
+            const decoded = {
+                id: 'user-123',
                 jti: 'token-jti-123',
                 iat: Math.floor(Date.now() / 1000),
             };
@@ -177,37 +174,35 @@ describe('Auth Middleware', () => {
                 callback(null, decoded);
             });
 
-            verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+            await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
-            expect(mockDb.get).toHaveBeenCalled();
+            expect(mockDbGet).toHaveBeenCalled();
         });
 
-        it('should reject revoked token', () => {
+        it('should reject revoked token', async () => {
             mockReq.headers = { authorization: 'Bearer revoked-token' };
-            const decoded = { 
-                id: 'user-123', 
+            const decoded = {
+                id: 'user-123',
                 jti: 'revoked-jti',
             };
             (mockJwt.verify as unknown as ReturnType<typeof vi.fn>).mockImplementation((_token, _secret, callback) => {
                 callback(null, decoded);
             });
-            mockDb.get = vi.fn((_sql, _params, callback) => {
-                callback(null, { jti: 'revoked-jti' });
-            });
+            mockDbGet.mockResolvedValue({ jti: 'revoked-jti' });
 
-            verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+            await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockRes.status).toHaveBeenCalledWith(401);
             expect(mockRes.json).toHaveBeenCalledWith({ error: 'Token has been revoked' });
         });
 
-        it('should bypass auth in test mode when enabled', () => {
+        it('should bypass auth in test mode when enabled', async () => {
             const originalEnv = process.env.NODE_ENV;
             const originalBypass = process.env.ENABLE_TEST_AUTH_BYPASS;
             process.env.NODE_ENV = 'test';
             process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
 
-            verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+            await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockReq.user).toBeDefined();
             expect(mockReq.user?.id).toBe('test-user-id');
@@ -223,32 +218,32 @@ describe('Auth Middleware', () => {
     });
 
     describe('optionalAuth', () => {
-        it('should continue without user when no token', () => {
-            optionalAuth(mockReq as AuthRequest, mockRes as Response, mockNext);
+        it('should continue without user when no token', async () => {
+            await optionalAuth(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockNext).toHaveBeenCalled();
             expect(mockReq.user).toBeUndefined();
         });
 
-        it('should attach user when valid token provided', () => {
+        it('should attach user when valid token provided', async () => {
             mockReq.headers = { authorization: 'Bearer valid-token' };
             (mockJwt.verify as unknown as ReturnType<typeof vi.fn>).mockImplementation((_token, _secret, callback) => {
-                callback(null, { id: 'user-123', role: 'user' });
+                callback(null, { id: 'user-123', role: 'team_member', name: 'Test User' });
             });
 
-            optionalAuth(mockReq as AuthRequest, mockRes as Response, mockNext);
+            await optionalAuth(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockReq.user).toBeDefined();
             expect(mockNext).toHaveBeenCalled();
         });
 
-        it('should continue without user when token is invalid', () => {
+        it('should continue without user when token is invalid', async () => {
             mockReq.headers = { authorization: 'Bearer invalid-token' };
             (mockJwt.verify as unknown as ReturnType<typeof vi.fn>).mockImplementation((_token, _secret, callback) => {
                 callback(new Error('Invalid'), null);
             });
 
-            optionalAuth(mockReq as AuthRequest, mockRes as Response, mockNext);
+            await optionalAuth(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockNext).toHaveBeenCalled();
         });
@@ -256,7 +251,7 @@ describe('Auth Middleware', () => {
 
     describe('requireRole', () => {
         it('should return 401 when user not authenticated', () => {
-            const middleware = requireRole('admin');
+            const middleware = requireRole('administrator');
             middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockRes.status).toHaveBeenCalledWith(401);
@@ -266,10 +261,13 @@ describe('Auth Middleware', () => {
         it('should return 403 when user role not in required roles', () => {
             mockReq.user = {
                 id: 'user-123',
-                role: 'user',
+                role: 'team_member',
+                name: 'Test User',
+                email: 'test@example.com',
+                organizationId: 'org-123',
                 isSuperAdmin: false,
             };
-            const middleware = requireRole('admin', 'manager');
+            const middleware = requireRole('administrator', 'project_manager');
             middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockRes.status).toHaveBeenCalledWith(403);
@@ -279,10 +277,13 @@ describe('Auth Middleware', () => {
         it('should allow access when user role matches', () => {
             mockReq.user = {
                 id: 'user-123',
-                role: 'admin',
+                role: 'administrator',
+                name: 'Test Admin',
+                email: 'admin@example.com',
+                organizationId: 'org-123',
                 isSuperAdmin: false,
             };
-            const middleware = requireRole('admin', 'manager');
+            const middleware = requireRole('administrator', 'project_manager');
             middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockNext).toHaveBeenCalled();
@@ -299,7 +300,10 @@ describe('Auth Middleware', () => {
         it('should return 403 when user is not super admin', () => {
             mockReq.user = {
                 id: 'user-123',
-                role: 'admin',
+                role: 'administrator',
+                name: 'Test Admin',
+                email: 'admin@example.com',
+                organizationId: 'org-123',
                 isSuperAdmin: false,
             };
             requireSuperAdmin(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -311,7 +315,10 @@ describe('Auth Middleware', () => {
         it('should allow access when user is super admin', () => {
             mockReq.user = {
                 id: 'user-123',
-                role: 'admin',
+                role: 'administrator',
+                name: 'Super Admin',
+                email: 'super@example.com',
+                organizationId: 'org-123',
                 isSuperAdmin: true,
             };
             requireSuperAdmin(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -347,7 +354,10 @@ describe('Auth Middleware', () => {
         it('should return 403 when user lacks permission', () => {
             mockReq.user = {
                 id: 'user-123',
-                role: 'user',
+                role: 'team_member',
+                name: 'Test User',
+                email: 'test@example.com',
+                organizationId: 'org-123',
                 isSuperAdmin: false,
             };
             mockReq.can = vi.fn().mockReturnValue(false);
@@ -360,7 +370,10 @@ describe('Auth Middleware', () => {
         it('should allow access when user has permission', () => {
             mockReq.user = {
                 id: 'user-123',
-                role: 'user',
+                role: 'team_member',
+                name: 'Test User',
+                email: 'test@example.com',
+                organizationId: 'org-123',
                 isSuperAdmin: false,
             };
             mockReq.can = vi.fn().mockReturnValue(true);
@@ -371,4 +384,6 @@ describe('Auth Middleware', () => {
         });
     });
 });
+
+
 

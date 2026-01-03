@@ -1,310 +1,451 @@
 /**
  * Dunning Service
- * Enterprise SaaS Architecture - TypeScript Backend
- * 
- * Handles automated collection retries and account suspension.
- * Fully migrated from server/services/dunningService.js
+ * Handles payment failure recovery, retries, notifications, and suspensions.
+ * Fully migrated from server/services/dunningService.js to TypeScript.
  */
 
+import { v4 as uuidv4 } from 'uuid';
+import Stripe from 'stripe';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
-import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
-// ==========================================
-// TYPES
-// ==========================================
+const DUNNING_SCHEDULE = {
+    RETRY_1: 3, // days
+    RETRY_2: 7,
+    RETRY_3: 14,
+    FINAL_NOTICE: 21,
+    SUSPENSION: 28
+} as const;
 
-export interface DunningStatus {
+const DUNNING_STAGES = {
+    CURRENT: 0,
+    INITIAL_FAILURE: 1,
+    RETRY_1: 2,
+    RETRY_2: 3,
+    RETRY_3: 4,
+    FINAL_NOTICE: 5,
+    SUSPENDED: 6
+} as const;
+
+type DunningStageKey = keyof typeof DUNNING_STAGES;
+
+interface DunningStatus {
+    inDunning: boolean;
+    status: string;
+    stage: number;
+    stageName?: DunningStageKey;
+    daysSinceStart: number;
+    daysUntilSuspension: number;
+    suspensionScheduledAt?: string | null;
+}
+
+interface OrganizationRecord {
     id: string;
-    organization_id: string;
-    status: 'active' | 'retrying' | 'failed' | 'completed';
-    current_attempt: number;
-    max_attempts: number;
-    next_retry_at: string | null;
-    last_error: string | null;
-    stripe_invoice_id: string | null;
-    created_at: string;
-    updated_at: string;
+    name?: string;
+    payment_status?: string;
+    dunning_stage: number;
+    dunning_started_at?: string | null;
+    suspension_scheduled_at?: string | null;
+    status?: string;
+    stripe_customer_id?: string | null;
+    last_payment_attempt_at?: string | null;
 }
 
-export interface PaymentAttempt {
-    id: string;
-    organization_id: string;
-    invoice_id: string;
-    attempt_number: number;
-    status: 'success' | 'failure';
-    error_message?: string | null;
-    created_at: string;
+interface StripeInvoiceItem {
+    description?: string;
+    quantity?: number | null;
+    amount?: number | null;
+    plan?: Stripe.Price | Stripe.Plan;
 }
 
-interface DunningServiceDeps {
-    db: IDatabase;
-    uuidv4: () => string;
-    stripe: any;
-    EmailService: any;
-    NotificationService: any;
-    AuditService: any;
+interface EmailServiceInterface {
+    send: (options: {
+        to: string;
+        subject: string;
+        template: string;
+        data: Record<string, unknown>;
+        attachments?: Array<{ filename: string; path: string }>;
+    }) => Promise<boolean>;
 }
 
-// ==========================================
-// CONSTANTS
-// ==========================================
+interface AuditServiceInterface {
+    logSystemEvent: (
+        actionType: string,
+        entityType: string,
+        entityId: string,
+        orgId?: string | null,
+        metadata?: Record<string, unknown>
+    ) => Promise<void>;
+}
 
-const DUNNING_SCHEDULE = [
-    { day: 1, action: 'retry' },
-    { day: 3, action: 'retry' },
-    { day: 5, action: 'retry' },
-    { day: 7, action: 'suspend' }
-];
+let emailService: EmailServiceInterface | null = null;
+let auditService: AuditServiceInterface | null = null;
 
-// ==========================================
-// CLASS IMPLEMENTATION
-// ==========================================
+async function getEmailService(): Promise<EmailServiceInterface | null> {
+    if (!emailService) {
+        const module = await import('../../services/emailService.js');
+        emailService = module.default || module;
+    }
+    return emailService;
+}
 
-export class DunningServiceClass {
-    #deps: DunningServiceDeps | null = null;
-    #initialized = false;
-    #initPromise: Promise<void> | null = null;
+async function getAuditService(): Promise<AuditServiceInterface | null> {
+    if (!auditService) {
+        const module = await import('../../services/auditService.js');
+        auditService = module.logSystemEvent ? module : null;
+    }
+    return auditService;
+}
 
-    constructor(deps?: Partial<DunningServiceDeps>) {
-        if (deps?.db && deps?.uuidv4 && deps?.stripe && deps?.EmailService && deps?.NotificationService && deps?.AuditService) {
-            this.#deps = deps as DunningServiceDeps;
-            this.#initialized = true;
+export class DunningService {
+    private db: IDatabase;
+    private stripeClient: Stripe | null = null;
+
+    constructor(deps?: { db?: IDatabase }) {
+        this.db = deps?.db ?? getDatabase();
+    }
+
+    private getStripeClient(): Stripe {
+        if (this.stripeClient) return this.stripeClient;
+        const secret = process.env.STRIPE_SECRET_KEY;
+        if (!secret) {
+            throw new Error('Stripe API key is not configured');
         }
+        this.stripeClient = new Stripe(secret, { apiVersion: '2024-11-20.acacia' });
+        return this.stripeClient;
     }
 
-    async #initDeps() {
-        if (this.#initialized) return;
-        if (this.#initPromise) return this.#initPromise;
-
-        this.#initPromise = (async () => {
-            const [uuidModule, stripeModule, emailModule, notifyModule, auditModule] = await Promise.all([
-                import('uuid'),
-                import('stripe'),
-                import('./emailService.js'),
-                import('./NotificationService.js'),
-                import('./auditService.js')
-            ]);
-
-            const { default: Stripe } = stripeModule;
-            let stripe: any = null;
-            if (process.env.STRIPE_SECRET_KEY) {
-                try {
-                    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-                        apiVersion: '2025-12-15.clover' as any,
-                    });
-                } catch (e) {
-                    logger.warn('Stripe not initialized in DunningService');
-                }
-            }
-
-            this.#deps = {
-                db: getDatabase(),
-                uuidv4: uuidModule.v4,
-                stripe,
-                EmailService: emailModule.default || emailModule,
-                NotificationService: notifyModule.default || notifyModule,
-                AuditService: auditModule.default || auditModule
-            };
-            this.#initialized = true;
-        })();
-
-        return this.#initPromise;
-    }
-
-    setDependencies(newDeps: Partial<DunningServiceDeps>) {
-        this.#deps = { ...this.#deps!, ...newDeps };
-        this.#initialized = true;
-    }
-
-    private async dbGet<T>(sql: string, params: any[] = []): Promise<T | null> {
-        await this.#initDeps();
-        return DbPromise.get<T>(this.#deps!.db, sql, params);
-    }
-
-    private async dbRun(sql: string, params: any[] = []): Promise<{ lastID?: number; changes: number }> {
-        await this.#initDeps();
-        const result = await DbPromise.run(this.#deps!.db, sql, params);
-        return {
-            lastID: result.lastID,
-            changes: result.changes || 0
-        };
-    }
-
-    private async dbAll<T>(sql: string, params: any[] = []): Promise<T[]> {
-        await this.#initDeps();
-        return DbPromise.all<T>(this.#deps!.db, sql, params);
-    }
-
-    /**
-     * Handle failed payment from Stripe
-     */
-    async handlePaymentFailed(organizationId: string, invoiceId: string, errorMsg: string): Promise<void> {
-        await this.#initDeps();
-        const { AuditService, NotificationService, uuidv4 } = this.#deps!;
-
-        logger.info(`[Dunning] Payment failed for org ${organizationId}, invoice ${invoiceId}`);
-
-        // 1. Log event
-        await AuditService.logSystemEvent('PAYMENT_FAILED', 'INVOICE', invoiceId, organizationId, { error: errorMsg });
-
-        // 2. Get or create dunning status
-        let dunning = await this.dbGet<DunningStatus>(
-            `SELECT * FROM dunning_status WHERE organization_id = ? AND status = 'retrying'`,
-            [organizationId]
-        );
-
-        if (!dunning) {
-            const id = uuidv4();
-            await this.dbRun(
-                `INSERT INTO dunning_status (id, organization_id, status, current_attempt, max_attempts, stripe_invoice_id)
-                 VALUES (?, ?, 'retrying', 0, ?, ?)`,
-                [id, organizationId, DUNNING_SCHEDULE.length, invoiceId]
-            );
-            dunning = { id, organization_id: organizationId, status: 'retrying', current_attempt: 0, max_attempts: DUNNING_SCHEDULE.length, stripe_invoice_id: invoiceId } as any;
-        }
-
-        // 3. Update dunning progress
-        const nextAttempt = dunning!.current_attempt + 1;
-
-        if (nextAttempt >= DUNNING_SCHEDULE.length) {
-            await this.suspendOrganization(organizationId, 'Dunning failed after max attempts');
+    public async handlePaymentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+        const orgId = (paymentIntent.metadata as Record<string, string | undefined>)?.organization_id;
+        if (!orgId) {
+            logger.error('[Dunning] Missing organization_id in payment metadata');
             return;
         }
 
-        const screen = DUNNING_SCHEDULE[nextAttempt];
-        const nextRetryAt = new Date();
-        nextRetryAt.setDate(nextRetryAt.getDate() + screen.day);
+        logger.info(`[Dunning] Payment failed for org ${orgId}`);
 
-        await this.dbRun(
-            `UPDATE dunning_status SET current_attempt = ?, next_retry_at = ?, last_error = ?, updated_at = datetime('now')
-             WHERE id = ?`,
-            [nextAttempt, nextRetryAt.toISOString(), errorMsg, dunning!.id]
+        await this.db.run(
+            `INSERT INTO payment_attempts 
+             (id, organization_id, stripe_payment_intent_id, amount, currency, status, failure_code, failure_reason, attempt_number)
+             VALUES (?, ?, ?, ?, ?, 'failed', ?, ?, 1)`,
+            [
+                uuidv4(),
+                orgId,
+                paymentIntent.id,
+                paymentIntent.amount || 0,
+                paymentIntent.currency || 'usd',
+                paymentIntent.last_payment_error?.code || 'unknown',
+                paymentIntent.last_payment_error?.message || 'Payment failed'
+            ]
         );
 
-        // 4. Notify admin
-        await NotificationService.sendToAdmins(organizationId, {
-            type: 'billing.payment_failed',
-            title: 'Payment Failed',
-            message: `Your recent payment failed. We will retry automatically on ${nextRetryAt.toLocaleDateString()}.`,
-            metadata: { invoiceId, nextRetryAt: nextRetryAt.toISOString() }
-        });
+        const org = await this.getOrganization(orgId);
+        if (!org) {
+            logger.error(`[Dunning] Organization not found: ${orgId}`);
+            return;
+        }
+
+        if (org.dunning_stage > 0) {
+            logger.info(`[Dunning] Org ${orgId} already in dunning stage ${org.dunning_stage}`);
+            return;
+        }
+
+        await this.startDunning(orgId);
     }
 
-    /**
-     * Handle successful payment (clear dunning)
-     */
-    async handlePaymentSucceeded(organizationId: string, invoiceId: string): Promise<void> {
-        await this.#initDeps();
-        const { AuditService } = this.#deps!;
+    public async handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+        const orgId = (paymentIntent.metadata as Record<string, string | undefined>)?.organization_id;
+        if (!orgId) return;
 
-        await this.dbRun(
-            `UPDATE dunning_status SET status = 'completed', updated_at = datetime('now')
-             WHERE organization_id = ? AND status = 'retrying'`,
-            [organizationId]
+        logger.info(`[Dunning] Payment succeeded for org ${orgId}`);
+
+        await this.db.run(
+            `INSERT INTO payment_attempts 
+             (id, organization_id, stripe_payment_intent_id, amount, currency, status)
+             VALUES (?, ?, ?, ?, ?, 'succeeded')`,
+            [uuidv4(), orgId, paymentIntent.id, paymentIntent.amount || 0, paymentIntent.currency || 'usd']
         );
 
-        await AuditService.logSystemEvent('PAYMENT_SUCCEEDED', 'INVOICE', invoiceId, organizationId);
+        const org = await this.getOrganization(orgId);
+        if (org && org.dunning_stage > 0) {
+            await this.exitDunning(orgId, 'payment_recovered');
+        }
 
-        // Ensure org is active
-        await this.reactivateOrganization(organizationId);
+        await this.db.run(
+            `UPDATE organizations SET last_successful_payment_at = datetime('now') WHERE id = ?`,
+            [orgId]
+        );
     }
 
-    /**
-     * Process scheduled retries (run via cron)
-     */
-    async processScheduledRetries(): Promise<number> {
-        await this.#initDeps();
-        const { stripe } = this.#deps!;
-
-        const pending = await this.dbAll<DunningStatus>(
-            `SELECT * FROM dunning_status 
-             WHERE status = 'retrying' AND next_retry_at <= datetime('now')`
+    public async processScheduledRetries(): Promise<void> {
+        logger.info('[Dunning] Processing scheduled retries...');
+        const orgs = await this.db.all<OrganizationRecord & { days_since_start: number }>(
+            `SELECT o.*, 
+                    julianday('now') - julianday(o.dunning_started_at) as days_since_start
+             FROM organizations o
+             WHERE o.dunning_stage > 0 
+               AND o.dunning_stage < ?
+               AND o.status = 'active'`,
+            [DUNNING_STAGES.SUSPENDED]
         );
 
-        for (const item of pending) {
+        for (const org of orgs) {
             try {
-                logger.info(`[Dunning] Retrying payment for org ${item.organization_id}, invoice ${item.stripe_invoice_id}`);
-
-                // Attempt to pay invoice via Stripe
-                if (item.stripe_invoice_id) {
-                    await stripe.invoices.pay(item.stripe_invoice_id);
-                    // If success, stripe webhook will call handlePaymentSucceeded
-                }
-            } catch (err: any) {
-                logger.error(`[Dunning] Retry failed for org ${item.organization_id}: ${err.message}`);
-                await this.handlePaymentFailed(item.organization_id, item.stripe_invoice_id || 'unknown', err.message);
+                await this.processOrganizationDunning(org);
+            } catch (err) {
+                logger.error(`[Dunning] Error processing org ${org.id}: ${(err as Error).message}`);
             }
         }
 
-        return pending.length;
+        logger.info(`[Dunning] Processed ${orgs.length} organizations`);
     }
 
-    /**
-     * Suspend organization's access
-     */
-    async suspendOrganization(organizationId: string, reason: string): Promise<void> {
-        await this.#initDeps();
-        const { AuditService, EmailService } = this.#deps!;
+    public async getDunningStatus(orgId: string): Promise<DunningStatus> {
+        const org = await this.getOrganization(orgId);
+        if (!org || org.dunning_stage === 0) {
+            return { inDunning: false, status: 'current', stage: 0, daysSinceStart: 0, daysUntilSuspension: DUNNING_SCHEDULE.SUSPENSION };
+        }
 
-        await this.dbRun(
-            `UPDATE organizations SET status = 'suspended', updated_at = datetime('now')
-             WHERE id = ?`,
-            [organizationId]
-        );
+        const daysSinceStart = org.dunning_started_at
+            ? Math.floor((Date.now() - new Date(org.dunning_started_at).getTime()) / (24 * 60 * 60 * 1000))
+            : 0;
+        const daysUntilSuspension = Math.max(0, DUNNING_SCHEDULE.SUSPENSION - daysSinceStart);
 
-        await this.dbRun(
-            `UPDATE dunning_status SET status = 'failed', last_error = ?, updated_at = datetime('now')
-             WHERE organization_id = ? AND status = 'retrying'`,
-            [reason, organizationId]
-        );
+        return {
+            inDunning: true,
+            status: org.payment_status || 'unpaid',
+            stage: org.dunning_stage,
+            stageName: this.getStageName(org.dunning_stage),
+            daysSinceStart,
+            daysUntilSuspension,
+            suspensionScheduledAt: org.suspension_scheduled_at
+        };
+    }
 
-        await AuditService.logSystemEvent('ORG_SUSPENDED', 'ORGANIZATION', organizationId, organizationId, { reason });
+    public async manualRetry(orgId: string): Promise<{ success: boolean; message: string; error?: string }> {
+        const org = await this.getOrganization(orgId);
+        if (!org) throw new Error('Organization not found');
 
-        // Email Admins
-        const admins = await this.dbAll<{ email: string }>(
-            `SELECT email FROM users WHERE organization_id = ? AND role IN ('ADMIN', 'OWNER')`,
-            [organizationId]
-        );
+        if (!org.stripe_customer_id) {
+            throw new Error('No Stripe customer linked');
+        }
 
-        for (const admin of admins) {
-            await EmailService.send({
-                to: admin.email,
-                subject: 'Your account has been suspended',
-                template: 'account_suspended',
-                data: { reason }
-            });
+        const stripe = this.getStripeClient();
+        const invoices = await stripe.invoices.list({
+            customer: org.stripe_customer_id,
+            status: 'open',
+            limit: 1
+        });
+
+        if (invoices.data.length === 0) {
+            throw new Error('No open invoices to retry');
+        }
+
+        try {
+            await stripe.invoices.pay(invoices.data[0].id);
+            return { success: true, message: 'Payment retry initiated' };
+        } catch (error) {
+            return { success: false, message: 'Retry failed', error: (error as Error).message };
         }
     }
 
-    /**
-     * Reactivate organization
-     */
-    async reactivateOrganization(organizationId: string): Promise<void> {
-        await this.#initDeps();
-        const { AuditService } = this.#deps!;
-
-        await this.dbRun(
-            `UPDATE organizations SET status = 'active', updated_at = datetime('now')
-             WHERE id = ? AND status = 'suspended'`,
-            [organizationId]
+    public async suspendOrganization(orgId: string, reason = 'manual'): Promise<void> {
+        await this.db.run(
+            `UPDATE organizations SET 
+                status = 'suspended',
+                payment_status = 'unpaid',
+                dunning_stage = ?,
+                suspension_reason = ?
+             WHERE id = ?`,
+            [DUNNING_STAGES.SUSPENDED, reason, orgId]
         );
 
-        await AuditService.logSystemEvent('ORG_ACTIVATED', 'ORGANIZATION', organizationId, organizationId);
+        await this.logSubscriptionHistory(orgId, 'suspended', null, null, reason, 'system');
+        await this.sendDunningEmail(orgId, 'suspension');
+        await this.logAudit('ACCOUNT_SUSPENDED', 'organization', orgId, reason);
+    }
+
+    public async reactivateOrganization(orgId: string): Promise<void> {
+        await this.db.run(
+            `UPDATE organizations SET 
+                status = 'active',
+                payment_status = 'current',
+                dunning_stage = 0,
+                dunning_started_at = NULL,
+                suspension_reason = NULL,
+                suspension_scheduled_at = NULL
+             WHERE id = ?`,
+            [orgId]
+        );
+
+        await this.logSubscriptionHistory(orgId, 'reactivated', null, null, 'payment_recovered', 'system');
+        await this.sendDunningEmail(orgId, 'recovery');
+        await this.logAudit('ACCOUNT_REACTIVATED', 'organization', orgId);
+    }
+
+    private async startDunning(orgId: string): Promise<void> {
+        const suspensionDate = new Date(Date.now() + DUNNING_SCHEDULE.SUSPENSION * 24 * 60 * 60 * 1000);
+
+        await this.db.run(
+            `UPDATE organizations SET 
+                payment_status = 'past_due',
+                dunning_stage = ?,
+                dunning_started_at = datetime('now'),
+                last_payment_attempt_at = datetime('now'),
+                suspension_scheduled_at = ?
+             WHERE id = ?`,
+            [DUNNING_STAGES.INITIAL_FAILURE, suspensionDate.toISOString(), orgId]
+        );
+
+        await this.sendDunningEmail(orgId, 'initial_failure');
+        await this.logSubscriptionHistory(orgId, 'dunning_started', null, null, 'payment_failed', 'system');
+        await this.logAudit('DUNNING_STARTED', 'organization', orgId);
+    }
+
+    private async exitDunning(orgId: string, reason: string): Promise<void> {
+        await this.db.run(
+            `UPDATE organizations SET 
+                payment_status = 'current',
+                dunning_stage = 0,
+                dunning_started_at = NULL,
+                suspension_scheduled_at = NULL
+             WHERE id = ?`,
+            [orgId]
+        );
+
+        await this.sendDunningEmail(orgId, 'recovery');
+        await this.logSubscriptionHistory(orgId, 'dunning_exited', null, null, reason, 'system');
+        await this.logAudit('DUNNING_EXITED', 'organization', orgId, reason);
+    }
+
+    private async processOrganizationDunning(org: OrganizationRecord & { days_since_start?: number }): Promise<void> {
+        const daysSinceStart = org.days_since_start ?? 0;
+        const currentStage = org.dunning_stage;
+
+        if (daysSinceStart >= DUNNING_SCHEDULE.SUSPENSION && currentStage < DUNNING_STAGES.SUSPENDED) {
+            await this.suspendOrganization(org.id, 'dunning_complete');
+            return;
+        }
+
+        if (daysSinceStart >= DUNNING_SCHEDULE.FINAL_NOTICE && currentStage < DUNNING_STAGES.FINAL_NOTICE) {
+            await this.advanceStage(org.id, DUNNING_STAGES.FINAL_NOTICE, 'final_notice');
+            return;
+        }
+
+        if (daysSinceStart >= DUNNING_SCHEDULE.RETRY_3 && currentStage < DUNNING_STAGES.RETRY_3) {
+            await this.advanceStage(org.id, DUNNING_STAGES.RETRY_3, 'retry_3');
+            await this.attemptRetry(org.id);
+            return;
+        }
+
+        if (daysSinceStart >= DUNNING_SCHEDULE.RETRY_2 && currentStage < DUNNING_STAGES.RETRY_2) {
+            await this.advanceStage(org.id, DUNNING_STAGES.RETRY_2, 'retry_2');
+            await this.attemptRetry(org.id);
+            return;
+        }
+
+        if (daysSinceStart >= DUNNING_SCHEDULE.RETRY_1 && currentStage < DUNNING_STAGES.RETRY_1) {
+            await this.advanceStage(org.id, DUNNING_STAGES.RETRY_1, 'retry_1');
+            await this.attemptRetry(org.id);
+            return;
+        }
+    }
+
+    private async advanceStage(orgId: string, stage: number, notificationType: string): Promise<void> {
+        await this.db.run(
+            `UPDATE organizations SET dunning_stage = ?, payment_status = 'unpaid' WHERE id = ?`,
+            [stage, orgId]
+        );
+
+        await this.sendDunningEmail(orgId, notificationType);
+        await this.logAudit('DUNNING_STAGE_ADVANCED', 'organization', orgId, undefined, { stage });
+    }
+
+    private async attemptRetry(orgId: string): Promise<void> {
+        try {
+            const result = await this.manualRetry(orgId);
+            logger.info(`[Dunning] Retry for ${orgId}: ${result.success ? 'success' : result.error}`);
+        } catch (error) {
+            logger.error(`[Dunning] Retry failed for ${orgId}: ${(error as Error).message}`);
+        }
+    }
+
+    private async sendDunningEmail(orgId: string, notificationType: string): Promise<void> {
+        try {
+            const admin = await this.db.get<{ email: string; first_name?: string }>(
+                `SELECT email, first_name FROM users WHERE organization_id = ? AND role IN ('ADMIN', 'OWNER') LIMIT 1`,
+                [orgId]
+            );
+            if (!admin) {
+                logger.warn(`[Dunning] No admin found for org ${orgId}`);
+                return;
+            }
+
+            const org = await this.getOrganization(orgId);
+            const emailSvc = await getEmailService();
+            if (!emailSvc) {
+                logger.warn('[Dunning] EmailService unavailable');
+                return;
+            }
+
+            await emailSvc.send({
+                to: admin.email,
+                subject: this.getEmailSubject(notificationType),
+                template: `dunning_${notificationType}`,
+                data: {
+                    firstName: admin.first_name ?? 'Team',
+                    organizationName: org?.name,
+                    suspensionDate: org?.suspension_scheduled_at,
+                    updatePaymentUrl: `${process.env.FRONTEND_URL ?? 'http://localhost:3000'}/settings/billing`
+                }
+            });
+
+            await this.db.run(
+                `INSERT INTO dunning_notifications (id, organization_id, notification_type, email_to)
+                 VALUES (?, ?, ?, ?)`,
+                [uuidv4(), orgId, notificationType, admin.email]
+            );
+        } catch (error) {
+            logger.error('[Dunning] Email send failed:', (error as Error).message);
+        }
+    }
+
+    private async logSubscriptionHistory(orgId: string, action: string, fromPlan: string | null, toPlan: string | null, reason: string, performedBy: string): Promise<void> {
+        await this.db.run(
+            `INSERT INTO subscription_history (id, organization_id, action, from_plan, to_plan, reason, performed_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [uuidv4(), orgId, action, fromPlan, toPlan, reason, performedBy]
+        );
+    }
+
+    private getEmailSubject(notificationType: string): string {
+        const subjects: Record<string, string> = {
+            initial_failure: '⚠️ Payment failed - Action required',
+            retry_1: '🔄 Payment retry failed - Please update your payment method',
+            retry_2: '⚠️ Second payment attempt failed',
+            retry_3: '🚨 Third payment attempt failed - Action required urgently',
+            final_notice: '🚨 FINAL NOTICE: Your account will be suspended',
+            suspension: '❌ Your account has been suspended',
+            recovery: '✅ Payment received - Your account is restored'
+        };
+        return subjects[notificationType] ?? 'Payment notification';
+    }
+
+    private async logAudit(actionType: string, entityType: string, entityId: string, orgId?: string | null, metadata?: Record<string, unknown>): Promise<void> {
+        const audit = await getAuditService();
+        if (!audit) return;
+        await audit.logSystemEvent(actionType, entityType, entityId, orgId ?? null, metadata ?? {});
+    }
+
+    private getStageName(stage: number): DunningStageKey | undefined {
+        return (Object.keys(DUNNING_STAGES) as Array<DunningStageKey>).find(key => DUNNING_STAGES[key] === stage);
+    }
+
+    private async getOrganization(orgId: string): Promise<OrganizationRecord | null> {
+        return this.db.get<OrganizationRecord>(`SELECT * FROM organizations WHERE id = ?`, [orgId]);
     }
 }
 
-// ==========================================
-// EXPORTS
-// ==========================================
-
-const DunningService = new DunningServiceClass();
-
-export const handlePaymentFailed = (orgId: string, invId: string, err: string) => DunningService.handlePaymentFailed(orgId, invId, err);
-export const handlePaymentSucceeded = (orgId: string, invId: string) => DunningService.handlePaymentSucceeded(orgId, invId);
-export const processScheduledRetries = () => DunningService.processScheduledRetries();
-export const suspendOrganization = (orgId: string, reason: string) => DunningService.suspendOrganization(orgId, reason);
-export const reactivateOrganization = (orgId: string) => DunningService.reactivateOrganization(orgId);
-
-export default DunningService;
+const dunningService = new DunningService();
+export default dunningService;

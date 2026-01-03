@@ -6,7 +6,7 @@
  * Automatically logs successful state-changing requests (POST, PUT, PATCH, DELETE)
  */
 
-import type { Request, Response, NextFunction } from 'express';
+import type { Response, NextFunction } from 'express';
 import type { AuthRequest } from './auth.middleware.js';
 
 // Dynamic import for ActivityService to avoid circular dependencies
@@ -49,12 +49,11 @@ const auditLogMiddleware = async (
 
     // Capture original end function
     const originalEnd = res.end.bind(res);
-    let responseBody: unknown;
 
     // Override end to capture status
-    res.end = function (chunk?: unknown, encoding?: unknown) {
+    (res.end as any) = function (chunk?: any, encodingOrCb?: any, cb?: any) {
         res.end = originalEnd;
-        res.end(chunk, encoding);
+        res.end(chunk, encodingOrCb, cb);
 
         // Only log successful operations (2xx)
         if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -64,7 +63,7 @@ const auditLogMiddleware = async (
                 const userId = user ? user.id : 'anonymous';
                 const organizationId = user
                     ? user.organizationId
-                    : ((req.body as { organizationId?: string })?.organizationId || 'unknown');
+                    : ((req.body as any)?.organizationId || 'unknown');
 
                 // Determine Entity & Action
                 // URL: /api/projects/:id -> Entity: project, ID: :id

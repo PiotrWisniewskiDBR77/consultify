@@ -384,7 +384,7 @@ const ProcessCard: React.FC<{
                                     leanAssessment: {
                                         ...process.leanAssessment,
                                         wasteIdentified: wastes,
-                                        wasteImpact: impact,
+                                        wasteImpact: impact as Record<WasteType, number>,
                                     }
                                 })}
                                 readOnly={readOnly}
@@ -676,7 +676,7 @@ const WorkstationCard: React.FC<{
                                     leanAssessment: {
                                         ...workstation.leanAssessment,
                                         wasteInRole: wastes,
-                                        wasteImpact: impact,
+                                        wasteImpact: impact as Record<WasteType, number>,
                                     }
                                 })}
                                 readOnly={readOnly}
@@ -1047,6 +1047,8 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
 };
 
 export default DBR77LeanMap;
+
+
 
 
 

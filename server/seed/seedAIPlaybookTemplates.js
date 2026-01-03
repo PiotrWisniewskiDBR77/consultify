@@ -1,5 +1,6 @@
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Seed AI Playbook Templates
@@ -160,11 +161,12 @@ async function seedAIPlaybookTemplates() {
     console.log(`[SeedAIPlaybooks] Completed: ${templates.length} templates seeded.`);
 }
 
-module.exports = { seedAIPlaybookTemplates };
+export default { seedAIPlaybookTemplates };
 
 // Allow direct execution
 if (require.main === module) {
-    const db = require('../database');
+    import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
     db.initPromise.then(() => {
         seedAIPlaybookTemplates().then(() => {
             console.log('Done.');

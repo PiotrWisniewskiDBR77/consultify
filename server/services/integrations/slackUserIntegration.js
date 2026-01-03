@@ -346,7 +346,9 @@ const SlackUserIntegration = {
     }
 };
 
-module.exports = SlackUserIntegration;
+export default SlackUserIntegration;
+
+
 
 
 

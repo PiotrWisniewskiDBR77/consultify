@@ -3,10 +3,12 @@
  * Handles document library operations with project/user scope separation
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const path = require('path');
-const fs = require('fs');
+import db from '../database.js';
+import path from 'path';
+import fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 class DocumentService {
     /**
@@ -256,4 +258,4 @@ class DocumentService {
     }
 }
 
-module.exports = DocumentService;
+export default DocumentService;

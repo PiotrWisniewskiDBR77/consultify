@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { securityHeaders, createRateLimiter, rateLimitPresets, validateRequest } from '../../../src/middleware/securityHeaders.middleware.js';
+import { securityHeaders, createRateLimiter, rateLimitPresets, validateRequest } from '../../../../src/middleware/securityHeaders.middleware.js';
 
 describe('Security Headers Middleware', () => {
     let mockReq: Partial<Request>;
@@ -223,4 +223,6 @@ describe('Security Headers Middleware', () => {
         });
     });
 });
+
+
 

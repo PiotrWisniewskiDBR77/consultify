@@ -231,7 +231,7 @@ function getSupportedMimeTypes() {
     ];
 }
 
-module.exports = {
+export default {
     process,
     isSupported,
     getSupportedExtensions,
@@ -239,6 +239,8 @@ module.exports = {
     extractTextFromSlideXml,
     extractXmlValue
 };
+
+
 
 
 

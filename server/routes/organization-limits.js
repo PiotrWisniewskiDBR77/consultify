@@ -8,12 +8,12 @@
  * - Trial upgrade (admin only)
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const AccessPolicyService = require('../services/accessPolicyService');
-const TrialService = require('../services/trialService');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
+import authMiddleware from '../middleware/authMiddleware.js';
+const AccessPolicyService = import('accessPolicyService.js');
+const TrialService = import('trialService.js');
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
 /**
  * GET /api/organization/policy-snapshot
@@ -188,5 +188,5 @@ router.put('/:id/extend-trial', verifySuperAdmin, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

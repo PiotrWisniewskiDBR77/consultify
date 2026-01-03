@@ -44,9 +44,16 @@ class DunningCron {
 
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
-            dunningService: deps?.dunningService || await import('../../services/dunningService.js').then(m => m.default || m),
+            dunningService: deps?.dunningService,
             sentry: deps?.sentry,
         };
+    }
+
+    private async ensureDeps(): Promise<Dependencies> {
+        if (!this.deps.dunningService) {
+            this.deps.dunningService = await import('../../services/dunningService.js').then(m => m.default || m);
+        }
+        return this.deps as Dependencies;
     }
 
     /**
@@ -60,18 +67,19 @@ class DunningCron {
 
         // Every hour at minute 30
         this.job = cron.schedule('30 * * * *', async () => {
+            const deps = await this.ensureDeps();
             logger.info('[DunningCron] Starting scheduled dunning processing...');
 
             try {
-                await this.deps.dunningService.processScheduledRetries();
+                await deps.dunningService.processScheduledRetries();
             } catch (error) {
                 const err = error instanceof Error ? error : new Error(String(error));
                 logger.error('[DunningCron] Processing failed:', err);
 
                 // Report to Sentry if available
-                if (this.deps.sentry) {
+                if (deps.sentry) {
                     try {
-                        this.deps.sentry.captureException(err, {
+                        deps.sentry.captureException(err, {
                             tags: { component: 'dunning', job: 'scheduled' },
                         });
                     } catch (e) {
@@ -124,4 +132,6 @@ export const stopDunningJob = (deps?: Partial<Dependencies>): void => {
 };
 
 export default DunningCron;
+
+
 

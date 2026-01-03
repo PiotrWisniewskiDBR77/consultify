@@ -81,7 +81,7 @@ class EmbeddingService {
 
     async storeChunkSqlite(chunk, embedding) {
         const { content, chunkIndex, documentId, organizationId, metadata } = chunk;
-        const { v4: uuidv4 } = require('uuid');
+        import { v4 as uuidv4 } from 'uuid';
 
         return new Promise((resolve, reject) => {
             db.run(
@@ -305,7 +305,7 @@ class EmbeddingService {
 // Singleton
 const embeddingService = new EmbeddingService();
 
-module.exports = {
+export default {
     EmbeddingService,
     embeddingService,
     EMBEDDING_MODEL,

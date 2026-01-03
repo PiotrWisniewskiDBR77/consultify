@@ -4,9 +4,12 @@
  * Supports EU VAT, US Sales Tax, and other jurisdictions
  */
 
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+    db,
+    uuidv4,
 };
 
 // Stripe initialization
@@ -601,7 +604,7 @@ function getTaxRatesForCountry(countryCode) {
     });
 }
 
-module.exports = {
+export default {
     setDependencies,
     // Tax Rates
     getTaxRates,
@@ -621,6 +624,8 @@ module.exports = {
     isEUCountry,
     mapCountryToTaxIdType
 };
+
+
 
 
 

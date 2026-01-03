@@ -8,12 +8,13 @@
  * - Export history
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import authMiddleware from '../middleware/authMiddleware.js';
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 // Database helpers
 function dbAll(sql, params = []) {
@@ -444,4 +445,4 @@ router.post('/gdpr-request', authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

@@ -5,9 +5,11 @@
  * Provides aggregated data, stats, and bulk operations.
  */
 
-const db = require('../database');
-const queryHelpers = require('../utils/queryHelpers');
-const { v4: uuidv4 } = require('uuid');
+import db from '../database.js';
+import queryHelpers from '../utils/queryHelpers.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 /**
  * Safe JSON parsing helper
@@ -395,7 +397,7 @@ async function getRoadmapWaves(projectId) {
     }
 }
 
-module.exports = {
+export default {
     getPortfolioData,
     getPortfolioStats,
     bulkUpdateStatus,
@@ -404,6 +406,8 @@ module.exports = {
     getInitiativeDependencies,
     getRoadmapWaves
 };
+
+
 
 
 

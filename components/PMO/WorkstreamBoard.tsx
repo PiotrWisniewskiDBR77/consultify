@@ -32,6 +32,13 @@ import {
   Target
 } from 'lucide-react';
 import { Workstream, WorkstreamStatus } from '../../types';
+
+type WorkstreamWithStats = Workstream & {
+  progress?: number;
+  initiativeCount?: number;
+  completedCount?: number;
+  ownerName?: string;
+};
 import { api } from '../../services/api';
 
 interface WorkstreamBoardProps {
@@ -60,13 +67,13 @@ export const WorkstreamBoard: React.FC<WorkstreamBoardProps> = ({
   onWorkstreamChange
 }) => {
   const { t } = useTranslation();
-  const [workstreams, setWorkstreams] = useState<Workstream[]>([]);
+  const [workstreams, setWorkstreams] = useState<WorkstreamWithStats[]>([]);
   const [unassignedCount, setUnassignedCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedWorkstreams, setExpandedWorkstreams] = useState<Set<string>>(new Set());
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingWorkstream, setEditingWorkstream] = useState<Workstream | null>(null);
+  const [editingWorkstream, setEditingWorkstream] = useState<WorkstreamWithStats | null>(null);
 
   useEffect(() => {
     loadWorkstreams();
@@ -232,7 +239,7 @@ export const WorkstreamBoard: React.FC<WorkstreamBoardProps> = ({
 };
 
 interface WorkstreamCardProps {
-  workstream: Workstream;
+  workstream: WorkstreamWithStats;
   expanded: boolean;
   onToggle: () => void;
   onEdit: () => void;

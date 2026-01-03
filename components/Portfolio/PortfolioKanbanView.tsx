@@ -42,11 +42,11 @@ interface PortfolioKanbanViewProps {
 
 // Kanban column configuration
 const KANBAN_COLUMNS: { id: InitiativeStatus; label: string }[] = [
-    { id: 'DRAFT', label: 'Draft' },
-    { id: 'PLANNING', label: 'Planning' },
-    { id: 'REVIEW', label: 'Review' },
-    { id: 'APPROVED', label: 'Approved' },
-    { id: 'EXECUTING', label: 'Executing' }
+    { id: 'DRAFT' as InitiativeStatus, label: 'Draft' },
+    { id: 'PLANNING' as InitiativeStatus, label: 'Planning' },
+    { id: 'REVIEW' as InitiativeStatus, label: 'Review' },
+    { id: 'APPROVED' as InitiativeStatus, label: 'Approved' },
+    { id: 'EXECUTING' as InitiativeStatus, label: 'Executing' }
 ];
 
 // ============================================
@@ -62,13 +62,13 @@ interface InitiativeCardProps {
 const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick, isDragging }) => {
     const priorityColors = getPriorityColors(initiative.priority);
     const axisColor = getAxisColor(initiative.axis);
-    
+
     const formatCurrency = (amount: number) => {
         if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
         if (amount >= 1000) return `$${(amount / 1000).toFixed(0)}K`;
         return `$${amount}`;
     };
-    
+
     return (
         <div
             onClick={onClick}
@@ -80,7 +80,7 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick, is
         >
             {/* Priority bar */}
             <div className={`h-1 -mx-4 -mt-4 mb-3 rounded-t-lg ${priorityColors.bg}`} />
-            
+
             {/* Axis indicator + Name */}
             <div className="flex items-start gap-2 mb-3">
                 <div className={`w-1 h-full min-h-[40px] rounded-full ${axisColor}`} />
@@ -95,7 +95,7 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick, is
                     )}
                 </div>
             </div>
-            
+
             {/* Priority badge */}
             <div className="flex items-center gap-2 mb-3">
                 <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${priorityColors.bg} ${priorityColors.text}`}>
@@ -107,7 +107,7 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick, is
                     </span>
                 )}
             </div>
-            
+
             {/* Owner */}
             {initiative.ownerBusiness && (
                 <div className="flex items-center gap-2 mb-3">
@@ -123,7 +123,7 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick, is
                     </span>
                 </div>
             )}
-            
+
             {/* Timeline */}
             {initiative.targetQuarter && (
                 <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-3">
@@ -131,7 +131,7 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick, is
                     {initiative.targetQuarter}
                 </div>
             )}
-            
+
             {/* Progress bar */}
             <div className="mb-3">
                 <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
@@ -139,13 +139,13 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick, is
                     <span>{initiative.progress}%</span>
                 </div>
                 <div className="h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-                    <div 
+                    <div
                         className="h-full bg-purple-500 rounded-full transition-all"
                         style={{ width: `${initiative.progress}%` }}
                     />
                 </div>
             </div>
-            
+
             {/* Footer with budget and ROI */}
             <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5">
                 <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
@@ -181,13 +181,13 @@ const SortableCard: React.FC<SortableCardProps> = ({ initiative, onClick }) => {
         transition,
         isDragging
     } = useSortable({ id: initiative.id });
-    
+
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1
     };
-    
+
     return (
         <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
             <InitiativeCard
@@ -214,9 +214,9 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({ id, label, initiatives, onI
     const { setNodeRef, isOver } = useDroppable({ id });
     const statusColors = getStatusColors(id);
     const columnColors = KANBAN_COLUMN_COLORS[id] || KANBAN_COLUMN_COLORS.DRAFT;
-    
+
     return (
-        <div 
+        <div
             ref={setNodeRef}
             className={`
                 flex flex-col min-w-[300px] max-w-[300px] rounded-xl overflow-hidden
@@ -234,7 +234,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({ id, label, initiatives, onI
                     {initiatives.length}
                 </span>
             </div>
-            
+
             {/* Column Content */}
             <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-320px)]">
                 <SortableContext
@@ -249,7 +249,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({ id, label, initiatives, onI
                         />
                     ))}
                 </SortableContext>
-                
+
                 {initiatives.length === 0 && (
                     <div className="p-4 text-center text-slate-400 dark:text-slate-500 text-sm">
                         Drop initiatives here
@@ -270,7 +270,7 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
     onStatusChange
 }) => {
     const [activeId, setActiveId] = useState<string | null>(null);
-    
+
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -279,48 +279,48 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
         }),
         useSensor(KeyboardSensor)
     );
-    
+
     // Group initiatives by status
     const columnData = useMemo(() => {
         const grouped: Record<string, PortfolioInitiative[]> = {};
         KANBAN_COLUMNS.forEach(col => {
             grouped[col.id] = [];
         });
-        
+
         initiatives.forEach(initiative => {
             if (grouped[initiative.status]) {
                 grouped[initiative.status].push(initiative);
             }
         });
-        
+
         return grouped;
     }, [initiatives]);
-    
+
     const activeInitiative = useMemo(() => {
         if (!activeId) return null;
         return initiatives.find(i => i.id === activeId) || null;
     }, [activeId, initiatives]);
-    
+
     const handleDragStart = (event: DragStartEvent) => {
         setActiveId(event.active.id as string);
     };
-    
+
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveId(null);
-        
+
         if (!over) return;
-        
+
         const activeInitiative = initiatives.find(i => i.id === active.id);
         if (!activeInitiative) return;
-        
+
         // Check if dropped on a column
         const newStatus = KANBAN_COLUMNS.find(col => col.id === over.id)?.id;
         if (newStatus && newStatus !== activeInitiative.status) {
             onStatusChange(active.id as string, newStatus);
         }
     };
-    
+
     return (
         <DndContext
             sensors={sensors}
@@ -341,12 +341,12 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
                     ))}
                 </div>
             </div>
-            
+
             <DragOverlay>
                 {activeInitiative && (
                     <InitiativeCard
                         initiative={activeInitiative}
-                        onClick={() => {}}
+                        onClick={() => { }}
                         isDragging
                     />
                 )}
@@ -356,6 +356,8 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
 };
 
 export default PortfolioKanbanView;
+
+
 
 
 

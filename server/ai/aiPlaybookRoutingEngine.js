@@ -6,7 +6,8 @@
  * Supports: metric_lte, metric_gte, flag_eq, has_open_tasks, signal_present, time_since_step_gte
  */
 
-const db = require('../database');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 const AIPlaybookRoutingEngine = {
     /**
@@ -395,4 +396,4 @@ const AIPlaybookRoutingEngine = {
     }
 };
 
-module.exports = AIPlaybookRoutingEngine;
+export default AIPlaybookRoutingEngine;

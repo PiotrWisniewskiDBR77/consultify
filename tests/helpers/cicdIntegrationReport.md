@@ -102,3 +102,5 @@
 - Coverage reporting nie blokuje pipeline (`fail_ci_if_error: false`)
 - Monitoring workflow działa niezależnie od głównego pipeline
 
+
+

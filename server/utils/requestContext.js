@@ -21,6 +21,6 @@ const getRequestContext = (req) => {
     };
 };
 
-module.exports = {
+export default {
     getRequestContext
 };

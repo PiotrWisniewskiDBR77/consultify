@@ -8,10 +8,11 @@
  * - Sessions Management
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const authMiddleware = require('../middleware/authMiddleware');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import authMiddleware from '../middleware/authMiddleware.js';
 
 // ==========================================
 // USER TIERS & COST ATTRIBUTION
@@ -772,5 +773,5 @@ function formatTimestamp(timestamp) {
     return `${Math.floor(diffHours / 24)} days ago`;
 }
 
-module.exports = router;
+export default router;
 

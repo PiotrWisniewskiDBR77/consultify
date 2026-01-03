@@ -207,7 +207,7 @@ function clearMetrics() {
     metricsStore.errors = [];
 }
 
-module.exports = {
+export default {
     performanceMetricsMiddleware,
     getMetricsSummary,
     getMemoryMetrics,

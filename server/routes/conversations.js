@@ -7,11 +7,12 @@
  * Refactored for SQLite compatibility.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import verifyToken from '../middleware/authMiddleware.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 // Helper: Promisify db.all
 const dbAll = (sql, params = []) => new Promise((resolve, reject) => {
@@ -395,7 +396,7 @@ router.post('/:id/title/generate', verifyToken, async (req, res) => {
         }
 
         // Use title generator service
-        const titleGenerator = require('../services/ai/titleGenerator');
+        const titleGenerator = import('ai/titleGenerator.js');
         const generatedTitle = await titleGenerator.generateConversationTitle(messages);
 
         // Update conversation with new title
@@ -623,4 +624,4 @@ router.get('/:id/export/:format', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

@@ -97,5 +97,5 @@ if (require.main === module) {
     });
 }
 
-module.exports = { migrate };
+export default { migrate };
 

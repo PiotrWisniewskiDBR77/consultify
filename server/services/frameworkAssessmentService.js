@@ -7,7 +7,9 @@
  * - Initiative generation from any framework
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // =====================================================
 // FRAMEWORK CONFIGURATIONS
@@ -394,7 +396,7 @@ function getImpactEstimate(gap) {
 // EXPORTS
 // =====================================================
 
-module.exports = {
+export default {
     FRAMEWORK_CONFIGS,
     normalizeScore,
     mapToDRDScale,
@@ -404,6 +406,8 @@ module.exports = {
     calculateGaps,
     generateInitiativeSuggestions
 };
+
+
 
 
 

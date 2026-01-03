@@ -7,9 +7,9 @@
  * - Management practices
  */
 
-const express = require('express');
-const { v4: uuidv4 } = require('uuid');
-const authMiddleware = require('../middleware/authMiddleware');
+import express from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import authMiddleware from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -322,5 +322,5 @@ router.get('/report/:assessmentId', authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

@@ -4,13 +4,18 @@
  * Provides single source of truth for pricing information
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Dependency injection container (for deterministic unit tests)
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+    db,
+    uuidv4,
 };
 
 // Cache for pricing data
@@ -330,7 +335,7 @@ function clearCache() {
     cacheTimestamp = null;
 }
 
-module.exports = {
+export default {
     setDependencies,
     loadLegalMetadata,
     getPlans,
@@ -349,6 +354,8 @@ module.exports = {
     syncPricingToDatabase,
     clearCache
 };
+
+
 
 
 

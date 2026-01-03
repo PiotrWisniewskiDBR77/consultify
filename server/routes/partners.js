@@ -11,11 +11,11 @@
  * - View own settlements
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const PartnerService = require('../services/partnerService');
-const SettlementService = require('../services/settlementService');
-const authMiddleware = require('../middleware/authMiddleware');
+const PartnerService = import('partnerService.js');
+const SettlementService = import('settlementService.js');
+import authMiddleware from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
 
 // ==========================================
@@ -274,4 +274,4 @@ router.get('/:id/settlements/:periodId', authMiddleware, checkPartnerAccess, asy
     }
 });
 
-module.exports = router;
+export default router;

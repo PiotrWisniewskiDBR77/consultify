@@ -32,4 +32,4 @@ const parseRedisConfig = () => {
 };
 
 const redisConfig = parseRedisConfig();
-module.exports = redisConfig;
+export default redisConfig;

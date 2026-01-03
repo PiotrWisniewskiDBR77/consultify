@@ -1,5 +1,5 @@
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
 
 // Use native fetch (Node.js 18+) or fallback to node-fetch if available
 let fetch;
@@ -381,4 +381,4 @@ async function searchTavilyAdvanced(query, apiKey, options = {}) {
     };
 }
 
-module.exports = WebSearchService;
+export default WebSearchService;

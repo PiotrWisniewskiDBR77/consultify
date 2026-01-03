@@ -1,5 +1,7 @@
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Dependency injection container (for deterministic unit tests)
 const deps = {
@@ -211,5 +213,5 @@ const RoadmapService = {
     }
 };
 
-module.exports = RoadmapService;
+export default RoadmapService;
 

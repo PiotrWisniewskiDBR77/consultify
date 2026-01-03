@@ -7,10 +7,12 @@
  * PMO Standards: ISO 21500, PMBOK 7, PRINCE2
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
-const ManagementReportsService = require('./managementReportsService');
-const ReportEmailService = require('./reportEmailService');
+import db from '../database.js';
+import ManagementReportsService from './managementReportsService.js';
+import ReportEmailService from './reportEmailService.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 /**
  * Schedule frequency options
@@ -516,7 +518,9 @@ const ScheduledReportsService = {
     }
 };
 
-module.exports = ScheduledReportsService;
+export default ScheduledReportsService;
+
+
 
 
 

@@ -5,15 +5,16 @@
  * SuperAdmin only access.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
+import verifyToken from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
-const { promptAssistant } = require('../services/ai/promptAssistant');
-const { promptTemplateService } = require('../services/ai/promptTemplateService');
-const { promptBlockLibrary, BLOCK_CATEGORIES } = require('../services/ai/promptBlockLibrary');
-const { variableResolver } = require('../services/ai/variableResolver');
-const db = require('../database');
+const { promptAssistant } = import('ai/promptAssistant.js');
+const { promptTemplateService } = import('ai/promptTemplateService.js');
+const { promptBlockLibrary, BLOCK_CATEGORIES } = import('ai/promptBlockLibrary.js');
+const { variableResolver } = import('ai/variableResolver.js');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // Database helpers
 function dbGet(sql, params = []) {
@@ -632,5 +633,5 @@ router.post('/feedback', verifyToken, requireRole(['super_admin', 'admin']), asy
     }
 });
 
-module.exports = router;
+export default router;
 

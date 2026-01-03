@@ -17,8 +17,10 @@
  * @module facilityUserService
  */
 
-const { v4: uuid } = require('uuid');
-const db = require('../database');
+import db from '../database.js';
+import { v4 as uuid } from 'uuid';
+
+
 
 /**
  * Assignment Types
@@ -524,7 +526,9 @@ const FacilityUserService = {
   }
 };
 
-module.exports = FacilityUserService;
+export default FacilityUserService;
+
+
 
 
 

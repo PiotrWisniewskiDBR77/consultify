@@ -1,11 +1,12 @@
 // Decisions Routes - Governance checkpoints
 // Step 3: PMO Objects, Statuses & Stage Gates
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const verifyToken = require('../middleware/authMiddleware');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
+import verifyToken from '../middleware/authMiddleware.js';
 
 // GET /api/decisions?projectId=xxx
 router.get('/', verifyToken, (req, res) => {
@@ -424,8 +425,8 @@ router.post('/:id/escalate', verifyToken, async (req, res) => {
             
             // Try to create escalation record and notify
             try {
-                const EscalationService = require('../services/escalationService');
-                const NotificationService = require('../services/notificationService');
+                const EscalationService = import('escalationService.js');
+                const NotificationService = import('notificationService.js');
                 
                 // Find manager of decision owner
                 const managerSql = `SELECT manager_id FROM users WHERE id = ?`;
@@ -474,4 +475,4 @@ router.post('/:id/escalate', verifyToken, async (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

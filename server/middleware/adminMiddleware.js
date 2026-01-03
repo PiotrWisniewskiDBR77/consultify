@@ -101,4 +101,4 @@ function setDependencies(newDeps) {
     Object.assign(deps, newDeps);
 }
 
-module.exports = { verifyAdmin, checkPermission, setDependencies };
+export default { verifyAdmin, checkPermission, setDependencies };

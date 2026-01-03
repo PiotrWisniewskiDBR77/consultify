@@ -13,7 +13,7 @@
  */
 
 const db = require('../../database');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const { llmService } = require('./llmService');
 const { promptTemplateService } = require('./promptTemplateService');
 const { promptBlockLibrary, BLOCK_CATEGORIES } = require('./promptBlockLibrary');
@@ -678,7 +678,7 @@ Return ONLY the improved prompt, no explanations.
 // Singleton instance
 const promptAssistant = new PromptAssistantService();
 
-module.exports = {
+export default {
     PromptAssistantService,
     promptAssistant,
     PROMPT_ENGINEERING_KNOWLEDGE,

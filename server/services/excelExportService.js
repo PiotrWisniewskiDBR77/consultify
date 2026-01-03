@@ -1,6 +1,8 @@
-const ExcelJS = require('exceljs');
-const fs = require('fs').promises;
-const path = require('path');
+import ExcelJS from 'exceljs';
+import path from 'path';
+import { promises as fs } from 'fs';
+
+
 
 const ExcelExportService = {
     /**
@@ -591,4 +593,4 @@ function addRawDataSheet(sheet, report) {
     sheet.getColumn(1).width = 100;
 }
 
-module.exports = ExcelExportService;
+export default ExcelExportService;

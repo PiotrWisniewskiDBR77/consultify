@@ -190,3 +190,5 @@ npm run test:backend -- tests/unit/backend/cron/TrialCron.test.ts
 
 **Status:** ✅ WSZYSTKIE ETAPY 6-8 ZAKOŃCZONE
 
+
+

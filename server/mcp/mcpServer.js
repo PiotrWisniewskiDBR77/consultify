@@ -10,8 +10,9 @@
  * Part of: User-Level Notifications & Integrations System
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // MCP Protocol Version
 const MCP_VERSION = '2024-11-05';
@@ -576,7 +577,7 @@ const MCPServer = {
     },
 
     _sendNotification: async (userId, organizationId, args) => {
-        const NotificationService = require('../services/notificationService');
+        const NotificationService = import('notificationService.js');
         
         const notification = {
             userId: args.userId || userId,
@@ -817,7 +818,9 @@ const MCPServer = {
     }
 };
 
-module.exports = MCPServer;
+export default MCPServer;
+
+
 
 
 

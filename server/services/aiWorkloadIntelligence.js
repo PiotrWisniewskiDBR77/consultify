@@ -8,9 +8,13 @@
  */
 
 // Dependency injection container (for deterministic unit tests)
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+    db,
+    uuidv4,
 };
 
 // Workload status levels
@@ -625,4 +629,4 @@ const AIWorkloadIntelligence = {
     }
 };
 
-module.exports = AIWorkloadIntelligence;
+export default AIWorkloadIntelligence;

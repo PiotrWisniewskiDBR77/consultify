@@ -10,7 +10,9 @@
  * - PRINCE2: Progress Theme - Trend Identification
  */
 
-const db = require('../database');
+import db from '../database.js';
+
+
 
 // Database helpers
 function dbGet(sql, params = []) {
@@ -387,7 +389,9 @@ const PeriodComparisonService = {
     }
 };
 
-module.exports = PeriodComparisonService;
+export default PeriodComparisonService;
+
+
 
 
 

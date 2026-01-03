@@ -18,25 +18,25 @@
  * - PRINCE2 - Progress Theme
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const rateLimit = require('express-rate-limit');
 
 // Services
-const EconomicsService = require('../services/economicsService');
-const ExcelImportService = require('../services/excelImportService');
-const ExcelExportService = require('../services/excelExportService');
-const PDFExportService = require('../services/pdfExportService');
-const GovernanceAuditService = require('../services/governanceAuditService');
-const VersioningService = require('../services/versioningService');
-const EvidenceService = require('../services/evidenceService');
+const EconomicsService = import('economicsService.js');
+const ExcelImportService = import('excelImportService.js');
+const ExcelExportService = import('excelExportService.js');
+const PDFExportService = import('pdfExportService.js');
+const GovernanceAuditService = import('governanceAuditService.js');
+const VersioningService = import('versioningService.js');
+const EvidenceService = import('evidenceService.js');
 
 // Middleware
-const authMiddleware = require('../middleware/authMiddleware');
+import authMiddleware from '../middleware/authMiddleware.js';
 const { requirePermission, auditAction } = require('../middleware/permissionMiddleware');
 const {
     validateCreateAnalysis,
@@ -1363,7 +1363,7 @@ router.post('/analyses/:id/calculate-metrics',
     validateAnalysisId,
     async (req, res) => {
         try {
-            const FinancialCalc = require('../services/financialCalculatorService');
+            const FinancialCalc = import('financialCalculatorService.js');
             
             // Get financial data for the analysis
             const financials = await EconomicsService.getAnalysisFinancials(
@@ -1571,7 +1571,7 @@ router.post('/analyses/:id/business-case',
 let FinancialCalculatorService;
 const getFinancialService = () => {
     if (!FinancialCalculatorService) {
-        FinancialCalculatorService = require('../services/financialCalculatorService');
+        FinancialCalculatorService = import('financialCalculatorService.js');
     }
     return FinancialCalculatorService;
 };
@@ -2020,7 +2020,7 @@ router.get('/initiatives/:initiativeId/quality',
     requireOrganization,
     async (req, res) => {
         try {
-            const QualityService = require('../services/qualityAssessmentService');
+            const QualityService = import('qualityAssessmentService.js');
             const assessment = await QualityService.getQualityAssessment(
                 req.params.initiativeId,
                 req.organizationId
@@ -2050,7 +2050,7 @@ router.post('/initiatives/:initiativeId/quality',
     requireOrganization,
     async (req, res) => {
         try {
-            const QualityService = require('../services/qualityAssessmentService');
+            const QualityService = import('qualityAssessmentService.js');
             const assessmentData = {
                 assessmentType: req.body.assessmentType || 'post_implementation',
                 lessonsLearned: req.body.lessonsLearned,
@@ -2091,7 +2091,7 @@ router.put('/initiatives/:initiativeId/quality',
     requireOrganization,
     async (req, res) => {
         try {
-            const QualityService = require('../services/qualityAssessmentService');
+            const QualityService = import('qualityAssessmentService.js');
             const assessment = await QualityService.updateQualityAssessment(
                 req.params.initiativeId,
                 req.body,
@@ -2119,7 +2119,7 @@ router.post('/initiatives/:initiativeId/quality/recalculate',
     requireOrganization,
     async (req, res) => {
         try {
-            const QualityService = require('../services/qualityAssessmentService');
+            const QualityService = import('qualityAssessmentService.js');
             const assessment = await QualityService.recalculateQualityScores(
                 req.params.initiativeId,
                 req.organizationId
@@ -2141,7 +2141,7 @@ router.get('/initiatives/:initiativeId/quality/lessons',
     requireOrganization,
     async (req, res) => {
         try {
-            const QualityService = require('../services/qualityAssessmentService');
+            const QualityService = import('qualityAssessmentService.js');
             const lessons = await QualityService.getLessonsLearned(
                 req.params.initiativeId,
                 req.organizationId
@@ -2181,4 +2181,4 @@ router.use((err, req, res, next) => {
     });
 });
 
-module.exports = router;
+export default router;

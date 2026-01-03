@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const verifyToken = require('../middleware/authMiddleware');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
+import verifyToken from '../middleware/authMiddleware.js';
 const { verifyAdmin } = require('../middleware/adminMiddleware');
 
 router.use(verifyToken);
@@ -243,4 +244,4 @@ router.delete('/:id/members/:userId', verifyAdmin, (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

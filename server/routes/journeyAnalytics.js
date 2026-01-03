@@ -4,10 +4,10 @@
  * Endpoints for user journey tracking and analytics dashboard.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const JourneyAnalytics = require('../services/journeyAnalytics');
-const auth = require('../middleware/authMiddleware');
+const JourneyAnalytics = import('journeyAnalytics.js');
+import auth from '../middleware/authMiddleware.js';
 
 // Middleware to check if user is admin (for aggregate endpoints)
 const requireAdmin = (req, res, next) => {
@@ -130,4 +130,4 @@ router.get('/user/:userId', auth, requireAdmin, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

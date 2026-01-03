@@ -34,7 +34,7 @@ import {
 import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { InfoButton } from '../../components/shared/InfoButton';
-import { LLMProviderConfig } from '../../types/domain/ai';
+import { LLMProviderConfig, LLMProvider } from '../../types/domain/ai';
 import { PageHeader, SectionHeader } from '../../components/Admin/shared/PageHeader';
 import { Card } from '../../components/Admin/shared/Card';
 import { Button, IconButton } from '../../components/Admin/shared/Button';
@@ -127,7 +127,7 @@ export const LLMManagementView: React.FC = () => {
                 if (providerForm.tier) {
                     await Api.updateProviderTier(editingProviderId, providerForm.tier);
                 }
-                await Api.updateLLMProvider(editingProviderId, providerForm);
+                await Api.updateLLMProvider(editingProviderId, providerForm as any);
                 toast.success('Provider updated');
             } else {
                 await Api.addLLMProvider(providerForm as any);
@@ -166,7 +166,7 @@ export const LLMManagementView: React.FC = () => {
         });
     };
 
-    const handleEditProvider = (p: LLMProvider) => {
+    const handleEditProvider = (p: LLMProviderConfig) => {
         setEditingProviderId(p.id);
         setProviderForm(p);
         setShowProviderModal(true);
@@ -224,10 +224,10 @@ export const LLMManagementView: React.FC = () => {
         }
     };
 
-    const handleTestConnection = async (config: Partial<LLMProvider>) => {
+    const handleTestConnection = async (config: Partial<LLMProviderConfig>) => {
         setTestingConnection(true);
         try {
-            const result = await Api.testLLMConnection(config);
+            const result = await Api.testLLMConnection(config as any);
             if (result.success) {
                 toast.success(result.message);
             } else {

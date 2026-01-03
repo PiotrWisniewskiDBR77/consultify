@@ -69,7 +69,7 @@ const ToolCallCard: React.FC<{ tool: ToolCallInfo }> = ({ tool }) => {
               {JSON.stringify(tool.args, null, 2)}
             </pre>
           </div>
-          {tool.result && (
+          {tool.result != null && (
             <div>
               <span className="text-slate-500">Result:</span>
               <pre className="mt-1 p-2 bg-slate-100 dark:bg-navy-900 rounded text-[10px] overflow-x-auto">

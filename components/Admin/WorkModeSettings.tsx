@@ -230,6 +230,7 @@ export const WorkModeSettings: React.FC = () => {
           <InfoButton
             title={t('admin.workMode.helpTitle', 'Work Mode Help')}
             content={t('admin.workMode.helpContent', 'Work mode determines how tasks and team members are organized. Choose SIMPLE for small teams, LOCATION_BASED for multi-site organizations, PROJECT_BASED for project-centric work, or FULL for matrix organizations.')}
+            {...({} as any)}
           />
         </div>
       </div>
@@ -454,6 +455,8 @@ export const WorkModeSettings: React.FC = () => {
 };
 
 export default WorkModeSettings;
+
+
 
 
 

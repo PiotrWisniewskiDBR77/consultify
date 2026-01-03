@@ -42,10 +42,17 @@ class HealthCheckJob {
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
             db: deps?.db || getDatabase(),
-            emailService: deps?.emailService || await import('../../services/emailService.js').then(m => m.default || m),
+            emailService: deps?.emailService,
             alertEmail: deps?.alertEmail || 'piotr.wisniewski@dbr77.com',
-            alertThreshold: deps?.alertThreshold || 1, // Send alert immediately on first confirmed failure
+            alertThreshold: deps?.alertThreshold || 1,
         };
+    }
+
+    private async ensureDeps(): Promise<Dependencies> {
+        if (!this.deps.emailService) {
+            this.deps.emailService = await import('../../services/emailService.js').then(m => m.default || m);
+        }
+        return this.deps as Dependencies;
     }
 
     /**
@@ -55,8 +62,9 @@ class HealthCheckJob {
     startHealthCheck(): void {
         // Run every minute: * * * * *
         this.job = cron.schedule('* * * * *', async () => {
+            const deps = await this.ensureDeps();
             const start = Date.now();
-            
+
             try {
                 await DbPromise.get('SELECT 1', []);
 
@@ -64,8 +72,8 @@ class HealthCheckJob {
                 if (!this.isSystemHealthy) {
                     // System just came UP
                     logger.info('[HEALTH CHECK] RECOVERED');
-                    await this.deps.emailService.sendEmail(
-                        this.deps.alertEmail,
+                    await deps.emailService.sendEmail(
+                        deps.alertEmail,
                         'RESOLVED: System Database Recovered',
                         `
                         <h1>System Recovered</h1>
@@ -85,8 +93,8 @@ class HealthCheckJob {
                 if (this.isSystemHealthy) {
                     this.isSystemHealthy = false;
                     // System just went DOWN
-                    await this.deps.emailService.sendEmail(
-                        this.deps.alertEmail,
+                    await deps.emailService.sendEmail(
+                        deps.alertEmail,
                         'CRITICAL ALERT: System Database Down',
                         `
                         <h1>System Alert</h1>

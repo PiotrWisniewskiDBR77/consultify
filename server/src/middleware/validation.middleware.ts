@@ -23,11 +23,11 @@ export const validateBody = (schema: z.ZodSchema) => {
             const result = schema.safeParse(req.body);
             if (!result.success) {
                 // Format Zod errors into a readable structure
-                const errors = result.error.errors.map(err => ({
+                const errors = result.error?.errors?.map(err => ({
                     field: err.path.join('.'),
                     message: err.message,
                     code: err.code
-                }));
+                })) || [];
 
                 res.status(400).json({
                     error: 'Validation Error',
@@ -56,11 +56,11 @@ export const validateQuery = (schema: z.ZodSchema) => {
         try {
             const result = schema.safeParse(req.query);
             if (!result.success) {
-                const errors = result.error.errors.map(err => ({
+                const errors = result.error?.errors?.map(err => ({
                     field: err.path.join('.'),
                     message: err.message,
                     code: err.code
-                }));
+                })) || [];
 
                 res.status(400).json({
                     error: 'Validation Error',
@@ -88,11 +88,11 @@ export const validateParams = (schema: z.ZodSchema) => {
         try {
             const result = schema.safeParse(req.params);
             if (!result.success) {
-                const errors = result.error.errors.map(err => ({
+                const errors = result.error?.errors?.map(err => ({
                     field: err.path.join('.'),
                     message: err.message,
                     code: err.code
-                }));
+                })) || [];
 
                 res.status(400).json({
                     error: 'Validation Error',

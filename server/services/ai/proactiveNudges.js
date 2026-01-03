@@ -387,7 +387,7 @@ class ProactiveNudgesService {
 // Singleton instance
 const proactiveNudgesService = new ProactiveNudgesService();
 
-module.exports = {
+export default {
     ProactiveNudgesService,
     proactiveNudgesService,
     proactiveNudges: proactiveNudgesService, // Alias for API routes

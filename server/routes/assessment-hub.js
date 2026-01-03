@@ -8,12 +8,13 @@
  * - POST /api/assessment-reports/:id/finalize - Finalize a report
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
-const AssessmentOverviewService = require('../services/assessmentOverviewService');
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import verifyToken from '../middleware/authMiddleware.js';
+const AssessmentOverviewService = import('assessmentOverviewService.js');
+import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // ============================================================================
 // ASSESSMENTS LIST (for AssessmentTable component)
@@ -223,4 +224,4 @@ router.post('/:id/duplicate', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

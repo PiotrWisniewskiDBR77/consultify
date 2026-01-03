@@ -25,4 +25,4 @@ function registerAllTools() {
 // Auto-register on import
 registerAllTools();
 
-module.exports = { registerAllTools };
+export default { registerAllTools };

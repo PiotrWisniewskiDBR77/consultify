@@ -60,4 +60,4 @@ const ActionProposalEngine = {
     }
 };
 
-module.exports = ActionProposalEngine;
+export default ActionProposalEngine;

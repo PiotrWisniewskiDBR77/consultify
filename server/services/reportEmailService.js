@@ -7,11 +7,11 @@
  * PMO Standards: ISO 21500, PMBOK 7, PRINCE2
  */
 
-const nodemailer = require('nodemailer');
-const fs = require('fs');
-const path = require('path');
-const db = require('../database');
-const ManagementReportsService = require('./managementReportsService');
+import nodemailer from 'nodemailer';
+import fs from 'fs';
+import path from 'path';
+import db from '../database.js';
+import ManagementReportsService from './managementReportsService.js';
 
 // Lazy load PDF generator to avoid circular dependencies
 let PdfGeneratorService;

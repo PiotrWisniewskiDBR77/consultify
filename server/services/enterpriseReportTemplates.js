@@ -1424,8 +1424,9 @@ class EnterpriseReportTemplates {
     }
 }
 
-module.exports = new EnterpriseReportTemplates();
-module.exports.DRD_AXES = DRD_AXES;
-module.exports.INDUSTRY_BENCHMARKS = INDUSTRY_BENCHMARKS;
-module.exports.MATURITY_LEVELS = MATURITY_LEVELS;
+const enterpriseReportTemplatesInstance = new EnterpriseReportTemplates();
+export default enterpriseReportTemplatesInstance;
+export { DRD_AXES };
+export { INDUSTRY_BENCHMARKS };
+export { MATURITY_LEVELS };
 

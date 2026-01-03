@@ -7,10 +7,10 @@
  * evidence packs for audit purposes.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const EvidenceLedgerService = require('../services/evidenceLedgerService');
-const authMiddleware = require('../middleware/authMiddleware');
+const EvidenceLedgerService = import('evidenceLedgerService.js');
+import authMiddleware from '../middleware/authMiddleware.js';
 
 // Apply auth to all routes
 router.use(authMiddleware);
@@ -204,4 +204,4 @@ router.get('/:entityType/:id/has-evidence', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

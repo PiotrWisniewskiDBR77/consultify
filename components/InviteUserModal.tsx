@@ -403,7 +403,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                         </button>
                         <button
                             type="submit"
-                            disabled={loading || !email || (seatsAreFull && !autoAddSeat)}
+                            disabled={loading || !email || (seatsAreFull ? !autoAddSeat : false)}
                             className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {loading ? (

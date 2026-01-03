@@ -4,9 +4,9 @@
  * Provides endpoints for checking LLM provider health status.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { llmHealthMonitor, HealthStatus, ErrorCategory, ErrorMessages } = require('../services/ai/llmHealthMonitor');
+const { llmHealthMonitor, HealthStatus, ErrorCategory, ErrorMessages } = import('ai/llmHealthMonitor.js');
 
 // Get database - works with both SQLite and PostgreSQL
 let db;
@@ -246,5 +246,5 @@ function getStatusLabel(status) {
     }
 }
 
-module.exports = router;
+export default router;
 

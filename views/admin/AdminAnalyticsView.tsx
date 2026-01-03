@@ -72,7 +72,7 @@ export const AdminAnalyticsView: React.FC = () => {
 
     const handleVoteIdea = async (id: string, status: string) => {
         try {
-            await Api.updateAIIdea(id, { status });
+            await Api.updateAIIdea(id, { status: status as any });
             loadData();
         } catch (e) {
             console.error("Failed to update idea", e);

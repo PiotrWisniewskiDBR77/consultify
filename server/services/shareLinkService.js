@@ -9,9 +9,11 @@
  * - Public-safe snapshot projection - strips PII before storage
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
+import db from '../database.js';
+import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Trial limits (configurable)
 const TRIAL_SHARE_LINK_LIMIT = 3;
@@ -381,4 +383,4 @@ const ShareLinkService = {
     }
 };
 
-module.exports = ShareLinkService;
+export default ShareLinkService;

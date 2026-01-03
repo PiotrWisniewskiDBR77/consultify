@@ -479,12 +479,14 @@ class QualityChecker {
 // Singleton instance
 const qualityChecker = new QualityChecker();
 
-module.exports = {
+export default {
     QualityChecker,
     QualityCheckerService: QualityChecker,
     qualityChecker,
     QUALITY_THRESHOLDS
 };
+
+
 
 
 

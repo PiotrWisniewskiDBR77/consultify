@@ -358,4 +358,4 @@ class SimulationEngine {
     }
 }
 
-module.exports = SimulationEngine;
+export default SimulationEngine;

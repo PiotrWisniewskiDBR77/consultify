@@ -11,7 +11,7 @@
  * Part of the Harvard-Level Co-Thinker AI System
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const { aiLogger } = require('./logger');
 
 // Memory types for conversation context
@@ -570,7 +570,7 @@ class ConversationStateMachine {
 // Singleton instance
 const conversationStateMachine = new ConversationStateMachine();
 
-module.exports = {
+export default {
     ConversationStateMachine,
     conversationStateMachine,
     MEMORY_TYPES,

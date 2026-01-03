@@ -5,8 +5,6 @@
  * Switch by setting DATABASE_URL environment variable
  */
 
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 

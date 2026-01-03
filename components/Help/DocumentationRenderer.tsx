@@ -47,7 +47,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
 }) => {
     const { i18n } = useTranslation();
     const lang = language || (i18n.language === 'pl' ? 'pl' : 'en');
-    
+
     // Get content based on type
     const content = useMemo(() => {
         switch (contentType) {
@@ -63,7 +63,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                 return null;
         }
     }, [contentType, contentId, moduleId]);
-    
+
     if (!content) {
         return (
             <div className="bg-white dark:bg-slate-800 rounded-xl p-8 text-center">
@@ -74,11 +74,11 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
             </div>
         );
     }
-    
+
     // Render module overview
     if (contentType === 'overview') {
-        const module = content as typeof MODULE_HELP_CONTENT[HelpModuleId];
-        
+        const module = content as any; // Type from MODULE_HELP_CONTENT
+
         return (
             <article className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
                 {/* Header */}
@@ -91,7 +91,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                     </div>
                     <p className="text-white/90">{module.description[lang]}</p>
                 </div>
-                
+
                 {/* Content */}
                 <div className="p-8 space-y-8">
                     {/* Purpose */}
@@ -104,7 +104,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                             {module.purpose[lang]}
                         </p>
                     </section>
-                    
+
                     {/* Target Audience */}
                     <section>
                         <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
@@ -112,7 +112,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                             {lang === 'pl' ? 'Dla kogo' : 'Target Audience'}
                         </h2>
                         <div className="flex flex-wrap gap-2">
-                            {module.targetAudience.map((audience, i) => (
+                            {module.targetAudience.map((audience: string, i: number) => (
                                 <span
                                     key={i}
                                     className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm"
@@ -122,7 +122,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                             ))}
                         </div>
                     </section>
-                    
+
                     {/* Key Features */}
                     <section>
                         <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -130,7 +130,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                             {lang === 'pl' ? 'Kluczowe funkcje' : 'Key Features'}
                         </h2>
                         <div className="grid gap-4 md:grid-cols-2">
-                            {module.keyFeatures.map((feature, i) => (
+                            {module.keyFeatures.map((feature: any, i: number) => (
                                 <div
                                     key={i}
                                     className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl"
@@ -150,7 +150,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                             ))}
                         </div>
                     </section>
-                    
+
                     {/* Workflow Steps */}
                     {module.workflowSteps && module.workflowSteps.length > 0 && (
                         <section>
@@ -161,9 +161,9 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                             <div className="relative">
                                 {/* Timeline line */}
                                 <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-600" />
-                                
+
                                 <div className="space-y-4">
-                                    {module.workflowSteps.map((step, i) => (
+                                    {module.workflowSteps.map((step: any, i: number) => (
                                         <div key={i} className="relative flex items-start gap-4 pl-10">
                                             {/* Step number */}
                                             <div className="absolute left-0 w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-bold">
@@ -183,7 +183,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                             </div>
                         </section>
                     )}
-                    
+
                     {/* Tips */}
                     <section className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-6">
                         <h2 className="text-lg font-semibold text-amber-800 dark:text-amber-200 mb-3 flex items-center gap-2">
@@ -191,7 +191,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                             {lang === 'pl' ? 'Wskazówki' : 'Tips'}
                         </h2>
                         <ul className="space-y-2">
-                            {module.tips[lang].map((tip, i) => (
+                            {module.tips[lang].map((tip: string, i: number) => (
                                 <li key={i} className="flex items-start gap-2 text-amber-700 dark:text-amber-300">
                                     <span className="text-amber-500 mt-0.5">•</span>
                                     {tip}
@@ -199,7 +199,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                             ))}
                         </ul>
                     </section>
-                    
+
                     {/* Related Modules */}
                     {module.relatedModules && module.relatedModules.length > 0 && (
                         <section>
@@ -207,8 +207,8 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                                 {lang === 'pl' ? 'Powiązane moduły' : 'Related Modules'}
                             </h2>
                             <div className="flex flex-wrap gap-2">
-                                {module.relatedModules.map(relatedId => {
-                                    const related = MODULE_HELP_CONTENT[relatedId];
+                                {module.relatedModules.map((relatedId: any) => {
+                                    const related = MODULE_HELP_CONTENT[relatedId as HelpModuleId];
                                     return (
                                         <button
                                             key={relatedId}
@@ -225,7 +225,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                         </section>
                     )}
                 </div>
-                
+
                 {/* Feedback */}
                 {showFeedback && (
                     <div className="border-t border-slate-200 dark:border-slate-700 p-6">
@@ -235,11 +235,11 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
             </article>
         );
     }
-    
+
     // Render card documentation
     if (contentType === 'card') {
-        const card = content as typeof CARD_DOCS[string];
-        
+        const card = content as any; // Type from CARD_DOCS
+
         return (
             <article className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
                 {/* Header */}
@@ -250,20 +250,20 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                     </div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{card.title}</h1>
                 </div>
-                
+
                 {/* Content */}
                 <div className="p-8 space-y-6">
                     <p className="text-slate-600 dark:text-slate-300 text-lg leading-relaxed">
                         {card.description}
                     </p>
-                    
+
                     {/* Features */}
                     <section>
                         <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
                             {lang === 'pl' ? 'Funkcje' : 'Features'}
                         </h2>
                         <ul className="space-y-2">
-                            {card.features.map((feature, i) => (
+                            {card.features.map((feature: string, i: number) => (
                                 <li key={i} className="flex items-start gap-2">
                                     <CheckCircle size={18} className="text-green-500 mt-0.5 flex-shrink-0" />
                                     <span className="text-slate-600 dark:text-slate-300">{feature}</span>
@@ -271,14 +271,14 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                             ))}
                         </ul>
                     </section>
-                    
+
                     {/* How to Use */}
                     <section>
                         <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
                             {lang === 'pl' ? 'Jak używać' : 'How to Use'}
                         </h2>
                         <ol className="space-y-3">
-                            {card.howToUse.map((step, i) => (
+                            {card.howToUse.map((step: string, i: number) => (
                                 <li key={i} className="flex items-start gap-3">
                                     <span className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center text-sm font-semibold flex-shrink-0">
                                         {i + 1}
@@ -288,7 +288,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                             ))}
                         </ol>
                     </section>
-                    
+
                     {/* Tips */}
                     <section className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
                         <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2">
@@ -296,7 +296,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                             {lang === 'pl' ? 'Wskazówki' : 'Tips'}
                         </h3>
                         <ul className="space-y-1">
-                            {card.tips.map((tip, i) => (
+                            {card.tips.map((tip: string, i: number) => (
                                 <li key={i} className="text-blue-700 dark:text-blue-300 text-sm flex items-start gap-2">
                                     <span>•</span>
                                     {tip}
@@ -305,7 +305,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                         </ul>
                     </section>
                 </div>
-                
+
                 {/* Feedback */}
                 {showFeedback && (
                     <div className="border-t border-slate-200 dark:border-slate-700 p-6">
@@ -315,11 +315,11 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
             </article>
         );
     }
-    
+
     // Render FAQ
     if (contentType === 'faq') {
-        const faq = content as typeof FAQ_CONTENT[0];
-        
+        const faq = content as any; // Type from FAQ_CONTENT
+
         return (
             <article className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
                 {/* Header */}
@@ -332,16 +332,16 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                         {lang === 'pl' ? faq.questionPl : faq.question}
                     </h1>
                 </div>
-                
+
                 {/* Answer */}
                 <div className="p-8">
                     <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
                         {lang === 'pl' ? faq.answerPl : faq.answer}
                     </p>
-                    
+
                     {/* Tags */}
                     <div className="mt-6 flex flex-wrap gap-2">
-                        {faq.tags.map(tag => (
+                        {faq.tags.map((tag: string) => (
                             <span
                                 key={tag}
                                 className="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs"
@@ -351,7 +351,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                         ))}
                     </div>
                 </div>
-                
+
                 {/* Feedback */}
                 {showFeedback && (
                     <div className="border-t border-slate-200 dark:border-slate-700 p-6">
@@ -361,11 +361,11 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
             </article>
         );
     }
-    
+
     // Render Video
     if (contentType === 'video') {
-        const video = content as typeof VIDEO_TUTORIALS[0];
-        
+        const video = content as any; // Type from VIDEO_TUTORIALS
+
         return (
             <article className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
                 {/* Video Placeholder */}
@@ -374,7 +374,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                         <Play size={32} className="text-slate-900 ml-1" />
                     </button>
                 </div>
-                
+
                 {/* Info */}
                 <div className="p-6">
                     <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 text-sm mb-2">
@@ -391,7 +391,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                         {video.description[lang]}
                     </p>
                 </div>
-                
+
                 {/* Feedback */}
                 {showFeedback && (
                     <div className="border-t border-slate-200 dark:border-slate-700 p-6">
@@ -401,11 +401,13 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
             </article>
         );
     }
-    
+
     return null;
 };
 
 export default DocumentationRenderer;
+
+
 
 
 

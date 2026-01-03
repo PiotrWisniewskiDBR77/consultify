@@ -1,7 +1,7 @@
 const defaultJwt = require('jsonwebtoken');
 const defaultConfig = require('../config');
 const defaultDb = require('../database');
-const defaultPermissionService = require('../services/permissionService');
+const defaultPermissionService = import('permissionService.js');
 
 // Dependencies object to allow injection
 const deps = {
@@ -111,5 +111,5 @@ verifyToken.setDependencies = (newDeps) => {
     Object.assign(deps, newDeps);
 };
 
-module.exports = verifyToken;
+export default verifyToken;
 

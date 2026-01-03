@@ -304,7 +304,7 @@ function getSupportedMimeTypes() {
     ];
 }
 
-module.exports = {
+export default {
     process,
     processCSV,
     extractStatistics,
@@ -314,6 +314,8 @@ module.exports = {
     formatCell,
     detectDelimiter
 };
+
+
 
 
 

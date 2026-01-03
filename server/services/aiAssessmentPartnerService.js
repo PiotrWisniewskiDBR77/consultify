@@ -4,7 +4,11 @@
  * Provides intelligent guidance for assessment process
  */
 
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { validateOrFallback, GapAnalysisSchema, EvidenceSchema, InitiativeListSchema, PrioritizedListSchema, ROIEstimateSchema } from '../utils/aiSchemaValidator.js';
+
+import { validateOrFallback, GapAnalysisSchema, EvidenceSchema, InitiativeListSchema, PrioritizedListSchema, ROIEstimateSchema } from '../utils/aiSchemaValidator.js';
+
 const {
     validateOrFallback,
     GapAnalysisSchema,
@@ -1401,7 +1405,7 @@ class AIAssessmentPartnerService {
 // Singleton instance
 const aiAssessmentPartner = new AIAssessmentPartnerService();
 
-module.exports = {
+export default {
     AIAssessmentPartnerService,
     aiAssessmentPartner,
     DRD_AXES,

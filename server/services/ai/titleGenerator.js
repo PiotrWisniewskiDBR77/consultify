@@ -168,7 +168,7 @@ function shouldRegenerateTitle(conversation) {
     return false;
 }
 
-module.exports = {
+export default {
     generateConversationTitle,
     generateFallbackTitle,
     detectTags,

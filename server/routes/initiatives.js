@@ -1,17 +1,18 @@
 // AI Service - Using unified pipeline with fallback to legacy service
-const { suggestTasks, validateInitiative, enrichInitiative } = require('../services/ai/aiPipeline');
+const { suggestTasks, validateInitiative, enrichInitiative } = import('ai/aiPipeline.js');
 // Legacy AiService kept for backward compatibility (deprecated)
-const AiService = require('../services/aiService');
-const AccessPolicyService = require('../services/accessPolicyService');
-const InitiativeStatusService = require('../services/initiativeStatusService');
-const StatusMachine = require('../services/statusMachine');
-const NotificationService = require('../services/notificationService');
-const DecisionTriggerService = require('../services/decisionTriggerService');
-const express = require('express');
+const AiService = import('aiService.js');
+const AccessPolicyService = import('accessPolicyService.js');
+const InitiativeStatusService = import('initiativeStatusService.js');
+const StatusMachine = import('statusMachine.js');
+const NotificationService = import('notificationService.js');
+const DecisionTriggerService = import('decisionTriggerService.js');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const verifyToken = require('../middleware/authMiddleware');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
+import verifyToken from '../middleware/authMiddleware.js';
 const { asyncHandler } = require('../utils/errorHandler');
 const queryHelpers = require('../utils/queryHelpers');
 
@@ -1066,7 +1067,7 @@ router.get('/:id/kpis/:kpiId/measurements', asyncHandler(async (req, res) => {
 // PORTFOLIO VIEW ENDPOINTS
 // ==========================================
 
-const PortfolioService = require('../services/portfolioService');
+const PortfolioService = import('portfolioService.js');
 
 /**
  * GET /api/initiatives/portfolio
@@ -1177,4 +1178,4 @@ router.post('/reorder', asyncHandler(async (req, res) => {
     res.json(result);
 }));
 
-module.exports = router;
+export default router;

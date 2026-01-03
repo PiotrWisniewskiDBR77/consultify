@@ -8,7 +8,8 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import type { AuthRequest } from './auth.middleware';
+import config from '../../config.js';
+import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
 // TYPES
@@ -30,19 +31,9 @@ interface Dependencies {
 // DEPENDENCIES (injectable for testing)
 // ==========================================
 
-let deps: Dependencies;
-
-const getDeps = (): Dependencies => {
-    if (!deps) {
-        const defaultJwt = await import('jsonwebtoken.js').then(m => m.default || m);
-        const defaultConfig = await import('../../config.js').then(m => m.default || m);
-        
-        deps = {
-            jwt: defaultJwt,
-            config: defaultConfig,
-        };
-    }
-    return deps;
+let deps: Dependencies = {
+    jwt,
+    config
 };
 
 // ==========================================
@@ -57,28 +48,28 @@ export const verifyAdmin = (
     res: Response,
     next: NextFunction
 ): void => {
-    const { jwt: jwtLib, config } = getDeps();
-    
+    const { jwt: jwtLib, config: depsConfig } = deps;
+
     const headers = req.headers || {};
     const token = headers['authorization'] || headers['x-access-token'];
-    
+
     if (!token) {
         res.status(403).json({ error: 'No token provided' });
         return;
     }
 
-    const cleanToken = typeof token === 'string' && token.startsWith('Bearer ') 
-        ? token.slice(7) 
+    const cleanToken = typeof token === 'string' && token.startsWith('Bearer ')
+        ? token.slice(7)
         : token;
 
-    jwtLib.verify(cleanToken as string, config.JWT_SECRET, (err, decoded) => {
+    jwtLib.verify(cleanToken as string, depsConfig.JWT_SECRET, (err, decoded) => {
         if (err) {
             res.status(401).json({ error: 'Unauthorized' });
             return;
         }
 
         const payload = decoded as JWTPayload;
-        
+
         // Check if user is ADMIN or SUPERADMIN
         if (payload.role !== 'ADMIN' && payload.role !== 'SUPERADMIN') {
             res.status(403).json({ error: 'Admin privileges required' });
@@ -94,7 +85,7 @@ export const verifyAdmin = (
             organizationId: req.organizationId,
             isSuperAdmin: payload.role === 'SUPERADMIN',
         };
-        
+
         next();
     });
 };
@@ -164,6 +155,8 @@ export const checkPermission = (requiredPermission: string) => {
 // ==========================================
 
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
-    deps = { ...getDeps(), ...newDeps };
+    deps = { ...deps, ...newDeps };
 };
+
+
 

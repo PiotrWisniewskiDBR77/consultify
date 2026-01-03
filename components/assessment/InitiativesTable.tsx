@@ -633,10 +633,6 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                         handleDelete(id);
                         setViewingInitiativeId(null);
                     }}
-                    onStatusChange={(initiativeId, newStatus) => {
-                        handleStatusChange(initiativeId, newStatus as InitiativeStatus);
-                        setViewingInitiativeId(null);
-                    }}
                 />
             )}
 

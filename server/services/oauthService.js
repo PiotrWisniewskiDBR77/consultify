@@ -3,11 +3,13 @@
  * Handles OAuth user creation, linking, and token generation
  */
 
-const db = require('../database');
-const jwt = require('jsonwebtoken');
-const config = require('../config');
-const { v4: uuidv4 } = require('uuid');
-const ActivityService = require('./activityService');
+import db from '../database.js';
+import jwt from 'jsonwebtoken';
+import config from '../config.js';
+import ActivityService from './activityService.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 /**
  * Find existing user by OAuth provider ID or email, or create new user
@@ -210,7 +212,7 @@ async function generateOAuthToken(user) {
     });
 }
 
-module.exports = {
+export default {
     findOrCreateOAuthUser,
     createOAuthUser,
     generateOAuthToken

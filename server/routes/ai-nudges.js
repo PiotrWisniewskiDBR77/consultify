@@ -4,10 +4,10 @@
  * Endpoints for managing proactive AI nudges.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
-const { proactiveNudges } = require('../services/ai/proactiveNudges');
+import verifyToken from '../middleware/authMiddleware.js';
+const { proactiveNudges } = import('ai/proactiveNudges.js');
 
 // All routes require authentication
 router.use(verifyToken);
@@ -160,7 +160,9 @@ router.post('/suppress', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

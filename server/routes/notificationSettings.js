@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const auth = require('../middleware/authMiddleware');
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import auth from '../middleware/authMiddleware.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * MED-04: Project Notification Settings API
@@ -168,4 +169,4 @@ router.put('/project/:projectId', auth, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

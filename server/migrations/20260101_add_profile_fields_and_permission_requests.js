@@ -8,7 +8,8 @@
  * New table: permission_requests
  */
 
-const db = require('../database');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 const MIGRATION_NAME = '20260101_add_profile_fields_and_permission_requests';
 
@@ -120,7 +121,9 @@ if (require.main === module) {
         });
 }
 
-module.exports = { up, down, MIGRATION_NAME };
+export default { up, down, MIGRATION_NAME };
+
+
 
 
 

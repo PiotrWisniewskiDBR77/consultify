@@ -6,7 +6,9 @@
  * Key is loaded from CONNECTOR_ENCRYPTION_KEY environment variable.
  */
 
-const crypto = require('crypto');
+import crypto from 'crypto';
+
+
 
 // Encryption configuration
 const ALGORITHM = 'aes-256-gcm';
@@ -151,7 +153,7 @@ function validateSecrets(secrets, requiredFields = []) {
     };
 }
 
-module.exports = {
+export default {
     encrypt,
     decrypt,
     redact,

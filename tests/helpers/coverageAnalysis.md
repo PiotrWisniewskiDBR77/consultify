@@ -77,3 +77,5 @@ npm run test:coverage
 - Niektóre testy mogą być pominięte z powodu problemów z ES modules
 - Priorytetem jest naprawa istniejących testów przed dodaniem nowych
 
+
+

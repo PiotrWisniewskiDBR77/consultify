@@ -5,7 +5,7 @@
  * Supports both self-hosted videos and external URLs (YouTube, Vimeo).
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 const path = require('path');
 const fs = require('fs');
@@ -132,7 +132,9 @@ router.post('/progress', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

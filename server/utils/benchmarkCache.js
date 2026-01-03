@@ -68,4 +68,4 @@ setInterval(() => {
     benchmarkCache.clearExpired();
 }, 600000);
 
-module.exports = benchmarkCache;
+export default benchmarkCache;

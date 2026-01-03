@@ -1,6 +1,6 @@
 // Default Dependencies
 const deps = {
-    ActivityService: require('../services/activityService')
+    ActivityService: import('activityService.js')
 };
 
 /**
@@ -71,4 +71,4 @@ auditLogMiddleware.setDependencies = (newDeps) => {
     Object.assign(deps, newDeps);
 };
 
-module.exports = auditLogMiddleware;
+export default auditLogMiddleware;

@@ -16,7 +16,7 @@
  */
 
 const db = require('../../database');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const AiService = require('../aiService');
 const ContextService = require('../contextService');
 
@@ -918,11 +918,12 @@ Format the response as JSON with fields: verdict, keyFindings (array), strategic
     }
 }
 
-// Export singleton instance
-module.exports = new BCGReportGenerator();
-module.exports.REPORT_SECTIONS = REPORT_SECTIONS;
-module.exports.DRD_AXES_CONFIG = DRD_AXES_CONFIG;
-module.exports.MATURITY_LEVELS = MATURITY_LEVELS;
+
+// Export singleton instance and constants
+export default new BCGReportGenerator();
+export { REPORT_SECTIONS, DRD_AXES_CONFIG, MATURITY_LEVELS };
+
+
 
 
 

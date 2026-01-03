@@ -13,9 +13,11 @@
  * @module server/services/approvalPatternService
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
+import db from '../database.js';
+import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Dependency injection for testing
 const deps = {
@@ -516,7 +518,9 @@ const ApprovalPatternService = {
     }
 };
 
-module.exports = ApprovalPatternService;
+export default ApprovalPatternService;
+
+
 
 
 

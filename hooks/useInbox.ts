@@ -5,11 +5,11 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { Api } from '../services/api';
-import type { 
-    InboxItem, 
-    InboxSummary, 
+import type {
+    InboxItem,
+    InboxSummary,
     TriageAction,
-    TriageParams 
+    TriageParams
 } from '../types/myWork';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -27,12 +27,12 @@ interface UseInboxReturn {
     loading: boolean;
     error: Error | null;
     selectedIds: Set<string>;
-    
+
     // Computed
     totalCount: number;
     criticalCount: number;
     hasSelection: boolean;
-    
+
     // Actions
     loadInbox: () => Promise<void>;
     triageItem: (itemId: string, action: TriageAction, params?: TriageParams[TriageAction]) => Promise<void>;
@@ -49,28 +49,28 @@ interface UseInboxReturn {
 export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
     const { autoLoad = true, includeTriaged = false, limit = 50 } = options;
     const { t } = useTranslation();
-    
+
     const [items, setItems] = useState<InboxItem[]>([]);
     const [summary, setSummary] = useState<InboxSummary | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    
+
     // Sample items for demo - used when API returns empty
     const SAMPLE_COUNTS = { total: 7, critical: 2 };
-    
+
     // Load inbox items
     const loadInbox = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
-            
+
             const params = new URLSearchParams();
             if (includeTriaged) params.append('includeTriaged', 'true');
             params.append('limit', limit.toString());
-            
-            const response = await Api.get(`/my-work/inbox?${params.toString()}`);
-            
+
+            const response = await (Api as any).get(`/my-work/inbox?${params.toString()}`);
+
             if (response && response.items && response.items.length > 0) {
                 setItems(response.items);
                 setSummary(response.summary || null);
@@ -80,7 +80,7 @@ export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
                     total: SAMPLE_COUNTS.total,
                     critical: SAMPLE_COUNTS.critical,
                     newToday: 3,
-                    groups: {}
+                    groups: {} as any
                 });
             }
         } catch (err) {
@@ -92,24 +92,24 @@ export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
                 total: SAMPLE_COUNTS.total,
                 critical: SAMPLE_COUNTS.critical,
                 newToday: 3,
-                groups: {}
+                groups: {} as any
             });
         } finally {
             setLoading(false);
         }
     }, [includeTriaged, limit]);
-    
+
     // Auto-load on mount
     useEffect(() => {
         if (autoLoad) {
             loadInbox();
         }
     }, [loadInbox, autoLoad]);
-    
+
     // Triage single item
     const triageItem = useCallback(async (
-        itemId: string, 
-        action: TriageAction, 
+        itemId: string,
+        action: TriageAction,
         params?: TriageParams[TriageAction]
     ) => {
         try {
@@ -120,9 +120,9 @@ export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
                 next.delete(itemId);
                 return next;
             });
-            
-            await Api.post(`/my-work/inbox/${itemId}/triage`, { action, params });
-            
+
+            await (Api as any).post(`/my-work/inbox/${itemId}/triage`, { action, params });
+
             toast.success(t('myWork.inbox.triaged', 'Item processed'));
         } catch (err) {
             console.error('Triage error:', err);
@@ -131,27 +131,27 @@ export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
             throw err;
         }
     }, [loadInbox, t]);
-    
+
     // Bulk triage
     const bulkTriage = useCallback(async (
-        action: TriageAction, 
+        action: TriageAction,
         params?: TriageParams[TriageAction]
     ) => {
         if (selectedIds.size === 0) return;
-        
+
         const ids = Array.from(selectedIds);
-        
+
         try {
             // Optimistic update
             setItems(prev => prev.filter(item => !selectedIds.has(item.id)));
             setSelectedIds(new Set());
-            
-            await Api.post('/my-work/inbox/bulk-triage', {
+
+            await (Api as any).post('/my-work/inbox/bulk-triage', {
                 itemIds: ids,
                 action,
                 params
             });
-            
+
             toast.success(t('myWork.inbox.bulkTriaged', `${ids.length} items processed`));
         } catch (err) {
             console.error('Bulk triage error:', err);
@@ -160,7 +160,7 @@ export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
             throw err;
         }
     }, [selectedIds, loadInbox, t]);
-    
+
     // Selection management
     const selectItem = useCallback((itemId: string) => {
         setSelectedIds(prev => {
@@ -169,15 +169,15 @@ export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
             return next;
         });
     }, []);
-    
+
     const selectAll = useCallback(() => {
         setSelectedIds(new Set(items.map(i => i.id)));
     }, [items]);
-    
+
     const clearSelection = useCallback(() => {
         setSelectedIds(new Set());
     }, []);
-    
+
     const toggleSelection = useCallback((itemId: string) => {
         setSelectedIds(prev => {
             const next = new Set(prev);
@@ -189,14 +189,14 @@ export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
             return next;
         });
     }, []);
-    
+
     // Computed values
     const untriagedItems = items.filter(i => !i.triaged);
     // Use summary counts when available (includes sample counts), fallback to item counts
     const totalCount = summary?.total ?? untriagedItems.length;
     const criticalCount = summary?.critical ?? untriagedItems.filter(i => i.urgency === 'critical').length;
     const hasSelection = selectedIds.size > 0;
-    
+
     return {
         // State
         items: untriagedItems,
@@ -204,12 +204,12 @@ export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
         loading,
         error,
         selectedIds,
-        
+
         // Computed
         totalCount,
         criticalCount,
         hasSelection,
-        
+
         // Actions
         loadInbox,
         triageItem,

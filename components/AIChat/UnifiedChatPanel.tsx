@@ -190,7 +190,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                         content: fullText,
                         messageType: 'text',
                         metadata: {
-                            thinkingSteps: thinking,
+                            thinkingSteps: thinking as any,
                             artifacts
                         }
                     });
@@ -229,11 +229,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             role: msg.role === 'ai' ? 'ai' : 'user',
             content: msg.content,
             timestamp: msg.createdAt,
-            thinkingSteps: msg.metadata?.thinkingSteps,
+            thinkingSteps: msg.metadata?.thinkingSteps as any,
             artifacts: msg.metadata?.artifacts,
             citations: msg.metadata?.citations,
             isStreaming: false
-        }));
+        })) as ChatMessage[];
     }, [activeMessages]);
     
     // Add streaming message if actively streaming

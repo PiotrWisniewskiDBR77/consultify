@@ -5,7 +5,9 @@
  * Logs all changes with actor information, timestamps, and diff calculation.
  */
 
-const db = require('../database');
+import db from '../database.js';
+
+
 
 // ============================================
 // ACTION CONSTANTS
@@ -526,7 +528,7 @@ async function logPDFImport(assessmentId, framework, actorId, fileName, confiden
 // EXPORTS
 // ============================================
 
-module.exports = {
+export default {
     // Constants
     ACTIONS,
     ACTION_CATEGORIES,
@@ -551,6 +553,8 @@ module.exports = {
     logPDFExport,
     logPDFImport,
 };
+
+
 
 
 

@@ -65,4 +65,4 @@ verifySuperAdmin.setDependencies = (newDeps) => {
     Object.assign(deps, newDeps);
 };
 
-module.exports = verifySuperAdmin;
+export default verifySuperAdmin;

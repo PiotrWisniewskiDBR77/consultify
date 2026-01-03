@@ -142,7 +142,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
         actualBenefits: number;
     }) => {
         try {
-            await Api.updateAnalysisBenefits(analysisId, data);
+            await Api.updateAnalysisBenefits(analysisId, data as any);
             
             // Reload benefits
             const response = await Api.getAnalysisBenefits(analysisId);
@@ -608,6 +608,8 @@ const MeasurementModal: React.FC<{
 };
 
 export default BenefitsTrackingDashboard;
+
+
 
 
 

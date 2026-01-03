@@ -82,7 +82,7 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedAxisId, pendingChanges, saveChanges]);
+    }, [selectedAxisId, pendingChanges]);
 
     const getAxisScore = useCallback((axisId: string): AxisScore | undefined => {
         return analysis.axisScores?.[axisId];

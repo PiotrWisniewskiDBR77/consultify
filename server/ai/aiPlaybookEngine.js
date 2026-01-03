@@ -72,4 +72,4 @@ const AIPlaybookEngine = {
     }
 };
 
-module.exports = AIPlaybookEngine;
+export default AIPlaybookEngine;

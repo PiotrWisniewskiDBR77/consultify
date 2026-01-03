@@ -4,10 +4,15 @@
  */
 
 // Dependency injection container (for deterministic unit tests)
+import fs from 'fs';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+
+
 const deps = {
-    fs: require('fs'),
-    path: require('path'),
-    uuidv4: require('uuid').v4
+    fs,
+    path,
+    uuidv4,
 };
 
 // Base upload directory - could be an environment variable or config
@@ -240,4 +245,5 @@ class StorageService {
     }
 }
 
-module.exports = new StorageService();
+const storageServiceInstance = new StorageService();
+export default storageServiceInstance;

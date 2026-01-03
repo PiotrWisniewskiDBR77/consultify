@@ -20,3 +20,5 @@ declare module '@/services/apiUtils' {
 
 declare module '@/services/modules/*';
 
+
+

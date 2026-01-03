@@ -401,7 +401,7 @@ docIndexer.indexAll().catch(err => {
     console.error('[DocIndexer] Initial indexing failed:', err);
 });
 
-module.exports = {
+export default {
     DocIndexer,
     docIndexer,
     PROMPT_ENGINEERING_KB

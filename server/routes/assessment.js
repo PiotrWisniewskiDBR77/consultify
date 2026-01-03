@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const AssessmentService = require('../services/assessmentService');
-const verifyToken = require('../middleware/authMiddleware');
+const AssessmentService = import('assessmentService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 
 // GET /api/assessment/:projectId
 router.get('/:projectId', verifyToken, async (req, res) => {
@@ -63,8 +63,8 @@ router.post('/:projectId/gap-analysis', verifyToken, async (req, res) => {
 // AI THINKING_PARTNER Endpoints (Enterprise Workflow)
 // =====================================================
 
-const { aiAssessmentPartner } = require('../services/aiAssessmentPartnerService');
-const { aiAssessmentFormHelper, FIELD_TYPES } = require('../services/aiAssessmentFormHelper');
+const { aiAssessmentPartner } = import('aiAssessmentPartnerService.js');
+const { aiAssessmentFormHelper, FIELD_TYPES } = import('aiAssessmentFormHelper.js');
 
 /**
  * @route POST /api/assessment/:projectId/ai/guidance
@@ -632,7 +632,7 @@ router.post('/:projectId/ai/validate-field', verifyToken, async (req, res) => {
 // AI REPORT GENERATOR Endpoints
 // =====================================================
 
-const { aiAssessmentReportGenerator, REPORT_TYPES, STAKEHOLDER_ROLES } = require('../services/aiAssessmentReportGenerator');
+const { aiAssessmentReportGenerator, REPORT_TYPES, STAKEHOLDER_ROLES } = import('aiAssessmentReportGenerator.js');
 
 /**
  * @route POST /api/assessment/:projectId/ai/reports/full
@@ -767,4 +767,4 @@ router.get('/:projectId/ai/reports/types', verifyToken, async (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

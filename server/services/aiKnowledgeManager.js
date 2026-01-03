@@ -7,10 +7,15 @@
  */
 
 // Dependency injection container (for deterministic unit tests)
+import db from '../database.js';
+import RagService from './ragService.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 const deps = {
-    db: require('../database'),
-    RagService: require('./ragService'),
-    uuidv4: require('uuid').v4
+    db,
+    RagService,
+    uuidv4,
 };
 
 // Knowledge types
@@ -432,4 +437,4 @@ const AIKnowledgeManager = {
     }
 };
 
-module.exports = AIKnowledgeManager;
+export default AIKnowledgeManager;

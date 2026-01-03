@@ -5,11 +5,11 @@
  * and AI-powered content.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const premiumPdfService = require('../services/premiumPdfService');
-const premiumReportAIService = require('../services/premiumReportAIService');
-const verifyToken = require('../middleware/authMiddleware');
+const premiumPdfService = import('premiumPdfService.js');
+const premiumReportAIService = import('premiumReportAIService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 
 /**
  * Generate PDF for a report
@@ -223,4 +223,4 @@ router.get('/assessment/:assessmentId/data', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

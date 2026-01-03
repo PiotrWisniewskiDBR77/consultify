@@ -4,10 +4,10 @@
  * API endpoints for managing user preferences.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const UserPreferencesService = require('../services/userPreferencesService');
+import authMiddleware from '../middleware/authMiddleware.js';
+const UserPreferencesService = import('userPreferencesService.js');
 
 /**
  * GET /api/preferences
@@ -117,4 +117,4 @@ router.put('/ui', authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

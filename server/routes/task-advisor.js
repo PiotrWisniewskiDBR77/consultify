@@ -7,12 +7,13 @@
  * - Review task descriptions
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
-const { taskAdvisorService } = require('../services/ai/taskAdvisorService');
-const { aiLogger } = require('../services/ai/logger');
-const db = require('../database');
+import verifyToken from '../middleware/authMiddleware.js';
+const { taskAdvisorService } = import('ai/taskAdvisorService.js');
+const { aiLogger } = import('ai/logger.js');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // All routes require authentication
 router.use(verifyToken);
@@ -230,7 +231,7 @@ router.post('/:taskId/apply-subtasks', async (req, res) => {
 
         // If draft provided, approve it
         if (draftId) {
-            const { draftService } = require('../services/ai/draftService');
+            const { draftService } = import('ai/draftService.js');
             await draftService.approveDraft(draftId, {
                 reviewedBy: req.user.id,
                 notes: `Applied ${createdSubtasks.length} subtasks`
@@ -282,5 +283,5 @@ async function getProjectTeamSize(projectId) {
     });
 }
 
-module.exports = router;
+export default router;
 

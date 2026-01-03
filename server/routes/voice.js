@@ -16,13 +16,14 @@
  * @version 1.0.0
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 const multer = require('multer');
-const verifyToken = require('../middleware/authMiddleware');
-const { speechToTextService } = require('../services/ai/speechToTextService');
-const { textToSpeechService } = require('../services/ai/textToSpeechService');
-const db = require('../database');
+import verifyToken from '../middleware/authMiddleware.js';
+const { speechToTextService } = import('ai/speechToTextService.js');
+const { textToSpeechService } = import('ai/textToSpeechService.js');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // ============================================================================
 // Multer Configuration for Audio Upload
@@ -499,5 +500,5 @@ router.use((error, req, res, next) => {
     res.status(500).json({ error: error.message });
 });
 
-module.exports = router;
+export default router;
 

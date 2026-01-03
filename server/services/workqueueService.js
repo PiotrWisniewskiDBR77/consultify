@@ -5,9 +5,11 @@
  * Handles assigning, acknowledging, and completing approval tasks.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const auditLogger = require('../utils/auditLogger');
+import db from '../database.js';
+import auditLogger from '../utils/auditLogger.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Dependency injection container
 const deps = {
@@ -311,4 +313,4 @@ const WorkqueueService = {
     }
 };
 
-module.exports = WorkqueueService;
+export default WorkqueueService;

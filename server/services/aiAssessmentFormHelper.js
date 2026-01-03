@@ -4,7 +4,9 @@
  * Includes field suggestions, validation, and autocomplete
  */
 
-const { aiAssessmentPartner, DRD_AXES } = require('./aiAssessmentPartnerService');
+import { aiAssessmentPartner, DRD_AXES } from './aiAssessmentPartnerService.js';
+
+
 
 // Field types for form assistance
 const FIELD_TYPES = {
@@ -542,7 +544,7 @@ class AIAssessmentFormHelper {
 // Export singleton instance
 const aiAssessmentFormHelper = new AIAssessmentFormHelper();
 
-module.exports = {
+export default {
     AIAssessmentFormHelper,
     aiAssessmentFormHelper,
     FIELD_TYPES,

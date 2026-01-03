@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { checkPlanLimit, PLAN_LIMITS, setDependencies, type AuthRequest } from '../../../src/middleware/planLimits.middleware.js';
+import { checkPlanLimit, PLAN_LIMITS, setDependencies, type AuthRequest } from '../../../../src/middleware/planLimits.middleware.js';
 
 describe('Plan Limits Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -173,4 +173,6 @@ describe('Plan Limits Middleware', () => {
         });
     });
 });
+
+
 

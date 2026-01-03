@@ -5,9 +5,10 @@
  * Run: node server/seeds/demoUser.js
  */
 
-const db = require('../database');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 const DEMO_ORG_ID = 'org-legolex-demo';
 const DEMO_USER_ID = 'user-demo-admin';
@@ -104,7 +105,9 @@ if (require.main === module) {
         });
 }
 
-module.exports = { seedDemoUser, DEMO_EMAIL, DEMO_PASSWORD, DEMO_ORG_ID, DEMO_USER_ID };
+export default { seedDemoUser, DEMO_EMAIL, DEMO_PASSWORD, DEMO_ORG_ID, DEMO_USER_ID };
+
+
 
 
 

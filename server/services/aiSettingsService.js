@@ -524,7 +524,7 @@ export class AISettingsService extends BaseService {
             newValue: JSON.parse(row.new_value || 'null'),
             ipAddress: row.ip_address,
             userAgent: row.user_agent
-        })));
+        }));
     }
     async getAvailableModels(userId, organizationId) {
         await this.init();

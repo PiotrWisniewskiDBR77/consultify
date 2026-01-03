@@ -48,14 +48,24 @@ interface DailyTrialTasksResult {
 // ==========================================
 
 class TrialCron {
-    private deps: Dependencies;
+    private deps: Partial<Dependencies>;
 
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
             db: deps?.db || getDatabase(),
-            demoService: deps?.demoService || await import('../../services/demoService.js').then(m => m.default || m),
-            trialService: deps?.trialService || await import('../../services/trialService.js').then(m => m.default || m),
+            demoService: deps?.demoService,
+            trialService: deps?.trialService,
         };
+    }
+
+    private async ensureDeps(): Promise<Dependencies> {
+        if (!this.deps.demoService) {
+            this.deps.demoService = await import('../../services/demoService.js').then(m => m.default || m);
+        }
+        if (!this.deps.trialService) {
+            this.deps.trialService = await import('../../services/trialService.js').then(m => m.default || m);
+        }
+        return this.deps as Dependencies;
     }
 
     /**
@@ -63,11 +73,12 @@ class TrialCron {
      * Call this from main scheduler (daily)
      */
     async runDailyTrialTasks(): Promise<DailyTrialTasksResult> {
+        const deps = await this.ensureDeps();
         logger.info('[TrialCron] Starting daily trial/demo tasks...');
 
         try {
             // 1. Cleanup expired demo organizations
-            const demosCleanedUp = await this.deps.demoService.cleanupExpiredDemos();
+            const demosCleanedUp = await deps.demoService.cleanupExpiredDemos();
             logger.info(`[TrialCron] Cleaned up ${demosCleanedUp} expired demo organization(s)`);
 
             // 2. Send trial warning notifications (T-7 days)
@@ -103,7 +114,7 @@ class TrialCron {
                 `DELETE FROM usage_counters WHERE counter_date < ?`,
                 [cutoffDate]
             );
-            
+
             const deleted = result.changes || 0;
             logger.info(`[TrialCron] Cleaned up ${deleted} old usage counter record(s)`);
             return deleted;

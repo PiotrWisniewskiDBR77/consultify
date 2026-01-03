@@ -400,12 +400,14 @@ class FrameworkBenchmarkService {
     }
 }
 
-module.exports = {
+export default {
     FrameworkBenchmarkService,
     BENCHMARK_DATA,
     REGION_MODIFIERS,
     SIZE_MODIFIERS,
 };
+
+
 
 
 

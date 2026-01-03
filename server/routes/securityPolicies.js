@@ -6,11 +6,11 @@
  * Org Admins can manage their own organization's policy.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
-const SecurityPolicyService = require('../services/securityPolicyService');
+import authMiddleware from '../middleware/authMiddleware.js';
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
+const SecurityPolicyService = import('securityPolicyService.js');
 
 // ==========================================
 // SUPERADMIN ROUTES
@@ -50,7 +50,8 @@ router.put('/defaults', authMiddleware, verifySuperAdmin, async (req, res) => {
  */
 router.get('/all', authMiddleware, verifySuperAdmin, async (req, res) => {
     try {
-        const db = require('../database');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
         
         const policies = await new Promise((resolve, reject) => {
             db.all(`
@@ -185,7 +186,8 @@ router.put('/:orgId', authMiddleware, async (req, res) => {
 router.delete('/:orgId', authMiddleware, verifySuperAdmin, async (req, res) => {
     try {
         const { orgId } = req.params;
-        const db = require('../database');
+        import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
         
         await new Promise((resolve, reject) => {
             db.run(`DELETE FROM security_policies WHERE organization_id = ?`, [orgId], (err) => {
@@ -283,8 +285,9 @@ router.post('/unlock-account', authMiddleware, verifySuperAdmin, async (req, res
 // SESSION MANAGEMENT ROUTES
 // ==========================================
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 // Helper functions
 function dbAll(sql, params = []) {
@@ -734,5 +737,5 @@ router.get('/stats', authMiddleware, verifySuperAdmin, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

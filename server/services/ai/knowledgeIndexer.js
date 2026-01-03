@@ -10,7 +10,7 @@
 const fs = require('fs');
 const path = require('path');
 const db = require('../../database');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const { aiLogger } = require('./logger');
 
 // PDF parsing libraries - these may need to be installed
@@ -643,7 +643,7 @@ class KnowledgeIndexer {
 // Singleton instance
 const knowledgeIndexer = new KnowledgeIndexer();
 
-module.exports = {
+export default {
     KnowledgeIndexer,
     knowledgeIndexer,
     KNOWLEDGE_SOURCES

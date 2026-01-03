@@ -11,9 +11,11 @@
  * - Export with integrity proof
  */
 
-const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
-const db = require('../database');
+import crypto from 'crypto';
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Configuration
 const BLOCK_SIZE = 100; // Number of audit entries per block
@@ -472,7 +474,10 @@ class AuditIntegrityService {
     }
 }
 
-module.exports = new AuditIntegrityService();
+const auditIntegrityServiceInstance = new AuditIntegrityService();
+export default auditIntegrityServiceInstance;
+
+
 
 
 

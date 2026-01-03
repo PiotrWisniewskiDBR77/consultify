@@ -1,12 +1,13 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('uuid');
+import jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
 const config = require('../config');
-const authMiddleware = require('../middleware/authMiddleware');
-const ActivityService = require('../services/activityService');
+import authMiddleware from '../middleware/authMiddleware.js';
+const ActivityService = import('activityService.js');
 
 // Helper to add timeout to promises
 const withTimeout = (promise, timeoutMs = 1000) => {
@@ -33,7 +34,7 @@ router.post('/refresh', async (req, res) => {
         return res.status(400).json({ error: 'Refresh token is required' });
     }
 
-    const RefreshTokenService = require('../services/refreshTokenService');
+    const RefreshTokenService = import('refreshTokenService.js');
 
     try {
         const result = await RefreshTokenService.refreshAccessToken(refreshToken, {
@@ -58,7 +59,7 @@ router.post('/refresh', async (req, res) => {
 
 // GET ACTIVE SESSIONS
 router.get('/sessions', authMiddleware, async (req, res) => {
-    const RefreshTokenService = require('../services/refreshTokenService');
+    const RefreshTokenService = import('refreshTokenService.js');
 
     try {
         const sessions = await RefreshTokenService.getActiveSessions(req.user.id);
@@ -72,7 +73,7 @@ router.get('/sessions', authMiddleware, async (req, res) => {
 // REVOKE SESSION
 router.delete('/sessions/:id', authMiddleware, async (req, res) => {
     const { id } = req.params;
-    const RefreshTokenService = require('../services/refreshTokenService');
+    const RefreshTokenService = import('refreshTokenService.js');
 
     try {
         await RefreshTokenService.revokeSession(req.user.id, id);
@@ -111,7 +112,7 @@ router.get('/me', authMiddleware, async (req, res) => {
         // Check if role changed in database - if so, generate new token
         let newToken = null;
         if (user.role !== req.user.role) {
-            const RefreshTokenService = require('../services/refreshTokenService');
+            const RefreshTokenService = import('refreshTokenService.js');
             const deviceInfo = (req.get('user-agent') || 'Unknown Device').substring(0, 200);
             const tokenPair = await RefreshTokenService.generateTokenPair(
                 {
@@ -286,7 +287,7 @@ router.post('/demo-login', async (req, res) => {
         });
 
         // Generate tokens using RefreshTokenService
-        const RefreshTokenService = require('../services/refreshTokenService');
+        const RefreshTokenService = import('refreshTokenService.js');
 
         const tokenResult = await RefreshTokenService.generateTokenPair(user, {
             deviceInfo: 'Demo Session',
@@ -628,7 +629,7 @@ router.post('/change-password', authMiddleware, async (req, res) => {
         });
 
         // Optionally: Revoke all other sessions for security
-        const RefreshTokenService = require('../services/refreshTokenService');
+        const RefreshTokenService = import('refreshTokenService.js');
         await RefreshTokenService.revokeAllUserTokens(userId);
 
         res.json({
@@ -706,7 +707,7 @@ router.post('/verify-email', async (req, res) => {
 
 router.post('/resend-verification', authMiddleware, async (req, res) => {
     const userId = req.user.id;
-    const EmailService = require('../services/emailService');
+    const EmailService = import('emailService.js');
     const crypto = require('crypto');
 
     try {
@@ -740,7 +741,7 @@ router.post('/resend-verification', authMiddleware, async (req, res) => {
 
 // MFA SETUP
 router.post('/mfa/setup', authMiddleware, async (req, res) => {
-    const MFAService = require('../services/mfaService');
+    const MFAService = import('mfaService.js');
     try {
         const result = await MFAService.setupMFA(req.user.id, req.user.email);
         res.json(result);
@@ -752,7 +753,7 @@ router.post('/mfa/setup', authMiddleware, async (req, res) => {
 
 router.post('/mfa/enable', authMiddleware, async (req, res) => {
     const { token } = req.body;
-    const MFAService = require('../services/mfaService');
+    const MFAService = import('mfaService.js');
     try {
         const result = await MFAService.verifyAndEnableMFA(req.user.id, token);
         if (!result.success) {
@@ -767,7 +768,7 @@ router.post('/mfa/enable', authMiddleware, async (req, res) => {
 
 router.post('/mfa/disable', authMiddleware, async (req, res) => {
     const { token } = req.body;
-    const MFAService = require('../services/mfaService');
+    const MFAService = import('mfaService.js');
     try {
         const result = await MFAService.disableMFA(req.user.id, token);
         if (!result.success) {
@@ -780,5 +781,5 @@ router.post('/mfa/disable', authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

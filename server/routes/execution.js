@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const ExecutionService = require('../services/executionService');
-const verifyToken = require('../middleware/authMiddleware');
+const ExecutionService = import('executionService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 
 // GET /api/execution/:projectId/summary
 router.get('/:projectId/summary', verifyToken, async (req, res) => {
@@ -35,4 +35,4 @@ router.post('/:projectId/gate-check', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

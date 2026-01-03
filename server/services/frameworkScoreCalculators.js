@@ -623,7 +623,7 @@ function calculateFrameworkScore(framework, data) {
     }
 }
 
-module.exports = {
+export default {
     calculateFrameworkScore,
     calculateSIRIScore,
     calculateADMAScore,
@@ -631,6 +631,8 @@ module.exports = {
     calculateLeanScore,
     FRAMEWORK_CONFIG,
 };
+
+
 
 
 

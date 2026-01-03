@@ -6,10 +6,11 @@
  * PMO Standards: Performance Measurement
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const db = require('../database');
+import authMiddleware from '../middleware/authMiddleware.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // Database helpers
 function dbGet(sql, params = []) {
@@ -321,7 +322,9 @@ router.get('/projects', authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

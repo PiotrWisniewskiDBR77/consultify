@@ -3,8 +3,10 @@
  * Manages cross-organization user groups
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 const UserGroupService = {
     /**
@@ -132,7 +134,9 @@ const UserGroupService = {
     }
 };
 
-module.exports = UserGroupService;
+export default UserGroupService;
+
+
 
 
 

@@ -14,7 +14,9 @@
  * - META_ANALYST: Pattern recognition, benchmarks
  */
 
-const UserStateMachine = require('./userStateMachine');
+import UserStateMachine from './userStateMachine.js';
+
+
 
 const AI_MODES = {
     OFF: 'OFF',
@@ -341,4 +343,4 @@ const AIModeResolver = {
     }
 };
 
-module.exports = AIModeResolver;
+export default AIModeResolver;

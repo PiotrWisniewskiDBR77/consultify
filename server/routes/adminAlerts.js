@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
+import authMiddleware from '../middleware/authMiddleware.js';
 const { requireOrgAccess } = require('../middleware/rbac');
-const adminAlertService = require('../services/adminAlertService');
+const adminAlertService = import('adminAlertService.js');
 
 /**
  * GET /api/admin-alerts
@@ -100,7 +100,9 @@ router.post('/:id/test', authMiddleware, requireOrgAccess({ roles: ['ADMIN', 'OW
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

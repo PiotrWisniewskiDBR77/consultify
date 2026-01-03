@@ -2,11 +2,11 @@
  * Analytics API Routes
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const CohortService = require('../services/cohortService');
-const ExperimentService = require('../services/experimentService');
-const auth = require('../middleware/authMiddleware');
+const CohortService = import('cohortService.js');
+const ExperimentService = import('experimentService.js');
+import auth from '../middleware/authMiddleware.js';
 const { verifyAdmin } = require('../middleware/adminMiddleware');
 const requireAdmin = verifyAdmin;
 
@@ -33,4 +33,4 @@ router.get('/experiments/me', auth, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

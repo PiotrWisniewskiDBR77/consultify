@@ -7,8 +7,9 @@
  * Step 6: Enterprise+ Ready
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Core Playbooks Definition (MVP Required)
@@ -437,7 +438,7 @@ const seedHelpPlaybooks = async () => {
 };
 
 // Export for CLI or programmatic use
-module.exports = { seedHelpPlaybooks, CORE_PLAYBOOKS };
+export default { seedHelpPlaybooks, CORE_PLAYBOOKS };
 
 // Run if called directly
 if (require.main === module) {

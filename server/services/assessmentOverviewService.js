@@ -8,9 +8,11 @@
  * - Generic Reports
  */
 
-const defaultDb = require('../database');
-const RapidLeanService = require('./rapidLeanService');
-const ExternalAssessmentService = require('./externalAssessmentService');
+import defaultDb from '../database.js';
+import RapidLeanService from './rapidLeanService.js';
+import ExternalAssessmentService from './externalAssessmentService.js';
+
+
 
 class AssessmentOverviewService {
     constructor() {
@@ -530,4 +532,5 @@ class AssessmentOverviewService {
 }
 
 // Export singleton instance
-module.exports = new AssessmentOverviewService();
+const assessmentOverviewServiceInstance = new AssessmentOverviewService();
+export default assessmentOverviewServiceInstance;

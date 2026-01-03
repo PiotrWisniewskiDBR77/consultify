@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 const superAdminController = require('../controllers/superAdminController');
 
 router.use(verifySuperAdmin);
@@ -444,4 +444,4 @@ router.post('/dashboards/widget-data', superAdminController.getDashboardWidgetDa
 // REFRESH TOKEN - Force token refresh for SuperAdmin (useful when role changes)
 router.post('/refresh-token', superAdminController.refreshToken);
 
-module.exports = router;
+export default router;

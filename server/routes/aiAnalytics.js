@@ -10,13 +10,13 @@
  * - Export functionality (CSV/JSON)
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
+import verifyToken from '../middleware/authMiddleware.js';
 const { verifyAdmin } = require('../middleware/adminMiddleware');
-const AIAnalyticsService = require('../services/aiAnalyticsService');
-const OutcomeService = require('../services/outcomeService');
-const ROIService = require('../services/roiService');
+const AIAnalyticsService = import('aiAnalyticsService.js');
+const OutcomeService = import('outcomeService.js');
+const ROIService = import('roiService.js');
 
 // Apply authentication to all routes
 router.use(verifyToken);
@@ -347,4 +347,4 @@ router.get('/export', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

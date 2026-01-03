@@ -63,4 +63,4 @@ async function getProjectDetails(params, context) {
     });
 }
 
-module.exports = { getProjectDetails };
+export default { getProjectDetails };

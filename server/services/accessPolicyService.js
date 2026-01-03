@@ -15,10 +15,15 @@
  */
 
 // Dependency injection container (for deterministic unit tests)
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+import SeatManagementService from './seatManagementService.js';
+
+
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4,
-    SeatManagementService: require('./seatManagementService')
+    db,
+    uuidv4,
+    SeatManagementService,
 };
 
 // Organization types
@@ -803,5 +808,5 @@ AccessPolicyService.TRIAL_DURATION_DAYS = TRIAL_DURATION_DAYS;
 AccessPolicyService.MAX_TRIAL_EXTENSIONS = 2;
 AccessPolicyService.MAX_EXTENSION_DAYS = 14;
 
-module.exports = AccessPolicyService;
+export default AccessPolicyService;
 

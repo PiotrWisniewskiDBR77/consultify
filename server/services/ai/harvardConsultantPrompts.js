@@ -588,7 +588,7 @@ const RESPONSE_QUALITY_CHECKLIST = {
     }
 };
 
-module.exports = {
+export default {
     HARVARD_CONSULTANT_PROMPT,
     PHASE_SPECIFIC_EXPERTISE,
     VOICE_RESPONSE_INSTRUCTIONS,

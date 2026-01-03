@@ -14,6 +14,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
     X,
     BookOpen,
@@ -83,10 +84,10 @@ const isVideoWatched = (videoId: string): boolean => {
 };
 
 // Helper to safely get translated array (handles missing translations)
-const getTranslatedArray = (t: (key: string, options?: object) => unknown, key: string): string[] => {
+const getTranslatedArray = (t: TFunction, key: string): string[] => {
     const result = t(key, { returnObjects: true });
     if (Array.isArray(result)) {
-        return result;
+        return result.filter((item): item is string => typeof item === 'string');
     }
     // If translation returns string (key not found), return empty array
     return [];
@@ -686,4 +687,3 @@ export const HelpSidePanel: React.FC = () => {
 };
 
 export default HelpSidePanel;
-

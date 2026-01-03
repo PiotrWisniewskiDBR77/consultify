@@ -676,7 +676,7 @@ class EnhancedContextBuilder {
 // Singleton instance
 const enhancedContextBuilder = new EnhancedContextBuilder();
 
-module.exports = {
+export default {
     EnhancedContextBuilder,
     enhancedContextBuilder,
     PHASE_CONTEXT_PRIORITIES,

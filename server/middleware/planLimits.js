@@ -1,4 +1,5 @@
-const db = require('../database');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 /**
  * Plan Limits Configuration
@@ -95,4 +96,4 @@ const checkPlanLimit = (limitKey) => {
 };
 
 
-module.exports = { checkPlanLimit, PLAN_LIMITS };
+export default { checkPlanLimit, PLAN_LIMITS };

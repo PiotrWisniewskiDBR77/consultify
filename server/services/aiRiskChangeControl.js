@@ -12,9 +12,13 @@
  */
 
 // Dependency injection container (for deterministic unit tests)
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+    db,
+    uuidv4,
 };
 
 // Risk types that PMO must monitor
@@ -644,4 +648,4 @@ const AIRiskChangeControl = {
     }
 };
 
-module.exports = AIRiskChangeControl;
+export default AIRiskChangeControl;

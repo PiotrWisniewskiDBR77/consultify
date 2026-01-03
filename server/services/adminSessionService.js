@@ -5,12 +5,16 @@
  * and session revocation capabilities.
  */
 
-const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
+import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
+
+import db from '../database.js';
+
+
 
 // Dependency injection for testing
 const deps = {
-    db: require('../database')
+    db,
 };
 
 /**
@@ -38,7 +42,8 @@ const generateSessionToken = () => {
  * @returns {Promise<Object>} Created session
  */
 const createSession = async ({ adminId, ipAddress, userAgent, mfaVerified = false, expiresInHours = 24 }) => {
-    const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
     const sessionToken = generateSessionToken();
     const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000).toISOString();
 
@@ -247,7 +252,7 @@ const updateMfaStatus = async (sessionId, mfaVerified) => {
     return result.changes > 0;
 };
 
-module.exports = {
+export default {
     setDependencies,
     createSession,
     getSession,
@@ -259,6 +264,7 @@ module.exports = {
     cleanupExpiredSessions,
     updateMfaStatus
 };
+
 
 
 

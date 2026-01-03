@@ -11,8 +11,10 @@
  * "When one door closes, another opens" - but automatically.
  */
 
-const CircuitBreakerService = require('./circuitBreakerService');
-const db = require('../database');
+import CircuitBreakerService from './circuitBreakerService.js';
+import db from '../database.js';
+
+
 
 // Provider priority chains by capability tier
 const FALLBACK_CHAINS = {
@@ -398,7 +400,9 @@ class LLMFallbackService {
 // Singleton instance
 const llmFallbackService = new LLMFallbackService();
 
-module.exports = llmFallbackService;
+export default llmFallbackService;
+
+
 
 
 

@@ -7,9 +7,9 @@
  * Uses Puppeteer for high-quality PDF generation with charts and styling.
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const { DIGITIZATION_AXES, getLevelColor } = require('../data/digitizationEvaluationData');
+import path from 'path';
+import { DIGITIZATION_AXES, getLevelColor } from '../data/digitizationEvaluationData.js';
+import { promises as fs } from 'fs';
 
 // Try to require puppeteer, fallback to PDFKit if not available
 let puppeteer;
@@ -904,4 +904,4 @@ function generateStatusReportHTML(report) {
     `;
 }
 
-module.exports = PDFExportService;
+export default PDFExportService;

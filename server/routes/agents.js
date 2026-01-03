@@ -8,10 +8,10 @@
  * - Agent metrics and metadata
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authenticate = require('../middleware/authMiddleware');
-const AIOrchestrator = require('../services/aiOrchestrator');
+import authenticate from '../middleware/authMiddleware.js';
+const AIOrchestrator = import('aiOrchestrator.js');
 
 /**
  * POST /api/agents/query
@@ -239,7 +239,9 @@ router.post('/strategic-review', authenticate, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

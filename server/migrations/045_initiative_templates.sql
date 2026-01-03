@@ -55,3 +55,5 @@ CREATE INDEX IF NOT EXISTS idx_charter_gen_template ON ai_charter_generations(te
 
 
 
+
+

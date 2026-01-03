@@ -11,11 +11,12 @@
  * - Recovery email/phone
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const requireAuth = require('../middleware/authMiddleware');
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import requireAuth from '../middleware/authMiddleware.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
@@ -779,7 +780,9 @@ router.put('/settings', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

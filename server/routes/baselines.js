@@ -1,10 +1,10 @@
 // Baselines Routes - Schedule baseline management
 // Step 4: Roadmap, Sequencing & Capacity
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const BaselineService = require('../services/baselineService');
-const verifyToken = require('../middleware/authMiddleware');
+const BaselineService = import('baselineService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 
 // POST /api/baselines/:roadmapId/capture
 router.post('/:roadmapId/capture', verifyToken, async (req, res) => {
@@ -59,4 +59,4 @@ router.get('/:roadmapId/variance', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

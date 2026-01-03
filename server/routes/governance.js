@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const GovernanceService = require('../services/governanceService');
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+const GovernanceService = import('governanceService.js');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
 
 // GET /api/governance/change-requests?projectId=XXX
 router.get('/change-requests', async (req, res) => {
@@ -107,4 +108,4 @@ router.put('/policies/:scopeId', (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

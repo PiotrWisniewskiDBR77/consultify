@@ -17,7 +17,7 @@
  * @module workModeService
  */
 
-const db = require('../database');
+import db from '../database.js';
 
 /**
  * Work Mode Constants
@@ -482,7 +482,9 @@ const WorkModeService = {
   }
 };
 
-module.exports = WorkModeService;
+export default WorkModeService;
+
+
 
 
 

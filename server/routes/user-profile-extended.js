@@ -12,10 +12,10 @@
  * - Profile Completion
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const auth = require('../middleware/authMiddleware');
-const UserProfileExtendedService = require('../services/userProfileExtendedService');
+import auth from '../middleware/authMiddleware.js';
+const UserProfileExtendedService = import('userProfileExtendedService.js');
 
 // ==========================================
 // FULL EXTENDED PROFILE
@@ -536,7 +536,9 @@ function isValidUrl(string) {
     }
 }
 
-module.exports = router;
+export default router;
+
+
 
 
 

@@ -34,7 +34,7 @@ const MetricsPersistenceService = {
      * Takes a snapshot of current in-memory metrics and saves to DB.
      * Optionally resets the in-memory counters after saving.
      */
-    async saveSnapshot(reset = true, dbInstance = null) => {
+    async saveSnapshot(reset = true, dbInstance = null) {
         await initDeps();
         const db = dbInstance || deps.db;
         try {
@@ -101,7 +101,7 @@ const MetricsPersistenceService = {
      * Retrieves historical metrics for charting
      * @param {number} days - Number of days to look back
      */
-    async getHistory(days = 7, dbInstance = db) {
+    async getHistory(days = 7, dbInstance = null) {
         return new Promise((resolve, reject) => {
             const query = `
                 SELECT * FROM metrics_snapshots 

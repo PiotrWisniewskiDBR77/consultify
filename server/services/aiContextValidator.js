@@ -224,4 +224,4 @@ const AiContextValidator = {
     },
 };
 
-module.exports = AiContextValidator;
+export default AiContextValidator;

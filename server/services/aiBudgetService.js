@@ -12,8 +12,10 @@
  * - Budget enforcement
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Cost per 1000 tokens for different models (approximate)
 const MODEL_COSTS = {
@@ -686,7 +688,10 @@ class AIBudgetService {
     }
 }
 
-module.exports = new AIBudgetService();
+const aIBudgetServiceInstance = new AIBudgetService();
+export default aIBudgetServiceInstance;
+
+
 
 
 

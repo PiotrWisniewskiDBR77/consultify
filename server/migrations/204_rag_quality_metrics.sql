@@ -44,3 +44,5 @@ CREATE INDEX IF NOT EXISTS idx_rag_metrics_quality ON rag_quality_metrics (retri
 CREATE INDEX IF NOT EXISTS idx_rag_metrics_feedback ON rag_quality_metrics (user_rating);
 
 
+
+

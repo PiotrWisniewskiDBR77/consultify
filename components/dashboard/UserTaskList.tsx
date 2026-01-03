@@ -52,14 +52,14 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
     const handleNavigate = (task: Task) => {
         if (onNavigate) {
             if (task.stepPhase === 'design') onNavigate(AppView.FULL_STEP1_CONTEXT);
-            else if (task.stepPhase === 'pilot' || task.stepPhase === 'execution') onNavigate(AppView.IMPLEMENTATION);
+            else if (task.stepPhase === 'pilot' || task.stepPhase === 'rollout') onNavigate(AppView.IMPLEMENTATION);
             else onNavigate(AppView.FULL_STEP1_CONTEXT);
         }
     };
 
     const getIcon = (task: Task) => {
         if (task.taskType === 'ANALYSIS') return <BarChart size={20} />;
-        if (task.taskType === 'PILOT' || task.taskType === 'BUILD') return <Play size={20} />;
+        if (task.stepPhase === 'pilot' || task.taskType === 'BUILD') return <Play size={20} />;
         return <FileText size={20} />;
     };
 

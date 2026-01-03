@@ -62,20 +62,37 @@ class BillingCron {
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
             db: deps?.db || getDatabase(),
-            budgetManagementService: deps?.budgetManagementService || await import('../../services/budgetManagementService.js').then(m => m.default || m),
-            adminAlertService: deps?.adminAlertService || await import('../../services/adminAlertService.js').then(m => m.default || m),
-            payAsYouGoService: deps?.payAsYouGoService || await import('../../services/payAsYouGoService.js').then(m => m.default || m),
-            seatManagementService: deps?.seatManagementService || await import('../../services/seatManagementService.js').then(m => m.default || m),
+            budgetManagementService: deps?.budgetManagementService,
+            adminAlertService: deps?.adminAlertService,
+            payAsYouGoService: deps?.payAsYouGoService,
+            seatManagementService: deps?.seatManagementService,
         };
+    }
+
+    private async ensureDeps(): Promise<Dependencies> {
+        if (!this.deps.budgetManagementService) {
+            this.deps.budgetManagementService = await import('../../services/budgetManagementService.js').then(m => m.default || m);
+        }
+        if (!this.deps.adminAlertService) {
+            this.deps.adminAlertService = await import('../../services/adminAlertService.js').then(m => m.default || m);
+        }
+        if (!this.deps.payAsYouGoService) {
+            this.deps.payAsYouGoService = await import('../../services/payAsYouGoService.js').then(m => m.default || m);
+        }
+        if (!this.deps.seatManagementService) {
+            this.deps.seatManagementService = await import('../../services/seatManagementService.js').then(m => m.default || m);
+        }
+        return this.deps as Dependencies;
     }
 
     /**
      * Reset monthly budgets (runs daily, checks reset_day_of_month)
      */
     async resetMonthlyBudgets(): Promise<void> {
+        const deps = await this.ensureDeps();
         try {
             logger.info('[BillingCron] Running resetMonthlyBudgets...');
-            await this.deps.budgetManagementService.resetMonthlyBudgets();
+            await deps.budgetManagementService.resetMonthlyBudgets();
             logger.info('[BillingCron] Monthly budgets reset completed');
         } catch (error) {
             logger.error('[BillingCron] Error resetting monthly budgets:', error);
@@ -87,12 +104,13 @@ class BillingCron {
      * Check and trigger admin alerts (runs hourly)
      */
     async checkAndTriggerAlerts(): Promise<number> {
+        const deps = await this.ensureDeps();
         try {
             logger.info('[BillingCron] Running checkAndTriggerAlerts...');
 
             // Get all active organizations
             const orgs = await new Promise<Organization[]>((resolve, reject) => {
-                this.deps.db.all<Organization>(
+                deps.db.all<Organization>(
                     'SELECT id FROM organizations WHERE status = ?',
                     ['active'],
                     (err, rows) => {
@@ -105,7 +123,7 @@ class BillingCron {
             let triggeredCount = 0;
             for (const org of orgs) {
                 try {
-                    const result = await this.deps.adminAlertService.checkAndTriggerAlerts(org.id);
+                    const result = await deps.adminAlertService.checkAndTriggerAlerts(org.id);
                     if (result.triggeredCount > 0) {
                         triggeredCount += result.triggeredCount;
                         logger.info(`[BillingCron] Triggered ${result.triggeredCount} alerts for org ${org.id}`);
@@ -127,6 +145,7 @@ class BillingCron {
      * Generate PAYG invoices (runs monthly)
      */
     async generatePayAsYouGoInvoices(): Promise<number> {
+        const deps = await this.ensureDeps();
         try {
             logger.info('[BillingCron] Running generatePayAsYouGoInvoices...');
 
@@ -136,7 +155,7 @@ class BillingCron {
 
             // Get all organizations with PAYG billing
             const orgs = await new Promise<OrganizationSeat[]>((resolve, reject) => {
-                this.deps.db.all<OrganizationSeat>(
+                deps.db.all<OrganizationSeat>(
                     `SELECT os.organization_id
                      FROM organization_seats os
                      WHERE os.billing_model IN('pay_as_you_go', 'hybrid')`,
@@ -151,7 +170,7 @@ class BillingCron {
             let invoicesGenerated = 0;
             for (const org of orgs) {
                 try {
-                    const result = await this.deps.payAsYouGoService.generatePayAsYouGoInvoice(
+                    const result = await deps.payAsYouGoService.generatePayAsYouGoInvoice(
                         org.organization_id,
                         lastMonthStart,
                         lastMonthEnd
@@ -177,11 +196,12 @@ class BillingCron {
      * Update seat counts (runs daily)
      */
     async updateSeatCounts(): Promise<number> {
+        const deps = await this.ensureDeps();
         try {
             logger.info('[BillingCron] Running updateSeatCounts...');
 
             const orgs = await new Promise<Organization[]>((resolve, reject) => {
-                this.deps.db.all<Organization>(
+                deps.db.all<Organization>(
                     'SELECT id FROM organizations WHERE status = ?',
                     ['active'],
                     (err, rows) => {
@@ -194,7 +214,7 @@ class BillingCron {
             let updated = 0;
             for (const org of orgs) {
                 try {
-                    await this.deps.seatManagementService.updateSeatCount(org.id);
+                    await deps.seatManagementService.updateSeatCount(org.id);
                     updated++;
                 } catch (err) {
                     logger.error(`[BillingCron] Error updating seat count for org ${org.id}:`, err);
@@ -263,4 +283,6 @@ export const calculateMonthlyUsage = async (deps?: Partial<Dependencies>): Promi
 };
 
 export default BillingCron;
+
+
 

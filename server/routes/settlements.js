@@ -10,10 +10,10 @@
  * - 404: Not found
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const SettlementService = require('../services/settlementService');
-const authMiddleware = require('../middleware/authMiddleware');
+const SettlementService = import('settlementService.js');
+import authMiddleware from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
 
 // All routes require SUPERADMIN
@@ -266,5 +266,5 @@ router.post('/adjustments', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

@@ -8,11 +8,12 @@
  * while aggregating data from various existing services.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
+import verifyToken from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
-const db = require('../database');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // ==========================================
 // MISSION CONTROL ENDPOINTS
@@ -733,7 +734,9 @@ router.get('/summary', verifyToken, requireRole(['super_admin', 'admin']), async
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

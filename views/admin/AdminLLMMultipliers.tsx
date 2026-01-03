@@ -23,7 +23,7 @@ export const AdminLLMMultipliers = () => {
         setLoading(true);
         try {
             const data = await Api.getLLMProviders();
-            setProviders(data);
+            setProviders(data as any);
         } catch (err) {
             console.error(err);
             toast.error('Failed to load providers');

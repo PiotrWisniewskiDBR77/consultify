@@ -182,7 +182,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
             try {
                 const [u, p] = await Promise.all([Api.getUsers(), Api.getProjects()]);
                 setUsers(u);
-                setProjects(p);
+                setProjects(p as any);
             } catch (e) {
                 console.error('Failed to load initial admin data', e);
             }

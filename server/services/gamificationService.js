@@ -4,7 +4,7 @@
  * Manages user points, levels, and achievements.
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 // Points Configuration
 const POINTS_TABLE = {
@@ -32,7 +32,7 @@ let db = null;
 const getDb = () => {
     if (!db) {
         try {
-            db = require('../db/sqliteAsync');
+            db = getDatabase();
         } catch (e) {
             db = require('../database');
         }
@@ -181,4 +181,4 @@ const GamificationService = {
     }
 };
 
-module.exports = GamificationService;
+export default GamificationService;

@@ -7,7 +7,7 @@
  * Part of the Enterprise AI Consulting System.
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const db = require('../../../database');
 const FrameworkEngine = require('./frameworkEngine');
 const { getFramework } = require('./consultingFrameworks');
@@ -544,7 +544,9 @@ class StrategicRecommendationService {
     }
 }
 
-module.exports = StrategicRecommendationService;
+export default StrategicRecommendationService;
+
+
 
 
 

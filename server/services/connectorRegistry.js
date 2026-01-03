@@ -156,7 +156,7 @@ function getAllCategories() {
     return CONNECTOR_CATEGORIES;
 }
 
-module.exports = {
+export default {
     CONNECTOR_CATALOG,
     CONNECTOR_CATEGORIES,
     getAllConnectors,

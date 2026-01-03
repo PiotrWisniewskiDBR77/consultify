@@ -262,4 +262,4 @@ const DemoSessionService = {
     }
 };
 
-module.exports = DemoSessionService;
+export default DemoSessionService;

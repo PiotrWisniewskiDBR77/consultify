@@ -245,7 +245,7 @@ async function getAvailableLanguages(url) {
     return ['en']; // Default assumption
 }
 
-module.exports = {
+export default {
     process,
     extractVideoId,
     isYouTubeUrl,
@@ -253,6 +253,8 @@ module.exports = {
     getAvailableLanguages,
     formatTimestamp
 };
+
+
 
 
 

@@ -44,4 +44,4 @@ const PlaybookExecutor = {
     }
 };
 
-module.exports = PlaybookExecutor;
+export default PlaybookExecutor;

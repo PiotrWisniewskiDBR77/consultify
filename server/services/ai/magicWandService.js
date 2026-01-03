@@ -293,4 +293,4 @@ Generate the justification:`;
 // Singleton
 const magicWandService = new MagicWandService();
 
-module.exports = { MagicWandService, magicWandService, MagicWandSuggestionSchema };
+export default { MagicWandService, magicWandService, MagicWandSuggestionSchema };

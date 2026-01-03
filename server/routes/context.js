@@ -5,10 +5,10 @@
  * Implements BCG/McKinsey-level context requirements.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const ContextService = require('../services/contextService');
-const verifyToken = require('../middleware/authMiddleware');
+const ContextService = import('contextService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 
 /**
  * GET /api/context/:projectId
@@ -207,4 +207,4 @@ router.get('/meta/levels', verifyToken, (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware'); // Standard auth checks valid token
+import authMiddleware from '../middleware/authMiddleware.js'; // Standard auth checks valid token
 
 // Lazy load ConsultantService
 let ConsultantService = null;
@@ -98,4 +98,4 @@ router.get('/invites', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

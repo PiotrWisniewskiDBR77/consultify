@@ -8,18 +8,19 @@
  * - LEAN (DBR77 Lean 4.0)
  */
 
-const express = require('express');
-const { v4: uuidv4 } = require('uuid');
+import express from 'express';
+import { v4 as uuidv4 } from 'uuid';
 const router = express.Router();
 
 // Middleware
-const authenticateToken = require('../middleware/authMiddleware');
+import authenticateToken from '../middleware/authMiddleware.js';
 const { assessmentRBAC } = require('../middleware/assessmentRBAC');
 
 // Services
-const db = require('../database');
-const { calculateFrameworkScore } = require('../services/frameworkScoreCalculators');
-const multiFrameworkAuditService = require('../services/multiFrameworkAuditService');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+const { calculateFrameworkScore } = import('frameworkScoreCalculators.js');
+const multiFrameworkAuditService = import('multiFrameworkAuditService.js');
 
 // Valid frameworks
 const VALID_FRAMEWORKS = ['SIRI', 'ADMA', 'CMMI', 'LEAN'];
@@ -659,7 +660,9 @@ router.get('/:id/comments', authenticateToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

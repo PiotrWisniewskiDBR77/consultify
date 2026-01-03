@@ -5,11 +5,15 @@
  * filtering, export capabilities, and compliance features.
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
+
+import db from '../database.js';
+
+
 
 // Dependency injection for testing
 const deps = {
-    db: require('../database')
+    db,
 };
 
 /**
@@ -104,7 +108,8 @@ const logAction = async ({
     status = 'success',
     context = {}
 }) => {
-    const id = uuidv4();
+        await initDeps();
+        const id = deps.uuidv4();
     const riskScore = calculateRiskScore(actionType, context);
     const detailsJson = JSON.stringify(details);
     
@@ -498,7 +503,7 @@ const cleanupOldLogs = async (retentionDays = 365) => {
     return result.changes;
 };
 
-module.exports = {
+export default {
     setDependencies,
     RISK_LEVELS,
     ACTION_CATEGORIES,
@@ -513,6 +518,7 @@ module.exports = {
     getRecentHighRisk,
     cleanupOldLogs
 };
+
 
 
 

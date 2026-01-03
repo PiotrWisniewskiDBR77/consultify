@@ -9,10 +9,10 @@
  * Part of: User-Level Notifications & Integrations System
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const UserIntegrationService = require('../services/userIntegrationService');
+import authMiddleware from '../middleware/authMiddleware.js';
+const UserIntegrationService = import('userIntegrationService.js');
 
 // All routes require authentication
 router.use(authMiddleware);
@@ -415,7 +415,8 @@ router.put('/:provider/config', async (req, res) => {
         
         // Update in database
         await new Promise((resolve, reject) => {
-            const db = require('../database');
+            import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
             db.run(
                 `UPDATE user_integrations 
                 SET config_json = ?, updated_at = CURRENT_TIMESTAMP
@@ -464,7 +465,9 @@ router.get('/:provider/logs', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

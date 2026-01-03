@@ -3,18 +3,18 @@
  * Handles RapidLean, ADKAR, External Digital, Generic Reports
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 // Services
-const RapidLeanService = require('../services/rapidLeanService');
-const ADKARService = require('../services/adkarService');
-const ExternalAssessmentService = require('../services/externalAssessmentService');
-const GenericReportService = require('../services/genericReportService');
-const AssessmentOverviewService = require('../services/assessmentOverviewService');
+const RapidLeanService = import('rapidLeanService.js');
+const ADKARService = import('adkarService.js');
+const ExternalAssessmentService = import('externalAssessmentService.js');
+const GenericReportService = import('genericReportService.js');
+const AssessmentOverviewService = import('assessmentOverviewService.js');
 const { assessmentRBAC } = require('../middleware/assessmentRBAC');
 const AssessmentAuditLogger = require('../utils/assessmentAuditLogger');
 
@@ -297,4 +297,4 @@ router.get('/sessions/:projectId/assessment-overview', assessmentRBAC('read'), a
     }
 });
 
-module.exports = router;
+export default router;

@@ -53,3 +53,5 @@ CREATE TABLE IF NOT EXISTS ai_suggestion_preferences (
 CREATE INDEX IF NOT EXISTS idx_ai_suggestion_preferences_user_id ON ai_suggestion_preferences (user_id);
 
 
+
+

@@ -483,7 +483,7 @@ class LLMHealthMonitor {
 // Singleton instance
 const llmHealthMonitor = new LLMHealthMonitor();
 
-module.exports = {
+export default {
     llmHealthMonitor,
     LLMHealthMonitor,
     HealthStatus,

@@ -8,7 +8,7 @@
  */
 
 const { aiLogger } = require('./logger');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 // Transformation methodology definition
 const TRANSFORMATION_METHODOLOGY = {
@@ -683,7 +683,7 @@ class ConsultingFlowEngine {
 // Singleton instance
 const consultingFlowEngine = new ConsultingFlowEngine();
 
-module.exports = {
+export default {
     ConsultingFlowEngine,
     consultingFlowEngine,
     TRANSFORMATION_METHODOLOGY,

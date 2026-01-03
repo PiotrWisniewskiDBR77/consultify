@@ -7,11 +7,13 @@
  * @module server/services/studioAIService
  */
 
-const db = require('../database');
-const { ModelRouter } = require('./ai/modelRouter');
-const PromptService = require('./promptService');
-const TokenBillingService = require('./tokenBillingService');
-const { v4: uuidv4 } = require('uuid');
+import db from '../database.js';
+import PromptService from './promptService.js';
+import TokenBillingService from './tokenBillingService.js';
+import { ModelRouter } from './ai/modelRouter.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Helper to clean JSON from AI response
 const cleanJSON = (text) => {
@@ -636,7 +638,10 @@ Apply the requested changes to the diagram. Return the complete updated diagram.
 }
 
 // Export singleton instance
-module.exports = new StudioAIService();
+const studioAIServiceInstance = new StudioAIService();
+export default studioAIServiceInstance;
+
+
 
 
 

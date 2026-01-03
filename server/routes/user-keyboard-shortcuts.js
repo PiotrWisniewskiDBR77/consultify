@@ -3,10 +3,11 @@
  * Handles custom keyboard shortcut configurations
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const requireAuth = require('../middleware/authMiddleware');
-const db = require('../database');
+import requireAuth from '../middleware/authMiddleware.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 router.use(requireAuth);
 
@@ -151,7 +152,9 @@ function getDefaultShortcuts() {
     ];
 }
 
-module.exports = router;
+export default router;
+
+
 
 
 

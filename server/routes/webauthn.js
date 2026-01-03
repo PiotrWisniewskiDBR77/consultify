@@ -5,10 +5,10 @@
  * Supports credential registration and authentication
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const webauthnService = require('../services/webauthnService');
-const verifyToken = require('../middleware/authMiddleware');
+const webauthnService = import('webauthnService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 
 // ====== REGISTRATION ENDPOINTS ======
 
@@ -281,5 +281,5 @@ router.get('/status', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

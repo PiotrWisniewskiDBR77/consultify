@@ -19,11 +19,16 @@ interface ProjectDetailsViewProps {
 }
 
 export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectId, onBack }) => {
-    const [project, setProject] = useState<any>(null);
+    const [project, setProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'overview' | 'team' | 'initiatives' | 'assessments' | 'documents'>('overview');
     const [isEditing, setIsEditing] = useState(false);
-    const [editForm, setEditForm] = useState({ name: '', description: '', goal: '', status: '' });
+    const [editForm, setEditForm] = useState<{
+        name: string;
+        description: string;
+        goal: string;
+        status: Project['status'];
+    }>({ name: '', description: '', goal: '', status: 'active' });
     const [uploading, setUploading] = useState(false);
     const [uploadFile, setUploadFile] = useState<File | null>(null);
 
@@ -31,12 +36,12 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
         try {
             setLoading(true);
             const data = await Api.getProjectDetails(projectId);
-            setProject(data);
+            setProject(data as any);
             setEditForm({
                 name: data.name,
                 description: data.description || '',
                 goal: data.goal || '',
-                status: data.status
+                status: data.status as Project['status']
             });
         } catch (e) {
             console.error(e);
@@ -136,7 +141,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                             </div>
                             <div className="flex items-center gap-1.5 text-slate-500">
                                 <Globe size={16} />
-                                <span>Created {new Date(project.created_at).toLocaleDateString()}</span>
+                                <span>Created {new Date(project.created_at || project.createdAt).toLocaleDateString()}</span>
                             </div>
                         </div>
                     </div>
@@ -219,7 +224,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Status</label>
                                             <select
                                                 value={editForm.status}
-                                                onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                                                onChange={e => setEditForm({ ...editForm, status: e.target.value as Project['status'] })}
                                                 className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-purple-500 outline-none appearance-none"
                                             >
                                                 <option value="active">Active</option>

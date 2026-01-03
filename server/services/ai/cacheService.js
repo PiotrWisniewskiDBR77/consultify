@@ -223,4 +223,4 @@ class CacheService {
 // Singleton
 const cacheService = new CacheService();
 
-module.exports = { CacheService, cacheService, CACHE_CONFIG };
+export default { CacheService, cacheService, CACHE_CONFIG };

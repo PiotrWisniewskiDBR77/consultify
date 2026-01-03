@@ -4,7 +4,9 @@
  * Manages user-specific settings and preferences.
  */
 
-const db = require('../database');
+import db from '../database.js';
+
+
 
 // Database helpers
 function dbGet(sql, params = []) {
@@ -234,4 +236,4 @@ const UserPreferencesService = {
     },
 };
 
-module.exports = UserPreferencesService;
+export default UserPreferencesService;

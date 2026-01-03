@@ -14,8 +14,10 @@
  * - Rate limiting handled at route level
  */
 
-const defaultDb = require('../database');
-const { v4: defaultUuidv4 } = require('uuid');
+import defaultDb from '../database.js';
+import { v4 as defaultUuidv4 } from 'uuid';
+
+
 
 const deps = {
     db: defaultDb,
@@ -372,4 +374,4 @@ const PromoCodeService = {
     }
 };
 
-module.exports = PromoCodeService;
+export default PromoCodeService;

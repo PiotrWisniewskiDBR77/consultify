@@ -1566,7 +1566,7 @@ function generateAxisAreaMatrixHTML(axisId, areaAssessments, language = 'pl') {
 // ============================================================================
 // EXPORTS
 // ============================================================================
-module.exports = {
+export default {
     BUSINESS_AREAS,
     MATURITY_LEVELS,
     AXIS_AREA_CONTENT,

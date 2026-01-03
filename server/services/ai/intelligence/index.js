@@ -7,10 +7,12 @@
 const IndustryIntelligenceService = require('./industryIntelligenceService');
 const BenchmarkDataService = require('./benchmarkDataService');
 
-module.exports = {
+export default {
     IndustryIntelligenceService,
     BenchmarkDataService
 };
+
+
 
 
 

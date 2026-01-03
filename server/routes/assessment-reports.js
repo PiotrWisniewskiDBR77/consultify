@@ -17,15 +17,16 @@
  * - POST /api/assessment-reports/:id/finalize - Finalize a report
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const verifyToken = require('../middleware/authMiddleware');
-const AssessmentOverviewService = require('../services/assessmentOverviewService');
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import verifyToken from '../middleware/authMiddleware.js';
+const AssessmentOverviewService = import('assessmentOverviewService.js');
+import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // Multer configuration for report imports
 const importStorage = multer.diskStorage({
@@ -175,7 +176,7 @@ router.post('/import', verifyToken, importUpload.single('reportFile'), async (re
         }
 
         // Dynamically import ReportParserService to avoid circular dependency
-        const ReportParserService = require('../services/ai/reportParserService');
+        const ReportParserService = import('ai/reportParserService.js');
 
         // Parse the uploaded file
         const parsedData = await ReportParserService.parseReport({
@@ -1349,7 +1350,7 @@ router.post('/:id/generate-comprehensive', verifyToken, async (req, res) => {
 
             try {
                 // Import comprehensive report generator
-                const { comprehensiveReportGenerator } = require('../services/ai/comprehensiveReportGenerator');
+                const { comprehensiveReportGenerator } = import('ai/comprehensiveReportGenerator.js');
                 
                 // Generate comprehensive report
                 const result = await comprehensiveReportGenerator.generateReport(
@@ -2339,9 +2340,9 @@ let StrategicRecommendationService = null;
 function getEnterpriseServices() {
     if (!ReportPipeline) {
         try {
-            ReportPipeline = require('../services/ai/pipeline/reportPipeline');
-            IndustryIntelligenceService = require('../services/ai/intelligence/industryIntelligenceService');
-            StrategicRecommendationService = require('../services/ai/frameworks/strategicRecommendationService');
+            ReportPipeline = import('ai/pipeline/reportPipeline.js');
+            IndustryIntelligenceService = import('ai/intelligence/industryIntelligenceService.js');
+            StrategicRecommendationService = import('ai/frameworks/strategicRecommendationService.js');
         } catch (e) {
             console.warn('[Enterprise] Services not available:', e.message);
         }
@@ -2676,4 +2677,4 @@ router.get('/:id/industry-context', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

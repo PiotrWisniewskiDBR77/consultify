@@ -110,7 +110,7 @@ function asyncHandler(fn) {
     };
 }
 
-module.exports = {
+export default {
     AppError,
     ERROR_CODES,
     errorHandlerMiddleware,
@@ -120,6 +120,8 @@ module.exports = {
     validationError: (msg, fields) => new AppError(msg, 400, ERROR_CODES.VALIDATION_ERROR, { fields }),
     notFoundError: (res, id) => new AppError(`${res} not found`, 404, ERROR_CODES.NOT_FOUND, { id }),
 };
+
+
 
 
 

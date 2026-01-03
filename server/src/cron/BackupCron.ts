@@ -41,9 +41,16 @@ class BackupCron {
 
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
-            backupService: deps?.backupService || await import('../../services/backupService.js').then(m => m.default || m),
+            backupService: deps?.backupService,
             sentry: deps?.sentry,
         };
+    }
+
+    private async ensureDeps(): Promise<Dependencies> {
+        if (!this.deps.backupService) {
+            this.deps.backupService = await import('../../services/backupService.js').then(m => m.default || m);
+        }
+        return this.deps as Dependencies;
     }
 
     /**
@@ -57,15 +64,16 @@ class BackupCron {
 
         // Daily at 3 AM UTC
         this.job = cron.schedule('0 3 * * *', async () => {
+            const deps = await this.ensureDeps();
             logger.info('[BackupCron] Starting scheduled backup...');
 
             try {
                 // Create backup
-                const result = await this.deps.backupService.createBackup('full', 'scheduled');
+                const result = await deps.backupService.createBackup('full', 'scheduled');
                 logger.info(`[BackupCron] Backup completed: ${result.id}`);
 
                 // Run retention policy
-                const cleanup = await this.deps.backupService.runRetentionPolicy();
+                const cleanup = await deps.backupService.runRetentionPolicy();
                 logger.info(`[BackupCron] Cleanup: deleted ${cleanup.deleted} old backups`);
 
             } catch (error) {
@@ -73,9 +81,9 @@ class BackupCron {
                 logger.error('[BackupCron] Scheduled backup failed:', err);
 
                 // Report to Sentry if available
-                if (this.deps.sentry) {
+                if (deps.sentry) {
                     try {
-                        this.deps.sentry.captureException(err, {
+                        deps.sentry.captureException(err, {
                             tags: { component: 'backup', job: 'scheduled' },
                         });
                     } catch (e) {
@@ -105,8 +113,9 @@ class BackupCron {
      * Trigger manual backup
      */
     async triggerManualBackup(reason = 'manual'): Promise<{ id: string }> {
+        const deps = await this.ensureDeps();
         logger.info(`[BackupCron] Manual backup triggered: ${reason}`);
-        return this.deps.backupService.createBackup('full', reason);
+        return deps.backupService.createBackup('full', reason);
     }
 }
 
@@ -140,4 +149,6 @@ export const triggerManualBackup = async (reason: string, deps?: Partial<Depende
 };
 
 export default BackupCron;
+
+
 

@@ -3,8 +3,10 @@
  * Calculates health scores and churn risk for organizations
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 const OrganizationHealthService = {
     /**
@@ -156,7 +158,9 @@ const OrganizationHealthService = {
     }
 };
 
-module.exports = OrganizationHealthService;
+export default OrganizationHealthService;
+
+
 
 
 

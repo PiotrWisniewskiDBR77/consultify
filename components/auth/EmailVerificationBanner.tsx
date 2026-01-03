@@ -24,12 +24,12 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
     const [isDismissed, setIsDismissed] = useState(false);
 
     // Don't show if email is already verified
-    if (currentUser.emailVerified || isDismissed) return null;
+    if ((currentUser as any).emailVerified || isDismissed) return null;
 
     const handleResendVerification = async () => {
         setIsSending(true);
         try {
-            await Api.resendVerificationEmail();
+            await (Api as any).resendVerificationEmail();
             setSent(true);
             toast.success(t('auth.verificationSent', 'Verification email sent! Check your inbox.'));
         } catch (error: any) {
@@ -152,6 +152,8 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
 };
 
 export default EmailVerificationBanner;
+
+
 
 
 

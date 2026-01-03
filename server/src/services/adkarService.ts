@@ -206,7 +206,7 @@ class ADKARServiceClass {
     /**
      * Get overall change readiness level
      */
-    static getReadinessLevel(scores: ADKARScores): 'high' | 'medium' | 'low' {
+    getReadinessLevel(scores: ADKARScores): 'high' | 'medium' | 'low' {
         const overall = scores.overall_score || 0;
         if (overall >= 4.0) return 'high';
         if (overall >= 3.0) return 'medium';
@@ -216,7 +216,7 @@ class ADKARServiceClass {
     /**
      * Generate summary report
      */
-    static generateReport(scores: ADKARScores): {
+    generateReport(scores: ADKARScores): {
         readinessLevel: 'high' | 'medium' | 'low';
         overallScore: number;
         gaps: ADKARGap[];
@@ -253,22 +253,137 @@ class ADKARServiceClass {
             weaknesses
         };
     }
+
+    /**
+     * Create ADKAR assessment
+     */
+    async createAssessment(data: {
+        organizationId: string;
+        projectId?: string;
+        responses: ADKARResponses;
+        userId: string;
+    }): Promise<{
+        id: string;
+        awareness_score?: number;
+        desire_score?: number;
+        knowledge_score?: number;
+        ability_score?: number;
+        reinforcement_score?: number;
+        overall_score: number;
+        recommendations: ADKARRecommendation[];
+    }> {
+        const { organizationId, projectId, responses, userId } = data;
+
+        const scores = this.calculateScores(responses);
+        const recommendations = this.generateRecommendations(scores);
+
+        const assessmentId = uuidv4();
+
+        const sql = `
+            INSERT INTO adkar_assessments (
+                id, organization_id, project_id,
+                awareness_score, desire_score, knowledge_score, ability_score, reinforcement_score,
+                overall_score, questionnaire_responses, ai_recommendations,
+                created_by, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        `;
+
+        await this.dbRun(sql, [
+            assessmentId,
+            organizationId,
+            projectId || null,
+            scores.awareness_score || null,
+            scores.desire_score || null,
+            scores.knowledge_score || null,
+            scores.ability_score || null,
+            scores.reinforcement_score || null,
+            scores.overall_score,
+            JSON.stringify(responses),
+            JSON.stringify(recommendations),
+            userId
+        ]);
+
+        return {
+            id: assessmentId,
+            ...scores,
+            recommendations
+        };
+    }
+
+    /**
+     * Get ADKAR assessment by ID
+     */
+    async getAssessment(assessmentId: string): Promise<ADKARAssessmentParsed | null> {
+        const row = await this.dbGet<ADKARAssessmentRow>(
+            'SELECT * FROM adkar_assessments WHERE id = ?',
+            [assessmentId]
+        );
+
+        if (!row) return null;
+
+        // Parse JSON fields
+        return {
+            ...row,
+            questionnaire_responses: JSON.parse(row.questionnaire_responses || '{}') as ADKARResponses,
+            ai_recommendations: JSON.parse(row.ai_recommendations || '[]') as ADKARRecommendation[]
+        };
+    }
+}
+
+// ==========================================
+// DATABASE ROW TYPES
+// ==========================================
+
+interface ADKARAssessmentRow {
+    id: string;
+    organization_id: string;
+    project_id: string | null;
+    awareness_score: number | null;
+    desire_score: number | null;
+    knowledge_score: number | null;
+    ability_score: number | null;
+    reinforcement_score: number | null;
+    overall_score: number;
+    questionnaire_responses: string; // JSON string
+    ai_recommendations: string; // JSON string
+    created_by: string;
+    created_at: string;
+}
+
+interface ADKARAssessmentParsed extends Omit<ADKARAssessmentRow, 'questionnaire_responses' | 'ai_recommendations'> {
+    questionnaire_responses: ADKARResponses;
+    ai_recommendations: ADKARRecommendation[];
 }
 
 // ==========================================
 // EXPORTS
 // ==========================================
 
-// Export class (static methods)
+// Export class
 export { ADKARServiceClass };
 
-// Export default instance (for backward compatibility)
-const adkarService = ADKARServiceClass;
-export default adkarService;
+// Export types
+export type {
+    ADKARResponses,
+    ADKARScores,
+    ADKARGap,
+    ADKARRecommendation,
+    ADKARAssessment,
+    ADKARAssessmentRow,
+    ADKARAssessmentParsed
+};
 
-// Export individual methods for backward compatibility
-export const calculateScores = (responses: ADKARResponses) => ADKARServiceClass.calculateScores(responses);
-export const identifyGaps = (scores: ADKARScores, threshold?: number) => ADKARServiceClass.identifyGaps(scores, threshold);
-export const generateRecommendations = (scores: ADKARScores) => ADKARServiceClass.generateRecommendations(scores);
-export const getReadinessLevel = (scores: ADKARScores) => ADKARServiceClass.getReadinessLevel(scores);
-export const generateReport = (scores: ADKARScores) => ADKARServiceClass.generateReport(scores);
+// Create singleton instance
+const adkarServiceInstance = new ADKARServiceClass();
+
+// Export default instance (for backward compatibility)
+export default adkarServiceInstance;
+
+// Export individual methods for backward compatibility (using singleton)
+export const calculateScores = (responses: ADKARResponses) => adkarServiceInstance.calculateScores(responses);
+export const identifyGaps = (scores: ADKARScores, threshold?: number) => adkarServiceInstance.identifyGaps(scores, threshold);
+export const generateRecommendations = (scores: ADKARScores) => adkarServiceInstance.generateRecommendations(scores);
+export const getReadinessLevel = (scores: ADKARScores) => adkarServiceInstance.getReadinessLevel(scores);
+export const generateReport = (scores: ADKARScores) => adkarServiceInstance.generateReport(scores);
+export const createAssessment = (data: Parameters<ADKARServiceClass['createAssessment']>[0]) => adkarServiceInstance.createAssessment(data);
+export const getAssessment = (assessmentId: string) => adkarServiceInstance.getAssessment(assessmentId);

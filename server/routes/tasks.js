@@ -1,15 +1,16 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const verifyToken = require('../middleware/authMiddleware');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import { v4 as uuidv4 } from 'uuid';
+import verifyToken from '../middleware/authMiddleware.js';
 const notificationsRouter = require('./notifications');
-const ActivityService = require('../services/activityService');
-const InitiativeService = require('../services/initiativeService');
+const ActivityService = import('activityService.js');
+const InitiativeService = import('initiativeService.js');
 const cacheHelper = require('../utils/cacheHelper');
-const TaskAssignmentService = require('../services/taskAssignmentService');
-const ProjectMemberService = require('../services/projectMemberService');
-const DecisionTriggerService = require('../services/decisionTriggerService');
+const TaskAssignmentService = import('taskAssignmentService.js');
+const ProjectMemberService = import('projectMemberService.js');
+const DecisionTriggerService = import('decisionTriggerService.js');
 
 const { validateBody } = require('../middleware/validationMiddleware');
 const { createTaskSchema, updateTaskSchema } = require('../validators/taskValidator');
@@ -987,4 +988,4 @@ router.get('/my-workload', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

@@ -1,11 +1,11 @@
 // Notifications Routes
 // Step 5: Execution Control, My Work & Notifications
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const NotificationService = require('../services/notificationService');
-const EscalationService = require('../services/escalationService');
-const verifyToken = require('../middleware/authMiddleware');
+const NotificationService = import('notificationService.js');
+const EscalationService = import('escalationService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 
 // GET /api/notifications
 router.get('/', verifyToken, async (req, res) => {
@@ -119,4 +119,4 @@ router.patch('/escalations/:id/resolve', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

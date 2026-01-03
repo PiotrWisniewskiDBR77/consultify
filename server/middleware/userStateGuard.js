@@ -7,12 +7,12 @@
  *   router.get('/endpoint', userStateGuard.requireState(['ORG_MEMBER', 'TEAM_COLLAB']), handler)
  */
 
-const UserStateMachine = require('../services/userStateMachine');
+const UserStateMachine = import('userStateMachine.js');
 
 // Dependency injection for testability
 let db = null;
 try {
-    db = require('../db/sqliteAsync');
+    db = getDatabase();
 } catch (e) {
     console.warn('userStateGuard: Database not available');
 }
@@ -193,7 +193,7 @@ async function transitionState(userId, fromState, toState, context = {}) {
     }
 }
 
-module.exports = {
+export default {
     attachUserState,
     requireState,
     requirePhase,

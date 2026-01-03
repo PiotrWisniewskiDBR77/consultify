@@ -7,7 +7,8 @@
  * This is the MVP-safe approach that avoids risky schema migrations.
  */
 
-const db = require('../database');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 /**
  * Get the organization column name for a given table.
@@ -68,7 +69,7 @@ async function orgWhereClause(tableName, orgId) {
     };
 }
 
-module.exports = {
+export default {
     getOrgColumn,
     getOrgColumnCached,
     orgWhereClause

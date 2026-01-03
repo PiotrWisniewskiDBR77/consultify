@@ -12,7 +12,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 // Import processors
 const docxProcessor = require('./processors/docxProcessor');
@@ -421,11 +421,13 @@ class MediaIngestionService {
 // Export singleton instance
 const mediaIngestionService = new MediaIngestionService();
 
-module.exports = {
+export default {
     MediaIngestionService,
     mediaIngestionService,
     FILE_PROCESSORS
 };
+
+
 
 
 

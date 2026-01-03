@@ -429,12 +429,14 @@ class ReportTemplateManager {
 // Singleton instance
 const reportTemplateManager = new ReportTemplateManager();
 
-module.exports = {
+export default {
     ReportTemplateManager,
     reportTemplateManager,
     SECTION_STRUCTURES,
     PROMPT_TEMPLATES
 };
+
+
 
 
 

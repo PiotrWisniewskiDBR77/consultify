@@ -797,7 +797,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                             // Attachments support
                             assessmentId={assessmentId}
                             axisId={axis}
-                            areaId={currentAreaKey}
+                            areaId={currentAreaKey || undefined}
                             readOnly={readOnly}
                         />
 

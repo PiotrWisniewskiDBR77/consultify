@@ -14,11 +14,13 @@
  * - Caching for performance
  */
 
-const RagService = require('./ragService');
-const KnowledgeGraphService = require('./knowledgeGraphService');
-const { embeddingService } = require('./ai/embeddingService');
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import RagService from './ragService.js';
+import KnowledgeGraphService from './knowledgeGraphService.js';
+import db from '../database.js';
+import { embeddingService } from './ai/embeddingService.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Simple in-memory cache
 const cache = new Map();
@@ -482,7 +484,9 @@ const RagEnhancedService = {
     }
 };
 
-module.exports = RagEnhancedService;
+export default RagEnhancedService;
+
+
 
 
 

@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
+import authMiddleware from '../middleware/authMiddleware.js';
 const { requireOrgAccess } = require('../middleware/rbac');
 import budgetManagementService from '../services/budgetManagementService.js';
 
@@ -124,7 +124,7 @@ router.get('/status', authMiddleware, requireOrgAccess({ roles: ['ADMIN', 'OWNER
     }
 });
 
-module.exports = router;
+export default router;
 
 
 

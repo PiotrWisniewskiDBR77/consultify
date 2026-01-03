@@ -9,7 +9,7 @@
 
 const db = require('../../database');
 const { aiLogger } = require('./logger');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 // Default user profile template
 const DEFAULT_PROFILE = {
@@ -631,7 +631,7 @@ class PersonalizationEngine {
 // Singleton instance
 const personalizationEngine = new PersonalizationEngine();
 
-module.exports = {
+export default {
     PersonalizationEngine,
     personalizationEngine,
     DEFAULT_PROFILE,

@@ -7,7 +7,7 @@
  * Part of the Enterprise AI Consulting System for BCG/McKinsey-level reports.
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const db = require('../../../database');
 const WebSearchService = require('../../webSearchService');
 
@@ -613,7 +613,9 @@ class IndustryIntelligenceService {
     }
 }
 
-module.exports = IndustryIntelligenceService;
+export default IndustryIntelligenceService;
+
+
 
 
 

@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const KnowledgeService = require('../services/knowledgeService');
-const requireSuperAdmin = require('../middleware/superAdminMiddleware');
-const verifyToken = require('../middleware/authMiddleware');
+const KnowledgeService = import('knowledgeService.js');
+import requireSuperAdmin from '../middleware/superAdminMiddleware.js';
+import verifyToken from '../middleware/authMiddleware.js';
 const { enforceStorageQuota, recordStorageAfterUpload } = require('../middleware/quotaMiddleware');
 
 // --- CANDIDATES (Idea Inbox) ---
@@ -112,7 +112,7 @@ router.get('/candidates/by-project/:projectId', verifyToken, async (req, res) =>
 router.get('/observations/generate', requireSuperAdmin, async (req, res) => {
     try {
         // Use unified AI pipeline for observation generation
-        const { generateObservations } = require('../services/ai/aiPipeline');
+        const { generateObservations } = import('ai/aiPipeline.js');
         const observations = await generateObservations(req.user?.id, req.user?.organizationId);
         res.json(observations);
     } catch (err) {
@@ -251,8 +251,8 @@ router.put('/strategies/:id/toggle', requireSuperAdmin, async (req, res) => {
 
 // --- KNOWLEDGE DOCUMENTS (RAG) ---
 
-const StorageService = require('../services/storageService');
-const { v4: uuidv4 } = require('uuid');
+const StorageService = import('storageService.js');
+import { v4 as uuidv4 } from 'uuid';
 
 const multer = require('multer');
 const path = require('path');
@@ -272,7 +272,7 @@ const upload = multer({
     }
 });
 
-const enforceProjectQuota = require('../middleware/projectQuotaMiddleware');
+import enforceProjectQuota from '../middleware/projectQuotaMiddleware.js';
 
 // Apply storage quota enforcement before upload
 router.post('/documents', verifyToken, enforceStorageQuota, upload.single('file'), enforceProjectQuota, async (req, res) => {
@@ -404,4 +404,4 @@ router.delete('/documents/:id', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

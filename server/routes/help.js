@@ -7,12 +7,12 @@
  * Step 6: Enterprise+ Ready
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const HelpService = require('../services/helpService');
-const PlaybookResolver = require('../services/playbookResolver');
-const AccessPolicyService = require('../services/accessPolicyService');
-const requireAuth = require('../middleware/authMiddleware');
+const HelpService = import('helpService.js');
+const PlaybookResolver = import('playbookResolver.js');
+const AccessPolicyService = import('accessPolicyService.js');
+import requireAuth from '../middleware/authMiddleware.js';
 const isSuperAdmin = (req, res, next) => {
     if (req.user && (req.user.role === 'SUPERADMIN' || req.user.role === 'SUPER_ADMIN')) {
         return next();
@@ -348,4 +348,4 @@ router.get('/admin/analytics', requireAuth, isSuperAdmin, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

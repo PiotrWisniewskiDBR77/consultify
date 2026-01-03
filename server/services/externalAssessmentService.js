@@ -5,9 +5,11 @@
  * Handles file upload, framework-specific parsing, score normalization, and DRD mapping.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const PDFParserService = require('./pdfParserService');
+import db from '../database.js';
+import PDFParserService from './pdfParserService.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 class ExternalAssessmentService {
     /**
@@ -312,4 +314,4 @@ class ExternalAssessmentService {
     }
 }
 
-module.exports = ExternalAssessmentService;
+export default ExternalAssessmentService;

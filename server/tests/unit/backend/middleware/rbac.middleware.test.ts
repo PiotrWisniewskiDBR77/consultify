@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { requireOrgAccess, requireOrgRole, requireConsultantScope, requireOwnerOrSuperadmin, ORG_ROLE_HIERARCHY, type AuthRequest } from '../../../src/middleware/rbac.middleware.js';
+import { requireOrgAccess, requireOrgRole, requireConsultantScope, requireOwnerOrSuperadmin, ORG_ROLE_HIERARCHY, type AuthRequest } from '../../../../src/middleware/rbac.middleware.js';
 
 describe('RBAC Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -148,4 +148,6 @@ describe('RBAC Middleware', () => {
         });
     });
 });
+
+
 

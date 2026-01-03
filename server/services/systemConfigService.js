@@ -9,8 +9,10 @@
  * - Default value management
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 class SystemConfigService {
     /**
@@ -210,7 +212,8 @@ class SystemConfigService {
     }
 }
 
-module.exports = new SystemConfigService();
+const systemConfigServiceInstance = new SystemConfigService();
+export default systemConfigServiceInstance;
 
 
 

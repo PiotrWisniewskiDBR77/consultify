@@ -7,10 +7,12 @@
 const reportAgents = require('./reportAgents');
 const ReportPipeline = require('./reportPipeline');
 
-module.exports = {
+export default {
     ...reportAgents,
     ReportPipeline
 };
+
+
 
 
 

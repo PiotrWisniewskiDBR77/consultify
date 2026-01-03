@@ -10,8 +10,10 @@
  * - PMBOK 7: Governance and transparency
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Audit action types
 const AUDIT_ACTIONS = {
@@ -515,7 +517,9 @@ const ReportAuditService = {
     }
 };
 
-module.exports = ReportAuditService;
+export default ReportAuditService;
+
+
 
 
 

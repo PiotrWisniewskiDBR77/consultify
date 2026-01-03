@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { trialEntryGuard, requireOrgContext, isTrialEntryUser, setDependencies, BLOCKED_ROUTES, type AuthRequest } from '../../../src/middleware/trialEntryGuard.middleware.js';
+import { trialEntryGuard, requireOrgContext, isTrialEntryUser, setDependencies, BLOCKED_ROUTES, type AuthRequest } from '../../../../src/middleware/trialEntryGuard.middleware.js';
 
 describe('Trial Entry Guard Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -152,4 +152,6 @@ describe('Trial Entry Guard Middleware', () => {
         });
     });
 });
+
+
 

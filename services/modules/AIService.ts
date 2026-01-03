@@ -21,6 +21,8 @@ import {
 import { AISchemas } from '../../schemas/ai.schema';
 import { z } from 'zod';
 
+type UpdateSystemPromptPayload = Partial<SystemPrompt> & { updatedBy?: string | null };
+
 // ==========================================
 // AI SERVICE TYPES
 // ==========================================
@@ -52,19 +54,25 @@ interface ThoughtEvent {
 }
 
 interface DiagnosisResult {
-    axis: string;
-    score: number;
-    findings: string[];
-    recommendations: string[];
+    axis?: string;
+    score?: number;
+    findings?: string[];
+    recommendations?: string[];
+    assessment?: any;
+    goals?: string[];
+    painPoints?: string[];
+    industry?: string;
+    contextSufficiency?: any;
 }
 
 interface RecommendationResult {
     id: string;
-    title: string;
+    title?: string;
+    name?: string;
     description: string;
-    priority: 'low' | 'medium' | 'high' | 'critical';
-    effort: 'low' | 'medium' | 'high';
-    impact: 'low' | 'medium' | 'high';
+    priority: 'low' | 'medium' | 'high' | 'critical' | 'Low' | 'Medium' | 'High' | 'Critical';
+    effort?: 'low' | 'medium' | 'high' | 'Low' | 'Medium' | 'High';
+    impact?: 'low' | 'medium' | 'high' | 'Low' | 'Medium' | 'High';
     category?: string;
 }
 
@@ -563,7 +571,7 @@ export const AIService = {
         return res.json();
     },
 
-    aiUpdateSystemPrompt: async (key: string, data: Partial<SystemPrompt>): Promise<void> => {
+    aiUpdateSystemPrompt: async (key: string, data: UpdateSystemPromptPayload): Promise<void> => {
         const res = await fetch(`${API_URL}/llm/prompts/${key}`, {
             method: 'PUT',
             headers: getHeaders(),

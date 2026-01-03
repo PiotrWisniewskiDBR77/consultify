@@ -72,7 +72,7 @@ export default defineConfig({
             'tests/unit/backend/aiPromptHierarchy.test.js',
             'tests/unit/backend/aiRiskChangeControl.test.js',
             'tests/unit/backend/aiSettingsService.test.js',
-            'tests/unit/backend/aiSimulationEngine.test.js',
+            // 'tests/unit/backend/aiSimulationEngine.test.js',
             // 'tests/unit/ai/**',
 
             // Assessment & PMO Services (database mock issues)

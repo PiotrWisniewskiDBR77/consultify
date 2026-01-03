@@ -1,5 +1,5 @@
 require('dotenv').config();
-const express = require('express');
+import express from 'express';
 const cors = require('cors');
 const path = require('path');
 const helmet = require('helmet');
@@ -1049,4 +1049,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = app;
+export default app;

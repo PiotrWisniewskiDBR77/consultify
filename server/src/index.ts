@@ -17,20 +17,20 @@ import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import http from 'http';
 
 // TypeScript imports (ES Modules)
-import { initSentry } from './config/sentry.js';
+import { initSentry } from './config/index.js';
 import { correlationMiddleware } from './utils/RequestStore.js';
 import logger from './utils/Logger.js';
 import RedisRateLimitStore from './utils/RedisRateLimitStore.js';
 import { getDatabase } from './database/Database.js';
 import { get as dbGet } from './utils/DbPromise.js';
-import { init as initScheduler } from './cron/Scheduler.js';
+import Scheduler from './cron/Scheduler.js';
 import { startHealthCheck } from './cron/HealthCheckJob.js';
 
 // TypeScript routes (migrated)
 import authRoutes from './routes/auth.routes.js';
 import billingRoutes from './routes/billing.routes.js';
 import aiRoutes from './routes/ai.routes.js';
-import demoGuard from './middleware/demoGuard.middleware.js';
+import { demoGuard } from './middleware/demoGuard.middleware.js';
 import userRoutes from './routes/users.routes.js';
 import projectRoutes from './routes/projects.routes.js';
 import taskRoutes from './routes/tasks.routes.js';
@@ -226,7 +226,7 @@ const sentryHandlers = initSentry(app);
 if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     // Init Scheduler (ES modules)
     try {
-        initScheduler();
+        Scheduler.init();
     } catch (err) {
         const error = err as Error;
         console.error('[Server] Scheduler initialization failed:', error.message);
@@ -245,7 +245,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     // ============================================================
     (async () => {
         try {
-            const { validateOnStartup } = await import('../services/ai/startupValidator.js');
+            const { validateOnStartup } = await import('./services/ai/startupValidator.js');
             const healthReport = await validateOnStartup({
                 testConnectivity: true,
                 parallel: true
@@ -270,7 +270,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
 
     // Init LLM Provider Health Monitoring (Auto-Fallback)
     try {
-        const llmFallbackService = await import('../services/llmFallbackService.js');
+        const llmFallbackService = await import('./services/llmFallbackService.js');
         const service = llmFallbackService.default || llmFallbackService;
         if (service && typeof service.startHealthMonitoring === 'function') {
             service.startHealthMonitoring(60000);
@@ -283,7 +283,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
 
     // Init AI Health Monitor (Self-Healing System)
     try {
-        const { healthMonitor } = await import('../services/ai/healthMonitor.js');
+        const { healthMonitor } = await import('./services/ai/healthMonitor.js');
         healthMonitor.start(60000);
 
         healthMonitor.onAlert((alert: { message: string; checks?: string[] }) => {

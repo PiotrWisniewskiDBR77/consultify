@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { requirePermission, requireAnyPermission, requireAllPermissions, setDependencies, type AuthRequest } from '../../../src/middleware/permission.middleware.js';
+import { requirePermission, requireAnyPermission, requireAllPermissions, setDependencies, type AuthRequest } from '../../../../src/middleware/permission.middleware.js';
 
 describe('Permission Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -137,4 +137,6 @@ describe('Permission Middleware', () => {
         });
     });
 });
+
+
 

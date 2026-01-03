@@ -455,11 +455,13 @@ setInterval(() => {
     memoryManager.sessionStore.cleanup();
 }, 5 * 60 * 1000); // Every 5 minutes
 
-module.exports = {
+export default {
     MemoryManager,
     memoryManager,
     LAYER_CONFIG
 };
+
+
 
 
 

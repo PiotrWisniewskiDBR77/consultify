@@ -132,7 +132,7 @@ function clearAcceptFailure(req) {
     acceptFailures.delete(ip);
 }
 
-module.exports = {
+export default {
     validateRateLimiter,
     acceptRateLimiter,
     recordAcceptFailure,

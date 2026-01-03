@@ -9,11 +9,12 @@
  * @see docs/AI_ENTERPRISE_AUDIT_REPORT.md for migration status
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import db from '../database.js';
+import AIService from './aiService.js';
+import InitiativeTemplateService from './initiativeTemplateService.js';
+import { v4 as uuidv4 } from 'uuid';
+
 // TODO: Migrate to: const { generateStructuredContent } = require('./ai/aiPipeline');
-const AIService = require('./aiService');
-const InitiativeTemplateService = require('./initiativeTemplateService');
 
 // Lazy-load enterprise services
 let IndustryIntelligenceService = null;
@@ -1070,7 +1071,7 @@ Include mix of business and technical roles. Allocation is percentage of time.`;
     }
 }
 
-module.exports = AICharterGeneratorService;
+export default AICharterGeneratorService;
 
 
 

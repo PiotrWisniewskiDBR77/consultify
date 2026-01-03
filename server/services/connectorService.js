@@ -6,11 +6,13 @@
  * Handles encryption of secrets and RBAC enforcement.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const secretsVault = require('./secretsVault');
-const connectorRegistry = require('./connectorRegistry');
-const auditLogger = require('../utils/auditLogger');
+import db from '../database.js';
+import secretsVault from './secretsVault.js';
+import connectorRegistry from './connectorRegistry.js';
+import auditLogger from '../utils/auditLogger.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Dependency injection container
 const deps = {
@@ -320,4 +322,4 @@ const ConnectorService = {
     }
 };
 
-module.exports = ConnectorService;
+export default ConnectorService;

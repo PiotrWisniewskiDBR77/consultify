@@ -10,7 +10,7 @@
 // Action types supported by the executor
 
 // Action types supported by the executor
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 const ACTION_TYPES = {
     NAVIGATE: 'navigate',
     CREATE_PROJECT: 'create_project',
@@ -705,7 +705,7 @@ setInterval(() => {
     actionExecutor.cleanupPendingActions();
 }, 10 * 60 * 1000); // Every 10 minutes
 
-module.exports = {
+export default {
     ActionExecutor,
     actionExecutor,
     ACTION_TYPES,

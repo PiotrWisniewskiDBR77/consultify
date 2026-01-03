@@ -8,11 +8,13 @@ const consultingFrameworks = require('./consultingFrameworks');
 const FrameworkEngine = require('./frameworkEngine');
 const StrategicRecommendationService = require('./strategicRecommendationService');
 
-module.exports = {
+export default {
     ...consultingFrameworks,
     FrameworkEngine,
     StrategicRecommendationService
 };
+
+
 
 
 

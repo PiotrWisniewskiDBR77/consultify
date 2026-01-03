@@ -6,11 +6,11 @@
  * @module routes/workMode
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const auth = require('../middleware/authMiddleware');
+import auth from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
-const WorkModeService = require('../services/workModeService');
+const WorkModeService = import('workModeService.js');
 
 /**
  * GET /api/org/work-mode
@@ -192,7 +192,9 @@ router.get('/visibility-rules', auth, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

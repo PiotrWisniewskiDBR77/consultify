@@ -559,7 +559,7 @@ class IntentEngine {
 // Singleton instance
 const intentEngine = new IntentEngine();
 
-module.exports = {
+export default {
     IntentEngine,
     intentEngine,
     INTENT_TAXONOMY,

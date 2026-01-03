@@ -108,7 +108,7 @@ export const AdminLLMView: React.FC = () => {
         const initLLMData = async () => {
             try {
                 const data = await Api.getLLMProviders(true);
-                setProviders(data);
+                setProviders(data as any);
                 setLoading(false);
             } catch (err) {
                 toast.error('Failed to load providers');
@@ -149,7 +149,7 @@ export const AdminLLMView: React.FC = () => {
     const loadProviders = async () => {
         try {
             const data = await Api.getLLMProviders(true);
-            setProviders(data);
+            setProviders(data as any);
             setLoading(false);
         } catch (err) {
             toast.error('Failed to load providers');
@@ -246,7 +246,7 @@ export const AdminLLMView: React.FC = () => {
                 await Api.updateLLMProvider(editingId, form);
                 toast.success('Provider updated');
             } else {
-                await Api.addLLMProvider(form);
+                await Api.addLLMProvider(form as any);
                 toast.success('Provider added');
             }
             setShowModal(false);
@@ -265,7 +265,7 @@ export const AdminLLMView: React.FC = () => {
             await Api.aiUpdateSystemPrompt(editingPrompt.key, {
                 content: editingPrompt.content,
                 description: editingPrompt.description,
-                context_config: editingPrompt.context_config,
+                context_config: editingPrompt.context_config as any,
                 updatedBy: 'SuperAdmin' // In real app, use currentUser.email
             });
             toast.success('System Prompt Updated');

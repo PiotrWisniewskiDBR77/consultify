@@ -7,7 +7,9 @@
  * Step 6: Enterprise+ Ready
  */
 
-const HelpService = require('./helpService');
+import HelpService from './helpService.js';
+
+
 
 /**
  * Maximum number of playbooks to show at once
@@ -325,4 +327,4 @@ const PlaybookResolver = {
     }
 };
 
-module.exports = PlaybookResolver;
+export default PlaybookResolver;

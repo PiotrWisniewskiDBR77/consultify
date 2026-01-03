@@ -2,10 +2,15 @@
 // Step 4: Roadmap, Sequencing & Capacity
 
 // Dependency injection for testing
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+import DependencyService from './dependencyService.js';
+
+
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4,
-    DependencyService: require('./dependencyService')
+    db,
+    uuidv4,
+    DependencyService,
 };
 
 const ScenarioService = {
@@ -149,4 +154,4 @@ const ScenarioService = {
     }
 };
 
-module.exports = ScenarioService;
+export default ScenarioService;

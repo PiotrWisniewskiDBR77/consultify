@@ -16,11 +16,11 @@
  * - GET /api/promo/:id/usage - Get usage history
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const authMiddleware = require('../middleware/authMiddleware');
-const PromoCodeService = require('../services/promoCodeService');
+import authMiddleware from '../middleware/authMiddleware.js';
+const PromoCodeService = import('promoCodeService.js');
 import AttributionService from '../services/attributionService.js';
 
 // Rate limit promo validation: 10 per minute
@@ -228,4 +228,4 @@ router.get('/:id/usage', authMiddleware, requireSuperAdmin, async (req, res) => 
     }
 });
 
-module.exports = router;
+export default router;

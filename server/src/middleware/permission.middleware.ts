@@ -7,8 +7,9 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import type { AuthRequest } from './auth.middleware';
-import type { Role } from '../services/permissionService.js';
+import type { AuthRequest } from './auth.middleware.js';
+import PermissionService from '../services/permissionService.js';
+import GovernanceAuditService from '../services/governanceAuditService.js';
 
 // ==========================================
 // TYPES
@@ -54,19 +55,9 @@ interface AuditOptions {
 // DEPENDENCIES (injectable for testing)
 // ==========================================
 
-let deps: Dependencies;
-
-const getDeps = async (): Promise<Dependencies> => {
-    if (!deps) {
-        const { default: defaultPermissionService } = await import('../services/permissionService.js');
-        const { default: defaultGovernanceAuditService } = await import('../services/governanceAuditService.js');
-        
-        deps = {
-            PermissionService: defaultPermissionService,
-            GovernanceAuditService: defaultGovernanceAuditService,
-        };
-    }
-    return deps;
+let deps: Dependencies = {
+    PermissionService: PermissionService as unknown as PermissionService,
+    GovernanceAuditService: GovernanceAuditService as unknown as GovernanceAuditService,
 };
 
 // ==========================================
@@ -81,10 +72,10 @@ const getDeps = async (): Promise<Dependencies> => {
 export const requirePermission = (permissionKey: string) => {
     return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { PermissionService } = await getDeps();
-            
+            const { PermissionService } = deps;
+
             const userId = req.userId || req.user?.id;
-            const orgId = req.organizationId || req.user?.organization_id;
+            const orgId = req.organizationId || req.user?.organizationId;
             const userRole = req.userRole || req.user?.role;
 
             if (!userId) {
@@ -133,10 +124,10 @@ export const requirePermission = (permissionKey: string) => {
 export const requireAnyPermission = (permissionKeys: string[]) => {
     return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { PermissionService } = await getDeps();
-            
+            const { PermissionService } = deps;
+
             const userId = req.userId || req.user?.id;
-            const orgId = req.organizationId || req.user?.organization_id;
+            const orgId = req.organizationId || req.user?.organizationId;
             const userRole = req.userRole || req.user?.role;
 
             if (!userId) {
@@ -186,10 +177,10 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
 export const requireAllPermissions = (permissionKeys: string[]) => {
     return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { PermissionService } = await getDeps();
-            
+            const { PermissionService } = deps;
+
             const userId = req.userId || req.user?.id;
-            const orgId = req.organizationId || req.user?.organization_id;
+            const orgId = req.organizationId || req.user?.organizationId;
             const userRole = req.userRole || req.user?.role;
 
             if (!userId) {
@@ -252,20 +243,20 @@ export const auditAction = (options: AuditOptions) => {
     } = options;
 
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-        const { GovernanceAuditService } = await getDeps();
-        
+        const { GovernanceAuditService } = deps;
+
         // Store original json method
         const originalJson = res.json.bind(res);
 
         // Override json to intercept response
-        res.json = async function (data: unknown) {
+        res.json = (async (data: unknown) => {
             // Only audit on success (2xx status codes)
             if (res.statusCode >= 200 && res.statusCode < 300) {
                 try {
                     await GovernanceAuditService.logAudit({
                         actorId: (req as AuthRequest).userId || (req as AuthRequest).user?.id || '',
                         actorRole: (req as AuthRequest).userRole || (req as AuthRequest).user?.role,
-                        orgId: (req as AuthRequest).organizationId || (req as AuthRequest).user?.organization_id,
+                        orgId: (req as AuthRequest).organizationId || (req as AuthRequest).user?.organizationId,
                         action,
                         resourceType,
                         resourceId: getResourceId(req, data),
@@ -281,7 +272,7 @@ export const auditAction = (options: AuditOptions) => {
 
             // Call original json method
             return originalJson(data);
-        };
+        }) as any;
 
         next();
     };
@@ -291,8 +282,7 @@ export const auditAction = (options: AuditOptions) => {
 // DEPENDENCY INJECTION (for testing)
 // ==========================================
 
-export const setDependencies = async (newDeps: Partial<Dependencies>): Promise<void> => {
-    const currentDeps = await getDeps();
-    deps = { ...currentDeps, ...newDeps };
+export const setDependencies = (newDeps: Partial<Dependencies>): void => {
+    deps = { ...deps, ...newDeps };
 };
 

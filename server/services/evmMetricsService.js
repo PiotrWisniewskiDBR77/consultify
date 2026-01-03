@@ -22,7 +22,9 @@
  * - TCPI (To-Complete Performance Index)
  */
 
-const db = require('../database');
+import db from '../database.js';
+
+
 
 // Database helpers
 function dbGet(sql, params = []) {
@@ -383,7 +385,9 @@ const EVMMetricsService = {
     }
 };
 
-module.exports = EVMMetricsService;
+export default EVMMetricsService;
+
+
 
 
 

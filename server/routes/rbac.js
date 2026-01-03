@@ -5,10 +5,10 @@
  * Includes custom roles, permissions, and role assignments
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const rbacService = require('../services/rbacService');
-const verifyToken = require('../middleware/authMiddleware');
+const rbacService = import('rbacService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
 
 // ====== ROLES ======
@@ -578,5 +578,5 @@ router.post('/roles/from-template', verifyToken, requireRole(['super_admin', 'ad
     }
 });
 
-module.exports = router;
+export default router;
 

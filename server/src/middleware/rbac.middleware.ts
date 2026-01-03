@@ -13,8 +13,8 @@
  * SECURITY: All guards require orgContextMiddleware to be applied first.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import type { AuthRequest } from './auth.middleware';
+import { Response, NextFunction } from 'express';
+import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
 // TYPES
@@ -157,7 +157,7 @@ export const requireOrgAccess = (options: RequireOrgAccessOptions = {}) => {
 export const requireRole = (roles: string | string[]) => {
     // Normalize to array if single string provided
     const allowedRoles = Array.isArray(roles) ? roles : [roles];
-    
+
     return (req: AuthRequest, res: Response, next: NextFunction): void => {
         if (!req.user) {
             res.status(401).json({ error: 'Authentication required' });
@@ -167,7 +167,7 @@ export const requireRole = (roles: string | string[]) => {
         // Case-insensitive role check
         const userRole = (req.user.role || '').toUpperCase();
         const matches = allowedRoles.some(r => r.toUpperCase() === userRole);
-        
+
         if (!matches) {
             res.status(403).json({
                 error: 'Forbidden',
@@ -327,4 +327,6 @@ export const requireOwnerOrSuperadmin = () => {
         });
     };
 };
+
+
 

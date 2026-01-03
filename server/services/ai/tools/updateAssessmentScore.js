@@ -39,7 +39,9 @@ async function updateAssessmentScore(params, context) {
     });
 }
 
-module.exports = { updateAssessmentScore };
+export default { updateAssessmentScore };
+
+
 
 
 

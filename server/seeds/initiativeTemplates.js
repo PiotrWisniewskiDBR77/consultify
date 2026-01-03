@@ -5,7 +5,7 @@
  * These templates provide pre-filled charter patterns for common transformation scenarios.
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 const DEFAULT_TEMPLATES = [
     // ============= DATA Category =============
@@ -642,10 +642,12 @@ async function seedTemplates(db) {
     console.log(`[Seed] Inserted ${DEFAULT_TEMPLATES.length} initiative templates`);
 }
 
-module.exports = {
+export default {
     DEFAULT_TEMPLATES,
     seedTemplates
 };
+
+
 
 
 

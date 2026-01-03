@@ -4,10 +4,10 @@
  * API endpoints for system configuration management
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const systemConfigService = require('../services/systemConfigService');
-const verifySuperAdmin = require('../middleware/superAdminMiddleware');
+const systemConfigService = import('systemConfigService.js');
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
 /**
  * GET /api/system-config
@@ -81,7 +81,9 @@ router.delete('/:key', verifySuperAdmin, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

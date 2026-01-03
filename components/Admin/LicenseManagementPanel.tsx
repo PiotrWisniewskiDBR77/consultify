@@ -128,7 +128,7 @@ export const LicenseManagementPanel: React.FC = () => {
     };
 
     const filteredUsers = users.filter(user => {
-        const fullName = `${user.firstName || '} ${user.lastName || '}`.trim();
+        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
         const matchesSearch = user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
             fullName.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesFilter = filterLicense === 'all' ||
@@ -290,7 +290,7 @@ export const LicenseManagementPanel: React.FC = () => {
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold">
-                                                {(user.firstName || user.email).charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
+                                                {(user.firstName || user.email).charAt(0).toUpperCase()}
                                             </div>
                                             <div>
                                                 <p className="font-medium text-slate-900 dark:text-white">{`${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email}</p>
@@ -407,6 +407,8 @@ export const LicenseManagementPanel: React.FC = () => {
 };
 
 export default LicenseManagementPanel;
+
+
 
 
 

@@ -1128,7 +1128,7 @@ class LearningSystem {
 // Singleton instance
 const learningSystem = new LearningSystem();
 
-module.exports = {
+export default {
     LearningSystem,
     learningSystem,
     CONFIG

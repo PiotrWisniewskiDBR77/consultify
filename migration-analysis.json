@@ -1,0 +1,1991 @@
+{
+  "timestamp": "2026-01-03T19:12:49.496Z",
+  "summary": {
+    "total": 394,
+    "simple": 0,
+    "medium": 0,
+    "complex": 0,
+    "ai": 0,
+    "alreadyMigrated": 394,
+    "remaining": 0
+  },
+  "categories": {
+    "simple": [],
+    "medium": [],
+    "complex": [],
+    "ai": [],
+    "alreadyMigrated": [
+      {
+        "category": "alreadyMigrated",
+        "fileName": "BaseService.js",
+        "relativePath": "BaseService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "accessCodeService.js",
+        "relativePath": "accessCodeService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "accessPolicyService.js",
+        "relativePath": "accessPolicyService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "activityService.js",
+        "relativePath": "activityService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "adkarService.js",
+        "relativePath": "adkarService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "adminAlertService.js",
+        "relativePath": "adminAlertService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "adminAuditService.js",
+        "relativePath": "adminAuditService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "adminSessionService.js",
+        "relativePath": "adminSessionService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "abTesting.js",
+        "relativePath": "ai/abTesting.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "actionExecutor.js",
+        "relativePath": "ai/actionExecutor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "adaptiveResponseService.js",
+        "relativePath": "ai/adaptiveResponseService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "agentCoordinator.js",
+        "relativePath": "ai/agents/agentCoordinator.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "baseAgent.js",
+        "relativePath": "ai/agents/baseAgent.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "changeAgent.js",
+        "relativePath": "ai/agents/changeAgent.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "financeAgent.js",
+        "relativePath": "ai/agents/financeAgent.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "index.js",
+        "relativePath": "ai/agents/index.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "pmoAgent.js",
+        "relativePath": "ai/agents/pmoAgent.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "riskAgent.js",
+        "relativePath": "ai/agents/riskAgent.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "strategyAgent.js",
+        "relativePath": "ai/agents/strategyAgent.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiContext.js",
+        "relativePath": "ai/aiContext.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiGateway.js",
+        "relativePath": "ai/aiGateway.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiHealthAlertService.js",
+        "relativePath": "ai/aiHealthAlertService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiHealthService.js",
+        "relativePath": "ai/aiHealthService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiMemoryMetricsService.js",
+        "relativePath": "ai/aiMemoryMetricsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiPipeline.js",
+        "relativePath": "ai/aiPipeline.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "alerting.js",
+        "relativePath": "ai/alerting.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "bcgReportGenerator.js",
+        "relativePath": "ai/bcgReportGenerator.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "cacheService.js",
+        "relativePath": "ai/cacheService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "circuitBreaker.js",
+        "relativePath": "ai/circuitBreaker.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "citationExtractor.js",
+        "relativePath": "ai/citationExtractor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "citationVerifier.js",
+        "relativePath": "ai/citationVerifier.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "index.js",
+        "relativePath": "ai/coThinker/index.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "coThinkerPrompts.js",
+        "relativePath": "ai/coThinkerPrompts.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "comprehensiveReportGenerator.js",
+        "relativePath": "ai/comprehensiveReportGenerator.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "consultingFlowEngine.js",
+        "relativePath": "ai/consultingFlowEngine.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "conversationStateMachine.js",
+        "relativePath": "ai/conversationStateMachine.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "conversationTracker.js",
+        "relativePath": "ai/conversationTracker.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "docIndexer.js",
+        "relativePath": "ai/docIndexer.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "draftService.js",
+        "relativePath": "ai/draftService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "embeddingService.js",
+        "relativePath": "ai/embeddingService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "enhancedContextBuilder.js",
+        "relativePath": "ai/enhancedContextBuilder.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "enterpriseSecurity.js",
+        "relativePath": "ai/enterpriseSecurity.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "consultingFrameworks.js",
+        "relativePath": "ai/frameworks/consultingFrameworks.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "frameworkEngine.js",
+        "relativePath": "ai/frameworks/frameworkEngine.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "index.js",
+        "relativePath": "ai/frameworks/index.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "strategicRecommendationService.js",
+        "relativePath": "ai/frameworks/strategicRecommendationService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "harvardConsultantPrompts.js",
+        "relativePath": "ai/harvardConsultantPrompts.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "healthMonitor.js",
+        "relativePath": "ai/healthMonitor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "ingestionPipeline.js",
+        "relativePath": "ai/ingestionPipeline.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "benchmarkDataService.js",
+        "relativePath": "ai/intelligence/benchmarkDataService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "index.js",
+        "relativePath": "ai/intelligence/index.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "industryIntelligenceService.js",
+        "relativePath": "ai/intelligence/industryIntelligenceService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "intelligentResearch.js",
+        "relativePath": "ai/intelligentResearch.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "intentEngine.js",
+        "relativePath": "ai/intentEngine.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "knowledgeIndexer.js",
+        "relativePath": "ai/knowledgeIndexer.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "learningSystem.js",
+        "relativePath": "ai/learningSystem.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "llmConfigService.js",
+        "relativePath": "ai/llmConfigService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "llmHealthMonitor.js",
+        "relativePath": "ai/llmHealthMonitor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "llmService.js",
+        "relativePath": "ai/llmService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "logger.js",
+        "relativePath": "ai/logger.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "magicWandService.js",
+        "relativePath": "ai/magicWandService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "mcpServer.js",
+        "relativePath": "ai/mcpServer.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "mediaIngestionService.js",
+        "relativePath": "ai/mediaIngestionService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "memoryManager.js",
+        "relativePath": "ai/memoryManager.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "metrics.js",
+        "relativePath": "ai/metrics.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "modelRouter.js",
+        "relativePath": "ai/modelRouter.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "observability.js",
+        "relativePath": "ai/observability.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "organizationMemoryStore.js",
+        "relativePath": "ai/organizationMemoryStore.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "performanceOptimizer.js",
+        "relativePath": "ai/performanceOptimizer.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "persistentSessionStore.js",
+        "relativePath": "ai/persistentSessionStore.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "personalizationEngine.js",
+        "relativePath": "ai/personalizationEngine.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "index.js",
+        "relativePath": "ai/pipeline/index.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportAgents.js",
+        "relativePath": "ai/pipeline/reportAgents.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportPipeline.js",
+        "relativePath": "ai/pipeline/reportPipeline.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "proactiveNudges.js",
+        "relativePath": "ai/proactiveNudges.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "proactiveSuggestionsService.js",
+        "relativePath": "ai/proactiveSuggestionsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "audioProcessor.js",
+        "relativePath": "ai/processors/audioProcessor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "docxProcessor.js",
+        "relativePath": "ai/processors/docxProcessor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "imageProcessor.js",
+        "relativePath": "ai/processors/imageProcessor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "index.js",
+        "relativePath": "ai/processors/index.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "pptxProcessor.js",
+        "relativePath": "ai/processors/pptxProcessor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "spreadsheetProcessor.js",
+        "relativePath": "ai/processors/spreadsheetProcessor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "urlProcessor.js",
+        "relativePath": "ai/processors/urlProcessor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "videoProcessor.js",
+        "relativePath": "ai/processors/videoProcessor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "youtubeProcessor.js",
+        "relativePath": "ai/processors/youtubeProcessor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "projectMemoryStore.js",
+        "relativePath": "ai/projectMemoryStore.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "promptAssembler.js",
+        "relativePath": "ai/promptAssembler.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "promptAssistant.js",
+        "relativePath": "ai/promptAssistant.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "promptBlockLibrary.js",
+        "relativePath": "ai/promptBlockLibrary.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "promptTemplateService.js",
+        "relativePath": "ai/promptTemplateService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "qualityChecker.js",
+        "relativePath": "ai/qualityChecker.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "quotaService.js",
+        "relativePath": "ai/quotaService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "ragMetricsService.js",
+        "relativePath": "ai/ragMetricsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "rateLimiter.js",
+        "relativePath": "ai/rateLimiter.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "redisClient.js",
+        "relativePath": "ai/redisClient.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportContentGenerator.js",
+        "relativePath": "ai/reportContentGenerator.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportGeneratorService.js",
+        "relativePath": "ai/reportGeneratorService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportParserService.js",
+        "relativePath": "ai/reportParserService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportTemplates.js",
+        "relativePath": "ai/reportTemplates.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "rerankerService.js",
+        "relativePath": "ai/rerankerService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "responseQualityService.js",
+        "relativePath": "ai/responseQualityService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "smartSuggestions.js",
+        "relativePath": "ai/smartSuggestions.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "socraticEngine.js",
+        "relativePath": "ai/socraticEngine.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "speechToTextService.js",
+        "relativePath": "ai/speechToTextService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "startupValidator.js",
+        "relativePath": "ai/startupValidator.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "summarizationService.js",
+        "relativePath": "ai/summarizationService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "taskAdvisorService.js",
+        "relativePath": "ai/taskAdvisorService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "textToSpeechService.js",
+        "relativePath": "ai/textToSpeechService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "titleGenerator.js",
+        "relativePath": "ai/titleGenerator.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "calculateRoiDraft.js",
+        "relativePath": "ai/tools/calculateRoiDraft.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "createInitiative.js",
+        "relativePath": "ai/tools/createInitiative.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "getProjectDetails.js",
+        "relativePath": "ai/tools/getProjectDetails.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "index.js",
+        "relativePath": "ai/tools/index.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "searchKnowledgeBase.js",
+        "relativePath": "ai/tools/searchKnowledgeBase.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "updateAssessmentScore.js",
+        "relativePath": "ai/tools/updateAssessmentScore.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "variableResolver.js",
+        "relativePath": "ai/variableResolver.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "voiceHealthMonitor.js",
+        "relativePath": "ai/voiceHealthMonitor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "webResearchService.js",
+        "relativePath": "ai/webResearchService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiActionExecutor.js",
+        "relativePath": "aiActionExecutor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiAnalyticsService.js",
+        "relativePath": "aiAnalyticsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiAssessmentFormHelper.js",
+        "relativePath": "aiAssessmentFormHelper.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiAssessmentPartnerService.js",
+        "relativePath": "aiAssessmentPartnerService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiAssessmentReportGenerator.js",
+        "relativePath": "aiAssessmentReportGenerator.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiAuditLogger.js",
+        "relativePath": "aiAuditLogger.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiBudgetService.js",
+        "relativePath": "aiBudgetService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiCharterGeneratorService.js",
+        "relativePath": "aiCharterGeneratorService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiContextBuilder.js",
+        "relativePath": "aiContextBuilder.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiContextValidator.js",
+        "relativePath": "aiContextValidator.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiCostControlService.js",
+        "relativePath": "aiCostControlService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiDecisionGovernance.js",
+        "relativePath": "aiDecisionGovernance.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiExecutiveReporting.js",
+        "relativePath": "aiExecutiveReporting.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiExplainabilityService.js",
+        "relativePath": "aiExplainabilityService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiExternalDataControl.js",
+        "relativePath": "aiExternalDataControl.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiFailureHandler.js",
+        "relativePath": "aiFailureHandler.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiIntegrationService.js",
+        "relativePath": "aiIntegrationService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiKnowledgeManager.js",
+        "relativePath": "aiKnowledgeManager.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiMaturityMonitor.js",
+        "relativePath": "aiMaturityMonitor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiMemoryManager.js",
+        "relativePath": "aiMemoryManager.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiModeEnforcer.js",
+        "relativePath": "aiModeEnforcer.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiModeResolver.js",
+        "relativePath": "aiModeResolver.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiOrchestrator.js",
+        "relativePath": "aiOrchestrator.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiPolicyEngine.js",
+        "relativePath": "aiPolicyEngine.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiProactivityEngine.js",
+        "relativePath": "aiProactivityEngine.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiPromptHierarchy.js",
+        "relativePath": "aiPromptHierarchy.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiRecommendationService.js",
+        "relativePath": "aiRecommendationService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiReplayService.js",
+        "relativePath": "aiReplayService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiResponsePostProcessor.js",
+        "relativePath": "aiResponsePostProcessor.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiRiskChangeControl.js",
+        "relativePath": "aiRiskChangeControl.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiRoleGuard.js",
+        "relativePath": "aiRoleGuard.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiService.js",
+        "relativePath": "aiService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiSettingsService.js",
+        "relativePath": "aiSettingsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "aiWorkloadIntelligence.js",
+        "relativePath": "aiWorkloadIntelligence.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "alertService.js",
+        "relativePath": "alertService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "apiKeyService.js",
+        "relativePath": "apiKeyService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "approvalPatternService.js",
+        "relativePath": "approvalPatternService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "areaContentTemplates.js",
+        "relativePath": "areaContentTemplates.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "assessmentOverviewService.js",
+        "relativePath": "assessmentOverviewService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "assessmentReportService.js",
+        "relativePath": "assessmentReportService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "assessmentService.js",
+        "relativePath": "assessmentService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "assessmentWorkflowService.js",
+        "relativePath": "assessmentWorkflowService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "attributionService.js",
+        "relativePath": "attributionService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "auditIntegrityService.js",
+        "relativePath": "auditIntegrityService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "auditLogService.js",
+        "relativePath": "auditLogService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "auditService.js",
+        "relativePath": "auditService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "automationEngineService.js",
+        "relativePath": "automationEngineService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "backupService.js",
+        "relativePath": "backupService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "baselineService.js",
+        "relativePath": "baselineService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "benchmarkingService.js",
+        "relativePath": "benchmarkingService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "billingService.js",
+        "relativePath": "billingService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "brandingService.js",
+        "relativePath": "brandingService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "breakGlassService.js",
+        "relativePath": "breakGlassService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "budgetService.js",
+        "relativePath": "budgetService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "capacityService.js",
+        "relativePath": "capacityService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "circuitBreakerService.js",
+        "relativePath": "circuitBreakerService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "cohortService.js",
+        "relativePath": "cohortService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "collaborationAIService.js",
+        "relativePath": "collaborationAIService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "competitiveIntelligenceService.js",
+        "relativePath": "competitiveIntelligenceService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "complianceService.js",
+        "relativePath": "complianceService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "connectorHealthService.js",
+        "relativePath": "connectorHealthService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "connectorRegistry.js",
+        "relativePath": "connectorRegistry.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "connectorService.js",
+        "relativePath": "connectorService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "consentManagementService.js",
+        "relativePath": "consentManagementService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "consultantService.js",
+        "relativePath": "consultantService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "contentService.js",
+        "relativePath": "contentService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "contextService.js",
+        "relativePath": "contextService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "creditNoteService.js",
+        "relativePath": "creditNoteService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "criticalPathService.js",
+        "relativePath": "criticalPathService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "currencyService.js",
+        "relativePath": "currencyService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "customerSuccessService.js",
+        "relativePath": "customerSuccessService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "dashboardBuilderService.js",
+        "relativePath": "dashboardBuilderService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "dataRetentionService.js",
+        "relativePath": "dataRetentionService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "decisionTriggerService.js",
+        "relativePath": "decisionTriggerService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "demoService.js",
+        "relativePath": "demoService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "demoSessionService.js",
+        "relativePath": "demoSessionService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "dependencyService.js",
+        "relativePath": "dependencyService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "deviceManagementService.js",
+        "relativePath": "deviceManagementService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "dlpService.js",
+        "relativePath": "dlpService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "documentService.js",
+        "relativePath": "documentService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "economicsService.js",
+        "relativePath": "economicsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "emailCampaignService.js",
+        "relativePath": "emailCampaignService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "emailService.js",
+        "relativePath": "emailService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "emailTemplateService.js",
+        "relativePath": "emailTemplateService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "emailVerificationService.js",
+        "relativePath": "emailVerificationService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "enterpriseReportTemplates.js",
+        "relativePath": "enterpriseReportTemplates.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "escalationService.js",
+        "relativePath": "escalationService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "evidenceLedgerService.js",
+        "relativePath": "evidenceLedgerService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "evidenceService.js",
+        "relativePath": "evidenceService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "evmMetricsService.js",
+        "relativePath": "evmMetricsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "excelExportService.js",
+        "relativePath": "excelExportService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "excelImportService.js",
+        "relativePath": "excelImportService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "executionMonitorService.js",
+        "relativePath": "executionMonitorService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "executionService.js",
+        "relativePath": "executionService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "experimentService.js",
+        "relativePath": "experimentService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "externalAssessmentService.js",
+        "relativePath": "externalAssessmentService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "facilityUserService.js",
+        "relativePath": "facilityUserService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "featureFlagService.js",
+        "relativePath": "featureFlagService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "feedbackService.js",
+        "relativePath": "feedbackService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "financialCalculatorService.js",
+        "relativePath": "financialCalculatorService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "financialService.js",
+        "relativePath": "financialService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "focusService.js",
+        "relativePath": "focusService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "frameworkAssessmentService.js",
+        "relativePath": "frameworkAssessmentService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "frameworkBenchmarkService.js",
+        "relativePath": "frameworkBenchmarkService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "frameworkRBACService.js",
+        "relativePath": "frameworkRBACService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "frameworkScoreCalculators.js",
+        "relativePath": "frameworkScoreCalculators.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "gamificationService.js",
+        "relativePath": "gamificationService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "gdprService.js",
+        "relativePath": "gdprService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "genericReportService.js",
+        "relativePath": "genericReportService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "governanceAuditService.js",
+        "relativePath": "governanceAuditService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "governanceService.js",
+        "relativePath": "governanceService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "helpAnalyticsService.js",
+        "relativePath": "helpAnalyticsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "helpChatService.js",
+        "relativePath": "helpChatService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "helpService.js",
+        "relativePath": "helpService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "inboxService.js",
+        "relativePath": "inboxService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "industryAIModelsService.js",
+        "relativePath": "industryAIModelsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "ingestionService.js",
+        "relativePath": "ingestionService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "initiativeGeneratorService.js",
+        "relativePath": "initiativeGeneratorService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "initiativeService.js",
+        "relativePath": "initiativeService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "initiativeStatusService.js",
+        "relativePath": "initiativeStatusService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "initiativeTemplateService.js",
+        "relativePath": "initiativeTemplateService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "integrationAnalyticsService.js",
+        "relativePath": "integrationAnalyticsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "integrationHubService.js",
+        "relativePath": "integrationHubService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "integrationService.js",
+        "relativePath": "integrationService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "clickupUserIntegration.js",
+        "relativePath": "integrations/clickupUserIntegration.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "jiraUserIntegration.js",
+        "relativePath": "integrations/jiraUserIntegration.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "slackUserIntegration.js",
+        "relativePath": "integrations/slackUserIntegration.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "teamsUserIntegration.js",
+        "relativePath": "integrations/teamsUserIntegration.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "invitationService.js",
+        "relativePath": "invitationService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "invoiceTemplateService.js",
+        "relativePath": "invoiceTemplateService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "ipWhitelistService.js",
+        "relativePath": "ipWhitelistService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "journeyAnalytics.js",
+        "relativePath": "journeyAnalytics.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "knowledgeGraphService.js",
+        "relativePath": "knowledgeGraphService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "knowledgeService.js",
+        "relativePath": "knowledgeService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "legalEventLogger.js",
+        "relativePath": "legalEventLogger.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "legalExportService.js",
+        "relativePath": "legalExportService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "legalService.js",
+        "relativePath": "legalService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "llmFallbackService.js",
+        "relativePath": "llmFallbackService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "managementReportsService.js",
+        "relativePath": "managementReportsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "metricsAggregator.js",
+        "relativePath": "metricsAggregator.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "metricsCollector.js",
+        "relativePath": "metricsCollector.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "metricsPersistenceService.js",
+        "relativePath": "metricsPersistenceService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "metricsService.js",
+        "relativePath": "metricsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "mfaService.js",
+        "relativePath": "mfaService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "multiFrameworkAssessmentService.js",
+        "relativePath": "multiFrameworkAssessmentService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "multiFrameworkAuditService.js",
+        "relativePath": "multiFrameworkAuditService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "multiFrameworkReportService.js",
+        "relativePath": "multiFrameworkReportService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "myWorkService.js",
+        "relativePath": "myWorkService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "narrativeService.js",
+        "relativePath": "narrativeService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "notificationBatchingService.js",
+        "relativePath": "notificationBatchingService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "notificationOutboxService.js",
+        "relativePath": "notificationOutboxService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "notificationService.js",
+        "relativePath": "notificationService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "oauthService.js",
+        "relativePath": "oauthService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "onboardingService.js",
+        "relativePath": "onboardingService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "organizationAnalyticsService.js",
+        "relativePath": "organizationAnalyticsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "organizationEventService.js",
+        "relativePath": "organizationEventService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "organizationHealthService.js",
+        "relativePath": "organizationHealthService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "organizationMetadataService.js",
+        "relativePath": "organizationMetadataService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "organizationRelationshipService.js",
+        "relativePath": "organizationRelationshipService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "organizationSegmentService.js",
+        "relativePath": "organizationSegmentService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "organizationService.js",
+        "relativePath": "organizationService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "organizationTagService.js",
+        "relativePath": "organizationTagService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "outcomeService.js",
+        "relativePath": "outcomeService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "partnerService.js",
+        "relativePath": "partnerService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "passwordPolicyService.js",
+        "relativePath": "passwordPolicyService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "patternRecognitionService.js",
+        "relativePath": "patternRecognitionService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "payAsYouGoService.js",
+        "relativePath": "payAsYouGoService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "pdfExportService.js",
+        "relativePath": "pdfExportService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "pdfGeneratorService.js",
+        "relativePath": "pdfGeneratorService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "pdfParserService.js",
+        "relativePath": "pdfParserService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "periodComparisonService.js",
+        "relativePath": "periodComparisonService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "permissionService.js",
+        "relativePath": "permissionService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "permissionsMatrixService.js",
+        "relativePath": "permissionsMatrixService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "platformEcosystemService.js",
+        "relativePath": "platformEcosystemService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "playbookResolver.js",
+        "relativePath": "playbookResolver.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "pmoAnalysisService.js",
+        "relativePath": "pmoAnalysisService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "pmoDomainRegistry.js",
+        "relativePath": "pmoDomainRegistry.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "pmoHealthService.js",
+        "relativePath": "pmoHealthService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "pmoRoleService.js",
+        "relativePath": "pmoRoleService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "pmoStandardsMapping.js",
+        "relativePath": "pmoStandardsMapping.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "portfolioService.js",
+        "relativePath": "portfolioService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "pptxExportService.js",
+        "relativePath": "pptxExportService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "pptxGeneratorService.js",
+        "relativePath": "pptxGeneratorService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "predictiveService.js",
+        "relativePath": "predictiveService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "premiumPdfService.js",
+        "relativePath": "premiumPdfService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "premiumReportAIService.js",
+        "relativePath": "premiumReportAIService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "pricingService.js",
+        "relativePath": "pricingService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "progressService.js",
+        "relativePath": "progressService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "projectMemberService.js",
+        "relativePath": "projectMemberService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "promoCodeService.js",
+        "relativePath": "promoCodeService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "promptService.js",
+        "relativePath": "promptService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "promptVersionService.js",
+        "relativePath": "promptVersionService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "qualityAssessmentService.js",
+        "relativePath": "qualityAssessmentService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "ragEnhancedService.js",
+        "relativePath": "ragEnhancedService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "ragService.js",
+        "relativePath": "ragService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "rapidLeanObservationMapper.js",
+        "relativePath": "rapidLeanObservationMapper.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "rapidLeanReportService.js",
+        "relativePath": "rapidLeanReportService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "rapidLeanService.js",
+        "relativePath": "rapidLeanService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "rbacService.js",
+        "relativePath": "rbacService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "realtimeService.js",
+        "relativePath": "realtimeService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "recommendationsService.js",
+        "relativePath": "recommendationsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "referralService.js",
+        "relativePath": "referralService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "refreshTokenService.js",
+        "relativePath": "refreshTokenService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "regulatoryModeGuard.js",
+        "relativePath": "regulatoryModeGuard.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportApprovalService.js",
+        "relativePath": "reportApprovalService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportAuditService.js",
+        "relativePath": "reportAuditService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportCacheService.js",
+        "relativePath": "reportCacheService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportCommentsService.js",
+        "relativePath": "reportCommentsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportContentService.js",
+        "relativePath": "reportContentService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportEmailService.js",
+        "relativePath": "reportEmailService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportService.js",
+        "relativePath": "reportService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportTemplateService.js",
+        "relativePath": "reportTemplateService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportVersionService.js",
+        "relativePath": "reportVersionService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "reportingService.js",
+        "relativePath": "reportingService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "retentionPolicyService.js",
+        "relativePath": "retentionPolicyService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "roadmapService.js",
+        "relativePath": "roadmapService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "roiService.js",
+        "relativePath": "roiService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "scenarioService.js",
+        "relativePath": "scenarioService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "scheduledReportsService.js",
+        "relativePath": "scheduledReportsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "scimService.js",
+        "relativePath": "scimService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "seatManagementService.js",
+        "relativePath": "seatManagementService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "secretManager.js",
+        "relativePath": "secretManager.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "secretsVault.js",
+        "relativePath": "secretsVault.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "securityEventService.js",
+        "relativePath": "securityEventService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "securityIncidentService.js",
+        "relativePath": "securityIncidentService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "securityPolicyService.js",
+        "relativePath": "securityPolicyService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "securityService.js",
+        "relativePath": "securityService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "settlementService.js",
+        "relativePath": "settlementService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "shareLinkService.js",
+        "relativePath": "shareLinkService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "siemService.js",
+        "relativePath": "siemService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "slaService.js",
+        "relativePath": "slaService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "slackService.js",
+        "relativePath": "slackService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "smsService.js",
+        "relativePath": "smsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "ssoService.js",
+        "relativePath": "ssoService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "stabilizationService.js",
+        "relativePath": "stabilizationService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "stageGateService.js",
+        "relativePath": "stageGateService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "stakeholderPerspectiveService.js",
+        "relativePath": "stakeholderPerspectiveService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "statusMachine.js",
+        "relativePath": "statusMachine.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "statusReportService.js",
+        "relativePath": "statusReportService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "statusService.js",
+        "relativePath": "statusService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "steeringCommitteeAggregator.js",
+        "relativePath": "steeringCommitteeAggregator.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "storageReconciliationService.js",
+        "relativePath": "storageReconciliationService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "storageService.js",
+        "relativePath": "storageService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "studioAIService.js",
+        "relativePath": "studioAIService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "subscriptionAnalyticsService.js",
+        "relativePath": "subscriptionAnalyticsService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "supportTicketService.js",
+        "relativePath": "supportTicketService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "systemConfigService.js",
+        "relativePath": "systemConfigService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "systemHealthService.js",
+        "relativePath": "systemHealthService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "systemIntegrity.js",
+        "relativePath": "systemIntegrity.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "taskAssignmentService.js",
+        "relativePath": "taskAssignmentService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "taxService.js",
+        "relativePath": "taxService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "teamMeetingAggregator.js",
+        "relativePath": "teamMeetingAggregator.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "threatIntelligenceService.js",
+        "relativePath": "threatIntelligenceService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "trialService.js",
+        "relativePath": "trialService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "usageService.js",
+        "relativePath": "usageService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "userActivityService.js",
+        "relativePath": "userActivityService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "userAdoptionService.js",
+        "relativePath": "userAdoptionService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "userGoals.js",
+        "relativePath": "userGoals.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "userGroupService.js",
+        "relativePath": "userGroupService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "userIntegrationService.js",
+        "relativePath": "userIntegrationService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "userLicenseService.js",
+        "relativePath": "userLicenseService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "userNotificationPreferencesService.js",
+        "relativePath": "userNotificationPreferencesService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "userPreferencesService.js",
+        "relativePath": "userPreferencesService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "userProfileExtendedService.js",
+        "relativePath": "userProfileExtendedService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "userSessionService.js",
+        "relativePath": "userSessionService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "userStateMachine.js",
+        "relativePath": "userStateMachine.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "versioningService.js",
+        "relativePath": "versioningService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "voiceCommandParser.js",
+        "relativePath": "voiceCommandParser.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "webSearchService.js",
+        "relativePath": "webSearchService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "webauthnService.js",
+        "relativePath": "webauthnService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "webhookDeliveryService.js",
+        "relativePath": "webhookDeliveryService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "webhookService.js",
+        "relativePath": "webhookService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "whatsappService.js",
+        "relativePath": "whatsappService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "workModeService.js",
+        "relativePath": "workModeService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "workqueueService.js",
+        "relativePath": "workqueueService.js"
+      },
+      {
+        "category": "alreadyMigrated",
+        "fileName": "workstreamService.js",
+        "relativePath": "workstreamService.js"
+      }
+    ]
+  },
+  "migrationOrder": []
+}

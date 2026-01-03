@@ -5,10 +5,11 @@
  * for the help system.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // ==========================================
 // FEEDBACK ENDPOINTS
@@ -461,5 +462,5 @@ router.get('/tour/progress', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

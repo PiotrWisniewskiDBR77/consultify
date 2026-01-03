@@ -4,9 +4,9 @@
  * API routes for AI-powered help chat.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const helpChatService = require('../services/helpChatService');
+const helpChatService = import('helpChatService.js');
 
 /**
  * POST /api/help/chat
@@ -109,7 +109,9 @@ router.get('/chat/suggestions', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

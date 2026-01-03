@@ -10,9 +10,9 @@
  * - PRINCE2: Lessons Learned
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
-const ReportAuditService = require('./reportAuditService');
+import db from '../database.js';
+import ReportAuditService from './reportAuditService.js';
+import { v4 as uuidv4 } from 'uuid';
 
 // Lazy-load to avoid circular dependency
 let NotificationOutboxService = null;
@@ -528,7 +528,9 @@ const ReportCommentsService = {
     }
 };
 
-module.exports = ReportCommentsService;
+export default ReportCommentsService;
+
+
 
 
 

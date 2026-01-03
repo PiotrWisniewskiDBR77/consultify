@@ -371,7 +371,9 @@ const ClickUpUserIntegration = {
     }
 };
 
-module.exports = ClickUpUserIntegration;
+export default ClickUpUserIntegration;
+
+
 
 
 

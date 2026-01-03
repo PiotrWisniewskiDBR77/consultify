@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const verifyToken = require('../middleware/authMiddleware');
-const { v4: uuidv4 } = require('uuid');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import verifyToken from '../middleware/authMiddleware.js';
+import { v4 as uuidv4 } from 'uuid';
 
 // GET AI feedback for organization
 router.get('/', verifyToken, (req, res) => {
@@ -141,4 +142,4 @@ router.get('/analytics', verifyToken, (req, res) => {
     );
 });
 
-module.exports = router;
+export default router;

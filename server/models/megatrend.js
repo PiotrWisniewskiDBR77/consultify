@@ -2,7 +2,8 @@
 // Provides data access for Megatrend Scanner module
 // Uses the existing SQLite/Postgres db abstraction (db.get, db.all, db.run)
 
-const db = require('../database');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // Default megatrends data for common industries (fallback when DB is empty)
 const DEFAULT_MEGATRENDS = {
@@ -182,7 +183,7 @@ function updateCustomTrend(id, payload, companyId) {
     });
 }
 
-module.exports = {
+export default {
     getBaselineTrends,
     getRadarData,
     getTrendDetail,

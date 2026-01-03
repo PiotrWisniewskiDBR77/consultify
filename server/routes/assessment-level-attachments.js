@@ -5,14 +5,15 @@
  * Allows uploading evidence documents, screenshots, reports, etc.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
-const verifyToken = require('../middleware/authMiddleware');
+import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+import verifyToken from '../middleware/authMiddleware.js';
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -388,5 +389,5 @@ router.get('/level/:assessmentId/:axisId/:levelNumber', verifyToken, async (req,
     }
 });
 
-module.exports = router;
+export default router;
 

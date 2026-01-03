@@ -414,7 +414,7 @@ class ABTestingService {
 // Singleton instance
 const abTestingService = new ABTestingService();
 
-module.exports = {
+export default {
     ABTestingService,
     abTestingService,
     abTesting: abTestingService // Alias for API routes

@@ -8,10 +8,12 @@
  * - Integration with audit logging
  */
 
-const db = require('../database');
-const AiService = require('./aiService');
-const { v4: uuidv4 } = require('uuid');
-const { runAsync, getAsync, withTransaction } = require('../db/sqliteAsync');
+import db from '../database.js';
+import AiService from './aiService.js';
+import { v4 as uuidv4 } from 'uuid';
+import { runAsync, getAsync, withTransaction } from '../db/sqliteAsync.js';
+
+
 
 // ============================================
 // VALIDATION
@@ -360,4 +362,4 @@ const OnboardingService = {
     }
 };
 
-module.exports = OnboardingService;
+export default OnboardingService;

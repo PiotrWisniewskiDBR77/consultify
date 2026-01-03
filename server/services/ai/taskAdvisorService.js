@@ -480,11 +480,13 @@ class TaskAdvisorService {
 // Singleton instance
 const taskAdvisorService = new TaskAdvisorService();
 
-module.exports = {
+export default {
     TaskAdvisorService,
     taskAdvisorService,
     PROMPTS
 };
+
+
 
 
 

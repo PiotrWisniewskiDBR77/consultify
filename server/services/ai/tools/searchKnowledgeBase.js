@@ -77,4 +77,4 @@ function getDRDFallbackContent(query) {
     return `DRD (Digital Readiness Diagnostic) is a comprehensive framework for assessing and improving organizational digital maturity. It focuses on identifying gaps, prioritizing improvements, and tracking progress across key dimensions of digital transformation.`;
 }
 
-module.exports = { searchKnowledgeBase };
+export default { searchKnowledgeBase };

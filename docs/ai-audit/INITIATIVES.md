@@ -480,3 +480,5 @@ trackLatency: async (capability, latency) => {
 **Wersja:** 1.0
 
 
+
+

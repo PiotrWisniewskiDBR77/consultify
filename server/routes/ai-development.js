@@ -8,23 +8,24 @@
  * while proxying to existing specialized endpoints for backward compatibility.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
+import verifyToken from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
-const db = require('../database');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 // Import existing services
 let abTestingService;
 try {
-    abTestingService = require('../services/ai/abTesting').abTestingService;
+    abTestingService = import('ai/abTesting.js').abTestingService;
 } catch (e) {
     console.warn('[AI Development] abTesting service not available');
 }
 
 let KnowledgeService;
 try {
-    KnowledgeService = require('../services/knowledgeService');
+    KnowledgeService = import('knowledgeService.js');
 } catch (e) {
     console.warn('[AI Development] Knowledge service not available');
 }
@@ -545,7 +546,9 @@ router.get('/summary', verifyToken, requireRole(['super_admin', 'admin']), async
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

@@ -9,9 +9,13 @@
  * - Aggregated analytics
  */
 
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+    db,
+    uuidv4,
 };
 
 const IntegrationAnalyticsService = {
@@ -371,7 +375,9 @@ const IntegrationAnalyticsService = {
     }
 };
 
-module.exports = IntegrationAnalyticsService;
+export default IntegrationAnalyticsService;
+
+
 
 
 

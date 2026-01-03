@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { requireFeature, requireAccess, isFeatureAccessible, getAccessibleFeatures, FEATURE_REQUIREMENTS, type AuthRequest } from '../../../src/middleware/featureGate.middleware.js';
+import { requireFeature, requireAccess, isFeatureAccessible, getAccessibleFeatures, FEATURE_REQUIREMENTS, type AuthRequest } from '../../../../src/middleware/featureGate.middleware.js';
 
 describe('Feature Gate Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -203,4 +203,6 @@ describe('Feature Gate Middleware', () => {
         });
     });
 });
+
+
 

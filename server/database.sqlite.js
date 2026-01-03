@@ -10,7 +10,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 const dbPath = path.resolve(__dirname, 'consultify.db');
 
@@ -1287,4 +1287,4 @@ function initDb() {
     });
 }
 
-module.exports = db;
+export default db;

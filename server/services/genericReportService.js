@@ -5,9 +5,11 @@
  * Handles file storage, text extraction, AI summarization, and full-text search.
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const PDFParserService = require('./pdfParserService');
+import db from '../database.js';
+import PDFParserService from './pdfParserService.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 class GenericReportService {
     /**
@@ -310,4 +312,4 @@ class GenericReportService {
     }
 }
 
-module.exports = GenericReportService;
+export default GenericReportService;

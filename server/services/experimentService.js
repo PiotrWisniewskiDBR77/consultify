@@ -4,14 +4,14 @@
  * Manages feature flags and experiment assignments.
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 // Lazy-loaded database
 let db = null;
 const getDb = () => {
     if (!db) {
         try {
-            db = require('../db/sqliteAsync');
+            db = getDatabase();
         } catch (e) {
             db = require('../database');
         }
@@ -96,4 +96,4 @@ const ExperimentService = {
     }
 };
 
-module.exports = ExperimentService;
+export default ExperimentService;

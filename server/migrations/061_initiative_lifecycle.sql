@@ -155,3 +155,5 @@ CREATE INDEX IF NOT EXISTS idx_initiatives_charter_completeness
 
 
 
+
+

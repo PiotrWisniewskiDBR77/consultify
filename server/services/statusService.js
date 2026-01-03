@@ -5,7 +5,9 @@
  * for the status page.
  */
 
-const db = require('../database');
+import db from '../database.js';
+
+
 
 // Service status enum
 const STATUS = {
@@ -255,7 +257,7 @@ async function updateIncident(incidentId, update) {
     return { success: true };
 }
 
-module.exports = {
+export default {
     STATUS,
     SEVERITY,
     getSystemStatus,
@@ -272,6 +274,8 @@ module.exports = {
     checkStorageHealth,
     checkEmailHealth
 };
+
+
 
 
 

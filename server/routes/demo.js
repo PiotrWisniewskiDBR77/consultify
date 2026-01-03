@@ -12,13 +12,13 @@
  * - Supports UTM parameters for campaign attribution
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 const rateLimit = require('express-rate-limit');
 const config = require('../config');
-const DemoService = require('../services/demoService');
-const OrganizationEventService = require('../services/organizationEventService');
+const DemoService = import('demoService.js');
+const OrganizationEventService = import('organizationEventService.js');
 import AttributionService from '../services/attributionService.js';
 
 // Demo abuse protection: 3 demos per 10 minutes per IP
@@ -137,8 +137,8 @@ router.get('/templates', async (req, res) => {
 // PHASE B: DEMO SESSION FLOW ENDPOINTS
 // ============================================================
 
-const DemoSessionService = require('../services/demoSessionService');
-const authMiddleware = require('../middleware/authMiddleware');
+const DemoSessionService = import('demoSessionService.js');
+import authMiddleware from '../middleware/authMiddleware.js';
 
 /**
  * GET /api/demo/progress
@@ -301,4 +301,4 @@ router.get('/steps', (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

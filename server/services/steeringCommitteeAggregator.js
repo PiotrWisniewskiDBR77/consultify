@@ -7,7 +7,9 @@
  * PMO Standards: ISO 21500, PMBOK 7, PRINCE2 (Highlight Report)
  */
 
-const db = require('../database');
+import db from '../database.js';
+
+
 
 /**
  * Database helpers
@@ -502,7 +504,9 @@ const SteeringCommitteeAggregator = {
     }
 };
 
-module.exports = SteeringCommitteeAggregator;
+export default SteeringCommitteeAggregator;
+
+
 
 
 

@@ -38,10 +38,10 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
 }) => {
     const { t, i18n } = useTranslation();
     const isPolish = i18n.language === 'pl';
-    
+
     // Global state for chat
     const { addChatMessage, setIsBotTyping, isBotTyping, activeChatMessages } = useAppStore();
-    
+
     // Report sections hook
     const {
         report,
@@ -129,9 +129,9 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     // Handle AI action on section
     const handleAIAction = useCallback(async (sectionId: string, action: string) => {
         toast.loading(isPolish ? 'AI przetwarza...' : 'AI processing...', { id: 'ai-action' });
-        
+
         const success = await aiAction(sectionId, action as AIAction);
-        
+
         if (success) {
             toast.success(isPolish ? 'Sekcja zaktualizowana przez AI' : 'Section updated by AI', { id: 'ai-action' });
         } else {
@@ -149,17 +149,17 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     // Handle finalize
     const handleFinalize = useCallback(async () => {
         const confirmed = window.confirm(
-            isPolish 
+            isPolish
                 ? 'Czy na pewno chcesz sfinalizować raport? Po finalizacji nie będzie można go edytować.'
                 : 'Are you sure you want to finalize this report? It cannot be edited after finalization.'
         );
-        
+
         if (!confirmed) return;
-        
+
         setIsFinalizing(true);
         const success = await finalizeReport();
         setIsFinalizing(false);
-        
+
         if (success) {
             toast.success(isPolish ? 'Raport sfinalizowany' : 'Report finalized');
         } else {
@@ -170,19 +170,19 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     // Handle regenerate
     const handleRegenerate = useCallback(async () => {
         const confirmed = window.confirm(
-            isPolish 
+            isPolish
                 ? 'Czy na pewno chcesz wygenerować raport od nowa? Wszystkie edycje zostaną utracone.'
                 : 'Are you sure you want to regenerate the report? All edits will be lost.'
         );
-        
+
         if (!confirmed) return;
-        
+
         setIsRegenerating(true);
         toast.loading(isPolish ? 'Generowanie raportu...' : 'Generating report...', { id: 'regenerate' });
-        
+
         const success = await regenerateReport();
         setIsRegenerating(false);
-        
+
         if (success) {
             toast.success(isPolish ? 'Raport wygenerowany' : 'Report regenerated', { id: 'regenerate' });
         } else {
@@ -246,8 +246,8 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
         const lastMessage = activeChatMessages[activeChatMessages.length - 1];
         if (lastMessage?.role === 'user' && activeSection) {
             // Check if this is an edit command
-            const text = lastMessage.text.toLowerCase();
-            const isEditCommand = 
+            const text = (lastMessage as any).content?.toLowerCase() || '';
+            const isEditCommand =
                 text.includes('rozwiń') || text.includes('expand') ||
                 text.includes('skróć') || text.includes('summarize') ||
                 text.includes('ulepsz') || text.includes('improve') ||
@@ -264,16 +264,16 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
 
                 // Execute AI action
                 handleAIAction(activeSection, action);
-                
+
                 // Add bot response
                 setIsBotTyping(true);
                 setTimeout(() => {
                     addChatMessage({
-                        role: 'assistant',
-                        text: isPolish 
+                        role: 'ai',
+                        content: isPolish
                             ? `Wykonuję akcję "${action}" na wybranej sekcji...`
                             : `Executing "${action}" on the selected section...`
-                    });
+                    } as any);
                     setIsBotTyping(false);
                 }, 500);
             }
@@ -348,7 +348,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                     onExportPdf={handleExportPdf}
                     onExportExcel={handleExportExcel}
                 />
-                
+
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center max-w-md px-6">
                         <Sparkles className="w-16 h-16 text-purple-500 mx-auto mb-4" />
@@ -356,7 +356,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                             {isPolish ? 'Raport jest pusty' : 'Report is empty'}
                         </h2>
                         <p className="text-slate-600 dark:text-slate-400 mb-6">
-                            {isPolish 
+                            {isPolish
                                 ? 'Ten raport nie ma jeszcze sekcji. Wygeneruj raport, aby rozpocząć.'
                                 : 'This report has no sections yet. Generate the report to get started.'}
                         </p>
@@ -443,7 +443,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                         report={{
                             id: report.id,
                             name: report.name,
-                            status: report.status,
+                            status: report.status as 'DRAFT' | 'FINAL',
                             assessmentId: report.assessmentId,
                             assessmentName: report.assessmentName,
                             projectName: report.projectName,
@@ -523,9 +523,9 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                         <ChatPanel
                             messages={activeChatMessages}
                             onSendMessage={(text) => {
-                                addChatMessage({ role: 'user', text });
+                                addChatMessage({ role: 'user', content: text } as any);
                             }}
-                            onOptionSelect={() => {}}
+                            onOptionSelect={() => { }}
                             isTyping={isBotTyping}
                             title={isPolish ? 'Czat AI' : 'AI Chat'}
                             subtitle={isPolish ? 'Edytuj raport przez czat' : 'Edit report via chat'}

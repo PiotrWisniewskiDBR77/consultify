@@ -4,12 +4,13 @@
  * Endpoints for enterprise security features, audit logs, and data access tracking.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const verifyToken = require('../middleware/authMiddleware');
+import verifyToken from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
-const { enterpriseSecurity } = require('../services/ai/enterpriseSecurity');
-const db = require('../database');
+const { enterpriseSecurity } = import('ai/enterpriseSecurity.js');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 /**
  * GET /api/ai-security/audit-log OR /api/ai-security/audit-logs
@@ -369,5 +370,5 @@ router.post('/check-rate-limit', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

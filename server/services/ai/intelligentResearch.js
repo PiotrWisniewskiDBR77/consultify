@@ -767,7 +767,7 @@ class IntelligentResearch {
 // Singleton instance
 const intelligentResearch = new IntelligentResearch();
 
-module.exports = {
+export default {
     IntelligentResearch,
     intelligentResearch,
     QUERY_TEMPLATES,

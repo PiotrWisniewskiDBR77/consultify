@@ -6,8 +6,10 @@
  * Part of Content Module Enterprise Extension
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 const CONTENT_TYPES = {
     PLAYBOOK_TEMPLATE: 'PLAYBOOK_TEMPLATE',
@@ -1461,7 +1463,9 @@ const ContentService = {
     _camelToSnake: (str) => str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
 };
 
-module.exports = ContentService;
+export default ContentService;
+
+
 
 
 

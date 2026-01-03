@@ -3,11 +3,11 @@
  * API endpoints for legal document management and acceptance.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const LegalService = require('../services/legalService');
-const ActivityService = require('../services/activityService');
+import authMiddleware from '../middleware/authMiddleware.js';
+const LegalService = import('legalService.js');
+const ActivityService = import('activityService.js');
 
 // ==========================================
 // PUBLIC ROUTES (No Authentication Required)
@@ -236,7 +236,7 @@ router.get('/admin/acceptance-status/organization/:orgId', async (req, res) => {
 // ENTERPRISE+ COMPLIANCE EXPORT ENDPOINTS
 // ==========================================
 
-const LegalExportService = require('../services/legalExportService');
+const LegalExportService = import('legalExportService.js');
 
 /**
  * GET /api/legal/export/acceptances
@@ -358,7 +358,7 @@ router.get('/compliance-summary', async (req, res) => {
 // CONTACT FORM
 // ==========================================
 
-const EmailService = require('../services/emailService');
+const EmailService = import('emailService.js');
 
 /**
  * POST /api/legal/contact
@@ -426,5 +426,5 @@ This message was sent from the Consultify contact form.
     }
 });
 
-module.exports = router;
+export default router;
 

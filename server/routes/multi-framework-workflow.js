@@ -5,17 +5,18 @@
  * Handles submission, review, approval, and rejection flows.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authenticateToken = require('../middleware/authMiddleware');
+import authenticateToken from '../middleware/authMiddleware.js';
 const {
     multiFrameworkRBAC,
     requireFrameworkApprover,
     validateWorkflowTransition
 } = require('../middleware/assessmentRBAC');
-const { FrameworkRBACService } = require('../services/frameworkRBACService');
-const db = require('../database');
-const multiFrameworkAuditService = require('../services/multiFrameworkAuditService');
+const { FrameworkRBACService } = import('frameworkRBACService.js');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
+const multiFrameworkAuditService = import('multiFrameworkAuditService.js');
 
 // ============================================
 // WORKFLOW STATUS ROUTES
@@ -517,7 +518,9 @@ router.get('/:assessmentId/history', authenticateToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

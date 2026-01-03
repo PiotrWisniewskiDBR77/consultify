@@ -18,10 +18,10 @@
  * - GET  /api/invitations/:id/audit     - Get invitation audit trail
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const InvitationService = require('../services/invitationService');
-const verifyToken = require('../middleware/authMiddleware');
+const InvitationService = import('invitationService.js');
+import verifyToken from '../middleware/authMiddleware.js';
 const { verifyAdmin } = require('../middleware/adminMiddleware');
 const {
     validateRateLimiter,
@@ -557,4 +557,4 @@ router.delete('/:id', verifyAdmin, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

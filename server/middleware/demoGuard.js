@@ -80,4 +80,4 @@ const demoGuard = (req, res, next) => {
     });
 };
 
-module.exports = demoGuard;
+export default demoGuard;

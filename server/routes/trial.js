@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const TrialService = require('../services/trialService');
-const auth = require('../middleware/authMiddleware');
-const demoGuard = require('../middleware/demoGuard');
+const TrialService = import('trialService.js');
+import auth from '../middleware/authMiddleware.js';
+import demoGuard from '../middleware/demoGuard.js';
 import AuditService from '../services/auditService.js';
 
 // POST /api/trial/:trialId/convert
@@ -72,4 +72,4 @@ router.post('/confirm-transition', auth, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

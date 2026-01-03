@@ -5,9 +5,11 @@
  * Uses pattern matching and industry best practices to suggest initiatives.
  */
 
-const { v4: uuidv4 } = require('uuid');
-const defaultDb = require('../database');
-const { DIGITIZATION_AXES } = require('../data/digitizationEvaluationData');
+import defaultDb from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+import { DIGITIZATION_AXES } from '../data/digitizationEvaluationData.js';
+
+
 
 // Initiative templates for each axis
 const INITIATIVE_TEMPLATES = {
@@ -287,7 +289,10 @@ class AIRecommendationService {
 }
 
 // Export singleton instance
-module.exports = new AIRecommendationService();
+const aIRecommendationServiceInstance = new AIRecommendationService();
+export default aIRecommendationServiceInstance;
+
+
 
 
 

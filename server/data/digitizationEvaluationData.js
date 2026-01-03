@@ -680,7 +680,7 @@ const calculateAxisScore = (areaScores) => {
 // ============================================
 // Exports
 // ============================================
-module.exports = {
+export default {
     DIGITIZATION_AXES,
     getAxisById,
     getAreaByCode,

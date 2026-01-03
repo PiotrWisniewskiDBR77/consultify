@@ -9,9 +9,13 @@
  */
 
 // Dependency injection for testing
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
 const deps = {
-    db: require('../database'),
-    uuidv4: require('uuid').v4
+    db,
+    uuidv4,
 };
 
 /**
@@ -305,4 +309,4 @@ const ROIService = {
     }
 };
 
-module.exports = ROIService;
+export default ROIService;

@@ -12,10 +12,10 @@
  * - DELETE /api/verify/cancel-change - Cancel pending email change
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const EmailVerificationService = require('../services/emailVerificationService');
+import authMiddleware from '../middleware/authMiddleware.js';
+const EmailVerificationService = import('emailVerificationService.js');
 import AuditService from '../services/auditService.js';
 
 /**
@@ -192,4 +192,4 @@ router.delete('/cancel-change', authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

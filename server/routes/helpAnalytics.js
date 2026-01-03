@@ -4,9 +4,9 @@
  * Admin-only routes for viewing help system analytics.
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const helpAnalyticsService = require('../services/helpAnalyticsService');
+const helpAnalyticsService = import('helpAnalyticsService.js');
 const { requireRole } = require('../middleware/rbac');
 
 /**
@@ -129,7 +129,9 @@ router.get('/engagement', requireRole(['ADMIN', 'SUPERADMIN']), async (req, res)
     }
 });
 
-module.exports = router;
+export default router;
+
+
 
 
 

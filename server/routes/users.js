@@ -1,10 +1,11 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const AccessPolicyService = require('../services/accessPolicyService');
-const db = require('../database');
+const AccessPolicyService = import('accessPolicyService.js');
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
-const verifyToken = require('../middleware/authMiddleware');
+import { v4 as uuidv4 } from 'uuid';
+import verifyToken from '../middleware/authMiddleware.js';
 
 router.use(verifyToken);
 
@@ -273,4 +274,4 @@ router.delete('/:id', (req, res) => {
     );
 });
 
-module.exports = router;
+export default router;

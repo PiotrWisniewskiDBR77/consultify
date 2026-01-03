@@ -6,7 +6,8 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import type { AuthRequest } from './auth.middleware';
+import type { AuthRequest } from './auth.middleware.js';
+import usageService from '../../services/usageService.js';
 import * as fs from 'fs';
 
 // ==========================================
@@ -42,15 +43,7 @@ interface Dependencies {
 // DEPENDENCIES (injectable for testing)
 // ==========================================
 
-let deps: Dependencies;
-
-const getDeps = (): Dependencies => {
-    if (!deps) {
-        const { default: defaultUsageService } = await import('../../services/usageService.js');
-        deps = { usageService: defaultUsageService };
-    }
-    return deps;
-};
+let deps: Dependencies = { usageService };
 
 // ==========================================
 // MIDDLEWARE
@@ -65,8 +58,8 @@ export async function enforceProjectQuota(
     next: NextFunction
 ): Promise<void> {
     try {
-        const { usageService } = getDeps();
-        
+        const { usageService } = deps;
+
         const projectId = req.body?.project_id || req.query?.projectId;
 
         // If no project specified, skip project-level check (falls back to Org check)
@@ -113,6 +106,6 @@ export async function enforceProjectQuota(
 // ==========================================
 
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
-    deps = { ...getDeps(), ...newDeps };
+    deps = { ...deps, ...newDeps };
 };
 
