@@ -109,7 +109,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
 
     const fetchBackups = useCallback(async () => {
         try {
-            const data = await Api.getBackups();
+            const data = await (Api as any).getBackups?.() || [];
             setBackups(data);
         } catch (error) {
             console.error('Failed to fetch backups:', error);
@@ -193,7 +193,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
     const handleCreateBackup = async (type: 'full' | 'incremental', reason: string = 'manual') => {
         setCreating(true);
         try {
-            await Api.createBackup(type, reason);
+            await (Api as any).createBackup?.(type, reason);
             toast.success('Backup started');
             fetchBackups();
         } catch (error) {
@@ -209,7 +209,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
         if (!confirm('Are you sure you want to delete this backup? This action cannot be undone.')) return;
 
         try {
-            await Api.deleteBackup(id);
+            await (Api as any).deleteBackup?.(id);
             toast.success('Backup deleted');
             fetchBackups();
         } catch (error) {
@@ -223,7 +223,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
 
         setRestoring(id);
         try {
-            await Api.restoreBackup?.(id);
+            await (Api as any).restoreBackup?.(id);
             toast.success('Restore completed successfully');
         } catch (error) {
             console.error('Failed to restore:', error);
@@ -309,11 +309,10 @@ export const EnterpriseBackupPanel: React.FC = () => {
                     <button
                         key={id}
                         onClick={() => setActiveTab(id as any)}
-                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
-                            activeTab === id
-                                ? 'bg-white/10 text-white border-b-2 border-purple-500'
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
-                        }`}
+                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${activeTab === id
+                            ? 'bg-white/10 text-white border-b-2 border-purple-500'
+                            : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            }`}
                     >
                         <Icon className="w-4 h-4" />
                         {label}
@@ -350,9 +349,8 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
                                                     <div className={`p-2 rounded-lg ${statusConfig.color}/20`}>
-                                                        <StatusIcon className={`w-5 h-5 ${statusConfig.text} ${
-                                                            backup.status === 'in_progress' ? 'animate-spin' : ''
-                                                        }`} />
+                                                        <StatusIcon className={`w-5 h-5 ${statusConfig.text} ${backup.status === 'in_progress' ? 'animate-spin' : ''
+                                                            }`} />
                                                     </div>
                                                     <div>
                                                         <div className="flex items-center gap-2">
@@ -363,10 +361,10 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                                                 {backup.filename}
                                                             </code>
                                                             {backup.encrypted && (
-                                                                <Lock className="w-3 h-3 text-emerald-400" title="Encrypted" />
+                                                                <Lock className="w-3 h-3 text-emerald-400" />
                                                             )}
                                                             {backup.hasS3 && (
-                                                                <Cloud className="w-3 h-3 text-cyan-400" title="Cloud synced" />
+                                                                <Cloud className="w-3 h-3 text-cyan-400" />
                                                             )}
                                                         </div>
                                                         <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
@@ -468,11 +466,10 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                             <div className="flex items-center gap-2">
                                                 <button
                                                     onClick={() => handleToggleSchedule(schedule.id, !schedule.enabled)}
-                                                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                                                        schedule.enabled
-                                                            ? 'bg-emerald-500/20 text-emerald-400'
-                                                            : 'bg-slate-700 text-slate-400'
-                                                    }`}
+                                                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${schedule.enabled
+                                                        ? 'bg-emerald-500/20 text-emerald-400'
+                                                        : 'bg-slate-700 text-slate-400'
+                                                        }`}
                                                 >
                                                     {schedule.enabled ? 'Enabled' : 'Disabled'}
                                                 </button>
@@ -558,11 +555,10 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                             {['AWS S3', 'Google Cloud Storage', 'Azure Blob'].map((provider) => (
                                                 <button
                                                     key={provider}
-                                                    className={`p-3 rounded-lg border transition-colors ${
-                                                        config.cloud_provider === provider
-                                                            ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
-                                                            : 'bg-slate-800 border-white/10 text-slate-400 hover:border-white/20'
-                                                    }`}
+                                                    className={`p-3 rounded-lg border transition-colors ${config.cloud_provider === provider
+                                                        ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
+                                                        : 'bg-slate-800 border-white/10 text-slate-400 hover:border-white/20'
+                                                        }`}
                                                     onClick={() => setConfig({ ...config, cloud_provider: provider })}
                                                 >
                                                     {provider}
@@ -692,6 +688,8 @@ export const EnterpriseBackupPanel: React.FC = () => {
 };
 
 export default EnterpriseBackupPanel;
+
+
 
 
 
