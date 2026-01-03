@@ -7,12 +7,12 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Keyboard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { ShortcutConfig } from '../../../hooks/useKeyboardShortcuts';
+import { ShortcutAction } from '../../../types';
 
 interface KeyboardShortcutsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    shortcuts: ShortcutConfig[];
+    shortcuts: ShortcutAction[];
 }
 
 /**
@@ -33,7 +33,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
     shortcuts
 }) => {
     const { t } = useTranslation();
-    
+
     // Group shortcuts by category
     const groupedShortcuts = shortcuts.reduce((acc, shortcut) => {
         const category = shortcut.category || 'Other';
@@ -42,46 +42,29 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
         }
         acc[category].push(shortcut);
         return acc;
-    }, {} as Record<string, ShortcutConfig[]>);
-    
+    }, {} as Record<string, ShortcutAction[]>);
+
     // Format key for display
-    const formatKey = (shortcut: ShortcutConfig): React.ReactNode => {
-        const parts: React.ReactNode[] = [];
-        
-        // Add modifiers
-        shortcut.modifiers?.forEach((mod) => {
-            switch (mod) {
-                case 'ctrl':
-                    parts.push(<Key key="ctrl">Ctrl</Key>);
-                    break;
-                case 'shift':
-                    parts.push(<Key key="shift">⇧</Key>);
-                    break;
-                case 'alt':
-                    parts.push(<Key key="alt">Alt</Key>);
-                    break;
-                case 'meta':
-                    parts.push(<Key key="meta">⌘</Key>);
-                    break;
-            }
-        });
-        
-        // Add 'g' prefix for navigation shortcuts
-        if (shortcut.category === 'Navigation') {
-            parts.push(<Key key="g">g</Key>);
-            parts.push(<span key="then" className="mx-1 text-slate-400">then</span>);
-        }
-        
-        // Add main key
-        let keyDisplay = shortcut.key;
-        if (shortcut.key === 'Escape') keyDisplay = 'Esc';
-        if (shortcut.key === '/') keyDisplay = '/';
-        if (shortcut.key === '?') keyDisplay = '?';
-        parts.push(<Key key="main">{keyDisplay}</Key>);
-        
-        return <div className="flex items-center gap-1">{parts}</div>;
+    const formatKey = (shortcut: ShortcutAction): React.ReactNode => {
+        const keyString = (shortcut as any).currentKey || (shortcut as any).defaultKey || '';
+        const parts = keyString.split(/[\s+]/); // Split by space or +
+
+        return (
+            <div className="flex items-center gap-1">
+                {parts.map((part, idx) => (
+                    <React.Fragment key={idx}>
+                        {idx > 0 && part !== 'then' && <span className="text-slate-400">+</span>}
+                        {part === 'then' ? (
+                            <span className="mx-1 text-slate-400">then</span>
+                        ) : (
+                            <Key>{part}</Key>
+                        )}
+                    </React.Fragment>
+                ))}
+            </div>
+        );
     };
-    
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -114,7 +97,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
                                 <X size={18} />
                             </button>
                         </div>
-                        
+
                         {/* Content */}
                         <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
                             {Object.entries(groupedShortcuts).map(([category, categoryShortcuts]) => (
@@ -123,7 +106,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
                                         {category}
                                     </h3>
                                     <div className="space-y-2">
-                                        {categoryShortcuts.map((shortcut, idx) => (
+                                        {(categoryShortcuts as any[]).map((shortcut: any, idx: number) => (
                                             <div
                                                 key={idx}
                                                 className="flex items-center justify-between py-2 border-b border-slate-50 dark:border-white/5 last:border-0"
@@ -138,7 +121,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
                                 </div>
                             ))}
                         </div>
-                        
+
                         {/* Footer tip */}
                         <div className="p-4 border-t border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/5">
                             <p className="text-xs text-slate-500 text-center">
@@ -153,6 +136,8 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
 };
 
 export default KeyboardShortcutsModal;
+
+
 
 
 
