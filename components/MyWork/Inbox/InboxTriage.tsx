@@ -31,12 +31,12 @@ import {
     Sparkles
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { 
-    InboxItem, 
-    InboxItemType, 
-    TriageAction, 
+import type {
+    InboxItem,
+    InboxItemType,
+    TriageAction,
     InboxTriageProps,
-    TriageParams 
+    TriageParams
 } from '../../../types/myWork';
 import { PMOPriorityBadge, getPMOCategory } from '../shared/PMOPriorityBadge';
 import { DueDateIndicator } from '../shared/DueDateIndicator';
@@ -61,7 +61,7 @@ const SAMPLE_INBOX_ITEMS: InboxItem[] = [
         receivedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
         urgency: 'critical',
         linkedTaskId: 'task-1',
-        linkedTask: { id: 'task-1', title: 'Raport Q4', status: 'todo', priority: 'high', dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString() },
+        linkedTask: { id: 'task-1', title: 'Raport Q4', status: 'todo' as any, priority: 'high', dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString() },
         triaged: false
     },
     {
@@ -73,7 +73,7 @@ const SAMPLE_INBOX_ITEMS: InboxItem[] = [
         receivedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 min ago
         urgency: 'high',
         linkedTaskId: 'task-2',
-        linkedTask: { id: 'task-2', title: 'Zatwierdzenie budżetu', status: 'in_progress', priority: 'high', dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString() },
+        linkedTask: { id: 'task-2', title: 'Zatwierdzenie budżetu', status: 'in_progress' as any, priority: 'high', dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString() },
         triaged: false
     },
     {
@@ -96,7 +96,7 @@ const SAMPLE_INBOX_ITEMS: InboxItem[] = [
         receivedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
         urgency: 'normal',
         linkedTaskId: 'task-3',
-        linkedTask: { id: 'task-3', title: 'Dokumentacja API', status: 'in_progress', priority: 'medium', dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() },
+        linkedTask: { id: 'task-3', title: 'Dokumentacja API', status: 'IN_PROGRESS' as any, priority: 'medium', dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() },
         triaged: false
     },
     {
@@ -125,11 +125,11 @@ const SAMPLE_INBOX_ITEMS: InboxItem[] = [
         type: 'new_assignment',
         title: 'Nowe zadanie: Spotkanie z klientem ABC',
         description: 'Umów spotkanie prezentacyjne z klientem ABC w sprawie nowego projektu.',
-        source: { type: 'user', userId: 'user-5', userName: 'Jan Kowalczyk', avatarUrl: null },
+        source: { type: 'user', userId: 'user-5', userName: 'Jan Kowalczyk', avatarUrl: undefined },
         receivedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
         urgency: 'low',
         linkedTaskId: 'task-4',
-        linkedTask: { id: 'task-4', title: 'Spotkanie z ABC', status: 'todo', priority: 'low', dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() },
+        linkedTask: { id: 'task-4', title: 'Spotkanie z ABC', status: 'TODO' as any, priority: 'low', dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() },
         triaged: false
     }
 ];
@@ -186,42 +186,42 @@ const triageActions: Array<{
     className: string;
     shortcut: string;
 }> = [
-    {
-        action: 'accept_today',
-        label: 'Dziś',
-        icon: <CheckCircle size={14} />,
-        className: 'triage-accept',
-        shortcut: 'T'
-    },
-    {
-        action: 'schedule',
-        label: 'Zaplanuj',
-        icon: <Calendar size={14} />,
-        className: 'triage-schedule',
-        shortcut: 'S'
-    },
-    {
-        action: 'delegate',
-        label: 'Deleguj',
-        icon: <UserPlus size={14} />,
-        className: 'triage-delegate',
-        shortcut: 'D'
-    },
-    {
-        action: 'archive',
-        label: 'Archiwum',
-        icon: <Archive size={14} />,
-        className: 'triage-archive',
-        shortcut: 'A'
-    },
-    {
-        action: 'reject',
-        label: 'Odrzuć',
-        icon: <XCircle size={14} />,
-        className: 'triage-reject',
-        shortcut: 'X'
-    }
-];
+        {
+            action: 'accept_today',
+            label: 'Dziś',
+            icon: <CheckCircle size={14} />,
+            className: 'triage-accept',
+            shortcut: 'T'
+        },
+        {
+            action: 'schedule',
+            label: 'Zaplanuj',
+            icon: <Calendar size={14} />,
+            className: 'triage-schedule',
+            shortcut: 'S'
+        },
+        {
+            action: 'delegate',
+            label: 'Deleguj',
+            icon: <UserPlus size={14} />,
+            className: 'triage-delegate',
+            shortcut: 'D'
+        },
+        {
+            action: 'archive',
+            label: 'Archiwum',
+            icon: <Archive size={14} />,
+            className: 'triage-archive',
+            shortcut: 'A'
+        },
+        {
+            action: 'reject',
+            label: 'Odrzuć',
+            icon: <XCircle size={14} />,
+            className: 'triage-reject',
+            shortcut: 'X'
+        }
+    ];
 
 /**
  * Single inbox item card
@@ -271,7 +271,7 @@ const InboxItemCard: React.FC<{
                 </button>
 
                 {/* Content */}
-                <div 
+                <div
                     className="flex-1 min-w-0 cursor-pointer"
                     onClick={onClick}
                 >
@@ -308,9 +308,9 @@ const InboxItemCard: React.FC<{
                         {item.source.userName && (
                             <span className="flex items-center gap-1">
                                 {item.source.avatarUrl ? (
-                                    <img 
-                                        src={item.source.avatarUrl} 
-                                        alt="" 
+                                    <img
+                                        src={item.source.avatarUrl}
+                                        alt=""
                                         className="w-4 h-4 rounded-full object-cover"
                                     />
                                 ) : (
@@ -320,8 +320,8 @@ const InboxItemCard: React.FC<{
                             </span>
                         )}
                         {item.linkedTask && (
-                            <DueDateIndicator 
-                                dueDate={item.linkedTask.dueDate} 
+                            <DueDateIndicator
+                                dueDate={item.linkedTask.dueDate}
                                 size="sm"
                             />
                         )}
@@ -450,8 +450,8 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
 
     // Group items by urgency
     const groupedItems = useMemo(() => {
-        const filtered = filter === 'all' 
-            ? items 
+        const filtered = filter === 'all'
+            ? items
             : items.filter(i => i.type === filter);
 
         return {
@@ -503,14 +503,14 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
         try {
             // Optimistic update - remove from UI immediately
             setItems(prev => prev.filter(i => i.id !== itemId));
-            
+
             // Check if it's a sample item (sample items have 'sample-' prefix)
             const isSampleItem = itemId.startsWith('sample-');
-            
+
             if (!isSampleItem) {
                 await Api.post(`/my-work/inbox/${itemId}/triage`, { action, params });
             }
-            
+
             onTriage?.(itemId, action, params);
             toast.success(t('myWork.inbox.triaged', 'Item processed'));
         } catch (error) {
@@ -529,14 +529,14 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
 
         try {
             const ids = Array.from(selectedIds);
-            
+
             // Optimistic update
             setItems(prev => prev.filter(i => !selectedIds.has(i.id)));
             setSelectedIds(new Set());
-            
+
             // Filter out sample items - only send real items to API
             const realIds = ids.filter(id => !id.startsWith('sample-'));
-            
+
             if (realIds.length > 0) {
                 await Api.post('/my-work/inbox/bulk-triage', {
                     itemIds: realIds,
@@ -618,13 +618,13 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
                         <span className="text-sm font-medium text-brand">
                             {selectedIds.size} {t('myWork.inbox.selected', 'selected')}
                         </span>
-                        <button 
+                        <button
                             onClick={selectAll}
                             className="text-xs text-brand hover:underline"
                         >
                             {t('myWork.inbox.selectAll', 'Select all')}
                         </button>
-                        <button 
+                        <button
                             onClick={clearSelection}
                             className="text-xs text-slate-500 hover:underline"
                         >
