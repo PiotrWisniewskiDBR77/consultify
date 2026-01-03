@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const notificationSettingsRoutesJSPromise = (async () => {
-    const module = await import('../../routes/notificationSettings.js');
-    return module.default || module;
-})();
-const notificationSettingsRoutesJS = notificationSettingsRoutesJSPromise;;
+const module = await import('../../routes/notificationSettings.js');
+const notificationSettingsRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof notificationSettingsRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof notificationSettingsRoutesJS === 'function' || (notificationSettingsRoutesJS && typeof notificationSettingsRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(notificationSettingsRoutesJS);
-} else if (notificationSettingsRoutesJS.default) {
-    // If it has a default export
-    router.use(notificationSettingsRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(notificationSettingsRoutesJS);
+    // Fallback or error
+    console.error('notificationSettings.js did not export a valid router');
 }
 
 export default router;

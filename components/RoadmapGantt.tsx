@@ -12,11 +12,11 @@
 
 import React, { useRef, useState, useCallback, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    GripVertical, 
-    Maximize2, 
-    Minimize2, 
-    ZoomIn, 
+import {
+    GripVertical,
+    Maximize2,
+    Minimize2,
+    ZoomIn,
     ZoomOut,
     ChevronLeft,
     ChevronRight,
@@ -26,9 +26,20 @@ import {
     Calendar,
     Filter
 } from 'lucide-react';
-import { FullInitiative, InitiativeStatus, Quarter } from '../types';
+import { Initiative, InitiativeStatus } from '../types/domain';
 import { StatusTransitionDropdown } from './PMO/StatusTransitionDropdown';
 import toast from 'react-hot-toast';
+
+type Quarter = string;
+
+interface FullInitiative extends Initiative {
+    axis: string;
+    quarter?: string;
+    plannedStartDate?: string;
+    plannedEndDate?: string;
+    dependencies?: any[];
+    name: string;
+}
 
 interface RoadmapGanttProps {
     initiatives: FullInitiative[];
@@ -37,11 +48,8 @@ interface RoadmapGanttProps {
     onCreateDependency?: (fromId: string, toId: string, type: 'FINISH_TO_START' | 'START_TO_START') => void;
 }
 
-interface GanttInitiative extends FullInitiative {
-    plannedStartDate?: string;
-    plannedEndDate?: string;
-    status?: string;
-    dependencies?: { initiativeId: string; type: string }[];
+interface GanttInitiative extends Omit<FullInitiative, 'status'> {
+    status: string;
 }
 
 type ZoomLevel = 'month' | 'quarter' | 'year';
@@ -84,6 +92,10 @@ const AXIS_COLORS: Record<string, string> = {
 
 // Status colors
 const STATUS_COLORS: Record<string, string> = {
+    'approved': 'border-l-4 border-l-green-500',
+    'active': 'border-l-4 border-l-purple-500',
+    'on_hold': 'border-l-4 border-l-red-500 animate-pulse',
+    // Legacy support
     'APPROVED': 'border-l-4 border-l-green-500',
     'EXECUTING': 'border-l-4 border-l-purple-500',
     'BLOCKED': 'border-l-4 border-l-red-500 animate-pulse'
@@ -127,7 +139,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
             const endDate = new Date(init.plannedEndDate);
             const startMonth = (startDate.getFullYear() - currentYear) * 12 + startDate.getMonth();
             const endMonth = (endDate.getFullYear() - currentYear) * 12 + endDate.getMonth();
-            
+
             return {
                 left: startMonth * cellWidth,
                 width: Math.max((endMonth - startMonth + 1) * cellWidth, cellWidth)
@@ -137,7 +149,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
         // Fall back to quarter
         const quarterIndex = QUARTERS.indexOf(init.quarter || 'Q1');
         const monthIndex = quarterIndex * 3;
-        
+
         return {
             left: monthIndex * cellWidth,
             width: cellWidth * 3 // Default 3 months
@@ -162,7 +174,8 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
         currentStart.setMonth(currentStart.getMonth() + monthsMoved);
         currentEnd.setMonth(currentEnd.getMonth() + monthsMoved);
 
-        onUpdateInitiative({...(init as any),
+        onUpdateInitiative({
+            ...(init as any),
             ...init,
             plannedStartDate: currentStart.toISOString(),
             plannedEndDate: currentEnd.toISOString()
@@ -187,7 +200,8 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
             if (currentEnd <= currentStart) return;
         }
 
-        onUpdateInitiative({...(init as any),
+        onUpdateInitiative({
+            ...(init as any),
             ...init,
             plannedStartDate: currentStart.toISOString(),
             plannedEndDate: currentEnd.toISOString()
@@ -239,9 +253,8 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
     }, [months, zoomLevel, cellWidth]);
 
     return (
-        <div className={`flex flex-col bg-white dark:bg-navy-950 rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm ${
-            isFullscreen ? 'fixed inset-4 z-50' : 'h-full'
-        }`}>
+        <div className={`flex flex-col bg-white dark:bg-navy-950 rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm ${isFullscreen ? 'fixed inset-4 z-50' : 'h-full'
+            }`}>
             {/* Toolbar */}
             <div className="shrink-0 flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-white/5">
                 <div className="flex items-center gap-2">
@@ -254,17 +267,15 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                     <div className="flex items-center bg-white dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-white/10 p-0.5">
                         <button
                             onClick={() => setZoomLevel('month')}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                                zoomLevel === 'month' ? 'bg-purple-600 text-white' : 'text-slate-600 dark:text-slate-400'
-                            }`}
+                            className={`px-2 py-1 text-xs rounded-md transition-colors ${zoomLevel === 'month' ? 'bg-purple-600 text-white' : 'text-slate-600 dark:text-slate-400'
+                                }`}
                         >
                             Month
                         </button>
                         <button
                             onClick={() => setZoomLevel('quarter')}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                                zoomLevel === 'quarter' ? 'bg-purple-600 text-white' : 'text-slate-600 dark:text-slate-400'
-                            }`}
+                            className={`px-2 py-1 text-xs rounded-md transition-colors ${zoomLevel === 'quarter' ? 'bg-purple-600 text-white' : 'text-slate-600 dark:text-slate-400'
+                                }`}
                         >
                             Quarter
                         </button>
@@ -300,14 +311,14 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                 <div className="w-72 min-w-[288px] p-3 font-bold text-xs uppercase text-slate-500 border-r border-slate-200 dark:border-white/5 shrink-0">
                     Initiative
                 </div>
-                <div 
+                <div
                     className="flex-1 overflow-hidden"
                     style={{ transform: `translateX(-${scrollOffset}px)` }}
                 >
                     <div className="flex" style={{ width: timelineGroups.length * cellWidth }}>
                         {timelineGroups.map((group: any, idx) => (
-                            <div 
-                                key={idx} 
+                            <div
+                                key={idx}
                                 className="border-r border-slate-200 dark:border-white/5 last:border-r-0 p-2 text-center"
                                 style={{ width: cellWidth }}
                             >
@@ -339,14 +350,13 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                         const isLinking = linkingFrom === init.id;
 
                         return (
-                            <div 
-                                key={init.id} 
-                                className={`flex border-b border-slate-100 dark:border-white/5 group hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors ${
-                                    isLinking ? 'bg-purple-50 dark:bg-purple-900/10' : ''
-                                }`}
+                            <div
+                                key={init.id}
+                                className={`flex border-b border-slate-100 dark:border-white/5 group hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors ${isLinking ? 'bg-purple-50 dark:bg-purple-900/10' : ''
+                                    }`}
                             >
                                 {/* Info Column */}
-                                <div 
+                                <div
                                     className="w-72 min-w-[288px] p-3 text-sm border-r border-slate-200 dark:border-white/5 z-10 bg-inherit relative shrink-0 cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5"
                                     onClick={() => onInitiativeClick?.(init as FullInitiative)}
                                 >
@@ -361,11 +371,10 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                                                     e.stopPropagation();
                                                     handleLinkClick(init.id);
                                                 }}
-                                                className={`p-1 rounded transition-colors ${
-                                                    isLinking 
-                                                        ? 'bg-purple-600 text-white' 
-                                                        : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/10'
-                                                }`}
+                                                className={`p-1 rounded transition-colors ${isLinking
+                                                    ? 'bg-purple-600 text-white'
+                                                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/10'
+                                                    }`}
                                                 title="Create dependency"
                                             >
                                                 <Link size={12} />
@@ -375,33 +384,32 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                                     <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
                                         <span className="capitalize">{init.axis}</span>
                                         <span>•</span>
-                                        <span className={`px-1.5 py-0.5 rounded ${
-                                            init.priority === 'High' || init.priority === 'Critical'
-                                                ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' 
-                                                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                                        }`}>
+                                        <span className={`px-1.5 py-0.5 rounded ${init.priority === 'high' || init.priority === 'critical'
+                                            ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                                            : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                                            }`}>
                                             {init.priority}
                                         </span>
-                                        {init.status === 'BLOCKED' && (
+                                        {(init.status === 'BLOCKED' || init.status === 'on_hold') && (
                                             <AlertTriangle size={10} className="text-red-500" />
                                         )}
                                     </div>
                                 </div>
 
                                 {/* Timeline Container */}
-                                <div 
+                                <div
                                     ref={idx => { if (init.id === initiatives[0]?.id) timelineRef.current = idx as any; }}
                                     className="flex-1 relative h-20 overflow-hidden"
                                     style={{ transform: `translateX(-${scrollOffset}px)` }}
                                 >
                                     {/* Background Grid Lines */}
-                                    <div 
+                                    <div
                                         className="absolute inset-0 flex pointer-events-none"
                                         style={{ width: timelineGroups.length * cellWidth }}
                                     >
                                         {timelineGroups.map((_: any, idx: number) => (
-                                            <div 
-                                                key={idx} 
+                                            <div
+                                                key={idx}
                                                 className="border-r border-slate-100 dark:border-white/5 last:border-r-0"
                                                 style={{ width: cellWidth }}
                                             />
@@ -426,14 +434,13 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                                         onDragEnd={(e, info) => handleDragEnd(init, info)}
                                         onHoverStart={() => setHoveredInitiative(init.id)}
                                         onHoverEnd={() => setHoveredInitiative(null)}
-                                        className={`rounded-lg shadow-md cursor-grab active:cursor-grabbing flex items-center text-white ${barColor} ${statusBorder} text-xs font-medium overflow-hidden ${
-                                            isActive ? 'ring-2 ring-white ring-offset-2' : ''
-                                        }`}
+                                        className={`rounded-lg shadow-md cursor-grab active:cursor-grabbing flex items-center text-white ${barColor} ${statusBorder} text-xs font-medium overflow-hidden ${isActive ? 'ring-2 ring-white ring-offset-2' : ''
+                                            }`}
                                         whileHover={{ scale: 1.01 }}
                                         whileTap={{ scale: 0.99 }}
                                     >
                                         {/* Resize Handle Start */}
-                                        <div 
+                                        <div
                                             className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                             onMouseDown={(e) => {
                                                 e.stopPropagation();
@@ -450,7 +457,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                                         </div>
 
                                         {/* Resize Handle End */}
-                                        <div 
+                                        <div
                                             className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                             onMouseDown={(e) => {
                                                 e.stopPropagation();
@@ -466,9 +473,9 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                                         const depInit = initiatives.find(i => i.id === dep.initiativeId);
                                         if (!depInit) return null;
                                         const depPos = getInitiativePosition(depInit as GanttInitiative);
-                                        
+
                                         return (
-                                            <svg 
+                                            <svg
                                                 key={dep.initiativeId}
                                                 className="absolute pointer-events-none"
                                                 style={{
@@ -479,17 +486,17 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                                                     transform: 'translateY(-50%)'
                                                 }}
                                             >
-                                                <line 
-                                                    x1="0" 
-                                                    y1="10" 
-                                                    x2="100%" 
-                                                    y2="10" 
-                                                    stroke="currentColor" 
+                                                <line
+                                                    x1="0"
+                                                    y1="10"
+                                                    x2="100%"
+                                                    y2="10"
+                                                    stroke="currentColor"
                                                     strokeWidth="2"
                                                     strokeDasharray="4 2"
                                                     className="text-slate-300 dark:text-slate-600"
                                                 />
-                                                <polygon 
+                                                <polygon
                                                     points="100,5 90,10 100,15"
                                                     fill="currentColor"
                                                     className="text-slate-400 dark:text-slate-500"
@@ -517,7 +524,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
 
             {/* Fullscreen overlay */}
             {isFullscreen && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black/50 -z-10"
                     onClick={toggleFullscreen}
                 />

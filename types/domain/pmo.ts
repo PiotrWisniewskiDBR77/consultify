@@ -9,7 +9,7 @@
 // PMO CORE TYPES
 // ==========================================
 
-export type PMODomain = 
+export type PMODomain =
     | 'scope'
     | 'schedule'
     | 'cost'
@@ -57,12 +57,15 @@ export interface PMODomainStatus {
 // PHASE & GATE TYPES
 // ==========================================
 
-export type ProjectPhase = 
-    | 'initiation'
-    | 'planning'
-    | 'execution'
-    | 'monitoring'
-    | 'closure';
+import { ProjectPhase } from './project';
+
+// ==========================================
+// PHASE & GATE TYPES
+// ==========================================
+
+// ProjectPhase is imported from ./project
+
+export type PMOIssue = Issue;
 
 export type GateStatus = 'open' | 'blocked' | 'pending' | 'passed' | 'failed';
 
@@ -132,7 +135,7 @@ export interface GateOutcome {
 
 export type DecisionStatus = 'pending' | 'approved' | 'rejected' | 'deferred' | 'escalated';
 
-export type DecisionCategory = 
+export type DecisionCategory =
     | 'scope_change'
     | 'budget_change'
     | 'schedule_change'
@@ -247,7 +250,7 @@ export interface Risk extends RAIDItem {
     reviewDate?: string;
 }
 
-export type RiskCategory = 
+export type RiskCategory =
     | 'technical'
     | 'schedule'
     | 'cost'
@@ -258,7 +261,7 @@ export type RiskCategory =
     | 'security'
     | 'compliance';
 
-export type RiskResponse = 
+export type RiskResponse =
     | 'avoid'
     | 'mitigate'
     | 'transfer'
@@ -281,7 +284,7 @@ export interface Issue extends RAIDItem {
     escalatedAt?: string;
 }
 
-export type IssueCategory = 
+export type IssueCategory =
     | 'blocker'
     | 'impediment'
     | 'defect'
@@ -306,7 +309,7 @@ export interface Dependency extends RAIDItem {
     lag?: number;
 }
 
-export type DependencyType = 
+export type DependencyType =
     | 'finish_to_start'
     | 'start_to_start'
     | 'finish_to_finish'
@@ -363,7 +366,7 @@ export interface Milestone {
 // CHANGE CONTROL TYPES
 // ==========================================
 
-export type ChangeRequestStatus = 
+export type ChangeRequestStatus =
     | 'draft'
     | 'submitted'
     | 'under_review'
@@ -372,7 +375,7 @@ export type ChangeRequestStatus =
     | 'implemented'
     | 'withdrawn';
 
-export type ChangeRequestType = 
+export type ChangeRequestType =
     | 'scope'
     | 'schedule'
     | 'cost'
@@ -447,7 +450,7 @@ export interface ChangeReviewer {
 // REPORT TYPES
 // ==========================================
 
-export type ReportType = 
+export type ReportType =
     | 'status'
     | 'progress'
     | 'risk'
@@ -535,7 +538,7 @@ export interface ReportSection {
 // LESSONS LEARNED TYPES
 // ==========================================
 
-export type LessonCategory = 
+export type LessonCategory =
     | 'process'
     | 'technical'
     | 'communication'

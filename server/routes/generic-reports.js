@@ -162,7 +162,7 @@ router.delete('/:id', async (req, res) => {
         const { id } = req.params;
         const organizationId = req.user.organizationId;
 
-        import { getDatabase } from '../database/Database.js';
+        import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
         const sql = `DELETE FROM generic_assessment_reports WHERE id = ? AND organization_id = ?`;
 

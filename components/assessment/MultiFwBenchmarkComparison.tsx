@@ -211,7 +211,7 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
 
         const categoryComparison: Record<string, any> = {};
         const labels = CATEGORY_LABELS[framework] || {};
-        
+
         Object.entries(scoreResult.categories || {}).forEach(([catId, catScore]) => {
             const scoreValue = typeof catScore === 'number' ? catScore : 0;
             const benchmark = industryAverage + (Math.random() - 0.5) * 0.8;
@@ -240,9 +240,9 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
             lastUpdated: '2024-Q4',
             percentile: Math.min(99, Math.max(1, percentile)),
             percentileLabel: percentile >= 90 ? 'Industry Leader' :
-                            percentile >= 75 ? 'Above Average' :
-                            percentile >= 50 ? 'Average' :
-                            percentile >= 25 ? 'Below Average' : 'Laggard',
+                percentile >= 75 ? 'Above Average' :
+                    percentile >= 50 ? 'Average' :
+                        percentile >= 25 ? 'Below Average' : 'Laggard',
             industryAverage: Math.round(industryAverage * 10) / 10,
             gapToAverage: Math.round((scoreResult.overall - industryAverage) * 10) / 10,
             categoryComparison,
@@ -254,7 +254,7 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
     // Prepare radar chart data
     const radarData = useMemo(() => {
         if (!benchmarkData) return [];
-        
+
         const labels = CATEGORY_LABELS[framework] || {};
         return Object.entries(benchmarkData.categoryComparison).map(([catId, data]) => ({
             category: labels[catId] || catId,
@@ -266,7 +266,7 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
     // Prepare bar chart data
     const barData = useMemo(() => {
         if (!benchmarkData) return [];
-        
+
         const labels = CATEGORY_LABELS[framework] || {};
         return Object.entries(benchmarkData.categoryComparison).map(([catId, data]) => ({
             name: labels[catId] || catId,
@@ -382,9 +382,8 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
                             ) : (
                                 <TrendingDown className="w-5 h-5 text-red-500" />
                             )}
-                            <span className={`text-lg font-semibold ${
-                                benchmarkData.gapToAverage >= 0 ? 'text-green-500' : 'text-red-500'
-                            }`}>
+                            <span className={`text-lg font-semibold ${benchmarkData.gapToAverage >= 0 ? 'text-green-500' : 'text-red-500'
+                                }`}>
                                 {benchmarkData.gapToAverage > 0 ? '+' : ''}{benchmarkData.gapToAverage}
                             </span>
                         </div>
@@ -434,12 +433,12 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
                         <ResponsiveContainer width="100%" height="100%">
                             <RadarChart data={radarData}>
                                 <PolarGrid stroke="#374151" />
-                                <PolarAngleAxis 
-                                    dataKey="category" 
+                                <PolarAngleAxis
+                                    dataKey="category"
                                     tick={{ fill: '#6B7280', fontSize: 11 }}
                                 />
-                                <PolarRadiusAxis 
-                                    angle={90} 
+                                <PolarRadiusAxis
+                                    angle={90}
                                     domain={[0, 5]}
                                     tick={{ fill: '#6B7280', fontSize: 10 }}
                                 />
@@ -473,22 +472,22 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={barData} layout="vertical">
                                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                                <XAxis 
-                                    type="number" 
+                                <XAxis
+                                    type="number"
                                     domain={[-2, 2]}
                                     tick={{ fill: '#6B7280', fontSize: 10 }}
                                 />
-                                <YAxis 
-                                    type="category" 
-                                    dataKey="name" 
+                                <YAxis
+                                    type="category"
+                                    dataKey="name"
                                     width={100}
                                     tick={{ fill: '#6B7280', fontSize: 11 }}
                                 />
                                 <Tooltip
-                                    formatter={(value: number) => [
+                                    formatter={(value: any) => [
                                         value > 0 ? `+${value}` : value,
                                         'Gap'
-                                    ] as [string | number, string]}
+                                    ] as any}
                                 />
                                 <Bar dataKey="gap" radius={[0, 4, 4, 0]}>
                                     {barData.map((entry, index) => (
@@ -560,8 +559,8 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
             <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-navy-900 rounded-lg">
                 <Info className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Benchmark data is based on aggregated industry assessments and may not reflect 
-                    the most recent market conditions. Sample sizes vary by industry and region. 
+                    Benchmark data is based on aggregated industry assessments and may not reflect
+                    the most recent market conditions. Sample sizes vary by industry and region.
                     Use these comparisons as guidance rather than absolute measures.
                 </p>
             </div>

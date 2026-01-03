@@ -14,11 +14,11 @@ interface SwimLaneData {
     icon?: 'user' | 'building' | 'team';
 }
 
-export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(({ 
-    data, 
+export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(({
+    data,
     selected,
     isConnectable
-}) => {
+}: any) => {
     const { label, color = 'blue', icon = 'building' } = data;
 
     const colorClasses = {
@@ -47,12 +47,12 @@ export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(({
         team: Users
     };
 
-    const Icon = icons[icon];
+    const Icon = (icons as any)[icon];
 
     return (
         <>
             {/* Node Resizer - allows resizing the swimlane */}
-            <NodeResizer 
+            <NodeResizer
                 color={selected ? '#3b82f6' : '#64748b'}
                 isVisible={selected}
                 minWidth={300}
@@ -62,15 +62,15 @@ export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(({
             <div
                 className={`
                     w-full h-full min-w-[300px] min-h-[100px] rounded-lg border-2
-                    transition-all duration-200 ${colorClasses[color]}
+                    transition-all duration-200 ${(colorClasses as any)[color]}
                     ${selected ? 'ring-2 ring-blue-400/30' : ''}
                 `}
             >
                 {/* Lane Header */}
-                <div 
+                <div
                     className={`
                         absolute left-0 top-0 bottom-0 w-10 rounded-l-lg border-r-2
-                        flex items-center justify-center ${headerColors[color]}
+                        flex items-center justify-center ${(headerColors as any)[color]}
                     `}
                 >
                     <div className="flex flex-col items-center gap-2 -rotate-90 whitespace-nowrap">
@@ -109,6 +109,7 @@ export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(({
 SwimLaneNode.displayName = 'SwimLaneNode';
 
 export default SwimLaneNode;
+
 
 
 

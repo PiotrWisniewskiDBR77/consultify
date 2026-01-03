@@ -1,11 +1,10 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { createClient } = require('redis');
+import { createClient } from 'redis';
 
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
 console.log('[Redis] Initializing client...');
 
-let client;
+let client: any;
 
 if (process.env.MOCK_REDIS === 'true') {
     console.log('[Redis] Using Mock Client');
@@ -27,7 +26,7 @@ if (process.env.MOCK_REDIS === 'true') {
         url: redisUrl
     });
 
-    client.on('error', (err) => console.error('[Redis] Client Error', err));
+    client.on('error', (err: any) => console.error('[Redis] Client Error', err));
     client.on('connect', () => console.log('[Redis] Connected'));
 
     // Connect immediately
@@ -42,4 +41,4 @@ if (process.env.MOCK_REDIS === 'true') {
     })();
 }
 
-module.exports = client;
+export default client;

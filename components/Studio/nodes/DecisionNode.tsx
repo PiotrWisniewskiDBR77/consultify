@@ -17,7 +17,7 @@ export const DecisionNode: React.FC<NodeProps<DecisionData>> = memo(({
     data, 
     selected,
     isConnectable
-}) => {
+}: any) => {
     const { label, yesLabel = 'Yes', noLabel = 'No' } = data;
 
     return (
@@ -77,6 +77,7 @@ export const DecisionNode: React.FC<NodeProps<DecisionData>> = memo(({
 DecisionNode.displayName = 'DecisionNode';
 
 export default DecisionNode;
+
 
 
 

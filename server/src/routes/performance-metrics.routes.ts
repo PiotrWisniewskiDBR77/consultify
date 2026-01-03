@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const performance_metricsRoutesJSPromise = (async () => {
-    const module = await import('../../routes/performance-metrics.js');
-    return module.default || module;
-})();
-const performance_metricsRoutesJS = performance_metricsRoutesJSPromise;;
+const module = await import('../../routes/performance-metrics.js');
+const performance_metricsRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof performance_metricsRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof performance_metricsRoutesJS === 'function' || (performance_metricsRoutesJS && typeof performance_metricsRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(performance_metricsRoutesJS);
-} else if (performance_metricsRoutesJS.default) {
-    // If it has a default export
-    router.use(performance_metricsRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(performance_metricsRoutesJS);
+    // Fallback or error
+    console.error('performance-metrics.js did not export a valid router');
 }
 
 export default router;

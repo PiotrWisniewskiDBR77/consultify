@@ -43,10 +43,10 @@ export const useUsageLimits = () => {
             setState(prev => ({ ...prev, isLoading: true, error: null }));
 
             // Fetch billing/usage data
-            const billingData = await Api.getOrganizationBilling(currentUser.organizationId);
-            
-            // Calculate usage percentages
-            const usage = billingData?.usage || {};
+            const billing = await (Api as any).getOrganizationBillingDetails(currentUser.organizationId);
+
+            // Transform billing plan limits to UsageLimits format
+            const usage = billing?.usage || {}; // Assuming 'billing' now directly contains the usage object or similar structure
             const limits: UsageLimits = {
                 projects: {
                     current: usage.projectsUsed || 0,
@@ -149,6 +149,7 @@ export const useUsageLimits = () => {
 };
 
 export default useUsageLimits;
+
 
 
 

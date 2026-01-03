@@ -5,10 +5,10 @@
  */
 
 import React from 'react';
-import { 
-    CheckCircle2, 
-    Clock, 
-    AlertTriangle, 
+import {
+    CheckCircle2,
+    Clock,
+    AlertTriangle,
     HelpCircle,
     CalendarDays,
     Sparkles
@@ -90,16 +90,16 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({
             <MetricCardsGrid metrics={metrics} columns={4} />
 
             {/* AI Highlights & Concerns */}
-            {(content.aiHighlights?.length > 0 || content.aiConcerns?.length > 0) && (
+            {(((content as any).aiHighlights?.length ?? 0) > 0 || ((content as any).aiConcerns?.length ?? 0) > 0) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {content.aiHighlights && content.aiHighlights.length > 0 && (
+                    {(content as any).aiHighlights && (content as any).aiHighlights.length > 0 && (
                         <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded-xl border border-emerald-200 dark:border-emerald-500/20 p-4">
                             <h3 className="flex items-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400 mb-2">
                                 <CheckCircle2 size={16} />
                                 Highlights
                             </h3>
                             <ul className="space-y-1">
-                                {content.aiHighlights.map((highlight, idx) => (
+                                {(content as any).aiHighlights.map((highlight: string, idx: number) => (
                                     <li key={idx} className="text-sm text-emerald-800 dark:text-emerald-300">
                                         • {highlight}
                                     </li>
@@ -107,14 +107,14 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({
                             </ul>
                         </div>
                     )}
-                    {content.aiConcerns && content.aiConcerns.length > 0 && (
+                    {(content as any).aiConcerns && (content as any).aiConcerns.length > 0 && (
                         <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-500/20 p-4">
                             <h3 className="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-400 mb-2">
                                 <AlertTriangle size={16} />
                                 Concerns
                             </h3>
                             <ul className="space-y-1">
-                                {content.aiConcerns.map((concern, idx) => (
+                                {(content as any).aiConcerns.map((concern: string, idx: number) => (
                                     <li key={idx} className="text-sm text-amber-800 dark:text-amber-300">
                                         • {concern}
                                     </li>
@@ -245,11 +245,10 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({
                                             {project.tasksCompleted}/{project.tasksTotal}
                                         </td>
                                         <td className="px-4 py-3 text-center">
-                                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                                project.blockers > 0 
-                                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
-                                                    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                            }`}>
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${project.blockers > 0
+                                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                }`}>
                                                 {project.blockers}
                                             </span>
                                         </td>
@@ -276,6 +275,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({
 };
 
 export default TeamMeetingReport;
+
 
 
 

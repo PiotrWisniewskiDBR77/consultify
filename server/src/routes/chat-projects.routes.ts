@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const chat_projectsRoutesJSPromise = (async () => {
-    const module = await import('../../routes/chat-projects.js');
-    return module.default || module;
-})();
-const chat_projectsRoutesJS = chat_projectsRoutesJSPromise;;
+const module = await import('../../routes/chat-projects.js');
+const chat_projectsRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof chat_projectsRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof chat_projectsRoutesJS === 'function' || (chat_projectsRoutesJS && typeof chat_projectsRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(chat_projectsRoutesJS);
-} else if (chat_projectsRoutesJS.default) {
-    // If it has a default export
-    router.use(chat_projectsRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(chat_projectsRoutesJS);
+    // Fallback or error
+    console.error('chat-projects.js did not export a valid router');
 }
 
 export default router;

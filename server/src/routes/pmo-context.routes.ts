@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const pmo_contextRoutesJSPromise = (async () => {
-    const module = await import('../../routes/pmo-context.js');
-    return module.default || module;
-})();
-const pmo_contextRoutesJS = pmo_contextRoutesJSPromise;;
+const module = await import('../../routes/pmo-context.js');
+const pmo_contextRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof pmo_contextRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof pmo_contextRoutesJS === 'function' || (pmo_contextRoutesJS && typeof pmo_contextRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(pmo_contextRoutesJS);
-} else if (pmo_contextRoutesJS.default) {
-    // If it has a default export
-    router.use(pmo_contextRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(pmo_contextRoutesJS);
+    // Fallback or error
+    console.error('pmo-context.js did not export a valid router');
 }
 
 export default router;

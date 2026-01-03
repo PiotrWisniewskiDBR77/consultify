@@ -18,6 +18,7 @@ import {
     RefreshCw,
     Sparkles
 } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import type { EmailTemplate, ContentCategory, ContentTag, EmailTemplateStatus } from '../../types';
 
 interface EmailTemplateEditorProps {
@@ -89,8 +90,8 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
         const resolveVariables = (content: string) => {
             return content.replace(/\{\{(\w+(?:\.\w+)*)\}\}/g, (match, path) => {
                 const value = path.split('.').reduce((obj: Record<string, unknown>, key: string) => {
-                    return obj && (obj as Record<string, unknown>)[key] !== undefined 
-                        ? (obj as Record<string, unknown>)[key] 
+                    return obj && (obj as Record<string, unknown>)[key] !== undefined
+                        ? (obj as Record<string, unknown>)[key]
                         : null;
                 }, testData as Record<string, unknown>);
                 return value !== null ? String(value) : match;
@@ -517,33 +518,30 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                         <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1">
                             <button
                                 onClick={() => setViewMode('html')}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                                    viewMode === 'html'
-                                        ? 'bg-pink-500/20 text-pink-400'
-                                        : 'text-slate-400 hover:text-white'
-                                }`}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'html'
+                                    ? 'bg-pink-500/20 text-pink-400'
+                                    : 'text-slate-400 hover:text-white'
+                                    }`}
                             >
                                 <Type size={14} />
                                 HTML
                             </button>
                             <button
                                 onClick={() => setViewMode('preview')}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                                    viewMode === 'preview'
-                                        ? 'bg-pink-500/20 text-pink-400'
-                                        : 'text-slate-400 hover:text-white'
-                                }`}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'preview'
+                                    ? 'bg-pink-500/20 text-pink-400'
+                                    : 'text-slate-400 hover:text-white'
+                                    }`}
                             >
                                 <Eye size={14} />
                                 Preview
                             </button>
                             <button
                                 onClick={() => setViewMode('code')}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                                    viewMode === 'code'
-                                        ? 'bg-pink-500/20 text-pink-400'
-                                        : 'text-slate-400 hover:text-white'
-                                }`}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'code'
+                                    ? 'bg-pink-500/20 text-pink-400'
+                                    : 'text-slate-400 hover:text-white'
+                                    }`}
                             >
                                 <Code size={14} />
                                 Code
@@ -554,33 +552,30 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                             <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1">
                                 <button
                                     onClick={() => setPreviewDevice('desktop')}
-                                    className={`p-2 rounded-md transition-colors ${
-                                        previewDevice === 'desktop'
-                                            ? 'bg-pink-500/20 text-pink-400'
-                                            : 'text-slate-400 hover:text-white'
-                                    }`}
+                                    className={`p-2 rounded-md transition-colors ${previewDevice === 'desktop'
+                                        ? 'bg-pink-500/20 text-pink-400'
+                                        : 'text-slate-400 hover:text-white'
+                                        }`}
                                     title="Desktop"
                                 >
                                     <Monitor size={14} />
                                 </button>
                                 <button
                                     onClick={() => setPreviewDevice('tablet')}
-                                    className={`p-2 rounded-md transition-colors ${
-                                        previewDevice === 'tablet'
-                                            ? 'bg-pink-500/20 text-pink-400'
-                                            : 'text-slate-400 hover:text-white'
-                                    }`}
+                                    className={`p-2 rounded-md transition-colors ${previewDevice === 'tablet'
+                                        ? 'bg-pink-500/20 text-pink-400'
+                                        : 'text-slate-400 hover:text-white'
+                                        }`}
                                     title="Tablet"
                                 >
                                     <Tablet size={14} />
                                 </button>
                                 <button
                                     onClick={() => setPreviewDevice('mobile')}
-                                    className={`p-2 rounded-md transition-colors ${
-                                        previewDevice === 'mobile'
-                                            ? 'bg-pink-500/20 text-pink-400'
-                                            : 'text-slate-400 hover:text-white'
-                                    }`}
+                                    className={`p-2 rounded-md transition-colors ${previewDevice === 'mobile'
+                                        ? 'bg-pink-500/20 text-pink-400'
+                                        : 'text-slate-400 hover:text-white'
+                                        }`}
                                     title="Mobile"
                                 >
                                     <Smartphone size={14} />
@@ -622,7 +617,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                                     {/* Email body */}
                                     <div
                                         className="email-preview"
-                                        dangerouslySetInnerHTML={{ __html: previewHtml }}
+                                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewHtml) }}
                                     />
                                 </div>
                             </div>
@@ -741,6 +736,7 @@ function getDefaultHtmlTemplate(): string {
 }
 
 export default EmailTemplateEditor;
+
 
 
 

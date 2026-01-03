@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const statusRoutesJSPromise = (async () => {
-    const module = await import('../../routes/status.js');
-    return module.default || module;
-})();
-const statusRoutesJS = statusRoutesJSPromise;;
+const module = await import('../../routes/status.js');
+const statusRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof statusRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof statusRoutesJS === 'function' || (statusRoutesJS && typeof statusRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(statusRoutesJS);
-} else if (statusRoutesJS.default) {
-    // If it has a default export
-    router.use(statusRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(statusRoutesJS);
+    // Fallback or error
+    console.error('status.js did not export a valid router');
 }
 
 export default router;

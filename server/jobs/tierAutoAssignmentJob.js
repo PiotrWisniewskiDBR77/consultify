@@ -11,7 +11,7 @@
  * - REASONING: 200000+ tokens/month (manual only by default)
  */
 
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 
@@ -440,6 +440,7 @@ class TierAutoAssignmentJob {
 const tierAutoAssignmentJob = new TierAutoAssignmentJob();
 
 export default tierAutoAssignmentJob;
+
 
 
 

@@ -57,6 +57,7 @@ const CalloutComponent: React.FC<{
     node: { attrs: CalloutAttrs };
     updateAttributes: (attrs: Partial<CalloutAttrs>) => void;
     selected: boolean;
+    children?: React.ReactNode;
 }> = ({ node, updateAttributes, selected, children }) => {
     const attrs = node.attrs;
     const style = CALLOUT_STYLES[attrs.type || 'info'];
@@ -64,49 +65,49 @@ const CalloutComponent: React.FC<{
 
     return (
         <NodeViewWrapper
-      className= {`premium-callout ${style.bg} ${style.border} ${selected ? 'ring-2 ring-blue-500' : ''}`
-}
-    >
-    <div className="flex items-start gap-3" >
-        <Icon className={ `w-5 h-5 mt-0.5 flex-shrink-0 ${style.iconColor}` } />
-            < div className = "flex-1 min-w-0" >
-            {
-                attrs.title && (
-                    <div className="font-semibold text-slate-900 dark:text-white mb-1">
-                        { attrs.title }
-                        </div>
-          )
+            className={`premium-callout ${style.bg} ${style.border} ${selected ? 'ring-2 ring-blue-500' : ''}`
             }
-                < div className = "text-slate-700 dark:text-slate-300 prose-sm" >
-                    { children }
+        >
+            <div className="flex items-start gap-3" >
+                <Icon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${style.iconColor}`} />
+                < div className="flex-1 min-w-0" >
+                    {
+                        attrs.title && (
+                            <div className="font-semibold text-slate-900 dark:text-white mb-1">
+                                {attrs.title}
+                            </div>
+                        )
+                    }
+                    < div className="text-slate-700 dark:text-slate-300 prose-sm" >
+                        {children}
                     </div>
-                    </div>
-                    </div>
+                </div>
+            </div>
 
-{/* Type selector on hover */ }
-{
-    selected && (
-        <div className="absolute top-2 right-2 flex gap-1" >
-            {(Object.keys(CALLOUT_STYLES) as CalloutAttrs['type'][]).map((type) => {
-                const TypeIcon = CALLOUT_STYLES[type].icon;
-                return (
-                    <button
-                key= { type }
-                onClick = {() => updateAttributes({ type })
-            }
-                className = {`p-1.5 rounded ${attrs.type === type
-                        ? 'bg-slate-200 dark:bg-slate-600'
-                        : 'hover:bg-slate-100 dark:hover:bg-slate-700'
-                    }`}
-              >
-    <TypeIcon className={ `w-4 h-4 ${CALLOUT_STYLES[type].iconColor}` } />
-        </button>
-            );
-          })}
-</div>
-      )}
-</NodeViewWrapper>
-  );
+            {/* Type selector on hover */}
+            {
+                selected && (
+                    <div className="absolute top-2 right-2 flex gap-1" >
+                        {(Object.keys(CALLOUT_STYLES) as CalloutAttrs['type'][]).map((type) => {
+                            const TypeIcon = CALLOUT_STYLES[type].icon;
+                            return (
+                                <button
+                                    key={type}
+                                    onClick={() => updateAttributes({ type })
+                                    }
+                                    className={`p-1.5 rounded ${attrs.type === type
+                                        ? 'bg-slate-200 dark:bg-slate-600'
+                                        : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                                        }`}
+                                >
+                                    <TypeIcon className={`w-4 h-4 ${CALLOUT_STYLES[type].iconColor}`} />
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
+        </NodeViewWrapper>
+    );
 };
 
 export const CalloutExtension = Node.create({
@@ -132,7 +133,7 @@ export const CalloutExtension = Node.create({
     },
 
     addNodeView() {
-        return ReactNodeViewRenderer(CalloutComponent);
+        return ReactNodeViewRenderer(CalloutComponent as any);
     }
 });
 

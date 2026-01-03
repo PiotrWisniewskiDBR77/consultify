@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const myWorkRoutesJSPromise = (async () => {
-    const module = await import('../../routes/myWork.js');
-    return module.default || module;
-})();
-const myWorkRoutesJS = myWorkRoutesJSPromise;;
+const module = await import('../../routes/myWork.js');
+const myWorkRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof myWorkRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof myWorkRoutesJS === 'function' || (myWorkRoutesJS && typeof myWorkRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(myWorkRoutesJS);
-} else if (myWorkRoutesJS.default) {
-    // If it has a default export
-    router.use(myWorkRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(myWorkRoutesJS);
+    // Fallback or error
+    console.error('myWork.js did not export a valid router');
 }
 
 export default router;

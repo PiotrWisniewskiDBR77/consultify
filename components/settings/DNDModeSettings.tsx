@@ -10,7 +10,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../../types';
 import { useTranslation } from 'react-i18next';
-import { 
+import {
     Moon,
     Clock,
     Save,
@@ -34,9 +34,9 @@ const DND_PRESETS = [
     { label: 'Until tomorrow 9 AM', hours: null, untilTomorrow: true },
 ] as const;
 
-export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ 
-    currentUser, 
-    onUpdateUser 
+export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({
+    currentUser,
+    onUpdateUser
 }) => {
     const { t } = useTranslation();
     const [dndEnabled, setDndEnabled] = useState(false);
@@ -62,15 +62,15 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({
     const handlePreset = (preset: typeof DND_PRESETS[number]) => {
         const now = new Date();
         let until: Date;
-        
-        if (preset.untilTomorrow) {
+
+        if ('untilTomorrow' in preset && preset.untilTomorrow) {
             until = new Date(now);
             until.setDate(until.getDate() + 1);
             until.setHours(9, 0, 0, 0);
         } else {
             until = new Date(now.getTime() + (preset.hours! * 60 * 60 * 1000));
         }
-        
+
         setDndUntil(until.toISOString());
         setDndEnabled(true);
     };
@@ -78,16 +78,16 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({
     const handleSave = async () => {
         setIsSaving(true);
         setSaveStatus('idle');
-        
+
         try {
             await Api.put('/settings/notifications/dnd', {
                 enabled: dndEnabled,
                 until: dndEnabled ? dndUntil : null
             });
-            
+
             setSaveStatus('success');
             toast.success(t('settings.notifications.dnd.saved', 'DND mode updated'));
-            
+
             setTimeout(() => setSaveStatus('idle'), 2000);
         } catch (error: any) {
             setSaveStatus('error');
@@ -222,6 +222,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({
 };
 
 export default DNDModeSettings;
+
 
 
 

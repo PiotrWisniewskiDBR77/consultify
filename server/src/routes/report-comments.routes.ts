@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const report_commentsRoutesJSPromise = (async () => {
-    const module = await import('../../routes/report-comments.js');
-    return module.default || module;
-})();
-const report_commentsRoutesJS = report_commentsRoutesJSPromise;;
+const module = await import('../../routes/report-comments.js');
+const report_commentsRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof report_commentsRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof report_commentsRoutesJS === 'function' || (report_commentsRoutesJS && typeof report_commentsRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(report_commentsRoutesJS);
-} else if (report_commentsRoutesJS.default) {
-    // If it has a default export
-    router.use(report_commentsRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(report_commentsRoutesJS);
+    // Fallback or error
+    console.error('report-comments.js did not export a valid router');
 }
 
 export default router;

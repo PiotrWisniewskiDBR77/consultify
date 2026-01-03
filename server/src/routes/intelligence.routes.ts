@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const intelligenceRoutesJSPromise = (async () => {
-    const module = await import('../../routes/intelligence.js');
-    return module.default || module;
-})();
-const intelligenceRoutesJS = intelligenceRoutesJSPromise;;
+const module = await import('../../routes/intelligence.js');
+const intelligenceRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof intelligenceRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof intelligenceRoutesJS === 'function' || (intelligenceRoutesJS && typeof intelligenceRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(intelligenceRoutesJS);
-} else if (intelligenceRoutesJS.default) {
-    // If it has a default export
-    router.use(intelligenceRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(intelligenceRoutesJS);
+    // Fallback or error
+    console.error('intelligence.js did not export a valid router');
 }
 
 export default router;

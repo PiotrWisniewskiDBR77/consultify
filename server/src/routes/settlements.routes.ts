@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const settlementsRoutesJSPromise = (async () => {
-    const module = await import('../../routes/settlements.js');
-    return module.default || module;
-})();
-const settlementsRoutesJS = settlementsRoutesJSPromise;;
+const module = await import('../../routes/settlements.js');
+const settlementsRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof settlementsRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof settlementsRoutesJS === 'function' || (settlementsRoutesJS && typeof settlementsRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(settlementsRoutesJS);
-} else if (settlementsRoutesJS.default) {
-    // If it has a default export
-    router.use(settlementsRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(settlementsRoutesJS);
+    // Fallback or error
+    console.error('settlements.js did not export a valid router');
 }
 
 export default router;

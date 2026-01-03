@@ -148,7 +148,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
             if (year <= 2) {
                 cumulativeInvestment += investmentPerYear;
             }
-            
+
             // Benefits start in year 2 and grow
             if (year >= 1) {
                 const benefitMultiplier = Math.min(1, (year - 1) * 0.4); // Ramp up to full benefits
@@ -190,7 +190,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                         {isPolish ? 'Oszacowanie orientacyjne' : 'Indicative Estimates'}
                     </p>
                     <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
-                        {isPolish 
+                        {isPolish
                             ? 'Poniższe wartości są szacunkowe i mogą różnić się w zależności od specyfiki organizacji. Szczegółowe budżetowanie powinno być przeprowadzone w ramach planowania projektu.'
                             : 'The values below are estimates and may vary based on organization specifics. Detailed budgeting should be conducted during project planning.'
                         }
@@ -256,7 +256,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                         {formatCurrency(Math.abs(metrics.npv), currency)}
                     </div>
                     <div className="text-xs opacity-75 mt-2">
-                        {metrics.npv >= 0 
+                        {metrics.npv >= 0
                             ? (isPolish ? 'Dodatnia wartość netto' : 'Positive net value')
                             : (isPolish ? 'Ujemna wartość netto' : 'Negative net value')
                         }
@@ -272,16 +272,16 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                 <ResponsiveContainer width="100%" height={300}>
                     <AreaChart data={roiData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-white/10" />
-                        <XAxis 
-                            dataKey="year" 
+                        <XAxis
+                            dataKey="year"
                             tick={{ fill: '#64748b', fontSize: 12 }}
                         />
-                        <YAxis 
+                        <YAxis
                             tick={{ fill: '#64748b', fontSize: 12 }}
                             tickFormatter={(value) => formatCurrency(Math.abs(value), '')}
                         />
-                        <Tooltip 
-                            formatter={(value: number) => [formatCurrency(Math.abs(value), currency), '']}
+                        <Tooltip
+                            formatter={(value: any) => [formatCurrency(Math.abs(Number(value)), currency), ''] as any}
                             contentStyle={{
                                 backgroundColor: 'white',
                                 border: '1px solid #e2e8f0',
@@ -363,7 +363,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                                                 {formatCurrency(investment.minAmount, currency)} - {formatCurrency(investment.maxAmount, currency)}
                                             </span>
                                         </div>
-                                        
+
                                         {/* Progress bar */}
                                         <div className="h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                                             <motion.div
@@ -395,7 +395,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                                 </span>
                             </div>
                             <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                {isPolish ? 'Średnio' : 'Average'}: {formatCurrency(totals.avgTotal, currency)} 
+                                {isPolish ? 'Średnio' : 'Average'}: {formatCurrency(totals.avgTotal, currency)}
                                 ({formatCurrency(metrics.monthlyBreakdown, currency)}/{isPolish ? 'miesiąc' : 'month'})
                             </p>
                         </div>

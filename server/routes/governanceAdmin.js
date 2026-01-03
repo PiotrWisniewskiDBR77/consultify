@@ -182,7 +182,7 @@ router.get('/users/:id/permissions', requirePermission('PERMISSION_VIEW'), async
         const orgId = req.organizationId;
 
         // Fetch user role (simplified - would normally come from users table)
-        import { getDatabase } from '../database/Database.js';
+        import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
         const user = await new Promise((resolve, reject) => {
             db.get('SELECT role FROM users WHERE id = ?', [userId], (err, row) => {

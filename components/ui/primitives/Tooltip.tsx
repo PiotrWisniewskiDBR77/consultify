@@ -14,18 +14,18 @@ import React, { useState, useRef, useEffect, cloneElement } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 
-export type TooltipPlacement = 
-  | 'top' 
-  | 'top-start' 
+export type TooltipPlacement =
+  | 'top'
+  | 'top-start'
   | 'top-end'
-  | 'bottom' 
-  | 'bottom-start' 
+  | 'bottom'
+  | 'bottom-start'
   | 'bottom-end'
-  | 'left' 
-  | 'left-start' 
+  | 'left'
+  | 'left-start'
   | 'left-end'
-  | 'right' 
-  | 'right-start' 
+  | 'right'
+  | 'right-start'
   | 'right-end';
 
 export interface TooltipProps {
@@ -65,12 +65,12 @@ const placementMap: Record<TooltipPlacement, { x: string; y: string; origin: str
 };
 
 const tooltipVariants: Variants = {
-  hidden: { 
-    opacity: 0, 
+  hidden: {
+    opacity: 0,
     scale: 0.95,
   },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     scale: 1,
     transition: {
       type: 'spring',
@@ -150,7 +150,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
   const handleShow = () => {
     if (disabled || isControlled) return;
-    
+
     clearTimeout(hideTimeoutRef.current);
     showTimeoutRef.current = setTimeout(() => {
       updatePosition();
@@ -160,7 +160,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
   const handleHide = () => {
     if (isControlled) return;
-    
+
     clearTimeout(showTimeoutRef.current);
     hideTimeoutRef.current = setTimeout(() => {
       setIsOpen(false);
@@ -192,34 +192,34 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
   const { x, y, origin } = placementMap[placement];
 
-const child = children as React.ReactElement;
-const childHandlers = child.props as {
-  onMouseEnter?: React.MouseEventHandler;
-  onMouseLeave?: React.MouseEventHandler;
-  onFocus?: React.FocusEventHandler;
-  onBlur?: React.FocusEventHandler;
-};
+  const child = children as React.ReactElement;
+  const childHandlers = child.props as {
+    onMouseEnter?: React.MouseEventHandler;
+    onMouseLeave?: React.MouseEventHandler;
+    onFocus?: React.FocusEventHandler;
+    onBlur?: React.FocusEventHandler;
+  };
 
-// Clone child with ref and handlers
-const trigger = cloneElement(child, {
-  ref: triggerRef,
-  onMouseEnter: (e: React.MouseEvent) => {
-    handleShow();
-    childHandlers.onMouseEnter?.(e);
-  },
-  onMouseLeave: (e: React.MouseEvent) => {
-    handleHide();
-    childHandlers.onMouseLeave?.(e);
-  },
-  onFocus: (e: React.FocusEvent) => {
-    handleShow();
-    childHandlers.onFocus?.(e);
-  },
-  onBlur: (e: React.FocusEvent) => {
-    handleHide();
-    childHandlers.onBlur?.(e);
-  },
-});
+  // Clone child with ref and handlers
+  const trigger = cloneElement(child as any, {
+    ref: triggerRef,
+    onMouseEnter: (e: React.MouseEvent) => {
+      handleShow();
+      childHandlers.onMouseEnter?.(e);
+    },
+    onMouseLeave: (e: React.MouseEvent) => {
+      handleHide();
+      childHandlers.onMouseLeave?.(e);
+    },
+    onFocus: (e: React.FocusEvent) => {
+      handleShow();
+      childHandlers.onFocus?.(e);
+    },
+    onBlur: (e: React.FocusEvent) => {
+      handleHide();
+      childHandlers.onBlur?.(e);
+    },
+  });
 
   return (
     <>
@@ -268,4 +268,3 @@ const trigger = cloneElement(child, {
 };
 
 export default Tooltip;
-

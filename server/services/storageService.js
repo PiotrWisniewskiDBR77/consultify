@@ -6,7 +6,11 @@
 // Dependency injection container (for deterministic unit tests)
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 
 const deps = {
@@ -137,7 +141,7 @@ class StorageService {
     async getUsageByOrganization(orgId) {
         const orgPath = deps.path.join(BASE_UPLOAD_DIR, orgId);
         const totalBytes = await this.getDirectorySize(orgPath);
-        
+
         // Count files
         let fileCount = 0;
         try {
@@ -146,7 +150,7 @@ class StorageService {
         } catch (e) {
             // Ignore errors
         }
-        
+
         return {
             totalBytes: totalBytes || 0,
             fileCount: fileCount || 0

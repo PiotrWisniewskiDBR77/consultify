@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const systemConfigRoutesJSPromise = (async () => {
-    const module = await import('../../routes/systemConfig.js');
-    return module.default || module;
-})();
-const systemConfigRoutesJS = systemConfigRoutesJSPromise;;
+const module = await import('../../routes/systemConfig.js');
+const systemConfigRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof systemConfigRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof systemConfigRoutesJS === 'function' || (systemConfigRoutesJS && typeof systemConfigRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(systemConfigRoutesJS);
-} else if (systemConfigRoutesJS.default) {
-    // If it has a default export
-    router.use(systemConfigRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(systemConfigRoutesJS);
+    // Fallback or error
+    console.error('systemConfig.js did not export a valid router');
 }
 
 export default router;

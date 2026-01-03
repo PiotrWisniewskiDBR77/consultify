@@ -10,7 +10,7 @@
  */
 
 import { Router, Response } from 'express';
-import { requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
+import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import type { AuthRequest } from '../middleware/auth.middleware.js';

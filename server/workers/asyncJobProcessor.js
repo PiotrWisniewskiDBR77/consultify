@@ -50,7 +50,7 @@ const AsyncJobProcessor = {
 
             // Link job_id to action_execution if created
             if (execResult.execution_id) {
-                import { getDatabase } from '../database/Database.js';
+                import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
                 await new Promise((resolve, reject) => {
                     db.run(
@@ -188,7 +188,7 @@ const db = getDatabase();
 
             // Update ai_playbook_run_steps with job_id if step was executed
             if (advanceResult.step && advanceResult.step.id) {
-                import { getDatabase } from '../database/Database.js';
+                import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
                 await new Promise((resolve, reject) => {
                     db.run(

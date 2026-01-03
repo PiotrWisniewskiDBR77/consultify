@@ -7,7 +7,7 @@
 import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 const { aiLogger } = import('ai/logger.js');
 
@@ -399,6 +399,7 @@ async function getOrganizationBudget(organizationId) {
 }
 
 export default router;
+
 
 
 

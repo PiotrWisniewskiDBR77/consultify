@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const videosRoutesJSPromise = (async () => {
-    const module = await import('../../routes/videos.js');
-    return module.default || module;
-})();
-const videosRoutesJS = videosRoutesJSPromise;;
+const module = await import('../../routes/videos.js');
+const videosRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof videosRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof videosRoutesJS === 'function' || (videosRoutesJS && typeof videosRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(videosRoutesJS);
-} else if (videosRoutesJS.default) {
-    // If it has a default export
-    router.use(videosRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(videosRoutesJS);
+    // Fallback or error
+    console.error('videos.js did not export a valid router');
 }
 
 export default router;

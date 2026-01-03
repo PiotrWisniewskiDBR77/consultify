@@ -49,7 +49,7 @@ const runDailyTrialTasks = async () => {
  * This cleans up old counter records older than 30 days
  */
 const cleanupOldUsageCounters = async () => {
-    import { getDatabase } from '../database/Database.js';
+    import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
     const cutoffDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 

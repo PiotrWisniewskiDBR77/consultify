@@ -94,10 +94,10 @@ const MenuButton: React.FC<{
     activeSection: SettingsSection;
     showFull: boolean;
     onSectionChange: (section: SettingsSection) => void;
-    t: (key: string, fallback?: string) => string;
+    t: any;
 }> = ({ item, activeSection, showFull, onSectionChange, t }) => {
     const label = t(item.labelKey, item.id.charAt(0).toUpperCase() + item.id.slice(1).replace('-', ' '));
-    
+
     return (
         <button
             onClick={() => onSectionChange(item.id)}
@@ -230,6 +230,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
 };
 
 export default SettingsSidebar;
+
 
 
 

@@ -11,9 +11,9 @@
  * - Comprehensive analytics
  */
 
-const db = require('../../database');
-const { aiLogger } = require('./logger');
-const crypto = require('crypto');
+import db from '../../database.js';
+import { aiLogger } from './logger.js';
+import crypto from 'crypto';
 
 // ============================================================================
 // CONFIGURATION

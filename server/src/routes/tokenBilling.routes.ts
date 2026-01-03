@@ -8,7 +8,7 @@
 import { Router, Response } from 'express';
 import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
 import { verifyAdmin } from '../middleware/admin.middleware.js';
-import { requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
+import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import express from 'express';
 

@@ -100,8 +100,9 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
 
     const fetchAnalytics = useCallback(async () => {
         try {
-            const healthData = await Api.getSystemHealthDetailed();
-            
+            setLoading(true);
+            const healthData = await (Api as any).getSystemHealthDetailed();
+
             // Transform to metrics
             setMetrics([
                 {
@@ -317,11 +318,10 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                     <button
                         key={id}
                         onClick={() => setActiveTab(id as any)}
-                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
-                            activeTab === id
-                                ? 'bg-white/10 text-white border-b-2 border-cyan-500'
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
-                        }`}
+                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${activeTab === id
+                            ? 'bg-white/10 text-white border-b-2 border-cyan-500'
+                            : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            }`}
                     >
                         <Icon className="w-4 h-4" />
                         {label}
@@ -541,11 +541,10 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                                     {scheduledReports.map((report) => (
                                         <div
                                             key={report.id}
-                                            className={`p-4 rounded-xl border transition-colors ${
-                                                report.is_active
-                                                    ? 'bg-white/5 border-white/10 hover:border-white/20'
-                                                    : 'bg-slate-800/30 border-slate-700/50'
-                                            }`}
+                                            className={`p-4 rounded-xl border transition-colors ${report.is_active
+                                                ? 'bg-white/5 border-white/10 hover:border-white/20'
+                                                : 'bg-slate-800/30 border-slate-700/50'
+                                                }`}
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div>
@@ -608,7 +607,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
 // Simple Bar Chart Component
 const SimpleBarChart: React.FC<{ data: ChartData }> = ({ data }) => {
     const maxValue = Math.max(...data.datasets.flatMap(d => d.data));
-    
+
     return (
         <div>
             {/* Legend */}
@@ -620,7 +619,7 @@ const SimpleBarChart: React.FC<{ data: ChartData }> = ({ data }) => {
                     </div>
                 ))}
             </div>
-            
+
             {/* Chart */}
             <div className="flex items-end gap-1 h-32">
                 {data.labels.map((label, i) => (
@@ -752,6 +751,7 @@ const CreateScheduledReportModal: React.FC<{
 };
 
 export default EnterpriseAnalyticsPanel;
+
 
 
 

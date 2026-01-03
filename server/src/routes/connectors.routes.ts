@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const connectorsRoutesJSPromise = (async () => {
-    const module = await import('../../routes/connectors.js');
-    return module.default || module;
-})();
-const connectorsRoutesJS = connectorsRoutesJSPromise;;
+const module = await import('../../routes/connectors.js');
+const connectorsRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof connectorsRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof connectorsRoutesJS === 'function' || (connectorsRoutesJS && typeof connectorsRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(connectorsRoutesJS);
-} else if (connectorsRoutesJS.default) {
-    // If it has a default export
-    router.use(connectorsRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(connectorsRoutesJS);
+    // Fallback or error
+    console.error('connectors.js did not export a valid router');
 }
 
 export default router;

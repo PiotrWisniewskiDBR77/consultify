@@ -22,7 +22,7 @@ const multer = require('multer');
 import verifyToken from '../middleware/authMiddleware.js';
 const { speechToTextService } = import('ai/speechToTextService.js');
 const { textToSpeechService } = import('ai/textToSpeechService.js');
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
 // ============================================================================

@@ -13,11 +13,11 @@ interface MindmapNodeData {
     color?: 'blue' | 'green' | 'amber' | 'red' | 'purple' | 'cyan';
 }
 
-export const MindmapNode: React.FC<NodeProps<MindmapNodeData>> = memo(({ 
-    data, 
+export const MindmapNode: React.FC<NodeProps<MindmapNodeData>> = memo(({
+    data,
     selected,
     isConnectable
-}) => {
+}: any) => {
     const { label, level = 1, color = 'blue' } = data;
 
     // Size based on level
@@ -41,7 +41,7 @@ export const MindmapNode: React.FC<NodeProps<MindmapNodeData>> = memo(({
         <div
             className={`
                 rounded-full border-2 flex items-center justify-center text-center p-2
-                transition-all duration-200 ${sizeClasses[level]} ${colorClasses[color]}
+                transition-all duration-200 ${(sizeClasses as any)[level]} ${(colorClasses as any)[color]}
                 ${selected ? 'ring-2 ring-white/30 ring-offset-2 ring-offset-slate-900' : ''}
             `}
         >
@@ -87,6 +87,7 @@ export const MindmapNode: React.FC<NodeProps<MindmapNodeData>> = memo(({
 MindmapNode.displayName = 'MindmapNode';
 
 export default MindmapNode;
+
 
 
 

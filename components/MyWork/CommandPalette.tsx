@@ -220,7 +220,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         toast.error(t('command.action.error', 'Failed to approve'));
                     }
                 } else {
-                    toast.info(t('command.action.noDecisions', 'No pending decisions'));
+                    toast(t('command.action.noDecisions', 'No pending decisions'), { icon: 'ℹ️' });
                 }
                 onClose();
             }

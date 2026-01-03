@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const metricsRoutesJSPromise = (async () => {
-    const module = await import('../../routes/metrics.js');
-    return module.default || module;
-})();
-const metricsRoutesJS = metricsRoutesJSPromise;;
+const module = await import('../../routes/metrics.js');
+const metricsRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof metricsRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof metricsRoutesJS === 'function' || (metricsRoutesJS && typeof metricsRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(metricsRoutesJS);
-} else if (metricsRoutesJS.default) {
-    // If it has a default export
-    router.use(metricsRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(metricsRoutesJS);
+    // Fallback or error
+    console.error('metrics.js did not export a valid router');
 }
 
 export default router;

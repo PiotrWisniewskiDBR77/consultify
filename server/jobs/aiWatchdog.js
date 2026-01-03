@@ -11,7 +11,7 @@
  * Designed to run every 15-30 minutes in production.
  */
 
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 const PredictiveService = import('predictiveService.js');
 const { getCoordinator } = import('ai/agents.js');
@@ -702,6 +702,7 @@ const AIWatchdog = {
 };
 
 export default AIWatchdog;
+
 
 
 

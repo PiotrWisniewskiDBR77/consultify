@@ -34,7 +34,7 @@ export const ApiManagementPanel: React.FC = () => {
         if (!confirm('Are you sure you want to revoke this API key?')) return;
 
         try {
-            await Api.revokeApiKey(id);
+            await (Api as any).revokeApiKey(id);
             toast.success('API key revoked');
             fetchApiKeys();
         } catch (error) {
@@ -126,6 +126,7 @@ export const ApiManagementPanel: React.FC = () => {
 };
 
 export default ApiManagementPanel;
+
 
 
 

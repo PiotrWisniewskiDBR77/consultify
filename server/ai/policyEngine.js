@@ -11,7 +11,7 @@
  * - Can be globally disabled by SUPERADMIN
  */
 
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
 const PolicyEngine = {

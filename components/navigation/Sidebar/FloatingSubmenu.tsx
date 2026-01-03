@@ -24,15 +24,15 @@ interface FloatingSubmenuProps {
 
 const menuVariants = {
   hidden: { opacity: 0, x: -8, scale: 0.98 },
-  visible: { 
-    opacity: 1, 
-    x: 0, 
+  visible: {
+    opacity: 1,
+    x: 0,
     scale: 1,
     transition: { type: 'spring', stiffness: 500, damping: 30 }
   },
-  exit: { 
-    opacity: 0, 
-    x: -8, 
+  exit: {
+    opacity: 0,
+    x: -8,
     scale: 0.98,
     transition: { duration: 0.15 }
   },
@@ -78,15 +78,15 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
     <AnimatePresence>
       <motion.div
         ref={menuRef}
-        variants={menuVariants}
+        variants={menuVariants as any}
         initial="hidden"
         animate={isPositioned ? "visible" : "hidden"}
         exit="exit"
         className={`
           fixed z-[9999] w-64 py-2
           rounded-2xl
-          ${isDark 
-            ? 'bg-navy-900 border-white/10' 
+          ${isDark
+            ? 'bg-navy-900 border-white/10'
             : 'bg-white border-slate-200'
           }
           border
@@ -100,12 +100,12 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
       >
         {/* Header */}
         {title && (
-          <div 
+          <div
             className={`
               px-4 py-3 text-sm font-semibold
               ${hasItems ? 'border-b mb-1' : ''} 
-              ${isDark 
-                ? 'border-white/10 text-white' 
+              ${isDark
+                ? 'border-white/10 text-white'
                 : 'border-slate-100 text-navy-900'
               }
             `}
@@ -117,7 +117,7 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
         {/* Menu Items */}
         {items.map((item) => {
           const isActive = item.viewId === currentView;
-          
+
           return (
             <motion.button
               key={item.id}
@@ -127,9 +127,9 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
                 w-full flex items-center gap-3 px-4 py-2.5
                 text-sm font-medium text-left
                 transition-colors duration-100
-                ${isActive 
-                  ? isDark 
-                    ? 'bg-primary-900/20 text-primary-300' 
+                ${isActive
+                  ? isDark
+                    ? 'bg-primary-900/20 text-primary-300'
                     : 'bg-primary-50 text-primary-600'
                   : isDark
                     ? 'text-slate-300 hover:bg-white/5 hover:text-white'
@@ -155,6 +155,7 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
 };
 
 export default FloatingSubmenu;
+
 
 
 

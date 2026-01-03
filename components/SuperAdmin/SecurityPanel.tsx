@@ -22,12 +22,10 @@ export const SecurityPanel: React.FC = () => {
         setLoading(true);
         try {
             if (activeTab === 'events') {
-                const data = await Api.getSecurityEvents();
+                const data = await (Api as any).getSecurityEvents();
                 setEvents(data);
-                const statsData = await Api.getSecurityEventStats();
-                setStats(statsData);
             } else {
-                const data = await Api.getComplianceRecords();
+                const data = await (Api as any).getComplianceReport();
                 setComplianceRecords(data);
             }
         } catch (error) {
@@ -69,21 +67,19 @@ export const SecurityPanel: React.FC = () => {
             <div className="flex gap-2 border-b border-white/10">
                 <button
                     onClick={() => setActiveTab('events')}
-                    className={`px-4 py-2 font-medium transition-colors ${
-                        activeTab === 'events'
-                            ? 'text-blue-400 border-b-2 border-blue-400'
-                            : 'text-slate-400 hover:text-white'
-                    }`}
+                    className={`px-4 py-2 font-medium transition-colors ${activeTab === 'events'
+                        ? 'text-blue-400 border-b-2 border-blue-400'
+                        : 'text-slate-400 hover:text-white'
+                        }`}
                 >
                     Security Events
                 </button>
                 <button
                     onClick={() => setActiveTab('compliance')}
-                    className={`px-4 py-2 font-medium transition-colors ${
-                        activeTab === 'compliance'
-                            ? 'text-blue-400 border-b-2 border-blue-400'
-                            : 'text-slate-400 hover:text-white'
-                    }`}
+                    className={`px-4 py-2 font-medium transition-colors ${activeTab === 'compliance'
+                        ? 'text-blue-400 border-b-2 border-blue-400'
+                        : 'text-slate-400 hover:text-white'
+                        }`}
                 >
                     Compliance
                 </button>
@@ -124,12 +120,11 @@ export const SecurityPanel: React.FC = () => {
                                     <div className="flex items-center justify-between">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-2">
-                                                <span className={`px-2 py-1 text-xs rounded ${
-                                                    event.severity === 'CRITICAL' ? 'bg-red-500/20 text-red-400' :
+                                                <span className={`px-2 py-1 text-xs rounded ${event.severity === 'CRITICAL' ? 'bg-red-500/20 text-red-400' :
                                                     event.severity === 'HIGH' ? 'bg-orange-500/20 text-orange-400' :
-                                                    event.severity === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-400' :
-                                                    'bg-green-500/20 text-green-400'
-                                                }`}>
+                                                        event.severity === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                            'bg-green-500/20 text-green-400'
+                                                    }`}>
                                                     {event.severity}
                                                 </span>
                                                 <span className="text-white font-medium">{event.event_type}</span>
@@ -200,6 +195,7 @@ export const SecurityPanel: React.FC = () => {
 };
 
 export default SecurityPanel;
+
 
 
 

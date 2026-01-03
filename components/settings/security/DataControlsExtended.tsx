@@ -79,7 +79,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
     const [saving, setSaving] = useState(false);
     const [exporting, setExporting] = useState<string | null>(null);
     const [deleting, setDeleting] = useState<string | null>(null);
-    
+
     const [retention, setRetention] = useState<DataRetentionSettings>(defaultRetention);
     const [anonymizationEnabled, setAnonymizationEnabled] = useState(false);
     const [anonymizationSchedule, setAnonymizationSchedule] = useState('monthly');
@@ -149,7 +149,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                 category: categoryId,
                 format: exportFormat
             });
-            
+
             if (response.success && response.downloadUrl) {
                 // Trigger download
                 window.open(response.downloadUrl, '_blank');
@@ -216,7 +216,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-data-controls-extended" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -275,13 +275,11 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                         </div>
                         <button
                             onClick={() => setAnonymizationEnabled(!anonymizationEnabled)}
-                            className={`relative w-12 h-6 rounded-full transition-colors ${
-                                anonymizationEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
-                            }`}
+                            className={`relative w-12 h-6 rounded-full transition-colors ${anonymizationEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
+                                }`}
                         >
-                            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                                anonymizationEnabled ? 'left-7' : 'left-1'
-                            }`} />
+                            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${anonymizationEnabled ? 'left-7' : 'left-1'
+                                }`} />
                         </button>
                     </div>
 
@@ -310,7 +308,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                     <Download size={20} className="text-purple-500" />
                     Export Format
                 </h3>
-                
+
                 <div className="flex gap-4">
                     {[
                         { value: 'json', label: 'JSON', icon: FileJson, description: 'Machine-readable format' },
@@ -322,11 +320,10 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                             <button
                                 key={format.value}
                                 onClick={() => setExportFormat(format.value as any)}
-                                className={`flex-1 p-4 rounded-lg border-2 transition-all ${
-                                    exportFormat === format.value
+                                className={`flex-1 p-4 rounded-lg border-2 transition-all ${exportFormat === format.value
                                         ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
                                         : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
-                                }`}
+                                    }`}
                             >
                                 <Icon size={24} className={exportFormat === format.value ? 'text-purple-600' : 'text-slate-400'} />
                                 <p className="font-medium text-slate-900 dark:text-white mt-2">{format.label}</p>
@@ -352,20 +349,19 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                     <Archive size={20} className="text-amber-500" />
                     Data Categories
                 </h3>
-                
+
                 <div className="space-y-3">
                     {dataCategories.map(category => {
                         const Icon = category.icon;
                         const isConfirming = confirmDelete === category.id;
-                        
+
                         return (
                             <div
                                 key={category.id}
-                                className={`p-4 rounded-lg border transition-all ${
-                                    isConfirming 
+                                className={`p-4 rounded-lg border transition-all ${isConfirming
                                         ? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/5'
                                         : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-950'
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -399,11 +395,10 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                                             <button
                                                 onClick={() => handleDelete(category.id)}
                                                 disabled={deleting === category.id}
-                                                className={`p-2 rounded-lg transition-colors ${
-                                                    isConfirming
+                                                className={`p-2 rounded-lg transition-colors ${isConfirming
                                                         ? 'bg-red-600 text-white'
                                                         : 'hover:bg-white dark:hover:bg-white/10 text-red-600'
-                                                }`}
+                                                    }`}
                                                 title={isConfirming ? 'Click again to confirm' : 'Delete'}
                                             >
                                                 {deleting === category.id ? (
@@ -444,7 +439,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                 <p className="text-sm text-slate-500">
                     Transfer your data to other platforms or import data from elsewhere.
                 </p>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <button
                         className="flex items-center gap-3 p-4 border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-950 transition-colors"
@@ -458,7 +453,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                     </button>
                     <button
                         className="flex items-center gap-3 p-4 border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-950 transition-colors"
-                        onClick={() => toast.info('Import wizard coming soon')}
+                        onClick={() => toast('Import wizard coming soon', { icon: 'ℹ️' })}
                     >
                         <Upload size={24} className="text-emerald-600" />
                         <div className="text-left">
@@ -484,6 +479,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
 };
 
 export default DataControlsExtended;
+
 
 
 

@@ -6,7 +6,7 @@
 import express from 'express';
 const router = express.Router();
 import requireAuth from '../middleware/authMiddleware.js';
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
 router.use(requireAuth);
@@ -153,6 +153,7 @@ function getDefaultShortcuts() {
 }
 
 export default router;
+
 
 
 

@@ -13,11 +13,11 @@ interface TextNodeData {
     color?: 'yellow' | 'blue' | 'green' | 'red' | 'purple';
 }
 
-export const TextNode: React.FC<NodeProps<TextNodeData>> = memo(({ 
-    data, 
+export const TextNode: React.FC<NodeProps<TextNodeData>> = memo(({
+    data,
     selected,
     isConnectable
-}) => {
+}: any) => {
     const { label, color = 'yellow' } = data;
 
     const colorClasses = {
@@ -32,7 +32,7 @@ export const TextNode: React.FC<NodeProps<TextNodeData>> = memo(({
         <div
             className={`
                 min-w-[100px] max-w-[200px] p-3 rounded-lg border transition-all duration-200
-                ${colorClasses[color]}
+                ${(colorClasses as any)[color]}
                 ${selected ? 'ring-2 ring-white/30 ring-offset-2 ring-offset-slate-900' : ''}
             `}
         >
@@ -65,6 +65,7 @@ export const TextNode: React.FC<NodeProps<TextNodeData>> = memo(({
 TextNode.displayName = 'TextNode';
 
 export default TextNode;
+
 
 
 

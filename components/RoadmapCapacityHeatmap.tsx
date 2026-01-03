@@ -55,15 +55,16 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
             let totalEffort = 0;
 
             initiatives.forEach(init => {
+                const initAsAny = init as any;
                 let initStart: Date | null = null;
                 let initEnd: Date | null = null;
 
                 // Try to get dates from initiative
-                if (init.plannedStartDate && init.plannedEndDate) {
-                    initStart = new Date(init.plannedStartDate);
-                    initEnd = new Date(init.plannedEndDate);
-                } else if (init.quarter) {
-                    const qIndex = parseInt(init.quarter.replace('Q', '')) - 1;
+                if (initAsAny.plannedStartDate && initAsAny.plannedEndDate) {
+                    initStart = new Date(initAsAny.plannedStartDate);
+                    initEnd = new Date(initAsAny.plannedEndDate);
+                } else if (initAsAny.quarter) {
+                    const qIndex = parseInt(initAsAny.quarter.replace('Q', '')) - 1;
                     initStart = new Date(currentYear, qIndex * 3, 1);
                     initEnd = new Date(currentYear, (qIndex + 1) * 3, 0);
                 }
@@ -109,7 +110,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
         const overloaded = capacityData.filter(d => d.isOverloaded).length;
         const avgUtilization = capacityData.reduce((sum, d) => sum + d.utilizationPercent, 0) / capacityData.length;
         const peakMonth = capacityData.reduce((max, d) => d.utilizationPercent > max.utilizationPercent ? d : max);
-        
+
         return {
             overloadedMonths: overloaded,
             avgUtilization: Math.round(avgUtilization),
@@ -121,7 +122,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
     const yearGroups = useMemo(() => {
         const groups: { year: number; months: CapacityData[] }[] = [];
         let currentYear = -1;
-        
+
         capacityData.forEach(d => {
             if (d.year !== currentYear) {
                 currentYear = d.year;
@@ -165,9 +166,8 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
                 </div>
                 <div className="text-center">
                     <p className="text-xs text-slate-500 dark:text-slate-400">Avg Utilization</p>
-                    <p className={`text-lg font-bold ${
-                        stats.avgUtilization > 100 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
-                    }`}>
+                    <p className={`text-lg font-bold ${stats.avgUtilization > 100 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                        }`}>
                         {stats.avgUtilization}%
                     </p>
                 </div>
@@ -179,9 +179,8 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
                 </div>
                 <div className="text-center">
                     <p className="text-xs text-slate-500 dark:text-slate-400">Overloaded</p>
-                    <p className={`text-lg font-bold ${
-                        stats.overloadedMonths > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
-                    }`}>
+                    <p className={`text-lg font-bold ${stats.overloadedMonths > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                        }`}>
                         {stats.overloadedMonths} months
                     </p>
                 </div>
@@ -199,16 +198,14 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
                                 <div
                                     key={idx}
                                     onClick={() => onMonthClick?.(d.month, d.year)}
-                                    className={`relative group rounded-md p-2 cursor-pointer transition-all hover:ring-2 hover:ring-purple-500 ${
-                                        getUtilizationColor(d.utilizationPercent)
-                                    }`}
+                                    className={`relative group rounded-md p-2 cursor-pointer transition-all hover:ring-2 hover:ring-purple-500 ${getUtilizationColor(d.utilizationPercent)
+                                        }`}
                                 >
                                     <p className="text-[10px] font-medium text-center text-slate-700 dark:text-slate-200">
                                         {d.month}
                                     </p>
-                                    <p className={`text-xs font-bold text-center ${
-                                        d.isOverloaded ? 'text-white' : 'text-slate-600 dark:text-slate-300'
-                                    }`}>
+                                    <p className={`text-xs font-bold text-center ${d.isOverloaded ? 'text-white' : 'text-slate-600 dark:text-slate-300'
+                                        }`}>
                                         {d.utilizationPercent}%
                                     </p>
                                     {d.isOverloaded && (
@@ -266,6 +263,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
 };
 
 export default RoadmapCapacityHeatmap;
+
 
 
 

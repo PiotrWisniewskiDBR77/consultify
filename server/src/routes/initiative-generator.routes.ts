@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const initiative_generatorRoutesJSPromise = (async () => {
-    const module = await import('../../routes/initiative-generator.js');
-    return module.default || module;
-})();
-const initiative_generatorRoutesJS = initiative_generatorRoutesJSPromise;;
+const module = await import('../../routes/initiative-generator.js');
+const initiative_generatorRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof initiative_generatorRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof initiative_generatorRoutesJS === 'function' || (initiative_generatorRoutesJS && typeof initiative_generatorRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(initiative_generatorRoutesJS);
-} else if (initiative_generatorRoutesJS.default) {
-    // If it has a default export
-    router.use(initiative_generatorRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(initiative_generatorRoutesJS);
+    // Fallback or error
+    console.error('initiative-generator.js did not export a valid router');
 }
 
 export default router;

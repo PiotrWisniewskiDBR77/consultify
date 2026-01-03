@@ -110,7 +110,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
   const fetchWebhooks = async () => {
     try {
-      const subscriptions = await Api.getWebhooks();
+      const subscriptions = await (Api as any).getWebhooks();
       const formatted = (subscriptions || []).map((s: any) => ({
         id: s.id,
         name: s.name,
@@ -149,7 +149,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
   const fetchDeliveries = async (webhookId: string) => {
     try {
-      const deliveries = await Api.getWebhookDeliveries(webhookId, 50);
+      const deliveries = await (Api as any).getWebhookDeliveries(webhookId, 50);
       setDeliveries(prev => ({ ...prev, [webhookId]: deliveries || [] }));
     } catch (error) {
       console.error('Failed to fetch deliveries:', error);
@@ -163,7 +163,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
     }
 
     try {
-      await Api.createWebhook({
+      await (Api as any).createWebhook({
         name: newWebhook.name || `Webhook ${Date.now()}`,
         targetUrl: newWebhook.url,
         eventTypes: newWebhook.events,
@@ -197,7 +197,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
     if (!confirm(t('settings.webhooks.deleteConfirm', 'Delete this webhook?'))) return;
 
     try {
-      await Api.deleteWebhook(webhookId);
+      await (Api as any).deleteWebhook(webhookId);
       setWebhooks(prev => prev.filter(w => w.id !== webhookId));
       toast.success(t('settings.webhooks.deleted', 'Webhook deleted'));
     } catch (error) {
@@ -208,7 +208,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
   const testWebhook = async (webhookId: string) => {
     setTestingWebhook(webhookId);
     try {
-      await Api.testWebhook(webhookId, {
+      await (Api as any).testWebhook(webhookId, {
         eventType: 'test.event',
         payload: { test: true, timestamp: new Date().toISOString() }
       });
@@ -224,7 +224,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
   const retryDelivery = async (webhookId: string, deliveryId: string) => {
     try {
-      await Api.retryWebhookDelivery(webhookId, deliveryId);
+      await (Api as any).retryWebhookDelivery(webhookId, deliveryId);
 
       toast.success(t('settings.webhooks.retryStarted', 'Retry started'));
       setTimeout(() => fetchDeliveries(webhookId), 1000);
@@ -238,7 +238,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
     if (!settings) return;
 
     try {
-      await Api.updateWebhook(webhookId, {
+      await (Api as any).updateWebhook(webhookId, {
         signatureSecret: settings.signatureSecret || undefined,
         retryConfig: JSON.stringify(settings.retryConfig),
         filterRules: JSON.stringify(settings.filterRules),

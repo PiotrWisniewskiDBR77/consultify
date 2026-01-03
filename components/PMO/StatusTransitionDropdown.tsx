@@ -7,12 +7,12 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-    ChevronDown, 
-    Check, 
-    AlertTriangle, 
-    XCircle, 
-    Clock, 
+import {
+    ChevronDown,
+    Check,
+    AlertTriangle,
+    XCircle,
+    Clock,
     Rocket,
     Archive,
     Ban,
@@ -26,8 +26,8 @@ import { Api } from '../../services/api';
 import toast from 'react-hot-toast';
 
 // Status colors and icons mapping
-const STATUS_CONFIG: Record<InitiativeStatus, { 
-    color: string; 
+const STATUS_CONFIG: Record<InitiativeStatus, {
+    color: string;
     bgColor: string;
     darkBgColor: string;
     icon: React.ReactNode;
@@ -220,7 +220,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
                         ${isLoading ? 'animate-pulse' : ''}
                     `}
                 >
-                    {React.cloneElement(config.icon as React.ReactElement, { size: iconSize })}
+                    {React.cloneElement(config.icon as any, { size: iconSize })}
                     {showLabel && <span>{config.label}</span>}
                     {!disabled && allowedTransitions.length > 0 && (
                         <ChevronDown size={iconSize} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -274,16 +274,16 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
                     <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
                         <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-2">
-                            {pendingStatus === InitiativeStatus.BLOCKED ? 'Block Initiative' : 
-                             pendingStatus === InitiativeStatus.CANCELLED ? 'Cancel Initiative' : 
-                             'Provide Reason'}
+                            {pendingStatus === InitiativeStatus.BLOCKED ? 'Block Initiative' :
+                                pendingStatus === InitiativeStatus.CANCELLED ? 'Cancel Initiative' :
+                                    'Provide Reason'}
                         </h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                            {pendingStatus === InitiativeStatus.BLOCKED 
-                                ? 'Please provide a reason for blocking this initiative.' 
+                            {pendingStatus === InitiativeStatus.BLOCKED
+                                ? 'Please provide a reason for blocking this initiative.'
                                 : pendingStatus === InitiativeStatus.CANCELLED
-                                ? 'Please provide a reason for cancelling this initiative.'
-                                : 'Please provide additional information for this status change.'}
+                                    ? 'Please provide a reason for cancelling this initiative.'
+                                    : 'Please provide additional information for this status change.'}
                         </p>
                         <textarea
                             value={reason}
@@ -337,15 +337,15 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
                             <div>
                                 <h3 className="text-lg font-bold text-navy-900 dark:text-white">
                                     {pendingStatus === InitiativeStatus.DONE ? 'Complete Initiative' :
-                                     pendingStatus === InitiativeStatus.ARCHIVED ? 'Archive Initiative' :
-                                     'Confirm Status Change'}
+                                        pendingStatus === InitiativeStatus.ARCHIVED ? 'Archive Initiative' :
+                                            'Confirm Status Change'}
                                 </h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    {pendingStatus === InitiativeStatus.DONE 
-                                        ? 'Mark this initiative as completed?' 
+                                    {pendingStatus === InitiativeStatus.DONE
+                                        ? 'Mark this initiative as completed?'
                                         : pendingStatus === InitiativeStatus.ARCHIVED
-                                        ? 'Move this initiative to archive?'
-                                        : `Change status to ${STATUS_CONFIG[pendingStatus]?.label}?`}
+                                            ? 'Move this initiative to archive?'
+                                            : `Change status to ${STATUS_CONFIG[pendingStatus]?.label}?`}
                                 </p>
                             </div>
                         </div>
@@ -362,11 +362,10 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
                             <button
                                 onClick={() => executeTransition(pendingStatus)}
                                 disabled={isLoading}
-                                className={`px-4 py-2 text-white text-sm font-medium rounded-lg disabled:opacity-50 ${
-                                    pendingStatus === InitiativeStatus.DONE 
-                                        ? 'bg-green-600 hover:bg-green-500' 
+                                className={`px-4 py-2 text-white text-sm font-medium rounded-lg disabled:opacity-50 ${pendingStatus === InitiativeStatus.DONE
+                                        ? 'bg-green-600 hover:bg-green-500'
                                         : 'bg-purple-600 hover:bg-purple-500'
-                                }`}
+                                    }`}
                             >
                                 {isLoading ? 'Updating...' : 'Confirm'}
                             </button>
@@ -379,6 +378,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
 };
 
 export default StatusTransitionDropdown;
+
 
 
 

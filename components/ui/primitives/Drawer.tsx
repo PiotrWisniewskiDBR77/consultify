@@ -201,7 +201,7 @@ export const Drawer: React.FC<DrawerProps> = ({
             aria-modal="true"
             tabIndex={-1}
             className={`
-              fixed z-50
+              fixed z-[9999]
               ${positionStyles[position]}
               ${sizeStyles[position][size]}
               bg-white dark:bg-navy-900
@@ -214,7 +214,7 @@ export const Drawer: React.FC<DrawerProps> = ({
             initial="hidden"
             animate="visible"
             exit="hidden"
-            variants={slideVariants[position]}
+            variants={slideVariants[position] as any}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             drag={enableDrag ? dragDirection : false}
             dragConstraints={dragConstraints}

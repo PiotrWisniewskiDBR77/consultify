@@ -59,13 +59,13 @@ const overlayVariants = {
 };
 
 const contentVariants = {
-  hidden: { 
-    opacity: 0, 
+  hidden: {
+    opacity: 0,
     scale: 0.95,
     y: 10,
   },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     scale: 1,
     y: 0,
     transition: {
@@ -180,7 +180,7 @@ export const Modal: React.FC<ModalProps> = ({
               outline-none
               ${className}
             `}
-            variants={contentVariants}
+            variants={contentVariants as any}
             initial="hidden"
             animate="visible"
             exit="exit"

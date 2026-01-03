@@ -61,7 +61,7 @@ const paddingStyles: Record<CardPadding, string> = {
 
 const hoverVariants = {
   initial: { y: 0 },
-  hover: { 
+  hover: {
     y: -2,
     transition: { type: 'spring', stiffness: 400, damping: 25 }
   },
@@ -90,8 +90,8 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
 
     const hoverShadow = variant === 'elevated' || variant === 'glass'
       ? {
-          boxShadow: '0 10px 15px rgba(0,0,0,0.04), 0 4px 6px rgba(0,0,0,0.05)',
-        }
+        boxShadow: '0 10px 15px rgba(0,0,0,0.04), 0 4px 6px rgba(0,0,0,0.05)',
+      }
       : {};
 
     const darkHoverShadow = {
@@ -105,7 +105,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
           className={baseClasses}
           initial="initial"
           whileHover="hover"
-          variants={hoverVariants}
+          variants={hoverVariants as any}
           {...props}
         >
           {children}
@@ -193,6 +193,7 @@ export const CardFooter = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDi
 CardFooter.displayName = 'CardFooter';
 
 export default Card;
+
 
 
 

@@ -29,7 +29,7 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
         priority: 'medium',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        taskType: 'DESIGN',
+        taskType: 'task',
         stepPhase: 'design'
     };
 
@@ -58,8 +58,8 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
     };
 
     const getIcon = (task: Task) => {
-        if (task.taskType === 'ANALYSIS') return <BarChart size={20} />;
-        if (task.stepPhase === 'pilot' || task.taskType === 'BUILD') return <Play size={20} />;
+        if (task.taskType === 'story') return <BarChart size={20} />;
+        if (task.stepPhase === 'pilot' || task.taskType === 'epic') return <Play size={20} />;
         return <FileText size={20} />;
     };
 

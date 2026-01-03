@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const project_membersRoutesJSPromise = (async () => {
-    const module = await import('../../routes/project-members.js');
-    return module.default || module;
-})();
-const project_membersRoutesJS = project_membersRoutesJSPromise;;
+const module = await import('../../routes/project-members.js');
+const project_membersRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof project_membersRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof project_membersRoutesJS === 'function' || (project_membersRoutesJS && typeof project_membersRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(project_membersRoutesJS);
-} else if (project_membersRoutesJS.default) {
-    // If it has a default export
-    router.use(project_membersRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(project_membersRoutesJS);
+    // Fallback or error
+    console.error('project-members.js did not export a valid router');
 }
 
 export default router;

@@ -17,11 +17,11 @@ interface OrgUnitData {
     reportCount?: number;
 }
 
-export const OrgUnitNode: React.FC<NodeProps<OrgUnitData>> = memo(({ 
-    data, 
+export const OrgUnitNode: React.FC<NodeProps<OrgUnitData>> = memo(({
+    data,
     selected,
     isConnectable
-}) => {
+}: any) => {
     const { label, role, department, avatarUrl, type = 'person', reportCount } = data;
 
     const typeConfig = {
@@ -45,7 +45,7 @@ export const OrgUnitNode: React.FC<NodeProps<OrgUnitData>> = memo(({
         }
     };
 
-    const config = typeConfig[type];
+    const config = (typeConfig as any)[type];
     const Icon = config.icon;
 
     return (
@@ -67,8 +67,8 @@ export const OrgUnitNode: React.FC<NodeProps<OrgUnitData>> = memo(({
             {/* Header */}
             <div className={`px-3 py-2 ${config.iconBg} flex items-center gap-2`}>
                 {avatarUrl ? (
-                    <img 
-                        src={avatarUrl} 
+                    <img
+                        src={avatarUrl}
                         alt={label}
                         className="w-8 h-8 rounded-full object-cover border-2 border-slate-700"
                     />
@@ -121,6 +121,7 @@ export const OrgUnitNode: React.FC<NodeProps<OrgUnitData>> = memo(({
 OrgUnitNode.displayName = 'OrgUnitNode';
 
 export default OrgUnitNode;
+
 
 
 

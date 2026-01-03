@@ -19,17 +19,19 @@ import {
 import { RichTextEditor } from './RichTextEditor';
 import './EnterpriseReportStyles.css';
 
+import DOMPurify from 'dompurify';
+
 // Convert content to HTML - handles both raw HTML and Markdown
 function contentToHtml(content: string): string {
   if (!content) return '';
-  
+
   const trimmed = content.trim();
-  
-  // If content starts with HTML tag, it's already HTML - return as is
+
+  // If content starts with HTML tag, it's already HTML - return as is (but sanitized)
   if (trimmed.startsWith('<') && (
-    trimmed.startsWith('<div') || 
-    trimmed.startsWith('<h1') || 
-    trimmed.startsWith('<h2') || 
+    trimmed.startsWith('<div') ||
+    trimmed.startsWith('<h1') ||
+    trimmed.startsWith('<h2') ||
     trimmed.startsWith('<h3') ||
     trimmed.startsWith('<p') ||
     trimmed.startsWith('<table') ||
@@ -39,9 +41,9 @@ function contentToHtml(content: string): string {
     trimmed.startsWith('<article') ||
     trimmed.startsWith('<!') // doctype or comment
   )) {
-    return content;
+    return DOMPurify.sanitize(content);
   }
-  
+
   // Otherwise, treat as Markdown and convert to HTML
   let html = content
     // Headers
@@ -88,7 +90,7 @@ function contentToHtml(content: string): string {
     html = `<p>${html}</p>`;
   }
 
-  return html;
+  return DOMPurify.sanitize(html);
 }
 
 interface ReportSectionData {
@@ -147,7 +149,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
   const [showAIMenu, setShowAIMenu] = useState(false);
   const [showCopied, setShowCopied] = useState(false);
   const [panelMode, setPanelMode] = useState(false);
-  
+
   const editorRef = useRef<HTMLDivElement>(null);
   const aiMenuRef = useRef<HTMLDivElement>(null);
 
@@ -224,13 +226,13 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isEditing) return;
-      
+
       // Ctrl/Cmd + S to save
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
       }
-      
+
       // Escape to cancel
       if (e.key === 'Escape') {
         handleCancel();
@@ -269,7 +271,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
                     <Wand2 className="w-4 h-4" />
                   )}
                 </button>
-                
+
                 {/* AI actions menu */}
                 {showAIMenu && (
                   <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 py-1 z-20">
@@ -300,11 +302,11 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
         </div>
 
         {/* Rendered content */}
-        <div 
+        <div
           className="enterprise-report prose prose-slate dark:prose-invert max-w-none prose-headings:font-semibold prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3 prose-table:text-sm prose-p:my-3 prose-li:my-1"
           onClick={!readOnly ? onStartEdit : undefined}
-          dangerouslySetInnerHTML={{ 
-            __html: contentToHtml(section.content || (isPolish ? '*Brak treści*' : '*No content*')) 
+          dangerouslySetInnerHTML={{
+            __html: contentToHtml(section.content || (isPolish ? '*Brak treści*' : '*No content*'))
           }}
         />
 
@@ -351,9 +353,9 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
           >
             {panelMode ? <Minimize2 className="w-4 h-4" /> : <Expand className="w-4 h-4" />}
           </button>
-          
+
           <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
-          
+
           <button
             onClick={handleCancel}
             className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
@@ -361,7 +363,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
           >
             <X className="w-4 h-4" />
           </button>
-          
+
           <button
             onClick={handleSave}
             disabled={isSaving}
@@ -404,7 +406,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
 
       {/* Panel mode backdrop */}
       {panelMode && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 -z-10"
           onClick={handleCancel}
         />

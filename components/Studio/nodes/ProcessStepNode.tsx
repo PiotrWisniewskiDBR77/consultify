@@ -14,11 +14,11 @@ interface ProcessStepData {
     icon?: React.ReactNode;
 }
 
-export const ProcessStepNode: React.FC<NodeProps<ProcessStepData>> = memo(({ 
-    data, 
+export const ProcessStepNode: React.FC<NodeProps<ProcessStepData>> = memo(({
+    data,
     selected,
     isConnectable
-}) => {
+}: any) => {
     const { label, description, status = 'pending', icon } = data;
 
     const statusColors = {
@@ -39,7 +39,7 @@ export const ProcessStepNode: React.FC<NodeProps<ProcessStepData>> = memo(({
         <div
             className={`
                 min-w-[160px] max-w-[240px] rounded-lg border-2 transition-all duration-200
-                ${statusColors[status]}
+                ${(statusColors as any)[status]}
                 ${selected ? 'ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-900' : ''}
             `}
         >
@@ -55,8 +55,8 @@ export const ProcessStepNode: React.FC<NodeProps<ProcessStepData>> = memo(({
             <div className="p-3">
                 <div className="flex items-start gap-2">
                     {/* Status Indicator */}
-                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${statusIndicator[status]}`} />
-                    
+                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${(statusIndicator as any)[status]}`} />
+
                     <div className="flex-1 min-w-0">
                         {/* Icon */}
                         {icon && (
@@ -64,12 +64,12 @@ export const ProcessStepNode: React.FC<NodeProps<ProcessStepData>> = memo(({
                                 {icon}
                             </div>
                         )}
-                        
+
                         {/* Label */}
                         <div className="font-medium text-sm text-white truncate">
                             {label || 'Process Step'}
                         </div>
-                        
+
                         {/* Description */}
                         {description && (
                             <div className="text-xs text-slate-400 mt-1 line-clamp-2">
@@ -94,6 +94,7 @@ export const ProcessStepNode: React.FC<NodeProps<ProcessStepData>> = memo(({
 ProcessStepNode.displayName = 'ProcessStepNode';
 
 export default ProcessStepNode;
+
 
 
 

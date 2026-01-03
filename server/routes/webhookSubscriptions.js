@@ -288,7 +288,7 @@ router.post('/:id/retry', async (req, res) => {
         }
         
         // Get failed delivery and retry
-        import { getDatabase } from '../database/Database.js';
+        import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
         const delivery = await new Promise((resolve, reject) => {
             db.get('SELECT * FROM webhook_delivery_logs WHERE id = ? AND webhook_id = ?', 

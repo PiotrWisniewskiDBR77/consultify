@@ -72,10 +72,15 @@ export const SubscriptionsPanel: React.FC = () => {
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
-    const [createForm, setCreateForm] = useState({
+    const [createForm, setCreateForm] = useState<{
+        organizationId: string;
+        planId: string;
+        billingCycle: 'monthly' | 'yearly';
+        trialDays: number;
+    }>({
         organizationId: '',
         planId: '',
-        billingCycle: 'monthly' as const,
+        billingCycle: 'monthly',
         trialDays: 0
     });
     const [saving, setSaving] = useState(false);
@@ -201,7 +206,7 @@ export const SubscriptionsPanel: React.FC = () => {
                             className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none w-64"
                         />
                     </div>
-                    
+
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
@@ -215,7 +220,7 @@ export const SubscriptionsPanel: React.FC = () => {
                         <option value="paused">Paused</option>
                     </select>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     <button
                         onClick={fetchData}
@@ -267,7 +272,7 @@ export const SubscriptionsPanel: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex items-center gap-4">
                                     <div className="text-right">
                                         {sub.current_period_end && (
@@ -282,7 +287,7 @@ export const SubscriptionsPanel: React.FC = () => {
                                             </p>
                                         )}
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => setSelectedSubscription(sub)}
@@ -313,7 +318,7 @@ export const SubscriptionsPanel: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                     <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-md">
                         <h3 className="text-lg font-semibold text-white mb-6">Create Subscription</h3>
-                        
+
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Organization</label>
@@ -353,11 +358,10 @@ export const SubscriptionsPanel: React.FC = () => {
                                             key={cycle}
                                             type="button"
                                             onClick={() => setCreateForm(prev => ({ ...prev, billingCycle: cycle }))}
-                                            className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${
-                                                createForm.billingCycle === cycle
+                                            className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${createForm.billingCycle === cycle
                                                     ? 'bg-violet-500/20 border-violet-500/50 text-violet-400'
                                                     : 'bg-slate-800 border-white/10 text-slate-400 hover:border-white/20'
-                                            }`}
+                                                }`}
                                         >
                                             {cycle.charAt(0).toUpperCase() + cycle.slice(1)}
                                         </button>
@@ -404,7 +408,7 @@ export const SubscriptionsPanel: React.FC = () => {
                     <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-lg">
                         <h3 className="text-lg font-semibold text-white mb-2">Manage Subscription</h3>
                         <p className="text-sm text-slate-400 mb-6">{selectedSubscription.organization_name}</p>
-                        
+
                         <div className="space-y-4">
                             <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg">
                                 <div>
@@ -478,6 +482,7 @@ export const SubscriptionsPanel: React.FC = () => {
 };
 
 export default SubscriptionsPanel;
+
 
 
 

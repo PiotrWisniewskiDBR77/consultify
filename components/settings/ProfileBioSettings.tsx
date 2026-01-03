@@ -11,7 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../../types';
 import { useTranslation } from 'react-i18next';
-import { 
+import {
     User as UserIcon,
     MapPin,
     Calendar,
@@ -38,9 +38,9 @@ const PRONOUN_OPTIONS = [
     { value: 'other', label: 'Other' },
 ] as const;
 
-export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({ 
-    currentUser, 
-    onUpdateUser 
+export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
+    currentUser,
+    onUpdateUser
 }) => {
     const { t } = useTranslation();
     const [bio, setBio] = useState(currentUser.bio || '');
@@ -76,7 +76,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
     const handleSave = async () => {
         setIsSaving(true);
         setSaveStatus('idle');
-        
+
         try {
             await Api.updateUser(currentUser.id, {
                 bio: bio.trim() || undefined,
@@ -84,19 +84,19 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
                 birthday: birthday || undefined,
                 location: location.trim() || undefined,
                 skills: skills.length > 0 ? skills : undefined
-            });
-            
+            } as any);
+
             onUpdateUser({
                 bio: bio.trim() || undefined,
                 pronouns: pronouns || undefined,
                 birthday: birthday || undefined,
                 location: location.trim() || undefined,
                 skills: skills.length > 0 ? skills : undefined
-            });
-            
+            } as any);
+
             setSaveStatus('success');
             toast.success(t('settings.profile.bio.saved', 'Bio updated successfully'));
-            
+
             setTimeout(() => setSaveStatus('idle'), 2000);
         } catch (error: any) {
             setSaveStatus('error');
@@ -275,6 +275,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
 };
 
 export default ProfileBioSettings;
+
 
 
 

@@ -309,7 +309,7 @@ router.post('/:orgId/tokens/credit', async (req, res) => {
 // OWNERSHIP TRANSFER ROUTES
 // ==========================================
 
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 

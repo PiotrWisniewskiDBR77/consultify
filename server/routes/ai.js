@@ -106,7 +106,7 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
 
     // Helper: Save partial response to database
     const savePartialResponse = async (sessionId, content, userId, orgId) => {
-        import { getDatabase } from '../database/Database.js';
+        import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
         import { v4 as uuidv4 } from 'uuid';
         
@@ -127,7 +127,7 @@ const db = getDatabase();
     try {
         // RESUME FROM PARTIAL: Check if we should resume from saved partial
         if (resumeFromPartial && conversationId) {
-            import { getDatabase } from '../database/Database.js';
+            import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
             const partial = await new Promise((resolve) => {
                 db.get(`SELECT content FROM ai_partial_responses WHERE session_id = ? AND user_id = ?`,
@@ -201,7 +201,7 @@ const db = getDatabase();
                 res.write('data: [DONE]\n\n');
                 
                 // Delete partial response on successful completion
-                import { getDatabase } from '../database/Database.js';
+                import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
                 db.run(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId], () => {});
             }
@@ -241,7 +241,7 @@ const db = getDatabase();
 
 // GET /api/ai/stream/partial/:sessionId - Get partial response for resume
 router.get('/stream/partial/:sessionId', verifyToken, async (req, res) => {
-    import { getDatabase } from '../database/Database.js';
+    import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
     
     db.get(`

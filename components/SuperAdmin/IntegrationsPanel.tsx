@@ -49,13 +49,13 @@ export const IntegrationsPanel: React.FC = () => {
         try {
             if (activeTab === 'integrations') {
                 const orgId = 'current'; // Get from context/store
-                const data = await Api.getIntegrations(orgId);
+                const data = await (Api as any).getIntegrations(orgId);
                 setIntegrations(data);
                 const types = await (Api as any).getAvailableIntegrationTypes();
                 setAvailableTypes(types);
             } else {
                 const orgId = 'current'; // Get from context/store
-                const data = await Api.getWebhooks(orgId);
+                const data = await (Api as any).getWebhooks(orgId) || [];
                 setWebhooks(data);
             }
         } catch (error) {
@@ -126,8 +126,8 @@ export const IntegrationsPanel: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('integrations')}
                     className={`px-4 py-2 font-medium transition-colors ${activeTab === 'integrations'
-                            ? 'text-cyan-400 border-b-2 border-cyan-400'
-                            : 'text-slate-400 hover:text-white'
+                        ? 'text-cyan-400 border-b-2 border-cyan-400'
+                        : 'text-slate-400 hover:text-white'
                         }`}
                 >
                     Integrations
@@ -135,8 +135,8 @@ export const IntegrationsPanel: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('webhooks')}
                     className={`px-4 py-2 font-medium transition-colors ${activeTab === 'webhooks'
-                            ? 'text-cyan-400 border-b-2 border-cyan-400'
-                            : 'text-slate-400 hover:text-white'
+                        ? 'text-cyan-400 border-b-2 border-cyan-400'
+                        : 'text-slate-400 hover:text-white'
                         }`}
                 >
                     Webhooks

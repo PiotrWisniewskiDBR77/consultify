@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const governanceAdminRoutesJSPromise = (async () => {
-    const module = await import('../../routes/governanceAdmin.js');
-    return module.default || module;
-})();
-const governanceAdminRoutesJS = governanceAdminRoutesJSPromise;;
+const module = await import('../../routes/governanceAdmin.js');
+const governanceAdminRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof governanceAdminRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof governanceAdminRoutesJS === 'function' || (governanceAdminRoutesJS && typeof governanceAdminRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(governanceAdminRoutesJS);
-} else if (governanceAdminRoutesJS.default) {
-    // If it has a default export
-    router.use(governanceAdminRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(governanceAdminRoutesJS);
+    // Fallback or error
+    console.error('governanceAdmin.js did not export a valid router');
 }
 
 export default router;

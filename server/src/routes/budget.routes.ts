@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const budgetRoutesJSPromise = (async () => {
-    const module = await import('../../routes/budget.js');
-    return module.default || module;
-})();
-const budgetRoutesJS = budgetRoutesJSPromise;;
+const module = await import('../../routes/budget.js');
+const budgetRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof budgetRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof budgetRoutesJS === 'function' || (budgetRoutesJS && typeof budgetRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(budgetRoutesJS);
-} else if (budgetRoutesJS.default) {
-    // If it has a default export
-    router.use(budgetRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(budgetRoutesJS);
+    // Fallback or error
+    console.error('budget.js did not export a valid router');
 }
 
 export default router;

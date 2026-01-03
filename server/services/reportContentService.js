@@ -6,7 +6,7 @@
  * Now uses Enterprise Templates for BCG/McKinsey-style reports
  */
 
-import db from '../database.js';
+import ReportRepository from '../repositories/ReportRepository.js';
 import EnterpriseTemplates from './enterpriseReportTemplates.js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -14,57 +14,57 @@ import { v4 as uuidv4 } from 'uuid';
 
 // DRD Axis Configuration
 const DRD_AXES = {
-    processes: { 
-        id: 'processes', 
-        name: 'Digital Processes', 
+    processes: {
+        id: 'processes',
+        name: 'Digital Processes',
         namePl: 'Procesy Cyfrowe',
         order: 1,
         maxLevel: 7,
         areas: ['1A', '1B', '1C', '1D', '1E', '1F', '1G', '1H', '1I']
     },
-    digitalProducts: { 
-        id: 'digitalProducts', 
-        name: 'Digital Products', 
+    digitalProducts: {
+        id: 'digitalProducts',
+        name: 'Digital Products',
         namePl: 'Produkty Cyfrowe',
         order: 2,
         maxLevel: 5,
         areas: ['2A', '2B', '2C', '2D', '2E']
     },
-    businessModels: { 
-        id: 'businessModels', 
-        name: 'Digital Business Models', 
+    businessModels: {
+        id: 'businessModels',
+        name: 'Digital Business Models',
         namePl: 'Cyfrowe Modele Biznesowe',
         order: 3,
         maxLevel: 5,
         areas: ['3A', '3B', '3C', '3D', '3E']
     },
-    dataManagement: { 
-        id: 'dataManagement', 
-        name: 'Data Management', 
+    dataManagement: {
+        id: 'dataManagement',
+        name: 'Data Management',
         namePl: 'Zarządzanie Danymi',
         order: 4,
         maxLevel: 7,
         areas: ['4A', '4B', '4C', '4D', '4E']
     },
-    culture: { 
-        id: 'culture', 
-        name: 'Culture of Transformation', 
+    culture: {
+        id: 'culture',
+        name: 'Culture of Transformation',
         namePl: 'Kultura Transformacji',
         order: 5,
         maxLevel: 5,
         areas: ['5A', '5B', '5C', '5D', '5E']
     },
-    cybersecurity: { 
-        id: 'cybersecurity', 
-        name: 'Cybersecurity', 
+    cybersecurity: {
+        id: 'cybersecurity',
+        name: 'Cybersecurity',
         namePl: 'Cyberbezpieczeństwo',
         order: 6,
         maxLevel: 5,
         areas: ['6A', '6B', '6C', '6D', '6E']
     },
-    aiMaturity: { 
-        id: 'aiMaturity', 
-        name: 'AI Maturity', 
+    aiMaturity: {
+        id: 'aiMaturity',
+        name: 'AI Maturity',
         namePl: 'Dojrzałość AI',
         order: 7,
         maxLevel: 5,
@@ -74,68 +74,68 @@ const DRD_AXES = {
 
 // Section type definitions
 const SECTION_TYPES = {
-    cover_page: { 
-        title: 'Cover Page', 
+    cover_page: {
+        title: 'Cover Page',
         titlePl: 'Strona Tytułowa',
         hasData: false,
         aiSupported: false
     },
-    executive_summary: { 
-        title: 'Executive Summary', 
+    executive_summary: {
+        title: 'Executive Summary',
         titlePl: 'Podsumowanie Wykonawcze',
         hasData: true,
         aiSupported: true
     },
-    methodology: { 
-        title: 'DRD Methodology', 
+    methodology: {
+        title: 'DRD Methodology',
         titlePl: 'Metodologia DRD',
         hasData: false,
         aiSupported: false
     },
-    maturity_overview: { 
-        title: 'Maturity Overview', 
+    maturity_overview: {
+        title: 'Maturity Overview',
         titlePl: 'Przegląd Dojrzałości',
         hasData: true,
         aiSupported: true
     },
-    axis_detail: { 
-        title: 'Axis Detail', 
+    axis_detail: {
+        title: 'Axis Detail',
         titlePl: 'Szczegóły Osi',
         hasData: true,
         aiSupported: true
     },
-    area_detail: { 
-        title: 'Area Detail', 
+    area_detail: {
+        title: 'Area Detail',
         titlePl: 'Szczegóły Obszaru',
         hasData: true,
         aiSupported: true
     },
-    gap_analysis: { 
-        title: 'Gap Analysis', 
+    gap_analysis: {
+        title: 'Gap Analysis',
         titlePl: 'Analiza Luk',
         hasData: true,
         aiSupported: true
     },
-    initiatives: { 
-        title: 'Recommended Initiatives', 
+    initiatives: {
+        title: 'Recommended Initiatives',
         titlePl: 'Rekomendowane Inicjatywy',
         hasData: true,
         aiSupported: true
     },
-    roadmap: { 
-        title: 'Transformation Roadmap', 
+    roadmap: {
+        title: 'Transformation Roadmap',
         titlePl: 'Roadmapa Transformacji',
         hasData: true,
         aiSupported: true
     },
-    appendix: { 
-        title: 'Appendix', 
+    appendix: {
+        title: 'Appendix',
         titlePl: 'Załączniki',
         hasData: true,
         aiSupported: false
     },
-    custom: { 
-        title: 'Custom Section', 
+    custom: {
+        title: 'Custom Section',
         titlePl: 'Sekcja Niestandardowa',
         hasData: false,
         aiSupported: true
@@ -152,59 +152,35 @@ class ReportContentService {
      * Get full report data with all sections
      */
     async getFullReport(reportId, organizationId) {
-        return new Promise((resolve, reject) => {
-            const reportSql = `
-                SELECT 
-                    r.*,
-                    a.name as assessment_name,
-                    a.axis_data,
-                    a.progress,
-                    a.is_complete,
-                    p.name as project_name,
-                    o.name as organization_name,
-                    o.transformation_context
-                FROM assessment_reports r
-                LEFT JOIN assessments a ON r.assessment_id = a.id
-                LEFT JOIN projects p ON r.project_id = p.id
-                LEFT JOIN organizations o ON r.organization_id = o.id
-                WHERE r.id = ? AND r.organization_id = ?
-            `;
+        try {
+            const report = await ReportRepository.getReportById(reportId, organizationId);
+            if (!report) return null;
 
-            db.get(reportSql, [reportId, organizationId], (err, report) => {
-                if (err) return reject(err);
-                if (!report) return resolve(null);
+            const sections = await ReportRepository.getReportSections(reportId);
 
-                // Get sections
-                db.all(
-                    'SELECT * FROM report_sections WHERE report_id = ? ORDER BY order_index',
-                    [reportId],
-                    (err, sections) => {
-                        if (err) sections = [];
+            // Parse JSON fields
+            let axisData = {};
+            let transformationContext = {};
+            try {
+                axisData = report.axis_data ? JSON.parse(report.axis_data) : {};
+                transformationContext = report.transformation_context ? JSON.parse(report.transformation_context) : {};
+            } catch (e) { }
 
-                        // Parse JSON fields
-                        let axisData = {};
-                        let transformationContext = {};
-                        try {
-                            axisData = report.axis_data ? JSON.parse(report.axis_data) : {};
-                            transformationContext = report.transformation_context ? JSON.parse(report.transformation_context) : {};
-                        } catch (e) {}
+            const parsedSections = (sections || []).map(s => ({
+                ...s,
+                dataSnapshot: s.data_snapshot ? JSON.parse(s.data_snapshot) : {},
+                isAiGenerated: s.is_ai_generated === 1
+            }));
 
-                        const parsedSections = (sections || []).map(s => ({
-                            ...s,
-                            dataSnapshot: s.data_snapshot ? JSON.parse(s.data_snapshot) : {},
-                            isAiGenerated: s.is_ai_generated === 1
-                        }));
-
-                        resolve({
-                            ...report,
-                            axisData,
-                            transformationContext,
-                            sections: parsedSections
-                        });
-                    }
-                );
-            });
-        });
+            return {
+                ...report,
+                axisData,
+                transformationContext,
+                sections: parsedSections
+            };
+        } catch (err) {
+            throw err;
+        }
     }
 
     /**
@@ -263,37 +239,25 @@ class ReportContentService {
      * Get assessment data with all axis scores
      */
     async getAssessmentData(assessmentId) {
-        return new Promise((resolve, reject) => {
-            const sql = `
-                SELECT 
-                    a.*,
-                    p.name as project_name,
-                    o.name as organization_name,
-                    o.transformation_context
-                FROM assessments a
-                LEFT JOIN projects p ON a.project_id = p.id
-                LEFT JOIN organizations o ON a.organization_id = o.id
-                WHERE a.id = ?
-            `;
+        try {
+            const row = await ReportRepository.getAssessmentData(assessmentId);
+            if (!row) return null;
 
-            db.get(sql, [assessmentId], (err, row) => {
-                if (err) return reject(err);
-                if (!row) return resolve(null);
+            let axisData = {};
+            let transformationContext = {};
+            try {
+                axisData = row.axis_data ? JSON.parse(row.axis_data) : {};
+                transformationContext = row.transformation_context ? JSON.parse(row.transformation_context) : {};
+            } catch (e) { }
 
-                let axisData = {};
-                let transformationContext = {};
-                try {
-                    axisData = row.axis_data ? JSON.parse(row.axis_data) : {};
-                    transformationContext = row.transformation_context ? JSON.parse(row.transformation_context) : {};
-                } catch (e) {}
-
-                resolve({
-                    ...row,
-                    axisData,
-                    transformationContext
-                });
-            });
-        });
+            return {
+                ...row,
+                axisData,
+                transformationContext
+            };
+        } catch (err) {
+            throw err;
+        }
     }
 
     /**
@@ -304,18 +268,15 @@ class ReportContentService {
             return this.getDefaultSections();
         }
 
-        return new Promise((resolve, reject) => {
-            db.get('SELECT section_config FROM report_templates WHERE id = ?', [templateId], (err, row) => {
-                if (err || !row) {
-                    return resolve(this.getDefaultSections());
-                }
-                try {
-                    resolve(JSON.parse(row.section_config));
-                } catch (e) {
-                    resolve(this.getDefaultSections());
-                }
-            });
-        });
+        try {
+            const row = await ReportRepository.getTemplateConfig(templateId);
+            if (!row) {
+                return this.getDefaultSections();
+            }
+            return JSON.parse(row.section_config);
+        } catch (e) {
+            return this.getDefaultSections();
+        }
     }
 
     /**
@@ -344,11 +305,11 @@ class ReportContentService {
      */
     getSectionTitle(config, language) {
         const isPolish = language === 'pl';
-        
+
         if (config.type === 'axis_detail' && config.axisId) {
             const axis = DRD_AXES[config.axisId];
             if (axis) {
-                return isPolish 
+                return isPolish
                     ? `Oś ${axis.order}: ${axis.namePl}`
                     : `Axis ${axis.order}: ${axis.name}`;
             }
@@ -477,46 +438,17 @@ class ReportContentService {
      * Save sections to database
      */
     async saveSections(reportId, sections) {
-        // Delete existing sections first
-        await new Promise((resolve, reject) => {
-            db.run('DELETE FROM report_sections WHERE report_id = ?', [reportId], (err) => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
+        try {
+            // Delete existing sections first
+            await ReportRepository.deleteReportSections(reportId);
 
-        // Insert new sections
-        const stmt = db.prepare(`
-            INSERT INTO report_sections 
-            (id, report_id, section_type, axis_id, area_id, title, content, data_snapshot, order_index, is_ai_generated, last_edited_by, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        for (const section of sections) {
-            await new Promise((resolve, reject) => {
-                stmt.run(
-                    section.id,
-                    section.reportId,
-                    section.sectionType,
-                    section.axisId,
-                    section.areaId,
-                    section.title,
-                    section.content,
-                    JSON.stringify(section.dataSnapshot),
-                    section.orderIndex,
-                    section.isAiGenerated ? 1 : 0,
-                    section.lastEditedBy,
-                    section.createdAt,
-                    section.updatedAt,
-                    (err) => {
-                        if (err) reject(err);
-                        else resolve();
-                    }
-                );
-            });
+            // Insert new sections
+            for (const section of sections) {
+                await ReportRepository.createReportSection(section);
+            }
+        } catch (err) {
+            throw err;
         }
-
-        stmt.finalize();
     }
 
     // =========================================================================
@@ -550,9 +482,9 @@ ${isPolish ? 'Diagnoza Gotowości Cyfrowej' : 'Digital Maturity Assessment'}
 
 ---
 
-*${isPolish 
-    ? 'Raport przygotowany zgodnie z metodologią Digital Readiness Diagnosis (DRD) opisaną w książce "Digital Pathfinder" autorstwa dr Piotra Wiśniewskiego.'
-    : 'Report prepared according to the Digital Readiness Diagnosis (DRD) methodology described in the book "Digital Pathfinder" by Dr. Piotr Wisniewski.'}*
+*${isPolish
+                ? 'Raport przygotowany zgodnie z metodologią Digital Readiness Diagnosis (DRD) opisaną w książce "Digital Pathfinder" autorstwa dr Piotra Wiśniewskiego.'
+                : 'Report prepared according to the Digital Readiness Diagnosis (DRD) methodology described in the book "Digital Pathfinder" by Dr. Piotr Wisniewski.'}*
 
 ---
 
@@ -581,9 +513,9 @@ ${isPolish ? 'Diagnoza Gotowości Cyfrowej' : 'Digital Maturity Assessment'}
         return `## ${isPolish ? 'Podsumowanie Wykonawcze' : 'Executive Summary'}
 
 ### ${isPolish ? 'Kontekst' : 'Context'}
-${organization_name || (isPolish ? 'Organizacja' : 'Organization')} ${isPolish 
-    ? 'przeprowadziła kompleksową diagnozę dojrzałości cyfrowej (DRD) obejmującą 7 osi transformacji cyfrowej oraz ponad 30 szczegółowych obszarów oceny.'
-    : 'conducted a comprehensive Digital Readiness Diagnosis (DRD) covering 7 axes of digital transformation and over 30 detailed assessment areas.'}
+${organization_name || (isPolish ? 'Organizacja' : 'Organization')} ${isPolish
+                ? 'przeprowadziła kompleksową diagnozę dojrzałości cyfrowej (DRD) obejmującą 7 osi transformacji cyfrowej oraz ponad 30 szczegółowych obszarów oceny.'
+                : 'conducted a comprehensive Digital Readiness Diagnosis (DRD) covering 7 axes of digital transformation and over 30 detailed assessment areas.'}
 
 ### ${isPolish ? 'Kluczowe Wyniki' : 'Key Results'}
 
@@ -603,22 +535,22 @@ ${organization_name || (isPolish ? 'Organizacja' : 'Organization')} ${isPolish
 - ${isPolish ? 'Wymaga strategicznej uwagi i dedykowanych zasobów.' : 'Requires strategic attention and dedicated resources.'}
 
 ### ${isPolish ? 'Rekomendacja Strategiczna' : 'Strategic Recommendation'}
-${parseFloat(metrics.averageGap) > 2 
-    ? (isPolish 
-        ? 'Ze względu na znaczącą lukę między stanem obecnym a docelowym, zalecamy przyjęcie fazowego podejścia do transformacji, zaczynając od fundamentów (dane, governance) przed wdrożeniem bardziej zaawansowanych inicjatyw.'
-        : 'Given the significant gap between current and target state, we recommend adopting a phased approach to transformation, starting with foundations (data, governance) before implementing more advanced initiatives.')
-    : (isPolish
-        ? 'Organizacja wykazuje dobrą dojrzałość cyfrową. Zalecamy skupienie się na inicjatywach typu "quick win" oraz systematyczne podnoszenie poziomu w obszarach z największymi lukami.'
-        : 'Organization demonstrates good digital maturity. We recommend focusing on "quick win" initiatives and systematically raising the level in areas with the largest gaps.')}`;
+${parseFloat(metrics.averageGap) > 2
+                ? (isPolish
+                    ? 'Ze względu na znaczącą lukę między stanem obecnym a docelowym, zalecamy przyjęcie fazowego podejścia do transformacji, zaczynając od fundamentów (dane, governance) przed wdrożeniem bardziej zaawansowanych inicjatyw.'
+                    : 'Given the significant gap between current and target state, we recommend adopting a phased approach to transformation, starting with foundations (data, governance) before implementing more advanced initiatives.')
+                : (isPolish
+                    ? 'Organizacja wykazuje dobrą dojrzałość cyfrową. Zalecamy skupienie się na inicjatywach typu "quick win" oraz systematyczne podnoszenie poziomu w obszarach z największymi lukami.'
+                    : 'Organization demonstrates good digital maturity. We recommend focusing on "quick win" initiatives and systematically raising the level in areas with the largest gaps.')}`;
     }
 
     generateMethodology(isPolish) {
         return `## ${isPolish ? 'Metodologia DRD' : 'DRD Methodology'}
 
 ### ${isPolish ? 'Czym jest DRD?' : 'What is DRD?'}
-${isPolish 
-    ? 'Digital Readiness Diagnosis (DRD) to kompleksowa metodologia oceny dojrzałości cyfrowej organizacji, opracowana na bazie wieloletniego doświadczenia w transformacji przedsiębiorstw produkcyjnych i usługowych. Metodologia opiera się na filozofii kontroli VDA 6.3 stosowanej w ocenie doskonałości procesów w firmach.'
-    : 'Digital Readiness Diagnosis (DRD) is a comprehensive methodology for assessing organizational digital maturity, developed based on years of experience in transforming manufacturing and service enterprises. The methodology is based on the VDA 6.3 control philosophy used in assessing process excellence in companies.'}
+${isPolish
+                ? 'Digital Readiness Diagnosis (DRD) to kompleksowa metodologia oceny dojrzałości cyfrowej organizacji, opracowana na bazie wieloletniego doświadczenia w transformacji przedsiębiorstw produkcyjnych i usługowych. Metodologia opiera się na filozofii kontroli VDA 6.3 stosowanej w ocenie doskonałości procesów w firmach.'
+                : 'Digital Readiness Diagnosis (DRD) is a comprehensive methodology for assessing organizational digital maturity, developed based on years of experience in transforming manufacturing and service enterprises. The methodology is based on the VDA 6.3 control philosophy used in assessing process excellence in companies.'}
 
 ### ${isPolish ? '7 Osi Transformacji Cyfrowej' : '7 Axes of Digital Transformation'}
 
@@ -738,17 +670,17 @@ ${axis.justification || (isPolish ? '*Brak uzasadnienia. Do uzupełnienia przez 
 ${areaTable}
 
 ### ${isPolish ? 'Ścieżka Dojścia (Pathway)' : 'Pathway'}
-${gap > 0 
-    ? (isPolish 
-        ? `Aby osiągnąć poziom ${axis.target} z obecnego poziomu ${axis.actual}, organizacja powinna przejść przez następujące etapy:`
-        : `To reach level ${axis.target} from current level ${axis.actual}, organization should go through the following stages:`)
-    : (isPolish ? '*Cel osiągnięty lub brak zdefiniowanego celu.*' : '*Target achieved or no target defined.*')}
+${gap > 0
+                ? (isPolish
+                    ? `Aby osiągnąć poziom ${axis.target} z obecnego poziomu ${axis.actual}, organizacja powinna przejść przez następujące etapy:`
+                    : `To reach level ${axis.target} from current level ${axis.actual}, organization should go through the following stages:`)
+                : (isPolish ? '*Cel osiągnięty lub brak zdefiniowanego celu.*' : '*Target achieved or no target defined.*')}
 
 ${gap > 0 ? Array.from({ length: gap }, (_, i) => {
-    const fromLevel = (axis.actual || 0) + i;
-    const toLevel = fromLevel + 1;
-    return `**${isPolish ? 'Poziom' : 'Level'} ${fromLevel} → ${toLevel}:**\n*${isPolish ? 'Wymagane działania do uzupełnienia przez AI lub audytora...' : 'Required actions to be completed by AI or auditor...'}*`;
-}).join('\n\n') : ''}
+                    const fromLevel = (axis.actual || 0) + i;
+                    const toLevel = fromLevel + 1;
+                    return `**${isPolish ? 'Poziom' : 'Level'} ${fromLevel} → ${toLevel}:**\n*${isPolish ? 'Wymagane działania do uzupełnienia przez AI lub audytora...' : 'Required actions to be completed by AI or auditor...'}*`;
+                }).join('\n\n') : ''}
 
 ### ${isPolish ? 'Rekomendacje' : 'Recommendations'}
 *${isPolish ? 'Do wygenerowania przez AI na podstawie analizy luk...' : 'To be generated by AI based on gap analysis...'}*`;
@@ -796,13 +728,13 @@ ${gapRows}
 
 ### ${isPolish ? 'Interpretacja' : 'Interpretation'}
 
-${highPriority.length > 0 
-    ? `**${isPolish ? 'Obszary krytyczne' : 'Critical areas'} (${isPolish ? 'WYSOKI priorytet' : 'HIGH priority'}):**\n${highPriority.map(g => `- ${g.name}: ${isPolish ? 'luka' : 'gap'} ${g.gap} ${isPolish ? 'poziomów' : 'levels'}`).join('\n')}\n\n${isPolish ? 'Te obszary wymagają natychmiastowej uwagi i dedykowanych zasobów.' : 'These areas require immediate attention and dedicated resources.'}`
-    : ''}
+${highPriority.length > 0
+                ? `**${isPolish ? 'Obszary krytyczne' : 'Critical areas'} (${isPolish ? 'WYSOKI priorytet' : 'HIGH priority'}):**\n${highPriority.map(g => `- ${g.name}: ${isPolish ? 'luka' : 'gap'} ${g.gap} ${isPolish ? 'poziomów' : 'levels'}`).join('\n')}\n\n${isPolish ? 'Te obszary wymagają natychmiastowej uwagi i dedykowanych zasobów.' : 'These areas require immediate attention and dedicated resources.'}`
+                : ''}
 
 ${mediumPriority.length > 0
-    ? `\n**${isPolish ? 'Obszary do poprawy' : 'Areas for improvement'} (${isPolish ? 'ŚREDNI priorytet' : 'MEDIUM priority'}):**\n${mediumPriority.map(g => `- ${g.name}: ${isPolish ? 'luka' : 'gap'} ${g.gap} ${isPolish ? 'poziomów' : 'levels'}`).join('\n')}`
-    : ''}
+                ? `\n**${isPolish ? 'Obszary do poprawy' : 'Areas for improvement'} (${isPolish ? 'ŚREDNI priorytet' : 'MEDIUM priority'}):**\n${mediumPriority.map(g => `- ${g.name}: ${isPolish ? 'luka' : 'gap'} ${g.gap} ${isPolish ? 'poziomów' : 'levels'}`).join('\n')}`
+                : ''}
 
 ### ${isPolish ? 'Heat Map' : 'Heat Map'}
 *${isPolish ? 'Wizualizacja heat map zostanie wygenerowana w eksporcie PDF.' : 'Heat map visualization will be generated in PDF export.'}*`;
@@ -820,7 +752,7 @@ ${mediumPriority.length > 0
                 initiatives.push({
                     axis: isPolish ? config.namePl : config.name,
                     priority: gap >= 3 ? 'Critical' : gap >= 2 ? 'High' : 'Medium',
-                    initiative: isPolish 
+                    initiative: isPolish
                         ? `Podniesienie poziomu ${config.namePl} z ${data.actual} do ${data.target}`
                         : `Raise ${config.name} level from ${data.actual} to ${data.target}`,
                     timeframe: `${gap * 3}-${gap * 4} ${isPolish ? 'mies.' : 'mo.'}`,
@@ -834,7 +766,7 @@ ${mediumPriority.length > 0
             return priorityOrder[a.priority] - priorityOrder[b.priority];
         });
 
-        const initiativeRows = initiatives.map((init, i) => 
+        const initiativeRows = initiatives.map((init, i) =>
             `| ${i + 1} | ${init.priority} | ${init.axis} | ${init.initiative} | ${init.timeframe} | ${init.effort} |`
         ).join('\n');
 
@@ -865,33 +797,33 @@ ${initiativeRows || `| - | - | - | ${isPolish ? 'Brak luk do zamknięcia' : 'No 
 
         // Create phases based on gaps
         const phases = [
-            { 
-                name: isPolish ? 'Fundamenty' : 'Foundation', 
-                period: '0-6', 
+            {
+                name: isPolish ? 'Fundamenty' : 'Foundation',
+                period: '0-6',
                 focus: isPolish ? 'Dane, governance, cyberbezpieczeństwo' : 'Data, governance, cybersecurity',
                 axes: ['dataManagement', 'cybersecurity']
             },
-            { 
-                name: 'Quick Wins', 
-                period: '3-9', 
+            {
+                name: 'Quick Wins',
+                period: '3-9',
                 focus: isPolish ? 'Procesy, automatyzacja, kultura' : 'Processes, automation, culture',
                 axes: ['processes', 'culture']
             },
-            { 
-                name: isPolish ? 'Strategiczne' : 'Strategic', 
-                period: '6-18', 
+            {
+                name: isPolish ? 'Strategiczne' : 'Strategic',
+                period: '6-18',
                 focus: isPolish ? 'Produkty cyfrowe, modele biznesowe' : 'Digital products, business models',
                 axes: ['digitalProducts', 'businessModels']
             },
-            { 
-                name: isPolish ? 'Integracja AI' : 'AI Integration', 
-                period: '12-24', 
+            {
+                name: isPolish ? 'Integracja AI' : 'AI Integration',
+                period: '12-24',
                 focus: isPolish ? 'AI we wszystkich osiach' : 'AI across all axes',
                 axes: ['aiMaturity']
             }
         ];
 
-        const phaseRows = phases.map((phase, i) => 
+        const phaseRows = phases.map((phase, i) =>
             `| ${i + 1} | ${phase.name} | ${phase.period} ${isPolish ? 'mies.' : 'mo.'} | ${phase.focus} |`
         ).join('\n');
 
@@ -1029,13 +961,13 @@ ${isPolish ? 'Szczegółowe tabele ocen dla wszystkich 7 osi i ponad 30 obszaró
         </thead>
         <tbody>
             ${axisScores.map((axis, i) => {
-                const gap = axis.target - axis.actual;
-                const priorityColor = gap >= 3 ? '#ef4444' : gap >= 2 ? '#f59e0b' : gap > 0 ? '#10b981' : '#94a3b8';
-                const priorityText = gap >= 3 ? (isPolish ? 'WYSOKI' : 'HIGH') : gap >= 2 ? (isPolish ? 'ŚREDNI' : 'MEDIUM') : gap > 0 ? (isPolish ? 'NISKI' : 'LOW') : '-';
-                const actualWidth = (axis.actual / axis.max) * 100;
-                const targetPos = (axis.target / axis.max) * 100;
+            const gap = axis.target - axis.actual;
+            const priorityColor = gap >= 3 ? '#ef4444' : gap >= 2 ? '#f59e0b' : gap > 0 ? '#10b981' : '#94a3b8';
+            const priorityText = gap >= 3 ? (isPolish ? 'WYSOKI' : 'HIGH') : gap >= 2 ? (isPolish ? 'ŚREDNI' : 'MEDIUM') : gap > 0 ? (isPolish ? 'NISKI' : 'LOW') : '-';
+            const actualWidth = (axis.actual / axis.max) * 100;
+            const targetPos = (axis.target / axis.max) * 100;
 
-                return `
+            return `
                     <tr style="background: ${i % 2 === 0 ? '#f8f9fa' : 'white'};">
                         <td style="padding: 14px; border: 1px solid #e5e7eb; font-weight: 700; color: #3b82f6;">${i + 1}</td>
                         <td style="padding: 14px; border: 1px solid #e5e7eb;">
@@ -1062,7 +994,7 @@ ${isPolish ? 'Szczegółowe tabele ocen dla wszystkich 7 osi i ponad 30 obszaró
                         </td>
                     </tr>
                 `;
-            }).join('')}
+        }).join('')}
         </tbody>
     </table>
 
@@ -1093,7 +1025,7 @@ ${isPolish ? 'Szczegółowe tabele ocen dla wszystkich 7 osi i ponad 30 obszaró
 
     generateInitiativesEnterprise(assessment, isPolish) {
         const { axisData } = assessment;
-        
+
         // Generate initiatives based on gaps with detailed descriptions
         const initiatives = [];
         Object.entries(DRD_AXES).forEach(([id, config]) => {
@@ -1108,7 +1040,7 @@ ${isPolish ? 'Szczegółowe tabele ocen dla wszystkich 7 osi i ponad 30 obszaró
                     target: data.target,
                     gap,
                     priority: gap >= 3 ? 'Critical' : gap >= 2 ? 'High' : 'Medium',
-                    initiative: isPolish 
+                    initiative: isPolish
                         ? `Program podniesienia dojrzałości ${config.namePl} z poziomu ${data.actual} do ${data.target}`
                         : `${config.name} maturity improvement program from level ${data.actual} to ${data.target}`,
                     timeframe: `${gap * 3}-${gap * 4}`,
@@ -1132,7 +1064,7 @@ ${isPolish ? 'Szczegółowe tabele ocen dla wszystkich 7 osi i ponad 30 obszaró
     
     <div style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: white; padding: 20px; border-radius: 12px; margin: 20px 0;">
         <p style="margin: 0; font-size: 15px; line-height: 1.7;">
-            ${isPolish 
+            ${isPolish
                 ? `Na podstawie przeprowadzonej diagnozy DRD zidentyfikowaliśmy <strong>${initiatives.length} inicjatyw transformacyjnych</strong>, które pozwolą zamknąć luki między stanem obecnym a docelowym. Poniżej prezentujemy szczegółową analizę każdej inicjatywy wraz z szacowanymi zasobami i harmonogramem.`
                 : `Based on the DRD diagnosis, we identified <strong>${initiatives.length} transformation initiatives</strong> that will close the gaps between current and target state. Below is a detailed analysis of each initiative with estimated resources and timeline.`}
         </p>
@@ -1238,14 +1170,14 @@ ${isPolish ? 'Szczegółowe tabele ocen dla wszystkich 7 osi i ponad 30 obszaró
 
     generateRoadmapEnterprise(assessment, isPolish) {
         const { axisData } = assessment;
-        
+
         // Calculate total transformation time
         let maxGap = 0;
         Object.values(axisData || {}).forEach(data => {
             const gap = (data?.target || 0) - (data?.actual || 0);
             if (gap > maxGap) maxGap = gap;
         });
-        
+
         const totalMonths = Math.max(12, maxGap * 4);
 
         return `
@@ -1330,7 +1262,7 @@ ${isPolish ? 'Szczegółowe tabele ocen dla wszystkich 7 osi i ponad 30 obszaró
             <thead>
                 <tr style="background: #1e1b4b; color: white;">
                     <th style="padding: 12px; text-align: left; border: 1px solid #374151; width: 200px;">${isPolish ? 'Faza / Inicjatywa' : 'Phase / Initiative'}</th>
-                    ${Array.from({length: 8}, (_, i) => `<th style="padding: 8px; text-align: center; border: 1px solid #374151; width: 60px;">Q${Math.floor(i/2)+1}${i%2 === 0 ? 'a' : 'b'}</th>`).join('')}
+                    ${Array.from({ length: 8 }, (_, i) => `<th style="padding: 8px; text-align: center; border: 1px solid #374151; width: 60px;">Q${Math.floor(i / 2) + 1}${i % 2 === 0 ? 'a' : 'b'}</th>`).join('')}
                 </tr>
             </thead>
             <tbody>
@@ -1502,7 +1434,7 @@ ${isPolish ? 'Szczegółowe tabele ocen dla wszystkich 7 osi i ponad 30 obszaró
     <h3>C. ${isPolish ? 'Lista Rozmówców' : 'Interviewee List'}</h3>
     <div style="margin: 16px 0; padding: 16px; background: #f8f9fa; border-radius: 8px;">
         <p style="margin: 0; font-style: italic; color: #64748b;">
-            ${isPolish 
+            ${isPolish
                 ? 'Lista osób, z którymi przeprowadzono wywiady podczas audytu. Szczegółowe notatki z wywiadów przechowywane są w systemie DRD i dostępne na żądanie.'
                 : 'List of individuals interviewed during the audit. Detailed interview notes are stored in the DRD system and available upon request.'}
         </p>
@@ -1568,7 +1500,7 @@ ${isPolish ? 'Szczegółowe tabele ocen dla wszystkich 7 osi i ponad 30 obszaró
 
     <div style="margin-top: 40px; padding: 20px; background: #f1f5f9; border-radius: 8px; text-align: center;">
         <p style="margin: 0; font-size: 13px; color: #64748b;">
-            ${isPolish 
+            ${isPolish
                 ? `Raport wygenerowany: ${date} | Wersja: 1.0 | Status: Draft`
                 : `Report generated: ${date} | Version: 1.0 | Status: Draft`}
         </p>

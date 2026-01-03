@@ -224,7 +224,7 @@ router.post('/confirm', authMiddleware, async (req, res) => {
         }
 
         // Save to database
-        import { getDatabase } from '../database/Database.js';
+        import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
         const { calculateFrameworkScore } = import('frameworkScoreCalculators.js');
         const multiFrameworkAuditService = import('multiFrameworkAuditService.js');

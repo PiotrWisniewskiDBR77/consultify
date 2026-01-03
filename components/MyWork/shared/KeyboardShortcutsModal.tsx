@@ -51,7 +51,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
 
         return (
             <div className="flex items-center gap-1">
-                {parts.map((part, idx) => (
+                {parts.map((part: any, idx: number) => (
                     <React.Fragment key={idx}>
                         {idx > 0 && part !== 'then' && <span className="text-slate-400">+</span>}
                         {part === 'then' ? (
@@ -136,6 +136,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
 };
 
 export default KeyboardShortcutsModal;
+
 
 
 

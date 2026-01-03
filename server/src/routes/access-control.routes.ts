@@ -8,7 +8,7 @@
 import { Router, Response } from 'express';
 import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
 import { verifyAdmin } from '../middleware/admin.middleware.js';
-import { requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
+import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -50,7 +50,7 @@ router.post('/requests', asyncHandler(async (req: AuthRequest, res: Response) =>
         (id, email, first_name, last_name, phone, organization_name, request_type, metadata, requested_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
         [requestId, email, firstName, lastName, phone, organizationName, requestType || 'new_user', metadata]);
-    
+
     if (!runResult.success) {
         throw new Error(runResult.error || 'Failed to create access request');
     }
@@ -190,7 +190,7 @@ router.put('/requests/:id/reject', verifyToken, requireSuperAdmin, asyncHandler(
         SET status = ?, reviewed_by = ?, reviewed_at = datetime('now'), rejection_reason = ?
         WHERE id = ?`,
         ['rejected', userId, reason || 'No reason provided', id]);
-    
+
     if (!runResult.success) {
         throw new Error(runResult.error || 'Failed to reject access request');
     }
@@ -224,7 +224,7 @@ router.post('/codes', verifyToken, verifyAdmin, asyncHandler(async (req: AuthReq
         (id, organization_id, code, created_by, role, max_uses, expires_at, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
         [codeId, organizationId, code, userId, role || 'USER', maxUses || 1, expiresAt]);
-    
+
     if (!runResult.success) {
         throw new Error(runResult.error || 'Failed to create access code');
     }
@@ -459,7 +459,7 @@ router.delete('/codes/:id', verifyToken, verifyAdmin, asyncHandler(async (req: A
     }
 
     const runResult = await dbRun('UPDATE access_codes SET is_active = 0 WHERE id = ?', [id]);
-    
+
     if (!runResult.success) {
         throw new Error(runResult.error || 'Failed to deactivate access code');
     }

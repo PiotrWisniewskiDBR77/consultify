@@ -26,6 +26,7 @@ import {
     Download,
     FileOutput
 } from 'lucide-react';
+import DOMPurify from 'dompurify';
 
 interface ReportSection {
     id: string;
@@ -147,9 +148,9 @@ export const ReportEditorModal: React.FC<ReportEditorModalProps> = ({
             const response = await fetch(`/api/assessment-reports/${id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            
+
             if (!response.ok) throw new Error('Failed to load report');
-            
+
             const data = await response.json();
             setReport({
                 ...data,
@@ -167,7 +168,7 @@ export const ReportEditorModal: React.FC<ReportEditorModalProps> = ({
     const handleSectionChange = (sectionId: string, content: string) => {
         setReport(prev => ({
             ...prev,
-            sections: prev.sections.map(s => 
+            sections: prev.sections.map(s =>
                 s.id === sectionId ? { ...s, content } : s
             )
         }));
@@ -188,7 +189,7 @@ export const ReportEditorModal: React.FC<ReportEditorModalProps> = ({
     const generateAIContent = async (sectionId: string) => {
         setIsGeneratingAI(sectionId);
         setError(null);
-        
+
         try {
             const token = localStorage.getItem('token');
             const response = await fetch('/api/ai/assessment/report-section', {
@@ -213,7 +214,7 @@ export const ReportEditorModal: React.FC<ReportEditorModalProps> = ({
 
             const data = await response.json();
             handleSectionChange(sectionId, data.content);
-            
+
             // Mark as AI generated
             setReport(prev => ({
                 ...prev,
@@ -381,7 +382,7 @@ The assessment reveals a total gap of [X] points between current state and targe
         try {
             const token = localStorage.getItem('token');
             const method = report.id ? 'PUT' : 'POST';
-            const url = report.id 
+            const url = report.id
                 ? `/api/assessment-reports/${report.id}`
                 : '/api/assessment-reports';
 
@@ -433,7 +434,7 @@ The assessment reveals a total gap of [X] points between current state and targe
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Backdrop */}
-            <div 
+            <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 onClick={() => {
                     if (!hasChanges || confirm('You have unsaved changes. Are you sure you want to close?')) {
@@ -465,22 +466,20 @@ The assessment reveals a total gap of [X] points between current state and targe
                         <div className="flex bg-slate-100 dark:bg-navy-800 rounded-lg p-1">
                             <button
                                 onClick={() => setActiveTab('edit')}
-                                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                                    activeTab === 'edit'
-                                        ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                                }`}
+                                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'edit'
+                                    ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                    }`}
                             >
                                 <Edit3 size={14} className="inline mr-1" />
                                 Edit
                             </button>
                             <button
                                 onClick={() => setActiveTab('preview')}
-                                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                                    activeTab === 'preview'
-                                        ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                                }`}
+                                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'preview'
+                                    ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                    }`}
                             >
                                 <Eye size={14} className="inline mr-1" />
                                 Preview
@@ -628,18 +627,18 @@ The assessment reveals a total gap of [X] points between current state and targe
                             {report.description && (
                                 <p className="text-slate-500 mb-6">{report.description}</p>
                             )}
-                            
+
                             {report.sections.map((section) => (
                                 <div key={section.id} className="mb-8">
                                     {section.content ? (
-                                        <div 
+                                        <div
                                             className="whitespace-pre-wrap text-slate-700 dark:text-slate-300"
-                                            dangerouslySetInnerHTML={{ 
-                                                __html: section.content
+                                            dangerouslySetInnerHTML={{
+                                                __html: DOMPurify.sanitize(section.content
                                                     .replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold text-navy-900 dark:text-white mt-6 mb-3">$1</h2>')
                                                     .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold text-navy-900 dark:text-white mt-4 mb-2">$1</h3>')
                                                     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                                                    .replace(/\n/g, '<br/>')
+                                                    .replace(/\n/g, '<br/>'))
                                             }}
                                         />
                                     ) : (

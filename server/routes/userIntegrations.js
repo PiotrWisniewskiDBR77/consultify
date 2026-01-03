@@ -12,7 +12,8 @@
 import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
-const UserIntegrationService = import('userIntegrationService.js');
+import UserIntegrationService from '../services/userIntegrationService.js';
+import { getDatabase } from '../src/database/Database.js';
 
 // All routes require authentication
 router.use(authMiddleware);
@@ -34,10 +35,10 @@ router.get('/', async (req, res) => {
     try {
         const userId = req.user.id;
         const integrations = await UserIntegrationService.getUserIntegrations(userId);
-        
+
         // Get list of available providers
         const availableProviders = UserIntegrationService.getAvailableProviders();
-        
+
         // Mark which are connected
         const providers = availableProviders.map(provider => {
             const connection = integrations.find(i => i.provider === provider.id);
@@ -47,8 +48,8 @@ router.get('/', async (req, res) => {
                 connection: connection || null
             };
         });
-        
-        res.json({ 
+
+        res.json({
             integrations,
             providers,
             connectedCount: integrations.filter(i => i.status === 'active').length
@@ -81,10 +82,10 @@ router.get('/:provider/status', async (req, res) => {
     try {
         const userId = req.user.id;
         const { provider } = req.params;
-        
+
         const status = await UserIntegrationService.getConnectionStatus(userId, provider);
-        
-        res.json({ 
+
+        res.json({
             provider,
             status: status || { isConnected: false }
         });
@@ -106,17 +107,17 @@ router.post('/:provider/connect', async (req, res) => {
     try {
         const userId = req.user.id;
         const { provider } = req.params;
-        
+
         // Validate provider
         const providers = UserIntegrationService.getAvailableProviders();
         if (!providers.find(p => p.id === provider)) {
             return res.status(400).json({ error: `Unknown provider: ${provider}` });
         }
-        
+
         // Generate OAuth URL
         const redirectUri = `${getBaseUrl(req)}/api/settings/integrations/${provider}/callback`;
         const authUrl = await UserIntegrationService.getOAuthUrl(userId, provider, redirectUri);
-        
+
         res.json({ authUrl });
     } catch (error) {
         console.error('[UserIntegrations] Connect error:', error);
@@ -132,24 +133,24 @@ router.get('/:provider/callback', async (req, res) => {
     try {
         const { provider } = req.params;
         const { code, state, error: oauthError } = req.query;
-        
+
         if (oauthError) {
             console.error(`[UserIntegrations] OAuth error for ${provider}:`, oauthError);
             return res.redirect(`/settings/integrations?error=${encodeURIComponent(oauthError)}&provider=${provider}`);
         }
-        
+
         if (!code || !state) {
             return res.redirect('/settings/integrations?error=missing_params');
         }
-        
+
         // Parse state to get user ID
         const stateData = UserIntegrationService.parseOAuthState(state);
         const userId = stateData.userId;
-        
+
         // Exchange code for tokens (provider-specific)
         // This would call the appropriate provider service
         await handleOAuthCallback(provider, userId, code, req);
-        
+
         res.redirect(`/settings/integrations?connected=${provider}`);
     } catch (error) {
         console.error('[UserIntegrations] Callback error:', error);
@@ -162,7 +163,7 @@ router.get('/:provider/callback', async (req, res) => {
  */
 async function handleOAuthCallback(provider, userId, code, req) {
     const redirectUri = `${getBaseUrl(req)}/api/settings/integrations/${provider}/callback`;
-    
+
     switch (provider) {
         case 'slack':
             return handleSlackCallback(userId, code, redirectUri);
@@ -182,7 +183,7 @@ async function handleOAuthCallback(provider, userId, code, req) {
  */
 async function handleSlackCallback(userId, code, redirectUri) {
     const axios = require('axios');
-    
+
     try {
         const response = await axios.post('https://slack.com/api/oauth.v2.access', null, {
             params: {
@@ -192,11 +193,11 @@ async function handleSlackCallback(userId, code, redirectUri) {
                 redirect_uri: redirectUri
             }
         });
-        
+
         if (!response.data.ok) {
             throw new Error(response.data.error || 'Slack OAuth failed');
         }
-        
+
         await UserIntegrationService.saveConnection(userId, 'slack', {
             access_token: response.data.authed_user?.access_token,
             refresh_token: response.data.authed_user?.refresh_token,
@@ -219,7 +220,7 @@ async function handleSlackCallback(userId, code, redirectUri) {
  */
 async function handleTeamsCallback(userId, code, redirectUri) {
     const axios = require('axios');
-    
+
     try {
         const response = await axios.post(
             'https://login.microsoftonline.com/common/oauth2/v2.0/token',
@@ -234,12 +235,12 @@ async function handleTeamsCallback(userId, code, redirectUri) {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
             }
         );
-        
+
         // Get user info from Microsoft Graph
         const userResponse = await axios.get('https://graph.microsoft.com/v1.0/me', {
             headers: { Authorization: `Bearer ${response.data.access_token}` }
         });
-        
+
         await UserIntegrationService.saveConnection(userId, 'teams', {
             access_token: response.data.access_token,
             refresh_token: response.data.refresh_token,
@@ -261,7 +262,7 @@ async function handleTeamsCallback(userId, code, redirectUri) {
  */
 async function handleJiraCallback(userId, code, redirectUri) {
     const axios = require('axios');
-    
+
     try {
         const response = await axios.post('https://auth.atlassian.com/oauth/token', {
             grant_type: 'authorization_code',
@@ -270,7 +271,7 @@ async function handleJiraCallback(userId, code, redirectUri) {
             code,
             redirect_uri: redirectUri
         });
-        
+
         // Get accessible resources (Jira sites)
         const resourcesResponse = await axios.get(
             'https://api.atlassian.com/oauth/token/accessible-resources',
@@ -278,9 +279,9 @@ async function handleJiraCallback(userId, code, redirectUri) {
                 headers: { Authorization: `Bearer ${response.data.access_token}` }
             }
         );
-        
+
         const site = resourcesResponse.data[0]; // Use first site
-        
+
         await UserIntegrationService.saveConnection(userId, 'jira', {
             access_token: response.data.access_token,
             refresh_token: response.data.refresh_token,
@@ -303,7 +304,7 @@ async function handleJiraCallback(userId, code, redirectUri) {
  */
 async function handleClickUpCallback(userId, code, redirectUri) {
     const axios = require('axios');
-    
+
     try {
         const response = await axios.post('https://app.clickup.com/api/v2/oauth/token', null, {
             params: {
@@ -312,12 +313,12 @@ async function handleClickUpCallback(userId, code, redirectUri) {
                 code
             }
         });
-        
+
         // Get user info
         const userResponse = await axios.get('https://api.clickup.com/api/v2/user', {
             headers: { Authorization: response.data.access_token }
         });
-        
+
         await UserIntegrationService.saveConnection(userId, 'clickup', {
             access_token: response.data.access_token,
             external_user_id: userResponse.data.user?.id?.toString(),
@@ -344,13 +345,13 @@ router.delete('/:provider', async (req, res) => {
     try {
         const userId = req.user.id;
         const { provider } = req.params;
-        
+
         const result = await UserIntegrationService.disconnectProvider(userId, provider);
-        
-        res.json({ 
-            success: true, 
+
+        res.json({
+            success: true,
             disconnected: result.disconnected,
-            provider 
+            provider
         });
     } catch (error) {
         console.error('[UserIntegrations] Disconnect error:', error);
@@ -366,9 +367,9 @@ router.post('/:provider/test', async (req, res) => {
     try {
         const userId = req.user.id;
         const { provider } = req.params;
-        
+
         const result = await UserIntegrationService.testConnection(userId, provider);
-        
+
         res.json(result);
     } catch (error) {
         console.error('[UserIntegrations] Test error:', error);
@@ -384,9 +385,9 @@ router.post('/:provider/refresh', async (req, res) => {
     try {
         const userId = req.user.id;
         const { provider } = req.params;
-        
+
         const result = await UserIntegrationService.refreshToken(userId, provider);
-        
+
         res.json({ success: true, ...result });
     } catch (error) {
         console.error('[UserIntegrations] Refresh error:', error);
@@ -403,32 +404,31 @@ router.put('/:provider/config', async (req, res) => {
         const userId = req.user.id;
         const { provider } = req.params;
         const { config } = req.body;
-        
+
         // Get current connection
         const connection = await UserIntegrationService.getConnection(userId, provider);
         if (!connection) {
             return res.status(404).json({ error: 'Integration not found' });
         }
-        
+
         // Update config (re-save with merged config)
         const mergedConfig = { ...connection.config, ...config };
-        
+
         // Update in database
         await new Promise((resolve, reject) => {
-            import { getDatabase } from '../database/Database.js';
-const db = getDatabase();
+            const db = getDatabase();
             db.run(
                 `UPDATE user_integrations 
                 SET config_json = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE user_id = ? AND provider = ?`,
                 [JSON.stringify(mergedConfig), userId, provider],
-                function(err) {
+                function (err) {
                     if (err) return reject(err);
                     resolve({ updated: this.changes > 0 });
                 }
             );
         });
-        
+
         res.json({ success: true, config: mergedConfig });
     } catch (error) {
         console.error('[UserIntegrations] Config update error:', error);
@@ -449,15 +449,15 @@ router.get('/:provider/logs', async (req, res) => {
         const userId = req.user.id;
         const { provider } = req.params;
         const { limit = 50 } = req.query;
-        
+
         // Get integration ID
         const connection = await UserIntegrationService.getConnection(userId, provider);
         if (!connection) {
             return res.status(404).json({ error: 'Integration not found' });
         }
-        
+
         const logs = await UserIntegrationService.getSyncLogs(userId, connection.id, parseInt(limit));
-        
+
         res.json({ logs });
     } catch (error) {
         console.error('[UserIntegrations] Logs error:', error);
@@ -466,6 +466,7 @@ router.get('/:provider/logs', async (req, res) => {
 });
 
 export default router;
+
 
 
 

@@ -6,7 +6,7 @@
  * Supports: metric_lte, metric_gte, flag_eq, has_open_tasks, signal_present, time_since_step_gte
  */
 
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
 const AIPlaybookRoutingEngine = {

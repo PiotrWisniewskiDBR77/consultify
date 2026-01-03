@@ -213,7 +213,7 @@ export const RiskRadar: React.FC<RiskRadarProps> = ({
                     <text
                         x={pos.x}
                         y={pos.y}
-                        textAnchor={pos.textAnchor}
+                        textAnchor={pos.textAnchor as "start" | "middle" | "end" | "inherit" | undefined}
                         dominantBaseline="middle"
                         className="text-[10px] font-medium fill-slate-600 dark:fill-slate-400"
                     >
@@ -223,7 +223,7 @@ export const RiskRadar: React.FC<RiskRadarProps> = ({
                         <text
                             x={pos.x}
                             y={pos.y + 12}
-                            textAnchor={pos.textAnchor}
+                            textAnchor={pos.textAnchor as "start" | "middle" | "end" | "inherit" | undefined}
                             dominantBaseline="middle"
                             className="text-[9px] font-bold"
                             fill={pos.value >= 70 ? '#10B981' : pos.value >= 40 ? '#F59E0B' : '#F43F5E'}

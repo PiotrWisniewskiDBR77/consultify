@@ -10,14 +10,14 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-    CheckCircle2, 
-    Circle, 
-    User as UserIcon, 
-    Briefcase, 
-    Phone, 
-    Clock, 
-    Shield, 
+import {
+    CheckCircle2,
+    Circle,
+    User as UserIcon,
+    Briefcase,
+    Phone,
+    Clock,
+    Shield,
     Image,
     Link2,
     ChevronRight,
@@ -99,7 +99,7 @@ const COMPLETION_ITEMS: CompletionItem[] = [
         icon: Link2,
         weight: 15,
         isComplete: (user) => {
-            const accounts = user.linkedAccounts || {};
+            const accounts = (user as any).linkedAccounts || {};
             return !!(accounts.google || accounts.linkedin);
         },
         action: 'connected',
@@ -139,10 +139,10 @@ interface Suggestion {
     actionLabel?: string;
 }
 
-export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({ 
-    currentUser, 
+export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
+    currentUser,
     onNavigate,
-    compact = false 
+    compact = false
 }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
@@ -157,7 +157,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
     const loadCompletenessData = async () => {
         try {
             setLoading(true);
-            const data = await Api.get('/api/user/profile-completeness');
+            const data = await (Api as any).get('/api/user/profile-completeness');
             if (data.success && data.data) {
                 setApiData(data.data);
                 setAchievements(data.data.achievements || []);
@@ -240,7 +240,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                     </div>
                 </div>
                 <div className="h-2 bg-white dark:bg-white/10 rounded-full overflow-hidden">
-                    <div 
+                    <div
                         className={`h-full ${level.bgColor} transition-all duration-500 ease-out`}
                         style={{ width: `${percentage}%` }}
                     />
@@ -281,7 +281,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
 
                 {/* Progress Bar */}
                 <div className="h-3 bg-white dark:bg-white/10 rounded-full overflow-hidden shadow-inner">
-                    <div 
+                    <div
                         className={`h-full ${level.bgColor} transition-all duration-700 ease-out rounded-full`}
                         style={{ width: `${percentage}%` }}
                     />
@@ -291,10 +291,10 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
             {/* Items List */}
             <div className="divide-y divide-slate-100 dark:divide-white/5">
                 {/* Incomplete Items First */}
-                {incompleteItems.map((item) => {
-                    const Icon = item.icon;
+                {incompleteItems.map((item: any) => {
+                    const Icon = item.icon || Circle;
                     return (
-                        <div 
+                        <div
                             key={item.id}
                             className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
                         >
@@ -325,10 +325,10 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                 })}
 
                 {/* Completed Items */}
-                {completedItems.map((item) => {
-                    const Icon = item.icon;
+                {completedItems.map((item: any) => {
+                    const Icon = item.icon || CheckCircle2;
                     return (
-                        <div 
+                        <div
                             key={item.id}
                             className="px-6 py-4 flex items-center justify-between opacity-60"
                         >
@@ -385,12 +385,11 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                                 key={idx}
                                 className="flex items-start gap-2 p-2 bg-white dark:bg-navy-800 rounded-lg"
                             >
-                                <AlertCircle 
-                                    size={16} 
-                                    className={`mt-0.5 ${
-                                        suggestion.priority === 'high' ? 'text-red-500' :
+                                <AlertCircle
+                                    size={16}
+                                    className={`mt-0.5 ${suggestion.priority === 'high' ? 'text-red-500' :
                                         suggestion.priority === 'medium' ? 'text-yellow-500' : 'text-blue-500'
-                                    }`}
+                                        }`}
                                 />
                                 <div className="flex-1">
                                     <p className="text-sm text-slate-700 dark:text-slate-300">
@@ -418,7 +417,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                     <div className="flex items-center gap-3">
                         <Sparkles className="text-green-500" size={20} />
                         <p className="text-sm text-green-700 dark:text-green-300">
-                            <span className="font-medium">Congratulations!</span> Your profile is complete. 
+                            <span className="font-medium">Congratulations!</span> Your profile is complete.
                             You're getting the most out of Consultify.
                         </p>
                     </div>

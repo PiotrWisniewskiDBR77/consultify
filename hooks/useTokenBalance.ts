@@ -33,11 +33,9 @@ export const useTokenBalance = () => {
 
         try {
             setState(prev => ({ ...prev, isLoading: true, error: null }));
-            
-            const response = await Api.getOrganizationBilling(currentUser.organizationId);
-            const balance = response?.usage?.tokensUsed !== undefined 
-                ? (response?.usage?.tokenLimit || 0) - (response?.usage?.tokensUsed || 0)
-                : response?.tokenBalance || 0;
+
+            const billing = await (Api as any).getOrganizationBillingDetails(currentUser.organizationId);
+            const balance = billing.tokenBalance || 0;
 
             setState({
                 balance,
@@ -69,7 +67,7 @@ export const useTokenBalance = () => {
 
     // Check if user should see low balance warning
     const shouldShowWarning = state.isLowBalance && !state.isLoading;
-    
+
     // Check if user should see zero balance modal
     const shouldBlockAI = state.isZeroBalance && !state.isLoading;
 
@@ -84,6 +82,7 @@ export const useTokenBalance = () => {
 };
 
 export default useTokenBalance;
+
 
 
 

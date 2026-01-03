@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const pmoRolesRoutesJSPromise = (async () => {
-    const module = await import('../../routes/pmoRoles.js');
-    return module.default || module;
-})();
-const pmoRolesRoutesJS = pmoRolesRoutesJSPromise;;
+const module = await import('../../routes/pmoRoles.js');
+const pmoRolesRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof pmoRolesRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof pmoRolesRoutesJS === 'function' || (pmoRolesRoutesJS && typeof pmoRolesRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(pmoRolesRoutesJS);
-} else if (pmoRolesRoutesJS.default) {
-    // If it has a default export
-    router.use(pmoRolesRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(pmoRolesRoutesJS);
+    // Fallback or error
+    console.error('pmoRoles.js did not export a valid router');
 }
 
 export default router;

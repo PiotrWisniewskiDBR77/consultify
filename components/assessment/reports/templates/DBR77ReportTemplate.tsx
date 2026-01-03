@@ -195,7 +195,7 @@ const WorkstationPage: React.FC<{
                         </div>
                         <div className="flex justify-between">
                             <span className="text-slate-600 dark:text-slate-400">Czas wdrożenia:</span>
-                            <span className="font-bold">{workstation.automationPotential.timeToAutomate || '-'} mies.</span>
+                            <span className="font-bold">{(workstation.automationPotential as any).timeToAutomate || '-'} mies.</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-slate-600 dark:text-slate-400">Reskilling:</span>
@@ -415,6 +415,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
 };
 
 export default DBR77ReportTemplate;
+
 
 
 

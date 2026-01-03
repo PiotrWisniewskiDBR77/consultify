@@ -5,8 +5,11 @@
  * Switch by setting DATABASE_URL environment variable
  */
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const path = require('path');
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const isProduction = process.env.NODE_ENV === 'production';
 const databaseUrl = process.env.DATABASE_URL;
@@ -44,10 +47,10 @@ const getDatabaseType = () => {
 const databaseType = getDatabaseType();
 
 // Database paths for SQLite
-const sqlitePath = process.env.SQLITE_PATH || path.resolve(__dirname, 'consultify.db');
+const sqlitePath = process.env.SQLITE_PATH || path.resolve(__dirname, '../consultify.db'); // Adjusted path relative to config dir
 
 // Parse PostgreSQL connection URL
-function parsePostgresUrl(url) {
+function parsePostgresUrl(url: string) {
     try {
         const parsed = new URL(url);
         return {
@@ -61,7 +64,7 @@ function parsePostgresUrl(url) {
             idleTimeoutMillis: 30000,
             connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000')
         };
-    } catch (e) {
+    } catch (e: any) {
         console.error('Failed to parse DATABASE_URL:', e.message);
         return null;
     }
@@ -82,7 +85,7 @@ const config = {
     // PostgreSQL config (parsed from DATABASE_URL)
     postgres: databaseUrl ? parsePostgresUrl(databaseUrl) : (() => {
         // Determine SSL configuration
-        let sslConfig = false;
+        let sslConfig: boolean | { rejectUnauthorized: boolean } = false;
         if (process.env.DB_SSL === 'true' || process.env.DB_SSL === 'require') {
             sslConfig = { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' };
         } else if (process.env.DB_SSL === 'false' || process.env.DB_SSL === 'disable') {
@@ -91,7 +94,7 @@ const config = {
             // Default: No SSL for Railway/internal connections
             sslConfig = false;
         }
-        
+
         return {
             host: process.env.DB_HOST || 'localhost',
             port: parseInt(process.env.DB_PORT || '5432', 10),
@@ -110,4 +113,4 @@ const config = {
     logQueries: !isProduction && process.env.DB_LOG_QUERIES === 'true'
 };
 
-module.exports = config;
+export default config;

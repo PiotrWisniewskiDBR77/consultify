@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-export type QuickActionType = 
+export type QuickActionType =
     | 'complete'
     | 'schedule'
     | 'delegate'
@@ -170,7 +170,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
                                 `}
                                 title={t(`myWork.actions.${actionType}`, config.label)}
                             >
-                                {React.cloneElement(config.icon as React.ReactElement, {
+                                {React.cloneElement(config.icon as any, {
                                     size: iconSizes[size]
                                 })}
                             </button>
@@ -221,7 +221,7 @@ export const QuickActionButton: React.FC<{
             `}
             title={t(`myWork.actions.${action}`, config.label)}
         >
-            {React.cloneElement(config.icon as React.ReactElement, {
+            {React.cloneElement(config.icon as any, {
                 size: iconSizes[size]
             })}
             {showLabel && (
@@ -262,6 +262,7 @@ export const MoreActionsButton: React.FC<{
 };
 
 export default QuickActions;
+
 
 
 

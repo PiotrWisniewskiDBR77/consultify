@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const economicsRoutesJSPromise = (async () => {
-    const module = await import('../../routes/economics.js');
-    return module.default || module;
-})();
-const economicsRoutesJS = economicsRoutesJSPromise;;
+const module = await import('../../routes/economics.js');
+const economicsRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof economicsRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof economicsRoutesJS === 'function' || (economicsRoutesJS && typeof economicsRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(economicsRoutesJS);
-} else if (economicsRoutesJS.default) {
-    // If it has a default export
-    router.use(economicsRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(economicsRoutesJS);
+    // Fallback or error
+    console.error('economics.js did not export a valid router');
 }
 
 export default router;

@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const assessmentsRoutesJSPromise = (async () => {
-    const module = await import('../../routes/assessments.js');
-    return module.default || module;
-})();
-const assessmentsRoutesJS = assessmentsRoutesJSPromise;;
+const module = await import('../../routes/assessments.js');
+const assessmentsRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof assessmentsRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof assessmentsRoutesJS === 'function' || (assessmentsRoutesJS && typeof assessmentsRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(assessmentsRoutesJS);
-} else if (assessmentsRoutesJS.default) {
-    // If it has a default export
-    router.use(assessmentsRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(assessmentsRoutesJS);
+    // Fallback or error
+    console.error('assessments.js did not export a valid router');
 }
 
 export default router;

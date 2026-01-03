@@ -395,3 +395,4 @@ Po zakończeniu wszystkich batchów:
 
 
 
+

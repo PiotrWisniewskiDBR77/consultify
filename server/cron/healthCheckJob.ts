@@ -4,7 +4,7 @@
  */
 
 const cron = require('node-cron');
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 const EmailService = import('emailService.js');
 

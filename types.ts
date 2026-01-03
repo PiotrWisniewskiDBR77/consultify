@@ -2734,7 +2734,7 @@ export type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4' | 'Q5' | 'Q6' | 'Q7' | 'Q8';
 export type Wave = 'Wave 1' | 'Wave 2' | 'Wave 3';
 // Updated InitiativeStatus to include Pilot-specific 'Validated' (Task) or Initiative status
 
-export type TaskType = 'ANALYSIS' | 'DESIGN' | 'BUILD' | 'EXECUTION' | 'VALIDATION' | 'DECISION' | 'CHANGE_MGMT';
+export type TaskType = 'task' | 'bug' | 'story' | 'epic' | 'subtask' | 'pilot';
 
 export interface DecisionImpact {
   decisionType: 'CONTINUE' | 'MOVE_TO_PILOT' | 'MOVE_TO_SCALE' | 'STOP' | 'APPROVE_INVESTMENT' | 'CHANGE_SCOPE';

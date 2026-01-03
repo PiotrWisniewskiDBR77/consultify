@@ -81,7 +81,7 @@ const BackupService = {
 
         try {
             // 1. Create SQLite backup (using VACUUM INTO for consistent snapshot)
-            import { getDatabase } from '../database/Database.js';
+            import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
             await new Promise((resolve, reject) => {

@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const workspace_defaultsRoutesJSPromise = (async () => {
-    const module = await import('../../routes/workspace-defaults.js');
-    return module.default || module;
-})();
-const workspace_defaultsRoutesJS = workspace_defaultsRoutesJSPromise;;
+const module = await import('../../routes/workspace-defaults.js');
+const workspace_defaultsRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof workspace_defaultsRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof workspace_defaultsRoutesJS === 'function' || (workspace_defaultsRoutesJS && typeof workspace_defaultsRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(workspace_defaultsRoutesJS);
-} else if (workspace_defaultsRoutesJS.default) {
-    // If it has a default export
-    router.use(workspace_defaultsRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(workspace_defaultsRoutesJS);
+    // Fallback or error
+    console.error('workspace-defaults.js did not export a valid router');
 }
 
 export default router;

@@ -26,3 +26,4 @@ CREATE INDEX IF NOT EXISTS idx_user_achievements_type ON user_achievements(achie
 
 
 
+

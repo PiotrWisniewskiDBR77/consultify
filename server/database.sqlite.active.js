@@ -1,13 +1,15 @@
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { createRequire } from 'module';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const require = createRequire(import.meta.url);
 
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-const bcrypt = require('bcryptjs');
-import { v4 as uuidv4 } from 'uuid';
+// const bcrypt = require('bcryptjs'); // Assuming bcrypt wasn't used or migrate it too if needed
+import bcrypt from 'bcryptjs';
 
 const dbPath = process.env.NODE_ENV === 'test'
     ? ':memory:'
@@ -3682,8 +3684,6 @@ function initDb() {
 
         // SEED PRICING DATA
         const seedPricing = async () => {
-            import { v4 as uuidv4 } from 'uuid';
-
             // ORG PLANS
             const orgPlans = [
                 { id: 'plan-trial', name: 'Trial (7 Days)', price: 0, tokens: 10000, storage: 1, features: JSON.stringify({ printing: false, analytics: 'basic', duration_days: 7 }) },

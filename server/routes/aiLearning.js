@@ -179,7 +179,7 @@ router.get('/interactions', verifyToken, async (req, res) => {
         const sinceDate = new Date();
         sinceDate.setDate(sinceDate.getDate() - days);
         
-        import { getDatabase } from '../database/Database.js';
+        import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
         const interactions = await new Promise((resolve, reject) => {
             const sql = organizationId 
@@ -232,7 +232,7 @@ router.get('/metrics', verifyToken, async (req, res) => {
         const sinceDate = new Date();
         sinceDate.setDate(sinceDate.getDate() - days);
         
-        import { getDatabase } from '../database/Database.js';
+        import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
         const analytics = await learningSystem.getAnalytics(organizationId);
         

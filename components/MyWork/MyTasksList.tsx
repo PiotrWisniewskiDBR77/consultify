@@ -254,7 +254,7 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
             setTasks(prev => 
                 prev.map(t => 
                     t.id === taskId 
-                        ? { ...t, status: completed ? 'completed' : 'todo' } 
+                        ? { ...t, status: completed ? 'completed' : 'todo' } as unknown as Task
                         : t
                 )
             );

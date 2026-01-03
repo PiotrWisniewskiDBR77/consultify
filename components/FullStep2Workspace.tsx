@@ -55,6 +55,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
     const newInit: FullInitiative = {
       id: '',
       name: '',
+      projectId: '',
       axis: filterAxis !== 'ALL' ? filterAxis : 'processes',
       priority: 'Medium',
       complexity: 'Medium',

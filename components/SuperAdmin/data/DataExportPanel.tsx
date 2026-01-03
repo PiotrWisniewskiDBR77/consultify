@@ -71,10 +71,14 @@ export const DataExportPanel: React.FC = () => {
     const [filterOrgId, setFilterOrgId] = useState<string>('');
     const [filterStatus, setFilterStatus] = useState<string>('');
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [formData, setFormData] = useState({
-        exportType: 'full' as const,
+    const [formData, setFormData] = useState<{
+        exportType: 'full' | 'partial';
+        includeData: string[];
+        excludeData: string[];
+    }>({
+        exportType: 'full',
         includeData: DATA_TYPES.map(d => d.id),
-        excludeData: [] as string[]
+        excludeData: []
     });
     const [creating, setCreating] = useState(false);
 
@@ -84,7 +88,7 @@ export const DataExportPanel: React.FC = () => {
             const params = new URLSearchParams();
             if (filterOrgId) params.append('organizationId', filterOrgId);
             if (filterStatus) params.append('status', filterStatus);
-            
+
             const [requestsResult, orgsResult] = await Promise.all([
                 Api.get(`/data-export/requests?${params.toString()}`),
                 Api.getOrganizations()
@@ -197,7 +201,7 @@ export const DataExportPanel: React.FC = () => {
                         <option value="failed">Failed</option>
                     </select>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     <button
                         onClick={fetchData}
@@ -235,7 +239,7 @@ export const DataExportPanel: React.FC = () => {
                                         {getStatusBadge(request.status)}
                                         {getExportTypeBadge(request.export_type)}
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-4 text-sm text-slate-400 mb-3">
                                         {request.organization_name && (
                                             <span className="flex items-center gap-1.5">
@@ -274,7 +278,7 @@ export const DataExportPanel: React.FC = () => {
                                         <p className="mt-2 text-sm text-red-400">{request.error_message}</p>
                                     )}
                                 </div>
-                                
+
                                 <div className="flex items-center gap-2">
                                     {request.status === 'completed' && request.file_url && (
                                         <a
@@ -307,7 +311,7 @@ export const DataExportPanel: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                     <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-lg">
                         <h3 className="text-lg font-semibold text-white mb-6">Request Data Export</h3>
-                        
+
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Export Type</label>
@@ -317,11 +321,10 @@ export const DataExportPanel: React.FC = () => {
                                             key={type}
                                             type="button"
                                             onClick={() => setFormData(prev => ({ ...prev, exportType: type }))}
-                                            className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${
-                                                formData.exportType === type
+                                            className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${formData.exportType === type
                                                     ? 'bg-violet-500/20 border-violet-500/50 text-violet-400'
                                                     : 'bg-slate-800 border-white/10 text-slate-400 hover:border-white/20'
-                                            }`}
+                                                }`}
                                         >
                                             {type.charAt(0).toUpperCase() + type.slice(1)}
                                         </button>
@@ -339,14 +342,14 @@ export const DataExportPanel: React.FC = () => {
                                                 checked={formData.includeData.includes(dataType.id)}
                                                 onChange={(e) => {
                                                     if (e.target.checked) {
-                                                        setFormData(prev => ({ 
-                                                            ...prev, 
-                                                            includeData: [...prev.includeData, dataType.id] 
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            includeData: [...prev.includeData, dataType.id]
                                                         }));
                                                     } else {
-                                                        setFormData(prev => ({ 
-                                                            ...prev, 
-                                                            includeData: prev.includeData.filter(d => d !== dataType.id) 
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            includeData: prev.includeData.filter(d => d !== dataType.id)
                                                         }));
                                                     }
                                                 }}
@@ -386,6 +389,7 @@ export const DataExportPanel: React.FC = () => {
 };
 
 export default DataExportPanel;
+
 
 
 

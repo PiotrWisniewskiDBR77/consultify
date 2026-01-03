@@ -8,8 +8,10 @@
  * - Logging
  */
 
-import cacheHelper from '../utils/cacheHelper.js';
-import queryHelpers from '../utils/queryHelpers.js';
+import * as cacheHelperMod from '../utils/cacheHelper.js';
+const cacheHelper = cacheHelperMod.default || cacheHelperMod;
+import * as queryHelpersMod from '../utils/queryHelpers.js';
+const queryHelpers = queryHelpersMod.default || queryHelpersMod;
 import logger from '../utils/logger.js';
 
 class BaseService {
@@ -98,5 +100,6 @@ class BaseService {
 }
 
 export default BaseService;
+
 
 

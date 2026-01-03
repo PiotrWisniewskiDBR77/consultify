@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const api_keysRoutesJSPromise = (async () => {
-    const module = await import('../../routes/api-keys.js');
-    return module.default || module;
-})();
-const api_keysRoutesJS = api_keysRoutesJSPromise;;
+const module = await import('../../routes/api-keys.js');
+const api_keysRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof api_keysRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof api_keysRoutesJS === 'function' || (api_keysRoutesJS && typeof api_keysRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(api_keysRoutesJS);
-} else if (api_keysRoutesJS.default) {
-    // If it has a default export
-    router.use(api_keysRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(api_keysRoutesJS);
+    // Fallback or error
+    console.error('api-keys.js did not export a valid router');
 }
 
 export default router;

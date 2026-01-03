@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const user_settings_historyRoutesJSPromise = (async () => {
-    const module = await import('../../routes/user-settings-history.js');
-    return module.default || module;
-})();
-const user_settings_historyRoutesJS = user_settings_historyRoutesJSPromise;;
+const module = await import('../../routes/user-settings-history.js');
+const user_settings_historyRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof user_settings_historyRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof user_settings_historyRoutesJS === 'function' || (user_settings_historyRoutesJS && typeof user_settings_historyRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(user_settings_historyRoutesJS);
-} else if (user_settings_historyRoutesJS.default) {
-    // If it has a default export
-    router.use(user_settings_historyRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(user_settings_historyRoutesJS);
+    // Fallback or error
+    console.error('user-settings-history.js did not export a valid router');
 }
 
 export default router;

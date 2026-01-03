@@ -14,7 +14,7 @@ const {
     validateWorkflowTransition
 } = require('../middleware/assessmentRBAC');
 const { FrameworkRBACService } = import('frameworkRBACService.js');
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 const multiFrameworkAuditService = import('multiFrameworkAuditService.js');
 
@@ -519,6 +519,7 @@ router.get('/:assessmentId/history', authenticateToken, async (req, res) => {
 });
 
 export default router;
+
 
 
 

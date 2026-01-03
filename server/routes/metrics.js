@@ -24,7 +24,7 @@ const seatManagementService = import('seatManagementService.js');
 import payAsYouGoService from '../services/payAsYouGoService.js';
 import budgetManagementService from '../services/budgetManagementService.js';
 const usageService = import('usageService.js');
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
 // ==========================================

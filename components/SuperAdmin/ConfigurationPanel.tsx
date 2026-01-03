@@ -20,7 +20,7 @@ export const ConfigurationPanel: React.FC = () => {
     const fetchConfigs = async () => {
         setLoading(true);
         try {
-            const data = await Api.getSystemConfigs();
+            const data = await (Api as any).getSystemConfigs();
             setConfigs(data);
         } catch (error) {
             console.error('Failed to fetch configs:', error);
@@ -32,7 +32,7 @@ export const ConfigurationPanel: React.FC = () => {
 
     const handleSave = async (key: string, value: any, configType: string) => {
         try {
-            await Api.setSystemConfig({
+            await (Api as any).setSystemConfig({
                 config_key: key,
                 config_value: value,
                 config_type: configType
@@ -138,6 +138,7 @@ export const ConfigurationPanel: React.FC = () => {
 };
 
 export default ConfigurationPanel;
+
 
 
 

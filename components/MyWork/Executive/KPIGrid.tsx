@@ -310,7 +310,8 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
                     kpiData.risk.level === 'medium' ? 'from-amber-500 to-orange-600 shadow-amber-500/30' :
                     'from-emerald-500 to-green-600 shadow-emerald-500/30'
                 }`}
-                value={<RiskLevelBadge level={kpiData.risk.level} />}
+                value={kpiData.risk.level.toUpperCase()}
+                subValue={<RiskLevelBadge level={kpiData.risk.level} /> as any}
                 trend={kpiData.risk.trend}
                 status={
                     kpiData.risk.level === 'critical' ? 'danger' :
@@ -329,6 +330,7 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
 };
 
 export default KPIGrid;
+
 
 
 

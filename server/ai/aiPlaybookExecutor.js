@@ -3,7 +3,7 @@ const AIPlaybookRoutingEngine = require('./aiPlaybookRoutingEngine');
 const ActionExecutionAdapter = require('./actionExecutionAdapter');
 const ActionDecisionService = require('./actionDecisionService');
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
 /**

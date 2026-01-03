@@ -94,7 +94,10 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
         const SpeechRecognition = (window as any).SpeechRecognition || 
                                   (window as any).webkitSpeechRecognition;
         
-        if (SpeechRecognition || navigator.mediaDevices?.getUserMedia) {
+        const SpeechRecognitionClass = (window as any).SpeechRecognition || 
+                                      (window as any).webkitSpeechRecognition;
+        
+        if (SpeechRecognitionClass || (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function')) {
             setSpeechSupported(true);
         }
 

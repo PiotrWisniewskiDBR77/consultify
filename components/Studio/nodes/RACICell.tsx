@@ -15,10 +15,10 @@ interface RACICellData {
     headerType?: 'task' | 'role';
 }
 
-export const RACICell: React.FC<NodeProps<RACICellData>> = memo(({ 
-    data, 
+export const RACICell: React.FC<NodeProps<RACICellData>> = memo(({
+    data,
     selected
-}) => {
+}: any) => {
     const { value, task, role, isHeader = false, headerType } = data;
 
     const valueColors = {
@@ -42,8 +42,8 @@ export const RACICell: React.FC<NodeProps<RACICellData>> = memo(({
             <div
                 className={`
                     w-32 h-12 flex items-center justify-center border transition-all duration-200
-                    ${headerType === 'task' 
-                        ? 'bg-slate-700 border-slate-600 text-white font-medium' 
+                    ${headerType === 'task'
+                        ? 'bg-slate-700 border-slate-600 text-white font-medium'
                         : 'bg-slate-800 border-slate-700 text-slate-300 font-medium -rotate-45'
                     }
                     ${selected ? 'ring-2 ring-white/30 ring-offset-1 ring-offset-slate-900' : ''}
@@ -60,10 +60,10 @@ export const RACICell: React.FC<NodeProps<RACICellData>> = memo(({
         <div
             className={`
                 w-16 h-16 flex items-center justify-center border-2 rounded-md
-                transition-all duration-200 ${valueColors[value]}
+                transition-all duration-200 ${(valueColors as any)[value]}
                 ${selected ? 'ring-2 ring-white/30 ring-offset-1 ring-offset-slate-900' : ''}
             `}
-            title={valueLabels[value]}
+            title={(valueLabels as any)[value]}
         >
             <span className="text-2xl font-bold">
                 {value || '-'}
@@ -75,6 +75,7 @@ export const RACICell: React.FC<NodeProps<RACICellData>> = memo(({
 RACICell.displayName = 'RACICell';
 
 export default RACICell;
+
 
 
 

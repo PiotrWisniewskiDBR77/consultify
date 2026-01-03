@@ -10,11 +10,11 @@ export const UserApi = {
     // ==========================================
     // USER CRUD
     // ==========================================
-    
+
     getUsers: async (): Promise<User[]> => {
         const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
-        const data = await handleResponse(res, 'Failed to fetch users');
-        return Array.isArray(data) ? data : (data.users || []);
+        const data = await handleResponse(res, 'Failed to fetch users') as any;
+        return (Array.isArray(data) ? data : (data?.users || [])) as User[];
     },
 
     getUser: async (id: string): Promise<User> => {
@@ -51,7 +51,7 @@ export const UserApi = {
     // ==========================================
     // USER STATUS
     // ==========================================
-    
+
     updateUserStatus: async (id: string, status: { availabilityStatus?: string; statusMessage?: string }): Promise<void> => {
         const res = await fetch(`${API_URL}/settings/profile/status`, {
             method: 'PUT',
@@ -67,7 +67,7 @@ export const UserApi = {
     // ==========================================
     // AVATAR
     // ==========================================
-    
+
     uploadAvatar: async (userId: string, file: File): Promise<{ avatarUrl: string }> => {
         const formData = new FormData();
         formData.append('avatar', file);
@@ -87,7 +87,7 @@ export const UserApi = {
     // ==========================================
     // REFERRALS
     // ==========================================
-    
+
     getUserReferrals: async (): Promise<unknown> => {
         const res = await fetch(`${API_URL}/referrals`, { headers: getHeaders() });
         return handleResponse(res, 'Failed to fetch referrals');
@@ -104,7 +104,7 @@ export const UserApi = {
     // ==========================================
     // ONBOARDING
     // ==========================================
-    
+
     saveOnboardingContext: async (context: unknown): Promise<void> => {
         const res = await fetch(`${API_URL}/onboarding/context`, {
             method: 'POST',
@@ -125,13 +125,13 @@ export const UserApi = {
     // ==========================================
     // FEEDBACK
     // ==========================================
-    
-    sendFeedback: async (data: { 
-        user_id: string; 
-        type: string; 
-        message: string; 
-        screenshot?: string; 
-        url?: string 
+
+    sendFeedback: async (data: {
+        user_id: string;
+        type: string;
+        message: string;
+        screenshot?: string;
+        url?: string
     }): Promise<void> => {
         const res = await fetch(`${API_URL}/feedback`, {
             method: 'POST',
@@ -168,13 +168,13 @@ export const UserApi = {
     // ==========================================
     // CONTACT FORM
     // ==========================================
-    
-    submitContactForm: async (formData: { 
-        name: string; 
-        email: string; 
-        company?: string; 
-        subject: string; 
-        message: string 
+
+    submitContactForm: async (formData: {
+        name: string;
+        email: string;
+        company?: string;
+        subject: string;
+        message: string
     }): Promise<void> => {
         const res = await fetch(`${API_URL}/legal/contact`, {
             method: 'POST',

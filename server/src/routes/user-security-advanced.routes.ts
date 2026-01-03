@@ -9,26 +9,19 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const user_security_advancedRoutesJSPromise = (async () => {
-    const module = await import('../../routes/user-security-advanced.js');
-    return module.default || module;
-})();
-const user_security_advancedRoutesJS = user_security_advancedRoutesJSPromise;;
+const module = await import('../../routes/user-security-advanced.js');
+const user_security_advancedRoutesJS = module.default || module;
 
-// Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof user_security_advancedRoutesJS === 'function') {
+if (typeof user_security_advancedRoutesJS === 'function' || (user_security_advancedRoutesJS && typeof user_security_advancedRoutesJS.handle === 'function')) {
     // If it's a router function, use it
     router.use(user_security_advancedRoutesJS);
-} else if (user_security_advancedRoutesJS.default) {
-    // If it has a default export
-    router.use(user_security_advancedRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(user_security_advancedRoutesJS);
+    // Fallback or error
+    console.error('user-security-advanced.js did not export a valid router');
 }
 
 export default router;

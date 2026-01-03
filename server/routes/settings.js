@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
 // GET Settings

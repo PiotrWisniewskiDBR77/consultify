@@ -86,6 +86,16 @@ const STATUS_CONFIG: Record<WorkflowState, { label: string; color: string; icon:
         label: 'Zarchiwizowany', 
         color: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500',
         icon: <FileText className="w-3.5 h-3.5" />
+    },
+    COMPLETED: { 
+        label: 'Ukończony', 
+        color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+        icon: <CheckCircle2 className="w-3.5 h-3.5" />
+    },
+    IN_PROGRESS: { 
+        label: 'W trakcie', 
+        color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+        icon: <Clock className="w-3.5 h-3.5" />
     }
 };
 

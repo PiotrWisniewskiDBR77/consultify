@@ -220,8 +220,8 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
         {viewMode === 'gantt' && (
           <div className="h-[600px] w-full">
             <RoadmapGantt
-              initiatives={initiatives}
-              onUpdateInitiative={onUpdateInitiative}
+              initiatives={initiatives as any}
+              onUpdateInitiative={onUpdateInitiative as any}
 
             />
           </div>
@@ -230,8 +230,8 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
         {viewMode === 'board' && (
           <div className="h-[500px] w-full">
             <RoadmapKanban
-              initiatives={initiatives}
-              onUpdateInitiative={onUpdateInitiative}
+              initiatives={initiatives as any}
+              onUpdateInitiative={onUpdateInitiative as any}
 
               users={users}
               currentUser={currentUser}

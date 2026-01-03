@@ -9,7 +9,7 @@ const NotificationService = import('notificationService.js');
 const DecisionTriggerService = import('decisionTriggerService.js');
 import express from 'express';
 const router = express.Router();
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import verifyToken from '../middleware/authMiddleware.js';

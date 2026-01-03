@@ -9,7 +9,7 @@ const RapidLeanObservationMapper = import('rapidLeanObservationMapper.js');
 const RapidLeanReportService = import('rapidLeanReportService.js');
 import verifyToken from '../middleware/authMiddleware.js';
 const { rapidLeanPhotoUpload } = require('../middleware/rapidLeanUploadMiddleware');
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 const path = require('path');

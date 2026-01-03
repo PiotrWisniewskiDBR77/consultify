@@ -129,3 +129,4 @@ export default { up, down, MIGRATION_NAME };
 
 
 
+

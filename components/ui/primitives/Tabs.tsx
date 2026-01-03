@@ -60,7 +60,7 @@ export const Tabs: React.FC<TabsProps> = ({
   className = '',
 }) => {
   const [internalValue, setInternalValue] = useState(defaultValue || '');
-  
+
   const isControlled = controlledValue !== undefined;
   const value = isControlled ? controlledValue : internalValue;
 
@@ -97,8 +97,8 @@ export const TabsList = React.forwardRef<HTMLDivElement, TabsListProps>(
         role="tablist"
         className={`
           relative flex
-          ${isPills 
-            ? 'gap-1 p-1 bg-slate-100 dark:bg-navy-900 rounded-xl' 
+          ${isPills
+            ? 'gap-1 p-1 bg-slate-100 dark:bg-navy-900 rounded-xl'
             : 'gap-0 border-b border-slate-200 dark:border-white/10'
           }
           ${className}
@@ -108,13 +108,14 @@ export const TabsList = React.forwardRef<HTMLDivElement, TabsListProps>(
         {/* Animated indicator for pills variant */}
         {isPills && indicatorStyle.width > 0 && (
           <motion.div
-            className="absolute top-1 bottom-1 bg-white dark:bg-navy-800 rounded-lg shadow-sm"
+            layoutId="activeTab"
+            className="absolute inset-0 bg-white dark:bg-navy-800 rounded-lg shadow-sm"
             initial={false}
             animate={{
               left: indicatorStyle.left,
               width: indicatorStyle.width,
             }}
-            transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 } as any}
           />
         )}
         <div ref={listRef} className="relative flex gap-1 w-full">
@@ -184,17 +185,17 @@ export const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>
           ${isPills
             ? `
               px-4 py-2 text-sm rounded-lg
-              ${isActive 
-                ? 'text-navy-900 dark:text-white' 
-                : 'text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
-              }
+              ${isActive
+              ? 'text-navy-900 dark:text-white'
+              : 'text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
+            }
             `
             : `
               px-4 py-3 text-sm border-b-2 -mb-px
               ${isActive
-                ? 'text-primary-600 dark:text-primary-400 border-primary-500'
-                : 'text-slate-600 dark:text-slate-400 border-transparent hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600'
-              }
+              ? 'text-primary-600 dark:text-primary-400 border-primary-500'
+              : 'text-slate-600 dark:text-slate-400 border-transparent hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600'
+            }
             `
           }
           ${className}
@@ -240,7 +241,7 @@ export const TabsContent = React.forwardRef<HTMLDivElement, TabsContentProps>(
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        {...props}
+        {...(props as any)}
       >
         {children}
       </motion.div>
@@ -251,6 +252,7 @@ export const TabsContent = React.forwardRef<HTMLDivElement, TabsContentProps>(
 TabsContent.displayName = 'TabsContent';
 
 export default Tabs;
+
 
 
 

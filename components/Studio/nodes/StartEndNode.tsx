@@ -17,7 +17,7 @@ export const StartEndNode: React.FC<NodeProps<StartEndData>> = memo(({
     data, 
     selected,
     isConnectable
-}) => {
+}: any) => {
     const { label, isStart = true } = data;
 
     return (
@@ -71,6 +71,7 @@ export const StartEndNode: React.FC<NodeProps<StartEndData>> = memo(({
 StartEndNode.displayName = 'StartEndNode';
 
 export default StartEndNode;
+
 
 
 

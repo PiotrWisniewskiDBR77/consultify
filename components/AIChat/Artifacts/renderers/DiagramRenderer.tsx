@@ -6,6 +6,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ZoomIn, ZoomOut, RotateCcw, Download, Code, Eye, AlertTriangle } from 'lucide-react';
 import mermaid from 'mermaid';
+import DOMPurify from 'dompurify';
 
 interface DiagramRendererProps {
   content: string;
@@ -91,7 +92,7 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({
 
     const svgData = new XMLSerializer().serializeToString(svgElement);
     const img = new Image();
-    
+
     img.onload = () => {
       canvas.width = img.width * 2; // 2x for better quality
       canvas.height = img.height * 2;
@@ -116,22 +117,20 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowCode(false)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
-              !showCode 
-                ? 'bg-brand text-white' 
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700'
-            }`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${!showCode
+              ? 'bg-brand text-white'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700'
+              }`}
           >
             <Eye size={14} />
             {t('diagram.preview', 'Preview')}
           </button>
           <button
             onClick={() => setShowCode(true)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
-              showCode 
-                ? 'bg-brand text-white' 
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700'
-            }`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${showCode
+              ? 'bg-brand text-white'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700'
+              }`}
           >
             <Code size={14} />
             {t('diagram.code', 'Code')}
@@ -207,7 +206,7 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({
           >
             <div
               className="[&>svg]:max-w-full [&>svg]:h-auto"
-              dangerouslySetInnerHTML={{ __html: svg }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(svg) }}
             />
           </div>
         )}
@@ -224,6 +223,7 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({
 };
 
 export default DiagramRenderer;
+
 
 
 

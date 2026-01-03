@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const roadmapRoutesJSPromise = (async () => {
-    const module = await import('../../routes/roadmap.js');
-    return module.default || module;
-})();
-const roadmapRoutesJS = roadmapRoutesJSPromise;;
+const module = await import('../../routes/roadmap.js');
+const roadmapRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof roadmapRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof roadmapRoutesJS === 'function' || (roadmapRoutesJS && typeof roadmapRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(roadmapRoutesJS);
-} else if (roadmapRoutesJS.default) {
-    // If it has a default export
-    router.use(roadmapRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(roadmapRoutesJS);
+    // Fallback or error
+    console.error('roadmap.js did not export a valid router');
 }
 
 export default router;

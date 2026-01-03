@@ -12,7 +12,7 @@ const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
 const { taskAdvisorService } = import('ai/taskAdvisorService.js');
 const { aiLogger } = import('ai/logger.js');
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
 // All routes require authentication

@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const mcpRoutesJSPromise = (async () => {
-    const module = await import('../../routes/mcp.js');
-    return module.default || module;
-})();
-const mcpRoutesJS = mcpRoutesJSPromise;;
+const module = await import('../../routes/mcp.js');
+const mcpRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof mcpRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof mcpRoutesJS === 'function' || (mcpRoutesJS && typeof mcpRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(mcpRoutesJS);
-} else if (mcpRoutesJS.default) {
-    // If it has a default export
-    router.use(mcpRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(mcpRoutesJS);
+    // Fallback or error
+    console.error('mcp.js did not export a valid router');
 }
 
 export default router;

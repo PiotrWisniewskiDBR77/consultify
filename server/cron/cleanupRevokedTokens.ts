@@ -3,7 +3,7 @@
  * Removes expired entries from the revoked_tokens table
  */
 
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 const config = require('../config');
 

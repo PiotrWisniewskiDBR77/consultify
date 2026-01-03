@@ -14,7 +14,7 @@ import express from 'express';
 const router = express.Router();
 import requireAuth from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 const archiver = require('archiver');
@@ -392,6 +392,7 @@ router.get('/gdpr-requests', requireAuth, requireRole(['admin', 'owner', 'super_
 });
 
 export default router;
+
 
 
 

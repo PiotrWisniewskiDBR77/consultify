@@ -127,7 +127,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
         title: '',
         status: TaskStatus.TODO,
         priority: 'medium',
-        taskType: 'ANALYSIS', // Default to Analysis
+        taskType: 'task', // Default to Task
         initiativeId: initiativeId
     };
 
@@ -209,7 +209,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                         <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
                             {selectedTaskIds.size} task{selectedTaskIds.size > 1 ? 's' : ''} selected
                         </span>
-                        <button 
+                        <button
                             onClick={() => setSelectedTaskIds(new Set())}
                             className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                         >
@@ -274,11 +274,10 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                         <div
                             key={task.id}
                             onClick={() => setSelectedTask(task)}
-                            className={`bg-white dark:bg-navy-950 border rounded-lg p-3 hover:border-blue-500/30 transition-colors cursor-pointer group flex items-center gap-4 shadow-sm dark:shadow-none ${
-                                selectedTaskIds.has(task.id) 
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10' 
+                            className={`bg-white dark:bg-navy-950 border rounded-lg p-3 hover:border-blue-500/30 transition-colors cursor-pointer group flex items-center gap-4 shadow-sm dark:shadow-none ${selectedTaskIds.has(task.id)
+                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10'
                                     : 'border-slate-200 dark:border-white/5'
-                            }`}
+                                }`}
                         >
                             {/* Checkbox */}
                             <button

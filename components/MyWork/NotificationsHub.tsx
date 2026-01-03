@@ -85,13 +85,13 @@ const formatRelativeTime = (dateString: string): string => {
     if (!dateString) return 'Recently';
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return 'Recently';
-    
+
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
-    
+
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
@@ -101,12 +101,12 @@ const formatRelativeTime = (dateString: string): string => {
 
 // Get notification icon
 const getNotificationIcon = (type: string, severity: string) => {
-    const iconClass = severity === 'CRITICAL' 
-        ? 'text-red-500' 
-        : severity === 'WARNING' 
-            ? 'text-amber-500' 
+    const iconClass = severity === 'CRITICAL'
+        ? 'text-red-500'
+        : severity === 'WARNING'
+            ? 'text-amber-500'
             : 'text-blue-500';
-    
+
     switch (type) {
         case 'TASK_ASSIGNED':
         case 'TASK_OVERDUE':
@@ -182,8 +182,8 @@ const NotificationItem: React.FC<{
             className={`
                 border-b border-slate-100 dark:border-white/5
                 transition-colors duration-150
-                ${notification.read 
-                    ? 'bg-white dark:bg-navy-900/50' 
+                ${notification.read
+                    ? 'bg-white dark:bg-navy-900/50'
                     : 'bg-blue-50/50 dark:bg-blue-900/10'
                 }
                 ${isExpanded ? 'bg-slate-50/80 dark:bg-white/5' : ''}
@@ -212,18 +212,17 @@ const NotificationItem: React.FC<{
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                        <p className={`text-[13px] leading-tight ${isExpanded ? '' : 'line-clamp-2'} ${
-                            notification.read 
-                                ? 'text-slate-600 dark:text-slate-400' 
+                        <p className={`text-[13px] leading-tight ${isExpanded ? '' : 'line-clamp-2'} ${notification.read
+                                ? 'text-slate-600 dark:text-slate-400'
                                 : 'text-slate-800 dark:text-white font-medium'
-                        }`}>
+                            }`}>
                             {notification.title}
                         </p>
                         <span className="shrink-0 text-[10px] text-slate-400 dark:text-slate-500">
                             {formatRelativeTime(notification.createdAt)}
                         </span>
                     </div>
-                    
+
                     {notification.message && !isExpanded && (
                         <p className="text-[11px] text-slate-500 dark:text-slate-500 mt-0.5 line-clamp-1">
                             {notification.message}
@@ -233,9 +232,9 @@ const NotificationItem: React.FC<{
 
                 {/* Expand indicator */}
                 <div className="shrink-0 pt-0.5">
-                    <ChevronDown 
-                        size={14} 
-                        className={`text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} 
+                    <ChevronDown
+                        size={14}
+                        className={`text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
                     />
                 </div>
 
@@ -310,13 +309,12 @@ const NotificationItem: React.FC<{
 
                                 {/* Scope badge */}
                                 {notification.scope && (
-                                    <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-[11px] ${
-                                        notification.scope === 'PROJECT' 
+                                    <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-[11px] ${notification.scope === 'PROJECT'
                                             ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
                                             : notification.scope === 'PERSONAL'
                                                 ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
                                                 : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400'
-                                    }`}>
+                                        }`}>
                                         {notification.scope === 'PROJECT' ? <Building2 size={12} /> : <User size={12} />}
                                         <span>{notification.scope === 'PROJECT' ? 'Project' : notification.scope === 'PERSONAL' ? 'Personal' : 'System'}</span>
                                     </div>
@@ -324,11 +322,10 @@ const NotificationItem: React.FC<{
 
                                 {/* Severity badge */}
                                 {notification.severity && notification.severity !== 'INFO' && (
-                                    <div className={`px-2 py-1 rounded text-[11px] font-medium ${
-                                        notification.severity === 'CRITICAL' 
+                                    <div className={`px-2 py-1 rounded text-[11px] font-medium ${notification.severity === 'CRITICAL'
                                             ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
                                             : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                                    }`}>
+                                        }`}>
                                         {notification.severity}
                                     </div>
                                 )}
@@ -345,7 +342,7 @@ const NotificationItem: React.FC<{
                                         <ArrowRight size={12} />
                                     </button>
                                 )}
-                                
+
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -399,7 +396,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
     const fetchNotifications = useCallback(async () => {
         try {
             setLoading(true);
-            const data = await Api.getNotifications(50);
+            const data = await Api.getNotifications(false, 50) as any;
             setNotifications(data || []);
         } catch (error) {
             console.error('Failed to fetch notifications:', error);
@@ -420,8 +417,8 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                 return n.projectId || n.scope === 'PROJECT';
             }
             if (mode === 'personal') {
-                return n.userId === currentUserId || n.scope === 'PERSONAL' || 
-                       ['TASK_ASSIGNED', 'DECISION_REQUIRED'].includes(n.type);
+                return n.userId === currentUserId || n.scope === 'PERSONAL' ||
+                    ['TASK_ASSIGNED', 'DECISION_REQUIRED'].includes(n.type);
             }
             return true;
         });
@@ -467,7 +464,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
             today: notifications.filter(n => new Date(n.createdAt) >= today).length,
             week: notifications.filter(n => new Date(n.createdAt) >= weekAgo).length,
             project: notifications.filter(n => n.projectId || n.scope === 'PROJECT').length,
-            personal: notifications.filter(n => 
+            personal: notifications.filter(n =>
                 n.userId === currentUserId || n.scope === 'PERSONAL' ||
                 ['TASK_ASSIGNED', 'DECISION_REQUIRED'].includes(n.type)
             ).length
@@ -478,7 +475,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
     const handleMarkRead = async (id: string) => {
         try {
             await Api.markNotificationRead(id);
-            setNotifications(prev => prev.map(n => 
+            setNotifications(prev => prev.map(n =>
                 n.id === id ? { ...n, read: true, readAt: new Date().toISOString() } : n
             ));
         } catch (error) {
@@ -490,10 +487,10 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
     const handleMarkAllRead = async () => {
         try {
             await Api.markAllNotificationsRead();
-            setNotifications(prev => prev.map(n => ({ 
-                ...n, 
-                read: true, 
-                readAt: new Date().toISOString() 
+            setNotifications(prev => prev.map(n => ({
+                ...n,
+                read: true,
+                readAt: new Date().toISOString()
             })));
             toast.success(t('notifications.allMarkedRead', 'All marked as read'));
         } catch (error) {
@@ -537,24 +534,24 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
 
     // Mode tabs - EXACTLY matching PillNavigation style
     const modeTabs: ModeTab[] = [
-        { 
-            key: 'project', 
-            label: t('myWork.projectNotifications', 'Project'), 
-            icon: Building2, 
+        {
+            key: 'project',
+            label: t('myWork.projectNotifications', 'Project'),
+            icon: Building2,
             count: counts.project,
             activeColor: 'bg-purple-500 text-white'
         },
-        { 
-            key: 'personal', 
-            label: t('myWork.personalNotifications', 'Personal'), 
-            icon: User, 
+        {
+            key: 'personal',
+            label: t('myWork.personalNotifications', 'Personal'),
+            icon: User,
             count: counts.personal,
             activeColor: 'bg-blue-500 text-white'
         },
-        { 
-            key: 'all', 
-            label: t('myWork.allNotifications', 'All'), 
-            icon: Layers, 
+        {
+            key: 'all',
+            label: t('myWork.allNotifications', 'All'),
+            icon: Layers,
             count: counts.total,
             activeColor: 'bg-slate-700 text-white dark:bg-slate-600'
         }
@@ -596,8 +593,8 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                                 {tab.count > 0 && (
                                     <span className={`
                                         px-1.5 min-w-[20px] text-center text-[10px] font-semibold rounded-full
-                                        ${isActive 
-                                            ? 'bg-white/25' 
+                                        ${isActive
+                                            ? 'bg-white/25'
                                             : 'bg-slate-200 dark:bg-white/10'
                                         }
                                     `}>
@@ -626,7 +623,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                 <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mr-1">
                     {t('common.show', 'Show')}:
                 </span>
-                
+
                 <div className="flex items-center gap-1.5 flex-wrap">
                     {filterChips.map((chip) => {
                         const isActive = filter === chip.key;
@@ -654,8 +651,8 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                                 {chip.count !== undefined && chip.count > 0 && (
                                     <span className={`
                                         px-1 min-w-[16px] text-center text-[10px] rounded-full
-                                        ${isActive 
-                                            ? 'bg-white/20' 
+                                        ${isActive
+                                            ? 'bg-white/20'
                                             : 'bg-slate-100 dark:bg-white/10'
                                         }
                                     `}>
@@ -700,7 +697,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                                         {groupedNotifications.thisWeek.length}
                                     </span>
                                 </button>
-                                
+
                                 {expandedGroups.has('thisWeek') && (
                                     <AnimatePresence>
                                         {groupedNotifications.thisWeek.map(notification => (
@@ -734,7 +731,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                                         {groupedNotifications.earlier.length}
                                     </span>
                                 </button>
-                                
+
                                 {expandedGroups.has('earlier') && (
                                     <AnimatePresence>
                                         {groupedNotifications.earlier.map(notification => (

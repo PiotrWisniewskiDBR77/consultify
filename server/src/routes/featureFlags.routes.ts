@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const featureFlagsRoutesJSPromise = (async () => {
-    const module = await import('../../routes/featureFlags.js');
-    return module.default || module;
-})();
-const featureFlagsRoutesJS = featureFlagsRoutesJSPromise;;
+const module = await import('../../routes/featureFlags.js');
+const featureFlagsRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof featureFlagsRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof featureFlagsRoutesJS === 'function' || (featureFlagsRoutesJS && typeof featureFlagsRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(featureFlagsRoutesJS);
-} else if (featureFlagsRoutesJS.default) {
-    // If it has a default export
-    router.use(featureFlagsRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(featureFlagsRoutesJS);
+    // Fallback or error
+    console.error('featureFlags.js did not export a valid router');
 }
 
 export default router;

@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const user_keyboard_shortcutsRoutesJSPromise = (async () => {
-    const module = await import('../../routes/user-keyboard-shortcuts.js');
-    return module.default || module;
-})();
-const user_keyboard_shortcutsRoutesJS = user_keyboard_shortcutsRoutesJSPromise;;
+const module = await import('../../routes/user-keyboard-shortcuts.js');
+const user_keyboard_shortcutsRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof user_keyboard_shortcutsRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof user_keyboard_shortcutsRoutesJS === 'function' || (user_keyboard_shortcutsRoutesJS && typeof user_keyboard_shortcutsRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(user_keyboard_shortcutsRoutesJS);
-} else if (user_keyboard_shortcutsRoutesJS.default) {
-    // If it has a default export
-    router.use(user_keyboard_shortcutsRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(user_keyboard_shortcutsRoutesJS);
+    // Fallback or error
+    console.error('user-keyboard-shortcuts.js did not export a valid router');
 }
 
 export default router;

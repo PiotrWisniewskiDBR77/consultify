@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const webhookSubscriptionsRoutesJSPromise = (async () => {
-    const module = await import('../../routes/webhookSubscriptions.js');
-    return module.default || module;
-})();
-const webhookSubscriptionsRoutesJS = webhookSubscriptionsRoutesJSPromise;;
+const module = await import('../../routes/webhookSubscriptions.js');
+const webhookSubscriptionsRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof webhookSubscriptionsRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof webhookSubscriptionsRoutesJS === 'function' || (webhookSubscriptionsRoutesJS && typeof webhookSubscriptionsRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(webhookSubscriptionsRoutesJS);
-} else if (webhookSubscriptionsRoutesJS.default) {
-    // If it has a default export
-    router.use(webhookSubscriptionsRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(webhookSubscriptionsRoutesJS);
+    // Fallback or error
+    console.error('webhookSubscriptions.js did not export a valid router');
 }
 
 export default router;

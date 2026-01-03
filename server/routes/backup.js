@@ -7,7 +7,7 @@
 import express from 'express';
 const router = express.Router();
 const BackupService = import('backupService.js');
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
@@ -143,6 +143,7 @@ router.delete('/:id', verifySuperAdmin, async (req, res) => {
 });
 
 export default router;
+
 
 
 

@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const scenariosRoutesJSPromise = (async () => {
-    const module = await import('../../routes/scenarios.js');
-    return module.default || module;
-})();
-const scenariosRoutesJS = scenariosRoutesJSPromise;;
+const module = await import('../../routes/scenarios.js');
+const scenariosRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof scenariosRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof scenariosRoutesJS === 'function' || (scenariosRoutesJS && typeof scenariosRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(scenariosRoutesJS);
-} else if (scenariosRoutesJS.default) {
-    // If it has a default export
-    router.use(scenariosRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(scenariosRoutesJS);
+    // Fallback or error
+    console.error('scenarios.js did not export a valid router');
 }
 
 export default router;

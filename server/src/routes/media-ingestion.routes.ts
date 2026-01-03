@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const media_ingestionRoutesJSPromise = (async () => {
-    const module = await import('../../routes/media-ingestion.js');
-    return module.default || module;
-})();
-const media_ingestionRoutesJS = media_ingestionRoutesJSPromise;;
+const module = await import('../../routes/media-ingestion.js');
+const media_ingestionRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof media_ingestionRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof media_ingestionRoutesJS === 'function' || (media_ingestionRoutesJS && typeof media_ingestionRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(media_ingestionRoutesJS);
-} else if (media_ingestionRoutesJS.default) {
-    // If it has a default export
-    router.use(media_ingestionRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(media_ingestionRoutesJS);
+    // Fallback or error
+    console.error('media-ingestion.js did not export a valid router');
 }
 
 export default router;

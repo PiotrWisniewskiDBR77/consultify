@@ -23,7 +23,8 @@ export * from './primitives';
 export * from './composed';
 
 // Legacy exports for backwards compatibility
-export { default as BaseCard } from './BaseCard';
+export { Card as BaseCard } from './BaseCard';
+
 
 
 

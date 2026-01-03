@@ -21,7 +21,7 @@ interface ModelCost {
     output: number;
 }
 
-type ModelId = 
+type ModelId =
     | 'gpt-4' | 'gpt-4-turbo' | 'claude-3-opus' | 'gemini-1.5-pro'
     | 'gpt-3.5-turbo' | 'claude-3-sonnet' | 'gemini-1.5-flash'
     | 'gpt-4o-mini' | 'claude-3-haiku' | 'glm-4' | 'glm-4-plus'
@@ -416,8 +416,8 @@ class AICostControlServiceClass {
                  input_tokens, output_tokens, estimated_cost_usd, was_downgraded, downgrade_reason)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
-                id, params.organizationId, params.projectId || null, params.userId, params.modelUsed, 
-                params.modelCategory, params.actionType, params.inputTokens, params.outputTokens, 
+                id, params.organizationId, params.projectId || null, params.userId, params.modelUsed,
+                params.modelCategory, params.actionType, params.inputTokens, params.outputTokens,
                 estimatedCost, params.wasDowngraded ? 1 : 0, params.downgradeReason || null
             ]);
 
@@ -640,7 +640,7 @@ class AICostControlServiceClass {
 export { AICostControlServiceClass };
 
 // Export constants
-export { MODEL_CATEGORIES, ROLE_TO_CATEGORY, ACTION_TO_CATEGORY };
+
 
 // Export types
 export type {

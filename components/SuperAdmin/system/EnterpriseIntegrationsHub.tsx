@@ -185,7 +185,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
 
     const fetchWebhooks = useCallback(async () => {
         try {
-            const data = await Api.getWebhooks('current');
+            const data = await (Api as any).getWebhooks?.() || [];
             setWebhooks(data);
         } catch (error) {
             // Mock data
@@ -811,6 +811,7 @@ const DeliveriesModal: React.FC<{
 );
 
 export default EnterpriseIntegrationsHub;
+
 
 
 

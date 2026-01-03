@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const framework_rbacRoutesJSPromise = (async () => {
-    const module = await import('../../routes/framework-rbac.js');
-    return module.default || module;
-})();
-const framework_rbacRoutesJS = framework_rbacRoutesJSPromise;;
+const module = await import('../../routes/framework-rbac.js');
+const framework_rbacRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof framework_rbacRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof framework_rbacRoutesJS === 'function' || (framework_rbacRoutesJS && typeof framework_rbacRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(framework_rbacRoutesJS);
-} else if (framework_rbacRoutesJS.default) {
-    // If it has a default export
-    router.use(framework_rbacRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(framework_rbacRoutesJS);
+    // Fallback or error
+    console.error('framework-rbac.js did not export a valid router');
 }
 
 export default router;

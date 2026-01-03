@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const capacityRoutesJSPromise = (async () => {
-    const module = await import('../../routes/capacity.js');
-    return module.default || module;
-})();
-const capacityRoutesJS = capacityRoutesJSPromise;;
+const module = await import('../../routes/capacity.js');
+const capacityRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof capacityRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof capacityRoutesJS === 'function' || (capacityRoutesJS && typeof capacityRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(capacityRoutesJS);
-} else if (capacityRoutesJS.default) {
-    // If it has a default export
-    router.use(capacityRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(capacityRoutesJS);
+    // Fallback or error
+    console.error('capacity.js did not export a valid router');
 }
 
 export default router;

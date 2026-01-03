@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const pinned_promptsRoutesJSPromise = (async () => {
-    const module = await import('../../routes/pinned-prompts.js');
-    return module.default || module;
-})();
-const pinned_promptsRoutesJS = pinned_promptsRoutesJSPromise;;
+const module = await import('../../routes/pinned-prompts.js');
+const pinned_promptsRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof pinned_promptsRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof pinned_promptsRoutesJS === 'function' || (pinned_promptsRoutesJS && typeof pinned_promptsRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(pinned_promptsRoutesJS);
-} else if (pinned_promptsRoutesJS.default) {
-    // If it has a default export
-    router.use(pinned_promptsRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(pinned_promptsRoutesJS);
+    // Fallback or error
+    console.error('pinned-prompts.js did not export a valid router');
 }
 
 export default router;

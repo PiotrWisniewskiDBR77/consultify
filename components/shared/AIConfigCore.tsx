@@ -35,7 +35,7 @@ export const ProviderTabs: React.FC<{
     onProviderChange: (provider: AIProviderType) => void;
     availableProviders?: AIProviderType[];
 }> = ({ activeProvider, onProviderChange, availableProviders = ['system', 'gemini', 'openai'] }) => {
-    const providerLabels: Record<AIProviderType, string> = {
+    const providerLabels: Record<string, string> = {
         'system': 'Default (System)',
         'gemini': 'Google Gemini',
         'openai': 'OpenAI',
@@ -50,11 +50,10 @@ export const ProviderTabs: React.FC<{
                 <button
                     key={provider}
                     onClick={() => onProviderChange(provider)}
-                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                        activeProvider === provider
-                            ? 'bg-purple-600 text-white shadow-lg'
-                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
-                    }`}
+                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeProvider === provider
+                        ? 'bg-purple-600 text-white shadow-lg'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                        }`}
                 >
                     {providerLabels[provider] || provider}
                 </button>
@@ -76,8 +75,8 @@ export const ModelPreferenceList: React.FC<{
     return (
         <div className="space-y-2 max-h-48 overflow-y-auto">
             {availableModels.map(model => (
-                <label 
-                    key={model.id} 
+                <label
+                    key={model.id}
                     className="flex items-center gap-3 p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded cursor-pointer group"
                 >
                     <input
@@ -113,9 +112,9 @@ export const AISystemHealthCard: React.FC<{
         error: { color: 'text-red-500', bg: 'bg-red-500/10', icon: <AlertTriangle size={16} /> },
         unknown: { color: 'text-slate-500', bg: 'bg-slate-500/10', icon: <Activity size={16} /> },
     };
-    
+
     const cfg = statusConfig[status];
-    
+
     return (
         <div className={`${cfg.bg} rounded-lg p-4 flex items-center gap-3`}>
             <div className={cfg.color}>{cfg.icon}</div>
@@ -161,9 +160,9 @@ export const OrgAIPolicy: React.FC<{
                 <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">
                         AI Assertiveness Level: {
-                            orgConfig.assertivenessLevel === 1 ? 'ADVISORY (Default)' : 
-                            orgConfig.assertivenessLevel === 2 ? 'MANAGER' : 
-                            orgConfig.assertivenessLevel === 3 ? 'OPERATOR' : 'ADVISORY'
+                            orgConfig.assertivenessLevel === 1 ? 'ADVISORY (Default)' :
+                                orgConfig.assertivenessLevel === 2 ? 'MANAGER' :
+                                    orgConfig.assertivenessLevel === 3 ? 'OPERATOR' : 'ADVISORY'
                         }
                     </label>
                     <input
@@ -215,9 +214,9 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
 
     useEffect(() => {
         // Fetch public models for preference selection
-        Api.getPublicLLMProviders()
-            .then(data => setAvailableModels(data))
-            .catch(err => console.error(err));
+        (Api as any).getPublicLLMProviders()
+            .then((data: any) => setAvailableModels(data))
+            .catch((err: any) => console.error(err));
     }, []);
 
     useEffect(() => {
@@ -225,7 +224,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
         if ((mode === 'org-admin' || mode === 'platform') && isAdmin) {
             const orgId = (currentUser as any)?.organizationId || (currentUser as any)?.organization_id;
             if (orgId) {
-                Api.getOrganizationLLMConfig(orgId)
+                (Api as any).getOrganizationLLMConfig(orgId)
                     .then(setOrgConfig)
                     .catch(console.error);
             }
@@ -234,7 +233,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
 
     const handleSaveConfig = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         const newConfig: any = {
             provider: configMode,
             visibleModelIds: visibleModelIds
@@ -259,7 +258,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
         const orgId = (currentUser as any)?.organizationId || (currentUser as any)?.organization_id;
         if (!orgId || !orgConfig) return;
         try {
-            await Api.updateOrganizationLLMConfig(orgId, orgConfig.activeProviderId);
+            await (Api as any).updateOrganizationLLMConfig(orgId, orgConfig.activeProviderId);
             setIsSaved(true);
             setTimeout(() => setIsSaved(false), 2000);
         } catch (e) {
@@ -315,7 +314,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
                                     </div>
                                 </div>
                                 <ModelPreferenceList
-                                    availableModels={availableModels}
+                                    availableModels={availableModels as any}
                                     selectedModelIds={visibleModelIds}
                                     onToggleModel={handleToggleModel}
                                 />

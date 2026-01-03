@@ -33,7 +33,7 @@ import {
 import { NewReportModal } from './modals/NewReportModal';
 import { ReportEditor } from './ReportEditor';
 import { StageGateModal } from './modals/StageGateModal';
-import { ImportReportModal } from '../reports/ImportReportModal';
+import { ImportReportModal } from '../Reports/ImportReportModal';
 
 interface Report {
     id: string;

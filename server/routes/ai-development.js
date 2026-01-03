@@ -12,7 +12,7 @@ import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
 const { requireRole } = require('../middleware/rbac');
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
 // Import existing services
@@ -547,6 +547,7 @@ router.get('/summary', verifyToken, requireRole(['super_admin', 'admin']), async
 });
 
 export default router;
+
 
 
 

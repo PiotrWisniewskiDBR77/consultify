@@ -302,7 +302,7 @@ const observeINP = (): void => {
             for (const entry of list.getEntries()) {
                 const eventEntry = entry as PerformanceEventTiming;
                 const inp = eventEntry.duration;
-                
+
                 if (inp > maxINP) {
                     maxINP = inp;
                     reportMetric('INP', inp, [entry]);
@@ -310,7 +310,7 @@ const observeINP = (): void => {
             }
         });
 
-        observer.observe({ type: 'event', buffered: true, durationThreshold: 40 });
+        observer.observe({ type: 'event', buffered: true, durationThreshold: 40 } as any);
     } catch (e) {
         console.warn('[WebVitals] INP observation not supported');
     }
@@ -325,7 +325,7 @@ const observeINP = (): void => {
  */
 export const onWebVital = (callback: MetricCallback): (() => void) => {
     callbacks.push(callback);
-    
+
     // Return unsubscribe function
     return () => {
         callbacks = callbacks.filter(cb => cb !== callback);
@@ -395,14 +395,14 @@ export const resetMetrics = (): void => {
  */
 export const areMetricsGood = (): boolean => {
     const required: WebVitalName[] = ['LCP', 'FID', 'CLS'];
-    
+
     for (const name of required) {
         const metric = collectedMetrics[name];
         if (metric && metric.rating !== 'good') {
             return false;
         }
     }
-    
+
     return true;
 };
 
@@ -425,7 +425,7 @@ export const getPerformanceScore = (): number => {
     for (const [name, metric] of Object.entries(collectedMetrics)) {
         const weight = weights[name as WebVitalName] || 0;
         const score = metric.rating === 'good' ? 100 : metric.rating === 'needs-improvement' ? 50 : 0;
-        
+
         totalWeight += weight;
         weightedScore += score * weight;
     }

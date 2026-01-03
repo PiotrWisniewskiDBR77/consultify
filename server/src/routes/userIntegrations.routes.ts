@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const userIntegrationsRoutesJSPromise = (async () => {
-    const module = await import('../../routes/userIntegrations.js');
-    return module.default || module;
-})();
-const userIntegrationsRoutesJS = userIntegrationsRoutesJSPromise;;
+const module = await import('../../routes/userIntegrations.js');
+const userIntegrationsRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof userIntegrationsRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof userIntegrationsRoutesJS === 'function' || (userIntegrationsRoutesJS && typeof userIntegrationsRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(userIntegrationsRoutesJS);
-} else if (userIntegrationsRoutesJS.default) {
-    // If it has a default export
-    router.use(userIntegrationsRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(userIntegrationsRoutesJS);
+    // Fallback or error
+    console.error('userIntegrations.js did not export a valid router');
 }
 
 export default router;

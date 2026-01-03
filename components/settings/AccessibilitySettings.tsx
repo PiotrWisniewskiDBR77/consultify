@@ -106,7 +106,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
 
     const loadPreferences = async () => {
         try {
-            const data = await Api.getAccessibilitySettings();
+            const data = await (Api as any).getAccessibilitySettings();
             if (data.preferences) {
                 setPreferences({ ...DEFAULT_PREFERENCES, ...data.preferences });
             }
@@ -120,7 +120,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
     const handleSave = async () => {
         setSaving(true);
         try {
-            await Api.updateAccessibilitySettings(preferences);
+            await (Api as any).updateAccessibilitySettings(preferences);
             toast.success(t('settings.accessibility.saved', 'Accessibility preferences saved'));
 
             // Apply preferences to document
@@ -244,8 +244,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                                 key={option.value}
                                 onClick={() => updatePreference('fontSize', option.value as AccessibilityPreferences['fontSize'])}
                                 className={`p-4 rounded-xl border-2 transition-all text-center ${isSelected
-                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
-                                        : 'border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50'
+                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
+                                    : 'border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50'
                                     }`}
                             >
                                 <div className={`font-medium ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}
@@ -413,8 +413,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                             <button
                                 onClick={() => updatePreference('cursorSize', 'default')}
                                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${preferences.cursorSize === 'default'
-                                        ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
-                                        : 'text-slate-500 hover:text-slate-700'
+                                    ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
+                                    : 'text-slate-500 hover:text-slate-700'
                                     }`}
                             >
                                 {t('settings.accessibility.cursor.default', 'Default')}
@@ -422,8 +422,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                             <button
                                 onClick={() => updatePreference('cursorSize', 'large')}
                                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${preferences.cursorSize === 'large'
-                                        ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
-                                        : 'text-slate-500 hover:text-slate-700'
+                                    ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
+                                    : 'text-slate-500 hover:text-slate-700'
                                     }`}
                             >
                                 {t('settings.accessibility.cursor.large', 'Large')}
@@ -477,8 +477,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                                 key={option.value}
                                 onClick={() => updatePreference('colorBlindMode', option.value as AccessibilityPreferences['colorBlindMode'])}
                                 className={`p-4 rounded-xl border-2 transition-all text-left ${isSelected
-                                        ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-500/10'
-                                        : 'border-slate-200 dark:border-white/10 hover:border-cyan-300 dark:hover:border-cyan-500/50'
+                                    ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-500/10'
+                                    : 'border-slate-200 dark:border-white/10 hover:border-cyan-300 dark:hover:border-cyan-500/50'
                                     }`}
                             >
                                 <div className={`font-medium ${isSelected ? 'text-cyan-700 dark:text-cyan-400' : 'text-slate-700 dark:text-slate-300'}`}>
@@ -511,8 +511,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                                 key={option.value}
                                 onClick={() => updatePreference('fontFamily', option.value)}
                                 className={`p-3 rounded-lg border-2 transition-all text-left ${isSelected
-                                        ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/10'
-                                        : 'border-slate-200 dark:border-white/10 hover:border-orange-300'
+                                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/10'
+                                    : 'border-slate-200 dark:border-white/10 hover:border-orange-300'
                                     }`}
                             >
                                 <div className={`font-medium ${option.preview} ${isSelected ? 'text-orange-700 dark:text-orange-400' : 'text-slate-700 dark:text-slate-300'}`}>
@@ -548,8 +548,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                                     key={value}
                                     onClick={() => updatePreference('lineHeight', value)}
                                     className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${preferences.lineHeight === value
-                                            ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
-                                            : 'text-slate-500 hover:text-slate-700'
+                                        ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
+                                        : 'text-slate-500 hover:text-slate-700'
                                         }`}
                                 >
                                     {t(`settings.accessibility.lineHeight.${value}`, value.charAt(0).toUpperCase() + value.slice(1))}
@@ -574,8 +574,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                                     key={value}
                                     onClick={() => updatePreference('letterSpacing', value)}
                                     className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${preferences.letterSpacing === value
-                                            ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
-                                            : 'text-slate-500 hover:text-slate-700'
+                                        ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
+                                        : 'text-slate-500 hover:text-slate-700'
                                         }`}
                                 >
                                     {t(`settings.accessibility.letterSpacing.${value}`, value.charAt(0).toUpperCase() + value.slice(1))}
@@ -598,8 +598,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                             <button
                                 onClick={() => updatePreference('caretWidth', 'default')}
                                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${preferences.caretWidth === 'default'
-                                        ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
-                                        : 'text-slate-500 hover:text-slate-700'
+                                    ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
+                                    : 'text-slate-500 hover:text-slate-700'
                                     }`}
                             >
                                 {t('settings.accessibility.caretWidth.default', 'Default')}
@@ -607,8 +607,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                             <button
                                 onClick={() => updatePreference('caretWidth', 'thick')}
                                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${preferences.caretWidth === 'thick'
-                                        ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
-                                        : 'text-slate-500 hover:text-slate-700'
+                                    ? 'bg-white dark:bg-navy-800 shadow text-slate-900 dark:text-white'
+                                    : 'text-slate-500 hover:text-slate-700'
                                     }`}
                             >
                                 {t('settings.accessibility.caretWidth.thick', 'Thick')}
@@ -708,8 +708,8 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                                 key={style}
                                 onClick={() => updatePreference('focusIndicatorStyle', style)}
                                 className={`p-4 rounded-xl border-2 transition-all text-center ${isSelected
-                                        ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10'
-                                        : 'border-slate-200 dark:border-white/10 hover:border-teal-300'
+                                    ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10'
+                                    : 'border-slate-200 dark:border-white/10 hover:border-teal-300'
                                     }`}
                             >
                                 <div className={`font-medium ${isSelected ? 'text-teal-700 dark:text-teal-400' : 'text-slate-700 dark:text-slate-300'}`}>

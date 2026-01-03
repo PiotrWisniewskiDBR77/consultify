@@ -163,14 +163,14 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
         try {
             setLoading(true);
             const [policyRes, ipRes, questionsRes, predefinedRes, recoveryRes, locationsRes, activityRes, settingsRes] = await Promise.all([
-                Api.get('/api/user/security/password-policy').catch(() => ({ data: null })),
-                Api.get('/api/user/security/ip-rules').catch(() => ({ data: [] })),
-                Api.get('/api/user/security/questions').catch(() => ({ data: [] })),
-                Api.get('/api/user/security/questions/predefined').catch(() => ({ data: [] })),
-                Api.get('/api/user/security/recovery').catch(() => ({ data: [] })),
-                Api.get('/api/user/security/login-locations').catch(() => ({ data: [] })),
-                Api.get('/api/user/security/suspicious-activities').catch(() => ({ data: [] })),
-                Api.get('/api/user/security/settings').catch(() => ({ data: null }))
+                (Api as any).get('/api/user/security/password-policy').catch(() => ({ data: null })),
+                (Api as any).get('/api/user/security/ip-rules').catch(() => ({ data: [] })),
+                (Api as any).get('/api/user/security/questions').catch(() => ({ data: [] })),
+                (Api as any).get('/api/user/security/questions/predefined').catch(() => ({ data: [] })),
+                (Api as any).get('/api/user/security/recovery').catch(() => ({ data: [] })),
+                (Api as any).get('/api/user/security/login-locations').catch(() => ({ data: [] })),
+                (Api as any).get('/api/user/security/suspicious-activities').catch(() => ({ data: [] })),
+                (Api as any).get('/api/user/security/settings').catch(() => ({ data: null }))
             ]);
 
             if (policyRes.data) setPasswordPolicy(policyRes.data);
@@ -196,7 +196,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
         }
         try {
             setSaving(true);
-            await Api.post('/api/user/security/ip-rules', newIPRule);
+            await (Api as any).post('/api/user/security/ip-rules', newIPRule);
             toast.success(t('settings.security.ipAdded', 'IP rule added'));
             setShowAddIP(false);
             setNewIPRule({ ipAddress: '', ruleType: 'allow', description: '' });
@@ -210,7 +210,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
     const handleDeleteIPRule = async (id: string) => {
         try {
-            await Api.delete(`/api/user/security/ip-rules/${id}`);
+            await (Api as any).delete(`/api/user/security/ip-rules/${id}`);
             toast.success(t('settings.security.ipDeleted', 'IP rule deleted'));
             loadData();
         } catch (error) {
@@ -226,7 +226,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
         }
         try {
             setSaving(true);
-            await Api.post('/api/user/security/questions', newQuestion);
+            await (Api as any).post('/api/user/security/questions', newQuestion);
             toast.success(t('settings.security.questionAdded', 'Security question added'));
             setShowAddQuestion(false);
             setNewQuestion({ questionId: 0, customQuestion: '', answer: '' });
@@ -240,7 +240,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
     const handleDeleteQuestion = async (id: string) => {
         try {
-            await Api.delete(`/api/user/security/questions/${id}`);
+            await (Api as any).delete(`/api/user/security/questions/${id}`);
             toast.success(t('settings.security.questionDeleted', 'Security question deleted'));
             loadData();
         } catch (error) {
@@ -256,7 +256,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
         }
         try {
             setSaving(true);
-            await Api.post('/api/user/security/recovery', newRecovery);
+            await (Api as any).post('/api/user/security/recovery', newRecovery);
             toast.success(t('settings.security.recoveryAdded', 'Recovery contact added'));
             setShowAddRecovery(false);
             setNewRecovery({ contactType: 'email', contactValue: '', isPrimary: false });
@@ -270,7 +270,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
     const handleDeleteRecovery = async (id: string) => {
         try {
-            await Api.delete(`/api/user/security/recovery/${id}`);
+            await (Api as any).delete(`/api/user/security/recovery/${id}`);
             toast.success(t('settings.security.recoveryDeleted', 'Recovery contact deleted'));
             loadData();
         } catch (error) {
@@ -281,7 +281,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
     // Location handlers
     const handleTrustLocation = async (id: string, trusted: boolean) => {
         try {
-            await Api.put(`/api/user/security/login-locations/${id}/trust`, { trusted });
+            await (Api as any).put(`/api/user/security/login-locations/${id}/trust`, { trusted });
             toast.success(trusted ? 'Location marked as trusted' : 'Location unmarked');
             loadData();
         } catch (error) {
@@ -292,7 +292,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
     // Activity handlers
     const handleAcknowledgeActivity = async (id: string) => {
         try {
-            await Api.put(`/api/user/security/suspicious-activities/${id}/acknowledge`);
+            await (Api as any).put(`/api/user/security/suspicious-activities/${id}/acknowledge`);
             toast.success('Activity acknowledged');
             loadData();
         } catch (error) {
@@ -304,7 +304,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
     const handleSaveSettings = async () => {
         try {
             setSaving(true);
-            await Api.put('/api/user/security/settings', {
+            await (Api as any).put('/api/user/security/settings', {
                 enableGeolocationAlerts: securitySettings.enable_geolocation_alerts,
                 trustedCountries: securitySettings.trusted_countries,
                 requireReauthMinutes: securitySettings.require_reauth_minutes,
@@ -343,7 +343,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-advanced-security" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -365,11 +365,10 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                activeTab === tab.id
-                                    ? 'bg-red-600 text-white'
-                                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
+                                ? 'bg-red-600 text-white'
+                                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                                }`}
                         >
                             <Icon size={16} />
                             {tab.label}
@@ -385,7 +384,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                         <Key size={20} className="text-amber-500" />
                         {t('settings.security.passwordPolicy', 'Password Policy')}
                     </h3>
-                    
+
                     {passwordPolicy && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
@@ -463,7 +462,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                                 />
                                 <select
                                     value={newIPRule.ruleType}
-                                    onChange={(e) => setNewIPRule({ ...newIPRule, ruleType: e.target.value as 'allow' | 'block' })}
+                                    onChange={(e) => setNewIPRule({ ...newIPRule, ruleType: e.target.value as any })}
                                     className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg"
                                 >
                                     <option value="allow">Allow</option>
@@ -499,11 +498,10 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                         {ipRules.map(rule => (
                             <div
                                 key={rule.id}
-                                className={`flex items-center justify-between p-4 rounded-lg border ${
-                                    rule.rule_type === 'allow'
-                                        ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30'
-                                        : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30'
-                                }`}
+                                className={`flex items-center justify-between p-4 rounded-lg border ${rule.rule_type === 'allow'
+                                    ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30'
+                                    : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30'
+                                    }`}
                             >
                                 <div className="flex items-center gap-3">
                                     {rule.rule_type === 'allow' ? (
@@ -734,13 +732,12 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                         {loginLocations.map(location => (
                             <div
                                 key={location.id}
-                                className={`flex items-center justify-between p-4 rounded-lg border ${
-                                    location.is_trusted
-                                        ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30'
-                                        : location.risk_score > 50
+                                className={`flex items-center justify-between p-4 rounded-lg border ${location.is_trusted
+                                    ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30'
+                                    : location.risk_score > 50
                                         ? 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30'
                                         : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10'
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-center gap-3">
                                     <MapPin size={18} className={location.is_trusted ? 'text-green-600' : location.risk_score > 50 ? 'text-red-600' : 'text-slate-400'} />
@@ -761,11 +758,10 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                                 </div>
                                 <button
                                     onClick={() => handleTrustLocation(location.id, !location.is_trusted)}
-                                    className={`px-3 py-1.5 text-sm rounded-lg ${
-                                        location.is_trusted
-                                            ? 'bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300'
-                                            : 'bg-green-600 text-white'
-                                    }`}
+                                    className={`px-3 py-1.5 text-sm rounded-lg ${location.is_trusted
+                                        ? 'bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300'
+                                        : 'bg-green-600 text-white'
+                                        }`}
                                 >
                                     {location.is_trusted ? 'Untrust' : 'Trust'}
                                 </button>
@@ -790,21 +786,20 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                         {suspiciousActivities.map(activity => (
                             <div
                                 key={activity.id}
-                                className={`p-4 rounded-lg border ${
-                                    activity.is_acknowledged
-                                        ? 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10 opacity-60'
-                                        : activity.severity === 'critical'
+                                className={`p-4 rounded-lg border ${activity.is_acknowledged
+                                    ? 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10 opacity-60'
+                                    : activity.severity === 'critical'
                                         ? 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30'
                                         : activity.severity === 'high'
-                                        ? 'bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/30'
-                                        : 'bg-yellow-50 dark:bg-yellow-500/10 border-yellow-200 dark:border-yellow-500/30'
-                                }`}
+                                            ? 'bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/30'
+                                            : 'bg-yellow-50 dark:bg-yellow-500/10 border-yellow-200 dark:border-yellow-500/30'
+                                    }`}
                             >
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-start gap-3">
                                         <AlertTriangle size={18} className={
                                             activity.severity === 'critical' ? 'text-red-600' :
-                                            activity.severity === 'high' ? 'text-orange-600' : 'text-yellow-600'
+                                                activity.severity === 'high' ? 'text-orange-600' : 'text-yellow-600'
                                         } />
                                         <div>
                                             <p className="font-medium text-slate-900 dark:text-white capitalize">
@@ -860,13 +855,11 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                             </div>
                             <button
                                 onClick={() => setSecuritySettings({ ...securitySettings, enable_geolocation_alerts: !securitySettings.enable_geolocation_alerts })}
-                                className={`relative w-12 h-6 rounded-full transition-colors ${
-                                    securitySettings.enable_geolocation_alerts ? 'bg-red-500' : 'bg-slate-300 dark:bg-slate-600'
-                                }`}
+                                className={`relative w-12 h-6 rounded-full transition-colors ${securitySettings.enable_geolocation_alerts ? 'bg-red-500' : 'bg-slate-300 dark:bg-slate-600'
+                                    }`}
                             >
-                                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                                    securitySettings.enable_geolocation_alerts ? 'left-7' : 'left-1'
-                                }`} />
+                                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${securitySettings.enable_geolocation_alerts ? 'left-7' : 'left-1'
+                                    }`} />
                             </button>
                         </div>
 
@@ -877,13 +870,11 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                             </div>
                             <button
                                 onClick={() => setSecuritySettings({ ...securitySettings, single_session_only: !securitySettings.single_session_only })}
-                                className={`relative w-12 h-6 rounded-full transition-colors ${
-                                    securitySettings.single_session_only ? 'bg-red-500' : 'bg-slate-300 dark:bg-slate-600'
-                                }`}
+                                className={`relative w-12 h-6 rounded-full transition-colors ${securitySettings.single_session_only ? 'bg-red-500' : 'bg-slate-300 dark:bg-slate-600'
+                                    }`}
                             >
-                                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                                    securitySettings.single_session_only ? 'left-7' : 'left-1'
-                                }`} />
+                                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${securitySettings.single_session_only ? 'left-7' : 'left-1'
+                                    }`} />
                             </button>
                         </div>
 
@@ -933,6 +924,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 };
 
 export default AdvancedSecuritySettings;
+
 
 
 

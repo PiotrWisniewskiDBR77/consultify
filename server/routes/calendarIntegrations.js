@@ -13,7 +13,7 @@
 
 import express from 'express';
 const router = express.Router();
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import verifyToken from '../middleware/authMiddleware.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -309,6 +309,7 @@ router.delete('/:provider', async (req, res) => {
 });
 
 export default router;
+
 
 
 

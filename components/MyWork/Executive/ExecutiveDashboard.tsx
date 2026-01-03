@@ -121,7 +121,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 Api.get('/my-work/stats?period=week'),
                 Api.get('/decisions?status=PENDING&limit=10'),
                 Api.get('/my-work/team-workload'),
-                Api.getTasks({ assignedToMe: true, status: 'todo,in_progress' })
+                Api.getTasks({ assigneeId: user?.id, status: 'todo,in_progress' } as any)
             ]);
 
             // Process stats

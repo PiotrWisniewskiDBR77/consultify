@@ -142,7 +142,7 @@ class FrameworkRBACService {
      * @returns {Promise<boolean>} Has permission
      */
     static async hasPermission(userId, framework, action, context = {}) {
-        import { getDatabase } from '../database/Database.js';
+        import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
         
         // Get user roles
@@ -192,7 +192,7 @@ const db = getDatabase();
      * @returns {Promise<Array>} Role IDs
      */
     static async getUserRoles(userId) {
-        import { getDatabase } from '../database/Database.js';
+        import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
         
         return new Promise((resolve, reject) => {
@@ -218,7 +218,7 @@ const db = getDatabase();
      * @returns {Promise<void>}
      */
     static async assignRole(userId, roleId, assignedBy) {
-        import { getDatabase } from '../database/Database.js';
+        import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
         import { v4 as uuidv4 } from 'uuid';
         
@@ -247,7 +247,7 @@ const db = getDatabase();
      * @returns {Promise<void>}
      */
     static async removeRole(userId, roleId) {
-        import { getDatabase } from '../database/Database.js';
+        import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
         
         return new Promise((resolve, reject) => {
@@ -306,7 +306,7 @@ const db = getDatabase();
      * @returns {Promise<Array>} Users with approval rights
      */
     static async getApprovers(framework, organizationId) {
-        import { getDatabase } from '../database/Database.js';
+        import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
         
         const approverRoles = Object.entries(FRAMEWORK_ROLES)
@@ -396,6 +396,7 @@ export default {
     FRAMEWORK_ROLES,
     ACTION_PERMISSIONS,
 };
+
 
 
 

@@ -1,4 +1,4 @@
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
 const PIIRedactor = require('../utils/piiRedactor');

@@ -5,7 +5,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { DbPromise } from '../database/Database.js';
+import { queryRun, queryAll, queryOne } from '../utils/queryHelpers.js';
 
 /**
  * PMO Domain IDs - Certifiable Core Domains
@@ -131,7 +131,7 @@ export class PMODomainRegistry {
      */
     static async seedDomains(): Promise<{ seeded: number }> {
         for (const domain of PMO_DOMAINS) {
-            await DbPromise.run(`
+            await queryRun(`
                 INSERT OR REPLACE INTO pmo_domains 
                 (id, name, description, iso21500_term, pmbok_term, prince2_term, is_configurable, sort_order)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -153,7 +153,7 @@ export class PMODomainRegistry {
      * Get all PMO domains with standards mapping
      */
     static async getAllDomains(): Promise<any[]> {
-        const rows = await DbPromise.all(`SELECT * FROM pmo_domains ORDER BY sort_order`);
+        const rows = await queryAll(`SELECT * FROM pmo_domains ORDER BY sort_order`);
         return rows.length > 0 ? rows : PMO_DOMAINS;
     }
 
@@ -166,7 +166,7 @@ export class PMODomainRegistry {
             throw new Error(`Unknown PMO domain: ${domainId}`);
         }
 
-        const row = await DbPromise.get(`SELECT * FROM pmo_domains WHERE id = ?`, [domainId]);
+        const row = await queryOne(`SELECT * FROM pmo_domains WHERE id = ?`, [domainId]);
         return row || domain;
     }
 
@@ -174,7 +174,7 @@ export class PMODomainRegistry {
      * Get enabled domains for a project
      */
     static async getProjectDomains(projectId: string): Promise<any[]> {
-        const rows = await DbPromise.all(`
+        const rows = await queryAll(`
             SELECT pd.*, ppd.is_enabled, ppd.enabled_at
             FROM pmo_domains pd
             LEFT JOIN project_pmo_domains ppd ON pd.id = ppd.domain_id AND ppd.project_id = ?
@@ -192,7 +192,7 @@ export class PMODomainRegistry {
      */
     static async configureProjectDomains(projectId: string, enabledDomainIds: string[], userId: string): Promise<any> {
         // First, set all domains to disabled for this project
-        await DbPromise.run(`
+        await queryRun(`
             INSERT OR REPLACE INTO project_pmo_domains (project_id, domain_id, is_enabled, enabled_by, enabled_at)
             SELECT ?, id, 0, ?, CURRENT_TIMESTAMP FROM pmo_domains
         `, [projectId, userId]);
@@ -200,7 +200,7 @@ export class PMODomainRegistry {
         // Then enable the specified domains
         if (enabledDomainIds.length > 0) {
             const placeholders = enabledDomainIds.map(() => '?').join(',');
-            const result = await DbPromise.run(`
+            const result = await queryRun(`
                 UPDATE project_pmo_domains 
                 SET is_enabled = 1, enabled_by = ?, enabled_at = CURRENT_TIMESTAMP
                 WHERE project_id = ? AND domain_id IN (${placeholders})
@@ -265,7 +265,7 @@ export class PMODomainRegistry {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
-        await DbPromise.run(sql, [
+        await queryRun(sql, [
             id,
             projectId,
             pmoDomainId,
@@ -310,7 +310,7 @@ export class PMODomainRegistry {
             params.push(options.limit);
         }
 
-        return await DbPromise.all(sql, params);
+        return await queryAll(sql, params);
     }
 }
 

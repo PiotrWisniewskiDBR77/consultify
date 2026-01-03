@@ -23,6 +23,7 @@ import {
     Loader2,
     Hash
 } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { useGlobalHelpSearch } from '../../hooks/useGlobalHelpSearch';
 import { SearchResult, SearchResultType } from '../../services/helpSearchService';
 import { highlightQuery } from '../../services/helpSearchService';
@@ -236,7 +237,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                                                     <span
                                                         className="font-medium text-slate-900 dark:text-white truncate"
                                                         dangerouslySetInnerHTML={{
-                                                            __html: highlightQuery(result.title, query)
+                                                            __html: DOMPurify.sanitize(highlightQuery(result.title, query), { ALLOWED_TAGS: ['mark'] })
                                                         }}
                                                     />
                                                     <span className="text-xs px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded">
@@ -246,7 +247,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                                                 <p
                                                     className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5"
                                                     dangerouslySetInnerHTML={{
-                                                        __html: highlightQuery(result.excerpt, query)
+                                                        __html: DOMPurify.sanitize(highlightQuery(result.excerpt, query), { ALLOWED_TAGS: ['mark'] })
                                                     }}
                                                 />
                                             </div>
@@ -374,11 +375,3 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
 };
 
 export default GlobalHelpSearch;
-
-
-
-
-
-
-
-

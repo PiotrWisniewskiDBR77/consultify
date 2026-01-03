@@ -111,15 +111,24 @@ export function log(params: AuditLogParams): AuditLogEntry {
 }
 
 // Convenience methods
-export const info = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry => 
+export const info = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry =>
     log({ ...params, level: LOG_LEVELS.INFO, event });
 
-export const warn = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry => 
+export const warn = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry =>
     log({ ...params, level: LOG_LEVELS.WARN, event });
 
-export const error = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry => 
+export const error = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry =>
     log({ ...params, level: LOG_LEVELS.ERROR, event });
 
-export const debug = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry => 
+export const debug = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry =>
     log({ ...params, level: LOG_LEVELS.DEBUG, event });
+
+export default {
+    log,
+    info,
+    warn,
+    error,
+    debug,
+    LOG_LEVELS
+};
 

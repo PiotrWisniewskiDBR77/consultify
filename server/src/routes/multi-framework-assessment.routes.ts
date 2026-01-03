@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const multi_framework_assessmentRoutesJSPromise = (async () => {
-    const module = await import('../../routes/multi-framework-assessment.js');
-    return module.default || module;
-})();
-const multi_framework_assessmentRoutesJS = multi_framework_assessmentRoutesJSPromise;;
+const module = await import('../../routes/multi-framework-assessment.js');
+const multi_framework_assessmentRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof multi_framework_assessmentRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof multi_framework_assessmentRoutesJS === 'function' || (multi_framework_assessmentRoutesJS && typeof multi_framework_assessmentRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(multi_framework_assessmentRoutesJS);
-} else if (multi_framework_assessmentRoutesJS.default) {
-    // If it has a default export
-    router.use(multi_framework_assessmentRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(multi_framework_assessmentRoutesJS);
+    // Fallback or error
+    console.error('multi-framework-assessment.js did not export a valid router');
 }
 
 export default router;

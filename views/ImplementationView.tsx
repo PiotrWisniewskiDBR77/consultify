@@ -10,9 +10,9 @@ import { useAppStore } from '../store/useAppStore';
 import { Task, Initiative, InitiativeStatus, TaskStatus } from '../types';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 import { Api } from '../services/api';
-import { 
-    Plus, Filter, Kanban, List as ListIcon, Sparkles, ShieldCheck, 
-    LayoutDashboard, Target, AlertTriangle, DollarSign, Users, 
+import {
+    Plus, Filter, Kanban, List as ListIcon, Sparkles, ShieldCheck,
+    LayoutDashboard, Target, AlertTriangle, DollarSign, Users,
     Calendar, FileText, ArrowRight, ChevronDown, Rocket,
     Clock, CheckCircle2, Pause, MoreHorizontal, Activity
 } from 'lucide-react';
@@ -54,7 +54,7 @@ export const ImplementationView: React.FC = () => {
     } = useAppStore();
 
     const language = currentUser?.preferredLanguage || 'EN';
-    
+
     const [activeTab, setActiveTab] = useState<TabId>('dashboard');
     const [selectedInitiative, setSelectedInitiative] = useState<Initiative | null>(null);
     const [initiatives, setInitiatives] = useState<Initiative[]>([]);
@@ -98,7 +98,7 @@ export const ImplementationView: React.FC = () => {
     const fetchTasks = useCallback(async () => {
         if (!currentUser?.organizationId) return;
         try {
-            const url = selectedInitiative 
+            const url = selectedInitiative
                 ? `/tasks?initiativeId=${selectedInitiative.id}`
                 : '/tasks';
             const response = await Api.get(url);
@@ -134,7 +134,7 @@ export const ImplementationView: React.FC = () => {
             priority: 'medium',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            taskType: 'EXECUTION',
+            taskType: 'task',
             initiativeId: selectedInitiative?.id
         };
         setEditingTask(newTask);
@@ -190,11 +190,10 @@ export const ImplementationView: React.FC = () => {
                             className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 p-3 rounded-lg hover:border-purple-400 dark:hover:border-purple-500/50 cursor-pointer shadow-sm group"
                         >
                             <div className="flex justify-between items-start mb-2">
-                                <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
-                                    task.priority === 'urgent' || task.priority === 'high'
+                                <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${task.priority === 'urgent' || task.priority === 'high'
                                         ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                                         : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
-                                }`}>
+                                    }`}>
                                     {task.priority}
                                 </span>
                                 {task.assignee && (
@@ -292,7 +291,7 @@ export const ImplementationView: React.FC = () => {
         switch (activeTab) {
             case 'dashboard':
                 return (
-                    <ExecutiveDashboard 
+                    <ExecutiveDashboard
                         onInitiativeClick={handleInitiativeClick}
                         onViewAllClick={() => setActiveTab('kanban')}
                     />
@@ -309,14 +308,14 @@ export const ImplementationView: React.FC = () => {
                 return renderTasksTab();
             case 'decisions':
                 return (
-                    <DecisionBoard 
+                    <DecisionBoard
                         initiativeId={selectedInitiative?.id}
                         onDecisionClick={(decision) => console.log('Decision clicked:', decision)}
                     />
                 );
             case 'raid':
                 return (
-                    <RAIDLog 
+                    <RAIDLog
                         initiativeId={selectedInitiative?.id}
                         onItemClick={(item) => console.log('RAID item clicked:', item)}
                     />
@@ -364,7 +363,7 @@ export const ImplementationView: React.FC = () => {
                         <div className="text-center">
                             <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                                 {Math.round(
-                                    initiatives.reduce((sum, i) => sum + (i.progress || 0), 0) / 
+                                    initiatives.reduce((sum, i) => sum + (i.progress || 0), 0) /
                                     Math.max(initiatives.length, 1)
                                 )}%
                             </p>
@@ -379,11 +378,10 @@ export const ImplementationView: React.FC = () => {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                                activeTab === tab.id
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
                                     ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
                                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
-                            }`}
+                                }`}
                         >
                             {tab.icon}
                             {tab.label}

@@ -12,19 +12,19 @@ export interface Permissions {
     userId: string | null;
     userRole: string | null;
     organizationId: string | null;
-    
+
     // Role Checks
     isUser: boolean;
     isManager: boolean;
     isAdmin: boolean;
     isSuperAdmin: boolean;
-    
+
     // Settings Permissions
     canAccessSettings: boolean;
     canEditProfile: boolean;
     canEditOrgSettings: boolean;
     canManageUserAI: boolean;
-    
+
     // Org Admin Permissions
     canAccessAdmin: boolean;
     canManageOrgUsers: boolean;
@@ -39,7 +39,7 @@ export interface Permissions {
     canViewOrgAnalytics: boolean;
     canManageOrgKnowledge: boolean;
     canManageConsultants: boolean;
-    
+
     // Platform Admin Permissions
     canAccessSuperAdmin: boolean;
     canManageOrganizations: boolean;
@@ -62,41 +62,42 @@ export interface Permissions {
 }
 
 export const usePermissions = (): Permissions => {
-    const { currentUser, isAuthenticated } = useAppStore();
-    
+    const { currentUser } = useAppStore();
+    const isAuthenticated = !!currentUser;
+
     return useMemo(() => {
         const userId = currentUser?.id || null;
         const userRole = currentUser?.role || null;
-        const organizationId = (currentUser as any)?.organizationId || 
-                              (currentUser as any)?.organization_id || null;
-        
+        const organizationId = (currentUser as any)?.organizationId ||
+            (currentUser as any)?.organization_id || null;
+
         // Role checks
         const isUser = !!currentUser;
-        const isManager = userRole === UserRole.MANAGER || 
-                         userRole === UserRole.ADMIN || 
-                         userRole === 'SUPERADMIN';
+        const isManager = userRole === UserRole.MANAGER ||
+            userRole === UserRole.ADMIN ||
+            userRole === 'SUPERADMIN';
         const isAdmin = userRole === UserRole.ADMIN || userRole === 'SUPERADMIN';
         const isSuperAdmin = userRole === 'SUPERADMIN';
-        
+
         return {
             // User Info
             isAuthenticated,
             userId,
             userRole,
             organizationId,
-            
+
             // Role Checks
             isUser,
             isManager,
             isAdmin,
             isSuperAdmin,
-            
+
             // Settings Permissions (All authenticated users)
             canAccessSettings: isUser,
             canEditProfile: isUser,
             canEditOrgSettings: isAdmin,
             canManageUserAI: isUser, // User can configure their own AI settings
-            
+
             // Org Admin Permissions (ADMIN role)
             canAccessAdmin: isAdmin,
             canManageOrgUsers: isAdmin,
@@ -111,7 +112,7 @@ export const usePermissions = (): Permissions => {
             canViewOrgAnalytics: isAdmin,
             canManageOrgKnowledge: isAdmin,
             canManageConsultants: isAdmin,
-            
+
             // Platform Admin Permissions (SUPERADMIN role only)
             canAccessSuperAdmin: isSuperAdmin,
             canManageOrganizations: isSuperAdmin,
@@ -140,20 +141,21 @@ export const usePermissions = (): Permissions => {
  */
 export const useUserCan = () => {
     const permissions = usePermissions();
-    
+
     return {
         // Quick access to common permissions
         canEdit: permissions.canEditUsers,
         canDelete: permissions.canDeleteUsers,
         isAdmin: permissions.isAdmin,
         isSuperAdmin: permissions.isSuperAdmin,
-        
+
         // Full permissions object
         permissions,
     };
 };
 
 export default usePermissions;
+
 
 
 

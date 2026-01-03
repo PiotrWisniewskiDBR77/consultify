@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const user_appearanceRoutesJSPromise = (async () => {
-    const module = await import('../../routes/user-appearance.js');
-    return module.default || module;
-})();
-const user_appearanceRoutesJS = user_appearanceRoutesJSPromise;;
+const module = await import('../../routes/user-appearance.js');
+const user_appearanceRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof user_appearanceRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof user_appearanceRoutesJS === 'function' || (user_appearanceRoutesJS && typeof user_appearanceRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(user_appearanceRoutesJS);
-} else if (user_appearanceRoutesJS.default) {
-    // If it has a default export
-    router.use(user_appearanceRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(user_appearanceRoutesJS);
+    // Fallback or error
+    console.error('user-appearance.js did not export a valid router');
 }
 
 export default router;

@@ -216,7 +216,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                                         >
                                             <DynamicIcon name={related.icon} size={16} className="text-slate-600 dark:text-slate-300" />
                                             <span className="text-sm text-slate-700 dark:text-slate-300">
-                                                {related.name[lang]}
+                                                {typeof related.name === 'string' ? related.name : (related.name?.[lang] || '')}
                                             </span>
                                         </button>
                                     );

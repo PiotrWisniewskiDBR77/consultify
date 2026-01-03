@@ -54,7 +54,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
         try {
             const data = await InitiativeService.getAll();
             // Handle both array and object response
-            const initiativesArray = Array.isArray(data) ? data : (data?.initiatives || []);
+            const initiativesArray = Array.isArray(data) ? data : ((data as any)?.initiatives || []);
             setInitiatives(initiativesArray.map((i: any) => ({ id: i.id, name: i.name })));
         } catch (error) {
             console.error('Failed to load initiatives', error);

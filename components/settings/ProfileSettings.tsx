@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { User } from '../../types';
 import { useTranslation } from 'react-i18next';
-import { 
-    UserCircle, Mail, Phone, Building2, Save, Loader2, CheckCircle, Globe, 
+import {
+    UserCircle, Mail, Phone, Building2, Save, Loader2, CheckCircle, Globe,
     Briefcase, Clock, Calendar, Users, MessageCircle, CalendarOff, User as UserIcon
 } from 'lucide-react';
 import { Api } from '../../services/api';
@@ -169,8 +169,8 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            await Api.updateUser(currentUser.id, formState);
-            onUpdateUser(formState);
+            await Api.updateUser(currentUser.id, formState as any);
+            onUpdateUser(formState as any);
             setSaveStatus('success');
             setTimeout(() => setSaveStatus('idle'), 2000);
         } catch (error) {
@@ -191,7 +191,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-profile" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -237,7 +237,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                             <p className="text-slate-400 text-xs">({formState.pronouns})</p>
                         )}
                         <p className="text-purple-600 dark:text-purple-400 text-sm font-medium">{currentUser.companyName}</p>
-                        
+
                         {/* Status Badge */}
                         {(formState.statusMessage || formState.isOutOfOffice) && (
                             <div className="mt-3 w-full">
@@ -279,7 +279,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
 
                 {/* Right Column: Edit Form */}
                 <div className="md:col-span-2 space-y-6">
-                    
+
                     {/* Public Profile Section */}
                     <div className={cardClass}>
                         <h4 className={sectionTitleClass}>
@@ -488,13 +488,11 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                     </div>
                                     <button
                                         onClick={() => setFormState({ ...formState, isOutOfOffice: !formState.isOutOfOffice })}
-                                        className={`relative w-12 h-6 rounded-full transition-colors ${
-                                            formState.isOutOfOffice ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'
-                                        }`}
+                                        className={`relative w-12 h-6 rounded-full transition-colors ${formState.isOutOfOffice ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'
+                                            }`}
                                     >
-                                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                                            formState.isOutOfOffice ? 'left-7' : 'left-1'
-                                        }`} />
+                                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${formState.isOutOfOffice ? 'left-7' : 'left-1'
+                                            }`} />
                                     </button>
                                 </div>
 
@@ -593,7 +591,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                             className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-all ${formState.timeFormat === fmt.value
                                                 ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-2 border-purple-500'
                                                 : 'bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-purple-300'
-                                            }`}
+                                                }`}
                                         >
                                             <input
                                                 type="radio"
@@ -659,11 +657,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                             <button
                                                 key={lang}
                                                 onClick={() => i18n.changeLanguage(lang)}
-                                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                                                    i18n.language === lang 
-                                                        ? 'bg-white shadow text-navy-900' 
+                                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${i18n.language === lang
+                                                        ? 'bg-white shadow text-navy-900'
                                                         : 'text-slate-500 hover:text-navy-700'
-                                                }`}
+                                                    }`}
                                             >
                                                 {t(`common.languages.${lang}`)}
                                             </button>

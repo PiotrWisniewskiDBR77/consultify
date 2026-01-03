@@ -9,17 +9,17 @@
 
 export type ProjectStatus = 'draft' | 'active' | 'on_hold' | 'completed' | 'cancelled' | 'archived';
 
-export type ProjectMethodology = 
-    | 'agile' 
-    | 'waterfall' 
-    | 'hybrid' 
-    | 'kanban' 
-    | 'scrum' 
-    | 'prince2' 
+export type ProjectMethodology =
+    | 'agile'
+    | 'waterfall'
+    | 'hybrid'
+    | 'kanban'
+    | 'scrum'
+    | 'prince2'
     | 'pmbok'
     | 'custom';
 
-export type ProjectPhase = 
+export type ProjectPhase =
     | 'initiation'
     | 'planning'
     | 'execution'
@@ -94,18 +94,18 @@ export interface ProjectMetadata {
 // TASK TYPES
 // ==========================================
 
-export type TaskStatus = 
+export type TaskStatus =
     | 'backlog'
-    | 'todo' 
-    | 'in_progress' 
-    | 'review' 
-    | 'done' 
-    | 'blocked' 
+    | 'todo'
+    | 'in_progress'
+    | 'review'
+    | 'done'
+    | 'blocked'
     | 'cancelled';
 
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
 
-export type TaskType = 'task' | 'bug' | 'story' | 'epic' | 'subtask';
+export type TaskType = 'task' | 'bug' | 'story' | 'epic' | 'subtask' | 'pilot';
 
 /**
  * Core Task entity
@@ -219,17 +219,17 @@ export interface CommentReaction {
 // INITIATIVE TYPES
 // ==========================================
 
-export type InitiativeStatus = 
-    | 'draft' 
-    | 'planning' 
+export type InitiativeStatus =
+    | 'draft'
+    | 'planning'
     | 'approved'
-    | 'active' 
+    | 'active'
     | 'on_hold'
-    | 'completed' 
-    | 'cancelled' 
+    | 'completed'
+    | 'cancelled'
     | 'archived';
 
-export type InitiativeCategory = 
+export type InitiativeCategory =
     | 'digital_transformation'
     | 'process_improvement'
     | 'cost_reduction'
@@ -332,7 +332,7 @@ export interface InitiativeBenefit {
 // PROJECT MEMBER TYPES
 // ==========================================
 
-export type ProjectRole = 
+export type ProjectRole =
     | 'owner'
     | 'admin'
     | 'manager'
@@ -400,16 +400,6 @@ export interface ProjectActivity {
 // EXPORT INDEX
 // ==========================================
 
-export type {
-    ProjectStatus,
-    ProjectMethodology,
-    ProjectPhase,
-    TaskStatus,
-    TaskPriority,
-    TaskType,
-    InitiativeStatus,
-    InitiativeCategory,
-    ProjectRole,
-};
+
 
 

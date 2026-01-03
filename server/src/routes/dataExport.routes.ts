@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const dataExportRoutesJSPromise = (async () => {
-    const module = await import('../../routes/dataExport.js');
-    return module.default || module;
-})();
-const dataExportRoutesJS = dataExportRoutesJSPromise;;
+const module = await import('../../routes/dataExport.js');
+const dataExportRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof dataExportRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof dataExportRoutesJS === 'function' || (dataExportRoutesJS && typeof dataExportRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(dataExportRoutesJS);
-} else if (dataExportRoutesJS.default) {
-    // If it has a default export
-    router.use(dataExportRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(dataExportRoutesJS);
+    // Fallback or error
+    console.error('dataExport.js did not export a valid router');
 }
 
 export default router;

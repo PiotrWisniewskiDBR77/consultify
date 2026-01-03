@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const onboardingRoutesJSPromise = (async () => {
-    const module = await import('../../routes/onboarding.js');
-    return module.default || module;
-})();
-const onboardingRoutesJS = onboardingRoutesJSPromise;;
+const module = await import('../../routes/onboarding.js');
+const onboardingRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof onboardingRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof onboardingRoutesJS === 'function' || (onboardingRoutesJS && typeof onboardingRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(onboardingRoutesJS);
-} else if (onboardingRoutesJS.default) {
-    // If it has a default export
-    router.use(onboardingRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(onboardingRoutesJS);
+    // Fallback or error
+    console.error('onboarding.js did not export a valid router');
 }
 
 export default router;

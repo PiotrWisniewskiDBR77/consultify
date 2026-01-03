@@ -9,26 +9,20 @@
 
 import { Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
-const benchmarkRoutesJSPromise = (async () => {
-    const module = await import('../../routes/benchmark.js');
-    return module.default || module;
-})();
-const benchmarkRoutesJS = benchmarkRoutesJSPromise;;
+const module = await import('../../routes/benchmark.js');
+const benchmarkRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof benchmarkRoutesJS === 'function') {
-    // If it's a router function, use it
+if (typeof benchmarkRoutesJS === 'function' || (benchmarkRoutesJS && typeof benchmarkRoutesJS.handle === 'function')) {
+    // If it's a router function or Router object, use it
     router.use(benchmarkRoutesJS);
-} else if (benchmarkRoutesJS.default) {
-    // If it has a default export
-    router.use(benchmarkRoutesJS.default);
 } else {
-    // If it's the router itself
-    router.use(benchmarkRoutesJS);
+    // Fallback or error
+    console.error('benchmark.js did not export a valid router');
 }
 
 export default router;

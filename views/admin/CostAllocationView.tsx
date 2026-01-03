@@ -69,7 +69,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
 
   const loadCostCenters = async () => {
     setLoading(true);
-    
+
     // For now, simulate data since this is an enterprise feature
     // In production, this would call /api/billing/cost-centers
     setTimeout(() => {
@@ -118,7 +118,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
           type: 'project'
         }
       ]);
-      
+
       setAllocations([
         { id: 'a-1', cost_center_id: 'cc-1', cost_center_name: 'Engineering', amount: 150.00, resource_type: 'AI Tokens', date: '2026-01-02' },
         { id: 'a-2', cost_center_id: 'cc-2', cost_center_name: 'Product', amount: 98.25, resource_type: 'AI Tokens', date: '2026-01-02' },
@@ -127,18 +127,18 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
         { id: 'a-5', cost_center_id: 'cc-3', cost_center_name: 'Marketing', amount: 45.00, resource_type: 'AI Tokens', date: '2026-01-01' },
         { id: 'a-6', cost_center_id: 'cc-4', cost_center_name: 'DBR77 Project', amount: 200.00, resource_type: 'AI Tokens', date: '2025-12-31' }
       ]);
-      
+
       setLoading(false);
     }, 500);
   };
 
-  const totalBudget = useMemo(() => 
+  const totalBudget = useMemo(() =>
     costCenters.reduce((sum, cc) => sum + cc.budget_monthly, 0), [costCenters]);
-  
-  const totalSpend = useMemo(() => 
+
+  const totalSpend = useMemo(() =>
     costCenters.reduce((sum, cc) => sum + cc.current_spend, 0), [costCenters]);
 
-  const pieData = useMemo(() => 
+  const pieData = useMemo(() =>
     costCenters.map((cc, index) => ({
       name: cc.name,
       value: cc.current_spend,
@@ -150,14 +150,14 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
       toast.error('Name and code are required');
       return;
     }
-    
+
     setSaving(true);
-    
+
     // Simulate API call
     setTimeout(() => {
       if (editingCenter) {
-        setCostCenters(prev => prev.map(cc => 
-          cc.id === editingCenter.id 
+        setCostCenters(prev => prev.map(cc =>
+          cc.id === editingCenter.id
             ? { ...cc, ...formData, percentage_used: (cc.current_spend / formData.budget_monthly) * 100 }
             : cc
         ));
@@ -173,7 +173,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
         setCostCenters(prev => [...prev, newCenter]);
         toast.success('Cost center created');
       }
-      
+
       setShowAddModal(false);
       setEditingCenter(null);
       setFormData({ name: '', code: '', budget_monthly: 0, type: 'department', owner_email: '' });
@@ -213,7 +213,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
         cc.owner_email || ''
       ].join(','))
     ].join('\n');
-    
+
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -262,8 +262,8 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
             <Download size={14} />
             Export
           </button>
-          <button 
-            onClick={() => { setEditingCenter(null); setShowAddModal(true); }} 
+          <button
+            onClick={() => { setEditingCenter(null); setShowAddModal(true); }}
             className="admin-btn admin-btn-accent flex items-center gap-2"
           >
             <Plus size={14} />
@@ -346,7 +346,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
                     borderRadius: '8px',
                     color: '#fff'
                   }}
-                  formatter={(value: number) => [`$${value.toFixed(2)}`, 'Spend'] as [string, string]}
+                  formatter={(value: any) => [`$${Number(value).toFixed(2)}`, 'Spend'] as [string, string]}
                 />
               </RechartsPieChart>
             </ResponsiveContainer>

@@ -79,85 +79,85 @@ oraz budowy kompetencji data science, co może przynieść szacowany ROI na pozi
     ];
 
     return (
-        <NodeViewWrapper className= {`premium-executive-summary ${selected ? 'ring-2 ring-blue-500' : ''}`
-}>
-    {/* Header */ }
-    < div className = "flex items-center justify-between mb-6" >
-        <div className="flex items-center gap-3" >
-            <div className="p-2 bg-white/20 rounded-lg" >
-                <FileText className="w-6 h-6" />
+        <NodeViewWrapper className={`premium-executive-summary ${selected ? 'ring-2 ring-blue-500' : ''}`
+        }>
+            {/* Header */}
+            < div className="flex items-center justify-between mb-6" >
+                <div className="flex items-center gap-3" >
+                    <div className="p-2 bg-white/20 rounded-lg" >
+                        <FileText className="w-6 h-6" />
                     </div>
-                    < h2 className = "text-xl font-bold" > Executive Summary </h2>
+                    < h2 className="text-xl font-bold" > Executive Summary </h2>
+                </div>
+                < div className="flex items-center gap-2" >
+                    {
+                        attrs.isAIGenerated && (
+                            <span className="flex items-center gap-1 px-2 py-1 bg-white/10 rounded-full text-xs">
+                                <Sparkles className="w-3 h-3" />
+                                AI
+                            </ span >
+                        )}
+                    <button
+                        onClick={handleRegenerate}
+                        disabled={isGenerating}
+                        className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                        {
+                            isGenerating ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <RefreshCw className="w-4 h-4" />
+                            )}
+                    </button>
+                </div>
+            </div>
+
+            {/* Metrics Row */}
+            <div className="metrics-row mb-6" >
+                {
+                    displayMetrics.map((metric, idx) => (
+                        <div
+                            key={idx}
+                            className="flex-1 bg-white/10 rounded-lg p-4 text-center"
+                        >
+                            <div className="text-2xl font-bold" > {metric.value} </div>
+                            < div className="text-sm opacity-80 mt-1" > {metric.label} </div>
                         </div>
-                        < div className = "flex items-center gap-2" >
-                            {
-                                attrs.isAIGenerated && (
-                                    <span className="flex items-center gap-1 px-2 py-1 bg-white/10 rounded-full text-xs">
-                                        <Sparkles className="w-3 h-3" />
-              AI
-                                    </ span >
-          )}
-<button
-            onClick={ handleRegenerate }
-disabled = { isGenerating }
-className = "p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50"
-    >
-    {
-        isGenerating?(
-              <Loader2 className = "w-4 h-4 animate-spin" />
-            ): (
-                <RefreshCw className = "w-4 h-4" />
-            )}
-</button>
-    </div>
-    </div>
+                    ))
+                }
+            </div>
 
-{/* Metrics Row */ }
-<div className="metrics-row mb-6" >
-{
-    displayMetrics.map((metric, idx) => (
-        <div
-            key= { idx }
-            className = "flex-1 bg-white/10 rounded-lg p-4 text-center"
-        >
-        <div className="text-2xl font-bold" > { metric.value } </div>
-    < div className = "text-sm opacity-80 mt-1" > { metric.label } </div>
-    </div>
-    ))
-}
-    </div>
-
-{/* Content */ }
-{
-    isEditing ? (
-        <textarea
-          value= { attrs.content }
-          onChange = {(e) => updateAttributes({ content: e.target.value })
-}
-onBlur = {() => setIsEditing(false)}
-autoFocus
-className = "w-full bg-white/10 rounded-lg p-4 text-white placeholder-white/50 resize-none min-h-[200px] focus:outline-none focus:ring-2 focus:ring-white/30"
-    />
-      ) : (
-    <div
-          onClick= {() => setIsEditing(true)}
-className = "key-insight cursor-text whitespace-pre-line"
-    >
-{
-    displayContent.split('\n').map((line, i) => (
-        <p key= { i } className = "mb-2" >
-        {
-            line.startsWith('**') && line.endsWith('**')
-                ? <strong>{ line.slice(2, -2) } </strong>
-                : line
-        }
-        </p>
-    ))
-}
-    </div>
-      )}
-</NodeViewWrapper>
-  );
+            {/* Content */}
+            {
+                isEditing ? (
+                    <textarea
+                        value={attrs.content}
+                        onChange={(e) => updateAttributes({ content: e.target.value })
+                        }
+                        onBlur={() => setIsEditing(false)}
+                        autoFocus
+                        className="w-full bg-white/10 rounded-lg p-4 text-white placeholder-white/50 resize-none min-h-[200px] focus:outline-none focus:ring-2 focus:ring-white/30"
+                    />
+                ) : (
+                    <div
+                        onClick={() => setIsEditing(true)}
+                        className="key-insight cursor-text whitespace-pre-line"
+                    >
+                        {
+                            displayContent.split('\n').map((line, i) => (
+                                <p key={i} className="mb-2" >
+                                    {
+                                        line.startsWith('**') && line.endsWith('**')
+                                            ? <strong>{line.slice(2, -2)} </strong>
+                                            : line
+                                    }
+                                </p>
+                            ))
+                        }
+                    </div>
+                )}
+        </NodeViewWrapper>
+    );
 };
 
 export const ExecutiveSummaryExtension = Node.create({
@@ -186,7 +186,7 @@ export const ExecutiveSummaryExtension = Node.create({
     },
 
     addNodeView() {
-        return ReactNodeViewRenderer(ExecutiveSummaryComponent);
+        return ReactNodeViewRenderer(ExecutiveSummaryComponent as any);
     }
 });
 

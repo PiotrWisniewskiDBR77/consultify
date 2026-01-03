@@ -1,7 +1,7 @@
 import express from 'express';
 const router = express.Router();
 const AccessPolicyService = import('accessPolicyService.js');
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 const bcrypt = require('bcryptjs');
 import { v4 as uuidv4 } from 'uuid';
