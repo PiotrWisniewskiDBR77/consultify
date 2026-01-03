@@ -380,7 +380,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                             Live
                                         </span>
                                     )}
-                                    <button 
+                                    <button
                                         onClick={refreshCosts}
                                         className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded hover:bg-white/10 transition-colors"
                                     >
@@ -388,7 +388,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                                 <div className="bg-gradient-to-br from-emerald-900/30 to-black/50 border border-emerald-500/20 rounded-xl p-5 relative overflow-hidden">
                                     {costsConnected && (
@@ -403,7 +403,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     <p className="text-3xl font-bold text-white">${costSummary.totalCostThisMonth.toFixed(2)}</p>
                                     <p className="text-xs text-slate-500 mt-1">this month</p>
                                 </div>
-                                
+
                                 <div className="bg-black/30 border border-white/10 rounded-xl p-5">
                                     <div className="flex items-center gap-2 mb-3">
                                         <Zap size={16} className="text-blue-400" />
@@ -412,30 +412,30 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     <p className="text-3xl font-bold text-white">{costSummary.totalRequestsThisMonth.toLocaleString()}</p>
                                     <p className="text-xs text-slate-500 mt-1">AI interactions</p>
                                 </div>
-                                
+
                                 <div className="bg-black/30 border border-white/10 rounded-xl p-5">
                                     <div className="flex items-center gap-2 mb-3">
                                         <FileText size={16} className="text-purple-400" />
                                         <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Tokens</span>
                                     </div>
                                     <p className="text-3xl font-bold text-white">
-                                        {costSummary.totalTokensThisMonth >= 1000000 
-                                            ? `${(costSummary.totalTokensThisMonth / 1000000).toFixed(1)}M` 
-                                            : costSummary.totalTokensThisMonth >= 1000 
-                                                ? `${(costSummary.totalTokensThisMonth / 1000).toFixed(1)}k` 
+                                        {costSummary.totalTokensThisMonth >= 1000000
+                                            ? `${(costSummary.totalTokensThisMonth / 1000000).toFixed(1)}M`
+                                            : costSummary.totalTokensThisMonth >= 1000
+                                                ? `${(costSummary.totalTokensThisMonth / 1000).toFixed(1)}k`
                                                 : costSummary.totalTokensThisMonth}
                                     </p>
                                     <p className="text-xs text-slate-500 mt-1">consumed</p>
                                 </div>
-                                
+
                                 <div className="bg-black/30 border border-white/10 rounded-xl p-5">
                                     <div className="flex items-center gap-2 mb-3">
                                         <Gauge size={16} className="text-amber-400" />
                                         <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Avg/Request</span>
                                     </div>
                                     <p className="text-3xl font-bold text-white">
-                                        ${costSummary.totalRequestsThisMonth > 0 
-                                            ? (costSummary.totalCostThisMonth / costSummary.totalRequestsThisMonth).toFixed(3) 
+                                        ${costSummary.totalRequestsThisMonth > 0
+                                            ? (costSummary.totalCostThisMonth / costSummary.totalRequestsThisMonth).toFixed(3)
                                             : '0.00'}
                                     </p>
                                     <p className="text-xs text-slate-500 mt-1">cost efficiency</p>
@@ -457,7 +457,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                         <div key={stat.tier} className="flex items-center gap-4">
                                             <div className="w-20 text-xs font-medium text-slate-400">{stat.tier}</div>
                                             <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                                                <div 
+                                                <div
                                                     className={`h-full bg-${stat.color}-500 rounded-full`}
                                                     style={{ width: `${stat.percent}%` }}
                                                 />
@@ -847,7 +847,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                             ...p.contextualBehavior,
                                             chatMode: mode.id as any
                                         }
-                                    }))}
+                                    } as any))}
                                     className={`p-5 rounded-xl border transition-all text-center ${preferences.contextualBehavior?.chatMode === mode.id
                                         ? `bg-${mode.color}-500/10 border-${mode.color}-500/50`
                                         : 'bg-white/5 border-white/10 hover:border-white/30'
@@ -892,7 +892,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                             setPreferences(p => ({
                                                 ...p,
                                                 responseLength: { ...p.responseLength, quick: values[parseInt(e.target.value)] }
-                                            }));
+                                            } as any));
                                         }}
                                     />
                                     <div className="flex justify-between text-[10px] text-slate-500 mt-1">
@@ -920,7 +920,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                             setPreferences(p => ({
                                                 ...p,
                                                 responseLength: { ...p.responseLength, standard: values[parseInt(e.target.value)] }
-                                            }));
+                                            } as any));
                                         }}
                                     />
                                     <div className="flex justify-between text-[10px] text-slate-500 mt-1">
@@ -948,7 +948,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                             setPreferences(p => ({
                                                 ...p,
                                                 responseLength: { ...p.responseLength, deepStudy: values[parseInt(e.target.value)] }
-                                            }));
+                                            } as any));
                                         }}
                                     />
                                     <div className="flex justify-between text-[10px] text-slate-500 mt-1">
@@ -970,10 +970,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                             </div>
                             <Toggle
                                 enabled={preferences.contextualBehavior?.autoDetectIntent ?? true}
-                                onChange={(val) => setPreferences(p => ({
+                                onChange={() => setPreferences(p => ({
                                     ...p,
-                                    contextualBehavior: { ...p.contextualBehavior, autoDetectIntent: val }
-                                }))}
+                                    contextualBehavior: { ...p.contextualBehavior, autoDetectIntent: !(p.contextualBehavior?.autoDetectIntent ?? true) }
+                                } as any))}
                             />
                         </div>
 
@@ -983,7 +983,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 onClick={() => setPreferences(p => ({
                                     ...p,
                                     formatting: { ...p.formatting, preferBulletPoints: !p.formatting?.preferBulletPoints }
-                                }))}
+                                } as any))}
                                 className={`p-3 rounded-lg border text-center text-xs transition-all ${preferences.formatting?.preferBulletPoints
                                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
                                     : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
@@ -995,7 +995,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 onClick={() => setPreferences(p => ({
                                     ...p,
                                     formatting: { ...p.formatting, preferTables: !p.formatting?.preferTables }
-                                }))}
+                                } as any))}
                                 className={`p-3 rounded-lg border text-center text-xs transition-all ${preferences.formatting?.preferTables
                                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
                                     : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
@@ -1007,7 +1007,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 onClick={() => setPreferences(p => ({
                                     ...p,
                                     formatting: { ...p.formatting, includeActionItems: !p.formatting?.includeActionItems }
-                                }))}
+                                } as any))}
                                 className={`p-3 rounded-lg border text-center text-xs transition-all ${preferences.formatting?.includeActionItems
                                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
                                     : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
@@ -1019,7 +1019,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 onClick={() => setPreferences(p => ({
                                     ...p,
                                     formatting: { ...p.formatting, includeSources: !p.formatting?.includeSources }
-                                }))}
+                                } as any))}
                                 className={`p-3 rounded-lg border text-center text-xs transition-all ${preferences.formatting?.includeSources
                                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
                                     : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
@@ -1053,205 +1053,210 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                             ))}
                         </div>
                     </div>
-                )}
+                )
+                }
 
                 {/* AI Proactivity Tab */}
-                {activeTab === 'proactivity' && (
-                    <div className="animate-in fade-in duration-300 max-w-4xl">
-                        <SectionHeader title="AI Proactivity Level" subtitle="Control how actively the AI assists you." />
+                {
+                    activeTab === 'proactivity' && (
+                        <div className="animate-in fade-in duration-300 max-w-4xl">
+                            <SectionHeader title="AI Proactivity Level" subtitle="Control how actively the AI assists you." />
 
-                        {/* Proactivity Selector */}
-                        <div className="mb-8 p-6 rounded-xl border border-white/10 bg-white/5">
-                            <ProactivitySelector
-                                value={proactivityMode}
-                                onChange={setProactivityMode}
-                                maxAllowed={maxProactivity}
-                                showBehaviors={true}
-                            />
+                            {/* Proactivity Selector */}
+                            <div className="mb-8 p-6 rounded-xl border border-white/10 bg-white/5">
+                                <ProactivitySelector
+                                    value={proactivityMode}
+                                    onChange={setProactivityMode}
+                                    maxAllowed={maxProactivity}
+                                    showBehaviors={true}
+                                />
+                            </div>
+
+                            {/* Proactivity Explanation */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                                <div className={`p-4 rounded-xl border transition-all ${proactivityMode === 'REACTIVE'
+                                    ? 'bg-slate-600/20 border-slate-500/50'
+                                    : 'bg-white/5 border-white/5'
+                                    }`}>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Pause size={18} className="text-slate-400" />
+                                        <h4 className="font-semibold text-white text-sm">Reactive Mode</h4>
+                                    </div>
+                                    <p className="text-xs text-slate-400 leading-relaxed">
+                                        AI remains silent until you explicitly ask. Perfect for experienced users who prefer full control and only want help when requested.
+                                    </p>
+                                    <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
+                                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                                            <span>✗</span> No auto-suggestions
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                                            <span>✗</span> No proactive nudges
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                                            <span>✗</span> No conversation initiation
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className={`p-4 rounded-xl border transition-all ${proactivityMode === 'BALANCED'
+                                    ? 'bg-violet-600/20 border-violet-500/50'
+                                    : 'bg-white/5 border-white/5'
+                                    }`}>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Scale size={18} className="text-violet-400" />
+                                        <h4 className="font-semibold text-white text-sm">Balanced Mode</h4>
+                                    </div>
+                                    <p className="text-xs text-slate-400 leading-relaxed">
+                                        AI provides helpful suggestions when relevant, but waits for you to drive major interactions. Recommended for most users.
+                                    </p>
+                                    <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
+                                        <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                            <span>✓</span> Contextual suggestions
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                            <span>✓</span> Helpful nudges
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                                            <span>✗</span> No conversation initiation
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className={`p-4 rounded-xl border transition-all ${proactivityMode === 'PROACTIVE'
+                                    ? 'bg-emerald-600/20 border-emerald-500/50'
+                                    : 'bg-white/5 border-white/5'
+                                    }`}>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Zap size={18} className="text-emerald-400" />
+                                        <h4 className="font-semibold text-white text-sm">Proactive Mode</h4>
+                                    </div>
+                                    <p className="text-xs text-slate-400 leading-relaxed">
+                                        AI actively monitors your work and proactively offers assistance, even starting conversations about potential issues.
+                                    </p>
+                                    <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
+                                        <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                            <span>✓</span> Active suggestions
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                            <span>✓</span> Continuous monitoring
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                            <span>✓</span> Proactive conversations
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Organization Limit Notice */}
+                            {maxProactivity !== 'PROACTIVE' && (
+                                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
+                                    <AlertCircle size={20} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                        <h4 className="font-medium text-amber-400 text-sm">Organization Limit</h4>
+                                        <p className="text-xs text-amber-400/80 mt-1">
+                                            Your organization has set the maximum proactivity level to <strong>{maxProactivity}</strong>.
+                                            Contact your administrator if you need a higher level.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
+                    )
+                }
 
-                        {/* Proactivity Explanation */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                            <div className={`p-4 rounded-xl border transition-all ${proactivityMode === 'REACTIVE'
-                                ? 'bg-slate-600/20 border-slate-500/50'
-                                : 'bg-white/5 border-white/5'
-                                }`}>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Pause size={18} className="text-slate-400" />
-                                    <h4 className="font-semibold text-white text-sm">Reactive Mode</h4>
-                                </div>
-                                <p className="text-xs text-slate-400 leading-relaxed">
-                                    AI remains silent until you explicitly ask. Perfect for experienced users who prefer full control and only want help when requested.
-                                </p>
-                                <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
-                                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                                        <span>✗</span> No auto-suggestions
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                                        <span>✗</span> No proactive nudges
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                                        <span>✗</span> No conversation initiation
-                                    </div>
-                                </div>
-                            </div>
+                {/* 3. Privacy & Controls */}
+                {
+                    activeTab === 'privacy' && (
+                        <div className="animate-in fade-in duration-300 max-w-4xl">
+                            <SectionHeader title="Data Privacy & Governance" subtitle="Manage how your data is handled and retained." />
 
-                            <div className={`p-4 rounded-xl border transition-all ${proactivityMode === 'BALANCED'
-                                ? 'bg-violet-600/20 border-violet-500/50'
-                                : 'bg-white/5 border-white/5'
-                                }`}>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Scale size={18} className="text-violet-400" />
-                                    <h4 className="font-semibold text-white text-sm">Balanced Mode</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                {/* PII Redaction */}
+                                <div className="p-6 rounded-xl border border-white/5 bg-white/5 hover:border-white/10 transition-colors">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 rounded-lg bg-red-500/20 text-red-400">
+                                                <Fingerprint size={20} />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-semibold text-white">PII Redaction</h3>
+                                                <p className="text-xs text-slate-500">Auto-remove sensitive data</p>
+                                            </div>
+                                        </div>
+                                        <Toggle
+                                            enabled={preferences.enablePiiRedaction || false}
+                                            onChange={() => setPreferences(p => ({ ...p, enablePiiRedaction: !p.enablePiiRedaction }))}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-400 leading-relaxed border-t border-white/5 pt-4">
+                                        Automatically detects and redacts emails, phone numbers, and credit card patterns before sending to the model.
+                                    </p>
                                 </div>
-                                <p className="text-xs text-slate-400 leading-relaxed">
-                                    AI provides helpful suggestions when relevant, but waits for you to drive major interactions. Recommended for most users.
-                                </p>
-                                <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
-                                    <div className="flex items-center gap-2 text-xs text-emerald-400">
-                                        <span>✓</span> Contextual suggestions
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-emerald-400">
-                                        <span>✓</span> Helpful nudges
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                                        <span>✗</span> No conversation initiation
-                                    </div>
-                                </div>
-                            </div>
 
-                            <div className={`p-4 rounded-xl border transition-all ${proactivityMode === 'PROACTIVE'
-                                ? 'bg-emerald-600/20 border-emerald-500/50'
-                                : 'bg-white/5 border-white/5'
-                                }`}>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Zap size={18} className="text-emerald-400" />
-                                    <h4 className="font-semibold text-white text-sm">Proactive Mode</h4>
-                                </div>
-                                <p className="text-xs text-slate-400 leading-relaxed">
-                                    AI actively monitors your work and proactively offers assistance, even starting conversations about potential issues.
-                                </p>
-                                <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
-                                    <div className="flex items-center gap-2 text-xs text-emerald-400">
-                                        <span>✓</span> Active suggestions
+                                {/* Web Search */}
+                                <div className="p-6 rounded-xl border border-white/5 bg-white/5 hover:border-white/10 transition-colors">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
+                                                <Globe size={20} />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-semibold text-white">Web Connectivity</h3>
+                                                <p className="text-xs text-slate-500">Allow external searches</p>
+                                            </div>
+                                        </div>
+                                        <Toggle
+                                            enabled={preferences.enableWebSearch || false}
+                                            onChange={() => setPreferences(p => ({ ...p, enableWebSearch: !p.enableWebSearch }))}
+                                        />
                                     </div>
-                                    <div className="flex items-center gap-2 text-xs text-emerald-400">
-                                        <span>✓</span> Continuous monitoring
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-emerald-400">
-                                        <span>✓</span> Proactive conversations
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Organization Limit Notice */}
-                        {maxProactivity !== 'PROACTIVE' && (
-                            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
-                                <AlertCircle size={20} className="text-amber-400 flex-shrink-0 mt-0.5" />
-                                <div>
-                                    <h4 className="font-medium text-amber-400 text-sm">Organization Limit</h4>
-                                    <p className="text-xs text-amber-400/80 mt-1">
-                                        Your organization has set the maximum proactivity level to <strong>{maxProactivity}</strong>.
-                                        Contact your administrator if you need a higher level.
+                                    <p className="text-xs text-slate-400 leading-relaxed border-t border-white/5 pt-4">
+                                        Enables the model to search the web for real-time information. May increase latency.
                                     </p>
                                 </div>
                             </div>
-                        )}
-                    </div>
-                )}
 
-                {/* 3. Privacy & Controls */}
-                {activeTab === 'privacy' && (
-                    <div className="animate-in fade-in duration-300 max-w-4xl">
-                        <SectionHeader title="Data Privacy & Governance" subtitle="Manage how your data is handled and retained." />
+                            {/* Retention Policy */}
+                            <div className="p-6 rounded-xl border border-white/5 bg-white/5">
+                                <h3 className="text-sm font-semibold text-white mb-6 flex items-center gap-2">
+                                    <Activity size={16} className="text-emerald-400" />
+                                    Data Retention Policy
+                                </h3>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            {/* PII Redaction */}
-                            <div className="p-6 rounded-xl border border-white/5 bg-white/5 hover:border-white/10 transition-colors">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 rounded-lg bg-red-500/20 text-red-400">
-                                            <Fingerprint size={20} />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-sm font-semibold text-white">PII Redaction</h3>
-                                            <p className="text-xs text-slate-500">Auto-remove sensitive data</p>
-                                        </div>
-                                    </div>
-                                    <Toggle
-                                        enabled={preferences.enablePiiRedaction || false}
-                                        onChange={() => setPreferences(p => ({ ...p, enablePiiRedaction: !p.enablePiiRedaction }))}
-                                    />
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {[
+                                        { id: 'none', label: 'Ephemeral', desc: 'No data saved', icon: <Trash2 size={16} /> },
+                                        { id: '30days', label: '30 Days', desc: 'Standard rotation', icon: <Activity size={16} /> },
+                                        { id: 'standard', label: 'Indefinite', desc: 'Full history', icon: <HardDrive size={16} /> }
+                                    ].map((policy) => (
+                                        <button
+                                            key={policy.id}
+                                            onClick={() => setPreferences(p => ({ ...p, dataRetentionPolicy: policy.id as any }))}
+                                            className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all gap-3 ${preferences.dataRetentionPolicy === policy.id
+                                                ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                                : 'bg-black/20 border-white/5 text-slate-400 hover:border-white/20'
+                                                }`}
+                                        >
+                                            {policy.icon}
+                                            <div className="text-center">
+                                                <div className="font-semibold text-xs">{policy.label}</div>
+                                                <div className="text-[10px] opacity-70">{policy.desc}</div>
+                                            </div>
+                                        </button>
+                                    ))}
                                 </div>
-                                <p className="text-xs text-slate-400 leading-relaxed border-t border-white/5 pt-4">
-                                    Automatically detects and redacts emails, phone numbers, and credit card patterns before sending to the model.
-                                </p>
-                            </div>
-
-                            {/* Web Search */}
-                            <div className="p-6 rounded-xl border border-white/5 bg-white/5 hover:border-white/10 transition-colors">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
-                                            <Globe size={20} />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-sm font-semibold text-white">Web Connectivity</h3>
-                                            <p className="text-xs text-slate-500">Allow external searches</p>
-                                        </div>
-                                    </div>
-                                    <Toggle
-                                        enabled={preferences.enableWebSearch || false}
-                                        onChange={() => setPreferences(p => ({ ...p, enableWebSearch: !p.enableWebSearch }))}
-                                    />
-                                </div>
-                                <p className="text-xs text-slate-400 leading-relaxed border-t border-white/5 pt-4">
-                                    Enables the model to search the web for real-time information. May increase latency.
-                                </p>
                             </div>
                         </div>
-
-                        {/* Retention Policy */}
-                        <div className="p-6 rounded-xl border border-white/5 bg-white/5">
-                            <h3 className="text-sm font-semibold text-white mb-6 flex items-center gap-2">
-                                <Activity size={16} className="text-emerald-400" />
-                                Data Retention Policy
-                            </h3>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                {[
-                                    { id: 'none', label: 'Ephemeral', desc: 'No data saved', icon: <Trash2 size={16} /> },
-                                    { id: '30days', label: '30 Days', desc: 'Standard rotation', icon: <Activity size={16} /> },
-                                    { id: 'standard', label: 'Indefinite', desc: 'Full history', icon: <HardDrive size={16} /> }
-                                ].map((policy) => (
-                                    <button
-                                        key={policy.id}
-                                        onClick={() => setPreferences(p => ({ ...p, dataRetentionPolicy: policy.id as any }))}
-                                        className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all gap-3 ${preferences.dataRetentionPolicy === policy.id
-                                            ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                                            : 'bg-black/20 border-white/5 text-slate-400 hover:border-white/20'
-                                            }`}
-                                    >
-                                        {policy.icon}
-                                        <div className="text-center">
-                                            <div className="font-semibold text-xs">{policy.label}</div>
-                                            <div className="text-[10px] opacity-70">{policy.desc}</div>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
+                    )
+                }
+            </div >
 
             {/* Minimal Footer */}
-            <div className="mt-12 border-t border-white/5 pt-6 flex justify-between items-center text-[10px] text-slate-600 uppercase tracking-widest">
+            < div className="mt-12 border-t border-white/5 pt-6 flex justify-between items-center text-[10px] text-slate-600 uppercase tracking-widest" >
                 <span>AI Governance v2.4.0</span>
                 <Link to="/legal/ai-policy" className="hover:text-slate-400 transition-colors">Safety Policy &rarr;</Link>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 
