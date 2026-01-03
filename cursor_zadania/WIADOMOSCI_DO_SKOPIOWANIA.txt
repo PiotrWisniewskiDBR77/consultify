@@ -1,0 +1,62 @@
+═══════════════════════════════════════════════════════════════
+📨 WIADOMOŚCI DO SKOPIOWANIA DLA AGENTÓW
+═══════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────┐
+│ 📋 DLA CURSOR                                                │
+└─────────────────────────────────────────────────────────────┘
+
+Cześć Cursor! 
+
+Masz nowe zadanie - napraw błędy TypeScript w 10 plikach.
+
+📁 Instrukcje: cursor_zadania/INSTRUKCJE_CURSOR.md
+🎯 Start: EnterpriseSecurityPanel.tsx (9 errors)
+📊 Raportuj: cursor_zadania/CURSOR_PROGRESS.txt
+
+Przeczytaj instrukcje i zacznij od pierwszego pliku!
+
+═══════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────┐
+│ 📋 DLA CODEX                                                 │
+└─────────────────────────────────────────────────────────────┘
+
+Cześć Codex!
+
+Kontynuuj refactoring serwisów - podziel billingService na 3 moduły.
+
+📁 Instrukcje: cursor_zadania/INSTRUKCJE_CODEX.md
+🎯 Start: BillingQueryService.ts
+📊 Raportuj: cursor_zadania/CODEX_PROGRESS.txt
+
+Przeczytaj instrukcje i kontynuuj pracę!
+
+═══════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────┐
+│ 📋 DLA ANTIGRAVITY #2                                        │
+└─────────────────────────────────────────────────────────────┘
+
+Cześć Antigravity #2!
+
+Masz nowe zadanie - napraw błędy TypeScript w 10 plikach.
+
+📁 Instrukcje: cursor_zadania/INSTRUKCJE_ANTIGRAVITY2.md
+🎯 Start: EnterpriseSecurityPanel.tsx (9 errors)
+📊 Raportuj: cursor_zadania/ANTIGRAVITY2_PROGRESS.txt
+
+Przeczytaj szczegółowe instrukcje i zacznij pracę!
+
+UWAGA: Pierwsze 4 pliki już naprawione przez Antigravity #1,
+zacznij od pliku #5 (EnterpriseSecurityPanel.tsx).
+
+═══════════════════════════════════════════════════════════════
+
+📌 WAŻNE DLA WSZYSTKICH:
+- Czytaj instrukcje w swoim pliku INSTRUKCJE_[NAZWA].md
+- Raportuj postęp w [NAZWA]_PROGRESS.txt
+- Aktualizuj MASTER_PLAN.md po każdym pliku
+- Zgłaszaj problemy w TEAM_COORDINATION.md
+
+═══════════════════════════════════════════════════════════════
