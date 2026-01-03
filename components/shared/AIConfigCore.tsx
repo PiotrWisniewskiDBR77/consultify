@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, AIProviderType } from '../../types';
+import { LLMProviderConfig } from '../../types/domain/ai';
 import { Api } from '../../services/api';
 import { Cpu, Check, Monitor, Lock, Sparkles, Shield, Brain, Activity, AlertTriangle } from 'lucide-react';
 
@@ -24,7 +25,7 @@ interface LLMProvider {
 
 interface OrgConfig {
     activeProviderId: string | null;
-    availableProviders: LLMProvider[];
+    availableProviders: LLMProviderConfig[];
     assertivenessLevel?: number;
 }
 
@@ -206,7 +207,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
     const [configMode, setConfigMode] = useState<AIProviderType>(currentUser?.aiConfig?.provider || 'system');
     const [customKey, setCustomKey] = useState(currentUser?.aiConfig?.apiKey || '');
     const [visibleModelIds, setVisibleModelIds] = useState<string[]>(currentUser?.aiConfig?.visibleModelIds || []);
-    const [availableModels, setAvailableModels] = useState<LLMProvider[]>([]);
+    const [availableModels, setAvailableModels] = useState<LLMProviderConfig[]>([]);
     const [orgConfig, setOrgConfig] = useState<OrgConfig | null>(null);
     const [isSaved, setIsSaved] = useState(false);
 

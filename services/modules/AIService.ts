@@ -18,6 +18,8 @@ import {
     fetchWithRetry,
     handleResponse
 } from '../apiUtils';
+import { AISchemas } from '../../schemas/ai.schema';
+import { z } from 'zod';
 
 // ==========================================
 // AI SERVICE TYPES
@@ -384,27 +386,39 @@ export const AIService = {
     getAIIdeas: async (): Promise<AIIdea[]> => {
         const res = await fetch(`${API_URL}/ai/ideas`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch AI ideas');
-        return res.json();
+        const json = await res.json();
+        // Validate response
+        AISchemas.IdeaSchema.array().parse(json);
+        return json;
     },
 
     createAIIdea: async (idea: Omit<AIIdea, 'id' | 'createdAt' | 'updatedAt'>): Promise<AIIdea> => {
+        // Validate payload
+        AISchemas.IdeaSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse(idea);
         const res = await fetch(`${API_URL}/ai/ideas`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(idea)
         });
         if (!res.ok) throw new Error('Failed to create AI idea');
-        return res.json();
+        const json = await res.json();
+        // Validate response
+        AISchemas.IdeaSchema.parse(json);
+        return json;
     },
 
     updateAIIdea: async (id: string, updates: Partial<AIIdea>): Promise<AIIdea> => {
+        // Validate updates
+        AISchemas.IdeaSchema.partial().parse(updates);
         const res = await fetch(`${API_URL}/ai/ideas/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify(updates)
         });
         if (!res.ok) throw new Error('Failed to update AI idea');
-        return res.json();
+        const json = await res.json();
+        AISchemas.IdeaSchema.parse(json);
+        return json;
     },
 
     deleteAIIdea: async (id: string): Promise<void> => {
@@ -464,7 +478,9 @@ export const AIService = {
         }
         const res = await fetch(`${API_URL}/llm/providers`, { headers });
         if (!res.ok) throw new Error('Failed to fetch LLM providers');
-        return res.json();
+        const json = await res.json();
+        AISchemas.LLMProviderSchema.array().parse(json);
+        return json;
     },
 
     getLLMAnalytics: async (days: number = 7): Promise<LLMAnalytics> => {

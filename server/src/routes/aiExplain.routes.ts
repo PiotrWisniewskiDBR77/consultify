@@ -1,0 +1,34 @@
+/**
+ * AiExplain Routes
+ * API endpoints for aiExplain
+ * 
+ * Note: This is a TypeScript wrapper around the existing JS implementation
+ * to maintain backward compatibility during migration.
+ * TODO: Fully migrate to TypeScript
+ */
+
+import { Router } from 'express';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+
+// Import the JS implementation for now (will be fully migrated later)
+const aiExplainRoutesJS = require('../../routes/aiExplain.js');
+
+// Create router and apply JS routes
+const router = Router();
+
+// Re-export the JS router (maintains backward compatibility)
+// The JS route file exports a router that we can use directly
+if (typeof aiExplainRoutesJS === 'function') {
+    // If it's a router function, use it
+    router.use(aiExplainRoutesJS);
+} else if (aiExplainRoutesJS.default) {
+    // If it has a default export
+    router.use(aiExplainRoutesJS.default);
+} else {
+    // If it's the router itself
+    router.use(aiExplainRoutesJS);
+}
+
+export default router;

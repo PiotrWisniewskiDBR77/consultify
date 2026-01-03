@@ -25,11 +25,16 @@ import {
     Server,
     Gauge
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
-import { Skeleton } from '../ui/skeleton';
+import { Card, CardHeader, CardContent } from '../ui/primitives/Card';
+import { Badge } from '../ui/primitives/Badge';
+import { Button } from '../ui/primitives/Button';
+import { Skeleton } from '../ui/primitives/Skeleton';
 import { Api } from '../../services/api';
+
+// CardTitle component - if not exported from Card, define it here
+const CardTitle: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
+  <h3 className={`text-lg font-semibold ${className}`}>{children}</h3>
+);
 
 // SLA Thresholds (in milliseconds)
 const SLA_THRESHOLDS = {
@@ -108,12 +113,13 @@ export const AISLADashboard: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        fetchMetrics();
+        void fetchMetrics();
         
         if (autoRefresh) {
-            const interval = setInterval(fetchMetrics, 30000); // Refresh every 30s
+            const interval = setInterval(() => void fetchMetrics(), 30000); // Refresh every 30s
             return () => clearInterval(interval);
         }
+        return undefined;
     }, [fetchMetrics, autoRefresh]);
 
     // Calculate SLA status
@@ -166,7 +172,7 @@ export const AISLADashboard: React.FC = () => {
                             {icon}
                             {title}
                         </CardTitle>
-                        <Badge variant={status === 'healthy' ? 'default' : status === 'warning' ? 'secondary' : 'destructive'}>
+                        <Badge variant={status === 'healthy' ? 'success' : status === 'warning' ? 'warning' : 'danger'}>
                             {status.toUpperCase()}
                         </Badge>
                     </div>
@@ -263,7 +269,7 @@ export const AISLADashboard: React.FC = () => {
                         <AlertCircle className="h-4 w-4" />
                         {t('admin.sla.recentBreaches', 'Recent SLA Breaches')}
                     </CardTitle>
-                    <Badge variant="outline">{breaches.length} events</Badge>
+                    <Badge variant="neutral">{breaches.length} events</Badge>
                 </div>
             </CardHeader>
             <CardContent>

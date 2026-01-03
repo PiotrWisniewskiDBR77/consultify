@@ -121,7 +121,7 @@ export const IntegrationsMarketplace: React.FC<IntegrationsMarketplaceProps> = (
     const connectIntegration = async (integrationId: string) => {
         setConnecting(integrationId);
         try {
-            const response = await Api.post(`/api/integrations/${integrationId}/connect`);
+            const response = await Api.post(`/api/integrations/${integrationId}/connect`, {});
             if (response.success) {
                 if (response.authUrl) {
                     window.open(response.authUrl, '_blank', 'width=600,height=700');
@@ -141,7 +141,7 @@ export const IntegrationsMarketplace: React.FC<IntegrationsMarketplaceProps> = (
 
     const disconnectIntegration = async (integrationId: string) => {
         try {
-            await Api.post(`/api/integrations/${integrationId}/disconnect`);
+            await Api.post(`/api/integrations/${integrationId}/disconnect`, {});
             setIntegrations(integrations.map(int =>
                 int.id === integrationId ? { ...int, connected: false, enabled: false } : int
             ));

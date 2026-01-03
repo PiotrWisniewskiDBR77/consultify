@@ -200,7 +200,7 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
     const [loading, setLoading] = useState(true);
     
     const currentProjectId = useAppStore(state => state.currentProjectId);
-    const currentUserId = useAppStore(state => state.user?.id);
+    const currentUserId = useAppStore(state => state.currentUser?.id);
 
     // Fetch decisions
     useEffect(() => {

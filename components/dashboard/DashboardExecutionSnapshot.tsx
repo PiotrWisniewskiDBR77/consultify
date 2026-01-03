@@ -10,7 +10,7 @@ interface DashboardExecutionSnapshotProps {
     onNavigate: (view: AppView) => void;
 }
 
-export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProps> = ({ session, onNavigate }) => {
+export const DashboardExecutionSnapshot = React.memo<DashboardExecutionSnapshotProps>(({ session, onNavigate }) => {
 
     // --- 1. Project Logic & Stats ---
     const initiativeStats = useMemo(() => {
@@ -265,9 +265,7 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
                         </div>
                     </div>
                 </div>
-
             </div>
-
         </div>
     );
-};
+});

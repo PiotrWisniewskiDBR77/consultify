@@ -1,10 +1,10 @@
 // REFACTORED: Uses BaseService for common functionality
-const BaseService = require('./BaseService');
-const queryHelpers = require('../utils/queryHelpers');
+import BaseService from './BaseService.js';
+import queryHelpers from '../utils/queryHelpers.js';
 
 const InitiativeService = Object.assign({}, BaseService, {
     // For testing: allow overriding dependencies (maintained for backwards compatibility)
-    setDependencies: function(newDeps = {}) {
+    setDependencies: function (newDeps = {}) {
         if (newDeps.db) this.setDb(newDeps.db);
     },
     /**
@@ -18,7 +18,7 @@ const InitiativeService = Object.assign({}, BaseService, {
      * @param {Object|string} params - Either {organizationId, initiativeId} or legacy initiativeId string
      * @returns {Promise<number>} calculated progress
      */
-    recalculateProgress: async function(params) {
+    recalculateProgress: async function (params) {
         // Support both new object format and legacy string format for backwards compatibility
         let organizationId, initiativeId;
         if (typeof params === 'object' && params !== null) {
@@ -99,4 +99,4 @@ const InitiativeService = Object.assign({}, BaseService, {
     }
 });
 
-module.exports = InitiativeService;
+export default InitiativeService;

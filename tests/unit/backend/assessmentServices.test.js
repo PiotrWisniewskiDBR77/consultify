@@ -1,8 +1,8 @@
 import { describe, test, expect, vi } from 'vitest';
 
-import ExternalAssessmentService from '../../server/services/externalAssessmentService';
-import GenericReportService from '../../server/services/genericReportService';
-import BenchmarkingService from '../../server/services/benchmarkingService';
+import ExternalAssessmentService from '../../../server/services/externalAssessmentService';
+import GenericReportService from '../../../server/services/genericReportService';
+import BenchmarkingService from '../../../server/services/benchmarkingService';
 
 describe('ExternalAssessmentService', () => {
     describe('normalizeScore', () => {

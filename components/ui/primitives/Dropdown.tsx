@@ -225,6 +225,7 @@ export const DropdownContent: React.FC<DropdownContentProps> = ({
         window.removeEventListener('resize', updatePosition);
       };
     }
+    return undefined;
   }, [open, updatePosition]);
 
   // Close on outside click

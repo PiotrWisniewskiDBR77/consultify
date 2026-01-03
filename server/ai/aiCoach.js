@@ -1,7 +1,8 @@
 const AIContextBuilder = require('./aiContextBuilder');
 const SignalEngine = require('./signalEngine');
 const RecommendationEngine = require('./recommendationEngine');
-const SimulationEngine = require('./simulationEngine');
+const SimulationEngineClass = require('./simulationEngine');
+const SimulationEngine = new SimulationEngineClass();
 
 /**
  * AICoach Facade
@@ -9,6 +10,22 @@ const SimulationEngine = require('./simulationEngine');
  * Context -> Signals -> Recommendations -> Simulation
  */
 const AICoach = {
+    // Dependencies wrapper for injection
+    deps: {
+        AIContextBuilder,
+        SignalEngine,
+        RecommendationEngine,
+        SimulationEngine
+    },
+
+    /**
+     * Override dependencies for testing
+     * @param {Object} newDeps - Partial dependency object to merge
+     */
+    setDependencies(newDeps) {
+        Object.assign(this.deps, newDeps);
+    },
+
     /**
      * Gets a full health report for the organization.
      * @param {string} orgId - The organization ID.
@@ -16,16 +33,16 @@ const AICoach = {
      */
     getAdvisoryReport: async (orgId) => {
         // 1. Build Context
-        const context = await AIContextBuilder.buildContext(orgId);
+        const context = await AICoach.deps.AIContextBuilder.buildContext(orgId);
 
         // 2. Detect Signals
-        const signals = SignalEngine.detectSignals(context);
+        const signals = AICoach.deps.SignalEngine.detectSignals(context);
 
         // 3. Generate Recommendations
-        const recommendations = RecommendationEngine.generateRecommendations(signals);
+        const recommendations = await AICoach.deps.RecommendationEngine.generateRecommendations(signals);
 
         // 4. Simulate Impacts
-        const simulations = SimulationEngine.simulateImpacts(recommendations);
+        const simulations = AICoach.deps.SimulationEngine.simulateImpacts(recommendations);
 
         return {
             orgId,

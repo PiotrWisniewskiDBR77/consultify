@@ -5,7 +5,7 @@
  * Eliminates callback hell and provides consistent error handling.
  */
 
-const db = require('../database');
+import db from '../database.js';
 
 // FAZA 5: Performance tracking for queryHelpers
 let performanceTracker = null;
@@ -36,12 +36,12 @@ function queryAll(sql, params = []) {
     return new Promise((resolve, reject) => {
         db.all(sql, params, (err, rows) => {
             const duration = Date.now() - startTime;
-            
+
             // Track performance if enabled
             if (performanceTracker) {
                 performanceTracker('all', duration);
             }
-            
+
             if (err) {
                 console.error('[QueryHelper] Error in queryAll:', err);
                 reject(err);
@@ -63,12 +63,12 @@ function queryOne(sql, params = []) {
     return new Promise((resolve, reject) => {
         db.get(sql, params, (err, row) => {
             const duration = Date.now() - startTime;
-            
+
             // Track performance if enabled
             if (performanceTracker) {
                 performanceTracker('get', duration);
             }
-            
+
             if (err) {
                 console.error('[QueryHelper] Error in queryOne:', err);
                 reject(err);
@@ -88,14 +88,14 @@ function queryOne(sql, params = []) {
 function queryRun(sql, params = []) {
     const startTime = Date.now();
     return new Promise((resolve, reject) => {
-        db.run(sql, params, function(err) {
+        db.run(sql, params, function (err) {
             const duration = Date.now() - startTime;
-            
+
             // Track performance if enabled
             if (performanceTracker) {
                 performanceTracker('run', duration);
             }
-            
+
             if (err) {
                 console.error('[QueryHelper] Error in queryRun:', err);
                 reject(err);
@@ -124,7 +124,7 @@ async function queryParallel(queries) {
             return queryRun(q.sql, q.params || []);
         }
     });
-    
+
     return Promise.all(promises);
 }
 
@@ -168,12 +168,12 @@ async function transaction(callback) {
         db.serialize(() => {
             db.run('BEGIN TRANSACTION', (err) => {
                 if (err) return reject(err);
-                
+
                 callback(db)
                     .then((result) => {
                         db.run('COMMIT', (commitErr) => {
                             if (commitErr) {
-                                db.run('ROLLBACK', () => {});
+                                db.run('ROLLBACK', () => { });
                                 reject(commitErr);
                             } else {
                                 resolve(result);
@@ -181,7 +181,7 @@ async function transaction(callback) {
                         });
                     })
                     .catch((error) => {
-                        db.run('ROLLBACK', () => {});
+                        db.run('ROLLBACK', () => { });
                         reject(error);
                     });
             });
@@ -197,7 +197,7 @@ async function transaction(callback) {
  */
 function parseJsonFields(row, jsonFields = ['checklist', 'attachments', 'tags', 'data']) {
     if (!row) return row;
-    
+
     const parsed = { ...row };
     jsonFields.forEach(field => {
         if (parsed[field] && typeof parsed[field] === 'string') {
@@ -209,7 +209,7 @@ function parseJsonFields(row, jsonFields = ['checklist', 'attachments', 'tags', 
             }
         }
     });
-    
+
     return parsed;
 }
 
@@ -221,7 +221,7 @@ function parseJsonFields(row, jsonFields = ['checklist', 'attachments', 'tags', 
  */
 function transformRow(row, fieldMap = {}) {
     if (!row) return null;
-    
+
     const transformed = {};
     Object.keys(row).forEach(key => {
         // Use custom mapping if provided
@@ -233,11 +233,11 @@ function transformRow(row, fieldMap = {}) {
             transformed[camelKey] = row[key];
         }
     });
-    
+
     return transformed;
 }
 
-module.exports = {
+export {
     queryAll,
     queryOne,
     queryRun,
@@ -249,6 +249,21 @@ module.exports = {
     parseJsonFields,
     transformRow,
     // FAZA 5: Performance tracking methods
+    enablePerformanceTracking,
+    disablePerformanceTracking
+};
+
+export default {
+    queryAll,
+    queryOne,
+    queryRun,
+    queryParallel,
+    buildInPlaceholders,
+    buildOrgFilter,
+    buildUserFilter,
+    transaction,
+    parseJsonFields,
+    transformRow,
     enablePerformanceTracking,
     disablePerformanceTracking
 };

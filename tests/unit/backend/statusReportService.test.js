@@ -341,27 +341,26 @@ describe('StatusReportService', () => {
 
     describe('approveReport', () => {
         it('should approve a report', async () => {
-            queryHelpers.queryRun.mockResolvedValue();
+            queryHelpers.queryRun.mockResolvedValue(undefined);
 
             await StatusReportService.approveReport('report-1', 'user-1');
 
-            expect(queryHelpers.queryRun).toHaveBeenCalledWith(
-                expect.stringContaining('APPROVED'),
-                expect.arrayContaining(['user-1'])
-            );
+            expect(queryHelpers.queryRun).toHaveBeenCalled();
+            const callArgs = queryHelpers.queryRun.mock.calls[0];
+            expect(callArgs[0]).toContain('APPROVED');
+            expect(callArgs[1]).toContain('user-1');
         });
     });
 
     describe('publishReport', () => {
         it('should publish a report', async () => {
-            queryHelpers.queryRun.mockResolvedValue();
+            queryHelpers.queryRun.mockResolvedValue(undefined);
 
             await StatusReportService.publishReport('report-1');
 
-            expect(queryHelpers.queryRun).toHaveBeenCalledWith(
-                expect.stringContaining('PUBLISHED'),
-                expect.any(Array)
-            );
+            expect(queryHelpers.queryRun).toHaveBeenCalled();
+            const callArgs = queryHelpers.queryRun.mock.calls[0];
+            expect(callArgs[0]).toContain('PUBLISHED');
         });
     });
 

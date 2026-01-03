@@ -346,6 +346,7 @@ _Context: ${pmoContext.currentScreen}_`,
             }, 1000);
             return () => clearTimeout(timer);
         }
+        return undefined;
     }, [currentProjectId, currentUser, autoSummaryEnabled, lastSummarizedProject, triggerProjectSummary]);
 
     // AI Roles Model: Fetch project AI role when project changes

@@ -4,7 +4,8 @@
  * Converts operator observations into structured assessment data
  */
 
-const { OBSERVATION_TO_SCORE_MAPPING, getTemplateById } = require('../data/rapidLeanObservationTemplates');
+import rapidLeanData from '../data/rapidLeanObservationTemplates.js';
+const { OBSERVATION_TO_SCORE_MAPPING, getTemplateById } = rapidLeanData;
 
 class RapidLeanObservationMapper {
     /**
@@ -24,7 +25,7 @@ class RapidLeanObservationMapper {
             Object.keys(obs.answers).forEach(itemId => {
                 const answer = obs.answers[itemId];
                 const mappingKey = `${itemId}_${answer}`;
-                
+
                 if (dimensionMapping[mappingKey] !== undefined) {
                     // Map to corresponding RapidLean question
                     const questionId = this.mapToQuestionId(dimension, itemId);
@@ -248,5 +249,5 @@ class RapidLeanObservationMapper {
     }
 }
 
-module.exports = RapidLeanObservationMapper;
+export default RapidLeanObservationMapper;
 

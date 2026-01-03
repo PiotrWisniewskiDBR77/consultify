@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 import { DashboardOverview } from '../components/dashboard/DashboardOverview';
@@ -31,30 +31,41 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUse
     const isSnapshot = currentView === AppView.DASHBOARD_SNAPSHOT;
 
     // Register Context for AI
+    const screenContextData = useMemo(() => ({
+        mode: isSnapshot ? 'Snapshot' : 'Overview',
+        projectStatus: fullSessionData?.step5Completed ? 'Execution' : (fullSessionData?.step3Completed ? 'Roadmap' : 'Planning'),
+        keyMetrics: fullSessionData?.kpiResults || {}
+    }), [isSnapshot, fullSessionData?.step5Completed, fullSessionData?.step3Completed, fullSessionData?.kpiResults]);
+
     useScreenContext(
         'user_dashboard',
         isSnapshot ? 'Execution Snapshot' : 'Executive Dashboard',
-        {
-            mode: isSnapshot ? 'Snapshot' : 'Overview',
-            projectStatus: fullSessionData?.step5Completed ? 'Execution' : (fullSessionData?.step3Completed ? 'Roadmap' : 'Planning'),
-            keyMetrics: fullSessionData?.kpiResults || {}
-        },
+        screenContextData,
         "User is reviewing their transformation progress and high-level KPIs."
     );
 
-    const handleStartTransformation = () => {
+    const handleStartTransformation = useCallback(() => {
         onNavigate(AppView.FULL_STEP1_CONTEXT);
-    };
+    }, [onNavigate]);
 
-    const handleCreateTask = () => {
+    const handleCreateTask = useCallback(() => {
         setSelectedTaskId(null);
         setIsCreateModalOpen(true);
-    };
+    }, []);
 
-    const handleEditTask = (taskId: string) => {
+    const handleEditTask = useCallback((taskId: string) => {
         setSelectedTaskId(taskId);
         setIsCreateModalOpen(true);
-    };
+    }, []);
+
+    const handleCloseModal = useCallback(() => {
+        setIsCreateModalOpen(false);
+    }, []);
+
+    const handleTaskSaved = useCallback(() => {
+        setRefreshTrigger(prev => prev + 1);
+        setIsCreateModalOpen(false);
+    }, []);
 
     // Keyboard Shortcuts Handlers
     const handleMarkAllRead = useCallback(async () => {
@@ -84,7 +95,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUse
     // The default handler in SplitLayout properly calls startStream() which sends to backend
 
     // Step C: Handle "Explain This" click from PMO Health section
-    const handleExplainPMO = (snapshot: any) => {
+    const handleExplainPMO = useCallback((snapshot: any) => {
         const prompt = `Explain the current PMO situation for project "${snapshot.projectName}":
 
 **Current Phase:** ${snapshot.phase.name} (${snapshot.phase.number}/6)
@@ -99,7 +110,9 @@ Please explain:
 3. Who should act on each item`;
 
         addMessage({ id: Date.now().toString(), role: 'user', content: prompt, timestamp: new Date() });
-    };
+    }, [addMessage]);
+
+    const handleProceed = useCallback(() => setRefreshTrigger(prev => prev + 1), []);
 
     return (
         <SplitLayout
@@ -124,7 +137,7 @@ Please explain:
                             <GateStatus
                                 projectId={currentProjectId}
                                 compact={false}
-                                onProceed={() => setRefreshTrigger(prev => prev + 1)}
+                                onProceed={handleProceed}
                             />
                         </div>
                     )}
@@ -147,11 +160,8 @@ Please explain:
                     <TaskDetailModal
                         taskId={selectedTaskId}
                         isOpen={isCreateModalOpen}
-                        onClose={() => setIsCreateModalOpen(false)}
-                        onTaskSaved={() => {
-                            setRefreshTrigger(prev => prev + 1);
-                            setIsCreateModalOpen(false);
-                        }}
+                        onClose={handleCloseModal}
+                        onTaskSaved={handleTaskSaved}
                     />
                 )}
             </div>

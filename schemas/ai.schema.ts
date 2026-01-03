@@ -95,7 +95,7 @@ export const ChatResponseActionSchema = z.object({
     payload: z.object({
         view: z.string().optional(),
         apiCall: z.string().optional(),
-        data: z.record(z.unknown()).optional(),
+        data: z.record(z.string(), z.unknown()).optional(),
         copyText: z.string().optional(),
     }),
 });
@@ -155,7 +155,7 @@ export const ChatMessageSchema = z.object({
     multiSelect: z.boolean().optional(),
     toolCalls: z.array(z.object({
         name: z.string(),
-        args: z.record(z.unknown()),
+        args: z.record(z.string(), z.unknown()),
         result: z.unknown().optional(),
         status: z.enum(['pending', 'approved', 'rejected', 'executed']).optional(),
     })).optional(),
@@ -168,7 +168,7 @@ export const ChatMessageSchema = z.object({
     regenerateCount: z.number().optional(),
     focusMode: z.enum(['all', 'pmo-docs', 'project-data', 'research', 'web']).optional(),
     feedback: MessageFeedbackSchema.optional(),
-    metadata: z.record(z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
     parentMessageId: z.string().optional(),
     isStreaming: z.boolean().optional(),
     streamProgress: z.number().optional(),

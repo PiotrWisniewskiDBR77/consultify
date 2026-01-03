@@ -34,7 +34,7 @@ import {
 import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { InfoButton } from '../../components/shared/InfoButton';
-import { LLMProvider } from '../../types';
+import { LLMProviderConfig } from '../../types/domain/ai';
 import { PageHeader, SectionHeader } from '../../components/Admin/shared/PageHeader';
 import { Card } from '../../components/Admin/shared/Card';
 import { Button, IconButton } from '../../components/Admin/shared/Button';
@@ -48,19 +48,30 @@ export const LLMManagementView: React.FC = () => {
     const [loading, setLoading] = useState(true);
 
     // Providers
-    const [providers, setProviders] = useState<LLMProvider[]>([]);
+    const [providers, setProviders] = useState<LLMProviderConfig[]>([]);
     const [showProviderModal, setShowProviderModal] = useState(false);
     const [editingProviderId, setEditingProviderId] = useState<string | null>(null);
     const [showInactive, setShowInactive] = useState(false);
-    const [providerForm, setProviderForm] = useState<Partial<LLMProvider>>({
+    const [providerForm, setProviderForm] = useState<Partial<LLMProviderConfig>>({
         name: '',
         provider: 'openai',
+        apiKey: '',
         api_key: '',
+        baseUrl: '',
         endpoint: '',
+        model: '',
         model_id: '',
+        isEnabled: true,
         is_active: true,
+        isDefault: false,
+        tier: 'standard',
+        maxTokens: 4096,
+        contextWindow: 4096,
+        capabilities: ['text'],
         visibility: 'admin',
-        cost_per_1k: 0
+        cost_per_1k: 0,
+        costPerInputToken: 0,
+        costPerOutputToken: 0
     });
 
     // Ollama
@@ -119,7 +130,7 @@ export const LLMManagementView: React.FC = () => {
                 await Api.updateLLMProvider(editingProviderId, providerForm);
                 toast.success('Provider updated');
             } else {
-                await Api.addLLMProvider(providerForm);
+                await Api.addLLMProvider(providerForm as any);
                 toast.success('Provider added');
             }
             setShowProviderModal(false);
@@ -204,8 +215,8 @@ export const LLMManagementView: React.FC = () => {
                 is_active: true,
                 visibility: 'public',
                 cost_per_1k: 0,
-                tier: 'BUDGET'
-            });
+                tier: 'budget'
+            } as any);
             toast.success(`Added ${modelName}`);
             loadInitialData();
         } catch (err) {
@@ -259,8 +270,8 @@ export const LLMManagementView: React.FC = () => {
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                                ? 'bg-blue-600 text-white'
-                                : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                            ? 'bg-blue-600 text-white'
+                            : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
                             }`}
                     >
                         <tab.icon size={16} />
@@ -314,8 +325,8 @@ export const LLMManagementView: React.FC = () => {
                                                     onClick={() => !alreadyAdded && addOllamaModel(model.name)}
                                                     disabled={alreadyAdded}
                                                     className={`px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-colors ${alreadyAdded
-                                                            ? 'bg-emerald-500/10 text-emerald-400 cursor-default'
-                                                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                                        ? 'bg-emerald-500/10 text-emerald-400 cursor-default'
+                                                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                                                         }`}
                                                 >
                                                     {alreadyAdded && <Check size={12} />}
@@ -551,7 +562,7 @@ export const LLMManagementView: React.FC = () => {
                                         <div key={idx} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
                                             <span className="text-sm text-slate-300">{check.name}</span>
                                             <span className={`text-sm ${check.status === 'OK' ? 'text-emerald-400' :
-                                                    check.status === 'MISSING' ? 'text-amber-400' : 'text-slate-400'
+                                                check.status === 'MISSING' ? 'text-amber-400' : 'text-slate-400'
                                                 }`}>
                                                 {check.status || check.value}
                                             </span>

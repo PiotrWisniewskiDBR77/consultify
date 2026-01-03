@@ -11,5 +11,11 @@ export { MetricCard, type MetricCardProps, type TrendDirection } from './MetricC
 export { SearchInput, type SearchInputProps } from './SearchInput';
 export { EmptyState, type EmptyStateProps, type EmptyStateAction, type EmptyStatePreset } from './EmptyState';
 export { DataTable, type DataTableProps, type Column, type SortDirection } from './DataTable';
+export { 
+  CommandPaletteProvider, 
+  useCommandPalette, 
+  type CommandItem, 
+  type CommandPaletteProviderProps 
+} from './CommandPalette';
 
 

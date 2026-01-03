@@ -1,4 +1,4 @@
-const { getRedisClient, isRedisConnected } = require('../services/ai/redisClient');
+import { getRedisClient, isRedisConnected } from '../services/ai/redisClient.js';
 
 /**
  * A simple Redis store for express-rate-limit
@@ -27,11 +27,11 @@ class RedisStore {
             }
 
             const hits = await client.incr(rKey);
-            
+
             // CRITICAL FIX: express-rate-limit v8 requires positive integer
             // Redis incr returns 0 on fresh keys or null on errors
             const safeHits = (typeof hits === 'number' && hits > 0) ? hits : 1;
-            
+
             if (safeHits === 1) {
                 await client.expire(rKey, Math.ceil(this.windowMs / 1000));
             }
@@ -91,7 +91,7 @@ class RedisStore {
             }
 
             const hits = await client.get(rKey);
-            
+
             // If key doesn't exist, return undefined (express-rate-limit handles this)
             if (hits === null || hits === undefined) {
                 return undefined;
@@ -113,4 +113,4 @@ class RedisStore {
     }
 }
 
-module.exports = RedisStore;
+export default RedisStore;

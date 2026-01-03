@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const { initTestDb, cleanTables, dbRun, dbAll, dbGet, db } = require('../../helpers/dbHelper.cjs');
-const ActivityService = require('../../../server/services/activityService.js');
+const dbHelper = require('../../helpers/dbHelper.cjs');
+const { initTestDb, cleanTables, dbRun, dbAll, dbGet } = dbHelper;
+import ActivityService from '../../../server/services/activityService.js';
 const { v4: uuidv4 } = require('uuid');
 
 /**
@@ -18,8 +19,10 @@ describe('Backend Service Test: ActivityService', () => {
         // Ensure dependecies are injected
         const mockRequestStore = { getCorrelationId: () => 'test-correlation-id' };
         const mockSiemService = { stream: async () => { } };
+
+        // Access dbHelper.db dynamically so we get the initialized instance
         ActivityService.setDependencies({
-            db,
+            db: dbHelper.db,
             requestStore: mockRequestStore,
             siemService: mockSiemService,
             uuidv4
@@ -138,7 +141,7 @@ describe('Backend Service Test: ActivityService', () => {
 
         it('handles database errors gracefully', async () => {
             // Set invalid DB to trigger error
-            const originalDb = db;
+            const originalDb = dbHelper.db;
             ActivityService.setDependencies({
                 db: { all: (sql, params, cb) => cb(new Error('DB Error')) }
             });
@@ -168,6 +171,63 @@ describe('Backend Service Test: ActivityService', () => {
             expect(Array.isArray(result)).toBe(true);
             expect(result.length).toBeGreaterThan(0);
             expect(result[0].organization_id).toBe(testOrgId);
+        });
+    });
+
+    describe('getStats', () => {
+        it('fetches basic activity stats', async () => {
+            await dbRun(
+                'INSERT INTO activity_logs (id, organization_id, action, entity_type, created_at) VALUES (?, ?, ?, ?, datetime("now"))',
+                [uuidv4(), testOrgId, 'created', 'task']
+            );
+
+            const stats = await ActivityService.getStats();
+            expect(stats.total).toBeGreaterThanOrEqual(1);
+            expect(stats.last_hour).toBeGreaterThanOrEqual(1);
+        });
+
+        it('handles database errors', async () => {
+            const originalDb = dbHelper.db;
+            ActivityService.setDependencies({
+                db: { get: (sql, params, cb) => cb(new Error('Stats Error')) }
+            });
+            try {
+                await ActivityService.getStats();
+            } catch (e) {
+                expect(e.message).toBe('Stats Error');
+            } finally {
+                ActivityService.setDependencies({ db: originalDb });
+            }
+        });
+    });
+
+    describe('log error handling', () => {
+        it('handles db.run failure gracefully without crashing', async () => {
+            const originalDb = dbHelper.db;
+            // Mock db.run to fail
+            ActivityService.setDependencies({
+                db: { run: (sql, params, cb) => cb(new Error('Insert Failed')) },
+                requestStore: { getCorrelationId: () => null }
+            });
+
+            // Should resolve despite error
+            await expect(ActivityService.log({ organizationId: 'org-1', action: 'test' })).resolves.toBeUndefined();
+
+            ActivityService.setDependencies({ db: originalDb });
+        });
+
+        it('handles SIEM service failure gracefully', async () => {
+            const mockSiemFail = {
+                stream: async () => { throw new Error('SIEM Down'); }
+            };
+
+            ActivityService.setDependencies({
+                db: dbHelper.db, // keep real db
+                siemService: mockSiemFail
+            });
+
+            // Should resolve despite SIEM error
+            await expect(ActivityService.log({ organizationId: testOrgId, action: 'siem_test' })).resolves.toBeUndefined();
         });
     });
 });

@@ -22,17 +22,21 @@ import {
     Lightbulb,
     ThumbsUp,
     ThumbsDown,
-    Send
+    Send,
+    CheckCircle
 } from 'lucide-react';
 import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
 
-interface Decision {
+export type DecisionStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'ESCALATED' | 'DEFERRED';
+export type DecisionPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+export interface Decision {
     id: string;
     title: string;
     description: string;
-    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ESCALATED' | 'DEFERRED';
-    priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    status: DecisionStatus;
+    priority: DecisionPriority;
     dueDate?: string;
     createdAt: string;
     initiativeId?: string;
@@ -68,7 +72,7 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({
     const fetchDecisions = async () => {
         setIsLoading(true);
         try {
-            const url = initiativeId 
+            const url = initiativeId
                 ? `/decisions?initiativeId=${initiativeId}`
                 : '/decisions';
             const response = await Api.get(url);
@@ -122,7 +126,7 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({
 
     const pendingCount = decisions.filter(d => d.status === 'PENDING').length;
     const blockingCount = decisions.filter(d => d.isBlocking).length;
-    const overdueCount = decisions.filter(d => 
+    const overdueCount = decisions.filter(d =>
         d.status === 'PENDING' && d.dueDate && getDaysOverdue(d.dueDate) > 0
     ).length;
 
@@ -150,15 +154,14 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({
         const daysOverdue = decision.dueDate ? getDaysOverdue(decision.dueDate) : 0;
 
         return (
-            <div 
+            <div
                 key={decision.id}
-                className={`bg-white dark:bg-navy-900 rounded-lg border p-4 transition-all ${
-                    isOverdue 
-                        ? 'border-red-300 dark:border-red-500/50 shadow-red-100 dark:shadow-red-900/20 shadow-md' 
-                        : decision.isBlocking
-                            ? 'border-amber-300 dark:border-amber-500/50'
-                            : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
-                }`}
+                className={`bg-white dark:bg-navy-900 rounded-lg border p-4 transition-all ${isOverdue
+                    ? 'border-red-300 dark:border-red-500/50 shadow-red-100 dark:shadow-red-900/20 shadow-md'
+                    : decision.isBlocking
+                        ? 'border-amber-300 dark:border-amber-500/50'
+                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                    }`}
             >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
@@ -197,13 +200,12 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({
 
                 {/* Due date / overdue warning */}
                 {decision.dueDate && (
-                    <div className={`flex items-center gap-2 p-2 rounded text-xs ${
-                        isOverdue 
-                            ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
-                            : daysOverdue > -7
-                                ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                                : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
-                    }`}>
+                    <div className={`flex items-center gap-2 p-2 rounded text-xs ${isOverdue
+                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                        : daysOverdue > -7
+                            ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                            : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                        }`}>
                         {isOverdue ? (
                             <>
                                 <AlertTriangle size={12} />
@@ -224,7 +226,7 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({
                     <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                         <User size={12} />
                         <span>
-                            {decision.requestedBy 
+                            {decision.requestedBy
                                 ? `${decision.requestedBy.firstName} ${decision.requestedBy.lastName}`
                                 : 'Unknown'
                             }
@@ -277,9 +279,8 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({
             {/* Stats bar */}
             <div className="flex items-center gap-4 p-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10">
                 <div className="flex items-center gap-2">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        pendingCount > 0 ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-slate-100 dark:bg-slate-800'
-                    }`}>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${pendingCount > 0 ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-slate-100 dark:bg-slate-800'
+                        }`}>
                         <Clock size={20} className={pendingCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'} />
                     </div>
                     <div>
@@ -291,9 +292,8 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({
                 <div className="w-px h-10 bg-slate-200 dark:bg-white/10" />
 
                 <div className="flex items-center gap-2">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        blockingCount > 0 ? 'bg-red-100 dark:bg-red-900/30' : 'bg-slate-100 dark:bg-slate-800'
-                    }`}>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${blockingCount > 0 ? 'bg-red-100 dark:bg-red-900/30' : 'bg-slate-100 dark:bg-slate-800'
+                        }`}>
                         <AlertTriangle size={20} className={blockingCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-400'} />
                     </div>
                     <div>
@@ -305,9 +305,8 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({
                 <div className="w-px h-10 bg-slate-200 dark:bg-white/10" />
 
                 <div className="flex items-center gap-2">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        overdueCount > 0 ? 'bg-red-100 dark:bg-red-900/30 animate-pulse' : 'bg-slate-100 dark:bg-slate-800'
-                    }`}>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${overdueCount > 0 ? 'bg-red-100 dark:bg-red-900/30 animate-pulse' : 'bg-slate-100 dark:bg-slate-800'
+                        }`}>
                         <Clock size={20} className={overdueCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-400'} />
                     </div>
                     <div>

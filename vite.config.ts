@@ -171,6 +171,9 @@ export default defineConfig(({ mode }) => {
             if (id.includes('node_modules/react-dropzone/')) {
               return 'dropzone';
             }
+            
+            // Return undefined for modules that don't match any condition
+            return undefined;
           }
         }
       },

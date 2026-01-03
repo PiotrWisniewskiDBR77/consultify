@@ -594,10 +594,11 @@ class AIHealthMonitor {
                 heapPercent
             };
 
-            // Alert if memory usage is too high
-            if (heapPercent > 90) {
+            // Alert if memory usage is too high (only if using significant memory > 500MB)
+            // V8 expands heapTotal lazily, so high % of small total is normal
+            if (heapPercent > 95 && heapUsedMB > 500) {
                 check.healthy = false;
-                check.message = `High memory usage: ${heapPercent}%`;
+                check.message = `High memory usage: ${heapPercent}% (${heapUsedMB}MB)`;
             } else {
                 check.message = `Memory: ${heapUsedMB}MB / ${heapTotalMB}MB (${heapPercent}%)`;
             }

@@ -5,7 +5,7 @@ export { DecisionBoard } from './DecisionBoard';
 export { RAIDLog } from './RAIDLog';
 
 // Types
-export type { Decision, DecisionStatus, DecisionType } from './DecisionBoard';
+export type { Decision, DecisionStatus, DecisionPriority } from './DecisionBoard';
 
 // Additional Components
 export { ChangeRequestModal } from './ChangeRequestModal';

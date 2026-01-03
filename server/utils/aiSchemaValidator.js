@@ -68,7 +68,7 @@ function validateOrFallback(data, schema, fallback) {
         if (result.success) {
             return result.data;
         } else {
-            console.warn('[AIValidator] Validation failed:', result.error.extractErrors());
+            console.warn('[AIValidator] Validation failed:', result.error.flatten());
             return fallback;
         }
     } catch (error) {

@@ -217,6 +217,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
+    return undefined;
   }, [showAIMenu]);
 
   // Keyboard shortcuts

@@ -37,7 +37,8 @@ import {
 import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { InfoButton } from '../../components/shared/InfoButton';
-import { LLMProvider, SuperAdminAISettings } from '../../types';
+import { SuperAdminAISettings } from '../../types';
+import { LLMProviderConfig } from '../../types/domain/ai';
 import { SettingsCard, SettingsToggle, SettingsSlider, AuditLogViewer } from '../../components/AISettings';
 
 // AI Capability definitions with their prompt keys
@@ -115,19 +116,30 @@ export const AIConfigurationView: React.FC = () => {
     const [savingSettings, setSavingSettings] = useState(false);
 
     // Providers
-    const [providers, setProviders] = useState<LLMProvider[]>([]);
+    const [providers, setProviders] = useState<LLMProviderConfig[]>([]);
     const [showProviderModal, setShowProviderModal] = useState(false);
     const [editingProviderId, setEditingProviderId] = useState<string | null>(null);
     const [showInactive, setShowInactive] = useState(false);
-    const [providerForm, setProviderForm] = useState<Partial<LLMProvider>>({
+    const [providerForm, setProviderForm] = useState<Partial<LLMProviderConfig>>({
         name: '',
         provider: 'openai',
+        apiKey: '',
         api_key: '',
+        baseUrl: '',
         endpoint: '',
+        model: '',
         model_id: '',
+        isEnabled: true,
         is_active: true,
+        isDefault: false,
+        tier: 'standard',
+        maxTokens: 4096,
+        contextWindow: 4096,
+        capabilities: ['text'],
         visibility: 'admin',
-        cost_per_1k: 0
+        cost_per_1k: 0,
+        costPerInputToken: 0,
+        costPerOutputToken: 0
     });
 
     // Ollama
@@ -374,13 +386,24 @@ Help leaders develop change management competencies.`
             await Api.addLLMProvider({
                 name: `Ollama - ${modelName}`,
                 provider: 'ollama',
+                model: modelName,
+                apiKey: '',
                 api_key: '',
                 endpoint: ollamaEndpoint,
+                baseUrl: ollamaEndpoint,
                 model_id: modelName,
+                isEnabled: true,
                 is_active: true,
+                isDefault: false,
+                tier: 'standard',
+                maxTokens: 4096,
+                contextWindow: 4096,
+                capabilities: ['text'],
                 visibility: 'public',
-                cost_per_1k: 0
-            });
+                cost_per_1k: 0,
+                costPerInputToken: 0,
+                costPerOutputToken: 0
+            } as any);
             toast.success(`Added ${modelName}`);
             loadInitialData();
         } catch (err) {

@@ -4,7 +4,12 @@
  * Tests for async notification delivery service using outbox pattern.
  */
 
-const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
+const { initTestDb, cleanTables, dbAll, dbRun, db } = require('../../helpers/dbHelper.cjs');
+
+// Inject the real test database instance into the global mock slot
+// This ensures that server/database.js uses our active test DB instance
+global.__TEST_DB_MOCK__ = db;
+
 const NotificationOutboxService = require('../../../server/services/notificationOutboxService');
 const { v4: uuidv4 } = require('uuid');
 

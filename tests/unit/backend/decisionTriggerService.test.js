@@ -1,32 +1,40 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
 
-const mockDb = {
-    run: vi.fn(),
-    get: vi.fn()
-};
+// Mock database with proper hoisting - define mock inside vi.mock
+const mockRun = vi.fn();
+const mockGet = vi.fn();
 
 vi.mock('../../../server/database', () => ({
-    default: mockDb
+    default: {
+        run: mockRun,
+        get: mockGet,
+        all: vi.fn(),
+        exec: vi.fn()
+    },
+    run: mockRun,
+    get: mockGet
 }));
 
-describe('DecisionTriggerService', () => {
-    let DecisionTriggerService;
+// Import after mock is set up
+import DecisionTriggerService from '../../../server/services/decisionTriggerService';
 
+describe('DecisionTriggerService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.resetModules();
         
-        mockDb.run.mockImplementation((sql, params, callback) => {
-            callback(null, { lastID: 1, changes: 1 });
+        // Setup run mock to properly handle callback-based API
+        mockRun.mockImplementation((sql, params, callback) => {
+            if (typeof callback === 'function') {
+                callback.call({ lastID: 1, changes: 1 }, null);
+            }
         });
 
-        mockDb.get.mockImplementation((sql, params, callback) => {
-            callback(null, { owner_id: 'owner-123', first_name: 'John', last_name: 'Doe' });
+        // Setup get mock to return project owner data
+        mockGet.mockImplementation((sql, params, callback) => {
+            if (typeof callback === 'function') {
+                callback(null, { owner_id: 'owner-123', first_name: 'John', last_name: 'Doe' });
+            }
         });
-
-        DecisionTriggerService = require('../../../server/services/decisionTriggerService');
     });
 
     afterEach(() => {

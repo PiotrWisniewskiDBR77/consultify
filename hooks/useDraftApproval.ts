@@ -213,16 +213,17 @@ export function useDraftApproval(options: UseDraftApprovalOptions = {}): UseDraf
 
     // Auto-refresh effect
     useEffect(() => {
-        fetchDrafts();
-        fetchStats();
+        void fetchDrafts();
+        void fetchStats();
 
         if (autoRefresh && refreshInterval > 0) {
             const interval = setInterval(() => {
-                fetchDrafts();
+                void fetchDrafts();
             }, refreshInterval);
 
             return () => clearInterval(interval);
         }
+        return undefined;
     }, [autoRefresh, refreshInterval, fetchDrafts, fetchStats]);
 
     return {

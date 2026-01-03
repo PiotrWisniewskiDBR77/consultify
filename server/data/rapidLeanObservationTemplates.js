@@ -450,7 +450,16 @@ function getAllTemplates() {
     return RAPID_LEAN_OBSERVATION_TEMPLATES;
 }
 
-module.exports = {
+export {
+    RAPID_LEAN_OBSERVATION_TEMPLATES,
+    OBSERVATION_TO_SCORE_MAPPING,
+    OBSERVATION_TO_DRD_MAPPING,
+    getTemplateById,
+    getTemplatesByDimension,
+    getAllTemplates
+};
+
+export default {
     RAPID_LEAN_OBSERVATION_TEMPLATES,
     OBSERVATION_TO_SCORE_MAPPING,
     OBSERVATION_TO_DRD_MAPPING,

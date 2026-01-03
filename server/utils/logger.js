@@ -4,8 +4,8 @@
  * Powered by Winston
  */
 
-const winston = require('winston');
-const requestStore = require('./requestStore');
+import winston from 'winston';
+import requestStore from './requestStore.js';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -93,4 +93,4 @@ const logger = {
     }
 };
 
-module.exports = logger;
+export default logger;

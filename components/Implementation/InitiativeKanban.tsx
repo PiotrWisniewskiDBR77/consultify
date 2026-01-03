@@ -42,28 +42,7 @@ import {
 import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
 
-interface Task {
-    id: string;
-    title: string;
-    status: string;
-    dueDate?: string;
-    assignee?: { firstName: string; lastName: string };
-    priority?: string;
-}
-
-interface Initiative {
-    id: string;
-    name: string;
-    status: string;
-    progress: number;
-    currentStage: string;
-    plannedEndDate?: string;
-    actualEndDate?: string;
-    ownerExecution?: { firstName: string; lastName: string };
-    tasks?: Task[];
-    slaDeadline?: string;
-    priority?: string;
-}
+import { Initiative, Task } from '../../types';
 
 interface Column {
     id: string;
@@ -98,11 +77,10 @@ const DroppableColumn: React.FC<{
     return (
         <div
             ref={setNodeRef}
-            className={`min-h-[400px] p-2 rounded-b-lg transition-colors ${
-                isOver 
-                    ? 'bg-purple-50 dark:bg-purple-900/20' 
-                    : 'bg-slate-50 dark:bg-navy-950/50'
-            }`}
+            className={`min-h-[400px] p-2 rounded-b-lg transition-colors ${isOver
+                ? 'bg-purple-50 dark:bg-purple-900/20'
+                : 'bg-slate-50 dark:bg-navy-950/50'
+                }`}
         >
             {children}
         </div>
@@ -142,11 +120,10 @@ const SortableInitiativeCard: React.FC<{
             style={style}
             {...attributes}
             {...listeners}
-            className={`bg-white dark:bg-navy-900 rounded-lg border p-4 mb-3 cursor-pointer transition-all ${
-                isDragging 
-                    ? 'shadow-lg border-purple-400 dark:border-purple-500 rotate-2' 
-                    : 'border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/50'
-            }`}
+            className={`bg-white dark:bg-navy-900 rounded-lg border p-4 mb-3 cursor-pointer transition-all ${isDragging
+                ? 'shadow-lg border-purple-400 dark:border-purple-500 rotate-2'
+                : 'border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/50'
+                }`}
             onClick={() => !isDragging && onInitiativeClick?.(initiative)}
         >
             {/* Header */}
@@ -172,7 +149,7 @@ const SortableInitiativeCard: React.FC<{
                     </span>
                 </div>
                 <div className="h-1.5 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
-                    <div 
+                    <div
                         className="h-full bg-purple-500 rounded-full transition-all"
                         style={{ width: `${initiative.progress || 0}%` }}
                     />
@@ -185,7 +162,7 @@ const SortableInitiativeCard: React.FC<{
                     <ListTodo size={12} />
                     <span>{completedTasks}/{totalTasks} tasks</span>
                     <div className="flex-1 h-1 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
-                        <div 
+                        <div
                             className="h-full bg-green-500 rounded-full"
                             style={{ width: `${taskProgress}%` }}
                         />
@@ -194,13 +171,12 @@ const SortableInitiativeCard: React.FC<{
             )}
 
             {/* SLA indicator */}
-            <div className={`flex items-center gap-2 p-2 rounded-lg text-xs ${
-                slaStatus === 'overdue' 
-                    ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
-                    : slaStatus === 'warning'
-                        ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                        : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
-            }`}>
+            <div className={`flex items-center gap-2 p-2 rounded-lg text-xs ${slaStatus === 'overdue'
+                ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                : slaStatus === 'warning'
+                    ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                    : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                }`}>
                 {slaStatus === 'overdue' ? (
                     <AlertTriangle size={12} />
                 ) : slaStatus === 'warning' ? (
@@ -209,7 +185,7 @@ const SortableInitiativeCard: React.FC<{
                     <Calendar size={12} />
                 )}
                 <span>
-                    {initiative.plannedEndDate 
+                    {initiative.plannedEndDate
                         ? new Date(initiative.plannedEndDate).toLocaleDateString('pl-PL')
                         : 'No deadline'
                     }
@@ -227,22 +203,21 @@ const SortableInitiativeCard: React.FC<{
                         <User size={10} className="text-purple-600 dark:text-purple-400" />
                     </div>
                     <span>
-                        {initiative.ownerExecution 
+                        {initiative.ownerExecution
                             ? `${initiative.ownerExecution.firstName} ${initiative.ownerExecution.lastName}`
                             : 'Unassigned'
                         }
                     </span>
                 </div>
-                
+
                 {/* Priority */}
                 {initiative.priority && (
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-                        initiative.priority === 'CRITICAL' 
-                            ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                            : initiative.priority === 'HIGH'
-                                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                    }`}>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${initiative.priority === 'Critical'
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                        : initiative.priority === 'High'
+                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                        }`}>
                         {initiative.priority}
                     </span>
                 )}
@@ -294,14 +269,14 @@ export const InitiativeKanban: React.FC<InitiativeKanbanProps> = ({
         const draggableId = active.id as string;
         const newStage = over.id as string;
         const initiative = localInitiatives.find(init => init.id === draggableId);
-        
+
         if (!initiative) return;
         if (initiative.currentStage === newStage) return;
 
         // Optimistic update
-        setLocalInitiatives(prev => 
-            prev.map(init => 
-                init.id === draggableId 
+        setLocalInitiatives(prev =>
+            prev.map(init =>
+                init.id === draggableId
                     ? { ...init, currentStage: newStage }
                     : init
             )
@@ -323,8 +298,8 @@ export const InitiativeKanban: React.FC<InitiativeKanbanProps> = ({
 
     // Group initiatives by stage
     const getInitiativesByStage = (stageId: string) => {
-        return localInitiatives.filter(init => 
-            (init.currentStage || 'KICKOFF') === stageId && 
+        return localInitiatives.filter(init =>
+            (init.currentStage || 'KICKOFF') === stageId &&
             init.status === 'EXECUTING'
         );
     };
@@ -352,7 +327,7 @@ export const InitiativeKanban: React.FC<InitiativeKanbanProps> = ({
                 {EXECUTION_STAGES.map(column => {
                     const columnInitiatives = getInitiativesByStage(column.id);
                     const initiativeIds = columnInitiatives.map(init => init.id);
-                    
+
                     return (
                         <div key={column.id} className="flex-1 min-w-[280px] max-w-[320px]">
                             {/* Column Header */}

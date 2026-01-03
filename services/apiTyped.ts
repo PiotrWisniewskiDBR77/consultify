@@ -682,24 +682,6 @@ export const AdminApi = {
 // EXPORT ALL
 // ==========================================
 
-export {
-    TypedApi,
-    AuthApi,
-    ProjectsApi,
-    TasksApi,
-    InitiativesApi,
-    OrganizationsApi,
-    TeamsApi,
-    BillingApi,
-    AIApi,
-    NotificationsApi,
-    AnalyticsApi,
-    PMOApi,
-    AssessmentsApi,
-    IntegrationsApi,
-    KnowledgeApi,
-    FeedbackApi,
-    AdminApi,
-};
+
 
 

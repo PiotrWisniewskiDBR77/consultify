@@ -3,18 +3,19 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import OrganizationMetadataService from '../../../../server/services/organizationMetadataService';
-import * as dbModule from '../../../../server/database';
+
+// Mock database with callback-style API
+const mockDb = {
+    all: vi.fn(),
+    run: vi.fn(),
+    get: vi.fn()
+};
 
 vi.mock('../../../../server/database', () => ({
-    default: {
-        all: vi.fn(),
-        run: vi.fn(),
-        get: vi.fn()
-    }
+    default: mockDb
 }));
 
-const db = dbModule.default;
+import OrganizationMetadataService from '../../../../server/services/organizationMetadataService';
 
 describe('OrganizationMetadataService', () => {
     beforeEach(() => {
@@ -26,33 +27,43 @@ describe('OrganizationMetadataService', () => {
             const mockMetadata = [
                 { id: '1', organization_id: 'org1', key: 'custom_field', value: 'test' }
             ];
-            db.all.mockImplementation((query, params, callback) => {
-                if (callback) callback(null, mockMetadata);
+            
+            mockDb.all.mockImplementation((query, params, callback) => {
+                // The service uses callback-style API wrapped in Promise
+                if (typeof callback === 'function') {
+                    process.nextTick(() => callback(null, mockMetadata));
+                }
+                // Also support Promise-style return
                 return Promise.resolve(mockMetadata);
             });
 
             const result = await OrganizationMetadataService.getMetadata('org1');
             expect(result).toEqual(mockMetadata);
-            expect(db.all).toHaveBeenCalledWith(
+            expect(mockDb.all).toHaveBeenCalledWith(
                 expect.stringContaining('organization_metadata'),
                 ['org1'],
                 expect.any(Function)
             );
         });
 
-        it('should return empty array on error', async () => {
-            db.all.mockImplementation((query, params, callback) => {
-                callback(new Error('DB Error'), null);
+        it('should reject on database error', async () => {
+            const dbError = new Error('DB Error');
+            mockDb.all.mockImplementation((query, params, callback) => {
+                if (typeof callback === 'function') {
+                    process.nextTick(() => callback(dbError, null));
+                }
+                return Promise.reject(dbError);
             });
 
-            await expect(OrganizationMetadataService.getMetadata('org1')).rejects.toThrow();
+            await expect(OrganizationMetadataService.getMetadata('org1')).rejects.toThrow('DB Error');
         });
     });
 
     describe('setMetadata', () => {
         it('should set metadata value', async () => {
-            db.run.mockImplementation((query, params, callback) => {
-                callback(null, { changes: 1 });
+            mockDb.run.mockImplementation(function(query, params, callback) {
+                // The service uses `this.changes` in callback, simulate it
+                callback.call({ changes: 1, lastID: 1 }, null);
             });
 
             const result = await OrganizationMetadataService.setMetadata(
@@ -66,8 +77,9 @@ describe('OrganizationMetadataService', () => {
 
     describe('deleteMetadata', () => {
         it('should delete metadata by key', async () => {
-            db.run.mockImplementation((query, params, callback) => {
-                callback(null, { changes: 1 });
+            mockDb.run.mockImplementation(function(query, params, callback) {
+                // Simulate `this.changes` for delete
+                callback.call({ changes: 1 }, null);
             });
 
             const result = await OrganizationMetadataService.deleteMetadata('org1', 'key1');

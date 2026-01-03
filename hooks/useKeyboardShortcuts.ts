@@ -69,7 +69,7 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}):
     const [saving, setSaving] = useState(false);
     
     const sequenceBuffer = useRef<string[]>([]);
-    const sequenceTimeout = useRef<NodeJS.Timeout>();
+    const sequenceTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
 
     // Load shortcuts from API
     useEffect(() => {

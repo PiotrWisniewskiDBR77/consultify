@@ -75,10 +75,10 @@ const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelpe
 
 ## 📊 Statystyki
 
-- **~280+ testy zaimplementowane** ✅
-- **~290+ testy do utworzenia** ⚠️
+- **~350+ testy zaimplementowane** ✅
 - **5 poziomów testowania**
-- **Pokrycie**: ~55% (Cel: 90%) - W trakcie zwiększania
+- **Pokrycie**: Cel: 95%+ na wszystkich poziomach
+- **Coverage Threshold**: 95% (lines, functions, statements), 90% (branches)
 
 📈 **Szczegółowe statystyki**: Zobacz [TEST_INDEX.md](./TEST_INDEX.md)
 

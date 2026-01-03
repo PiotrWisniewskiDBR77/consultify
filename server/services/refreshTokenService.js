@@ -16,11 +16,11 @@
  * - Immediate revocation on suspicious activity
  */
 
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
-const config = require('../config');
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
+import db from '../database.js';
+import config from '../config.js';
 
 // Configuration
 const CONFIG = {
@@ -155,7 +155,7 @@ const RefreshTokenService = {
                     // Token was just rotated - this is likely a multi-tab race condition
                     // Return the latest valid token from the same family instead of treating as theft
                     console.log(`[RefreshToken] Grace period: Token was rotated ${secondsSinceRevoke.toFixed(1)}s ago, looking for new token in family`);
-                    
+
                     const latestToken = await dbGet(
                         `SELECT rt.*, u.email, u.role, u.organization_id, u.status as user_status
                          FROM refresh_tokens rt
@@ -172,7 +172,7 @@ const RefreshTokenService = {
                         // Found a valid token in the same family - return new tokens based on it
                         // but DON'T rotate again (let the original refresh handle that)
                         console.log(`[RefreshToken] Grace period: Found valid token in family, returning current tokens`);
-                        
+
                         // Generate new access token only (don't rotate refresh token again)
                         const jti = uuidv4();
                         const accessToken = jwt.sign(
@@ -380,4 +380,4 @@ const RefreshTokenService = {
     }
 };
 
-module.exports = RefreshTokenService;
+export default RefreshTokenService;

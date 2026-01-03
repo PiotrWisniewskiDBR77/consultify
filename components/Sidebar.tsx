@@ -191,7 +191,7 @@ export const Sidebar: React.FC = () => {
     navigateWithChatContext,
     currentProjectId
   } = useAppStore();
-  
+
   // Unified Chat System: Conversation store for display mode management
   const {
     displayMode,
@@ -213,11 +213,11 @@ export const Sidebar: React.FC = () => {
   // Floating Menu State
   const [activeFloating, setActiveFloating] = useState<{ id: string; rect: DOMRect; items: MenuItem[]; title: string } | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout>(undefined);
-  
+
   // =========================================================================
   // UNIFIED CHAT SYSTEM: Navigation Handlers
   // =========================================================================
-  
+
   /**
    * Navigate to AI Chat full-screen mode
    * - Sets display mode to 'full'
@@ -228,7 +228,7 @@ export const Sidebar: React.FC = () => {
     setCurrentView(AppView.AI_CHAT);
     toggleChatSlidingPanel();
   }, [setDisplayMode, setCurrentView, toggleChatSlidingPanel]);
-  
+
   /**
    * Navigate to a view while preserving chat context
    * - Sets display mode to 'split'
@@ -238,14 +238,14 @@ export const Sidebar: React.FC = () => {
   const navigateToViewWithChat = useCallback((viewId: AppView) => {
     // Update display mode to split
     setDisplayMode('split');
-    
+
     // Create workspace context for the target view
     const workspaceType = getDefaultWorkspaceType(viewId);
     const context = createWorkspaceContext(viewId, workspaceType, {
       projectId: currentProjectId || undefined
     });
     setWorkspaceContext(context);
-    
+
     // Navigate using the app store
     navigateWithChatContext(viewId, {
       preserveChat: true,
@@ -361,7 +361,6 @@ export const Sidebar: React.FC = () => {
       id: 'MODULE_ECONOMICS',
       label: t('sidebar.economics'),
       icon: <Calculator size={20} />,
-      viewId: AppView.ECONOMICS,
       viewId: AppView.ECONOMICS,
       requiresView: AppView.FULL_STEP5_EXECUTION
     },
@@ -530,7 +529,7 @@ export const Sidebar: React.FC = () => {
             // =====================================================
             // UNIFIED CHAT SYSTEM: Smart Navigation
             // =====================================================
-            
+
             // AI Chat button: Navigate to full-screen chat
             if (item.id === 'AI_CHAT') {
               // If already in AI Chat, just toggle the sliding panel
@@ -552,7 +551,7 @@ export const Sidebar: React.FC = () => {
               } else {
                 setCurrentView(item.viewId);
               }
-              
+
               // Close on mobile/tablet after navigation
               if (isMobile || (isTablet && isSidebarOpen)) {
                 setIsSidebarOpen(false);

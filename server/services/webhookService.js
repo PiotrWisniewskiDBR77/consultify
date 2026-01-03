@@ -540,4 +540,6 @@ class WebhookService {
 }
 
 // Export singleton instance
-module.exports = new WebhookService();
+const service = new WebhookService();
+service.WebhookService = WebhookService;
+module.exports = service;

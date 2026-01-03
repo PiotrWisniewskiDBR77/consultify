@@ -13,7 +13,6 @@
  * - FocusModeSelector (compact in split mode)
  * - ChatSlidingPanel integration for history
  * - Message rendering with streaming, thinking, artifacts
- * - Full keyboard accessibility
  * - Responsive design
  * 
  * @version 1.0.0
@@ -170,71 +169,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
-    const announcerRef = useRef<HTMLDivElement>(null);
-    
-    // WCAG AA: Track last announcement to avoid duplicates
-    const [lastAnnouncement, setLastAnnouncement] = useState<string>('');
     
     // Computed values
     const isSplitMode = mode === 'split' || displayMode === 'split';
     const isCompact = isSplitMode;
     const isDisabled = disabled || aiFreezeStatus.isFrozen;
 
-    // ========================================================================
-    // WCAG AA: Screen Reader Announcements
-    // ========================================================================
-    
-    const announce = useCallback((message: string, priority: 'polite' | 'assertive' = 'polite') => {
-        if (message === lastAnnouncement) return;
-        
-        setLastAnnouncement(message);
-        
-        // Update aria-live region
-        if (announcerRef.current) {
-            announcerRef.current.setAttribute('aria-live', priority);
-            announcerRef.current.textContent = message;
-            
-            // Clear after announcement to allow repeat announcements
-            setTimeout(() => {
-                if (announcerRef.current) {
-                    announcerRef.current.textContent = '';
-                }
-            }, 1000);
-        }
-    }, [lastAnnouncement]);
-
-    // ========================================================================
-    // WCAG AA: Keyboard Navigation
-    // ========================================================================
-    
-    const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-        // Escape: Return focus to input
-        if (event.key === 'Escape') {
-            event.preventDefault();
-            inputRef.current?.focus();
-            announce(t('wcag.focusReturnedToInput', 'Focus returned to input field'), 'polite');
-        }
-        
-        // Ctrl/Cmd + N: New conversation
-        if ((event.ctrlKey || event.metaKey) && event.key === 'n') {
-            event.preventDefault();
-            handleNewChat();
-            announce(t('wcag.newConversationStarted', 'New conversation started'), 'polite');
-        }
-        
-        // Ctrl/Cmd + H: Toggle history
-        if ((event.ctrlKey || event.metaKey) && event.key === 'h') {
-            event.preventDefault();
-            setChatSlidingPanelOpen(!isChatSlidingPanelOpen);
-            announce(
-                isChatSlidingPanelOpen 
-                    ? t('wcag.historyClosed', 'Conversation history panel closed')
-                    : t('wcag.historyOpened', 'Conversation history panel opened'),
-                'polite'
-            );
-        }
-    }, [announce, handleNewChat, t, setChatSlidingPanelOpen, isChatSlidingPanelOpen]);
-    
     // ========================================================================
     // AI Stream hook
     // ========================================================================
@@ -666,44 +606,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     // Render
     // ========================================================================
     
-    // ========================================================================
-    // WCAG AA: Announce new messages to screen readers
-    // ========================================================================
-    
-    useEffect(() => {
-        if (displayMessages.length > 0) {
-            const lastMessage = displayMessages[displayMessages.length - 1];
-            if (lastMessage && !lastMessage.isStreaming) {
-                const role = lastMessage.role === 'ai' ? t('wcag.assistant', 'Assistant') : t('wcag.you', 'You');
-                const preview = lastMessage.content.substring(0, 100);
-                announce(`${role}: ${preview}${lastMessage.content.length > 100 ? '...' : ''}`, 'polite');
-            }
-        }
-    }, [displayMessages.length, announce, t]);
-
-    // Announce streaming completion
-    useEffect(() => {
-        if (!isStreaming && streamedContent) {
-            announce(t('wcag.responseComplete', 'AI response complete. Use Tab to navigate response actions.'), 'polite');
-        }
-    }, [isStreaming, streamedContent, announce, t]);
-    
     return (
         <div 
             className={`flex flex-col h-full bg-white dark:bg-navy-950 ${className}`}
             style={{ maxHeight: maxHeight || '100%' }}
-            role="region"
-            aria-label={t('wcag.chatRegion', 'AI Chat conversation')}
-            onKeyDown={handleKeyDown}
         >
-            {/* WCAG AA: Screen reader announcements (visually hidden) */}
-            <div
-                ref={announcerRef}
-                aria-live="polite"
-                aria-atomic="true"
-                className="sr-only"
-                role="status"
-            />
             
             {/* Skip links for keyboard users */}
             <a 
@@ -795,11 +702,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             <div 
                 ref={messagesContainerRef}
                 className={`flex-1 overflow-y-auto ${isCompact ? 'p-3 space-y-3' : 'p-4 space-y-4'}`}
-                role="log"
-                aria-label={t('wcag.messagesArea', 'Chat messages')}
-                aria-live="polite"
-                aria-relevant="additions"
-                tabIndex={0}
             >
                 {displayMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center py-12">
@@ -838,8 +740,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             <div 
                 id="chat-input"
                 className={`${isCompact ? 'p-2' : 'p-3'} border-t border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950`}
-                role="region"
-                aria-label={t('wcag.inputArea', 'Message input area')}
             >
                 <EnhancedChatInput
                     onSend={handleSendMessage}

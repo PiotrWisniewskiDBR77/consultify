@@ -4,7 +4,7 @@
  * Uses Redis for distributed caching
  */
 
-const redis = require('./redisClient');
+import redis from './redisClient.js';
 
 const DEFAULT_TTL = {
     SHORT: 60,        // 1 minute - frequently changing data
@@ -140,7 +140,18 @@ async function invalidateOrgCache(orgId) {
     return await invalidatePattern(`*:org:${orgId}*`);
 }
 
-module.exports = {
+export {
+    getCached,
+    invalidate,
+    invalidatePattern,
+    invalidateUserCache,
+    invalidateProjectCache,
+    invalidateOrgCache,
+    CacheKeys,
+    DEFAULT_TTL
+};
+
+export default {
     getCached,
     invalidate,
     invalidatePattern,

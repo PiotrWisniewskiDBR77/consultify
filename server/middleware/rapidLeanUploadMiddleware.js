@@ -2,12 +2,21 @@
  * Multer middleware for RapidLean observation photo uploads
  */
 
-let multer = require('multer');
-const path = require('path');
-let fs = require('fs');
+import multerPkg from 'multer';
+import path from 'path';
+import fsPkg from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Default implementations can be overridden for testing
+let multer = multerPkg;
+let fs = fsPkg;
 
 // Dependency Injection for Testing
-const _setDependencies = (deps) => {
+export const _setDependencies = (deps) => {
     if (deps.multer) multer = deps.multer;
     if (deps.fs) fs = deps.fs;
 };
@@ -18,7 +27,7 @@ const _setDependencies = (deps) => {
  * @param {string} assessmentId - Assessment ID (optional, for organizing files)
  * @returns {Object} Multer instance
  */
-function createRapidLeanUpload(organizationId, assessmentId = null) {
+export function createRapidLeanUpload(organizationId, assessmentId = null) {
     const uploadDir = assessmentId
         ? path.join(__dirname, '../../uploads/organizations', organizationId, 'rapidlean', assessmentId)
         : path.join(__dirname, '../../uploads/organizations', organizationId, 'rapidlean', 'temp');
@@ -62,7 +71,7 @@ function createRapidLeanUpload(organizationId, assessmentId = null) {
 /**
  * Middleware factory for RapidLean photo uploads
  */
-function rapidLeanPhotoUpload(req, res, next) {
+export function rapidLeanPhotoUpload(req, res, next) {
     const organizationId = req.user?.organizationId || req.user?.organization_id;
     const assessmentId = req.body?.assessmentId || req.params?.assessmentId || null;
 
@@ -81,9 +90,3 @@ function rapidLeanPhotoUpload(req, res, next) {
         next();
     });
 }
-
-module.exports = {
-    createRapidLeanUpload,
-    rapidLeanPhotoUpload,
-    _setDependencies
-};

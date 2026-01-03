@@ -165,6 +165,7 @@ export const StickyNavigation: React.FC<StickyNavigationProps> = ({
             document.addEventListener('mousedown', handleClickOutside);
             return () => document.removeEventListener('mousedown', handleClickOutside);
         }
+        return undefined;
     }, [showJumpMenu]);
 
     // Get icon for section

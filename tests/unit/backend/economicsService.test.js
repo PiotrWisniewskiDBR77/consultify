@@ -6,29 +6,38 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-import { createMockDb, createMockUuid } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
 
-const require = createRequire(import.meta.url);
+// Hoisted mocks - must be defined before imports
+const mockDb = vi.hoisted(() => {
+    return {
+        get: vi.fn(),
+        all: vi.fn(),
+        run: vi.fn(),
+        exec: vi.fn(),
+        prepare: vi.fn(),
+        serialize: vi.fn((cb) => { if (cb) cb(); }),
+        query: vi.fn(),
+        runAsync: vi.fn(),
+        getAsync: vi.fn(),
+        allAsync: vi.fn(),
+        execAsync: vi.fn(),
+        initPromise: Promise.resolve()
+    };
+});
+let uuidCounter = 0;
+
+vi.mock('../../../server/database', () => ({
+    default: mockDb
+}));
+
+// Import service after mock is set up
+import EconomicsService from '../../../server/services/economicsService.js';
 
 describe('EconomicsService', () => {
-    let mockDb;
-    let EconomicsService;
-    let uuidCounter = 0;
-
     beforeEach(() => {
-        vi.resetModules();
+        vi.clearAllMocks();
         uuidCounter = 0;
-        
-        mockDb = createMockDb();
-
-        vi.doMock('../../../server/database', () => ({
-            default: mockDb
-        }));
-
-        // Import service after mocking
-        EconomicsService = require('../../../server/services/economicsService.js');
         
         // Inject mock dependencies
         EconomicsService.setDependencies({
@@ -39,7 +48,6 @@ describe('EconomicsService', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../server/database');
     });
 
     describe('createValueHypothesis()', () => {

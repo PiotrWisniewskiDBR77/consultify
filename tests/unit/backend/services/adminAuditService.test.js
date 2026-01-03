@@ -2,7 +2,10 @@
  * Unit Tests for Admin Audit Service
  */
 
-const { describe, it, expect, beforeEach, vi } = require('vitest');
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 // Mock database
 const mockDb = {

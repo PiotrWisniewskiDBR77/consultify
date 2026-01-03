@@ -87,7 +87,7 @@ export const AccessCodeSchema = z.object({
  */
 export const UsageByOrgSchema = z.object({
     organizationId: z.string(),
-    usage: z.record(z.unknown()), // Adjust based on actual shape
+    usage: z.record(z.string(), z.unknown()), // Adjust based on actual shape
 });
 
 /**

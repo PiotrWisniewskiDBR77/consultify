@@ -164,7 +164,7 @@ export const EmailConfigurationPanel: React.FC = () => {
     const handleVerifyDNS = async () => {
         setVerifying(true);
         try {
-            const result = await Api.post(`/settings/email-config/verify-dns?organizationId=${selectedOrgId}`);
+            const result = await Api.post(`/settings/email-config/verify-dns?organizationId=${selectedOrgId}`, {});
             setConfig(prev => prev ? {
                 ...prev,
                 spf_verified: result.spf,
@@ -173,8 +173,9 @@ export const EmailConfigurationPanel: React.FC = () => {
                 last_verified_at: new Date().toISOString()
             } : null);
             toast.success('DNS verification completed');
-        } catch (error: any) {
-            toast.error(error.message || 'DNS verification failed');
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'DNS verification failed';
+            toast.error(errorMessage);
         } finally {
             setVerifying(false);
         }

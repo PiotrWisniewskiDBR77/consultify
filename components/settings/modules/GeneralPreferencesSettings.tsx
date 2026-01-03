@@ -144,7 +144,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
 
     const resetOnboarding = async () => {
         try {
-            await Api.post('/api/user/preferences/reset-onboarding');
+            await Api.post('/api/user/preferences/reset-onboarding', {});
             setSettings({ ...settings, onboardingCompleted: false });
             toast.success('Onboarding reset. You will see the tutorial on next login.');
         } catch (error) {

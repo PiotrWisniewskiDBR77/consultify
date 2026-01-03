@@ -452,8 +452,8 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                         )}
                       </button>
                       <button
-                        onClick={() => setShowWebhookSettings(showWebhookSettings ? null : webhook.id)}
-                        className={`p-2 rounded-lg transition-colors ${showWebhookSettings
+                        onClick={() => setShowSettings(showSettings === webhook.id ? null : webhook.id)}
+                        className={`p-2 rounded-lg transition-colors ${showSettings === webhook.id
                           ? 'bg-brand text-white'
                           : 'text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
                           }`}

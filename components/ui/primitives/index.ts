@@ -146,4 +146,10 @@ export {
   type ToastPosition,
 } from './Toast';
 
-
+// OptimizedImage
+export {
+  OptimizedImage,
+  ResponsiveImage,
+  type OptimizedImageProps,
+  type ResponsiveImageProps,
+} from './OptimizedImage';

@@ -39,11 +39,24 @@ import {
 import { Api } from '../../../services/api';
 
 interface SystemPrompt {
+    id: string;
     key: string;
-    description: string;
+    name: string;
+    description?: string;
     content: string;
-    updated_at: string;
-    context_config?: Record<string, boolean>;
+    category?: 'default' | 'persona' | 'focus_mode' | 'custom';
+    isActive?: boolean;
+    version?: number;
+    updated_at?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    context_config?: {
+        include_project_context?: boolean;
+        include_user_context?: boolean;
+        include_org_context?: boolean;
+        max_context_tokens?: number;
+    };
+    variables?: Array<{ name: string; description?: string; defaultValue?: string; required: boolean }>;
 }
 
 // Data retention options

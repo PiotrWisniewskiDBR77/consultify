@@ -7,6 +7,10 @@
  */
 
 // Dependency injection container (for deterministic unit tests)
+// Use createRequire for compatibility with both CommonJS and ES modules in tests
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+
 const deps = {
     db: require('../database'),
     StageGateService: require('./stageGateService')

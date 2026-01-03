@@ -65,7 +65,7 @@ router.post('/', checkPlanLimit('max_projects'), asyncHandler(async (req, res) =
 router.get('/:id', asyncHandler(async (req, res) => {
     const orgId = req.user.organizationId;
     const { id } = req.params;
-    
+
     console.log('[Projects API] GET /:id - orgId:', orgId, 'projectId:', id);
 
     const sql = `
@@ -83,26 +83,24 @@ router.get('/:id', asyncHandler(async (req, res) => {
         return res.status(404).json({ error: 'Project not found' });
     }
 
-    // Fetch team members
-    const membersSql = `
-        SELECT pm.*, u.first_name, u.last_name, u.email, u.avatar_url, u.role as account_role
-        FROM project_members pm
-        JOIN users u ON pm.user_id = u.id
-        WHERE pm.project_id = ?
-    `;
-    const members = await queryHelpers.queryAll(membersSql, [id]);
-
-    // Fetch workstreams
-    const workstreams = await queryHelpers.queryAll(`SELECT * FROM workstreams WHERE project_id = ?`, [id]);
-
-    // Fetch initiatives
-    const initiatives = await queryHelpers.queryAll(`SELECT * FROM initiatives WHERE project_id = ?`, [id]);
-
-    // Fetch assessments
-    const assessments = await queryHelpers.queryAll(`SELECT * FROM multi_framework_assessments WHERE project_id = ?`, [id]);
-
-    // Fetch documents
-    const documents = await queryHelpers.queryAll(`SELECT * FROM knowledge_docs WHERE project_id = ? AND deleted_at IS NULL`, [id]);
+    // Parallelize detailed fetches
+    const [members, workstreams, initiatives, assessments, documents] = await Promise.all([
+        // Fetch team members
+        queryHelpers.queryAll(`
+            SELECT pm.*, u.first_name, u.last_name, u.email, u.avatar_url, u.role as account_role
+            FROM project_members pm
+            JOIN users u ON pm.user_id = u.id
+            WHERE pm.project_id = ?
+        `, [id]),
+        // Fetch workstreams
+        queryHelpers.queryAll(`SELECT * FROM workstreams WHERE project_id = ?`, [id]),
+        // Fetch initiatives
+        queryHelpers.queryAll(`SELECT * FROM initiatives WHERE project_id = ?`, [id]),
+        // Fetch assessments
+        queryHelpers.queryAll(`SELECT * FROM multi_framework_assessments WHERE project_id = ?`, [id]),
+        // Fetch documents
+        queryHelpers.queryAll(`SELECT * FROM knowledge_docs WHERE project_id = ? AND deleted_at IS NULL`, [id])
+    ]);
 
     res.json({
         ...project,

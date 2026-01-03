@@ -3,12 +3,43 @@
  * Provides utilities for managing test database state
  */
 
-const db = require('../../server/database.sqlite.active.js');
+// Use dynamic import for ES module compatibility
+let db;
+let dbInitialized = false;
+let dbInitPromise = null;
+
+/**
+ * Get database instance with caching and connection pooling optimization
+ */
+async function getDb() {
+    if (!dbInitialized) {
+        if (!dbInitPromise) {
+            dbInitPromise = (async () => {
+                const dbModule = await import('../../server/database.sqlite.active.js');
+                db = dbModule.default || dbModule;
+                dbInitialized = true;
+                return db;
+            })();
+        }
+        await dbInitPromise;
+    }
+    return db;
+}
+
+// Initialize db on first use
+(async () => {
+    try {
+        db = await getDb();
+    } catch (e) {
+        // Will be initialized in initTestDb
+    }
+})();
 
 /**
  * Wait for database initialization
  */
 async function initTestDb() {
+    db = await getDb();
     await db.initPromise;
     // Clear mock flag if set
     delete process.env.MOCK_DB;
@@ -23,28 +54,29 @@ async function initTestDb() {
  * @param {string[]} tables - Array of table names to clean
  */
 async function cleanTables(tables) {
+    const database = await getDb();
     return new Promise((resolve, reject) => {
-        db.serialize(() => {
+        database.serialize(() => {
             // Disable foreign keys temporarily for faster cleanup
-            db.run('PRAGMA foreign_keys = OFF', (err) => {
+            database.run('PRAGMA foreign_keys = OFF', (err) => {
                 if (err) return reject(err);
 
                 let completed = 0;
                 const total = tables.length;
 
                 if (total === 0) {
-                    db.run('PRAGMA foreign_keys = ON', () => resolve());
+                    database.run('PRAGMA foreign_keys = ON', () => resolve());
                     return;
                 }
 
                 tables.forEach(table => {
-                    db.run(`DELETE FROM ${table}`, (err) => {
+                    database.run(`DELETE FROM ${table}`, (err) => {
                         if (err && !err.message.includes('no such table')) {
                             console.warn(`Warning: Could not clean table ${table}:`, err.message);
                         }
                         completed++;
                         if (completed === total) {
-                            db.run('PRAGMA foreign_keys = ON', () => resolve());
+                            database.run('PRAGMA foreign_keys = ON', () => resolve());
                         }
                     });
                 });
@@ -81,8 +113,9 @@ async function cleanAllTestTables() {
  * @returns {Promise<void>}
  */
 async function createTestOrg(orgId, name = 'Test Org') {
+    const database = await getDb();
     return new Promise((resolve, reject) => {
-        db.run(
+        database.run(
             'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
             [orgId, name, 'free', 'active'],
             (err) => {
@@ -111,9 +144,10 @@ async function createTestUser(userData) {
 
     const bcrypt = require('bcryptjs');
     const hash = password ? bcrypt.hashSync(password, 8) : null;
+    const database = await getDb();
 
     return new Promise((resolve, reject) => {
-        db.run(
+        database.run(
             'INSERT INTO users (id, organization_id, email, password, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
             [id, organizationId, email, hash, firstName, lastName, role],
             (err) => {
@@ -127,9 +161,10 @@ async function createTestUser(userData) {
 /**
  * Helper to run database operations in sequence
  */
-function dbRun(sql, params = []) {
+async function dbRun(sql, params = []) {
+    const database = await getDb();
     return new Promise((resolve, reject) => {
-        db.run(sql, params, function (err) {
+        database.run(sql, params, function (err) {
             if (err) reject(err);
             else resolve({ lastID: this.lastID, changes: this.changes });
         });
@@ -139,9 +174,10 @@ function dbRun(sql, params = []) {
 /**
  * Helper to query database
  */
-function dbAll(sql, params = []) {
+async function dbAll(sql, params = []) {
+    const database = await getDb();
     return new Promise((resolve, reject) => {
-        db.all(sql, params, (err, rows) => {
+        database.all(sql, params, (err, rows) => {
             if (err) reject(err);
             else resolve(rows || []);
         });
@@ -151,9 +187,10 @@ function dbAll(sql, params = []) {
 /**
  * Helper to get single row
  */
-function dbGet(sql, params = []) {
+async function dbGet(sql, params = []) {
+    const database = await getDb();
     return new Promise((resolve, reject) => {
-        db.get(sql, params, (err, row) => {
+        database.get(sql, params, (err, row) => {
             if (err) reject(err);
             else resolve(row);
         });
@@ -169,5 +206,13 @@ module.exports = {
     dbRun,
     dbAll,
     dbGet,
-    db
+    get db() {
+        if (!dbInitialized) {
+            // Try to get db synchronously - will fail if not initialized
+            // This is for backward compatibility
+            return null;
+        }
+        return db;
+    },
+    getDb // Export async getter
 };

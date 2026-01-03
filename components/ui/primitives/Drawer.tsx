@@ -142,6 +142,7 @@ export const Drawer: React.FC<DrawerProps> = ({
         previousActiveElement.current?.focus();
       };
     }
+    return undefined;
   }, [open, handleKeyDown]);
 
   // Handle drag to close

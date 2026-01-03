@@ -30,9 +30,10 @@ export default {
                 // ========================================
                 
                 // NEUTRAL - Navy-based grays (tła, ramki, tekst)
+                // Updated for softer dark mode appearance (HIG refinement)
                 navy: {
-                    950: '#020617', // Deepest background - Main App BG
-                    900: '#0B1121', // Panel background - Secondary BG
+                    950: '#0A0F1E', // Deepest background - Main App BG (softer than pure black)
+                    900: '#0F172A', // Panel background - Secondary BG (warmer, less harsh)
                     850: '#111827', // Lighter panels
                     800: '#151E32', // Card background
                     700: '#2A3655', // Borders/Separators

@@ -119,7 +119,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
         setConnecting(channel);
         try {
             // In production, this would initiate OAuth or connection flow
-            const response = await Api.post(`/api/integrations/${channel}/connect`);
+            const response = await Api.post(`/api/integrations/${channel}/connect`, {});
             if (response.success) {
                 if (response.authUrl) {
                     window.open(response.authUrl, '_blank', 'width=600,height=700');
@@ -140,7 +140,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
 
     const disconnectChannel = async (channel: string) => {
         try {
-            await Api.post(`/api/integrations/${channel}/disconnect`);
+            await Api.post(`/api/integrations/${channel}/disconnect`, {});
             setChannels({
                 ...channels,
                 [channel]: { ...channels[channel as keyof ChannelsState], connected: false, enabled: false }

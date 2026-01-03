@@ -83,18 +83,18 @@ const ReportChatPanel: React.FC<ReportChatPanelProps> = ({ onSendMessage, onClos
 
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
-    
+
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
       content: input.trim(),
       timestamp: new Date()
     };
-    
+
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
-    
+
     try {
       await onSendMessage(userMessage.content);
       // The parent component will handle the AI response
@@ -156,7 +156,7 @@ const ReportChatPanel: React.FC<ReportChatPanelProps> = ({ onSendMessage, onClos
             <p className="mt-2 text-xs">{t('reports.chatExamples', 'Try: "Expand the executive summary" or "Make it more formal"')}</p>
           </div>
         )}
-        
+
         {messages.map((msg) => (
           <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
             {msg.role === 'ai' && (
@@ -164,11 +164,10 @@ const ReportChatPanel: React.FC<ReportChatPanelProps> = ({ onSendMessage, onClos
                 <Bot className="w-4 h-4 text-white" />
               </div>
             )}
-            <div className={`max-w-[80%] rounded-xl px-4 py-2 ${
-              msg.role === 'user' 
-                ? 'bg-blue-600 text-white' 
+            <div className={`max-w-[80%] rounded-xl px-4 py-2 ${msg.role === 'user'
+                ? 'bg-blue-600 text-white'
                 : 'bg-slate-100 dark:bg-white/5 text-navy-900 dark:text-white'
-            }`}>
+              }`}>
               <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
             </div>
             {msg.role === 'user' && (
@@ -178,7 +177,7 @@ const ReportChatPanel: React.FC<ReportChatPanelProps> = ({ onSendMessage, onClos
             )}
           </div>
         ))}
-        
+
         {isTyping && (
           <div className="flex gap-3">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
@@ -193,7 +192,7 @@ const ReportChatPanel: React.FC<ReportChatPanelProps> = ({ onSendMessage, onClos
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -227,14 +226,14 @@ interface DRDAuditReportViewProps {
 
 export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({ reportId: propReportId }) => {
   const { t } = useTranslation();
-  const { 
-    addChatMessage, 
-    setIsBotTyping, 
-    currentReportId, 
+  const {
+    addChatMessage,
+    setIsBotTyping,
+    currentReportId,
     setCurrentView,
-    setCurrentReport 
+    setCurrentReport
   } = useAppStore();
-  
+
   // Use prop reportId first, then store reportId
   const reportId = propReportId || currentReportId;
 
@@ -252,10 +251,10 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({ reportId
   // Fetch report data
   const fetchReport = useCallback(async () => {
     if (!reportId) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const data = await api.getFullReport(reportId);
       setReport(data);
@@ -274,7 +273,7 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({ reportId
   // Generate full report from template
   const handleGenerateReport = async () => {
     if (!reportId) return;
-    
+
     setGenerating(true);
     try {
       await api.generateReport(reportId, { language: 'pl' });
@@ -296,17 +295,17 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({ reportId
   // Update section content
   const handleSectionUpdate = async (sectionId: string, content: string, title?: string) => {
     if (!reportId) return;
-    
+
     setSaving(true);
     try {
       await api.updateReportSection(reportId, sectionId, { content, title });
-      
+
       // Update local state
       setReport(prev => {
         if (!prev) return prev;
         return {
           ...prev,
-          sections: prev.sections.map(s => 
+          sections: prev.sections.map(s =>
             s.id === sectionId ? { ...s, content, title: title || s.title, isAiGenerated: false } : s
           )
         };
@@ -322,17 +321,17 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({ reportId
   // AI action on section
   const handleAIAction = async (sectionId: string, action: string) => {
     if (!reportId) return;
-    
+
     setSaving(true);
     try {
       const result = await api.aiSectionAction(reportId, sectionId, { action });
-      
+
       // Update local state with AI-generated content
       setReport(prev => {
         if (!prev) return prev;
         return {
           ...prev,
-          sections: prev.sections.map(s => 
+          sections: prev.sections.map(s =>
             s.id === sectionId ? { ...s, content: result.content, isAiGenerated: true } : s
           )
         };
@@ -354,10 +353,10 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({ reportId
   // Reorder sections
   const handleReorderSections = async (newOrder: { id: string; orderIndex: number }[]) => {
     if (!reportId) return;
-    
+
     try {
       await api.reorderReportSections(reportId, newOrder);
-      
+
       // Update local state
       setReport(prev => {
         if (!prev) return prev;
@@ -377,13 +376,13 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({ reportId
   // Add new section
   const handleAddSection = async (sectionType: string, afterIndex: number) => {
     if (!reportId) return;
-    
+
     try {
       const result = await api.addReportSection(reportId, {
         sectionType,
         orderIndex: afterIndex + 1
       });
-      
+
       // Refresh report to get updated sections
       await fetchReport();
       return result;
@@ -395,10 +394,10 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({ reportId
   // Delete section
   const handleDeleteSection = async (sectionId: string) => {
     if (!reportId) return;
-    
+
     try {
       await api.deleteReportSection(reportId, sectionId);
-      
+
       // Update local state
       setReport(prev => {
         if (!prev) return prev;
@@ -415,10 +414,10 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({ reportId
   // Export to PDF
   const handleExportPDF = async () => {
     if (!reportId) return;
-    
+
     try {
-      const blob = await api.exportReportPDF(reportId);
-      const url = window.URL.createObjectURL(blob);
+      const { pdfUrl } = await api.exportReportPDF(reportId);
+      const url = pdfUrl;
       const a = document.createElement('a');
       a.href = url;
       a.download = `${report?.name || 'report'}_DRD_Audit.pdf`;
@@ -434,13 +433,13 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({ reportId
   // Finalize report
   const handleFinalize = async () => {
     if (!reportId || !report || report.status === 'FINAL') return;
-    
+
     const confirmed = window.confirm(
       t('reports.finalizeConfirm', 'Are you sure you want to finalize this report? This action cannot be undone.')
     );
-    
+
     if (!confirmed) return;
-    
+
     try {
       await api.finalizeReport(reportId);
       setReport(prev => prev ? { ...prev, status: 'FINAL' } : prev);
@@ -461,7 +460,7 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({ reportId
 
     try {
       const result = await api.aiEditReport(reportId!, { message: text, focusSectionId });
-      
+
       addChatMessage({
         id: Date.now().toString(),
         role: 'ai',
@@ -616,11 +615,10 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({ reportId
 
           <button
             onClick={() => setChatOpen(!chatOpen)}
-            className={`p-2 rounded-lg transition-colors ${
-              chatOpen 
-                ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600' 
+            className={`p-2 rounded-lg transition-colors ${chatOpen
+                ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600'
                 : 'hover:bg-slate-100 dark:hover:bg-white/5'
-            }`}
+              }`}
             title={t('reports.toggleChat', 'Toggle AI Chat')}
           >
             <MessageSquare className="w-5 h-5" />

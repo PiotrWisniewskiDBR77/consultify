@@ -319,7 +319,11 @@ export const StrategicSynthesisModule: React.FC = () => {
                 {activeTab === 'summary' && (
                     <div className="space-y-6">
                         <SynthesisSummary
-                            companyProfile={companyProfile}
+                            companyProfile={{
+                                ...companyProfile,
+                                employeeCount: companyProfile.employees,
+                                activeConstraints: companyProfile.activeConstraints.map(c => ({ id: c, text: companyProfile.constraintDetails[c] || c }))
+                            }}
                             challenges={challenges}
                             goals={goals}
                             risks={risks}

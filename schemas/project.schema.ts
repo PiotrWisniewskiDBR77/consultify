@@ -77,3 +77,33 @@ export const ProjectFilterSchema = z.object({
 });
 
 export type ProjectFilterInput = z.infer<typeof ProjectFilterSchema>;
+
+// ==========================================
+// PROJECT RESPONSE SCHEMA (for API responses)
+// ==========================================
+
+export const ProjectSchema = z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    description: z.string().optional().nullable(),
+    status: z.enum(['draft', 'active', 'on_hold', 'completed', 'cancelled', 'archived']),
+    phase: z.enum(['initiation', 'planning', 'execution', 'monitoring', 'closure']).optional(),
+    organizationId: z.string().uuid(),
+    ownerId: z.string().uuid(),
+    ownerName: z.string().optional(),
+    startDate: z.string().datetime().optional().nullable(),
+    endDate: z.string().datetime().optional().nullable(),
+    actualStartDate: z.string().datetime().optional().nullable(),
+    actualEndDate: z.string().datetime().optional().nullable(),
+    budget: z.number().optional().nullable(),
+    actualCost: z.number().optional().nullable(),
+    currency: z.string().length(3).optional().default('USD'),
+    methodology: z.enum(['agile', 'waterfall', 'hybrid', 'kanban', 'scrum', 'prince2', 'pmbok', 'custom']).optional(),
+    progress: z.number().min(0).max(100).optional(),
+    tags: z.array(z.string()).optional(),
+    visibility: z.enum(['private', 'team', 'organization']).optional().default('team'),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+});
+
+export type Project = z.infer<typeof ProjectSchema>;

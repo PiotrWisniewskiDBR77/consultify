@@ -9,46 +9,103 @@ import { vi } from 'vitest';
 
 /**
  * Create a mock database instance
- * @returns {Object} Mock DB with all SQLite3 methods
+ * Supports both callback-style (SQLite3) and Promise-style (Postgres-compatible) APIs
+ * @returns {Object} Mock DB with all SQLite3 and Postgres methods
  */
 export const createMockDb = () => {
     const mockDb = {
+        // Callback-style (SQLite3)
         get: vi.fn(),
         all: vi.fn(),
         run: vi.fn(),
         exec: vi.fn(),
-        prepare: vi.fn().mockReturnValue({
-            run: vi.fn(),
-            get: vi.fn(),
-            all: vi.fn(),
-            finalize: vi.fn()
-        }),
+        prepare: vi.fn(),
         serialize: vi.fn((cb) => {
             if (cb) cb();
         }),
+        
+        // Promise-style (Postgres-compatible)
+        query: vi.fn(),
+        
+        // Async wrappers
+        runAsync: vi.fn(),
+        getAsync: vi.fn(),
+        allAsync: vi.fn(),
+        execAsync: vi.fn(),
+        
+        // Common properties
         initPromise: Promise.resolve()
     };
 
-    // Default implementations (can be overridden in tests)
-    mockDb.get.mockImplementation((...args) => {
-        const cb = args[args.length - 1];
+    // Default implementations - callback-style (SQLite3)
+    mockDb.get.mockImplementation(function(sql, params, callback) {
+        // Handle both (sql, callback) and (sql, params, callback) signatures
+        const cb = typeof params === 'function' ? params : callback;
         if (typeof cb === 'function') {
-            cb(null, null);
+            process.nextTick(() => cb(null, null));
         }
+        return mockDb;
     });
 
-    mockDb.all.mockImplementation((...args) => {
-        const cb = args[args.length - 1];
+    mockDb.all.mockImplementation(function(sql, params, callback) {
+        const cb = typeof params === 'function' ? params : callback;
         if (typeof cb === 'function') {
-            cb(null, []);
+            process.nextTick(() => cb(null, []));
         }
+        return mockDb;
     });
 
-    mockDb.run.mockImplementation((...args) => {
-        const cb = args[args.length - 1];
+    mockDb.run.mockImplementation(function(sql, params, callback) {
+        const cb = typeof params === 'function' ? params : callback;
         if (typeof cb === 'function') {
-            cb.call({ changes: 1, lastID: 1 }, null);
+            process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
         }
+        return mockDb;
+    });
+
+    mockDb.exec.mockImplementation(function(sql, callback) {
+        if (typeof callback === 'function') {
+            process.nextTick(() => callback(null));
+        }
+        return mockDb;
+    });
+
+    // Default implementations - Promise-style (Postgres-compatible)
+    mockDb.query.mockResolvedValue({ rows: [], rowCount: 0 });
+    mockDb.runAsync.mockResolvedValue({ lastID: 1, changes: 1 });
+    mockDb.getAsync.mockResolvedValue(null);
+    mockDb.allAsync.mockResolvedValue([]);
+    mockDb.execAsync.mockResolvedValue(undefined);
+
+    // Prepare mock - returns statement object
+    mockDb.prepare.mockReturnValue({
+        run: vi.fn().mockImplementation(function(params, callback) {
+            const cb = typeof params === 'function' ? params : callback;
+            if (typeof cb === 'function') {
+                process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
+            }
+            return this;
+        }),
+        get: vi.fn().mockImplementation(function(params, callback) {
+            const cb = typeof params === 'function' ? params : callback;
+            if (typeof cb === 'function') {
+                process.nextTick(() => cb(null, null));
+            }
+            return this;
+        }),
+        all: vi.fn().mockImplementation(function(params, callback) {
+            const cb = typeof params === 'function' ? params : callback;
+            if (typeof cb === 'function') {
+                process.nextTick(() => cb(null, []));
+            }
+            return this;
+        }),
+        finalize: vi.fn().mockImplementation(function(callback) {
+            if (typeof callback === 'function') {
+                process.nextTick(() => callback(null));
+            }
+            return this;
+        })
     });
 
     return mockDb;

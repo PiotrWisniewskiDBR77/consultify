@@ -1,9 +1,13 @@
 import '@testing-library/jest-dom';
-import { beforeAll, vi, beforeEach } from 'vitest';
+import { beforeAll, vi, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'module';
 import { mockLLMApi } from './__mocks__/llmApi.js';
+import { setupAutoCleanup, resetAllMocks } from './helpers/testCleanup.js';
 
 const require = createRequire(import.meta.url);
+
+// Setup automatic cleanup for all tests
+setupAutoCleanup();
 
 // Global mock for react-i18next to prevent "Cannot read properties of undefined (reading 'en')" errors
 vi.mock('react-i18next', () => {
@@ -179,6 +183,8 @@ vi.mock('jsonwebtoken', () => ({
 // Reset LLM API mocks before each test
 beforeEach(() => {
     mockLLMApi.reset();
+    // Ensure all mocks are reset
+    resetAllMocks();
 });
 
 // REMOVED: Schema Initialization. Integration tests must use TestDatabaseFactory.create()

@@ -81,5 +81,32 @@ chmod +x start.sh
 npm run test:all
 ```
 
+## 🔧 Backend TypeScript Migration
+
+The backend is being migrated from JavaScript (CommonJS) to TypeScript (ES Modules). 
+
+### Migration Status
+- ✅ **Routes:** Fully migrated to TypeScript
+- ✅ **Middleware:** Fully migrated to TypeScript
+- ✅ **Database Layer:** Fully migrated to TypeScript
+- ✅ **Config Layer:** Fully migrated to TypeScript
+- ⚠️ **Services:** Mostly migrated (wrappers in place, full migration in progress)
+- ⚠️ **Cron Jobs:** Migration in progress
+
+### Building Backend
+```bash
+cd server
+npm run build          # Full build
+npm run build:fast     # Incremental build (faster)
+npm run build:watch    # Watch mode
+npm run typecheck      # Type check only
+```
+
+### Migration Documentation
+- [Migration Plan](docs/typescript-migration-plan.md) - Detailed migration strategy
+- [Migration Guide](docs/typescript-migration-guide.md) - How to migrate services
+- [Build Optimization](docs/build-optimization-guide.md) - Build performance tips
+- [Verification Report](docs/migration-verification-report.md) - Current migration status
+
 ---
 *For legacy documentation, see [consultinity/legacy_archive](consultinity/legacy_archive/).*

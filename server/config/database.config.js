@@ -5,6 +5,14 @@
  * Switch by setting DATABASE_URL environment variable
  */
 
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const path = require('path');
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -57,7 +65,7 @@ const sqlitePath = process.env.SQLITE_PATH || path.resolve(__dirname, 'consultif
 function parsePostgresUrl(url) {
     try {
         const parsed = new URL(url);
-        
+
         // Determine SSL configuration
         // Railway PostgreSQL doesn't require SSL for internal connections
         // Allow override via DB_SSL environment variable
@@ -71,7 +79,7 @@ function parsePostgresUrl(url) {
             // Only enable SSL if explicitly requested or for external databases
             sslConfig = false;
         }
-        
+
         return {
             host: parsed.hostname,
             port: parseInt(parsed.port || '5432'),
@@ -121,7 +129,7 @@ const config = {
             // Default: No SSL for Railway/internal connections
             sslConfig = false;
         }
-        
+
         return {
             host: process.env.DB_HOST || 'localhost',
             port: parseInt(process.env.DB_PORT || '5432'),
@@ -148,4 +156,4 @@ const config = {
     logQueries: !isProduction && process.env.DB_LOG_QUERIES === 'true'
 };
 
-module.exports = config;
+export default config;

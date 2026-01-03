@@ -109,11 +109,12 @@ export const InvoicesPanel: React.FC = () => {
 
     const handleSendInvoice = async (invoiceId: string) => {
         try {
-            await Api.post(`/billing/invoices/${invoiceId}/send`);
+            await Api.post(`/billing/invoices/${invoiceId}/send`, {});
             toast.success('Invoice sent');
-            fetchInvoices();
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to send invoice');
+            void fetchInvoices();
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to send invoice';
+            toast.error(errorMessage);
         }
     };
 

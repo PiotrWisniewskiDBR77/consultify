@@ -21,7 +21,8 @@
     "test:load": "node tests/performance/load-test.js",
     "test:performance": "vitest run --config vitest.perf.config.ts",
     "test:all": "npm run test:unit && npm run test:component && npm run test:integration",
-    "test:coverage": "npm run test:all -- --coverage"
+    "test:coverage": "npm run test:all -- --coverage",
+    "test:coverage:check": "npm run test:coverage && node --loader ts-node/esm scripts/check-coverage.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.1",
@@ -103,6 +104,7 @@
     "react-i18next": "^16.4.1",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.11.0",
+    "react-virtuoso": "^4.18.1",
     "reactflow": "^11.11.4",
     "recharts": "^3.5.1",
     "redis": "^5.10.0",

@@ -100,8 +100,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const triggerRef = useRef<HTMLElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const showTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const showTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const isControlled = controlledOpen !== undefined;
   const showTooltip = isControlled ? controlledOpen : isOpen;
@@ -185,6 +185,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         window.removeEventListener('resize', updatePosition);
       };
     }
+    return undefined;
   }, [showTooltip]);
 
   if (!content) return children;

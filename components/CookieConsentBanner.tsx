@@ -37,6 +37,7 @@ export const CookieConsentBanner: React.FC = () => {
                 setIsOpen(true);
             }
         }
+        return undefined;
     }, []);
 
     const saveConsent = (prefs: CookiePreferences) => {

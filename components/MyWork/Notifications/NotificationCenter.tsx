@@ -48,14 +48,14 @@ interface NotificationCenterProps {
  * Get icon for notification type
  */
 const getNotificationIcon = (type: string, severity: string) => {
-    const iconClass = severity === 'CRITICAL' 
-        ? 'text-red-500' 
-        : severity === 'WARNING' 
-            ? 'text-amber-500' 
+    const iconClass = severity === 'CRITICAL'
+        ? 'text-red-500'
+        : severity === 'WARNING'
+            ? 'text-amber-500'
             : 'text-blue-500';
-    
+
     const iconSize = 16;
-    
+
     switch (type) {
         case 'TASK_ASSIGNED':
         case 'TASK_OVERDUE':
@@ -79,18 +79,18 @@ const getNotificationIcon = (type: string, severity: string) => {
  */
 const formatRelativeTime = (dateString: string | null | undefined): string => {
     if (!dateString) return 'Recently';
-    
+
     const date = new Date(dateString);
-    
+
     // Check if date is valid
     if (isNaN(date.getTime())) return 'Recently';
-    
+
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
-    
+
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
@@ -124,164 +124,164 @@ const NotificationItem: React.FC<{
     onNavigate: () => void;
     canNavigate: boolean;
     navigationLabel: string;
-}> = ({ 
-    notification, 
-    isExpanded, 
-    onToggleExpand, 
-    onMarkRead, 
+}> = ({
+    notification,
+    isExpanded,
+    onToggleExpand,
+    onMarkRead,
     onDelete,
     onNavigate,
     canNavigate,
     navigationLabel
 }) => {
-    const [showHoverActions, setShowHoverActions] = useState(false);
-    
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, height: 0 }}
-            className={`
+        const [showHoverActions, setShowHoverActions] = useState(false);
+
+        return (
+            <motion.div
+                layout
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, height: 0 }}
+                className={`
                 relative border-b border-slate-100 dark:border-white/5 
                 transition-colors
                 ${!notification.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}
                 ${isExpanded ? 'bg-slate-50/50 dark:bg-white/[0.02]' : ''}
             `}
-        >
-            {/* Compact View (always visible) */}
-            <div 
-                className="p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
-                onClick={onToggleExpand}
-                onMouseEnter={() => setShowHoverActions(true)}
-                onMouseLeave={() => setShowHoverActions(false)}
             >
-                <div className="flex gap-3">
-                    {/* Unread indicator */}
-                    {!notification.isRead && (
-                        <div className="absolute left-1.5 top-6 w-1.5 h-1.5 rounded-full bg-blue-500" />
-                    )}
-                    
-                    {/* Icon */}
-                    <div className={`
-                        shrink-0 w-8 h-8 rounded-full flex items-center justify-center
-                        ${notification.severity === 'CRITICAL' 
-                            ? 'bg-red-100 dark:bg-red-900/30' 
-                            : notification.severity === 'WARNING'
-                                ? 'bg-amber-100 dark:bg-amber-900/30'
-                                : 'bg-blue-100 dark:bg-blue-900/30'
-                        }
-                    `}>
-                        {getNotificationIcon(notification.type, notification.severity)}
-                    </div>
-                    
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                        {/* Project Badge + Title Row */}
-                        <div className="flex items-start justify-between gap-2 mb-0.5">
-                            <div className="flex items-center gap-2 min-w-0">
-                                {/* Project Badge */}
-                                {notification.projectName && (
-                                    <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[9px] font-medium text-slate-600 dark:text-slate-300">
-                                        <Folder size={8} />
-                                        {notification.projectName.length > 12 
-                                            ? notification.projectName.slice(0, 12) + '...' 
-                                            : notification.projectName
-                                        }
-                                    </span>
-                                )}
-                                <h4 className={`text-sm font-medium truncate ${
-                                    notification.isRead 
-                                        ? 'text-slate-600 dark:text-slate-400' 
-                                        : 'text-navy-900 dark:text-white'
-                                }`}>
-                                    {notification.title}
-                                </h4>
-                            </div>
-                            <div className="flex items-center gap-1.5 shrink-0">
-                                <span className="text-[10px] text-slate-400 whitespace-nowrap">
-                                    {formatRelativeTime(notification.createdAt)}
-                                </span>
-                                {/* Expand/Collapse indicator */}
-                                {isExpanded ? (
-                                    <ChevronUp size={12} className="text-slate-400" />
-                                ) : (
-                                    <ChevronDown size={12} className="text-slate-400" />
-                                )}
-                            </div>
-                        </div>
-                        
-                        {/* Message preview */}
-                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                            {notification.message}
-                        </p>
-                    </div>
-                    
-                    {/* Quick Hover Actions (only when not expanded) */}
-                    <AnimatePresence>
-                        {showHoverActions && !isExpanded && (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.9 }}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-white dark:bg-navy-800 shadow-lg rounded-lg p-1"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                {!notification.isRead && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onMarkRead(notification.id);
-                                        }}
-                                        className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 hover:text-green-500"
-                                        title="Mark as read"
-                                    >
-                                        <Check size={14} />
-                                    </button>
-                                )}
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onDelete(notification.id);
-                                    }}
-                                    className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 hover:text-red-500"
-                                    title="Delete"
-                                >
-                                    <Trash2 size={14} />
-                                </button>
-                                {canNavigate && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onNavigate();
-                                        }}
-                                        className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 hover:text-blue-500"
-                                        title={navigationLabel}
-                                    >
-                                        <ExternalLink size={14} />
-                                    </button>
-                                )}
-                            </motion.div>
+                {/* Compact View (always visible) */}
+                <div
+                    className="p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                    onClick={onToggleExpand}
+                    onMouseEnter={() => setShowHoverActions(true)}
+                    onMouseLeave={() => setShowHoverActions(false)}
+                >
+                    <div className="flex gap-3">
+                        {/* Unread indicator */}
+                        {!notification.isRead && (
+                            <div className="absolute left-1.5 top-6 w-1.5 h-1.5 rounded-full bg-blue-500" />
                         )}
-                    </AnimatePresence>
+
+                        {/* Icon */}
+                        <div className={`
+                        shrink-0 w-8 h-8 rounded-full flex items-center justify-center
+                        ${notification.severity === 'CRITICAL'
+                                ? 'bg-red-100 dark:bg-red-900/30'
+                                : notification.severity === 'WARNING'
+                                    ? 'bg-amber-100 dark:bg-amber-900/30'
+                                    : 'bg-blue-100 dark:bg-blue-900/30'
+                            }
+                    `}>
+                            {getNotificationIcon(notification.type, notification.severity)}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                            {/* Project Badge + Title Row */}
+                            <div className="flex items-start justify-between gap-2 mb-0.5">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    {/* Project Badge */}
+                                    {notification.projectName && (
+                                        <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[9px] font-medium text-slate-600 dark:text-slate-300">
+                                            <Folder size={8} />
+                                            {notification.projectName.length > 12
+                                                ? notification.projectName.slice(0, 12) + '...'
+                                                : notification.projectName
+                                            }
+                                        </span>
+                                    )}
+                                    <h4 className={`text-sm font-medium truncate ${notification.isRead
+                                            ? 'text-slate-600 dark:text-slate-400'
+                                            : 'text-navy-900 dark:text-white'
+                                        }`}>
+                                        {notification.title}
+                                    </h4>
+                                </div>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                                        {formatRelativeTime(notification.createdAt)}
+                                    </span>
+                                    {/* Expand/Collapse indicator */}
+                                    {isExpanded ? (
+                                        <ChevronUp size={12} className="text-slate-400" />
+                                    ) : (
+                                        <ChevronDown size={12} className="text-slate-400" />
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Message preview */}
+                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                                {notification.message}
+                            </p>
+                        </div>
+
+                        {/* Quick Hover Actions (only when not expanded) */}
+                        <AnimatePresence>
+                            {showHoverActions && !isExpanded && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-white dark:bg-navy-800 shadow-lg rounded-lg p-1"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    {!notification.isRead && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onMarkRead(notification.id);
+                                            }}
+                                            className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 hover:text-green-500"
+                                            title="Mark as read"
+                                        >
+                                            <Check size={14} />
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onDelete(notification.id);
+                                        }}
+                                        className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 hover:text-red-500"
+                                        title="Delete"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                    {canNavigate && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onNavigate();
+                                            }}
+                                            className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 hover:text-blue-500"
+                                            title={navigationLabel}
+                                        >
+                                            <ExternalLink size={14} />
+                                        </button>
+                                    )}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
-            </div>
-            
-            {/* Expanded Detail Panel */}
-            <AnimatePresence>
-                {isExpanded && (
-                    <NotificationDetailPanel
-                        notification={notification}
-                        onNavigate={onNavigate}
-                        onMarkRead={() => onMarkRead(notification.id)}
-                        onDelete={() => onDelete(notification.id)}
-                        canNavigate={canNavigate}
-                        navigationLabel={navigationLabel}
-                    />
-                )}
-            </AnimatePresence>
-        </motion.div>
-    );
-};
+
+                {/* Expanded Detail Panel */}
+                <AnimatePresence>
+                    {isExpanded && (
+                        <NotificationDetailPanel
+                            notification={notification}
+                            onNavigate={onNavigate}
+                            onMarkRead={() => onMarkRead(notification.id)}
+                            onDelete={() => onDelete(notification.id)}
+                            canNavigate={canNavigate}
+                            navigationLabel={navigationLabel}
+                        />
+                    )}
+                </AnimatePresence>
+            </motion.div>
+        );
+    };
 
 /**
  * NotificationCenter Component
@@ -298,18 +298,18 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
     const [showFilter, setShowFilter] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
-    
+
     // Navigation hook
     const { navigateToObject, canNavigate, getNavigationLabel } = useNotificationNavigation(
         onOpenTaskModal,
         onOpenDecisionPanel
     );
-    
+
     // Load notifications
     useEffect(() => {
         loadNotifications();
     }, []);
-    
+
     const loadNotifications = async () => {
         try {
             setLoading(true);
@@ -321,30 +321,30 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
             setLoading(false);
         }
     };
-    
+
     // Mark as read
     const handleMarkRead = useCallback(async (id: string) => {
         try {
-            await Api.patch(`/notifications/${id}/read`);
-            setNotifications(prev => 
+            await Api.patch(`/notifications/${id}/read`, {});
+            setNotifications(prev =>
                 prev.map(n => n.id === id ? { ...n, isRead: true } : n)
             );
         } catch (error) {
             console.error('Failed to mark as read:', error);
         }
     }, []);
-    
+
     // Mark all as read
     const handleMarkAllRead = async () => {
         try {
-            await Api.post('/notifications/mark-all-read');
+            await Api.post('/notifications/mark-all-read', {});
             setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
             toast.success(t('myWork.notifications.markedAllRead', 'All marked as read'));
         } catch (error) {
             console.error('Failed to mark all as read:', error);
         }
     };
-    
+
     // Delete notification
     const handleDelete = useCallback(async (id: string) => {
         try {
@@ -357,44 +357,44 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
             console.error('Failed to delete notification:', error);
         }
     }, [expandedId]);
-    
+
     // Toggle expand
     const handleToggleExpand = useCallback((id: string) => {
         setExpandedId(prev => prev === id ? null : id);
     }, []);
-    
+
     // Navigate to related object
     const handleNavigate = useCallback((notification: Notification) => {
         // Mark as read when navigating
         if (!notification.isRead) {
             handleMarkRead(notification.id);
         }
-        
+
         navigateToObject({
             relatedObjectType: notification.relatedObjectType as any,
             relatedObjectId: notification.relatedObjectId,
             projectId: notification.projectId,
             actionUrl: notification.actionUrl
         });
-        
+
         // Also trigger the legacy callback if provided
         onNotificationClick?.(notification);
     }, [navigateToObject, handleMarkRead, onNotificationClick]);
-    
+
     // Group notifications by time
     const groupedNotifications = useMemo(() => {
-        const filtered = filter === 'unread' 
+        const filtered = filter === 'unread'
             ? notifications.filter(n => !n.isRead)
             : notifications;
-        
+
         const today: Notification[] = [];
         const earlier: Notification[] = [];
         const thisWeek: Notification[] = [];
-        
+
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const weekStart = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000);
-        
+
         filtered.forEach(n => {
             const date = new Date(n.createdAt);
             if (isNaN(date.getTime()) || date >= todayStart) {
@@ -405,16 +405,16 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                 earlier.push(n);
             }
         });
-        
+
         return { today, thisWeek, earlier };
     }, [notifications, filter]);
-    
+
     const unreadCount = notifications.filter(n => !n.isRead).length;
-    
+
     // Render notification group
     const renderNotificationGroup = (items: Notification[], title: string) => {
         if (items.length === 0) return null;
-        
+
         return (
             <div>
                 <div className="px-4 py-2 bg-slate-50 dark:bg-white/5 text-[10px] uppercase tracking-wider text-slate-500 font-medium sticky top-0 z-10">
@@ -440,7 +440,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
             </div>
         );
     };
-    
+
     return (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden h-full flex flex-col">
             {/* Header */}
@@ -456,7 +456,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                         </span>
                     )}
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                     {/* Filter */}
                     <div className="relative">
@@ -468,7 +468,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                             {filter === 'all' ? 'All' : 'Unread'}
                             <ChevronDown size={10} />
                         </button>
-                        
+
                         {showFilter && (
                             <>
                                 <div className="fixed inset-0 z-10" onClick={() => setShowFilter(false)} />
@@ -489,7 +489,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                             </>
                         )}
                     </div>
-                    
+
                     {/* Mark all read */}
                     {unreadCount > 0 && (
                         <button
@@ -502,7 +502,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                     )}
                 </div>
             </div>
-            
+
             {/* Notifications List */}
             <div className="flex-1 overflow-y-auto mywork-scrollbar" style={{ maxHeight }}>
                 {loading ? (

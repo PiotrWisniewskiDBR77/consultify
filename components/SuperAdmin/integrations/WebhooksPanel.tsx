@@ -161,10 +161,11 @@ export const WebhooksPanel: React.FC = () => {
     const handleTestWebhook = async (webhookId: string) => {
         setTestingIds(prev => new Set(prev).add(webhookId));
         try {
-            await Api.post(`/settings/webhooks/${webhookId}/test`);
+            await Api.post(`/settings/webhooks/${webhookId}/test`, {});
             toast.success('Test webhook sent');
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to send test webhook');
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to send test webhook';
+            toast.error(errorMessage);
         } finally {
             setTestingIds(prev => {
                 const next = new Set(prev);

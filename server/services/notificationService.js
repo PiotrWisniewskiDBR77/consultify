@@ -2,9 +2,9 @@
 // Step 5: Execution Control, My Work & Notifications
 // Extended: User-Level Notifications & Integrations System
 
-const db = require('../database');
+let db = require('../database');
 const { v4: uuidv4 } = require('uuid');
-const SlackService = require('./slackService');
+let SlackService = require('./slackService');
 
 // User-level services (lazy-loaded to avoid circular deps)
 let UserIntegrationService = null;
@@ -67,6 +67,14 @@ const SEVERITY = {
 };
 
 const NotificationService = {
+    setTestDependencies: (mocks) => {
+        if (mocks.UserIntegrationService !== undefined) UserIntegrationService = mocks.UserIntegrationService;
+        if (mocks.UserNotificationPreferencesService !== undefined) UserNotificationPreferencesService = mocks.UserNotificationPreferencesService;
+        if (mocks.SlackUserIntegration !== undefined) SlackUserIntegration = mocks.SlackUserIntegration;
+        if (mocks.TeamsUserIntegration !== undefined) TeamsUserIntegration = mocks.TeamsUserIntegration;
+        if (mocks.SlackService !== undefined) SlackService = mocks.SlackService;
+        if (mocks.db) db = mocks.db;
+    },
     NOTIFICATION_TYPES,
     SEVERITY,
 
@@ -91,16 +99,20 @@ const NotificationService = {
         const id = uuidv4();
 
         return new Promise((resolve, reject) => {
-            // ADAPTATION: Removed columns missing from DB schema (project_id, related_object_*, is_actionable, action_url, expires_at)
+            // Insert full notification record
             const sql = `INSERT INTO notifications 
-                (id, user_id, organization_id, type, severity, title, message)
-                VALUES (?, ?, ?, ?, ?, ?, ?)`;
+                (id, user_id, organization_id, project_id, type, severity, title, message, related_object_type, related_object_id, is_actionable, action_url, expires_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
             db.run(sql, [
-                id, userId, organizationId, type, severity || 'INFO',
-                title, message
+                id, userId, organizationId, projectId, type, severity || 'INFO',
+                title, message, relatedObjectType, relatedObjectId,
+                isActionable ? 1 : 0, actionUrl, expiresAt
             ], function (err) {
-                if (err) return reject(err);
+                if (err) {
+                    console.error('[NotificationService] Create failed:', err.message);
+                    return reject(err);
+                }
 
                 // --- SLACK INTEGRATION TRIGGERS ---
                 if (type === 'SYSTEM_ALERT') {
@@ -388,10 +400,10 @@ const NotificationService = {
                     results.channels.push({ channel, ...channelResult });
                 } catch (channelError) {
                     console.error(`[NotificationService] Channel ${channel} delivery failed:`, channelError);
-                    results.channels.push({ 
-                        channel, 
-                        success: false, 
-                        error: channelError.message 
+                    results.channels.push({
+                        channel,
+                        success: false,
+                        error: channelError.message
                     });
                 }
             }
@@ -518,7 +530,7 @@ const NotificationService = {
     /**
      * Send due date reminder
      */
-    sendDueReminder: async (userId, taskId, taskTitle, reminderType, dueDate) => {
+    sendDueReminder: async (userId, organizationId, taskId, taskTitle, reminderType, dueDate) => {
         loadUserServices();
 
         if (!UserNotificationPreferencesService) {
@@ -537,7 +549,7 @@ const NotificationService = {
 
             // Get user's reminder preferences
             const reminderSettings = await UserNotificationPreferencesService.getDueReminderSettings(userId);
-            
+
             if (!reminderSettings[reminderType]) {
                 return { sent: false, reason: 'reminder_disabled' };
             }
@@ -556,6 +568,7 @@ const NotificationService = {
                 severity: reminderType === '1_hour' || reminderType === 'at_due' ? 'WARNING' : 'INFO',
                 title: `Task Due ${reminderLabels[reminderType]}`,
                 message: `"${taskTitle}" is due ${reminderLabels[reminderType]}${dueDate ? ` (${new Date(dueDate).toLocaleString()})` : ''}`,
+                organizationId: organizationId, // Added
                 relatedObjectType: 'TASK',
                 relatedObjectId: taskId,
                 isActionable: true,

@@ -3,35 +3,87 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import multiFrameworkAssessmentService from '../../../server/services/multiFrameworkAssessmentService';
-import db from '../../../server/database';
-// Import other dependencies if needed, or mock them
 
-// Mock database removed - using Real DB (SQLite with Polyfill)
-// The db module exports the instance directly, and our Polyfill in database.sqlite.active.js makes it compatible.
+// Mock database BEFORE importing service
+vi.mock('../../../server/database', () => {
+    const mockQuery = vi.fn();
+    const mockRun = vi.fn();
+    return {
+        default: {
+            query: mockQuery,
+            run: mockRun,
+            get: vi.fn(),
+            all: vi.fn(),
+            exec: vi.fn()
+        },
+        query: mockQuery,
+        run: mockRun,
+        get: vi.fn(),
+        all: vi.fn(),
+        exec: vi.fn()
+    };
+});
 
-// Mock audit service
+// Mock audit service - all functions must return Promises
 vi.mock('../../../server/services/multiFrameworkAuditService', () => ({
-    logCreate: vi.fn(),
-    logUpdate: vi.fn(),
-    logDelete: vi.fn(),
-    logAction: vi.fn(),
+    logCreate: vi.fn().mockResolvedValue(1),
+    logUpdate: vi.fn().mockResolvedValue(2),
+    logDelete: vi.fn().mockResolvedValue(3),
+    logAction: vi.fn().mockResolvedValue(4),
+    logWorkflowChange: vi.fn().mockResolvedValue(5),
+    logReportGeneration: vi.fn().mockResolvedValue(6),
+    logInitiativeGeneration: vi.fn().mockResolvedValue(7),
     ENTITY_TYPES: { ASSESSMENT: 'ASSESSMENT' },
     ACTION_TYPES: { CREATE: 'CREATE', UPDATE: 'UPDATE' },
+    ACTIONS: { CREATE: 'CREATE', UPDATE: 'UPDATE', DELETE: 'DELETE' },
     default: {
-        logCreate: vi.fn(),
-        logUpdate: vi.fn(),
-        logDelete: vi.fn(),
-        logAction: vi.fn()
+        logCreate: vi.fn().mockResolvedValue(1),
+        logUpdate: vi.fn().mockResolvedValue(2),
+        logDelete: vi.fn().mockResolvedValue(3),
+        logAction: vi.fn().mockResolvedValue(4),
+        logWorkflowChange: vi.fn().mockResolvedValue(5),
+        logReportGeneration: vi.fn().mockResolvedValue(6),
+        logInitiativeGeneration: vi.fn().mockResolvedValue(7)
     }
 }));
+
+import multiFrameworkAssessmentService from '../../../server/services/multiFrameworkAssessmentService';
+import db from '../../../server/database';
 import { calculateFrameworkScore } from '../../../server/services/frameworkScoreCalculators';
 
 describe('MultiFrameworkAssessmentService', () => {
     beforeEach(async () => {
         vi.clearAllMocks();
-        // Clean up DB tables if needed
-        await db.run('DELETE FROM multi_framework_assessments');
+        
+        // Setup default mock responses for database
+        // The service uses db.query() with INSERT...RETURNING pattern
+        db.query.mockImplementation((sql, params) => {
+            // For INSERT...RETURNING, return the created row
+            if (sql.includes('INSERT INTO multi_framework_assessments')) {
+                const createdRow = {
+                    id: params[0] || 'test-id',
+                    project_id: params[1],
+                    organization_id: params[2],
+                    framework: params[3],
+                    name: params[4] || `${params[3]} Assessment`,
+                    data: typeof params[5] === 'string' ? params[5] : JSON.stringify(params[5] || {}),
+                    overall_score: params[6],
+                    category_scores: typeof params[7] === 'string' ? params[7] : JSON.stringify(params[7] || {}),
+                    import_source: params[8],
+                    created_by: params[9],
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                return Promise.resolve({
+                    rows: [createdRow],
+                    rowCount: 1
+                });
+            }
+            // For SELECT queries, return empty by default
+            return Promise.resolve({ rows: [], rowCount: 0 });
+        });
+        
+        db.run.mockResolvedValue({ changes: 0 });
     });
 
     describe('createAssessment', () => {

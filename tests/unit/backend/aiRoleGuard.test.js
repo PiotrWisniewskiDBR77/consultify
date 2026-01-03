@@ -6,28 +6,36 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testProjects } from '../../fixtures/testData.js';
 
-const require = createRequire(import.meta.url);
+// Hoisted mock - must be defined before imports
+const mockDb = vi.hoisted(() => {
+    return {
+        get: vi.fn(),
+        all: vi.fn(),
+        run: vi.fn(),
+        exec: vi.fn(),
+        prepare: vi.fn(),
+        serialize: vi.fn((cb) => { if (cb) cb(); }),
+        query: vi.fn(),
+        runAsync: vi.fn(),
+        getAsync: vi.fn(),
+        allAsync: vi.fn(),
+        execAsync: vi.fn(),
+        initPromise: Promise.resolve()
+    };
+});
+
+vi.mock('../../../server/database', () => ({
+    default: mockDb
+}));
+
+// Import service after mock is set up
+import AIRoleGuard from '../../../server/services/aiRoleGuard.js';
 
 describe('AIRoleGuard', () => {
-    let mockDb;
-    let AIRoleGuard;
-
     beforeEach(() => {
-        vi.resetModules();
-        
-        mockDb = createMockDb();
-        
-        // Mock database before importing
-        vi.doMock('../../../server/database', () => ({
-            default: mockDb
-        }));
-        
-        // Import service after mocking
-        AIRoleGuard = require('../../../server/services/aiRoleGuard.js');
+        vi.clearAllMocks();
         
         // Inject mock dependencies
         AIRoleGuard.setDependencies({ db: mockDb });
@@ -35,7 +43,6 @@ describe('AIRoleGuard', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../server/database');
     });
 
     describe('getProjectRole()', () => {

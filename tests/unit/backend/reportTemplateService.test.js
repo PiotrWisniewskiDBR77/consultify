@@ -4,9 +4,11 @@
  * Tests for report template management service.
  */
 
-const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
-const ReportTemplateService = require('../../../server/services/reportTemplateService');
-const { v4: uuidv4 } = require('uuid');
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'vitest';
+import { initTestDb, cleanTables, dbAll, dbRun } from '../../helpers/dbHelper.cjs';
+import ReportTemplateService from '../../../server/services/reportTemplateService.js';
+import { v4 as uuidv4 } from 'uuid';
+import db from '../../../server/database.sqlite.active.js';
 
 describe('ReportTemplateService', () => {
     let testOrgId;
@@ -15,6 +17,40 @@ describe('ReportTemplateService', () => {
 
     beforeAll(async () => {
         await initTestDb();
+        console.log('[DEBUG] Test Setup DB ID:', db.id);
+
+        // Create management_report_templates table (from migration 065_report_templates.sql)
+        await new Promise((resolve, reject) => {
+            db.run(`
+                CREATE TABLE IF NOT EXISTS management_report_templates (
+                    id TEXT PRIMARY KEY,
+                    organization_id TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    report_type TEXT NOT NULL,
+                    scope TEXT DEFAULT 'PORTFOLIO',
+                    sections JSON NOT NULL,
+                    default_period_days INTEGER DEFAULT 7,
+                    default_ai_enhancement BOOLEAN DEFAULT 1,
+                    default_approval_config JSON,
+                    custom_header_text TEXT,
+                    custom_footer_text TEXT,
+                    include_logo BOOLEAN DEFAULT 1,
+                    pdf_orientation TEXT DEFAULT 'portrait',
+                    pptx_theme TEXT DEFAULT 'professional',
+                    is_default BOOLEAN DEFAULT 0,
+                    is_active BOOLEAN DEFAULT 1,
+                    created_by TEXT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+                )
+            `, (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
     });
 
     beforeEach(async () => {
@@ -24,6 +60,22 @@ describe('ReportTemplateService', () => {
             `INSERT INTO organizations (id, name, plan, status, organization_type) 
              VALUES (?, ?, ?, ?, ?)`,
             [testOrgId, 'Test Org', 'professional', 'active', 'PAID']
+        );
+
+
+
+        // Create system organization
+        await dbRun(
+            `INSERT INTO organizations (id, name, plan, status, organization_type) 
+             VALUES (?, ?, ?, ?, ?)`,
+            ['system', 'System Org', 'professional', 'active', 'PAID']
+        );
+
+        // Create system user (for system templates)
+        await dbRun(
+            `INSERT INTO users (id, organization_id, email, name, role, created_at) 
+             VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+            ['system', 'system', 'system@consultify.io', 'System', 'admin']
         );
 
         // Create test user
@@ -76,9 +128,9 @@ describe('ReportTemplateService', () => {
             const systemTemplateId = uuidv4();
             await dbRun(
                 `INSERT INTO management_report_templates 
-                 (id, organization_id, name, report_type, is_active, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-                [systemTemplateId, 'system', 'System Template', 'TEAM_MEETING', 1]
+                 (id, organization_id, name, report_type, sections, is_active, created_by, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+                [systemTemplateId, 'system', 'System Template', 'TEAM_MEETING', '[]', 1, 'system']
             );
 
             const templates = await ReportTemplateService.getTemplates(testOrgId);
@@ -91,16 +143,16 @@ describe('ReportTemplateService', () => {
             const defaultTemplateId = uuidv4();
             await dbRun(
                 `INSERT INTO management_report_templates 
-                 (id, organization_id, name, report_type, is_active, is_default, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-                [defaultTemplateId, testOrgId, 'Default Template', 'STEERING_COMMITTEE', 1, 1]
+                 (id, organization_id, name, report_type, sections, is_active, is_default, created_by, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+                [defaultTemplateId, testOrgId, 'Default Template', 'STEERING_COMMITTEE', '[]', 1, 1, testUserId]
             );
 
             const templates = await ReportTemplateService.getTemplates(testOrgId);
 
             const defaultIndex = templates.findIndex(t => t.isDefault);
             const nonDefaultIndex = templates.findIndex(t => !t.isDefault && t.id !== defaultTemplateId);
-            
+
             if (defaultIndex >= 0 && nonDefaultIndex >= 0) {
                 expect(defaultIndex).toBeLessThan(nonDefaultIndex);
             }
@@ -111,9 +163,9 @@ describe('ReportTemplateService', () => {
             const inactiveTemplateId = uuidv4();
             await dbRun(
                 `INSERT INTO management_report_templates 
-                 (id, organization_id, name, report_type, is_active, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-                [inactiveTemplateId, testOrgId, 'Inactive Template', 'TEAM_MEETING', 0]
+                 (id, organization_id, name, report_type, sections, is_active, created_by, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+                [inactiveTemplateId, testOrgId, 'Inactive Template', 'TEAM_MEETING', '[]', 0, testUserId]
             );
 
             const templates = await ReportTemplateService.getTemplates(testOrgId);
@@ -231,9 +283,9 @@ describe('ReportTemplateService', () => {
             const systemTemplateId = uuidv4();
             await dbRun(
                 `INSERT INTO management_report_templates 
-                 (id, organization_id, name, report_type, is_active, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-                [systemTemplateId, 'system', 'System Template', 'TEAM_MEETING', 1]
+                 (id, organization_id, name, report_type, sections, is_active, created_by, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+                [systemTemplateId, 'system', 'System Template', 'TEAM_MEETING', '[]', 1, 'system']
             );
 
             await expect(

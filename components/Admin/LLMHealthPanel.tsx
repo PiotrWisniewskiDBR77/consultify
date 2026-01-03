@@ -125,12 +125,13 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
     }, []);
 
     useEffect(() => {
-        fetchHealthData();
+        void fetchHealthData();
 
         if (autoRefresh) {
-            const interval = setInterval(() => fetchHealthData(false), refreshInterval);
+            const interval = setInterval(() => void fetchHealthData(false), refreshInterval);
             return () => clearInterval(interval);
         }
+        return undefined;
     }, [fetchHealthData, autoRefresh, refreshInterval]);
 
     const handleRefresh = () => {

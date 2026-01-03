@@ -5,12 +5,15 @@ import { Api } from '../services/api';
 
 // Define the types for each module's data
 interface CompanyProfileState {
+    companyName: string;
     industry: string;
     subIndustry: string;
     ownership: string;
     growthStage: string;
     employees: string;
     revenue: string;
+    currentMaturityLevel: string;
+    targetMaturityLevel: string;
     operationalFootprint: string; // 'Single Site' | 'Multi-Site'
     locations: string;
     targetMarkets: string[]; // e.g., 'Domestic Only'
@@ -42,6 +45,8 @@ interface CompanyProfileState {
 
 interface GoalsState {
     primaryObjective: string;
+    strategicGoals: DynamicListItem[]; // For Synthesis Summary
+    successMetrics: DynamicListItem[]; // For Synthesis Summary
     secondaryObjectives: string;
     topPriorities: string[];
 
@@ -114,12 +119,15 @@ interface ContextBuilderState {
 }
 
 const initialCompanyProfile: CompanyProfileState = {
+    companyName: '',
     industry: 'Manufacturing',
     subIndustry: 'Automotive',
     ownership: '',
     growthStage: '',
     employees: '',
     revenue: '',
+    currentMaturityLevel: '',
+    targetMaturityLevel: '',
     operationalFootprint: '',
     locations: '',
     targetMarkets: [],
@@ -143,6 +151,8 @@ const initialCompanyProfile: CompanyProfileState = {
 
 const initialGoals: GoalsState = {
     primaryObjective: '',
+    strategicGoals: [],
+    successMetrics: [],
     secondaryObjectives: '',
     topPriorities: [],
     kpis: [],
@@ -215,7 +225,7 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
 
                 const state = get();
                 const { challenges, companyProfile, goals } = state;
-                
+
                 // Try to get AI-generated suggestions
                 let aiSuggestions: { risks?: any[]; strengths?: any[] } = {};
                 try {
@@ -229,13 +239,13 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
                         Top Priorities: ${goals.topPriorities.join(', ')}
                         Challenges: ${challenges.declaredChallenges.map((c: any) => c.challenge).join(', ')}
                     `;
-                    
+
                     const response = await Api.chatWithAI(
                         `Based on this company context, suggest 1-2 key risks and 1-2 strategic opportunities. Output as JSON: {"risks":[{"risk":"","why":"","severity":"High/Medium/Low","mitigation":""}], "strengths":[{"enabler":"","seen":"","leverage":""}]}. Context: ${contextSummary}`,
                         [],
                         'You are a strategic consultant. Output only valid JSON.'
                     );
-                    
+
                     const jsonMatch = response.match(/\{[\s\S]*\}/);
                     if (jsonMatch) {
                         aiSuggestions = JSON.parse(jsonMatch[0]);

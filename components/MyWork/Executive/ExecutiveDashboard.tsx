@@ -75,7 +75,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
     onDecisionReject
 }) => {
     const { t } = useTranslation();
-    const user = useAppStore(state => state.user);
+    const user = useAppStore(state => state.currentUser);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());

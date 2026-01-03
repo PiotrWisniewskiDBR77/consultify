@@ -2,7 +2,10 @@
  * Unit tests for DLP Service
  */
 
-const { describe, it, expect, beforeEach, vi } = require('vitest');
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 // Mock database
 const mockDb = {

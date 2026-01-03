@@ -1,419 +1,693 @@
-<testsuites id="" name="" tests="11" failures="9" skipped="0" errors="0" time="20.451058">
-<testsuite name="workflow-access-levels.spec.ts" timestamp="2026-01-02T21:13:08.721Z" hostname="chromium" tests="11" failures="9" skipped="0" time="105.343" errors="0">
-<testcase name="ADMIN Level Workflow Tests › Complete ADMIN workflow: Settings → Tasks → AI Chat" classname="workflow-access-levels.spec.ts" time="11.693">
-<failure message="workflow-access-levels.spec.ts:24:3 Complete ADMIN workflow: Settings → Tasks → AI Chat" type="FAILURE">
-<![CDATA[  [chromium] › workflow-access-levels.spec.ts:24:3 › ADMIN Level Workflow Tests › Complete ADMIN workflow: Settings → Tasks → AI Chat 
+<testsuites id="" name="" tests="21" failures="21" skipped="0" errors="0" time="17.123695">
+<testsuite name="auth.spec.ts" timestamp="2026-01-03T10:56:33.331Z" hostname="chromium" tests="3" failures="3" skipped="0" time="47.175" errors="0">
+<testcase name="Authentication Flow › should login successfully with valid credentials" classname="auth.spec.ts" time="15.75">
+<failure message="auth.spec.ts:3:3 should login successfully with valid credentials" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:3:3 › Authentication Flow › should login successfully with valid credentials 
 
-    Error: expect(locator).toBeVisible() failed
-
-    Locator: getByText('ADMIN')
-    Expected: visible
-    Timeout: 10000ms
-    Error: element(s) not found
-
+    TimeoutError: page.click: Timeout 15000ms exceeded.
     Call log:
-      - Expect "toBeVisible" with timeout 10000ms
-      - waiting for getByText('ADMIN')
+      - waiting for locator('text=Log In')
 
 
-      28 |
-      29 |     // Verify we're logged in as ADMIN (check for ADMIN button)
-    > 30 |     await expect(page.getByText('ADMIN')).toBeVisible();
-         |                                           ^
-      31 |
-      32 |     // Test 1: Settings Management
-      33 |     await test.step('Settings: Update Profile Information', async () => {
-        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:30:43
+       6 |
+       7 |         // Click "Log In" on Welcome Page
+    >  8 |         await page.click('text=Log In');
+         |                    ^
+       9 |
+      10 |         // Fill login form
+      11 |         await page.fill('input[type="email"]', 'admin@dbr77.com');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/auth.spec.ts:8:20
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-ADM-9e964--Settings-→-Tasks-→-AI-Chat-chromium/test-failed-1.png
+    ../../test-results/auth-Authentication-Flow-s-74377-ully-with-valid-credentials-chromium/test-failed-1.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: ../../test-results/workflow-access-levels-ADM-9e964--Settings-→-Tasks-→-AI-Chat-chromium/error-context.md
-
-    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-ADM-9e964--Settings-→-Tasks-→-AI-Chat-chromium/trace.zip
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/auth-Authentication-Flow-s-74377-ully-with-valid-credentials-chromium/trace.zip
     Usage:
 
-        npx playwright show-trace ../../test-results/workflow-access-levels-ADM-9e964--Settings-→-Tasks-→-AI-Chat-chromium/trace.zip
+        npx playwright show-trace ../../test-results/auth-Authentication-Flow-s-74377-ully-with-valid-credentials-chromium/trace.zip
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 ]]>
 </failure>
 <system-out>
 <![CDATA[
-[[ATTACHMENT|test-results/workflow-access-levels-ADM-9e964--Settings-→-Tasks-→-AI-Chat-chromium/test-failed-1.png]]
+[[ATTACHMENT|test-results/auth-Authentication-Flow-s-74377-ully-with-valid-credentials-chromium/test-failed-1.png]]
 
-[[ATTACHMENT|test-results/workflow-access-levels-ADM-9e964--Settings-→-Tasks-→-AI-Chat-chromium/error-context.md]]
-
-[[ATTACHMENT|test-results/workflow-access-levels-ADM-9e964--Settings-→-Tasks-→-AI-Chat-chromium/trace.zip]]
+[[ATTACHMENT|test-results/auth-Authentication-Flow-s-74377-ully-with-valid-credentials-chromium/trace.zip]]
 ]]>
 </system-out>
 </testcase>
-<testcase name="ADMIN Level Workflow Tests › ADMIN Security Boundaries" classname="workflow-access-levels.spec.ts" time="11.688">
-<failure message="workflow-access-levels.spec.ts:105:3 ADMIN Security Boundaries" type="FAILURE">
-<![CDATA[  [chromium] › workflow-access-levels.spec.ts:105:3 › ADMIN Level Workflow Tests › ADMIN Security Boundaries 
+<testcase name="Authentication Flow › should show error with invalid credentials" classname="auth.spec.ts" time="15.713">
+<failure message="auth.spec.ts:22:3 should show error with invalid credentials" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:22:3 › Authentication Flow › should show error with invalid credentials 
 
-    Error: expect(locator).toBeVisible() failed
-
-    Locator: getByText('ADMIN')
-    Expected: visible
-    Timeout: 10000ms
-    Error: element(s) not found
-
+    TimeoutError: page.click: Timeout 15000ms exceeded.
     Call log:
-      - Expect "toBeVisible" with timeout 10000ms
-      - waiting for getByText('ADMIN')
+      - waiting for locator('text=Log In')
 
 
-      107 |
-      108 |     // Verify ADMIN can access these areas
-    > 109 |     await expect(page.getByText('ADMIN')).toBeVisible();
-          |                                           ^
-      110 |     await expect(page.getByText('Settings')).toBeVisible();
-      111 |     await expect(page.getByText('Organization')).toBeVisible();
-      112 |
-        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:109:43
+      24 |
+      25 |         // Click "Log In" on Welcome Page
+    > 26 |         await page.click('text=Log In');
+         |                    ^
+      27 |
+      28 |         // Fill login form with bad data
+      29 |         await page.fill('input[type="email"]', 'wrong@example.com');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/auth.spec.ts:26:20
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-ADM-a5b8f-s-ADMIN-Security-Boundaries-chromium/test-failed-1.png
+    ../../test-results/auth-Authentication-Flow-s-22fb7-or-with-invalid-credentials-chromium/test-failed-1.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: ../../test-results/workflow-access-levels-ADM-a5b8f-s-ADMIN-Security-Boundaries-chromium/error-context.md
-
-    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-ADM-a5b8f-s-ADMIN-Security-Boundaries-chromium/trace.zip
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/auth-Authentication-Flow-s-22fb7-or-with-invalid-credentials-chromium/trace.zip
     Usage:
 
-        npx playwright show-trace ../../test-results/workflow-access-levels-ADM-a5b8f-s-ADMIN-Security-Boundaries-chromium/trace.zip
+        npx playwright show-trace ../../test-results/auth-Authentication-Flow-s-22fb7-or-with-invalid-credentials-chromium/trace.zip
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 ]]>
 </failure>
 <system-out>
 <![CDATA[
-[[ATTACHMENT|test-results/workflow-access-levels-ADM-a5b8f-s-ADMIN-Security-Boundaries-chromium/test-failed-1.png]]
+[[ATTACHMENT|test-results/auth-Authentication-Flow-s-22fb7-or-with-invalid-credentials-chromium/test-failed-1.png]]
 
-[[ATTACHMENT|test-results/workflow-access-levels-ADM-a5b8f-s-ADMIN-Security-Boundaries-chromium/error-context.md]]
-
-[[ATTACHMENT|test-results/workflow-access-levels-ADM-a5b8f-s-ADMIN-Security-Boundaries-chromium/trace.zip]]
+[[ATTACHMENT|test-results/auth-Authentication-Flow-s-22fb7-or-with-invalid-credentials-chromium/trace.zip]]
 ]]>
 </system-out>
 </testcase>
-<testcase name="ADMIN Level Workflow Tests › Task CRUD Operations" classname="workflow-access-levels.spec.ts" time="16.609">
-<failure message="workflow-access-levels.spec.ts:120:3 Task CRUD Operations" type="FAILURE">
-<![CDATA[  [chromium] › workflow-access-levels.spec.ts:120:3 › ADMIN Level Workflow Tests › Task CRUD Operations 
+<testcase name="Authentication Flow › should logout successfully" classname="auth.spec.ts" time="15.712">
+<failure message="auth.spec.ts:41:3 should logout successfully" type="FAILURE">
+<![CDATA[  [chromium] › auth.spec.ts:41:3 › Authentication Flow › should logout successfully ────────────────
 
-    TimeoutError: locator.click: Timeout 15000ms exceeded.
+    TimeoutError: page.click: Timeout 15000ms exceeded.
     Call log:
-      - waiting for getByText('My Work')
+      - waiting for locator('text=Log In')
 
 
-      121 |
-      122 |     // Navigate to My Work
-    > 123 |     await page.getByText('My Work').click();
-          |                                     ^
-      124 |
-      125 |     // Create task
-      126 |     await page.getByText('Create Task').click();
-        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:123:37
+      41 |         // Login first
+      42 |         await page.goto('/');
+    > 43 |         await page.click('text=Log In');
+         |                    ^
+      44 |         await page.fill('input[type="email"]', 'admin@dbr77.com');
+      45 |         await page.fill('input[type="password"]', '123456');
+      46 |         await page.click('button[type="submit"]');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/auth.spec.ts:43:20
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-ADM-5487a--Tests-Task-CRUD-Operations-chromium/test-failed-1.png
+    ../../test-results/auth-Authentication-Flow-should-logout-successfully-chromium/test-failed-1.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: ../../test-results/workflow-access-levels-ADM-5487a--Tests-Task-CRUD-Operations-chromium/error-context.md
-
-    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-ADM-5487a--Tests-Task-CRUD-Operations-chromium/trace.zip
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/auth-Authentication-Flow-should-logout-successfully-chromium/trace.zip
     Usage:
 
-        npx playwright show-trace ../../test-results/workflow-access-levels-ADM-5487a--Tests-Task-CRUD-Operations-chromium/trace.zip
+        npx playwright show-trace ../../test-results/auth-Authentication-Flow-should-logout-successfully-chromium/trace.zip
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 ]]>
 </failure>
 <system-out>
 <![CDATA[
-[[ATTACHMENT|test-results/workflow-access-levels-ADM-5487a--Tests-Task-CRUD-Operations-chromium/test-failed-1.png]]
+[[ATTACHMENT|test-results/auth-Authentication-Flow-should-logout-successfully-chromium/test-failed-1.png]]
 
-[[ATTACHMENT|test-results/workflow-access-levels-ADM-5487a--Tests-Task-CRUD-Operations-chromium/error-context.md]]
-
-[[ATTACHMENT|test-results/workflow-access-levels-ADM-5487a--Tests-Task-CRUD-Operations-chromium/trace.zip]]
+[[ATTACHMENT|test-results/auth-Authentication-Flow-should-logout-successfully-chromium/trace.zip]]
 ]]>
 </system-out>
 </testcase>
-<testcase name="AI Integration Tests › AI Chat Persistence" classname="workflow-access-levels.spec.ts" time="15.951">
-<failure message="workflow-access-levels.spec.ts:141:3 AI Chat Persistence" type="FAILURE">
-<![CDATA[  [chromium] › workflow-access-levels.spec.ts:141:3 › AI Integration Tests › AI Chat Persistence ───
+</testsuite>
+<testsuite name="navigation.spec.ts" timestamp="2026-01-03T10:56:33.331Z" hostname="chromium" tests="4" failures="4" skipped="0" time="62.835" errors="0">
+<testcase name="Navigation Smoke Test › should navigate to Roadmap" classname="navigation.spec.ts" time="15.767">
+<failure message="navigation.spec.ts:38:5 should navigate to Roadmap" type="FAILURE">
+<![CDATA[  [chromium] › navigation.spec.ts:38:5 › Navigation Smoke Test › should navigate to Roadmap ────────
 
-    TimeoutError: locator.click: Timeout 15000ms exceeded.
+    TimeoutError: page.click: Timeout 15000ms exceeded.
     Call log:
-      - waiting for getByText('AI Chat')
+      - waiting for locator('text=Log In')
 
 
-      141 |
-      142 |     // Navigate to AI Chat
-    > 143 |     await page.getByText('AI Chat').click();
-          |                                     ^
-      144 |
-      145 |     // Send message
-      146 |     await page.fill('input[placeholder*="Ask anything"]', 'Test message for persistence');
-        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:143:37
+       5 |         // Login before each test via UI
+       6 |         await page.goto('/');
+    >  7 |         await page.click('text=Log In');
+         |                    ^
+       8 |         await page.fill('input[type="email"]', 'piotr.wisniewski@dbr77.com');
+       9 |         await page.fill('input[type="password"]', '123456');
+      10 |         await page.click('button[type="submit"]');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/navigation.spec.ts:7:20
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-AI--798af-n-Tests-AI-Chat-Persistence-chromium/test-failed-1.png
+    ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Roadmap-chromium/test-failed-1.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: ../../test-results/workflow-access-levels-AI--798af-n-Tests-AI-Chat-Persistence-chromium/error-context.md
-
-    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-AI--798af-n-Tests-AI-Chat-Persistence-chromium/trace.zip
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Roadmap-chromium/trace.zip
     Usage:
 
-        npx playwright show-trace ../../test-results/workflow-access-levels-AI--798af-n-Tests-AI-Chat-Persistence-chromium/trace.zip
+        npx playwright show-trace ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Roadmap-chromium/trace.zip
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 ]]>
 </failure>
 <system-out>
 <![CDATA[
-[[ATTACHMENT|test-results/workflow-access-levels-AI--798af-n-Tests-AI-Chat-Persistence-chromium/test-failed-1.png]]
+[[ATTACHMENT|test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Roadmap-chromium/test-failed-1.png]]
 
-[[ATTACHMENT|test-results/workflow-access-levels-AI--798af-n-Tests-AI-Chat-Persistence-chromium/error-context.md]]
-
-[[ATTACHMENT|test-results/workflow-access-levels-AI--798af-n-Tests-AI-Chat-Persistence-chromium/trace.zip]]
+[[ATTACHMENT|test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Roadmap-chromium/trace.zip]]
 ]]>
 </system-out>
 </testcase>
-<testcase name="AI Integration Tests › AI Context Awareness" classname="workflow-access-levels.spec.ts" time="16.617">
-<failure message="workflow-access-levels.spec.ts:162:3 AI Context Awareness" type="FAILURE">
-<![CDATA[  [chromium] › workflow-access-levels.spec.ts:162:3 › AI Integration Tests › AI Context Awareness ──
+<testcase name="Navigation Smoke Test › should navigate to Initiatives" classname="navigation.spec.ts" time="15.718">
+<failure message="navigation.spec.ts:38:5 should navigate to Initiatives" type="FAILURE">
+<![CDATA[  [chromium] › navigation.spec.ts:38:5 › Navigation Smoke Test › should navigate to Initiatives ────
 
-    TimeoutError: locator.click: Timeout 15000ms exceeded.
+    TimeoutError: page.click: Timeout 15000ms exceeded.
     Call log:
-      - waiting for getByText('AI Chat')
+      - waiting for locator('text=Log In')
 
 
-      161 |
-      162 |     // Navigate to AI Chat
-    > 163 |     await page.getByText('AI Chat').click();
-          |                                     ^
-      164 |
-      165 |     // Send context-aware message
-      166 |     await page.fill('input[placeholder*="Ask anything"]', 'What is the current status of my organization?');
-        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:163:37
+       5 |         // Login before each test via UI
+       6 |         await page.goto('/');
+    >  7 |         await page.click('text=Log In');
+         |                    ^
+       8 |         await page.fill('input[type="email"]', 'piotr.wisniewski@dbr77.com');
+       9 |         await page.fill('input[type="password"]', '123456');
+      10 |         await page.click('button[type="submit"]');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/navigation.spec.ts:7:20
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-AI--b37a4--Tests-AI-Context-Awareness-chromium/test-failed-1.png
+    ../../test-results/navigation-Navigation-Smok-4748e-uld-navigate-to-Initiatives-chromium/test-failed-1.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: ../../test-results/workflow-access-levels-AI--b37a4--Tests-AI-Context-Awareness-chromium/error-context.md
-
-    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-AI--b37a4--Tests-AI-Context-Awareness-chromium/trace.zip
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/navigation-Navigation-Smok-4748e-uld-navigate-to-Initiatives-chromium/trace.zip
     Usage:
 
-        npx playwright show-trace ../../test-results/workflow-access-levels-AI--b37a4--Tests-AI-Context-Awareness-chromium/trace.zip
+        npx playwright show-trace ../../test-results/navigation-Navigation-Smok-4748e-uld-navigate-to-Initiatives-chromium/trace.zip
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 ]]>
 </failure>
 <system-out>
 <![CDATA[
-[[ATTACHMENT|test-results/workflow-access-levels-AI--b37a4--Tests-AI-Context-Awareness-chromium/test-failed-1.png]]
+[[ATTACHMENT|test-results/navigation-Navigation-Smok-4748e-uld-navigate-to-Initiatives-chromium/test-failed-1.png]]
 
-[[ATTACHMENT|test-results/workflow-access-levels-AI--b37a4--Tests-AI-Context-Awareness-chromium/error-context.md]]
-
-[[ATTACHMENT|test-results/workflow-access-levels-AI--b37a4--Tests-AI-Context-Awareness-chromium/trace.zip]]
+[[ATTACHMENT|test-results/navigation-Navigation-Smok-4748e-uld-navigate-to-Initiatives-chromium/trace.zip]]
 ]]>
 </system-out>
 </testcase>
-<testcase name="Performance Tests › Page Load Performance" classname="workflow-access-levels.spec.ts" time="1.199">
-<system-out>
-<![CDATA[Page load time: 596ms
-]]>
-</system-out>
-</testcase>
-<testcase name="Performance Tests › AI Response Time" classname="workflow-access-levels.spec.ts" time="16.614">
-<failure message="workflow-access-levels.spec.ts:198:3 AI Response Time" type="FAILURE">
-<![CDATA[  [chromium] › workflow-access-levels.spec.ts:198:3 › Performance Tests › AI Response Time ─────────
+<testcase name="Navigation Smoke Test › should navigate to Projects" classname="navigation.spec.ts" time="15.68">
+<failure message="navigation.spec.ts:38:5 should navigate to Projects" type="FAILURE">
+<![CDATA[  [chromium] › navigation.spec.ts:38:5 › Navigation Smoke Test › should navigate to Projects ───────
 
-    TimeoutError: locator.click: Timeout 15000ms exceeded.
+    TimeoutError: page.click: Timeout 15000ms exceeded.
     Call log:
-      - waiting for getByText('AI Chat')
+      - waiting for locator('text=Log In')
 
 
-      193 |   test('AI Response Time', async ({ page }) => {
-      194 |     await page.goto(`${TEST_CONFIG.baseURL}`);
-    > 195 |     await page.getByText('AI Chat').click();
-          |                                     ^
-      196 |
-      197 |     const startTime = Date.now();
-      198 |
-        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:195:37
+       5 |         // Login before each test via UI
+       6 |         await page.goto('/');
+    >  7 |         await page.click('text=Log In');
+         |                    ^
+       8 |         await page.fill('input[type="email"]', 'piotr.wisniewski@dbr77.com');
+       9 |         await page.fill('input[type="password"]', '123456');
+      10 |         await page.click('button[type="submit"]');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/navigation.spec.ts:7:20
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-Performance-Tests-AI-Response-Time-chromium/test-failed-1.png
+    ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Projects-chromium/test-failed-1.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: ../../test-results/workflow-access-levels-Performance-Tests-AI-Response-Time-chromium/error-context.md
-
-    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-Performance-Tests-AI-Response-Time-chromium/trace.zip
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Projects-chromium/trace.zip
     Usage:
 
-        npx playwright show-trace ../../test-results/workflow-access-levels-Performance-Tests-AI-Response-Time-chromium/trace.zip
+        npx playwright show-trace ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Projects-chromium/trace.zip
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 ]]>
 </failure>
 <system-out>
 <![CDATA[
-[[ATTACHMENT|test-results/workflow-access-levels-Performance-Tests-AI-Response-Time-chromium/test-failed-1.png]]
+[[ATTACHMENT|test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Projects-chromium/test-failed-1.png]]
 
-[[ATTACHMENT|test-results/workflow-access-levels-Performance-Tests-AI-Response-Time-chromium/error-context.md]]
-
-[[ATTACHMENT|test-results/workflow-access-levels-Performance-Tests-AI-Response-Time-chromium/trace.zip]]
+[[ATTACHMENT|test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Projects-chromium/trace.zip]]
 ]]>
 </system-out>
 </testcase>
-<testcase name="Accessibility Tests › Keyboard Navigation" classname="workflow-access-levels.spec.ts" time="1.689">
-<failure message="workflow-access-levels.spec.ts:219:3 Keyboard Navigation" type="FAILURE">
-<![CDATA[  [chromium] › workflow-access-levels.spec.ts:219:3 › Accessibility Tests › Keyboard Navigation ────
+<testcase name="Navigation Smoke Test › should navigate to Settings" classname="navigation.spec.ts" time="15.67">
+<failure message="navigation.spec.ts:38:5 should navigate to Settings" type="FAILURE">
+<![CDATA[  [chromium] › navigation.spec.ts:38:5 › Navigation Smoke Test › should navigate to Settings ───────
 
-    Error: expect(received).toMatch(expected)
-
-    Expected pattern: /\/(chat|settings|organization)/
-    Received string:  "http://localhost:3000/"
-
-      223 |
-      224 |     // Verify navigation works
-    > 225 |     await expect(page.url()).toMatch(/\/(chat|settings|organization)/);
-          |                              ^
-      226 |   });
-      227 |
-      228 |   test('Screen Reader Support', async ({ page }) => {
-        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:225:30
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-Acc-0e07b-y-Tests-Keyboard-Navigation-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/workflow-access-levels-Acc-0e07b-y-Tests-Keyboard-Navigation-chromium/error-context.md
-
-    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-Acc-0e07b-y-Tests-Keyboard-Navigation-chromium/trace.zip
-    Usage:
-
-        npx playwright show-trace ../../test-results/workflow-access-levels-Acc-0e07b-y-Tests-Keyboard-Navigation-chromium/trace.zip
-
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|test-results/workflow-access-levels-Acc-0e07b-y-Tests-Keyboard-Navigation-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|test-results/workflow-access-levels-Acc-0e07b-y-Tests-Keyboard-Navigation-chromium/error-context.md]]
-
-[[ATTACHMENT|test-results/workflow-access-levels-Acc-0e07b-y-Tests-Keyboard-Navigation-chromium/trace.zip]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Accessibility Tests › Screen Reader Support" classname="workflow-access-levels.spec.ts" time="1.22">
-<failure message="workflow-access-levels.spec.ts:234:3 Screen Reader Support" type="FAILURE">
-<![CDATA[  [chromium] › workflow-access-levels.spec.ts:234:3 › Accessibility Tests › Screen Reader Support ──
-
-    Error: expect(received).toBeTruthy()
-
-    Received: ""
-
-      235 |       const text = await button.textContent();
-      236 |       // Either aria-label or visible text should be present
-    > 237 |       expect(ariaLabel || text?.trim()).toBeTruthy();
-          |                                         ^
-      238 |     }
-      239 |   });
-      240 | });
-        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:237:41
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-Acc-0c743-Tests-Screen-Reader-Support-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../../test-results/workflow-access-levels-Acc-0c743-Tests-Screen-Reader-Support-chromium/error-context.md
-
-    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-Acc-0c743-Tests-Screen-Reader-Support-chromium/trace.zip
-    Usage:
-
-        npx playwright show-trace ../../test-results/workflow-access-levels-Acc-0c743-Tests-Screen-Reader-Support-chromium/trace.zip
-
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|test-results/workflow-access-levels-Acc-0c743-Tests-Screen-Reader-Support-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|test-results/workflow-access-levels-Acc-0c743-Tests-Screen-Reader-Support-chromium/error-context.md]]
-
-[[ATTACHMENT|test-results/workflow-access-levels-Acc-0c743-Tests-Screen-Reader-Support-chromium/trace.zip]]
-]]>
-</system-out>
-</testcase>
-<testcase name="Cross-browser Compatibility › Core Functionality Works" classname="workflow-access-levels.spec.ts" time="10.787">
-<failure message="workflow-access-levels.spec.ts:253:3 Core Functionality Works" type="FAILURE">
-<![CDATA[  [chromium] › workflow-access-levels.spec.ts:253:3 › Cross-browser Compatibility › Core Functionality Works 
-
-    Error: expect(locator).toBeVisible() failed
-
-    Locator: getByText('AI Chat')
-    Expected: visible
-    Timeout: 10000ms
-    Error: element(s) not found
-
+    TimeoutError: page.click: Timeout 15000ms exceeded.
     Call log:
-      - Expect "toBeVisible" with timeout 10000ms
-      - waiting for getByText('AI Chat')
+      - waiting for locator('text=Log In')
 
 
-      248 |
-      249 |     // Basic navigation
-    > 250 |     await expect(page.getByText('AI Chat')).toBeVisible();
-          |                                             ^
-      251 |     await expect(page.getByText('Settings')).toBeVisible();
-      252 |
-      253 |     // Basic interaction
-        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/workflow-access-levels.spec.ts:250:45
+       5 |         // Login before each test via UI
+       6 |         await page.goto('/');
+    >  7 |         await page.click('text=Log In');
+         |                    ^
+       8 |         await page.fill('input[type="email"]', 'piotr.wisniewski@dbr77.com');
+       9 |         await page.fill('input[type="password"]', '123456');
+      10 |         await page.click('button[type="submit"]');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/navigation.spec.ts:7:20
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-Cro-49da1-ty-Core-Functionality-Works-chromium/test-failed-1.png
+    ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Settings-chromium/test-failed-1.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: ../../test-results/workflow-access-levels-Cro-49da1-ty-Core-Functionality-Works-chromium/error-context.md
-
-    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
-    ../../test-results/workflow-access-levels-Cro-49da1-ty-Core-Functionality-Works-chromium/trace.zip
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Settings-chromium/trace.zip
     Usage:
 
-        npx playwright show-trace ../../test-results/workflow-access-levels-Cro-49da1-ty-Core-Functionality-Works-chromium/trace.zip
+        npx playwright show-trace ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Settings-chromium/trace.zip
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 ]]>
 </failure>
 <system-out>
 <![CDATA[
-[[ATTACHMENT|test-results/workflow-access-levels-Cro-49da1-ty-Core-Functionality-Works-chromium/test-failed-1.png]]
+[[ATTACHMENT|test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Settings-chromium/test-failed-1.png]]
 
-[[ATTACHMENT|test-results/workflow-access-levels-Cro-49da1-ty-Core-Functionality-Works-chromium/error-context.md]]
-
-[[ATTACHMENT|test-results/workflow-access-levels-Cro-49da1-ty-Core-Functionality-Works-chromium/trace.zip]]
+[[ATTACHMENT|test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Settings-chromium/trace.zip]]
 ]]>
 </system-out>
 </testcase>
-<testcase name="Error Handling Tests › Graceful Error Handling" classname="workflow-access-levels.spec.ts" time="1.276">
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2026-01-03T10:56:33.331Z" hostname="firefox" tests="3" failures="3" skipped="0" time="0.002" errors="0">
+<testcase name="Authentication Flow › should login successfully with valid credentials" classname="auth.spec.ts" time="0.001">
+<failure message="auth.spec.ts:3:3 should login successfully with valid credentials" type="FAILURE">
+<![CDATA[  [firefox] › auth.spec.ts:3:3 › Authentication Flow › should login successfully with valid credentials 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/piotrwisniewski/Library/Caches/ms-playwright/firefox-1497/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/auth-Authentication-Flow-s-74377-ully-with-valid-credentials-firefox/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/auth-Authentication-Flow-s-74377-ully-with-valid-credentials-firefox/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/auth-Authentication-Flow-s-74377-ully-with-valid-credentials-firefox/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Authentication Flow › should show error with invalid credentials" classname="auth.spec.ts" time="0">
+<failure message="auth.spec.ts:22:3 should show error with invalid credentials" type="FAILURE">
+<![CDATA[  [firefox] › auth.spec.ts:22:3 › Authentication Flow › should show error with invalid credentials ─
+
+    Error: browserType.launch: Executable doesn't exist at /Users/piotrwisniewski/Library/Caches/ms-playwright/firefox-1497/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/auth-Authentication-Flow-s-22fb7-or-with-invalid-credentials-firefox/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/auth-Authentication-Flow-s-22fb7-or-with-invalid-credentials-firefox/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/auth-Authentication-Flow-s-22fb7-or-with-invalid-credentials-firefox/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Authentication Flow › should logout successfully" classname="auth.spec.ts" time="0.001">
+<failure message="auth.spec.ts:41:3 should logout successfully" type="FAILURE">
+<![CDATA[  [firefox] › auth.spec.ts:41:3 › Authentication Flow › should logout successfully ─────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/piotrwisniewski/Library/Caches/ms-playwright/firefox-1497/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/auth-Authentication-Flow-should-logout-successfully-firefox/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/auth-Authentication-Flow-should-logout-successfully-firefox/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/auth-Authentication-Flow-should-logout-successfully-firefox/trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="navigation.spec.ts" timestamp="2026-01-03T10:56:33.331Z" hostname="firefox" tests="4" failures="4" skipped="0" time="0.001" errors="0">
+<testcase name="Navigation Smoke Test › should navigate to Roadmap" classname="navigation.spec.ts" time="0.001">
+<failure message="navigation.spec.ts:38:5 should navigate to Roadmap" type="FAILURE">
+<![CDATA[  [firefox] › navigation.spec.ts:38:5 › Navigation Smoke Test › should navigate to Roadmap ─────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/piotrwisniewski/Library/Caches/ms-playwright/firefox-1497/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Roadmap-firefox/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Roadmap-firefox/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Roadmap-firefox/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Navigation Smoke Test › should navigate to Initiatives" classname="navigation.spec.ts" time="0">
+<failure message="navigation.spec.ts:38:5 should navigate to Initiatives" type="FAILURE">
+<![CDATA[  [firefox] › navigation.spec.ts:38:5 › Navigation Smoke Test › should navigate to Initiatives ─────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/piotrwisniewski/Library/Caches/ms-playwright/firefox-1497/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/navigation-Navigation-Smok-4748e-uld-navigate-to-Initiatives-firefox/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/navigation-Navigation-Smok-4748e-uld-navigate-to-Initiatives-firefox/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/navigation-Navigation-Smok-4748e-uld-navigate-to-Initiatives-firefox/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Navigation Smoke Test › should navigate to Projects" classname="navigation.spec.ts" time="0">
+<failure message="navigation.spec.ts:38:5 should navigate to Projects" type="FAILURE">
+<![CDATA[  [firefox] › navigation.spec.ts:38:5 › Navigation Smoke Test › should navigate to Projects ────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/piotrwisniewski/Library/Caches/ms-playwright/firefox-1497/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Projects-firefox/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Projects-firefox/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Projects-firefox/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Navigation Smoke Test › should navigate to Settings" classname="navigation.spec.ts" time="0">
+<failure message="navigation.spec.ts:38:5 should navigate to Settings" type="FAILURE">
+<![CDATA[  [firefox] › navigation.spec.ts:38:5 › Navigation Smoke Test › should navigate to Settings ────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/piotrwisniewski/Library/Caches/ms-playwright/firefox-1497/firefox/Nightly.app/Contents/MacOS/firefox
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Settings-firefox/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Settings-firefox/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Settings-firefox/trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="auth.spec.ts" timestamp="2026-01-03T10:56:33.331Z" hostname="webkit" tests="3" failures="3" skipped="0" time="0" errors="0">
+<testcase name="Authentication Flow › should login successfully with valid credentials" classname="auth.spec.ts" time="0">
+<failure message="auth.spec.ts:3:3 should login successfully with valid credentials" type="FAILURE">
+<![CDATA[  [webkit] › auth.spec.ts:3:3 › Authentication Flow › should login successfully with valid credentials 
+
+    Error: browserType.launch: Executable doesn't exist at /Users/piotrwisniewski/Library/Caches/ms-playwright/webkit-2227/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/auth-Authentication-Flow-s-74377-ully-with-valid-credentials-webkit/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/auth-Authentication-Flow-s-74377-ully-with-valid-credentials-webkit/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/auth-Authentication-Flow-s-74377-ully-with-valid-credentials-webkit/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Authentication Flow › should show error with invalid credentials" classname="auth.spec.ts" time="0">
+<failure message="auth.spec.ts:22:3 should show error with invalid credentials" type="FAILURE">
+<![CDATA[  [webkit] › auth.spec.ts:22:3 › Authentication Flow › should show error with invalid credentials ──
+
+    Error: browserType.launch: Executable doesn't exist at /Users/piotrwisniewski/Library/Caches/ms-playwright/webkit-2227/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/auth-Authentication-Flow-s-22fb7-or-with-invalid-credentials-webkit/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/auth-Authentication-Flow-s-22fb7-or-with-invalid-credentials-webkit/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/auth-Authentication-Flow-s-22fb7-or-with-invalid-credentials-webkit/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Authentication Flow › should logout successfully" classname="auth.spec.ts" time="0">
+<failure message="auth.spec.ts:41:3 should logout successfully" type="FAILURE">
+<![CDATA[  [webkit] › auth.spec.ts:41:3 › Authentication Flow › should logout successfully ──────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/piotrwisniewski/Library/Caches/ms-playwright/webkit-2227/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/auth-Authentication-Flow-should-logout-successfully-webkit/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/auth-Authentication-Flow-should-logout-successfully-webkit/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/auth-Authentication-Flow-should-logout-successfully-webkit/trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="navigation.spec.ts" timestamp="2026-01-03T10:56:33.331Z" hostname="webkit" tests="4" failures="4" skipped="0" time="0.003" errors="0">
+<testcase name="Navigation Smoke Test › should navigate to Roadmap" classname="navigation.spec.ts" time="0.001">
+<failure message="navigation.spec.ts:38:5 should navigate to Roadmap" type="FAILURE">
+<![CDATA[  [webkit] › navigation.spec.ts:38:5 › Navigation Smoke Test › should navigate to Roadmap ──────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/piotrwisniewski/Library/Caches/ms-playwright/webkit-2227/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Roadmap-webkit/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Roadmap-webkit/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Roadmap-webkit/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Navigation Smoke Test › should navigate to Initiatives" classname="navigation.spec.ts" time="0">
+<failure message="navigation.spec.ts:38:5 should navigate to Initiatives" type="FAILURE">
+<![CDATA[  [webkit] › navigation.spec.ts:38:5 › Navigation Smoke Test › should navigate to Initiatives ──────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/piotrwisniewski/Library/Caches/ms-playwright/webkit-2227/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/navigation-Navigation-Smok-4748e-uld-navigate-to-Initiatives-webkit/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/navigation-Navigation-Smok-4748e-uld-navigate-to-Initiatives-webkit/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/navigation-Navigation-Smok-4748e-uld-navigate-to-Initiatives-webkit/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Navigation Smoke Test › should navigate to Projects" classname="navigation.spec.ts" time="0">
+<failure message="navigation.spec.ts:38:5 should navigate to Projects" type="FAILURE">
+<![CDATA[  [webkit] › navigation.spec.ts:38:5 › Navigation Smoke Test › should navigate to Projects ─────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/piotrwisniewski/Library/Caches/ms-playwright/webkit-2227/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Projects-webkit/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Projects-webkit/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Projects-webkit/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Navigation Smoke Test › should navigate to Settings" classname="navigation.spec.ts" time="0.002">
+<failure message="navigation.spec.ts:38:5 should navigate to Settings" type="FAILURE">
+<![CDATA[  [webkit] › navigation.spec.ts:38:5 › Navigation Smoke Test › should navigate to Settings ─────────
+
+    Error: browserType.launch: Executable doesn't exist at /Users/piotrwisniewski/Library/Caches/ms-playwright/webkit-2227/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Settings-webkit/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Settings-webkit/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/navigation-Navigation-Smoke-Test-should-navigate-to-Settings-webkit/trace.zip]]
+]]>
+</system-out>
 </testcase>
 </testsuite>
 </testsuites>

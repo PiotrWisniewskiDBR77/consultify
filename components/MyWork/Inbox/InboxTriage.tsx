@@ -57,7 +57,7 @@ const SAMPLE_INBOX_ITEMS: InboxItem[] = [
         type: 'new_assignment',
         title: 'Przygotowanie raportu kwartalnego Q4',
         description: 'Przygotuj raport podsumowujący wyniki zespołu za ostatni kwartał. Uwzględnij KPI i rekomendacje.',
-        source: { type: 'user', userId: 'user-1', userName: 'Anna Kowalska', avatarUrl: null },
+        source: { type: 'user', userId: 'user-1', userName: 'Anna Kowalska', avatarUrl: undefined },
         receivedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
         urgency: 'critical',
         linkedTaskId: 'task-1',
@@ -69,7 +69,7 @@ const SAMPLE_INBOX_ITEMS: InboxItem[] = [
         type: 'mention',
         title: '@Ty zostałeś wspomniany w komentarzu',
         description: '"Sprawdźcie z @Ty czy budżet został już zatwierdzony przez zarząd"',
-        source: { type: 'user', userId: 'user-2', userName: 'Piotr Nowak', avatarUrl: null },
+        source: { type: 'user', userId: 'user-2', userName: 'Piotr Nowak', avatarUrl: undefined },
         receivedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 min ago
         urgency: 'high',
         linkedTaskId: 'task-2',
@@ -81,7 +81,7 @@ const SAMPLE_INBOX_ITEMS: InboxItem[] = [
         type: 'decision_request',
         title: 'Decyzja: Wybór dostawcy infrastruktury',
         description: 'Wymagana Twoja decyzja odnośnie wyboru dostawcy usług chmurowych. Deadline: jutro.',
-        source: { type: 'user', userId: 'user-3', userName: 'Marek Wiśniewski', avatarUrl: null },
+        source: { type: 'user', userId: 'user-3', userName: 'Marek Wiśniewski', avatarUrl: undefined },
         receivedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
         urgency: 'high',
         linkedDecisionId: 'decision-1',
@@ -92,7 +92,7 @@ const SAMPLE_INBOX_ITEMS: InboxItem[] = [
         type: 'review_request',
         title: 'Prośba o review: Dokumentacja API v2',
         description: 'Proszę o przejrzenie dokumentacji nowego API przed publikacją.',
-        source: { type: 'user', userId: 'user-4', userName: 'Katarzyna Dąbrowska', avatarUrl: null },
+        source: { type: 'user', userId: 'user-4', userName: 'Katarzyna Dąbrowska', avatarUrl: undefined },
         receivedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
         urgency: 'normal',
         linkedTaskId: 'task-3',
@@ -104,7 +104,7 @@ const SAMPLE_INBOX_ITEMS: InboxItem[] = [
         type: 'escalation',
         title: '⚠️ Eskalacja: Opóźnienie w dostawie komponentów',
         description: 'Dostawca zgłosił 2-tygodniowe opóźnienie. Wymagana interwencja PM.',
-        source: { type: 'system', userId: null, userName: 'System PMO', avatarUrl: null },
+        source: { type: 'system', userId: undefined, userName: 'System PMO', avatarUrl: undefined },
         receivedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 min ago
         urgency: 'critical',
         linkedInitiativeId: 'initiative-1',
@@ -115,7 +115,7 @@ const SAMPLE_INBOX_ITEMS: InboxItem[] = [
         type: 'ai_suggestion',
         title: '💡 AI sugeruje: Przegrupuj zadania na ten tydzień',
         description: 'Wykryto 3 zadania z nakładającymi się terminami. Rozważ delegację lub zmianę priorytetów.',
-        source: { type: 'system', userId: null, userName: 'AI Assistant', avatarUrl: null },
+        source: { type: 'system', userId: undefined, userName: 'AI Assistant', avatarUrl: undefined },
         receivedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 min ago
         urgency: 'normal',
         triaged: false

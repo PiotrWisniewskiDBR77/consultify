@@ -1,25 +1,45 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
+
+// Mock database with proper prepare/finalize support
+const mockPrepare = vi.fn();
+const mockRun = vi.fn();
+const mockFinalize = vi.fn();
+const mockAll = vi.fn();
+
+vi.mock('../../../server/database', () => ({
+    default: {
+        prepare: mockPrepare,
+        run: mockRun,
+        all: mockAll,
+        get: vi.fn()
+    },
+    prepare: mockPrepare,
+    run: mockRun,
+    all: mockAll,
+    get: vi.fn()
+}));
+
+import AnalyticsService from '../../../server/services/analyticsService.js';
 
 /**
- * Integration tests for AnalyticsService
- * Uses real database - production-ready tests
+ * Unit tests for AnalyticsService
  */
 describe('AnalyticsService - Integration', () => {
-    let AnalyticsService;
-
-    beforeAll(async () => {
-        const { createRequire } = await import('module');
-        const require = createRequire(import.meta.url);
-
-        // Ensure Mock DB is set
-        process.env.MOCK_DB = 'true';
-
-        // Ensure DB is initialized (will use mock from server/database.js)
-        const db = require('../../../server/database.js');
-
-        // Import the service
-        const mod = await import('../../../server/services/analyticsService.js');
-        AnalyticsService = mod.default;
+    beforeEach(() => {
+        vi.clearAllMocks();
+        
+        // Setup prepare mock to return statement object
+        mockPrepare.mockReturnValue({
+            run: vi.fn(),
+            finalize: vi.fn()
+        });
+        
+        // Setup all mock to return empty array by default (callback-based)
+        mockAll.mockImplementation((sql, params, callback) => {
+            if (typeof callback === 'function') {
+                callback(null, []);
+            }
+        });
     });
 
     describe('logUsage', () => {

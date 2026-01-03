@@ -40,8 +40,6 @@ const HarmBlockThreshold = {
     BLOCK_ONLY_HIGH: 'BLOCK_ONLY_HIGH'
 };
 
-module.exports = {
-    GoogleGenerativeAI,
-    HarmCategory,
-    HarmBlockThreshold
-};
+export { GoogleGenerativeAI };
+export { HarmCategory };
+export { HarmBlockThreshold };

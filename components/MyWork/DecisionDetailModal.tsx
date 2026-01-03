@@ -137,7 +137,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
     const [submitting, setSubmitting] = useState(false);
     const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | null>(null);
 
-    const currentUserId = useAppStore(state => state.user?.id);
+    const currentUserId = useAppStore(state => state.currentUser?.id);
     const isOwner = decision?.decisionOwnerId === currentUserId;
 
     // Fetch decision details

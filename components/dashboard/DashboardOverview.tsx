@@ -13,7 +13,8 @@ interface DashboardOverviewProps {
     refreshTrigger?: number;
 }
 
-export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
+
+export const DashboardOverview = React.memo<DashboardOverviewProps>(({
     onStartModule1,
     session,
     onCreateTask,
@@ -48,7 +49,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 {/* Right Panel: Notification Center - Spans 5 columns (lepszy balans) */}
                 <div className="lg:col-span-5 flex flex-col min-h-0">
                     <div className="flex-1 min-h-0 overflow-hidden">
-                        <NotificationCenter 
+                        <NotificationCenter
                             onOpenTaskModal={handleOpenTaskFromNotification}
                         />
                     </div>
@@ -57,4 +58,5 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
         </div>
     );
-};
+});
+

@@ -116,6 +116,47 @@ export const AdminKnowledgeView: React.FC = () => {
         }
     };
 
+    const handleApproveWithDetails = async () => {
+        if (!approvingIdea) return;
+        try {
+            const tagsArray = approveIdeaTags.split(',').map(t => t.trim()).filter(t => t.length > 0);
+            await Api.updateKnowledgeCandidate(approvingIdea.id, {
+                status: 'approved',
+                category: approveIdeaCategory || undefined,
+                tags: tagsArray.length > 0 ? tagsArray : undefined
+            });
+            toast.success('Idea approved and added to library');
+            setApprovingIdea(null);
+            setApproveIdeaCategory('');
+            setApproveIdeaTags('');
+            loadData();
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to approve idea';
+            toast.error(errorMessage);
+        }
+    };
+
+    const handleLinkIdeaToProject = async () => {
+        if (!linkingIdea || !linkProjectId) return;
+        try {
+            await Api.updateKnowledgeCandidate(linkingIdea.id, {
+                implementation_notes: linkProjectNotes || undefined
+            });
+            // Link idea to project - using updateKnowledgeCandidate with project reference
+            await Api.updateKnowledgeCandidate(linkingIdea.id, {
+                implementation_notes: linkProjectNotes || undefined
+            });
+            toast.success('Idea linked to project');
+            setLinkingIdea(null);
+            setLinkProjectId('');
+            setLinkProjectNotes('');
+            loadData();
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to link idea';
+            toast.error(errorMessage);
+        }
+    };
+
     // Strategy Actions
     const handleAddStrategy = async (e: React.FormEvent) => {
         e.preventDefault();

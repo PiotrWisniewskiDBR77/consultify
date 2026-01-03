@@ -83,6 +83,7 @@ const NotificationOutboxService = {
     shouldNotify: async (userId, orgId, eventType) => {
         const prefs = await NotificationOutboxService.getUserPreferences(userId, orgId);
 
+
         // Default to true if no preferences set
         if (!prefs) return true;
 
@@ -305,9 +306,9 @@ const NotificationOutboxService = {
             db.get(
                 `SELECT 
                     COUNT(*) as total,
-                    SUM(CASE WHEN status = 'QUEUED' THEN 1 ELSE 0 END) as queued,
-                    SUM(CASE WHEN status = 'SENT' THEN 1 ELSE 0 END) as sent,
-                    SUM(CASE WHEN status = 'FAILED' THEN 1 ELSE 0 END) as failed
+                    COALESCE(SUM(CASE WHEN status = 'QUEUED' THEN 1 ELSE 0 END), 0) as queued,
+                    COALESCE(SUM(CASE WHEN status = 'SENT' THEN 1 ELSE 0 END), 0) as sent,
+                    COALESCE(SUM(CASE WHEN status = 'FAILED' THEN 1 ELSE 0 END), 0) as failed
                  FROM notification_outbox
                  WHERE org_id = ?
                  AND created_at > datetime('now', '-7 days')`,

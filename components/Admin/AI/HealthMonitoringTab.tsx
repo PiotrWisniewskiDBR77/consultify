@@ -53,22 +53,24 @@ interface SystemStatus {
 }
 
 interface AnalyticsData {
-    total_requests: number;
-    avg_latency: number;
-    total_cost: number;
-    error_rate: number;
-    error_count: number;
+    totalCalls: number;
+    totalTokens: number;
+    avgLatency: number;
+    errorRate: number;
+    byProvider: Record<string, { calls: number; tokens: number }>;
+    byDay: { date: string; calls: number; tokens: number }[];
 }
 
 interface LogEntry {
     id: string;
-    timestamp: string;
     provider: string;
     model: string;
-    status: string;
-    latency_ms: number;
-    cost: number;
-    error_message?: string;
+    prompt: string;
+    response?: string;
+    tokens: number;
+    latency: number;
+    error?: string;
+    createdAt: string;
 }
 
 export const HealthMonitoringTab: React.FC = () => {
@@ -435,7 +437,7 @@ export const HealthMonitoringTab: React.FC = () => {
                                 <span className="text-xs font-mono text-slate-500">LAST 7 DAYS</span>
                             </div>
                             <div className="text-2xl font-bold text-navy-900 dark:text-white mb-1">
-                                {analytics?.total_requests?.toLocaleString() || 0}
+                                {analytics?.totalCalls?.toLocaleString() || 0}
                             </div>
                             <div className="text-xs text-slate-500 dark:text-slate-400">Total Requests</div>
                         </div>
@@ -448,7 +450,7 @@ export const HealthMonitoringTab: React.FC = () => {
                                 <span className="text-xs font-mono text-slate-500">AVG LATENCY</span>
                             </div>
                             <div className="text-2xl font-bold text-navy-900 dark:text-white mb-1">
-                                {analytics?.avg_latency || 0}ms
+                                {analytics?.avgLatency || 0}ms
                             </div>
                             <div className="text-xs text-slate-500 dark:text-slate-400">Response Time</div>
                         </div>
@@ -458,30 +460,30 @@ export const HealthMonitoringTab: React.FC = () => {
                                 <div className="p-2 bg-warning-500/20 rounded-lg">
                                     <Coins size={20} className="text-warning-600 dark:text-amber-400" />
                                 </div>
-                                <span className="text-xs font-mono text-slate-500">EST. COST</span>
+                                <span className="text-xs font-mono text-slate-500">TOTAL TOKENS</span>
                             </div>
                             <div className="text-2xl font-bold text-navy-900 dark:text-white mb-1">
-                                ${(analytics?.total_cost || 0).toFixed(4)}
+                                {(analytics?.totalTokens || 0).toLocaleString()}
                             </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400">Total Spend</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400">Tokens Used</div>
                         </div>
 
                         <div className="p-4 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl shadow-sm dark:shadow-none">
                             <div className="flex justify-between items-start mb-2">
                                 <div className={`p-2 rounded-lg ${
-                                    (analytics?.error_rate || 0) > 0.05 ? 'bg-danger-500/20' : 'bg-primary-500/20'
+                                    (analytics?.errorRate || 0) > 0.05 ? 'bg-danger-500/20' : 'bg-primary-500/20'
                                 }`}>
                                     <AlertTriangle size={20} className={
-                                        (analytics?.error_rate || 0) > 0.05 ? 'text-danger-600 dark:text-red-400' : 'text-primary-600 dark:text-purple-400'
+                                        (analytics?.errorRate || 0) > 0.05 ? 'text-danger-600 dark:text-red-400' : 'text-primary-600 dark:text-purple-400'
                                     } />
                                 </div>
                                 <span className="text-xs font-mono text-slate-500">ERROR RATE</span>
                             </div>
                             <div className="text-2xl font-bold text-navy-900 dark:text-white mb-1">
-                                {((analytics?.error_rate || 0) * 100).toFixed(1)}%
+                                {((analytics?.errorRate || 0) * 100).toFixed(1)}%
                             </div>
                             <div className="text-xs text-slate-500 dark:text-slate-400">
-                                {analytics?.error_count || 0} Failed Requests
+                                {Math.round((analytics?.errorRate || 0) * (analytics?.totalCalls || 0))} Failed Requests
                             </div>
                         </div>
                     </div>
@@ -528,15 +530,15 @@ export const HealthMonitoringTab: React.FC = () => {
                                     <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-sm">
                                         <td className="px-4 py-3">
                                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
-                                                log.status === 'success'
+                                                !log.error
                                                     ? 'bg-success-500/10 text-success-700 dark:text-emerald-400 border-success-500/30 dark:border-emerald-500/20'
                                                     : 'bg-danger-500/10 text-danger-700 dark:text-red-400 border-danger-500/30 dark:border-red-500/20'
                                             }`}>
-                                                {log.status}
+                                                {log.error ? 'error' : 'success'}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 text-slate-500 dark:text-slate-400 font-mono text-xs">
-                                            {new Date(log.timestamp).toLocaleTimeString()}
+                                            {new Date(log.createdAt).toLocaleTimeString()}
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex flex-col">
@@ -545,15 +547,15 @@ export const HealthMonitoringTab: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 text-slate-600 dark:text-slate-300 font-mono text-xs">
-                                            {log.latency_ms}ms
+                                            {log.latency}ms
                                         </td>
                                         <td className="px-4 py-3 text-slate-600 dark:text-slate-300 font-mono text-xs">
-                                            ${(log.cost || 0).toFixed(6)}
+                                            {log.tokens} tokens
                                         </td>
                                         <td className="px-4 py-3">
-                                            {log.error_message ? (
-                                                <span className="text-danger-600 dark:text-red-400 text-xs truncate max-w-[200px] block" title={log.error_message}>
-                                                    {log.error_message}
+                                            {log.error ? (
+                                                <span className="text-danger-600 dark:text-red-400 text-xs truncate max-w-[200px] block" title={log.error}>
+                                                    {log.error}
                                                 </span>
                                             ) : (
                                                 <span className="text-slate-400 dark:text-slate-600 text-xs italic">Success</span>

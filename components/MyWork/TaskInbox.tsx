@@ -9,6 +9,7 @@ import { Api } from '../../services/api';
 import toast from 'react-hot-toast';
 import { Task } from '../../types';
 import { usePMOStore, PMOTaskLabel } from '../../store/usePMOStore';
+import { Virtuoso } from 'react-virtuoso';
 
 // PMO Priority Categories
 type PMOCategory = 'blocking_phase' | 'blocking_initiative' | 'awaiting_decision' | 'overdue' | 'other';
@@ -475,8 +476,9 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                 </div>
             </div>
 
+
             {/* List */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+            <div className="flex-1 p-3 space-y-2 min-h-0">
                 {loading && (
                     <div className="text-center p-8">
                         <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
@@ -492,15 +494,15 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                     </div>
                 )}
 
-                {/* Pinned Tasks Section */}
+                {/* Pinned Tasks Section (Always rendered normally as it's small) */}
                 {!loading && pinnedTasks.length > 0 && (
-                    <div className="mb-4 pb-3 border-b border-dashed border-slate-200 dark:border-white/10">
+                    <div className="mb-4 pb-3 border-b border-dashed border-slate-200 dark:border-white/10 flex-shrink-0">
                         <div className="flex items-center gap-2 mb-2 px-1">
                             <Pin size={12} className="text-purple-500" />
                             <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
                                 Pinned
                             </span>
-                            <span className="text-[10px] text-slate-400">({pinnedTasks.length})</span>
+                            <span className="text-xs text-slate-400">({pinnedTasks.length})</span>
                         </div>
                         <div className="space-y-2">
                             <AnimatePresence initial={false}>
@@ -512,7 +514,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
 
                 {/* PMO Priority View */}
                 {viewMode === 'pmo' && !loading && unpinnedTasks.length > 0 && (
-                    <div className="space-y-4">
+                    <div className="space-y-4 overflow-y-auto h-full custom-scrollbar pb-10">
                         {/* PMO Category Sections */}
                         {([
                             { key: 'blocking_phase' as PMOCategory, label: '🔴 Blokujące Fazę', color: 'border-red-500', bgColor: 'bg-red-50 dark:bg-red-900/10' },
@@ -552,16 +554,23 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                     </div>
                 )}
 
-                {/* List View */}
+                {/* List View - VIRTUALIZED */}
                 {viewMode === 'list' && !loading && unpinnedTasks.length > 0 && (
-                    <AnimatePresence initial={false}>
-                        {unpinnedTasks.map(task => renderTaskCard(task))}
-                    </AnimatePresence>
+                    <Virtuoso
+                        style={{ height: '100%' }}
+                        data={unpinnedTasks}
+                        itemContent={(index: number, task: Task) => (
+                            <div className="pb-2">
+                                {renderTaskCard(task)}
+                            </div>
+                        )}
+                    />
                 )}
             </div>
         </div>
     );
 };
+
 
 /**
  * PMO Task Labels Component - Shows PMO-relevant labels for a task

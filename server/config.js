@@ -3,7 +3,7 @@
  * Centralizes environment variables and defaults
  */
 
-module.exports = {
+export default {
     // JWT Configuration
     JWT_SECRET: process.env.JWT_SECRET || 'supersecretkey_change_this_in_production',
     JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '365d', // 1 year for development

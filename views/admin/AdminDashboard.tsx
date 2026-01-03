@@ -6,7 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, Project } from '../../types';
-import { 
+import {
     Users, Briefcase, DollarSign, Activity,
     ArrowUpRight, ArrowDownRight,
     Plus, Send, Settings, Shield, Calendar, UserPlus,
@@ -72,9 +72,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
         ]
     });
 
-    const activeUsers = users.filter(u => u.isActive !== false).length;
-    const activeProjects = projects.filter(p => p.status === 'ACTIVE' || !p.status).length;
-    const pendingInvites = users.filter(u => u.status === 'PENDING').length;
+    const activeUsers = users.filter(u => u.status === 'active').length;
+    const activeProjects = projects.filter(p => p.status === 'active' || !p.status).length;
+    const pendingInvites = users.filter(u => u.status === 'pending').length;
 
     const userGrowth = users.length > 0 ? Math.round((activeUsers / users.length) * 100) - 88 : 0;
     const projectGrowth = projects.length > 0 ? Math.round((activeProjects / projects.length) * 100) - 95 : 0;
@@ -143,12 +143,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
     const formatEventTime = (startTime: string, endTime?: string, isAllDay?: boolean) => {
         if (isAllDay) return 'All day';
         const start = new Date(startTime);
-        const options: Intl.DateTimeFormatOptions = { 
-            weekday: 'short', 
-            month: 'short', 
-            day: 'numeric', 
-            hour: '2-digit', 
-            minute: '2-digit' 
+        const options: Intl.DateTimeFormatOptions = {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         };
         return start.toLocaleDateString('en-US', options);
     };
@@ -179,7 +179,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
     return (
         <div className="space-y-6 relative">
             <InfoButton cardId="admin-dashboard" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -214,7 +214,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
                         {userGrowth !== 0 && (
                             <span className={`flex items-center gap-0.5 text-xs ${userGrowth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                                 {userGrowth >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                            {Math.abs(userGrowth)}%
+                                {Math.abs(userGrowth)}%
                             </span>
                         )}
                     </div>
@@ -234,7 +234,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
                         {projectGrowth !== 0 && (
                             <span className={`flex items-center gap-0.5 text-xs ${projectGrowth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                                 {projectGrowth >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                            {Math.abs(projectGrowth)}%
+                                {Math.abs(projectGrowth)}%
                             </span>
                         )}
                     </div>
@@ -248,7 +248,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
                         <Send size={14} className="text-slate-500" />
                         <span className="admin-metric-label">
                             {t('admin.dashboard.pendingInvites', 'Pending Invites')}
-                            </span>
+                        </span>
                     </div>
                     <p className="admin-metric-value">{pendingInvites}</p>
                     <p className="admin-metric-subtitle">awaiting response</p>
@@ -406,7 +406,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
                                 </div>
                             </div>
                         ))}
-                        <button 
+                        <button
                             onClick={() => setShowScheduleModal(true)}
                             className="w-full mt-2 admin-btn admin-btn-subtle justify-center"
                         >
@@ -417,8 +417,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
                 ) : (
                     <div className="text-center py-8 text-slate-600">
                         <Calendar size={24} className="mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">{t('admin.dashboard.noEvents', 'No upcoming events')}</p>
-                        <button 
+                        <p className="text-sm">{t('admin.dashboard.noEvents', 'No upcoming events')}</p>
+                        <button
                             onClick={() => setShowScheduleModal(true)}
                             className="mt-3 admin-btn admin-btn-subtle"
                         >
@@ -430,7 +430,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
 
             {/* Schedule Event Modal */}
             {showScheduleModal && (
-                <ScheduleEventModal 
+                <ScheduleEventModal
                     onClose={() => setShowScheduleModal(false)}
                     onSuccess={() => {
                         setShowScheduleModal(false);

@@ -11,7 +11,13 @@ const mockAIPolicyEngine = vi.hoisted(() => ({
 
 const mockAIMemoryManager = vi.hoisted(() => ({
     getUserPreferences: vi.fn(),
-    buildProjectMemorySummary: vi.fn()
+    buildProjectMemorySummary: vi.fn(),
+    autoTrimContext: vi.fn(() => ({ trimmed: false })),
+    analyzeContextTokens: vi.fn(() => ({
+        breakdown: { total: 100 },
+        status: { utilizationPercent: 50 },
+        limits: { availableForContext: 4000 }
+    }))
 }));
 
 const mockAIRoleGuard = vi.hoisted(() => ({
@@ -38,6 +44,10 @@ const mockAccessPolicyService = vi.hoisted(() => ({
 }));
 
 const mockUuidv4 = vi.hoisted(() => vi.fn(() => 'uuid-1234'));
+
+const mockTokenBillingService = vi.hoisted(() => ({
+    getOrgBalance: vi.fn(() => Promise.resolve({ balance: 1000 }))
+}));
 
 vi.mock('../../../server/services/aiContextBuilder', () => ({
     default: mockAIContextBuilder
@@ -67,6 +77,10 @@ vi.mock('../../../server/services/accessPolicyService', () => ({
     default: mockAccessPolicyService
 }));
 
+vi.mock('../../../server/services/tokenBillingService', () => ({
+    default: mockTokenBillingService
+}));
+
 vi.mock('uuid', () => ({
     v4: mockUuidv4
 }));
@@ -86,6 +100,7 @@ describe('AIOrchestrator', () => {
             RegulatoryModeGuard: mockRegulatoryModeGuard,
             AIExplainabilityService: mockAIExplainabilityService,
             AccessPolicyService: mockAccessPolicyService,
+            TokenBillingService: mockTokenBillingService,
             uuidv4: mockUuidv4
         });
 
@@ -102,7 +117,7 @@ describe('AIOrchestrator', () => {
         });
 
         mockAIContextBuilder.buildContext.mockResolvedValue({
-            platform: { 
+            platform: {
                 user: { id: 'u1' },
                 role: 'PMO_MANAGER'
             },

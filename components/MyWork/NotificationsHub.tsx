@@ -393,7 +393,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
     const [filter, setFilter] = useState<NotificationFilter>('all');
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['thisWeek', 'earlier']));
 
-    const currentUserId = useAppStore(state => state.user?.id);
+    const currentUserId = useAppStore(state => state.currentUser?.id);
 
     // Fetch notifications
     const fetchNotifications = useCallback(async () => {

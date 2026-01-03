@@ -7,23 +7,23 @@
 // LLM PROVIDER TYPES
 // ==========================================
 
-export type LLMProvider = 
-    | 'openai' 
-    | 'anthropic' 
-    | 'google' 
-    | 'mistral' 
-    | 'azure' 
-    | 'ollama' 
+export type LLMProvider =
+    | 'openai'
+    | 'anthropic'
+    | 'google'
+    | 'mistral'
+    | 'azure'
+    | 'ollama'
     | 'custom';
 
-export type LLMTier = 'free' | 'standard' | 'premium' | 'enterprise';
+export type LLMTier = 'free' | 'standard' | 'premium' | 'enterprise' | 'budget';
 
-export type LLMCapability = 
-    | 'text' 
-    | 'code' 
-    | 'vision' 
-    | 'function_calling' 
-    | 'streaming' 
+export type LLMCapability =
+    | 'text'
+    | 'code'
+    | 'vision'
+    | 'function_calling'
+    | 'streaming'
     | 'embedding';
 
 /**
@@ -34,19 +34,29 @@ export interface LLMProviderConfig {
     provider: LLMProvider;
     name: string;
     model: string;
+    model_id?: string; // For compatibility with LLMProvider
     displayName?: string;
     apiKey?: string;
+    api_key?: string; // For compatibility with LLMProvider
     baseUrl?: string;
+    endpoint?: string; // For compatibility with LLMProvider
     isEnabled: boolean;
     isDefault: boolean;
-    tier: LLMTier;
+    is_active?: boolean; // For compatibility with LLMProvider
+    is_enabled_for_org?: boolean; // Organization context
+    tier: LLMTier | string; // Relaxed type for compatibility with string inputs
     maxTokens: number;
     contextWindow: number;
     capabilities: LLMCapability[];
     costPerInputToken?: number;
     costPerOutputToken?: number;
+    cost_per_1k?: number; // For compatibility with LLMProvider
+    input_cost_per_1k?: number;
+    output_cost_per_1k?: number;
     rateLimit?: LLMRateLimit;
-    healthStatus?: LLMHealthStatus;
+    healthStatus?: 'healthy' | 'degraded' | 'unhealthy' | 'unknown' | LLMHealthStatus;
+    visibility?: 'admin' | 'public' | 'beta'; // For compatibility with LLMProvider
+    recommendation?: string; // For LLMSelector compatibility
     createdAt: string;
     updatedAt: string;
 }
@@ -158,12 +168,12 @@ export interface AIArtifact {
     createdAt: string;
 }
 
-export type ArtifactType = 
-    | 'code' 
-    | 'document' 
-    | 'diagram' 
-    | 'table' 
-    | 'chart' 
+export type ArtifactType =
+    | 'code'
+    | 'document'
+    | 'diagram'
+    | 'table'
+    | 'chart'
     | 'pmo_document'
     | 'markdown'
     | 'json'
@@ -216,7 +226,7 @@ export interface MessageMetadata {
 // AI PERSONA & FOCUS MODES
 // ==========================================
 
-export type AIPersona = 
+export type AIPersona =
     | 'consultant'
     | 'project_manager'
     | 'architect'
@@ -225,7 +235,7 @@ export type AIPersona =
     | 'coach'
     | 'strategist';
 
-export type AIFocusMode = 
+export type AIFocusMode =
     | 'general'
     | 'assessment'
     | 'planning'
@@ -324,7 +334,7 @@ export interface RAGSearchResult {
 // AI MEMORY TYPES
 // ==========================================
 
-export type MemoryType = 
+export type MemoryType =
     | 'fact'
     | 'preference'
     | 'context'
@@ -356,7 +366,7 @@ export interface AIMemory {
 // AI ACTIONS & PROPOSALS
 // ==========================================
 
-export type AIActionType = 
+export type AIActionType =
     | 'create_task'
     | 'update_task'
     | 'create_initiative'

@@ -55,6 +55,9 @@ export interface ConversationMessage {
         citations?: Citation[];
         actions?: ResponseAction[];
         toolCalls?: any[];
+        // AI reasoning and artifacts
+        thinkingSteps?: Array<{ id: string; title: string; content: string; status: 'pending' | 'active' | 'completed' }>;
+        artifacts?: Array<{ id: string; type: string; title: string; content: string; language?: string }>;
         // Voice-specific metadata
         audioUrl?: string;
         audioDuration?: number;

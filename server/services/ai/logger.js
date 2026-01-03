@@ -11,7 +11,7 @@
  * Part of Stability Excellence - Phase 2.2
  */
 
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 const LOG_LEVELS = {
     DEBUG: 0,
@@ -110,7 +110,7 @@ const getCurrentLevel = () => {
 
 const formatMessage = (level, component, message, data = null, traceContext = null) => {
     const timestamp = new Date().toISOString();
-    const traceInfo = traceContext 
+    const traceInfo = traceContext
         ? ` [trace:${traceContext.traceId.substring(0, 8)}] [span:${traceContext.spanId}]`
         : '';
     const base = `[${timestamp}] [${level}] [AI:${component}]${traceInfo} ${message}`;
@@ -198,15 +198,15 @@ const aiLogger = {
         const context = new TraceContext();
         context.setAttribute('operation', operationName);
         Object.entries(attributes).forEach(([k, v]) => context.setAttribute(k, v));
-        
+
         currentTraceContext = context;
         activeSpans.set(context.spanId, context);
-        
+
         this.debug('Tracing', `Started trace: ${operationName}`, {
             traceId: context.traceId,
             spanId: context.spanId
         });
-        
+
         return context;
     },
 
@@ -223,19 +223,19 @@ const aiLogger = {
             TraceContext.generateSpanId(),
             parentContext?.spanId
         );
-        
+
         context.setAttribute('operation', operationName);
         Object.entries(attributes).forEach(([k, v]) => context.setAttribute(k, v));
-        
+
         currentTraceContext = context;
         activeSpans.set(context.spanId, context);
-        
+
         this.debug('Tracing', `Started span: ${operationName}`, {
             traceId: context.traceId,
             spanId: context.spanId,
             parentSpanId: context.parentSpanId
         });
-        
+
         return context;
     },
 
@@ -247,13 +247,13 @@ const aiLogger = {
      */
     endSpan(context, status = 'OK', finalAttributes = {}) {
         if (!context) return;
-        
+
         context.setAttribute('status', status);
         context.setAttribute('duration_ms', context.getDuration());
         Object.entries(finalAttributes).forEach(([k, v]) => context.setAttribute(k, v));
-        
+
         activeSpans.delete(context.spanId);
-        
+
         // Restore parent context if exists
         if (context.parentSpanId && activeSpans.has(context.parentSpanId)) {
             currentTraceContext = activeSpans.get(context.parentSpanId);
@@ -263,19 +263,19 @@ const aiLogger = {
         } else {
             currentTraceContext = null;
         }
-        
+
         this.debug('Tracing', `Ended span: ${context.attributes.operation}`, {
             traceId: context.traceId,
             spanId: context.spanId,
             duration: context.getDuration(),
             status
         });
-        
+
         // Record to persistence if enabled
         if (process.env.TRACING_PERSIST === 'true') {
             this._persistSpan(context);
         }
-        
+
         return context;
     },
 
@@ -355,7 +355,7 @@ const aiLogger = {
             ...context.toJSON(),
             timestamp: new Date().toISOString()
         };
-        
+
         // In production, send to tracing backend (Jaeger, Zipkin, etc.)
         if (process.env.NODE_ENV === 'production') {
             // Could POST to tracing collector here
@@ -380,4 +380,4 @@ const aiLogger = {
     }
 };
 
-module.exports = { aiLogger, LOG_LEVELS, TraceContext };
+export { aiLogger, LOG_LEVELS, TraceContext };

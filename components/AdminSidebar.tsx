@@ -108,13 +108,14 @@ const menuItems: MenuItem[] = [
 ];
 
 // Reusable menu button component
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const MenuButton: React.FC<{
     item: MenuItem;
     activeSection: AdminSection;
     showFull: boolean;
     onSectionChange: (section: AdminSection) => void;
     badge?: number;
-    t: (key: string, fallback?: string) => string;
+    t: (key: string, options?: any) => any;
 }> = ({ item, activeSection, showFull, onSectionChange, badge, t }) => {
     const label = t(item.labelKey, item.id.charAt(0).toUpperCase() + item.id.slice(1));
     

@@ -1,21 +1,33 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
 
-const require = createRequire(import.meta.url);
+// Hoisted mock - must be defined before imports
+const mockDb = vi.hoisted(() => {
+    return {
+        get: vi.fn(),
+        all: vi.fn(),
+        run: vi.fn(),
+        exec: vi.fn(),
+        prepare: vi.fn(),
+        serialize: vi.fn((cb) => { if (cb) cb(); }),
+        query: vi.fn(),
+        runAsync: vi.fn(),
+        getAsync: vi.fn(),
+        allAsync: vi.fn(),
+        execAsync: vi.fn(),
+        initPromise: Promise.resolve()
+    };
+});
+
+vi.mock('../../../server/database', () => ({
+    default: mockDb
+}));
+
+// Import service after mock is set up
+import BaselineService from '../../../server/services/baselineService.js';
 
 describe('Baseline Service', () => {
-    let BaselineService;
-    let mockDb;
-
     beforeEach(() => {
-        vi.resetModules();
-
-        mockDb = createMockDb();
-
-        vi.doMock('../../../server/database', () => ({ default: mockDb }));
-
-        BaselineService = require('../../../server/services/baselineService.js');
+        vi.clearAllMocks();
         
         // Inject mock dependencies
         BaselineService.setDependencies({
@@ -26,7 +38,6 @@ describe('Baseline Service', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../server/database');
     });
 
     describe('calculateVariance', () => {

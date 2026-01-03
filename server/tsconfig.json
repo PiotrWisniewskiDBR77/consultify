@@ -30,6 +30,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
+    "allowJs": true,
     
     // Output settings
     "declaration": true,
@@ -37,13 +38,18 @@
     "sourceMap": true,
     "inlineSources": true,
     
-    // Performance
+    // Performance optimizations
     "skipLibCheck": true,
     "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "composite": false, // Set to true if using project references
     
     // Decorators (for DI/ORM if needed)
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    
+    // Types
+    "types": ["node", "vitest/globals"],
     
     // Paths
     "baseUrl": ".",

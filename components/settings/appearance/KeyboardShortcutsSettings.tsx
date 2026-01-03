@@ -118,6 +118,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
             window.addEventListener('keydown', handleKeyDown);
             return () => window.removeEventListener('keydown', handleKeyDown);
         }
+        return undefined;
     }, [recordingKeys]);
 
     const loadSettings = async () => {

@@ -126,9 +126,10 @@ export function SLADashboard() {
 
     useEffect(() => {
         if (autoRefresh) {
-            const interval = setInterval(loadSLAData, 60000); // Refresh every 60s
+            const interval = setInterval(() => void loadSLAData(), 60000); // Refresh every 60s
             return () => clearInterval(interval);
         }
+        return undefined;
     }, [autoRefresh, loadSLAData]);
 
     const generateMockMetrics = (): SLAMetrics => {

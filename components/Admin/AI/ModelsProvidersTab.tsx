@@ -96,8 +96,32 @@ const TIER_CONFIG: Record<string, { icon: any; color: string; label: string }> =
     REASONING: { icon: Brain, color: 'amber', label: 'Reasoning' }
 };
 
+interface LLMProviderConfig {
+    id: string;
+    provider: string;
+    name: string;
+    model: string;
+    model_id?: string;
+    displayName?: string;
+    apiKey?: string;
+    baseUrl?: string;
+    isEnabled: boolean;
+    isDefault: boolean;
+    is_active?: boolean;
+    is_enabled_for_org?: boolean;
+    tier: string;
+    maxTokens: number;
+    contextWindow: number;
+    capabilities: string[];
+    costPerInputToken?: number;
+    costPerOutputToken?: number;
+    healthStatus?: { status: string; latency?: number; lastCheck: string };
+    createdAt?: string;
+    updatedAt?: string;
+}
+
 export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organizationId }) => {
-    const [providers, setProviders] = useState<LLMProvider[]>([]);
+    const [providers, setProviders] = useState<LLMProviderConfig[]>([]);
     const [llmStatus, setLLMStatus] = useState<LLMStatus | null>(null);
     const [availableModels, setAvailableModels] = useState<AvailableModels>({});
     const [loading, setLoading] = useState(true);
@@ -258,7 +282,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
     };
 
     // Get tiers for a provider - check by provider ID or name
-    const getProviderTiers = (provider: LLMProvider): string[] => {
+    const getProviderTiers = (provider: LLMProviderConfig): string[] => {
         const tiers: string[] = [];
         for (const [tier, models] of Object.entries(availableModels)) {
             if (models.some(m => 
@@ -273,7 +297,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
     };
 
     // Find provider status
-    const getProviderStatusInfo = (provider: LLMProvider) => {
+    const getProviderStatusInfo = (provider: LLMProviderConfig) => {
         return llmStatus?.providers.find(p => p.id === provider.id || p.provider === provider.provider);
     };
 

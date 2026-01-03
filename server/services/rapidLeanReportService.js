@@ -1,15 +1,13 @@
-/**
- * RapidLean Report Generation Service
- * Automatically generates comprehensive reports after assessment completion
- * Following DBR77 format and DRD principles
- */
+import RapidLeanService from './rapidLeanService.js';
+import RapidLeanObservationMapper from './rapidLeanObservationMapper.js';
+import { v4 as uuidv4 } from 'uuid';
+import db from '../database.js';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-const RapidLeanService = require('./rapidLeanService');
-const RapidLeanObservationMapper = require('./rapidLeanObservationMapper');
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
-const path = require('path');
-const fs = require('fs');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class RapidLeanReportService {
     /**
@@ -254,10 +252,10 @@ class RapidLeanReportService {
      * @returns {Promise<string>} File URL
      */
     static async generatePDF(reportData, organizationId) {
-        const PDFDocument = require('pdfkit');
+        const { default: PDFDocument } = await import('pdfkit');
 
         const fileName = `rapidlean_report_${reportData.assessmentId}_${Date.now()}.pdf`;
-        const filePath = path.join('uploads', 'organizations', organizationId, 'rapidlean', 'reports', fileName);
+        const filePath = path.join(process.cwd(), 'uploads', 'organizations', organizationId, 'rapidlean', 'reports', fileName);
 
         // Ensure directory exists
         const dir = path.dirname(filePath);
@@ -491,10 +489,10 @@ class RapidLeanReportService {
      * @returns {Promise<string>} File URL
      */
     static async generateExcel(reportData, organizationId) {
-        const ExcelJS = require('exceljs');
+        const { default: ExcelJS } = await import('exceljs');
 
         const fileName = `rapidlean_report_${reportData.assessmentId}_${Date.now()}.xlsx`;
-        const filePath = path.join('uploads', 'organizations', organizationId, 'rapidlean', 'reports', fileName);
+        const filePath = path.join(process.cwd(), 'uploads', 'organizations', organizationId, 'rapidlean', 'reports', fileName);
 
         const dir = path.dirname(filePath);
         if (!fs.existsSync(dir)) {
@@ -742,5 +740,5 @@ class RapidLeanReportService {
     }
 }
 
-module.exports = RapidLeanReportService;
+export default RapidLeanReportService;
 

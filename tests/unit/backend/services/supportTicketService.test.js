@@ -2,14 +2,28 @@
  * Unit tests for SupportTicketService
  */
 
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+
+// Mock database
+const mockDb = {
+    run: vi.fn(),
+    get: vi.fn(),
+    all: vi.fn()
+};
+
+vi.mock('../../../../server/database', () => ({
+    default: mockDb
+}));
+
 const SupportTicketService = require('../../../../server/services/supportTicketService');
 const db = require('../../../../server/database');
 
-jest.mock('../../../../server/database');
-
 describe('SupportTicketService', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('generateTicketNumber', () => {
@@ -25,7 +39,7 @@ describe('SupportTicketService', () => {
 
     describe('createTicket', () => {
         it('should create a support ticket', async () => {
-            db.run.mockImplementation((query, params, callback) => {
+            mockDb.run.mockImplementation((query, params, callback) => {
                 callback(null, { changes: 1 });
             });
 
@@ -48,7 +62,7 @@ describe('SupportTicketService', () => {
             const mockTickets = [
                 { id: '1', ticket_number: 'TKT-001', subject: 'Test', status: 'open' }
             ];
-            db.all.mockImplementation((query, params, callback) => {
+            mockDb.all.mockImplementation((query, params, callback) => {
                 callback(null, mockTickets);
             });
 

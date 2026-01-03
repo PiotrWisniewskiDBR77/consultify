@@ -88,7 +88,12 @@ const RegulatoryModeGuard = {
                         return;
                     }
                     // Default to enabled (1) if column doesn't exist or is null
-                    resolve(row?.regulatory_mode_enabled !== 0);
+                    // Return true only if explicitly set to 1, false if 0, true if null/undefined (default)
+                    if (!row || row.regulatory_mode_enabled == null) {
+                        resolve(true); // Default to enabled
+                    } else {
+                        resolve(row.regulatory_mode_enabled === 1);
+                    }
                 }
             );
         });

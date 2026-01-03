@@ -1,15 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 
-const require = createRequire(import.meta.url);
+// Mock modules before importing service
+vi.mock('../../../server/database.js', () => ({
+    default: null // Will be set in beforeEach
+}));
+
+vi.mock('../../../server/services/stageGateService.js', () => ({
+    default: null // Will be set in beforeEach
+}));
+
+// Import service after mocks are set up
+import PMOHealthService from '../../../server/services/pmoHealthService.js';
 
 describe('PMOHealthService', () => {
-    let PMOHealthService;
     let mockDb;
     let mockStageGateService;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.resetModules();
 
         mockDb = createMockDb();
@@ -20,10 +28,13 @@ describe('PMOHealthService', () => {
             PHASE_ORDER: ['Context', 'Planning', 'Execution']
         };
 
-        vi.doMock('../../../server/database', () => ({ default: mockDb }));
-        vi.doMock('../../../server/services/stageGateService', () => ({ default: mockStageGateService }));
-
-        PMOHealthService = require('../../../server/services/pmoHealthService.js');
+        // Update mocks
+        const dbModule = await import('../../../server/database.js');
+        const stageGateModule = await import('../../../server/services/stageGateService.js');
+        
+        // Replace module exports with mocks
+        Object.assign(dbModule, { default: mockDb });
+        Object.assign(stageGateModule, { default: mockStageGateService });
         
         // Inject mock dependencies
         PMOHealthService.setDependencies({

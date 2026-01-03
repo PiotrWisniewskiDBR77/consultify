@@ -47,7 +47,7 @@ describe('Variable Resolver Service', () => {
             const template = 'Hello {{user.name}}';
             const context = {
                 user: {
-                    name: 'John',
+                    firstName: 'John', // Resolver uses user.firstName, not user.name
                     language: 'en'
                 }
             };
@@ -60,7 +60,7 @@ describe('Variable Resolver Service', () => {
             const template = 'Hello {{user.name}}, your role is {{user.role}}';
             const context = {
                 user: {
-                    name: 'John',
+                    firstName: 'John', // Resolver uses user.firstName, not user.name
                     role: 'admin'
                 }
             };

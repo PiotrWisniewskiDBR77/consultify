@@ -1,15 +1,23 @@
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
+import db from '../database.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import config from '../config.js';
+import ActivityService from '../services/activityService.js';
+import MFAService from '../services/mfaService.js';
+import RefreshTokenService from '../services/refreshTokenService.js';
+import RedisStore from '../utils/redisRateLimitStore.js';
 
 // Default Dependencies
 const deps = {
-    db: require('../database'),
-    bcrypt: require('bcryptjs'),
-    jwt: require('jsonwebtoken'),
-    config: require('../config'),
-    ActivityService: require('../services/activityService'),
-    MFAService: require('../services/mfaService'),
-    RefreshTokenService: require('../services/refreshTokenService'),
-    RedisStore: require('../utils/redisRateLimitStore')
+    db,
+    bcrypt,
+    jwt,
+    config,
+    ActivityService,
+    MFAService,
+    RefreshTokenService,
+    RedisStore
 };
 
 /**
@@ -31,7 +39,7 @@ const withTimeout = (promise, timeoutMs = 1000) => {
 /**
  * Handle User Login
  */
-const login = async (req, res) => {
+export const login = async (req, res) => {
     console.log('[Auth] Login request received for:', req.body?.email || 'no email');
     const { email, password, mfaToken, deviceFingerprint, trustDevice } = req.body;
 
@@ -187,7 +195,8 @@ const login = async (req, res) => {
     }
 };
 
-module.exports = {
+export { setDependencies };
+export default {
     login,
     setDependencies
 };

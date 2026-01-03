@@ -145,9 +145,12 @@ describe('Performance Test: Database', () => {
         });
 
         it('should handle 20 concurrent INSERT operations', async () => {
+            // Use deterministic IDs to prevent race conditions
+            const baseTime = Date.now();
             const inserts = Array(20).fill(null).map((_, i) =>
                 new Promise((resolve, reject) => {
-                    const taskId = `perf-task-${i}-${Date.now()}`;
+                    // Use index-based ID to ensure uniqueness and prevent race conditions
+                    const taskId = `perf-task-${baseTime}-${i}`;
                     db.run(
                         'INSERT INTO tasks (id, organization_id, title, status) VALUES (?, ?, ?, ?)',
                         [taskId, testOrgId, `Task ${i}`, 'todo'],

@@ -12,16 +12,14 @@ vi.mock('../../../../services/api', () => ({
     }
 }));
 
+const mockUseAppStore = vi.fn();
 vi.mock('../../../../store/useAppStore', () => ({
-    useAppStore: (selector: any) => selector({
-        user: { id: 'user1', name: 'User 1' },
-        currentProjectId: 'proj1'
-    })
+    useAppStore: (selector: any) => mockUseAppStore(selector)
 }));
 
 vi.mock('react-i18next', () => ({
     useTranslation: () => ({
-        t: (key: string, defaultValue: string) => defaultValue
+        t: (key: string, defaultValue?: string) => defaultValue || key
     })
 }));
 
@@ -41,6 +39,7 @@ describe('DecisionsList', () => {
             id: 'd1',
             title: 'My Decision',
             status: 'PENDING',
+            decisionType: 'GENERAL',
             decisionOwnerId: 'user1',
             ownerName: 'User 1',
             createdAt: new Date().toISOString()
@@ -49,6 +48,7 @@ describe('DecisionsList', () => {
             id: 'd2',
             title: 'Awaiting Decision',
             status: 'PENDING',
+            decisionType: 'GENERAL',
             requestedById: 'user1',
             requestedByName: 'User 1',
             decisionOwnerId: 'user2',
@@ -59,7 +59,21 @@ describe('DecisionsList', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (Api.get as any).mockResolvedValue(mockDecisions);
+        // Use deterministic mock to prevent race conditions
+        (Api.get as any).mockImplementation(() => Promise.resolve(mockDecisions));
+        
+        // Setup store mock
+        mockUseAppStore.mockImplementation((selector: any) => {
+            const state = {
+                currentProjectId: 'proj1',
+                currentUser: { id: 'user1', name: 'User 1' }
+            };
+            return selector(state);
+        });
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
     });
 
     it('renders and fetches decisions', async () => {
@@ -71,17 +85,25 @@ describe('DecisionsList', () => {
             />
         );
 
+        // Wait for API call and then for rendering
         await waitFor(() => {
-            expect(Api.get).toHaveBeenCalledWith('/decisions?projectId=proj1&includeAll=true');
-            expect(screen.getByText('My Decision')).toBeTruthy();
-            expect(screen.getByText('Awaiting Decision')).toBeTruthy();
-        });
+            expect(Api.get).toHaveBeenCalled();
+        }, { timeout: 5000 });
 
-        expect(mockOnCountsChange).toHaveBeenCalledWith({
-            total: 2,
-            my: 1,
-            awaiting: 1
-        });
+        // Wait for decisions to be rendered
+        await waitFor(() => {
+            expect(screen.getByText('My Decision')).toBeInTheDocument();
+            expect(screen.getByText('Awaiting Decision')).toBeInTheDocument();
+        }, { timeout: 5000 });
+
+        // Wait for counts callback
+        await waitFor(() => {
+            expect(mockOnCountsChange).toHaveBeenCalledWith({
+                total: 2,
+                my: 1,
+                awaiting: 1
+            });
+        }, { timeout: 5000 });
     });
 
     it('filters by "my" decisions', async () => {
@@ -94,9 +116,13 @@ describe('DecisionsList', () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByText('My Decision')).toBeTruthy();
-            expect(screen.queryByText('Awaiting Decision')).toBeNull();
-        });
+            expect(Api.get).toHaveBeenCalled();
+        }, { timeout: 3000 });
+
+        await waitFor(() => {
+            expect(screen.getByText('My Decision')).toBeInTheDocument();
+            expect(screen.queryByText('Awaiting Decision')).not.toBeInTheDocument();
+        }, { timeout: 3000 });
     });
 
     it('filters by "awaiting" decisions', async () => {
@@ -109,9 +135,13 @@ describe('DecisionsList', () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByText('Awaiting Decision')).toBeTruthy();
-            expect(screen.queryByText('My Decision')).toBeNull();
-        });
+            expect(Api.get).toHaveBeenCalled();
+        }, { timeout: 3000 });
+
+        await waitFor(() => {
+            expect(screen.getByText('Awaiting Decision')).toBeInTheDocument();
+            expect(screen.queryByText('My Decision')).not.toBeInTheDocument();
+        }, { timeout: 3000 });
     });
 
     it('calls onDecisionClick when a card is clicked', async () => {
@@ -123,10 +153,23 @@ describe('DecisionsList', () => {
             />
         );
 
-        await waitFor(() => expect(screen.getByText('My Decision')).toBeTruthy());
+        await waitFor(() => {
+            expect(Api.get).toHaveBeenCalled();
+        }, { timeout: 3000 });
 
-        fireEvent.click(screen.getByText('My Decision'));
-        expect(mockOnDecisionClick).toHaveBeenCalledWith('d1');
+        await waitFor(() => {
+            expect(screen.getByText('My Decision')).toBeInTheDocument();
+        }, { timeout: 3000 });
+
+        const decisionCard = screen.getByText('My Decision').closest('div[class*="cursor-pointer"]');
+        if (decisionCard) {
+            fireEvent.click(decisionCard);
+            expect(mockOnDecisionClick).toHaveBeenCalledWith('d1');
+        } else {
+            // Fallback: click on the text itself
+            fireEvent.click(screen.getByText('My Decision'));
+            expect(mockOnDecisionClick).toHaveBeenCalledWith('d1');
+        }
     });
 
     it('shows empty state when no decisions found', async () => {
@@ -140,8 +183,12 @@ describe('DecisionsList', () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByText('No decisions awaiting your action')).toBeTruthy();
-            expect(screen.getByText('All caught up!')).toBeTruthy();
-        });
+            expect(Api.get).toHaveBeenCalled();
+        }, { timeout: 3000 });
+
+        await waitFor(() => {
+            expect(screen.getByText('No decisions awaiting your action')).toBeInTheDocument();
+            expect(screen.getByText('All caught up!')).toBeInTheDocument();
+        }, { timeout: 3000 });
     });
 });

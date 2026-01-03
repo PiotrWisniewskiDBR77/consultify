@@ -11,23 +11,30 @@ import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testOrganizations } from '../../fixtures/testData.js';
 
 const require = createRequire(import.meta.url);
-const WebhookServiceClass = require('../../../server/services/webhookService.js');
 
 describe('WebhookService', () => {
     let mockDb;
     let mockFetch;
     let WebhookService;
+    let WebhookServiceClass;
 
     beforeEach(() => {
+        vi.resetModules();
+
+        // Initialize mocks
         mockDb = createMockDb();
-        
+
         // Create fetch mock
         mockFetch = vi.fn().mockResolvedValue({
             ok: true,
             status: 200,
             statusText: 'OK'
         });
-        
+
+        // Import the REAL service (now exposing the class)
+        const WebhookServiceModule = require('../../../server/services/webhookService.js');
+        WebhookServiceClass = WebhookServiceModule.WebhookService;
+
         // Create service with injected fetch mock
         WebhookService = new WebhookServiceClass(mockDb, { fetch: mockFetch });
     });
@@ -249,7 +256,7 @@ describe('WebhookService', () => {
             expect(result.success).toBe(false);
             expect(result.status).toBe(400);
         });
-        
+
         it('should handle network errors', async () => {
             const webhookUrl = 'https://hooks.slack.com/services/xxx';
 
@@ -331,7 +338,7 @@ describe('WebhookService', () => {
             const callArgs = mockFetch.mock.calls[0];
             expect(callArgs[1].headers['X-Consultify-Event']).toBe('initiative.created');
         });
-        
+
         it('should generate different signatures for different secrets', async () => {
             const webhook1 = {
                 url: 'https://example.com/webhook1',
@@ -350,7 +357,7 @@ describe('WebhookService', () => {
 
             const sig1 = mockFetch.mock.calls[0][1].headers['X-Consultify-Signature'];
             const sig2 = mockFetch.mock.calls[1][1].headers['X-Consultify-Signature'];
-            
+
             expect(sig1).not.toBe(sig2);
         });
     });

@@ -4,6 +4,10 @@
  * Unit tests for NPV, IRR, Payback Period, ROI, and Sensitivity Analysis
  */
 
+import { describe, it, expect } from 'vitest';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 const FinancialCalculatorService = require('../../../server/services/financialCalculatorService');
 
 describe('FinancialCalculatorService', () => {

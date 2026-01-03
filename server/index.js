@@ -144,56 +144,56 @@ app.use(helmet({
         },
         reportOnly: false
     } : false, // Disable CSP in dev for hot reload
-    
+
     // HTTP Strict Transport Security
     hsts: {
         maxAge: 31536000, // 1 year
         includeSubDomains: true,
         preload: true
     },
-    
+
     // Referrer Policy
     referrerPolicy: {
         policy: 'strict-origin-when-cross-origin'
     },
-    
+
     // X-Content-Type-Options
     noSniff: true,
-    
+
     // X-Frame-Options (redundant with CSP frame-ancestors but good for old browsers)
     frameguard: {
         action: 'deny'
     },
-    
+
     // X-XSS-Protection (legacy but doesn't hurt)
     xssFilter: true,
-    
+
     // X-DNS-Prefetch-Control
     dnsPrefetchControl: {
         allow: false
     },
-    
+
     // X-Download-Options (IE specific)
     ieNoOpen: true,
-    
+
     // X-Permitted-Cross-Domain-Policies
     permittedCrossDomainPolicies: {
         permittedPolicies: 'none'
     },
-    
+
     // Cross-Origin Embedder Policy
     crossOriginEmbedderPolicy: false, // Allow embedding for now - can be stricter
-    
+
     // Cross-Origin Opener Policy
     crossOriginOpenerPolicy: {
         policy: 'same-origin'
     },
-    
+
     // Cross-Origin Resource Policy
     crossOriginResourcePolicy: {
         policy: 'same-site'
     },
-    
+
     // Origin Agent Cluster
     originAgentCluster: true
 }));
@@ -264,12 +264,11 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// TEMP DEBUG: Disabling Sentry middleware
 // Sentry Request Handler (must be FIRST middleware - before body parsing)
-// app.use(sentryHandlers.requestHandler);
+app.use(sentryHandlers.requestHandler);
 
 // Sentry Tracing Handler (must be after request handler, before routes)
-// app.use(sentryHandlers.tracingHandler);
+app.use(sentryHandlers.tracingHandler);
 
 // Body Parsing & Static Files
 app.use(express.json({ limit: '10mb' }));

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, LLMProvider, AIPreferences, UserAIProvider, UserAISettings, AIProactivityMode, OrgAISettings } from '../../types';
+import { LLMProviderConfig } from '../../types/domain/ai';
 import { InfoButton } from '../shared/InfoButton';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -55,7 +56,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
     const [saved, setSaved] = useState(false);
 
     // Model Management State
-    const [orgProviders, setOrgProviders] = useState<LLMProvider[]>([]);
+    const [orgProviders, setOrgProviders] = useState<LLMProviderConfig[]>([]);
     const [localProviders, setLocalProviders] = useState<UserAIProvider[]>([]);
     const [selectedOrgModels, setSelectedOrgModels] = useState<string[]>([]);
     const [loadingModels, setLoadingModels] = useState(true);

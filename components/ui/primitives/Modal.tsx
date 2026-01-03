@@ -129,6 +129,7 @@ export const Modal: React.FC<ModalProps> = ({
         previousActiveElement.current?.focus();
       };
     }
+    return undefined;
   }, [open, handleKeyDown]);
 
   // Handle overlay click

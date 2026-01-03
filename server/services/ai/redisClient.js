@@ -8,7 +8,8 @@
  * - Connection health monitoring
  */
 
-const { aiLogger } = require('./logger');
+import { aiLogger } from './logger.js';
+import { createClient } from 'redis';
 
 let redisClient = null;
 let isConnected = false;
@@ -28,7 +29,7 @@ async function initRedis(redisUrl) {
         aiLogger.warn('Redis', 'Falling back to in-memory fallback');
         redisUrl = null;
     }
-    
+
     if (!redisUrl) {
         aiLogger.info('Redis', 'No REDIS_URL configured, using in-memory fallback');
         return null;
@@ -41,12 +42,10 @@ async function initRedis(redisUrl) {
     }
 
     try {
-        const redis = require('redis');
-        
         const connectTimeout = parseInt(process.env.REDIS_CONNECT_TIMEOUT || '30000', 10); // 30 seconds default for Railway
         const commandTimeout = parseInt(process.env.REDIS_COMMAND_TIMEOUT || '10000', 10); // 10 seconds for commands
-        
-        redisClient = redis.createClient({
+
+        redisClient = createClient({
             url: redisUrl,
             socket: {
                 connectTimeout: connectTimeout,
@@ -146,7 +145,7 @@ async function healthCheck() {
     }
 }
 
-module.exports = {
+export {
     initRedis,
     getRedisClient,
     isRedisConnected,

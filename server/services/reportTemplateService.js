@@ -8,13 +8,16 @@
  * - ISO 21500: Document Management
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import { v4 as uuidv4 } from 'uuid';
+import db from '../database.sqlite.active.js';
 
 // Database helpers
 function dbGet(sql, params = []) {
+    console.log('[DEBUG] Service DB ID:', db ? db.id : 'DB_UNDEFINED');
+    console.log('[DEBUG] dbGet SQL:', sql, 'Params:', params);
     return new Promise((resolve, reject) => {
         db.get(sql, params, (err, row) => {
+            console.log('[DEBUG] dbGet Row:', row, 'Err:', err);
             if (err) reject(err);
             else resolve(row);
         });
@@ -32,7 +35,7 @@ function dbAll(sql, params = []) {
 
 function dbRun(sql, params = []) {
     return new Promise((resolve, reject) => {
-        db.run(sql, params, function(err) {
+        db.run(sql, params, function (err) {
             if (err) reject(err);
             else resolve({ lastID: this.lastID, changes: this.changes });
         });
@@ -75,7 +78,7 @@ const ReportTemplateService = {
             'SELECT * FROM management_report_templates WHERE id = ?',
             [templateId]
         );
-        
+
         if (!template) return null;
 
         return {
@@ -313,7 +316,7 @@ const ReportTemplateService = {
     }
 };
 
-module.exports = ReportTemplateService;
+export default ReportTemplateService;
 
 
 

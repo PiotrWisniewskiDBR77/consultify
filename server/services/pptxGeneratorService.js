@@ -1,23 +1,15 @@
-/**
- * PowerPoint Generator Service
- * 
- * Generates PowerPoint presentations for Management Reports:
- * - Team Meeting Reports
- * - Steering Committee Reports
- * 
- * PMO Standards Compliance:
- * - ISO 21500:2021 - Project Performance Measurement
- * - PMBOK 7 - Measurement Performance Domain
- * - PRINCE2 - Highlight Report / Progress Theme
- */
+import { promises as fs } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const fs = require('fs').promises;
-const path = require('path');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Try to load pptxgenjs
 let PptxGenJS;
 try {
-    PptxGenJS = require('pptxgenjs');
+    const mod = await import('pptxgenjs');
+    PptxGenJS = mod.default || mod;
 } catch (e) {
     console.warn('[PptxGenerator] pptxgenjs not installed. PowerPoint export will not be available.');
 }
@@ -80,42 +72,50 @@ const PptxGeneratorService = {
             // Header line
             { rect: { x: 0, y: 0, w: '100%', h: 0.1, fill: { color: primaryColor } } },
             // Footer
-            { text: { 
-                text: `${branding.companyName || 'Consultify'} | PMO Standards: ISO 21500 | PMBOK 7 | PRINCE2`,
-                options: { x: 0.5, y: 5.3, w: 9, h: 0.3, fontSize: 8, color: COLORS.TEXT_LIGHT }
-            }},
+            {
+                text: {
+                    text: `${branding.companyName || 'Consultify'} | PMO Standards: ISO 21500 | PMBOK 7 | PRINCE2`,
+                    options: { x: 0.5, y: 5.3, w: 9, h: 0.3, fontSize: 8, color: COLORS.TEXT_LIGHT }
+                }
+            },
             // Page number
-            { text: {
-                text: 'Slide ',
-                options: { x: 9, y: 5.3, w: 0.5, h: 0.3, fontSize: 8, color: COLORS.TEXT_LIGHT }
-            }}
+            {
+                text: {
+                    text: 'Slide ',
+                    options: { x: 9, y: 5.3, w: 0.5, h: 0.3, fontSize: 8, color: COLORS.TEXT_LIGHT }
+                }
+            }
         ];
 
         // Add DRAFT watermark if not finalized
         if (isDraft) {
             masterObjects.push(
                 // Diagonal watermark
-                { text: {
-                    text: 'DRAFT',
-                    options: {
-                        x: 1.5,
-                        y: 2,
-                        w: 7,
-                        h: 1.5,
-                        fontSize: 72,
-                        bold: true,
-                        color: 'ef444420', // Red with 12% opacity
-                        rotate: -35,
-                        align: 'center',
-                        valign: 'middle'
+                {
+                    text: {
+                        text: 'DRAFT',
+                        options: {
+                            x: 1.5,
+                            y: 2,
+                            w: 7,
+                            h: 1.5,
+                            fontSize: 72,
+                            bold: true,
+                            color: 'ef444420', // Red with 12% opacity
+                            rotate: -35,
+                            align: 'center',
+                            valign: 'middle'
+                        }
                     }
-                }},
+                },
                 // Top banner warning
                 { rect: { x: 0, y: 0.1, w: '100%', h: 0.35, fill: { color: 'fef2f2' } } },
-                { text: {
-                    text: '⚠️ DRAFT - NOT FOR DISTRIBUTION - This report has not been finalized ⚠️',
-                    options: { x: 0, y: 0.15, w: '100%', h: 0.25, fontSize: 10, bold: true, color: '991b1b', align: 'center' }
-                }}
+                {
+                    text: {
+                        text: '⚠️ DRAFT - NOT FOR DISTRIBUTION - This report has not been finalized ⚠️',
+                        options: { x: 0, y: 0.15, w: '100%', h: 0.25, fontSize: 10, bold: true, color: '991b1b', align: 'center' }
+                    }
+                }
             );
         }
 
@@ -223,7 +223,7 @@ async function generateTeamMeetingSlides(pptx, report, primaryColor) {
     if (completedWork.length > 0) {
         const tableData = [
             [{ text: 'Task', options: { bold: true, fill: { color: COLORS.BACKGROUND } } },
-             { text: 'Completed By', options: { bold: true, fill: { color: COLORS.BACKGROUND } } }]
+            { text: 'Completed By', options: { bold: true, fill: { color: COLORS.BACKGROUND } } }]
         ];
         completedWork.forEach(item => {
             tableData.push([
@@ -287,8 +287,8 @@ async function generateTeamMeetingSlides(pptx, report, primaryColor) {
 
         const decisionTable = [
             [{ text: 'Decision', options: { bold: true, fill: { color: COLORS.BACKGROUND } } },
-             { text: 'Owner', options: { bold: true, fill: { color: COLORS.BACKGROUND } } },
-             { text: 'Waiting', options: { bold: true, fill: { color: COLORS.BACKGROUND } } }]
+            { text: 'Owner', options: { bold: true, fill: { color: COLORS.BACKGROUND } } },
+            { text: 'Waiting', options: { bold: true, fill: { color: COLORS.BACKGROUND } } }]
         ];
         decisions.slice(0, 8).forEach(d => {
             decisionTable.push([
@@ -317,8 +317,8 @@ async function generateTeamMeetingSlides(pptx, report, primaryColor) {
     if (nextPlan.length > 0) {
         const planTable = [
             [{ text: 'Task', options: { bold: true, fill: { color: COLORS.BACKGROUND } } },
-             { text: 'Due Date', options: { bold: true, fill: { color: COLORS.BACKGROUND } } },
-             { text: 'Assignee', options: { bold: true, fill: { color: COLORS.BACKGROUND } } }]
+            { text: 'Due Date', options: { bold: true, fill: { color: COLORS.BACKGROUND } } },
+            { text: 'Assignee', options: { bold: true, fill: { color: COLORS.BACKGROUND } } }]
         ];
         nextPlan.forEach(item => {
             planTable.push([
@@ -358,7 +358,7 @@ async function generateSteeringCommitteeSlides(pptx, report, primaryColor) {
         x: 0.5, y: 1.3, w: 9, h: 0.4,
         fontSize: 12, color: COLORS.TEXT_LIGHT
     });
-    
+
     // Executive Summary box
     slide1.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
         x: 0.5, y: 1.9, w: 9, h: 2.5,
@@ -480,15 +480,15 @@ async function generateSteeringCommitteeSlides(pptx, report, primaryColor) {
 
         const riskTable = [
             [{ text: 'Type', options: { bold: true, fill: { color: COLORS.BACKGROUND } } },
-             { text: 'Title', options: { bold: true, fill: { color: COLORS.BACKGROUND } } },
-             { text: 'Severity', options: { bold: true, fill: { color: COLORS.BACKGROUND } } },
-             { text: 'Owner', options: { bold: true, fill: { color: COLORS.BACKGROUND } } },
-             { text: 'Days', options: { bold: true, fill: { color: COLORS.BACKGROUND } } }]
+            { text: 'Title', options: { bold: true, fill: { color: COLORS.BACKGROUND } } },
+            { text: 'Severity', options: { bold: true, fill: { color: COLORS.BACKGROUND } } },
+            { text: 'Owner', options: { bold: true, fill: { color: COLORS.BACKGROUND } } },
+            { text: 'Days', options: { bold: true, fill: { color: COLORS.BACKGROUND } } }]
         ];
 
         risks.slice(0, 8).forEach(risk => {
-            const sevColor = risk.severity === 'CRITICAL' ? COLORS.DANGER : 
-                           risk.severity === 'HIGH' ? COLORS.WARNING : COLORS.TEXT_LIGHT;
+            const sevColor = risk.severity === 'CRITICAL' ? COLORS.DANGER :
+                risk.severity === 'HIGH' ? COLORS.WARNING : COLORS.TEXT_LIGHT;
             riskTable.push([
                 { text: risk.type || 'RISK', options: { fontSize: 9 } },
                 { text: risk.title || '', options: { fontSize: 9 } },
@@ -624,5 +624,5 @@ async function generateSteeringCommitteeSlides(pptx, report, primaryColor) {
     }
 }
 
-module.exports = PptxGeneratorService;
+export default PptxGeneratorService;
 

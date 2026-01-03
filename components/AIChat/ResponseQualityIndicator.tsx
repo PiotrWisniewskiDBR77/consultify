@@ -87,6 +87,7 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
 
             return () => clearInterval(timer);
         }
+        return undefined;
     }, [metrics?.overall]);
 
     const getQualityColor = (level: string) => {

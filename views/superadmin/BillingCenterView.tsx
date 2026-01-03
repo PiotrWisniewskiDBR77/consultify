@@ -69,7 +69,7 @@ const OverviewTab: React.FC = () => {
             const [revenue, usage, costs] = await Promise.all([
                 Api.get('/billing/admin/revenue'),
                 Api.get('/billing/admin/usage'),
-                Api.getOperationalCosts()
+                Api.get('/billing/admin/operational-costs').catch(() => ({ costs: [] }))
             ]);
             setRevenueStats(revenue);
             setUsageStats(usage);

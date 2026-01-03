@@ -43,7 +43,8 @@ import {
 import { AppView, UserRole } from '../../../types';
 import { MenuItem } from './types';
 
-type TranslationFn = (key: string, fallback?: string) => string;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TranslationFn = (key: string, options?: any) => any;
 
 export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuItem[] {
   return [

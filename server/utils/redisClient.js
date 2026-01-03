@@ -1,15 +1,13 @@
 // Try to load redis module, fallback to mock if not available
-let createClient;
-let redisAvailable = false;
+import { createClient } from 'redis';
 
-try {
-    ({ createClient } = require('redis'));
-    redisAvailable = true;
-    console.log('[Redis] Module loaded successfully');
-} catch (err) {
-    console.log('[Redis] Module not available, using mock client');
-    redisAvailable = false;
-}
+let redisAvailable = true; // Assuming available if import works, otherwise we might need dynamic import or try/catch around logic if optional
+
+// Since 'redis' is a dependency, we expect it to be present.
+// If it was optional and missing, we'd need dynamic import(), but standard practice is it's installed.
+// However, the original code had a try-catch for the require.
+// In ESM, top-level import is static. If we want conditional, we need import().
+// Given this is a core utils file, let's assume 'redis' is installed as per package.json.
 
 let redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
@@ -40,7 +38,7 @@ const createMockClient = () => ({
     // Add other used methods as needed, or use Proxy for catch-all
 });
 
-if (process.env.MOCK_REDIS === 'true' || !redisAvailable || !redisUrl) {
+if (process.env.MOCK_REDIS === 'true' || !redisUrl) {
     if (!redisUrl) {
         console.log('[Redis] No REDIS_URL configured, using Mock Client');
     } else {
@@ -50,9 +48,9 @@ if (process.env.MOCK_REDIS === 'true' || !redisAvailable || !redisUrl) {
 } else {
     const connectTimeout = parseInt(process.env.REDIS_CONNECT_TIMEOUT || '30000', 10); // 30 seconds default for Railway
     const commandTimeout = parseInt(process.env.REDIS_COMMAND_TIMEOUT || '10000', 10); // 10 seconds for commands
-    
+
     console.log(`[Redis] Connecting to: ${redisUrl.replace(/:[^:@]+@/, ':****@')}`); // Hide password in logs
-    
+
     client = createClient({
         url: redisUrl,
         socket: {
@@ -99,4 +97,4 @@ if (process.env.MOCK_REDIS === 'true' || !redisAvailable || !redisUrl) {
     })();
 }
 
-module.exports = client;
+export default client;

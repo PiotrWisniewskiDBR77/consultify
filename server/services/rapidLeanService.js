@@ -12,8 +12,11 @@
  * Scoring: 1 (Ad-hoc) - 5 (World-Class)
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+import rapidLeanData from '../data/rapidLeanObservationTemplates.js';
+
+const { OBSERVATION_TO_DRD_MAPPING } = rapidLeanData;
 
 class RapidLeanService {
     /**
@@ -438,7 +441,6 @@ class RapidLeanService {
      * @returns {number|null} Evidence-based score adjustment or null
      */
     static analyzeObservationsForDRD(observations, leanDimension, drdAxis) {
-        const { OBSERVATION_TO_DRD_MAPPING } = require('../data/rapidLeanObservationTemplates');
         const dimensionMapping = OBSERVATION_TO_DRD_MAPPING[leanDimension] || {};
 
         let evidenceScores = [];
@@ -578,4 +580,4 @@ class RapidLeanService {
     }
 }
 
-module.exports = RapidLeanService;
+export default RapidLeanService;

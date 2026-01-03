@@ -3,11 +3,10 @@
  * Logs user actions for audit trail and SuperAdmin dashboard
  */
 
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-
-const requestStore = require('../utils/requestStore');
-const siemService = require('./siemService');
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+import requestStore from '../utils/requestStore.js';
+import siemService from './siemService.js';
 
 // Dependency injection container
 const deps = {
@@ -166,4 +165,4 @@ const ActivityService = {
     }
 };
 
-module.exports = ActivityService;
+export default ActivityService;

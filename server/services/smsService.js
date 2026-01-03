@@ -17,10 +17,11 @@
  * - SMS_MOCK_MODE (optional, for development)
  */
 
-const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
+import db from '../database.js';
+import twilio from 'twilio';
 
 // Configuration
 const CONFIG = {
@@ -38,7 +39,7 @@ let twilioClient = null;
 function getTwilioClient() {
     if (!twilioClient && !CONFIG.MOCK_MODE) {
         try {
-            const twilio = require('twilio');
+            // Twilio is imported at top level now, but we can still lazy init client
             twilioClient = twilio(
                 process.env.TWILIO_ACCOUNT_SID,
                 process.env.TWILIO_AUTH_TOKEN
@@ -245,8 +246,8 @@ const SMSService = {
 
             if (!isValid) {
                 const remainingAttempts = CONFIG.MAX_OTP_ATTEMPTS - record.attempts - 1;
-                return { 
-                    success: false, 
+                return {
+                    success: false,
                     error: `Invalid code. ${remainingAttempts > 0 ? `${remainingAttempts} attempts remaining.` : 'Please request a new code.'}`
                 };
             }
@@ -436,7 +437,7 @@ const SMSService = {
     }
 };
 
-module.exports = SMSService;
+export default SMSService;
 
 
 

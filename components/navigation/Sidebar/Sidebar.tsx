@@ -18,10 +18,10 @@ import { SidebarHeader } from './SidebarHeader';
 import { SidebarFooter } from './SidebarFooter';
 import { NavItem } from './NavItem';
 import { FloatingSubmenu } from './FloatingSubmenu';
-import { 
-  getMenuStructure, 
-  getAdminMenuItem, 
-  getOrganizationMenuItem, 
+import {
+  getMenuStructure,
+  getAdminMenuItem,
+  getOrganizationMenuItem,
   getSettingsMenuItem,
   getViewName,
 } from './menuConfig';
@@ -30,7 +30,7 @@ import { MenuItem, ActiveFloatingState } from './types';
 export const Sidebar: React.FC = () => {
   const { t } = useTranslation();
   const { isTablet, isMobile, isTouchDevice } = useDeviceType();
-  
+
   const {
     currentView,
     setCurrentView,
@@ -57,7 +57,7 @@ export const Sidebar: React.FC = () => {
 
   // Floating menu state
   const [activeFloating, setActiveFloating] = React.useState<ActiveFloatingState | null>(null);
-  const closeTimeoutRef = React.useRef<ReturnType<typeof setTimeout>>();
+  const closeTimeoutRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Derived state
   const showFull = !isSidebarCollapsed && !isTablet;
@@ -106,10 +106,10 @@ export const Sidebar: React.FC = () => {
   }, [setDisplayMode, setWorkspaceContext, navigateWithChatContext, currentProjectId]);
 
   const handleItemClick = React.useCallback((item: MenuItem) => {
-    const isLocked = item.requiresView && 
-      !completedViews.includes(item.requiresView) && 
+    const isLocked = item.requiresView &&
+      !completedViews.includes(item.requiresView) &&
       !(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN');
-    
+
     if (isLocked) return;
 
     // AI Chat special handling
@@ -128,23 +128,23 @@ export const Sidebar: React.FC = () => {
       } else {
         setCurrentView(item.viewId);
       }
-      
+
       if (isMobile || (isTablet && isSidebarOpen)) {
         setIsSidebarOpen(false);
       }
     }
   }, [
-    completedViews, 
-    currentUser?.role, 
-    currentView, 
-    toggleChatSlidingPanel, 
-    navigateToFullChat, 
-    activeConversationId, 
-    navigateToViewWithChat, 
-    setCurrentView, 
-    isMobile, 
-    isTablet, 
-    isSidebarOpen, 
+    completedViews,
+    currentUser?.role,
+    currentView,
+    toggleChatSlidingPanel,
+    navigateToFullChat,
+    activeConversationId,
+    navigateToViewWithChat,
+    setCurrentView,
+    isMobile,
+    isTablet,
+    isSidebarOpen,
     setIsSidebarOpen
   ]);
 
@@ -206,7 +206,7 @@ export const Sidebar: React.FC = () => {
       onMouseLeave={handleMouseLeave}
       onClick={handleItemClick}
       getViewName={(view) => getViewName(view, t)}
-      t={t}
+      t={t as any}
     />
   );
 
@@ -230,6 +230,7 @@ export const Sidebar: React.FC = () => {
 
       {/* Sidebar Container */}
       <motion.div
+        layout
         data-tour="sidebar-nav"
         className={`
           fixed inset-y-0 left-0 z-50
@@ -259,7 +260,7 @@ export const Sidebar: React.FC = () => {
           showFull={showFull}
           theme={theme}
           onToggleCollapse={toggleSidebarCollapse}
-          t={t}
+          t={t as any}
         />
 
         {/* Navigation */}
@@ -279,7 +280,7 @@ export const Sidebar: React.FC = () => {
         <SidebarFooter
           showFull={showFull}
           onLogout={logout}
-          t={t}
+          t={t as any}
         >
           {currentUser?.role === UserRole.ADMIN && renderNavItem(organizationMenuItem)}
           {currentUser?.role === UserRole.ADMIN && renderNavItem(adminMenuItem)}

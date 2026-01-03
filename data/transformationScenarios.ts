@@ -20,6 +20,10 @@ export interface ScenarioArchetype {
         culture: string;
     };
     aiReasoning?: string[]; // Dynamic
+    approach: string;
+    timeline: string;
+    investment: string;
+    riskLevel: string;
 }
 
 export const SCENARIOS: ScenarioArchetype[] = [
@@ -40,7 +44,11 @@ export const SCENARIOS: ScenarioArchetype[] = [
             operations: 'Standardization',
             it: 'Debt reduction',
             culture: 'Discipline first'
-        }
+        },
+        approach: 'Stabilization',
+        timeline: '6-12 months',
+        investment: 'Low',
+        riskLevel: 'Low'
     },
     {
         id: 'quickwins',
@@ -59,7 +67,11 @@ export const SCENARIOS: ScenarioArchetype[] = [
             operations: 'Efficiency spikes',
             it: 'Integration challenges',
             culture: 'Excitement'
-        }
+        },
+        approach: 'Quick Wins',
+        timeline: '3-6 months',
+        investment: 'Low',
+        riskLevel: 'Low-Medium'
     },
     {
         id: 'hybrid',
@@ -78,7 +90,11 @@ export const SCENARIOS: ScenarioArchetype[] = [
             operations: 'Incremental',
             it: 'Modernization',
             culture: 'Gradual shift'
-        }
+        },
+        approach: 'Balanced',
+        timeline: '12-18 months',
+        investment: 'Medium',
+        riskLevel: 'Medium'
     },
     {
         id: 'foundation',
@@ -97,7 +113,11 @@ export const SCENARIOS: ScenarioArchetype[] = [
             operations: 'New metrics',
             it: 'Platform build',
             culture: 'Fact-based'
-        }
+        },
+        approach: 'Foundation First',
+        timeline: '9-15 months',
+        investment: 'High',
+        riskLevel: 'Medium-High'
     },
     {
         id: 'scale',
@@ -116,7 +136,11 @@ export const SCENARIOS: ScenarioArchetype[] = [
             operations: 'New SOPs',
             it: 'Support scaling',
             culture: 'Agility'
-        }
+        },
+        approach: 'Scaling',
+        timeline: '12-24 months',
+        investment: 'High',
+        riskLevel: 'High'
     },
     {
         id: 'fullreset',
@@ -135,7 +159,11 @@ export const SCENARIOS: ScenarioArchetype[] = [
             operations: 'Reinvention',
             it: 'Cloud Native',
             culture: 'Shock therapy'
-        }
+        },
+        approach: 'Full Reset',
+        timeline: '18-36 months',
+        investment: 'Very High',
+        riskLevel: 'Very High'
     }
 ];
 

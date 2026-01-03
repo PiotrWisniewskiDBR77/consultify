@@ -11,7 +11,12 @@ const TaskAssignmentService = require('../services/taskAssignmentService');
 const ProjectMemberService = require('../services/projectMemberService');
 const DecisionTriggerService = require('../services/decisionTriggerService');
 
+const { validateBody } = require('../middleware/validationMiddleware');
+const { createTaskSchema, updateTaskSchema } = require('../validators/taskValidator');
+
 router.use(verifyToken);
+
+
 
 // ==========================================
 // GET TASKS (Filtered)
@@ -226,7 +231,7 @@ router.get('/:id', (req, res) => {
 // ==========================================
 // CREATE TASK
 // ==========================================
-router.post('/', async (req, res) => {
+router.post('/', validateBody(createTaskSchema), async (req, res) => {
     try {
         const orgId = req.user.organizationId;
         const userId = req.user.id;
@@ -311,13 +316,13 @@ router.post('/', async (req, res) => {
                 // Fetch created task
                 db.get(`SELECT * FROM tasks WHERE id = ?`, [id], async (err, row) => {
                     if (err) return res.status(500).json({ error: err.message });
-                    
+
                     // Invalidate cache for affected users
                     if (assigneeId) {
                         await cacheHelper.invalidateUserCache(assigneeId, orgId);
                     }
                     await cacheHelper.invalidateProjectCache(projectId);
-                    
+
                     res.status(201).json(row); // Use raw row or parse function if available
                 });
             }
@@ -339,7 +344,7 @@ router.post('/', async (req, res) => {
 // ==========================================
 // UPDATE TASK
 // ==========================================
-router.put('/:id', async (req, res) => {
+router.put('/:id', validateBody(updateTaskSchema), async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
     const userId = req.user.id;
@@ -497,7 +502,7 @@ router.put('/:id', async (req, res) => {
                 // Blocked - also trigger decision creation
                 if (updates.status === 'blocked') {
                     notify('task_blocked', 'Task Blocked', `Task "${currentTask.title}" is now BLOCKED. Reason: ${updates.blockedReason || 'No reason provided'}`);
-                    
+
                     // Auto-create unblock decision
                     try {
                         const taskData = {
@@ -506,11 +511,11 @@ router.put('/:id', async (req, res) => {
                             project_id: currentTask.project_id,
                             assignee_id: currentTask.assignee_id
                         };
-                        
+
                         DecisionTriggerService.safeTrigger(
                             () => DecisionTriggerService.onTaskBlocked(
-                                taskData, 
-                                updates.blockedReason || 'Not specified', 
+                                taskData,
+                                updates.blockedReason || 'Not specified',
                                 userId
                             ),
                             'TASK',
@@ -545,7 +550,7 @@ router.put('/:id', async (req, res) => {
                 const affectedUserIds = new Set();
                 if (currentTask.assignee_id) affectedUserIds.add(currentTask.assignee_id);
                 if (updates.assigneeId) affectedUserIds.add(updates.assigneeId);
-                
+
                 for (const userId of affectedUserIds) {
                     await cacheHelper.invalidateUserCache(userId, req.user.organizationId);
                 }

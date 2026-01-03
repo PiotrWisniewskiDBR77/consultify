@@ -6,7 +6,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Use correct import path (from tests/unit/backend, not tests/unit)
-const RapidLeanService = require('../../../server/services/rapidLeanService');
+// Use correct import path (from tests/unit/backend, not tests/unit)
+import RapidLeanService from '../../../server/services/rapidLeanService.js';
 
 describe('RapidLeanService', () => {
     describe('calculateScores', () => {

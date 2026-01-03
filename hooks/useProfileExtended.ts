@@ -86,7 +86,7 @@ export function useProfileExtended(options: UseProfileExtendedOptions = {}): Use
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<Error | null>(null);
     
-    const autoSaveTimeout = useRef<NodeJS.Timeout>();
+    const autoSaveTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
     const pendingChanges = useRef<Partial<UserProfileExtended>>({});
 
     // Load initial data

@@ -16,12 +16,13 @@
  * - All attempts are logged for audit
  */
 
-const speakeasy = require('speakeasy');
-const QRCode = require('qrcode');
-const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
+import speakeasy from 'speakeasy';
+import QRCode from 'qrcode';
+import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
+import db from '../database.js';
+import SMSService from './smsService.js';
 
 // Configuration
 const CONFIG = {
@@ -92,15 +93,7 @@ function dbAll(sql, params = []) {
 }
 
 // SMS Service for SMS MFA fallback
-let SMSService = null;
 function getSMSService() {
-    if (!SMSService) {
-        try {
-            SMSService = require('./smsService');
-        } catch (error) {
-            console.warn('[MFA] SMS Service not available:', error.message);
-        }
-    }
     return SMSService;
 }
 
@@ -127,8 +120,8 @@ const MFAService = {
             return result;
         }
 
-        return { 
-            success: true, 
+        return {
+            success: true,
             message: 'Verification code sent to your phone',
             expiresAt: result.expiresAt
         };
@@ -250,8 +243,8 @@ const MFAService = {
         );
 
         if (!user) {
-            return { 
-                enabled: false, 
+            return {
+                enabled: false,
                 methods: [],
                 primary: null
             };
@@ -361,11 +354,11 @@ const MFAService = {
             [hasTOTP ? 'totp' : null, hasTOTP ? 1 : 0, userId]
         );
 
-        return { 
-            success: true, 
+        return {
+            success: true,
             mfaStillEnabled: hasTOTP,
-            message: hasTOTP 
-                ? 'SMS MFA disabled. Authenticator app MFA is still active.' 
+            message: hasTOTP
+                ? 'SMS MFA disabled. Authenticator app MFA is still active.'
                 : 'SMS MFA disabled. Your account no longer has 2FA protection.'
         };
     },
@@ -811,4 +804,4 @@ const MFAService = {
     }
 };
 
-module.exports = MFAService;
+export default MFAService;

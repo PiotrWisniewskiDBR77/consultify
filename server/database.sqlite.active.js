@@ -1,3 +1,5 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcryptjs');
@@ -15,6 +17,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
         if (db.initReject) db.initReject(err);
     } else {
         console.log(`[DB:${dbId}] Connected to the SQLite database.`);
+        db.id = dbId; // Expose ID for debugging
 
         // Hardening & Performance Optimization
         db.serialize(() => {
@@ -648,6 +651,20 @@ function initDb() {
             FOREIGN KEY(sponsor_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
+        // Indexes for initiatives
+        db.run(`CREATE INDEX IF NOT EXISTS idx_initiatives_org_axis ON initiatives(organization_id, axis)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_initiatives_project ON initiatives(project_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_initiatives_status ON initiatives(status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_initiatives_owner_biz ON initiatives(owner_business_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_initiatives_owner_exec ON initiatives(owner_execution_id)`);
+
+        // Indexes for initiatives
+        db.run(`CREATE INDEX IF NOT EXISTS idx_initiatives_org_axis ON initiatives(organization_id, axis)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_initiatives_project ON initiatives(project_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_initiatives_status ON initiatives(status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_initiatives_owner_biz ON initiatives(owner_business_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_initiatives_owner_exec ON initiatives(owner_execution_id)`);
+
         // Migration: Add context_data if missing
         db.run(`ALTER TABLE projects ADD COLUMN context_data TEXT DEFAULT '{}'`, (err) => {
             // Ignore if exists
@@ -991,6 +1008,20 @@ function initDb() {
             FOREIGN KEY(reporter_id) REFERENCES users(id) ON DELETE SET NULL,
             FOREIGN KEY(custom_status_id) REFERENCES custom_statuses(id) ON DELETE SET NULL
         )`);
+
+        // Indexes for tasks
+        db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_org_project_status ON tasks(organization_id, project_id, status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_assignee_status ON tasks(assignee_id, status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_reporter ON tasks(reporter_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_initiative ON tasks(initiative_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date)`);
+
+        // Indexes for tasks
+        db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_org_project_status ON tasks(organization_id, project_id, status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_assignee_status ON tasks(assignee_id, status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_reporter ON tasks(reporter_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_initiative ON tasks(initiative_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date)`);
 
         // Task Escalations
         db.run(`CREATE TABLE IF NOT EXISTS task_escalations (
@@ -2654,6 +2685,11 @@ function initDb() {
                         topic TEXT, --Classified topic
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                     )`);
+
+        // Indexes for AI Logs
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_logs_created_at ON ai_logs(created_at)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_logs_topic ON ai_logs(topic)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_logs_model ON ai_logs(model)`);
 
         // System Prompts (Super Admin Control)
         db.run(`CREATE TABLE IF NOT EXISTS system_prompts(
@@ -7636,4 +7672,4 @@ db.runAsync = db.run;
 db.getAsync = db.get;
 db.allAsync = db.all;
 
-module.exports = db;
+export default db;

@@ -9,21 +9,26 @@
  * - Audit logging
  */
 
-const AISettingsService = require('../../../server/services/aiSettingsService');
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 // Mock database
 const mockDb = {
-    get: jest.fn(),
-    run: jest.fn(),
-    all: jest.fn()
+    get: vi.fn(),
+    run: vi.fn(),
+    all: vi.fn()
 };
 
 // Replace db module
-jest.mock('../../../server/database', () => mockDb);
+vi.mock('../../../server/database', () => ({ default: mockDb }));
+
+const AISettingsService = require('../../../server/services/aiSettingsService');
 
 describe('AISettingsService', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('getSuperAdminSettings', () => {

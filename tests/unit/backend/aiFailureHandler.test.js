@@ -6,27 +6,36 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testProjects } from '../../fixtures/testData.js';
 
-const require = createRequire(import.meta.url);
+// Hoisted mock - must be defined before imports
+const mockDb = vi.hoisted(() => {
+    return {
+        get: vi.fn(),
+        all: vi.fn(),
+        run: vi.fn(),
+        exec: vi.fn(),
+        prepare: vi.fn(),
+        serialize: vi.fn((cb) => { if (cb) cb(); }),
+        query: vi.fn(),
+        runAsync: vi.fn(),
+        getAsync: vi.fn(),
+        allAsync: vi.fn(),
+        execAsync: vi.fn(),
+        initPromise: Promise.resolve()
+    };
+});
+
+vi.mock('../../../server/database', () => ({
+    default: mockDb
+}));
+
+// Import service after mock is set up
+import AIFailureHandler from '../../../server/services/aiFailureHandler.js';
 
 describe('AIFailureHandler', () => {
-    let mockDb;
-    let AIFailureHandler;
-
     beforeEach(() => {
-        vi.resetModules();
-        
-        mockDb = createMockDb();
-        
-        // Mock database before importing
-        vi.doMock('../../../server/database', () => ({
-            default: mockDb
-        }));
-
-        AIFailureHandler = require('../../../server/services/aiFailureHandler.js');
+        vi.clearAllMocks();
         
         // Inject dependencies
         AIFailureHandler.setDependencies({ 
@@ -38,7 +47,6 @@ describe('AIFailureHandler', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         vi.useRealTimers();
-        vi.doUnmock('../../../server/database');
     });
 
     describe('withFallback()', () => {

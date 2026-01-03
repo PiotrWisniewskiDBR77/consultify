@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const { initTestDb, cleanTables, dbRun, dbAll } = require('../../helpers/dbHelper.cjs');
-const db = require('../../../server/database');
+const { initTestDb, cleanAllTestTables, dbRun, dbAll, db } = require('../../helpers/dbHelper.cjs');
+// const db = require('../../../server/database'); // Removed to avoid stale mock
 
 describe('Backend Error Recovery', () => {
     beforeEach(async () => {
@@ -11,7 +11,7 @@ describe('Backend Error Recovery', () => {
     });
 
     afterEach(async () => {
-        await cleanTables();
+        await cleanAllTestTables();
     });
 
     describe('Database Error Recovery', () => {

@@ -1,5 +1,5 @@
-const axios = require('axios');
-const logger = require('../utils/logger');
+import axios from 'axios';
+import logger from '../utils/logger.js';
 
 /**
  * SIEM Service (Prestige Tier)
@@ -68,4 +68,4 @@ class SiemService {
     }
 }
 
-module.exports = new SiemService();
+export default new SiemService();

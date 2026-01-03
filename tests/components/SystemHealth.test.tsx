@@ -48,7 +48,6 @@ describe('Component Test: SystemHealth', () => {
         });
     });
 
-    // TODO: Fix timeout issue with fake timers and waitFor
     it('polls health status periodically', async () => {
         vi.useFakeTimers();
         const checkSystemHealthMock = vi.fn().mockResolvedValue({ status: 'ok', latency: 50 });
@@ -59,12 +58,16 @@ describe('Component Test: SystemHealth', () => {
         // Initial call should happen immediately on mount
         expect(checkSystemHealthMock).toHaveBeenCalledTimes(1);
 
+        // Wait for initial promise to resolve
+        await vi.runAllTimersAsync();
+
         // Advance time by 30 seconds to trigger interval
         await React.act(async () => {
             vi.advanceTimersByTime(30000);
+            await vi.runAllTimersAsync();
         });
 
-        // Should have called again immediately
+        // Should have called again after interval
         expect(checkSystemHealthMock).toHaveBeenCalledTimes(2);
 
         vi.useRealTimers();

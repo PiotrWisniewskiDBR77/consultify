@@ -1,10 +1,11 @@
-const defaultDb = require('../database');
-const { v4: defaultUuidv4 } = require('uuid');
-const ActionProposalEngine = require('./actionProposalEngine');
-const PolicyEngine = require('./policyEngine');
-const auditLogger = require('../utils/auditLogger');
-const { ACTION_ERROR_CODES, classifyError } = require('./actionErrors');
-const EvidenceLedgerService = require('../services/evidenceLedgerService');
+import defaultDb from '../database.js';
+import { v4 as defaultUuidv4 } from 'uuid';
+import ActionProposalEngine from './actionProposalEngine.js';
+import PolicyEngine from './policyEngine.js';
+import auditLogger from '../utils/auditLogger.js';
+import actionErrors from './actionErrors.js';
+const { ACTION_ERROR_CODES, classifyError } = actionErrors;
+import EvidenceLedgerService from '../services/evidenceLedgerService.js';
 
 
 const deps = {
@@ -341,4 +342,4 @@ const ActionDecisionService = {
     }
 };
 
-module.exports = ActionDecisionService;
+export default ActionDecisionService;

@@ -9,7 +9,10 @@
  * - Payment Management & Dunning
  */
 
-const { describe, it, expect, beforeAll, afterAll, beforeEach, vi } = require('vitest');
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 // Mock database
 const mockDb = {

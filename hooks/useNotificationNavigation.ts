@@ -59,7 +59,7 @@ export const useNotificationNavigation = (
 
             case 'INITIATIVE':
                 // Navigate to initiatives view
-                setCurrentView(AppView.FULL_STEP2_INITIATIVES);
+                setCurrentView(AppView.PORTFOLIO_ROADMAP);
                 // Store highlight ID for the view to pick up
                 if (relatedObjectId) {
                     sessionStorage.setItem('highlightInitiativeId', relatedObjectId);
@@ -79,7 +79,7 @@ export const useNotificationNavigation = (
 
             case 'GATE':
                 // Navigate to implementation view with gate focus
-                setCurrentView(AppView.FULL_STEP5_IMPLEMENTATION);
+                setCurrentView(AppView.PORTFOLIO_ROADMAP);
                 if (relatedObjectId) {
                     sessionStorage.setItem('highlightGateId', relatedObjectId);
                 }
@@ -105,17 +105,17 @@ export const useNotificationNavigation = (
 
     const canNavigate = useCallback((target: NotificationNavigationTarget): boolean => {
         const { relatedObjectType, relatedObjectId, actionUrl } = target;
-        
+
         // Can navigate if we have a related object with ID
         if (relatedObjectType && relatedObjectId) {
             return true;
         }
-        
+
         // Or if we have an action URL
         if (actionUrl) {
             return true;
         }
-        
+
         return false;
     }, []);
 

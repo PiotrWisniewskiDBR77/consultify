@@ -42,7 +42,7 @@ export function useSidebarState() {
 
   // Floating menu state
   const [activeFloating, setActiveFloating] = useState<ActiveFloatingState | null>(null);
-  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Derived state
   const showFull = !isSidebarCollapsed && !isTablet;

@@ -225,11 +225,12 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
         if (!currentReport) return;
 
         try {
-            await Api.post(`/status-reports/${currentReport.id}/approve`);
+            await Api.post(`/status-reports/${currentReport.id}/approve`, {});
             setCurrentReport({ ...currentReport, status: 'APPROVED' });
             toast.success('Report approved');
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to approve report');
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to approve report';
+            toast.error(errorMessage);
         }
     };
 
@@ -237,11 +238,12 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
         if (!currentReport) return;
 
         try {
-            await Api.post(`/status-reports/${currentReport.id}/publish`);
+            await Api.post(`/status-reports/${currentReport.id}/publish`, {});
             setCurrentReport({ ...currentReport, status: 'PUBLISHED' });
             toast.success('Report published');
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to publish report');
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to publish report';
+            toast.error(errorMessage);
         }
     };
 

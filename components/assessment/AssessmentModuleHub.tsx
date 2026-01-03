@@ -415,6 +415,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             });
             return unsubscribe;
         }
+        return undefined;
     }, [activeTab]);
 
     // Auto-save every 30 seconds when there are unsaved changes

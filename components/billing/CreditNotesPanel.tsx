@@ -163,20 +163,22 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({ organization
     const handleRefund = async (creditNoteId: string) => {
         if (!window.confirm('Are you sure you want to refund this credit note?')) return;
         try {
-            await Api.post(`/billing/credit-notes/${creditNoteId}/refund`);
-            fetchData();
-        } catch (err: any) {
-            setError(err.message || 'Failed to refund credit note');
+            await Api.post(`/billing/credit-notes/${creditNoteId}/refund`, {});
+            void fetchData();
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to refund credit note';
+            setError(errorMessage);
         }
     };
 
     const handleVoid = async (creditNoteId: string) => {
         if (!window.confirm('Are you sure you want to void this credit note?')) return;
         try {
-            await Api.post(`/billing/credit-notes/${creditNoteId}/void`);
-            fetchData();
-        } catch (err: any) {
-            setError(err.message || 'Failed to void credit note');
+            await Api.post(`/billing/credit-notes/${creditNoteId}/void`, {});
+            void fetchData();
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to void credit note';
+            setError(errorMessage);
         }
     };
 

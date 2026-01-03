@@ -2208,6 +2208,15 @@ export interface OrgAISettings {
   focusModesEnabled: boolean;
   voiceEnabled: boolean;
 
+  // Auto-Tier Configuration
+  autoTierEnabled?: boolean;
+  autoTierDirection?: 'up' | 'down' | 'both';
+  autoTierThreshold?: number;
+
+  // System Prompts
+  systemPrompts?: SystemPromptConfig[];
+  defaultSystemPromptId?: string;
+
   // Audit Configuration
   auditAllRequests: boolean;
   auditPolicyChanges: boolean;
@@ -2216,6 +2225,33 @@ export interface OrgAISettings {
   createdAt: string;
   updatedAt: string;
   updatedBy: string | null;
+}
+
+/** System Prompt Configuration */
+export interface SystemPromptConfig {
+  id: string;
+  name: string;
+  content: string;
+  category: 'default' | 'persona' | 'focus_mode' | 'custom';
+  isActive: boolean;
+  version: number;
+  context_config?: {
+    include_project_context?: boolean;
+    include_user_context?: boolean;
+    include_org_context?: boolean;
+    max_context_tokens?: number;
+  };
+  variables?: SystemPromptVariable[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** System Prompt Variable */
+export interface SystemPromptVariable {
+  name: string;
+  description?: string;
+  defaultValue?: string;
+  required: boolean;
 }
 
 /** User AI Settings - Per-user preferences */
@@ -2644,36 +2680,7 @@ export interface CompanyProfile {
   };
 }
 
-export interface User {
-  id: string; // New: Unique ID
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  linkedinId?: string;
-  companyName: string;
-  role?: string; // e.g. CEO, ADMIN
-  status: 'active' | 'inactive' | 'suspended';
-  lastLogin?: string; // ISO date
 
-  isAuthenticated: boolean;
-  accessLevel: 'free' | 'full';
-  preferredLanguage?: Language;
-  organizationId?: string;
-  organizationName?: string;
-  avatarUrl?: string; // URL to avatar image
-  tokenUsage?: number;
-  tokenLimit?: number;
-  industry?: string; // Company industry
-  country?: string; // Company country
-  timezone?: string; // User timezone
-  units?: 'metric' | 'imperial'; // User preference
-  impersonatorId?: string; // ID of the admin impersonating this user
-  licensePlanId?: string;
-  hasWorkspace?: boolean; // NEW: Indicates if user already has an active workspace
-  journeyState?: string; // Phase G/User Lifecycle State
-  currentPhase?: string; // Phase A-G
-}
 
 export interface FreeSession {
   // Step 1
@@ -2925,12 +2932,19 @@ export interface InitiativeVersion {
 
 export interface FullInitiative {
   id: string;
+  projectId: string; // Added to resolve type error
   name: string;
   description?: string;
   axis: AxisId;
   priority: 'High' | 'Medium' | 'Low' | 'Critical';
   complexity: 'High' | 'Medium' | 'Low'; // Keep for compatibility
   status: InitiativeStatus;
+  currentStage?: string;
+  plannedEndDate?: string;
+  actualEndDate?: string;
+  blockedReason?: string;
+  slaDeadline?: string;
+  tasks?: Task[];
 
   // DRD New Fields
   summary?: string;
@@ -3957,13 +3971,14 @@ export interface User {
   phone?: string;
   linkedinId?: string;
   companyName: string;
-  role?: string; // SUPERADMIN, ADMIN, USER
-  status: 'active' | 'inactive' | 'suspended';
+  role?: UserRole; // SUPERADMIN, ADMIN, USER
+  status: 'active' | 'inactive' | 'suspended' | 'pending';
   lastLogin?: string;
   isAuthenticated: boolean;
   accessLevel: 'free' | 'full';
   preferredLanguage?: Language;
   organizationId?: string;
+  organizationName?: string;
   avatarUrl?: string;
   isDemo?: boolean;
   impersonatorId?: string;
@@ -3974,7 +3989,15 @@ export interface User {
   aiPreferences?: AIPreferences;
   licensePlanId?: string;
   mfaEnabled?: boolean;
+
+
   // Profile settings extensions
+  industry?: string;
+  country?: string;
+  units?: 'metric' | 'imperial';
+  hasWorkspace?: boolean;
+  journeyState?: string;
+  currentPhase?: string;
   jobTitle?: string;
   timezone?: string;
   dateFormat?: string;
@@ -4095,6 +4118,7 @@ export interface ContactPhone {
 }
 
 export interface Address {
+  id?: string;
   street?: string;
   city?: string;
   state?: string;
@@ -4104,6 +4128,7 @@ export interface Address {
 }
 
 export interface EmergencyContact {
+  id?: string;
   name: string;
   relationship: string;
   phone: string;

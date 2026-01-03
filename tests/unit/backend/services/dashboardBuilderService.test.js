@@ -3,7 +3,10 @@
  * Tests custom dashboard CRUD operations, widget management, and sharing functionality
  */
 
-const { describe, it, expect, beforeEach, vi } = require('vitest');
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 // Mock the database
 vi.mock('../../../../server/database.sqlite.active', () => ({

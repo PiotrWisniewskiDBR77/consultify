@@ -1,0 +1,225 @@
+# ETAP 11.1: Analiza Nieprzechodzących Testów
+
+**Data analizy:** 2025-01-XX  
+**Status:** ✅ Ukończone
+
+## Statystyki Ogólne
+
+- **Testy przechodzące:** 463 (77.1%)
+- **Testy nieprzechodzące:** 136 (22.6%)
+- **Testy pominięte:** 102 (14.5%)
+- **Pliki testowe:** 85 (45 failed, 37 passed, 3 skipped)
+- **Pass Rate:** 77.1% (Cel: 98%)
+
+## Kategoryzacja Błędów
+
+### Kategoria 1: ES Module Compatibility (WYSOKI PRIORYTET)
+
+**Liczba błędów:** ~100+ testów  
+**Opis:** Pliki JavaScript używają CommonJS (`require()`, `module.exports`) w środowisku ES modules.
+
+**Przykłady błędów:**
+```
+ReferenceError: require is not defined in ES module scope
+ReferenceError: module is not defined in ES module scope
+```
+
+**Pliki dotknięte:**
+- `server/services/breakGlassService.js`
+- `server/services/connectorService.js`
+- `server/services/connectorRegistry.js`
+- `server/services/dependencyService.js`
+- `server/services/demoService.js`
+- `server/services/demoSessionService.js`
+- `server/services/emailService.js`
+- `server/services/feedbackService.js`
+- `server/services/financialCalculatorService.js`
+- `server/middleware/performanceMetrics.js`
+- `server/services/workModeService.js`
+- `server/services/notificationOutboxService.js`
+- `server/services/notificationService.js`
+- `server/services/outcomeService.js`
+- `server/services/stageGateService.js`
+- `server/services/ai/embeddingService.js`
+- `server/services/secretsVault.js`
+- `server/services/storageService.js`
+- `server/services/userStateMachine.js`
+- `server/services/workqueueService.js`
+- `server/services/aiActionExecutor.js`
+- `server/services/aiAnalyticsService.js`
+- `server/services/aiKnowledgeManager.js`
+- `server/services/billingService.js`
+
+**Rozwiązanie:**
+1. Migracja plików `.js` do `.ts` z ES modules
+2. Zamiana `require()` na `import`
+3. Zamiana `module.exports` na `export`
+
+**Priorytet naprawy:** 🔴 WYSOKI - blokuje większość testów
+
+---
+
+### Kategoria 2: Brakujące Moduły (ŚREDNI PRIORYTET)
+
+**Liczba błędów:** ~20 testów  
+**Opis:** Testy próbują importować pliki, które nie istnieją lub zostały przeniesione.
+
+**Pliki dotknięte:**
+
+1. **Cron Jobs (zmigrowane do TypeScript):**
+   - `server/cron/backupCron.js` → powinno być `server/src/cron/backupCron.ts`
+   - `server/cron/billingCron.js` → powinno być `server/src/cron/billingCron.ts`
+   - `server/cron/healthCheckJob.js` → powinno być `server/src/cron/healthCheckJob.ts`
+   - `server/cron/trialCron.js` → powinno być `server/src/cron/trialCron.ts`
+
+2. **Services:**
+   - `server/services/drdAxisValidationService.js` → nie znaleziono
+
+**Rozwiązanie:**
+1. Zaktualizować ścieżki importów w testach
+2. Sprawdzić czy pliki istnieją w nowych lokalizacjach
+3. Utworzyć brakujące pliki lub zaktualizować testy
+
+**Priorytet naprawy:** 🟡 ŚREDNI - wymaga aktualizacji ścieżek
+
+---
+
+### Kategoria 3: Błędy Logiki Testów (NISKI PRIORYTET)
+
+**Liczba błędów:** ~3 testy  
+**Opis:** Testy mają błędne założenia lub oczekiwania.
+
+**Przykłady:**
+
+1. **economicsService.test.js:**
+   ```javascript
+   // Test oczekuje konkretnego UUID 'hypothesis-1'
+   expect(params[0]).toBe('hypothesis-1');
+   // Ale service generuje losowy UUID
+   // Otrzymano: 'a7875fd8-ce92-4d72-9f47-108a76859644'
+   ```
+   **Rozwiązanie:** Zmienić test, aby sprawdzał typ UUID zamiast konkretnej wartości
+
+2. **reportTemplateService.test.js:**
+   ```javascript
+   // Test oczekuje, że wszystkie szablony są aktywne
+   expect(templates.every(t => t.isActive === true)).toBe(true);
+   // Ale otrzymano: false
+   ```
+   **Rozwiązanie:** Sprawdzić logikę filtrowania aktywnych szablonów
+
+**Priorytet naprawy:** 🟢 NISKI - łatwe do naprawy
+
+---
+
+### Kategoria 4: Brakujące Eksporty Funkcji (ŚREDNI PRIORYTET)
+
+**Liczba błędów:** ~20 testów  
+**Opis:** Testy próbują wywołać funkcje, które nie są eksportowane lub nie istnieją.
+
+**Pliki dotknięte:**
+
+1. **RapidLeanObservationMapper:**
+   - `mapObservationsToResponses()` - nie jest funkcją
+   - `getDimensionFromTemplate()` - nie jest funkcją
+   - `mapToQuestionId()` - nie jest funkcją
+   - `extractKeyFindings()` - nie jest funkcją
+   - `generateObservationReport()` - nie jest funkcją
+   - `generateInsights()` - nie jest funkcją
+   - `analyzeNotesAndPhotos()` - nie jest funkcją
+   - `getAllQuestionIds()` - nie jest funkcją
+
+2. **RapidLeanReportService:**
+   - `getStatus()` - nie jest funkcją
+   - `calculateTrends()` - nie jest funkcją
+   - `calculateImprovementRate()` - nie jest funkcją
+   - `prepareChartsData()` - nie jest funkcją
+   - `getPreviousAssessments()` - undefined
+   - `saveReportMetadata()` - undefined
+
+**Rozwiązanie:**
+1. Sprawdzić eksporty w plikach źródłowych
+2. Zaktualizować eksporty, aby były dostępne jako funkcje
+3. Zaktualizować testy, aby używały poprawnych eksportów
+
+**Priorytet naprawy:** 🟡 ŚREDNI - wymaga sprawdzenia implementacji
+
+---
+
+## Lista Priorytetów Naprawy
+
+### Priorytet 1: ES Module Compatibility (🔴 WYSOKI)
+**Szacowany czas:** 2-3 dni  
+**Wpływ:** Naprawi ~100+ testów  
+**Kroki:**
+1. Zidentyfikować wszystkie pliki używające CommonJS
+2. Migrować do TypeScript z ES modules
+3. Zaktualizować wszystkie importy
+
+### Priorytet 2: Brakujące Moduły - Cron Jobs (🟡 ŚREDNI)
+**Szacowany czas:** 1-2 godziny  
+**Wpływ:** Naprawi ~15 testów  
+**Kroki:**
+1. Zaktualizować ścieżki importów w testach cron
+2. Sprawdzić lokalizacje zmigrowanych plików
+
+### Priorytet 3: Brakujące Eksporty Funkcji (🟡 ŚREDNI)
+**Szacowany czas:** 1 dzień  
+**Wpływ:** Naprawi ~20 testów  
+**Kroki:**
+1. Sprawdzić implementację RapidLean services
+2. Zaktualizować eksporty
+3. Zaktualizować testy
+
+### Priorytet 4: Błędy Logiki Testów (🟢 NISKI)
+**Szacowany czas:** 1-2 godziny  
+**Wpływ:** Naprawi ~3 testy  
+**Kroki:**
+1. Naprawić testy economicsService
+2. Naprawić testy reportTemplateService
+
+### Priorytet 5: Brakujące Moduły - Services (🟡 ŚREDNI)
+**Szacowany czas:** 1 godzina  
+**Wpływ:** Naprawi ~5 testów  
+**Kroki:**
+1. Sprawdzić czy drdAxisValidationService istnieje
+2. Utworzyć lub zaktualizować testy
+
+---
+
+## Szacunkowy Czas Naprawy
+
+- **Priorytet 1 (ES Modules):** 2-3 dni
+- **Priorytet 2 (Cron Jobs):** 1-2 godziny
+- **Priorytet 3 (Eksporty):** 1 dzień
+- **Priorytet 4 (Logika):** 1-2 godziny
+- **Priorytet 5 (Services):** 1 godzina
+
+**TOTAL:** ~4-5 dni roboczych
+
+---
+
+## Metryki Po Naprawie (Prognoza)
+
+- **Testy przechodzące:** ~600+ (95%+)
+- **Testy nieprzechodzące:** ~30-50 (5%)
+- **Pass Rate:** 95%+ (cel: 98%)
+
+---
+
+## Następne Kroki (ETAP 11.2)
+
+Po naprawie błędów z ETAPU 11.1:
+1. Uruchomić testy ponownie
+2. Zidentyfikować flaky tests
+3. Naprawić race conditions
+4. Dodać proper cleanup
+
+---
+
+## Uwagi
+
+- Większość błędów wynika z migracji CommonJS → ES modules
+- Niektóre testy wymagają aktualizacji po migracji do TypeScript
+- Priorytet 1 (ES Modules) powinien być wykonany najpierw, ponieważ naprawi większość problemów
+

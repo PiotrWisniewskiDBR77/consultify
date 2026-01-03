@@ -17,10 +17,10 @@
  * ```
  */
 
-const db = require('../database');
-const cacheHelper = require('../utils/cacheHelper');
-const queryHelpers = require('../utils/queryHelpers');
-const logger = require('../utils/logger');
+import db from '../database.js';
+import cacheHelper from '../utils/cacheHelper.js';
+import queryHelpers from '../utils/queryHelpers.js';
+import logger from '../utils/logger.js';
 
 const BaseService = {
     /**
@@ -159,7 +159,7 @@ const BaseService = {
     }
 };
 
-module.exports = BaseService;
+export default BaseService;
 
 
 

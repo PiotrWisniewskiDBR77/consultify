@@ -36,18 +36,7 @@ import {
     Loader2
 } from 'lucide-react';
 import { Api } from '../../services/api';
-import { InitiativeStatus } from '../../types';
-
-interface Initiative {
-    id: string;
-    name: string;
-    status: string;
-    progress: number;
-    plannedEndDate?: string;
-    ownerBusiness?: { firstName: string; lastName: string };
-    blockedReason?: string;
-    priority?: string;
-}
+import { Initiative, InitiativeStatus } from '../../types';
 
 interface ExecutiveDashboardProps {
     onInitiativeClick?: (initiative: Initiative) => void;
@@ -104,7 +93,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
     const fetchData = useCallback(async (silent = false) => {
         if (!silent) setIsLoading(true);
         setIsRefreshing(true);
-        
+
         try {
             // Fetch all data in parallel
             const [
@@ -128,9 +117,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             const atRisk = executing.filter((i: Initiative) => {
                 if (!i.plannedEndDate) return false;
                 const daysToEnd = Math.floor((new Date(i.plannedEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                return daysToEnd < 14 && i.progress < 80;
+                return daysToEnd < 14 && (i.progress || 0) < 80;
             });
-            const avgProgress = executing.length > 0 
+            const avgProgress = executing.length > 0
                 ? Math.round(executing.reduce((sum: number, i: Initiative) => sum + (i.progress || 0), 0) / executing.length)
                 : 0;
 
@@ -148,7 +137,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             const budgetSummary = budgetRes.summary;
             let budgetHealth: 'HEALTHY' | 'WARNING' | 'CRITICAL' | 'OVERRUN' = 'HEALTHY';
             let portfolioBudgetConsumed = 0;
-            
+
             if (budgetSummary) {
                 portfolioBudgetConsumed = budgetSummary.totals?.consumedPercent || 0;
                 if (budgetSummary.healthCounts?.overrun > 0) budgetHealth = 'OVERRUN';
@@ -172,7 +161,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
             // Generate alerts
             const newAlerts: Alert[] = [];
-            
+
             // Blocked initiatives - critical
             blocked.forEach((i: Initiative) => {
                 newAlerts.push({
@@ -378,7 +367,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                     </div>
                     <div className="mt-3">
                         <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
-                            <div 
+                            <div
                                 className="h-full bg-green-500 rounded-full transition-all"
                                 style={{ width: `${metrics.avgProgress}%` }}
                             />
@@ -392,20 +381,17 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                                 Blocked
                             </p>
-                            <p className={`text-3xl font-bold mt-1 ${
-                                metrics.blocked > 0 ? 'text-red-600 dark:text-red-400' : 'text-navy-900 dark:text-white'
-                            }`}>
+                            <p className={`text-3xl font-bold mt-1 ${metrics.blocked > 0 ? 'text-red-600 dark:text-red-400' : 'text-navy-900 dark:text-white'
+                                }`}>
                                 {metrics.blocked}
                             </p>
                         </div>
-                        <div className={`p-3 rounded-xl ${
-                            metrics.blocked > 0 
-                                ? 'bg-red-100 dark:bg-red-900/30 animate-pulse' 
-                                : 'bg-slate-100 dark:bg-slate-800'
-                        }`}>
-                            <Pause className={`w-6 h-6 ${
-                                metrics.blocked > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-400'
-                            }`} />
+                        <div className={`p-3 rounded-xl ${metrics.blocked > 0
+                            ? 'bg-red-100 dark:bg-red-900/30 animate-pulse'
+                            : 'bg-slate-100 dark:bg-slate-800'
+                            }`}>
+                            <Pause className={`w-6 h-6 ${metrics.blocked > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-400'
+                                }`} />
                         </div>
                     </div>
                     {metrics.blocked > 0 && (
@@ -421,20 +407,17 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                                 At Risk
                             </p>
-                            <p className={`text-3xl font-bold mt-1 ${
-                                metrics.atRisk > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-navy-900 dark:text-white'
-                            }`}>
+                            <p className={`text-3xl font-bold mt-1 ${metrics.atRisk > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-navy-900 dark:text-white'
+                                }`}>
                                 {metrics.atRisk}
                             </p>
                         </div>
-                        <div className={`p-3 rounded-xl ${
-                            metrics.atRisk > 0 
-                                ? 'bg-amber-100 dark:bg-amber-900/30' 
-                                : 'bg-slate-100 dark:bg-slate-800'
-                        }`}>
-                            <AlertTriangle className={`w-6 h-6 ${
-                                metrics.atRisk > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'
-                            }`} />
+                        <div className={`p-3 rounded-xl ${metrics.atRisk > 0
+                            ? 'bg-amber-100 dark:bg-amber-900/30'
+                            : 'bg-slate-100 dark:bg-slate-800'
+                            }`}>
+                            <AlertTriangle className={`w-6 h-6 ${metrics.atRisk > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'
+                                }`} />
                         </div>
                     </div>
                     {metrics.atRisk > 0 && (
@@ -453,20 +436,17 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                                 Pending Decisions
                             </p>
-                            <p className={`text-3xl font-bold mt-1 ${
-                                metrics.pendingDecisions > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-navy-900 dark:text-white'
-                            }`}>
+                            <p className={`text-3xl font-bold mt-1 ${metrics.pendingDecisions > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-navy-900 dark:text-white'
+                                }`}>
                                 {metrics.pendingDecisions}
                             </p>
                         </div>
-                        <div className={`p-3 rounded-xl ${
-                            metrics.pendingDecisions > 0 
-                                ? 'bg-blue-100 dark:bg-blue-900/30' 
-                                : 'bg-slate-100 dark:bg-slate-800'
-                        }`}>
-                            <FileCheck className={`w-6 h-6 ${
-                                metrics.pendingDecisions > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'
-                            }`} />
+                        <div className={`p-3 rounded-xl ${metrics.pendingDecisions > 0
+                            ? 'bg-blue-100 dark:bg-blue-900/30'
+                            : 'bg-slate-100 dark:bg-slate-800'
+                            }`}>
+                            <FileCheck className={`w-6 h-6 ${metrics.pendingDecisions > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'
+                                }`} />
                         </div>
                     </div>
                     {metrics.pendingDecisions > 3 && (
@@ -482,20 +462,17 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                                 High-Risk Items
                             </p>
-                            <p className={`text-3xl font-bold mt-1 ${
-                                metrics.highRiskItems > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-navy-900 dark:text-white'
-                            }`}>
+                            <p className={`text-3xl font-bold mt-1 ${metrics.highRiskItems > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-navy-900 dark:text-white'
+                                }`}>
                                 {metrics.highRiskItems}
                             </p>
                         </div>
-                        <div className={`p-3 rounded-xl ${
-                            metrics.highRiskItems > 0 
-                                ? 'bg-orange-100 dark:bg-orange-900/30' 
-                                : 'bg-slate-100 dark:bg-slate-800'
-                        }`}>
-                            <Shield className={`w-6 h-6 ${
-                                metrics.highRiskItems > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400'
-                            }`} />
+                        <div className={`p-3 rounded-xl ${metrics.highRiskItems > 0
+                            ? 'bg-orange-100 dark:bg-orange-900/30'
+                            : 'bg-slate-100 dark:bg-slate-800'
+                            }`}>
+                            <Shield className={`w-6 h-6 ${metrics.highRiskItems > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400'
+                                }`} />
                         </div>
                     </div>
                     {metrics.highRiskItems > 0 && (
@@ -533,20 +510,17 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                                 Overdue Items
                             </p>
-                            <p className={`text-3xl font-bold mt-1 ${
-                                metrics.overdueTasks > 0 ? 'text-red-600 dark:text-red-400' : 'text-navy-900 dark:text-white'
-                            }`}>
+                            <p className={`text-3xl font-bold mt-1 ${metrics.overdueTasks > 0 ? 'text-red-600 dark:text-red-400' : 'text-navy-900 dark:text-white'
+                                }`}>
                                 {metrics.overdueTasks}
                             </p>
                         </div>
-                        <div className={`p-3 rounded-xl ${
-                            metrics.overdueTasks > 0 
-                                ? 'bg-red-100 dark:bg-red-900/30' 
-                                : 'bg-slate-100 dark:bg-slate-800'
-                        }`}>
-                            <Clock className={`w-6 h-6 ${
-                                metrics.overdueTasks > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-400'
-                            }`} />
+                        <div className={`p-3 rounded-xl ${metrics.overdueTasks > 0
+                            ? 'bg-red-100 dark:bg-red-900/30'
+                            : 'bg-slate-100 dark:bg-slate-800'
+                            }`}>
+                            <Clock className={`w-6 h-6 ${metrics.overdueTasks > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-400'
+                                }`} />
                         </div>
                     </div>
                     {metrics.overdueTasks > 0 && (
@@ -568,7 +542,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                         {alerts.slice(0, 5).map((alert, idx) => {
                             const colors = getAlertColors(alert);
                             return (
-                                <div 
+                                <div
                                     key={idx}
                                     onClick={() => alert.initiativeId && onInitiativeClick?.(initiatives.find(i => i.id === alert.initiativeId)!)}
                                     className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${colors.bg}`}
@@ -621,7 +595,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                             </div>
                         ) : (
                             executingInitiatives.map(init => (
-                                <div 
+                                <div
                                     key={init.id}
                                     onClick={() => onInitiativeClick?.(init)}
                                     className="p-3 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer"
@@ -635,7 +609,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                                         </span>
                                     </div>
                                     <div className="h-1.5 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
-                                        <div 
+                                        <div
                                             className="h-full bg-purple-500 rounded-full transition-all"
                                             style={{ width: `${init.progress || 0}%` }}
                                         />
@@ -662,7 +636,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                             </div>
                         ) : (
                             blockedInitiatives.map(init => (
-                                <div 
+                                <div
                                     key={init.id}
                                     onClick={() => onInitiativeClick?.(init)}
                                     className="p-3 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"

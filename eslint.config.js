@@ -34,7 +34,7 @@ export default tseslint.config(
             '@typescript-eslint/explicit-function-return-type': 'off', // Too strict for now
             '@typescript-eslint/no-non-null-assertion': 'warn',
             '@typescript-eslint/prefer-nullish-coalescing': 'off', // Requires strictNullChecks
-            '@typescript-eslint/prefer-optional-chain': 'warn',
+            '@typescript-eslint/prefer-optional-chain': 'off', // Requires type-aware linting
             '@typescript-eslint/no-floating-promises': 'off', // Requires type-aware linting
             '@typescript-eslint/no-misused-promises': 'off', // Requires type-aware linting
             '@typescript-eslint/await-thenable': 'off', // Requires type-aware linting
@@ -87,6 +87,33 @@ export default tseslint.config(
             'no-throw-literal': 'warn',
             'no-useless-catch': 'warn',
             'no-empty-pattern': 'warn',
+            
+            // ==========================================
+            // CODE COMPLEXITY & MAINTAINABILITY
+            // ==========================================
+            
+            // Complexity limits (enterprise-grade maintainability)
+            'max-depth': ['warn', 4], // Maximum nesting depth
+            'max-lines-per-function': ['warn', { max: 200, skipBlankLines: true, skipComments: true }],
+            'complexity': ['warn', 15], // Cyclomatic complexity
+            
+            // Import hygiene
+            'no-restricted-imports': ['warn', {
+                patterns: [
+                    {
+                        group: ['../**/node_modules/**'],
+                        message: 'Import directly from package, not through node_modules path'
+                    }
+                ]
+            }],
+            
+            // Array key quality (prevents React re-render issues)
+            'no-magic-numbers': ['warn', { 
+                ignore: [-1, 0, 1, 2, 100], 
+                ignoreArrayIndexes: true,
+                enforceConst: true,
+                detectObjects: false
+            }],
         },
     },
 );

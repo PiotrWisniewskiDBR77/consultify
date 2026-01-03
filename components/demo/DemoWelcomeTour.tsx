@@ -81,7 +81,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
             title: t('tour.steps.complete.title', 'You\'re All Set!'),
             description: t('tour.steps.complete.description', 'Explore freely. Remember: AI recommends, but you decide. Every strategic decision remains in your hands.'),
             icon: CheckCircle2,
-            highlight: null
+            highlight: undefined
         }
     ];
 

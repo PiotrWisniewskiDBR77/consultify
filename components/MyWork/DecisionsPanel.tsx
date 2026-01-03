@@ -806,7 +806,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
     const [delegateDecision, setDelegateDecision] = useState<Decision | null>(null);
     
     const currentProjectId = useAppStore(state => state.currentProjectId);
-    const currentUserId = useAppStore(state => state.user?.id);
+    const currentUserId = useAppStore(state => state.currentUser?.id);
 
     useEffect(() => {
         fetchDecisions();
