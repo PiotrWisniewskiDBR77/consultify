@@ -14,10 +14,10 @@ import { PaymentMethodsPanel } from '../../components/billing/PaymentMethodsPane
 import { TaxSettingsForm } from '../../components/billing/TaxSettingsForm';
 import { UsageAlertsConfig } from '../../components/billing/UsageAlertsConfig';
 import { SubscriptionManager } from '../../components/billing/SubscriptionManager';
-import { DataGovernancePanel } from '../../components/admin/DataGovernancePanel';
-import { AuditExportPanel } from '../../components/admin/AuditExportPanel';
-import { BrandingSettingsPanel } from '../../components/admin/BrandingSettingsPanel';
-import { IntegrationsManagementPanel } from '../../components/admin/IntegrationsManagementPanel';
+import { DataGovernancePanel } from '../../components/Admin/DataGovernancePanel';
+import { AuditExportPanel } from '../../components/Admin/AuditExportPanel';
+import { BrandingSettingsPanel } from '../../components/Admin/BrandingSettingsPanel';
+import { IntegrationsManagementPanel } from '../../components/Admin/IntegrationsManagementPanel';
 import { ApiKeysManagementView } from './ApiKeysManagementView';
 import { useTranslation } from 'react-i18next';
 import { Api } from '../../services/api';
@@ -85,8 +85,8 @@ const AdminFeedbackView: React.FC = () => {
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-2">
                                         <span className={`px-2 py-0.5 text-xs rounded-full ${item.status === 'new' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300' :
-                                                item.status === 'resolved' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300' :
-                                                    'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300'
+                                            item.status === 'resolved' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300' :
+                                                'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300'
                                             }`}>
                                             {item.status}
                                         </span>
