@@ -98,6 +98,7 @@
 - [/] Define service boundaries
 - [x] Extract focused modules (aiService, assessmentService, reportGeneratorService)
 - [x] BillingService split (query/command/event)
+- [x] CQRS command/query buses + project handlers
 - [/] Implement dependency injection
 
 #### Faza 1.3: Database Optimization (Antigravity)
