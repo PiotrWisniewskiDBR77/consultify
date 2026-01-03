@@ -4114,11 +4114,14 @@ export interface ContactPhone {
   phone: string;
   type: 'work' | 'mobile' | 'home' | 'other';
   isPrimary: boolean;
+  isVerified?: boolean; // Added for verification support
   countryCode?: string;
 }
 
 export interface Address {
   id?: string;
+  type?: 'office' | 'home' | 'billing' | 'shipping' | 'other'; // Added for address type
+  isPrimary?: boolean; // Added for primary address support
   street?: string;
   city?: string;
   state?: string;
@@ -4689,15 +4692,26 @@ export interface Project {
   name: string;
   description?: string;
   goal?: string;
-  status: 'active' | 'archived' | 'completed';
+  status: 'draft' | 'active' | 'on_hold' | 'completed' | 'cancelled' | 'archived';
   ownerId?: string;
+  ownerName?: string;
+  owner_first_name?: string;
+  owner_last_name?: string;
   owner?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
   createdAt: string;
+  created_at?: string; // Legacy support
+  updatedAt: string;
+  updated_at?: string; // Legacy support
   taskCount?: number;
   memberCount?: number;
   initiativeCount?: number;
   assessmentCount?: number;
   documentCount?: number;
+  team?: any[];
+  initiatives?: any[];
+  assessments?: any[];
+  documents?: any[];
+  workstreams?: any[];
 }
 
 // ==========================================
@@ -5628,6 +5642,12 @@ export interface ProjectMember {
   createdAt: string;
   updatedAt: string;
   addedById?: string;
+
+  /** User details (joined) */
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  avatarUrl?: string;
 }
 
 /**
@@ -5670,6 +5690,12 @@ export interface Workstream {
   /** Audit fields */
   createdAt: string;
   updatedAt: string;
+
+  /** Computed fields for UI (optional, populated by backend) */
+  progress?: number;
+  initiativeCount?: number;
+  completedCount?: number;
+  ownerName?: string;
 }
 
 /**
