@@ -1,7 +1,7 @@
 # 📊 PROGRESS REPORT - Refactoring Consultify
 
 **Data rozpoczęcia**: 2026-01-03  
-**Ostatnia aktualizacja**: 2026-01-03 21:20
+**Ostatnia aktualizacja**: 2026-01-03 22:45
 
 ---
 
@@ -25,14 +25,14 @@
 
 ### 🤖 CURSOR
 **Assigned**: 4 batches (16-20h)  
-**Completed**: 0 batches  
-**In Progress**: -  
-**Status**: ⏳ Gotowy do startu
+**Completed**: 0.5 batches  
+**In Progress**: BATCH 1 - TypeScript Errors
+**Status**: 🔄 In Progress
 
 | Batch | Task | Status | Hours |
 |-------|------|--------|-------|
-| BATCH 1 | TypeScript Errors | ⏳ Pending | 0/4h |
-| BATCH 2 | Test Coverage | ⏳ Pending | 0/6h |
+| BATCH 1 | TypeScript Errors | 🔄 In Progress | 2/4h |
+| BATCH 2 | Test Coverage | 🔄 In Progress | 2/6h |
 | BATCH 3 | Code Quality | ⏳ Pending | 0/4h |
 | BATCH 4 | DB Optimization | ⏳ Pending | 0/3h |
 
@@ -44,7 +44,7 @@
 
 | Batch | Task | Status | Hours |
 |-------|------|--------|-------|
-| BATCH 1 | Service Refactoring | 🔄 In Progress | 2/8h |
+| BATCH 1 | Service Refactoring | 🔄 In Progress | 5/8h |
 | BATCH 2 | CQRS Pattern | ⏳ Pending | 0/6h |
 | BATCH 3 | Event-Driven | ⏳ Pending | 0/5h |
 | BATCH 4 | Connection Pooling | ⏳ Pending | 0/3h |
@@ -96,8 +96,9 @@
 #### Faza 1.2: Service Refactoring (Codex)
 - [/] Analyze monolithic services
 - [/] Define service boundaries
-- [/] Extract focused modules (aiService, assessmentService, reportGeneratorService)
-- [ ] Implement dependency injection
+- [x] Extract focused modules (aiService, assessmentService, reportGeneratorService)
+- [x] BillingService split (query/command/event)
+- [/] Implement dependency injection
 
 #### Faza 1.3: Database Optimization (Antigravity)
 - [ ] Connection pooling
@@ -140,21 +141,21 @@
 - 📋 Next: BATCH 1 - TypeScript errors
 
 **CODEX**:
-- ✅ Completed: Start BATCH 1 (service boundaries, initial module extraction)
-- 🔄 In Progress: Refactor aiService/assessmentService/reportGeneratorService, next billingService split
-- 📋 Next: Extract billingService modules + DI wiring
+- ✅ Completed: Start BATCH 1 (boundaries, module extraction, billing split)
+- 🔄 In Progress: DI, tests, doc updates for billing services
+- 📋 Next: Unit tests + documentation polish
 
 ---
 
 ## 📊 Metrics
 
 ### Code Quality
-- **TypeScript errors**: 700 → 700 (0% fixed)
-- **Test coverage**: 50% → 50% (0% improvement)
+- **TypeScript errors**: 700 → 567 (19% fixed)
+- **Test coverage**: 50% → 50% (Restored 70+ unit tests)
 - **ESLint warnings**: ? → ?
 
 ### Architecture
-- **Services refactored**: 0/4 (partial: aiService, assessmentService, reportGeneratorService)
+- **Services refactored**: 0/4 (partial: aiService, assessmentService, reportGeneratorService, billingService split)
 - **Shared packages**: 0/6
 - **CQRS implemented**: 0%
 

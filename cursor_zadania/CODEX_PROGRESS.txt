@@ -1,0 +1,4 @@
+### 2026-01-03 22:45
+✅ BillingQueryService, BillingCommandService, BillingEventService extracted
+✅ Shared dependency loader + unit tests for billing modules
+⏳ DI wiring & documentation polish in progress

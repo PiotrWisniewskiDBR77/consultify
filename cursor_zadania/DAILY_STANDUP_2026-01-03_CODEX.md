@@ -14,6 +14,8 @@
 - [x] Extracted legacy AI queue + LLM modules from `aiService.js`
 - [x] Split `assessmentService.js` into storage/analysis/workflow modules
 - [x] Split report generator schemas/phases for `reportGeneratorService.js`
+- [x] Refactored `BillingService` into query/command/event layers with DI
+- [x] Added architecture doc + Vitest coverage for billing modules
 
 ### Files Changed
 - `server/services/aiService.js`
@@ -26,10 +28,19 @@
 - `server/services/ai/reportGeneratorService.js`
 - `server/services/ai/reportGeneratorSchemas.js`
 - `server/services/ai/reportGeneratorPhases.js`
+- `server/src/services/billing/types.ts`
+- `server/src/services/billing/billingDependencyLoader.ts`
+- `server/src/services/billing/BillingQueryService.ts`
+- `server/src/services/billing/BillingCommandService.ts`
+- `server/src/services/billing/BillingEventService.ts`
+- `server/src/services/billing/__tests__/BillingQueryService.test.ts`
+- `server/src/services/billing/__tests__/BillingCommandService.test.ts`
+- `cursor_zadania/SERVICE_ARCHITECTURE.md`
 
 ### Tests
 ```bash
-# Not run (not requested)
+npm run test -- server/src/services/billing/__tests__/BillingQueryService.test.ts server/src/services/billing/__tests__/BillingCommandService.test.ts # ✅ Passed
+npm run type-check  # ✅ 0 errors
 ```
 
 ### Commits
@@ -39,12 +50,12 @@
 
 ## 🔄 In Progress
 
-**Current Task**: BillingService refactor  
-**Progress**: 20%  
+**Current Task**: BillingService DI/tests/doc polish  
+**Progress**: 60%  
 **Estimated Completion**: 2026-01-04
 
 ### Challenges
-- BillingService is large and needs boundary definition before extraction.
+- Keeping the shared dependency loader in sync across query/command flows while stubbing `db`/`stripe` in tests.
 
 ---
 
@@ -61,9 +72,9 @@
 ## 📋 Next Steps
 
 **Tomorrow's Plan**:
-1. [ ] Extract billingService modules
-2. [ ] Wire DI and ensure backward compatibility
-3. [ ] Update Master Plan checkboxes when batch is complete
+1. [ ] Finalize DI wiring + dependency loader coverage
+2. [ ] Ensure the new billing tests cover critical paths
+3. [ ] Update Master Plan checkboxes once batch fully re-targeted
 
 **Estimated Hours**: 6h
 
@@ -95,4 +106,4 @@ No `TASKS.md` found for Codex; using `cursor_zadania/CODEX_TASKS.md` as source u
 ---
 
 **Reported by**: Codex  
-**Time**: 21:20
+**Time**: 22:45
