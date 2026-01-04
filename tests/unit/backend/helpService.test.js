@@ -14,7 +14,7 @@ describe('HelpService Constants and Validation', () => {
 
     beforeEach(async () => {
         // Dynamic import to allow mocking
-        HelpService = (await import('../../../server/services/helpService')).default;
+        HelpService = (await import('../../../server/src/services/helpService')).default;
     });
 
     describe('EVENT_TYPES', () => {

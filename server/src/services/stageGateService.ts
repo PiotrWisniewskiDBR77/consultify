@@ -170,19 +170,19 @@ async function evaluateCriterion(projectId: string, field: string): Promise<bool
             return await checkContextField(
                 projectId,
                 'strategicGoals',
-                (arr) => arr && Array.isArray(arr) && arr.length > 0,
+                (arr) => !!(arr && Array.isArray(arr) && arr.length > 0),
             );
         case 'hasChallenges':
             return await checkContextField(
                 projectId,
                 'challenges',
-                (arr) => arr && Array.isArray(arr) && arr.length > 0,
+                (arr) => !!(arr && Array.isArray(arr) && arr.length > 0),
             );
         case 'hasConstraints':
             return await checkContextField(
                 projectId,
                 'constraints',
-                (arr) => arr && Array.isArray(arr) && arr.length > 0,
+                (arr) => !!(arr && Array.isArray(arr) && arr.length > 0),
             );
         case 'contextReadinessOk':
             return await checkContextReadiness(projectId);
@@ -395,6 +395,9 @@ const StageGateService = {
     evaluateGate,
     passGate,
     _setDb: setDb, // For testing
+    setDependencies: (deps: { db: IDatabase }) => {
+        if (deps.db) setDb(deps.db);
+    },
 };
 
 export default StageGateService;

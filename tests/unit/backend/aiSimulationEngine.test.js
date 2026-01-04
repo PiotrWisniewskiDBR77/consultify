@@ -2,41 +2,43 @@
 // Tests the AI simulation engine for scenario planning and what-if analysis
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-
-const mockDb = {
-    all: vi.fn(),
-    get: vi.fn(),
-    run: vi.fn()
-};
-
-const mockSimulationService = {
-    runSimulation: vi.fn(),
-    validateScenario: vi.fn(),
-    calculateProbabilities: vi.fn()
-};
-
-vi.mock('../../../server/database', () => ({ default: mockDb }));
-vi.mock('../../../server/services/simulationService', () => ({ default: mockSimulationService }));
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
 describe('AISimulationEngine', () => {
     let engine;
     let AISimulationEngine;
+    let mocks;
 
     beforeEach(async () => {
-        vi.resetAllMocks(); // Use reset instead of clear to remove implementations
+        vi.resetAllMocks();
         vi.resetModules();
+
+        mocks = setupStandardTest();
+
+        // Setup specific simulation service mocks
+        mocks.simulationService = {
+            runSimulation: vi.fn(),
+            validateScenario: vi.fn(),
+            calculateProbabilities: vi.fn()
+        };
+
+        // Module-level mock for simulation service
+        vi.mock('../../../server/src/services/simulationService', () => ({
+            default: mocks.simulationService
+        }));
+
         AISimulationEngine = (await import('../../../server/ai/simulationEngine.js')).default;
-        // Inject mocks via constructor
+
+        // Inject mocks via constructor using unified pattern
         engine = new AISimulationEngine({
-            db: mockDb,
-            SimulationService: mockSimulationService
+            db: mocks.db,
+            SimulationService: mocks.simulationService
         });
     });
 
     afterEach(() => {
         vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('runScenarioSimulation', () => {

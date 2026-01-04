@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import HelpButton from '../../components/HelpButton';
 import { useHelp } from '../../contexts/HelpContext';
 
-vi.mock('../../../contexts/HelpContext', () => ({
+vi.mock('../../contexts/HelpContext', () => ({
     useHelp: vi.fn()
 }));
 

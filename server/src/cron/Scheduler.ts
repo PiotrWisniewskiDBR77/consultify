@@ -16,7 +16,7 @@ const { learningSystem } = kls;
 import aiMemoryMetricsService from '../services/ai/aiMemoryMetricsService.js';
 import aiMemoryManager from '../services/aiMemoryManager.js';
 import feedbackService from '../services/feedbackService.js';
-import logger from '../utils/Logger.js';
+import logger from '../utils/Logger.ts';
 
 const Scheduler = {
     jobs: [] as cron.ScheduledTask[],
@@ -246,4 +246,3 @@ const Scheduler = {
 };
 
 export default Scheduler;
-

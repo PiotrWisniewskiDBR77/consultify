@@ -3,7 +3,7 @@
  * Handles OAuth user creation, linking, and token generation
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import jwt from 'jsonwebtoken';
 import config from '../config.js';

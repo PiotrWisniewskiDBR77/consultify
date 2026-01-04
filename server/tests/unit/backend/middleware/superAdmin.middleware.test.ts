@@ -136,5 +136,3 @@ describe('Super Admin Middleware', () => {
         });
     });
 });
-
-

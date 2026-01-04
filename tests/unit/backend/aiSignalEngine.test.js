@@ -36,7 +36,7 @@ describe('AISignalEngine', () => {
         };
 
         vi.mock('../../../server/database', () => ({ default: mockDb }));
-        vi.mock('../../../server/services/analyticsService', () => ({ default: mockAnalyticsService }));
+        vi.mock('../../../server/src/services/analyticsService', () => ({ default: mockAnalyticsService }));
 
         engine = new AISignalEngine();
     });

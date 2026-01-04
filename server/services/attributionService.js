@@ -11,7 +11,7 @@
  * Follows the same pattern as organization_events, legal_events, invitation_events.
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const defaultDb = getDatabase();
 import { v4 as defaultUuidv4 } from 'uuid';
 

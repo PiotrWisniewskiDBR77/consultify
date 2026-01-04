@@ -536,5 +536,3 @@ export const ADMAAssessmentMap: React.FC<ADMAAssessmentMapProps> = ({
 };
 
 export default ADMAAssessmentMap;
-
-

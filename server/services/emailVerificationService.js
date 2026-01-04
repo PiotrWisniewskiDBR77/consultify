@@ -11,7 +11,7 @@
  */
 
 import crypto from 'crypto';
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import EmailService from './emailService.js';
 import { v4 as uuidv4 } from 'uuid';

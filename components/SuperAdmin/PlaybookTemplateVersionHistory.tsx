@@ -301,5 +301,3 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
 };
 
 export default PlaybookTemplateVersionHistory;
-
-

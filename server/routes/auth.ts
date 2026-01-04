@@ -8,6 +8,7 @@ const db = getDatabase();
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
+
 import config from '../config.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 import * as ActivityServiceModule from '../src/services/ActivityService.js';
@@ -17,7 +18,7 @@ const ActivityService = ActivityServiceModule.default || ActivityServiceModule;
 const withTimeout = (promise, timeoutMs = 1000) => {
     return Promise.race([
         promise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timeout')), timeoutMs))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timeout')), timeoutMs)),
     ]);
 };
 
@@ -45,7 +46,7 @@ router.post('/refresh', async (req, res) => {
     try {
         const result = await RefreshTokenService.refreshAccessToken(refreshToken, {
             ip: req.ip,
-            userAgent: req.get('user-agent')
+            userAgent: req.get('user-agent'),
         });
 
         if (!result) {
@@ -55,7 +56,7 @@ router.post('/refresh', async (req, res) => {
         res.json({
             token: result.accessToken,
             refreshToken: result.refreshToken,
-            expiresIn: result.expiresIn
+            expiresIn: result.expiresIn,
         });
     } catch (error) {
         console.error('[Auth] Refresh error:', error);
@@ -92,7 +93,6 @@ router.delete('/sessions/:id', authMiddleware, async (req, res) => {
     }
 });
 
-
 // GET ME - Validate token and return user data (Phase 5: Real-time Profile Sync)
 router.get('/me', authMiddleware, async (req, res) => {
     try {
@@ -109,7 +109,7 @@ router.get('/me', authMiddleware, async (req, res) => {
                 (err, row) => {
                     if (err) reject(err);
                     else resolve(row);
-                }
+                },
             );
         });
 
@@ -128,13 +128,13 @@ router.get('/me', authMiddleware, async (req, res) => {
                     id: user.id,
                     email: user.email,
                     role: user.role,
-                    organization_id: user.organization_id
+                    organization_id: user.organization_id,
                 },
                 {
                     deviceInfo,
                     ip: req.ip,
-                    userAgent: req.get('user-agent')
-                }
+                    userAgent: req.get('user-agent'),
+                },
             );
             newToken = tokenPair.accessToken;
         }
@@ -149,8 +149,8 @@ router.get('/me', authMiddleware, async (req, res) => {
                 firstName: user.first_name,
                 lastName: user.last_name,
                 avatarUrl: user.avatar_url,
-                impersonatorId: user.impersonator_id
-            }
+                impersonatorId: user.impersonator_id,
+            },
         };
 
         // Include new token if role changed
@@ -169,8 +169,8 @@ router.get('/me', authMiddleware, async (req, res) => {
                 email: req.user.email,
                 role: req.user.role,
                 organizationId: req.user.organizationId,
-                impersonatorId: req.user.impersonator_id
-            }
+                impersonatorId: req.user.impersonator_id,
+            },
         });
     }
 });
@@ -204,7 +204,7 @@ router.post('/logout', authMiddleware, (req, res) => {
                     // Still return success - user is "logged out" from client perspective
                 }
                 res.json({ message: 'Logged out successfully' });
-            }
+            },
         );
     } catch (error) {
         console.error('Logout error:', error);
@@ -229,13 +229,17 @@ router.post('/revert-impersonation', authMiddleware, (req, res) => {
 
         // Generate new token for the admin
         const jti = uuidv4();
-        const token = jwt.sign({
-            id: adminUser.id,
-            email: adminUser.email,
-            role: adminUser.role,
-            organizationId: adminUser.organization_id,
-            jti: jti
-        }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
+        const token = jwt.sign(
+            {
+                id: adminUser.id,
+                email: adminUser.email,
+                role: adminUser.role,
+                organizationId: adminUser.organization_id,
+                jti: jti,
+            },
+            config.JWT_SECRET,
+            { expiresIn: config.JWT_EXPIRES_IN },
+        );
 
         // Log the reversion
         ActivityService.log({
@@ -243,7 +247,7 @@ router.post('/revert-impersonation', authMiddleware, (req, res) => {
             action: 'impersonate_end',
             entityType: 'user',
             entityId: req.user.id, // The user that was being impersonated
-            entityName: req.user.email
+            entityName: req.user.email,
         });
 
         // Return admin user and token
@@ -255,13 +259,12 @@ router.post('/revert-impersonation', authMiddleware, (req, res) => {
             role: adminUser.role,
             status: adminUser.status,
             organizationId: adminUser.organization_id,
-            companyName: 'Admin Console' // Simplified, or fetch org name if needed
+            companyName: 'Admin Console', // Simplified, or fetch org name if needed
         };
 
         res.json({ user: safeUser, token });
     });
 });
-
 
 // DEMO LOGIN - Auto-login as demo@legolex.com
 router.post('/demo-login', async (req, res) => {
@@ -283,7 +286,7 @@ router.post('/demo-login', async (req, res) => {
             console.error('[Auth] Demo user not found - please run seed script');
             return res.status(404).json({
                 error: 'Demo user not found. Please contact support.',
-                code: 'DEMO_USER_NOT_FOUND'
+                code: 'DEMO_USER_NOT_FOUND',
             });
         }
 
@@ -302,7 +305,7 @@ router.post('/demo-login', async (req, res) => {
         const tokenResult = await RefreshTokenService.generateTokenPair(user, {
             deviceInfo: 'Demo Session',
             ip: req.ip,
-            userAgent: req.get('user-agent')
+            userAgent: req.get('user-agent'),
         });
 
         const accessToken = tokenResult.accessToken;
@@ -315,7 +318,7 @@ router.post('/demo-login', async (req, res) => {
             entityType: 'user',
             entityId: user.id,
             entityName: DEMO_EMAIL,
-            metadata: { ip: req.ip }
+            metadata: { ip: req.ip },
         });
 
         // Return demo user
@@ -329,7 +332,7 @@ router.post('/demo-login', async (req, res) => {
             organizationId: user.organization_id,
             companyName: org?.name || 'Demo Company',
             isDemo: true,
-            hasWorkspace: true // Demo always has workspace access
+            hasWorkspace: true, // Demo always has workspace access
         };
 
         console.log('[Auth] Demo login successful');
@@ -337,9 +340,8 @@ router.post('/demo-login', async (req, res) => {
             user: safeUser,
             token: accessToken,
             refreshToken,
-            isDemo: true
+            isDemo: true,
         });
-
     } catch (error) {
         console.error('[Auth] Demo login error:', error);
         res.status(500).json({ error: 'Demo login failed. Please try again.' });
@@ -350,8 +352,17 @@ router.post('/demo-login', async (req, res) => {
 // Step 4: Enhanced with promo code support and attribution tracking
 router.post('/register', async (req, res) => {
     const {
-        email, password, firstName, lastName, companyName, accessCode, isDemo,
-        promoCode, utm_campaign, utm_medium, partner_code
+        email,
+        password,
+        firstName,
+        lastName,
+        companyName,
+        accessCode,
+        isDemo,
+        promoCode,
+        utm_campaign,
+        utm_medium,
+        partner_code,
     } = req.body;
 
     // Import services (lazy load to avoid circular deps)
@@ -366,7 +377,7 @@ router.post('/register', async (req, res) => {
             if (!promoValidation.valid) {
                 return res.status(400).json({
                     error: promoValidation.reason,
-                    errorCode: 'INVALID_PROMO_CODE'
+                    errorCode: 'INVALID_PROMO_CODE',
                 });
             }
         } catch (err) {
@@ -395,7 +406,9 @@ router.post('/register', async (req, res) => {
                 insertOrg.finalize();
 
                 // 2. Create Admin User for that Org
-                const insertUser = db.prepare(`INSERT INTO users (id, organization_id, email, password, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+                const insertUser = db.prepare(
+                    `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                );
                 insertUser.run(userId, orgId, email, hashedPassword, firstName, lastName, 'ADMIN', async (err) => {
                     if (err) {
                         if (process.env.NODE_ENV !== 'production') console.error('Register User Error:', err);
@@ -419,8 +432,8 @@ router.post('/register', async (req, res) => {
                                 promoCode: promoCode || null,
                                 accessCode: accessCode || null,
                                 isDemo,
-                                entryPoint: 'registration'
-                            }
+                                entryPoint: 'registration',
+                            },
                         });
                     } catch (attrErr) {
                         console.error('[Auth] Attribution recording failed:', attrErr);
@@ -439,27 +452,42 @@ router.post('/register', async (req, res) => {
 
                     // If pending, do not issue token, but return success with "pending" status
                     if (finalStatus === 'pending') {
-                        const insertRequest = db.prepare(`INSERT INTO access_requests (id, email, first_name, last_name, organization_id, organization_name, status) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-                        insertRequest.run(uuidv4(), email, firstName, lastName, orgId, companyName || 'My Company', 'pending', (err) => {
-                            if (err) console.error("Error logging access request:", err);
-                            insertRequest.finalize();
-                            return res.json({
-                                status: 'pending',
-                                message: 'Registration successful. Waiting for approval.'
-                            });
-                        });
+                        const insertRequest = db.prepare(
+                            `INSERT INTO access_requests (id, email, first_name, last_name, organization_id, organization_name, status) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        );
+                        insertRequest.run(
+                            uuidv4(),
+                            email,
+                            firstName,
+                            lastName,
+                            orgId,
+                            companyName || 'My Company',
+                            'pending',
+                            (err) => {
+                                if (err) console.error('Error logging access request:', err);
+                                insertRequest.finalize();
+                                return res.json({
+                                    status: 'pending',
+                                    message: 'Registration successful. Waiting for approval.',
+                                });
+                            },
+                        );
                         return;
                     }
 
                     // Generate unique token ID
                     const jti = uuidv4();
-                    const token = jwt.sign({
-                        id: userId,
-                        email: email,
-                        role: 'ADMIN',
-                        organizationId: orgId,
-                        jti: jti
-                    }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
+                    const token = jwt.sign(
+                        {
+                            id: userId,
+                            email: email,
+                            role: 'ADMIN',
+                            organizationId: orgId,
+                            jti: jti,
+                        },
+                        config.JWT_SECRET,
+                        { expiresIn: config.JWT_EXPIRES_IN },
+                    );
 
                     // Log registration
                     ActivityService.log({
@@ -468,21 +496,28 @@ router.post('/register', async (req, res) => {
                         action: 'registered',
                         entityType: 'organization',
                         entityId: orgId,
-                        entityName: companyName
+                        entityName: companyName,
                     });
 
                     res.json({
                         user: {
-                            id: userId, email, firstName, lastName, role: 'ADMIN',
-                            companyName: companyName, organizationId: orgId
+                            id: userId,
+                            email,
+                            firstName,
+                            lastName,
+                            role: 'ADMIN',
+                            companyName: companyName,
+                            organizationId: orgId,
                         },
                         token,
                         // Step 4: Include promo code info in response
-                        promoApplied: promoCode ? {
-                            code: promoCode,
-                            discountType: promoValidation?.discountType,
-                            discountValue: promoValidation?.discountValue
-                        } : null
+                        promoApplied: promoCode
+                            ? {
+                                  code: promoCode,
+                                  discountType: promoValidation?.discountType,
+                                  discountValue: promoValidation?.discountValue,
+                              }
+                            : null,
                     });
                 });
             });
@@ -510,7 +545,11 @@ router.post('/register', async (req, res) => {
                         db.run('UPDATE access_codes SET current_uses = current_uses + 1 WHERE id = ?', [codeRow.id]);
 
                         // Log usage
-                        db.run(`INSERT INTO access_code_usage (id, code_id, user_id) VALUES (?, ?, ?)`, [uuidv4(), codeRow.id, userId]);
+                        db.run(`INSERT INTO access_code_usage (id, code_id, user_id) VALUES (?, ?, ?)`, [
+                            uuidv4(),
+                            codeRow.id,
+                            userId,
+                        ]);
 
                         proceedWithRegistration('active', 'pro');
                     }
@@ -540,7 +579,9 @@ router.post('/revoke-all', authMiddleware, (req, res) => {
                 return res.status(404).json({ error: 'User not found' });
             }
             if (targetUser.organization_id !== req.user.organizationId) {
-                return res.status(403).json({ error: 'Not authorized to revoke tokens for users outside your organization' });
+                return res
+                    .status(403)
+                    .json({ error: 'Not authorized to revoke tokens for users outside your organization' });
             }
 
             // Proceed with revocation
@@ -565,7 +606,7 @@ function performRevocation(userId, res) {
                 return res.status(500).json({ error: 'Failed to revoke tokens' });
             }
             res.json({ message: 'All tokens revoked successfully' });
-        }
+        },
     );
 }
 
@@ -635,7 +676,7 @@ router.post('/change-password', authMiddleware, async (req, res) => {
             action: 'password_changed',
             entityType: 'user',
             entityId: userId,
-            entityName: 'Password Change'
+            entityName: 'Password Change',
         });
 
         // Optionally: Revoke all other sessions for security
@@ -645,9 +686,8 @@ router.post('/change-password', authMiddleware, async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Password changed successfully. All other sessions have been logged out for security.'
+            message: 'Password changed successfully. All other sessions have been logged out for security.',
         });
-
     } catch (error) {
         console.error('[Auth] Change password error:', error);
         res.status(500).json({ error: 'Failed to change password' });
@@ -705,7 +745,8 @@ router.post('/verify-email', async (req, res) => {
                  email_verification_token = NULL, 
                  email_verification_expires_at = NULL 
                  WHERE id = ?`,
-                [user.id], resolve
+                [user.id],
+                resolve,
             );
         });
 
@@ -733,7 +774,8 @@ router.post('/resend-verification', authMiddleware, async (req, res) => {
                  email_verification_expires_at = ?,
                  email_verification_sent_at = datetime('now')
                  WHERE id = ?`,
-                [token, expiresAt, userId], resolve
+                [token, expiresAt, userId],
+                resolve,
             );
         });
 
@@ -741,7 +783,7 @@ router.post('/resend-verification', authMiddleware, async (req, res) => {
         await EmailService.sendEmail(
             req.user.email,
             'Verify your Email',
-            `<a href="${verifyLink}">Click here to verify your email</a>`
+            `<a href="${verifyLink}">Click here to verify your email</a>`,
         );
 
         res.json({ success: true, message: 'Verification email sent' });
@@ -797,4 +839,3 @@ router.post('/mfa/disable', authMiddleware, async (req, res) => {
 });
 
 export default router;
-

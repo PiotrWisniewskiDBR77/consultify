@@ -3,31 +3,35 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
 
 // Mock database
-const mockDb = {
-    run: vi.fn(),
-    get: vi.fn(),
-    all: vi.fn()
-};
+const { mockDb } = vi.hoisted(() => {
+    return {
+        mockDb: {
+            run: vi.fn(),
+            get: vi.fn(),
+            all: vi.fn()
+        }
+    };
+});
 
 // Mock the service with dependency injection
-vi.mock('../../../../server/database', () => ({
+vi.mock('../../../../server/src/database/Database.ts', () => ({
     default: mockDb,
+    getDatabase: () => mockDb,
     run: mockDb.run,
     get: mockDb.get,
     all: mockDb.all
 }));
 
-const adminAuditService = require('../../../../server/services/adminAuditService');
-adminAuditService.setDependencies({ db: mockDb });
+import adminAuditService from '../../../../server/services/adminAuditService.js';
 
 describe('AdminAuditService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        if (adminAuditService.setDependencies) {
+            adminAuditService.setDependencies({ db: mockDb });
+        }
     });
 
     describe('calculateRiskScore', () => {
@@ -185,9 +189,9 @@ describe('AdminAuditService', () => {
             mockDb.get.mockResolvedValueOnce({ count: 3 });
             mockDb.all.mockResolvedValueOnce([]);
 
-            await adminAuditService.getLogs({ 
-                fromDate: '2025-01-01', 
-                toDate: '2025-01-31' 
+            await adminAuditService.getLogs({
+                fromDate: '2025-01-01',
+                toDate: '2025-01-31'
             });
 
             expect(mockDb.all).toHaveBeenCalledWith(
@@ -310,7 +314,3 @@ describe('AdminAuditService', () => {
         });
     });
 });
-
-
-
-

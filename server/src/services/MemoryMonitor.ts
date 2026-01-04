@@ -6,9 +6,9 @@
  * Alerts when memory growth exceeds thresholds
  */
 
+import logger from '../utils/Logger.ts';
 import { getMetricsService } from './MetricsService.js';
 import { memoryUsageBytes } from './MetricsService.js';
-import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -43,12 +43,14 @@ class MemoryMonitor {
     private leakThreshold: number; // Percentage growth threshold
     private timeWindow: number; // Time window in milliseconds
 
-    constructor(options: {
-        maxSamples?: number;
-        checkIntervalMs?: number;
-        leakThresholdPercent?: number;
-        timeWindowMs?: number;
-    } = {}) {
+    constructor(
+        options: {
+            maxSamples?: number;
+            checkIntervalMs?: number;
+            leakThresholdPercent?: number;
+            timeWindowMs?: number;
+        } = {},
+    ) {
         this.maxSamples = options.maxSamples || 100;
         this.leakThreshold = options.leakThresholdPercent || 20; // 20% growth threshold
         this.timeWindow = options.timeWindowMs || 3600000; // 1 hour default
@@ -194,9 +196,7 @@ class MemoryMonitor {
     } {
         const current = this.samples.length > 0 ? this.samples[this.samples.length - 1] : null;
         const growthSinceBaseline =
-            current && this.baseline
-                ? ((current.heapUsed - this.baseline.heapUsed) / this.baseline.heapUsed) * 100
-                : 0;
+            current && this.baseline ? ((current.heapUsed - this.baseline.heapUsed) / this.baseline.heapUsed) * 100 : 0;
 
         return {
             current,
@@ -249,6 +249,4 @@ export function getMemoryMonitor(options?: {
 // ==========================================
 
 export default MemoryMonitor;
-export type { MemorySample, MemoryLeakAlert };
-
-
+export type { MemoryLeakAlert, MemorySample };

@@ -5,7 +5,7 @@
  * Implements BCG/McKinsey-level context requirements for professional outputs.
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 
 

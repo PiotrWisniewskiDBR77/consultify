@@ -10,9 +10,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.ts';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
-import logger from '../utils/Logger.js';
     CreateInitiativeRequest,
     UpdateInitiativeRequest,
     UpdateInitiativeStatusRequest,

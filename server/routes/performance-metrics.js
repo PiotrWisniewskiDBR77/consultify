@@ -12,10 +12,11 @@
 import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
-import { asyncHandler  } from '../dist/utils/asyncHandler.js';
-import { getMetricsSummary,
+import { asyncHandler } from '../src/utils/asyncHandler.ts';
+import {
+    getMetricsSummary,
     getMemoryMetrics
- } from '../middleware/performanceMetrics.js';
+} from '../middleware/performanceMetrics.js';
 import * as metricsPersistenceServiceModule from '../services/metricsPersistenceService.js';
 const metricsPersistenceService = metricsPersistenceServiceModule.default || metricsPersistenceServiceModule;
 import alertService from '../services/alertService.js';

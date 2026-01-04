@@ -9,10 +9,14 @@
 
 import { Router } from 'express';
 
+import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 // Create router
 const router = Router();
+
+// Apply rate limiting
+router.use(defaultRateLimiter);
 
 // Lazy load the JS implementation
 const getMfaRoutesJS = async () => {

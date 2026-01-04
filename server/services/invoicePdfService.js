@@ -9,7 +9,7 @@
 
 import PDFDocument from 'pdfkit';
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 import path from 'path';
 import fs from 'fs';
 

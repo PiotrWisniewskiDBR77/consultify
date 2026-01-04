@@ -188,5 +188,3 @@ export function useSwipeGestures(config: SwipeConfig = {}): UseSwipeGesturesRetu
 }
 
 export default useSwipeGestures;
-
-

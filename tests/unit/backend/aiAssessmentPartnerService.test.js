@@ -4,38 +4,56 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
 // Mock Google AI
-vi.mock('@google/generative-ai', () => ({
-    GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
-        getGenerativeModel: vi.fn().mockReturnValue({
-            generateContent: vi.fn().mockResolvedValue({
-                response: {
-                    text: () => 'Mock AI response'
-                }
-            })
-        })
-    }))
+const googleAiMocks = vi.hoisted(() => ({
+    generateContent: vi.fn().mockResolvedValue({
+        response: {
+            text: () => 'Mock AI response'
+        }
+    }),
+    getGenerativeModel: vi.fn(),
+    GoogleGenerativeAI: vi.fn()
 }));
+
+vi.mock('@google/generative-ai', () => ({
+    GoogleGenerativeAI: googleAiMocks.GoogleGenerativeAI
+}));
+
+// Configure mock implementation
+googleAiMocks.GoogleGenerativeAI.mockImplementation(function () {
+    return {
+        getGenerativeModel: googleAiMocks.getGenerativeModel
+    };
+});
+googleAiMocks.getGenerativeModel.mockReturnValue({
+    generateContent: googleAiMocks.generateContent
+});
 
 describe('AIAssessmentPartnerService', () => {
     let AIAssessmentPartnerService;
     let aiAssessmentPartner;
     let DRD_AXES;
     let AI_PARTNER_CONFIG;
+    let mocks;
 
     beforeEach(async () => {
         vi.resetModules();
         vi.clearAllMocks();
 
+        mocks = setupStandardTest();
+
         // Set environment variable (won't be used since we disable model below)
         process.env.GEMINI_API_KEY = 'test-api-key';
 
-        const module = await import('../../../server/services/aiAssessmentPartnerService.js');
-        AIAssessmentPartnerService = module.AIAssessmentPartnerService;
-        aiAssessmentPartner = module.aiAssessmentPartner;
-        DRD_AXES = module.DRD_AXES;
-        AI_PARTNER_CONFIG = module.AI_PARTNER_CONFIG;
+        const module = await import('../../../server/src/services/aiAssessmentPartnerService.js');
+        const source = module.AIAssessmentPartnerService ? module : module.default;
+
+        AIAssessmentPartnerService = source.AIAssessmentPartnerService;
+        aiAssessmentPartner = source.aiAssessmentPartner;
+        DRD_AXES = source.DRD_AXES;
+        AI_PARTNER_CONFIG = source.AI_PARTNER_CONFIG;
 
         // IMPORTANT: Disable AI model to force fallback mode
         // vi.mock doesn't work here because the service imports from server/node_modules

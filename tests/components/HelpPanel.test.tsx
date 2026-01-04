@@ -4,13 +4,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { HelpPanel } from '../../components/HelpPanel';
+import HelpPanel from '../../components/HelpPanel';
 import { useHelp } from '../../contexts/HelpContext';
 
-vi.mock('../../../contexts/HelpContext', () => ({
+vi.mock('../../contexts/HelpContext', () => ({
     useHelp: vi.fn()
 }));
 
+vi.mock('../../contexts/AccessPolicyContext', () => ({
+    usePolicySnapshot: () => ({
+        snapshot: { isPaid: true, isDemo: false, isTrial: false }
+    })
+}));
 
 describe('HelpPanel Component', () => {
     const user = userEvent.setup();
@@ -29,13 +34,13 @@ describe('HelpPanel Component', () => {
     });
 
     it('renders help panel when open', () => {
-        render(<HelpPanel />);
+        render(<HelpPanel isOpen={true} onClose={vi.fn()} />);
 
-        expect(screen.getByText(/Help/i) || screen.getByText(/Training/i)).toBeInTheDocument();
+        expect(screen.getByText('help.panel.header')).toBeInTheDocument();
     });
 
     it('displays available playbooks', async () => {
-        render(<HelpPanel />);
+        render(<HelpPanel isOpen={true} onClose={vi.fn()} />);
 
         await waitFor(() => {
             expect(screen.getByText('Getting Started')).toBeInTheDocument();
@@ -44,6 +49,7 @@ describe('HelpPanel Component', () => {
 
     it('closes panel when close button clicked', async () => {
         const setPanelOpen = vi.fn();
+        const onCloseMock = vi.fn();
         (useHelp as any).mockReturnValue({
             playbooks: [],
             loading: false,
@@ -51,12 +57,12 @@ describe('HelpPanel Component', () => {
             setPanelOpen
         });
 
-        render(<HelpPanel />);
+        render(<HelpPanel isOpen={true} onClose={onCloseMock} />);
 
-        const closeButton = screen.getByRole('button', { name: /close/i });
+        const closeButton = screen.getByRole('button', { name: 'Close help panel' });
         await user.click(closeButton);
 
-        expect(setPanelOpen).toHaveBeenCalledWith(false);
+        expect(onCloseMock).toHaveBeenCalled();
     });
 
     it('shows loading state', () => {
@@ -67,19 +73,8 @@ describe('HelpPanel Component', () => {
             setPanelOpen: vi.fn()
         });
 
-        render(<HelpPanel />);
+        render(<HelpPanel isOpen={true} onClose={vi.fn()} />);
 
         expect(screen.getByRole('status')).toBeInTheDocument();
     });
 });
-
-
-
-
-
-
-
-
-
-
-

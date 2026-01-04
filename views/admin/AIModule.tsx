@@ -86,5 +86,3 @@ export const AIModule: React.FC<AIModuleProps> = ({ initialTab }) => {
 };
 
 export default AIModule;
-
-

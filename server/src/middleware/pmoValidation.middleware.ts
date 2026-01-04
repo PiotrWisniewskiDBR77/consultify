@@ -10,9 +10,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import StatusMachine from '../services/statusMachine.js';
-import * as DbPromise from '../utils/DbPromise.js';
+import * as DbPromise from '../utils/DbPromise.ts';
+import logger from '../utils/Logger.ts';
 import type { AuthRequest } from './auth.middleware.js';
-import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES

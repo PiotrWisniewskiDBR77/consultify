@@ -9,6 +9,7 @@ import { Router } from 'express';
 
 import OrganizationController from '../controllers/OrganizationController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import {
     _InviteMemberSchema,
@@ -19,6 +20,9 @@ import {
 } from '../validators/organization.validators.js';
 
 const router = Router();
+
+// Apply rate limiting
+router.use(authRateLimiter);
 
 // Apply auth middleware to all routes
 router.use(verifyToken);

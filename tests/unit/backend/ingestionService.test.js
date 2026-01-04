@@ -17,7 +17,7 @@ describe('Ingestion Service', () => {
 
         // 2. Register mocks for subsequent imports
         vi.doMock('../../../server/database.js', () => ({ default: mockDb }));
-        vi.doMock('../../../server/services/ragService.js', () => ({ default: mockRagService }));
+        vi.doMock('../../../server/src/services/ragService.js', () => ({ default: mockRagService }));
 
         // Mock fs and pdf-parse just in case they are used or cause issues
         vi.doMock('fs', () => ({
@@ -31,7 +31,7 @@ describe('Ingestion Service', () => {
         vi.doMock('pdf-parse', () => ({ default: vi.fn() }));
 
         // 3. Dynamic import of the system under test
-        const module = await import('../../../server/services/ingestionService.js');
+        const module = await import('../../../server/src/services/ingestionService.js');
         IngestionService = module.default;
 
         // 4. Manual injection (redundant but safe)
@@ -44,7 +44,7 @@ describe('Ingestion Service', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         vi.doUnmock('../../../server/database.js');
-        vi.doUnmock('../../../server/services/ragService.js');
+        vi.doUnmock('../../../server/src/services/ragService.js');
     });
 
     describe('chunkText', () => {

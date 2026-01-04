@@ -7,7 +7,6 @@
  */
 
 import type {
-import logger from '../../utils/Logger.js';
     _ResponseMetadata,
     _StreamChunk,
     AIArtifact,
@@ -23,6 +22,7 @@ import logger from '../../utils/Logger.js';
     StreamCallback,
     TokenUsage,
 } from '../../types/ai.types.js';
+import logger from '../../utils/Logger.ts';
 
 // ==========================================
 // CAPABILITY REGISTRY

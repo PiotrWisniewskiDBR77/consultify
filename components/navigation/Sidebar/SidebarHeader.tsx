@@ -85,5 +85,3 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({ showFull, theme, o
 };
 
 export default SidebarHeader;
-
-

@@ -5,7 +5,7 @@
  * Uses pattern matching and industry best practices to suggest initiatives.
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const defaultDb = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import { DIGITIZATION_AXES } from '../data/digitizationEvaluationData.js';

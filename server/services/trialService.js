@@ -51,7 +51,7 @@ const deps = {
  */
 async function initDeps() {
     if (!deps._db) {
-        const { default: db } = await import('../src/database/index.js');
+        const { default: db } = await import('../src/database/Database.ts');
         deps._db = db;
     }
     if (!deps._uuidv4) {

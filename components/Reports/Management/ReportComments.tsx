@@ -90,6 +90,7 @@ const CommentItem: React.FC<{
                     <div className="relative">
                         <button
                             onClick={() => setShowMenu(!showMenu)}
+                            aria-label="More options"
                             className="p-1 opacity-0 group-hover:opacity-100 hover:bg-slate-200 dark:hover:bg-navy-700 rounded transition-all"
                         >
                             <MoreHorizontal size={16} className="text-slate-400" />
@@ -234,6 +235,7 @@ const CommentInput: React.FC<{
             <button
                 onClick={handleSubmit}
                 disabled={!content.trim()}
+                aria-label="Send comment"
                 className="absolute right-2 bottom-2 p-2 bg-violet-500 hover:bg-violet-600 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white rounded-lg transition-colors"
             >
                 <Send size={16} />
@@ -373,5 +375,3 @@ export const ReportComments: React.FC<ReportCommentsProps> = ({
 };
 
 export default ReportComments;
-
-

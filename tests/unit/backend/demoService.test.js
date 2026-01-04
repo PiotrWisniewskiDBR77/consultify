@@ -49,7 +49,7 @@ vi.doMock(dbPath, () => {
 });
 
 // Mock ActivityService to avoid side effects
-vi.mock('../../../server/services/activityService', () => ({
+vi.mock('../../../server/src/services/activityService', () => ({
     log: vi.fn().mockResolvedValue(true)
 }));
 
@@ -117,7 +117,7 @@ describe('DemoService', () => {
         vi.resetModules(); // Critical: Force server/database.js to reload and pick up new global
 
         // Import Service AFTER injection
-        DemoService = require('../../../server/services/demoService');
+        DemoService = require('../../../server/src/services/demoService');
 
 
         // Create Schema Sequentially

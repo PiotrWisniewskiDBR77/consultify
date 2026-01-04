@@ -24,12 +24,12 @@ import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 import * as seatManagementServiceModule from '../services/seatManagementService.js';
 const seatManagementService = seatManagementServiceModule.default || seatManagementServiceModule;
 import payAsYouGoService from '../services/payAsYouGoService.js';
-import * as budgetManagementServiceModule from '../dist/services/budgetManagementService.js';
+import * as budgetManagementServiceModule from '../src/services/budgetManagementService.ts';
 const budgetManagementService = budgetManagementServiceModule.default || budgetManagementServiceModule;
 import * as usageServiceModule from '../services/usageService.js';
 const usageService = usageServiceModule.default || usageServiceModule;
 import { getDatabase } from '../src/database/index.js';
-import logger from '../dist/utils/logger.js';
+import logger from '../src/utils/Logger.ts';
 const db = getDatabase();
 
 // ==========================================
@@ -44,7 +44,7 @@ const db = getDatabase();
 router.get('/overview', verifyToken, verifySuperAdmin, async (req, res) => {
     try {
 
-        const { getRequestContext   } = await import('../utils/requestContext.js');
+        const { getRequestContext } = await import('../utils/requestContext.js');
         logger.info('SuperAdmin fetching metrics overview', getRequestContext(req));
 
         const overview = await MetricsAggregator.getOverview();
@@ -340,7 +340,7 @@ router.get('/org/overview', verifyToken, async (req, res) => {
     try {
         const organizationId = req.organizationId || req.user?.organizationId;
 
-        const { getRequestContext   } = await import('../utils/requestContext.js');
+        const { getRequestContext } = await import('../utils/requestContext.js');
 
         if (!organizationId) {
             logger.warn('Metrics org/overview access without orgId', getRequestContext(req));

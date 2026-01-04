@@ -8,6 +8,19 @@ import crypto from 'crypto';
 import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
+// Mutable dependencies for injection
+let all = dbAll;
+let get = dbGet;
+let _pmoHealthServiceOverride: any = null;
+let _aiActionExecutorOverride: any = null;
+let _aiSettingsServiceOverride: any = null;
+let _knowledgeServiceOverride: any = null;
+
+let _pmoHealthService: any = null;
+let _aiActionExecutor: any = null;
+let _aiSettingsService: any = null;
+let _knowledgeService: any = null;
+
 // Interfaces
 export interface ContextOptions {
     focusMode?: 'all' | 'pmo-docs' | 'project-data' | 'research' | 'web';
@@ -35,8 +48,8 @@ export interface AIContext {
 }
 
 // Lazy load dependencies to avoid circular dependencies
-let _pmoHealthService: any = null;
 async function getPMOHealthService() {
+    if (_pmoHealthServiceOverride) return _pmoHealthServiceOverride;
     if (!_pmoHealthService) {
         try {
             const mod = (await import('../../services/pmoHealthService.js')) as any;
@@ -48,8 +61,8 @@ async function getPMOHealthService() {
     return _pmoHealthService;
 }
 
-let _aiActionExecutor: any = null;
 async function getAIActionExecutor() {
+    if (_aiActionExecutorOverride) return _aiActionExecutorOverride;
     if (!_aiActionExecutor) {
         try {
             // Import from the local JS file (compiled TS)
@@ -62,8 +75,8 @@ async function getAIActionExecutor() {
     return _aiActionExecutor;
 }
 
-let _aiSettingsService: any = null;
 async function getAISettingsService() {
+    if (_aiSettingsServiceOverride) return _aiSettingsServiceOverride;
     if (!_aiSettingsService) {
         try {
             const mod = (await import('../../services/aiSettingsService.js')) as any;
@@ -75,8 +88,8 @@ async function getAISettingsService() {
     return _aiSettingsService;
 }
 
-let _knowledgeService: any = null;
 async function getKnowledgeService() {
+    if (_knowledgeServiceOverride) return _knowledgeServiceOverride;
     if (!_knowledgeService) {
         try {
             const mod = (await import('../../services/knowledgeService.js')) as any;
@@ -89,6 +102,20 @@ async function getKnowledgeService() {
 }
 
 export const AIContextBuilder = {
+    /**
+     * Set dependencies for testing
+     */
+    setDependencies(deps: any) {
+        if (deps.db) {
+            all = deps.db.all;
+            get = deps.db.get;
+        }
+        if (deps.PMOHealthService) _pmoHealthServiceOverride = deps.PMOHealthService;
+        if (deps.AIActionExecutor) _aiActionExecutorOverride = deps.AIActionExecutor;
+        if (deps.AISettingsService) _aiSettingsServiceOverride = deps.AISettingsService;
+        if (deps.KnowledgeService) _knowledgeServiceOverride = deps.KnowledgeService;
+    },
+
     /**
      * Build complete 6-layer context + PMO health snapshot
      */
@@ -243,9 +270,9 @@ export const AIContextBuilder = {
      * Layer 1: Platform Context
      */
     _buildPlatformContext: async (userId: string, organizationId: string) => {
-        const user: any = (await dbGet(`SELECT role FROM users WHERE id = ?`, [userId])) || {};
+        const user: any = (await get(`SELECT role FROM users WHERE id = ?`, [userId])) || {};
         const policies: any =
-            (await dbGet(`SELECT * FROM ai_policies WHERE organization_id = ?`, [organizationId])) || {};
+            (await get(`SELECT * FROM ai_policies WHERE organization_id = ?`, [organizationId])) || {};
 
         let platformRole = 'USER';
         if (user.role === 'SUPERADMIN') platformRole = 'SUPERADMIN';
@@ -268,12 +295,11 @@ export const AIContextBuilder = {
      * Layer 2: Organization Context
      */
     _buildOrganizationContext: async (organizationId: string) => {
-        const org: any = (await dbGet(`SELECT * FROM organizations WHERE id = ?`, [organizationId])) || {};
+        const org: any = (await get(`SELECT * FROM organizations WHERE id = ?`, [organizationId])) || {};
         const projects =
-            (await dbAll(`SELECT id FROM projects WHERE organization_id = ? AND is_closed = 0`, [organizationId])) ||
-            [];
+            (await all(`SELECT id FROM projects WHERE organization_id = ? AND is_closed = 0`, [organizationId])) || [];
         const memory: any =
-            (await dbGet(`SELECT * FROM ai_organization_memory WHERE organization_id = ?`, [organizationId])) || {};
+            (await get(`SELECT * FROM ai_organization_memory WHERE organization_id = ?`, [organizationId])) || {};
 
         return {
             organizationId,
@@ -289,10 +315,10 @@ export const AIContextBuilder = {
      * Layer 3: Project Context
      */
     _buildProjectContext: async (projectId: string) => {
-        const project: any = (await dbGet(`SELECT * FROM projects WHERE id = ?`, [projectId])) || {};
+        const project: any = (await get(`SELECT * FROM projects WHERE id = ?`, [projectId])) || {};
         if (!project.id) return null;
 
-        const initiatives: any = (await dbGet(
+        const initiatives: any = (await get(
             `SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
@@ -337,7 +363,7 @@ export const AIContextBuilder = {
             taskParams.push(projectId);
         }
         taskSql += ` ORDER BY due_date ASC LIMIT 10`;
-        const tasks = await dbAll(taskSql, taskParams);
+        const tasks = await all(taskSql, taskParams);
 
         let initiativeSql = `SELECT id, name, status FROM initiatives WHERE owner_business_id = ? AND status NOT IN ('COMPLETED', 'CANCELLED')`;
         const initiativeParams = [userId];
@@ -346,7 +372,7 @@ export const AIContextBuilder = {
             initiativeParams.push(projectId);
         }
         initiativeSql += ` LIMIT 10`;
-        const initiatives = await dbAll(initiativeSql, initiativeParams);
+        const initiatives = await all(initiativeSql, initiativeParams);
 
         let decisionSql = `SELECT id, title, created_at FROM decisions WHERE decision_owner_id = ? AND status = 'PENDING'`;
         const decisionParams = [userId];
@@ -355,7 +381,7 @@ export const AIContextBuilder = {
             decisionParams.push(projectId);
         }
         decisionSql += ` LIMIT 10`;
-        const decisions = await dbAll(decisionSql, decisionParams);
+        const decisions = await all(decisionSql, decisionParams);
 
         let blockerSql = `SELECT id, 'TASK' as type, blocked_reason as description FROM tasks 
                    WHERE assignee_id = ? AND status IN ('blocked', 'BLOCKED')`;
@@ -364,7 +390,7 @@ export const AIContextBuilder = {
             blockerSql += ` AND project_id = ?`;
             blockerParams.push(projectId);
         }
-        const blockers = await dbAll(blockerSql, blockerParams);
+        const blockers = await all(blockerSql, blockerParams);
 
         let capacityStatus = 'HEALTHY';
         if (tasks.length > 15) capacityStatus = 'OVERLOADED';
@@ -392,7 +418,7 @@ export const AIContextBuilder = {
 
         let organizationId = null;
         if (projectId) {
-            const project: any = (await dbGet(`SELECT organization_id FROM projects WHERE id = ?`, [projectId])) || {};
+            const project: any = (await get(`SELECT organization_id FROM projects WHERE id = ?`, [projectId])) || {};
             organizationId = project.organization_id;
         }
 
@@ -432,21 +458,21 @@ export const AIContextBuilder = {
             };
         }
 
-        const project: any = (await dbGet(`SELECT rag_enabled FROM projects WHERE id = ?`, [projectId])) || {
+        const project: any = (await get(`SELECT rag_enabled FROM projects WHERE id = ?`, [projectId])) || {
             rag_enabled: 1,
         };
         if (project.rag_enabled === 0) {
             return { ragDisabled: true, projectDocuments: [], message: 'RAG is disabled for this project' };
         }
 
-        const decisions = await dbAll(
+        const decisions = await all(
             `SELECT id, title, outcome FROM decisions 
                 WHERE project_id = ? AND status != 'PENDING' 
                 ORDER BY decided_at DESC LIMIT 10`,
             [projectId],
         );
 
-        const projectInfo: any = (await dbGet(`SELECT phase_history FROM projects WHERE id = ?`, [projectId])) || {};
+        const projectInfo: any = (await get(`SELECT phase_history FROM projects WHERE id = ?`, [projectId])) || {};
         let phaseHistory = [];
         try {
             phaseHistory = JSON.parse(projectInfo.phase_history || '[]');
@@ -490,7 +516,7 @@ export const AIContextBuilder = {
      */
     _buildExternalContext: async (organizationId: string, _focusMode: string = 'all') => {
         const policies: any =
-            (await dbGet(`SELECT internet_enabled FROM ai_policies WHERE organization_id = ?`, [organizationId])) || {};
+            (await get(`SELECT internet_enabled FROM ai_policies WHERE organization_id = ?`, [organizationId])) || {};
         return {
             internetEnabled: policies.internet_enabled === 1,
             externalSourcesUsed: [],

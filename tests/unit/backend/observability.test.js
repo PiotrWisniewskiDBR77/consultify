@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock dependencies
-vi.mock('../../../server/services/ai/logger', () => ({
+vi.mock('../../../server/src/services/ai/logger', () => ({
     aiLogger: {
         info: vi.fn(),
         warn: vi.fn(),
@@ -10,7 +10,7 @@ vi.mock('../../../server/services/ai/logger', () => ({
     }
 }));
 
-vi.mock('../../../server/services/ai/llmConfigService', () => ({
+vi.mock('../../../server/src/services/ai/llmConfigService', () => ({
     llmConfigService: {
         logEvent: vi.fn()
     }
@@ -29,7 +29,7 @@ describe('AI Observability Service', () => {
         // Clear module cache to get fresh instance
         vi.resetModules();
         // Dynamic import for ESM compatibility
-        observability = await import('../../../server/services/ai/observability');
+        observability = await import('../../../server/src/services/ai/observability');
     });
 
     afterEach(() => {

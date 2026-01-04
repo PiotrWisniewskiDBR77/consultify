@@ -26,7 +26,7 @@ class BaseService {
      */
     async init() {
         if (!this._db) {
-            const dbModule = await import('../src/database/index.js')
+            const dbModule = await import('../src/database/Database.ts')
             this._db = dbModule.default || dbModule;
         }
         return this;

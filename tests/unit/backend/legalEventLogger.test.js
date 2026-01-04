@@ -15,7 +15,7 @@ vi.mock('../../../server/database', () => ({
     default: mockDb
 }));
 
-import { LegalEventLogger } from '../../../server/services/legalEventLogger.js';
+import { LegalEventLogger } from '../../../server/src/services/legalEventLogger.js';
 
 describe('LegalEventLogger', () => {
     beforeEach(() => {

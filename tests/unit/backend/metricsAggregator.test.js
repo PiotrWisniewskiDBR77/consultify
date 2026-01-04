@@ -43,12 +43,12 @@ const { mockMetricsCollector } = vi.hoisted(() => ({
     }
 }));
 
-vi.mock('../../../server/services/metricsCollector.js', () => ({
+vi.mock('../../../server/src/services/metricsCollector.js', () => ({
     default: mockMetricsCollector
 }));
 
-import MetricsAggregator from '../../../server/services/metricsAggregator.js';
-import MetricsCollector from '../../../server/services/metricsCollector.js';
+import MetricsAggregator from '../../../server/src/services/metricsAggregator.js';
+import MetricsCollector from '../../../server/src/services/metricsCollector.js';
 
 describe('MetricsAggregator', () => {
     beforeEach(() => {

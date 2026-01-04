@@ -96,5 +96,3 @@ export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(({ data, sel
 SwimLaneNode.displayName = 'SwimLaneNode';
 
 export default SwimLaneNode;
-
-

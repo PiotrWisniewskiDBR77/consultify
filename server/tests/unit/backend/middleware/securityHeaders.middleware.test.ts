@@ -231,5 +231,3 @@ describe('Security Headers Middleware', () => {
         });
     });
 });
-
-

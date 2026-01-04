@@ -46,5 +46,3 @@ if (container) {
 }
 
 export { App };
-
-

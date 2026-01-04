@@ -3,7 +3,7 @@
 // REFACTORED: Uses BaseService for common functionality
 
 import BaseService from './BaseService.js';
-import * as queryHelpers from '../dist/utils/queryHelpers.js';
+import * as queryHelpers from '../src/utils/queryHelpers.js';
 import WorkModeService from './workModeService.js';
 
 

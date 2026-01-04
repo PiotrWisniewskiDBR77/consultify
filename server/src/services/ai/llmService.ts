@@ -6,13 +6,13 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateObject, generateText, jsonSchema, streamText, tool } from 'ai';
+import { createHash } from 'crypto';
 import { z } from 'zod';
 
-import { createHash } from 'crypto';
-import circuitBreaker from './circuitBreaker.js';
-import { aiLogger } from './logger.js';
 import { appCache } from '../redis/CacheService.js';
+import circuitBreaker from './circuitBreaker.js';
 import { embeddingService } from './embeddingService.js';
+import { aiLogger } from './logger.js';
 
 type ModelConfig = {
     id?: string;
@@ -86,8 +86,6 @@ async function getLLMConfigService(): Promise<{
     } | null;
 }
 
-
-
 function getProviderSync(modelConfig: ModelConfig) {
     const providerName = String(modelConfig.provider || '');
     const apiKey = typeof modelConfig.apiKey === 'string' ? modelConfig.apiKey : undefined;
@@ -124,8 +122,6 @@ function getProviderSync(modelConfig: ModelConfig) {
             });
     }
 }
-
-
 
 function getProvider(modelConfig: ModelConfig) {
     return getProviderSync(modelConfig);
@@ -277,15 +273,18 @@ export class LLMService {
         if (canCache && result && !result.stream) {
             // Cache success results only
             if (params.semantic) {
-                const promptText = params.systemPrompt + '\n' + params.messages.map(m => m.content).join('\n');
+                const promptText = params.systemPrompt + '\n' + params.messages.map((m) => m.content).join('\n');
                 try {
                     const embedding = await embeddingService.generateEmbedding(promptText);
-                    await embeddingService.storeChunk({
-                        documentId: 'cache',
-                        content: promptText,
-                        sourceType: 'llm_cache',
-                        metadata: { response: result }
-                    }, embedding);
+                    await embeddingService.storeChunk(
+                        {
+                            documentId: 'cache',
+                            content: promptText,
+                            sourceType: 'llm_cache',
+                            metadata: { response: result },
+                        },
+                        embedding,
+                    );
                 } catch (err) {
                     aiLogger.warn('LLMService', 'Failed to store semantic cache', err);
                 }
@@ -301,11 +300,11 @@ export class LLMService {
         const payload = JSON.stringify({
             model: params.modelConfig.id,
             provider: params.modelConfig.provider,
-            messages: params.messages.map(m => ({ role: m.role, content: m.content })),
+            messages: params.messages.map((m) => ({ role: m.role, content: m.content })),
             system: params.systemPrompt,
             schema: params.schema ? String(params.schema) : undefined,
             temp: params.temperature,
-            maxTokens: params.maxTokens
+            maxTokens: params.maxTokens,
         });
         return 'llm:' + createHash('sha256').update(payload).digest('hex');
     }
@@ -399,7 +398,7 @@ export class LLMService {
         const providerId = String(modelConfig.provider || 'openai');
         const mcpModule = await import('./mcpServer.js');
         const mcpServer = (mcpModule.mcpServer || mcpModule.default) as McpServer;
-        await import('./tools/index.js').catch(() => { });
+        await import('./tools/index.js').catch(() => {});
 
         const formattedMessages: LLMMessage[] = [
             { role: 'system', content: systemPrompt || '' },
@@ -466,7 +465,7 @@ export class LLMService {
         const providerId = String(modelConfig.provider || 'openai');
         const mcpModule = await import('./mcpServer.js');
         const mcpServer = (mcpModule.mcpServer || mcpModule.default) as McpServer;
-        await import('./tools/index.js').catch(() => { });
+        await import('./tools/index.js').catch(() => {});
 
         const circuitCheck = await circuitBreaker.canExecute(providerId);
         if (!circuitCheck.allowed) {

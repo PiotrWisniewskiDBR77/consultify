@@ -27,7 +27,7 @@ vi.mock('uuid', () => ({
     v4: vi.fn(() => 'test-attr-uuid-1234')
 }));
 
-import AttributionService from '../../../server/services/attributionService';
+import AttributionService from '../../../server/src/services/attributionService';
 
 describe('AttributionService', () => {
     beforeEach(() => {

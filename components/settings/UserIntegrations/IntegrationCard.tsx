@@ -184,5 +184,3 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
 };
 
 export default IntegrationCard;
-
-

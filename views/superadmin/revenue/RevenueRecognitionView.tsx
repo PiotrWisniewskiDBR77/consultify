@@ -511,5 +511,3 @@ export const RevenueRecognitionView: React.FC = () => {
 };
 
 export default RevenueRecognitionView;
-
-

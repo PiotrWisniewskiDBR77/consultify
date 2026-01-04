@@ -51,39 +51,39 @@ const mockTokenBillingService = vi.hoisted(() => ({
     getOrgBalance: vi.fn(() => Promise.resolve({ balance: 1000 }))
 }));
 
-vi.mock('../../../server/services/aiContextBuilder', () => ({
+vi.mock('../../../server/src/services/aiContextBuilder', () => ({
     default: mockAIContextBuilder
 }));
 
-vi.mock('../../../server/services/aiPolicyEngine', () => ({
+vi.mock('../../../server/src/services/aiPolicyEngine', () => ({
     default: mockAIPolicyEngine
 }));
 
-vi.mock('../../../server/services/aiMemoryManager', () => ({
+vi.mock('../../../server/src/services/aiMemoryManager', () => ({
     default: mockAIMemoryManager
 }));
 
-vi.mock('../../../server/services/aiRoleGuard', () => ({
+vi.mock('../../../server/src/services/aiRoleGuard', () => ({
     default: mockAIRoleGuard
 }));
 
-vi.mock('../../../server/services/regulatoryModeGuard', () => ({
+vi.mock('../../../server/src/services/regulatoryModeGuard', () => ({
     default: mockRegulatoryModeGuard
 }));
 
-vi.mock('../../../server/services/aiExplainabilityService', () => ({
+vi.mock('../../../server/src/services/aiExplainabilityService', () => ({
     default: mockAIExplainabilityService
 }));
 
-vi.mock('../../../server/services/accessPolicyService', () => ({
+vi.mock('../../../server/src/services/accessPolicyService', () => ({
     default: mockAccessPolicyService
 }));
 
-vi.mock('../../../server/services/tokenBillingService', () => ({
+vi.mock('../../../server/src/services/tokenBillingService', () => ({
     default: mockTokenBillingService
 }));
 
-vi.mock('../../../server/services/aiResponsePostProcessor', () => ({
+vi.mock('../../../server/src/services/aiResponsePostProcessor', () => ({
     aiResponsePostProcessor: mockAIResponsePostProcessor
 }));
 
@@ -91,7 +91,7 @@ vi.mock('uuid', () => ({
     v4: mockUuidv4
 }));
 
-import AIOrchestrator from '../../../server/services/aiOrchestrator.js';
+import AIOrchestrator from '../../../server/src/services/aiOrchestrator.js';
 
 describe('AIOrchestrator', () => {
     beforeEach(() => {
@@ -99,16 +99,16 @@ describe('AIOrchestrator', () => {
 
         // Inject mocked dependencies
         AIOrchestrator._setDependencies({
-            AIContextBuilder: mockAIContextBuilder,
-            AIPolicyEngine: mockAIPolicyEngine,
-            AIMemoryManager: mockAIMemoryManager,
-            AIRoleGuard: mockAIRoleGuard,
-            RegulatoryModeGuard: mockRegulatoryModeGuard,
-            AIExplainabilityService: mockAIExplainabilityService,
-            AccessPolicyService: mockAccessPolicyService,
-            TokenBillingService: mockTokenBillingService,
-            AIResponsePostProcessor: mockAIResponsePostProcessor,
-            uuidv4: mockUuidv4
+            aiContextBuilder: mockAIContextBuilder,
+            aiPolicyEngine: mockAIPolicyEngine,
+            aiMemoryManager: mockAIMemoryManager,
+            aiRoleGuard: mockAIRoleGuard,
+            regulatoryModeGuard: mockRegulatoryModeGuard,
+            aiExplainabilityService: mockAIExplainabilityService,
+            accessPolicyService: mockAccessPolicyService,
+            tokenBillingService: mockTokenBillingService,
+            aiResponsePostProcessor: mockAIResponsePostProcessor,
+            aiAgents: {} // Mock if needed
         });
 
         // Default mocks

@@ -22,7 +22,7 @@ describe('ExecutionMonitorService', () => {
             create: vi.fn().mockResolvedValue({ id: 'notif-123' })
         };
 
-        ExecutionMonitorService = (await import('../../../server/services/executionMonitorService.js')).default;
+        ExecutionMonitorService = (await import('../../../server/src/services/executionMonitorService.js')).default;
 
         ExecutionMonitorService.setDependencies({
             db: mockDb,

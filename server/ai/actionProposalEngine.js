@@ -3,7 +3,7 @@ import RecommendationEngine from './recommendationEngine.js';
 import SimulationEngine from './simulationEngine.js';
 import ActionProposalMapper from './actionProposalMapper.js';
 const PolicyEngine = await import('./policyEngine.js');
-import * as auditLogger from '../dist/utils/auditLogger.js';
+import * as auditLogger from '../src/utils/auditLogger.ts';
 import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';

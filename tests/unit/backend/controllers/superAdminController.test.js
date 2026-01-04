@@ -18,7 +18,7 @@ let controller;
 let mockDb, mockActivityService, mockBillingService, mockUsageService, mockRealtimeService, mockStorageService, mockLegalService, mockLegalEventLogger, mockAttributionService, mockInvitationService, mockJwt, mockBcrypt, mockUuid, mockRefreshTokenService;
 let mockReq, mockRes, mockNext;
 
-beforeEach(() => {
+beforeEach(async () => {
     vi.resetModules();
 
     // 1. Create Mocks
@@ -65,10 +65,10 @@ beforeEach(() => {
     vi.doMock('../../../../server/services/legalService', () => mockLegalService);
     vi.doMock('../../../../server/services/legalEventLogger', () => ({ LegalEventLogger: mockLegalEventLogger }));
     vi.doMock('../../../../server/services/attributionService', () => mockAttributionService);
-    vi.doMock('jsonwebtoken', () => mockJwt);
-    vi.doMock('bcryptjs', () => mockBcrypt);
-    vi.doMock('uuid', () => mockUuid);
-    vi.doMock('../../../../server/config', () => ({ JWT_SECRET: 'test-secret', billing: { type: 'stripe' } }));
+    vi.doMock('jsonwebtoken', () => ({ default: mockJwt, ...mockJwt }));
+    vi.doMock('bcryptjs', () => ({ default: mockBcrypt, ...mockBcrypt }));
+    vi.doMock('uuid', () => ({ default: mockUuid, ...mockUuid, v4: mockUuid.v4 }));
+    vi.doMock('../../../../server/config', () => ({ default: { JWT_SECRET: 'test-secret', billing: { type: 'stripe' } }, JWT_SECRET: 'test-secret' }));
     vi.doMock('../../../../server/services/refreshTokenService', () => mockRefreshTokenService);
     vi.doMock('../../../../server/utils/errorHandler', () => ({
         AppError: class AppError extends Error {
@@ -92,23 +92,35 @@ beforeEach(() => {
     mockNext = vi.fn();
 
     // 4. Load Controller and Set Dependencies
-    controller = require('../../../../server/controllers/superAdminController');
-    controller.setDependencies({
-        db: mockDb,
-        ActivityService: mockActivityService,
-        BillingService: mockBillingService,
-        UsageService: mockUsageService,
-        RealtimeService: mockRealtimeService,
-        StorageService: mockStorageService,
-        LegalService: mockLegalService,
-        LegalEventLogger: mockLegalEventLogger,
-        AttributionService: mockAttributionService,
-        InvitationService: mockInvitationService,
-        jwt: mockJwt,
-        bcrypt: mockBcrypt,
-        uuid: mockUuid,
-        RefreshTokenService: mockRefreshTokenService
-    });
+    // 4. Load Controller and Set Dependencies
+    // Use dynamic import for ESM compatibility
+    const module = await import('../../../../server/controllers/superAdminController.js');
+    controller = module.default || module;
+
+    // Set dependencies if exposed, or rely on mock replacement via vi.doMock
+    // Since superAdminController.js uses 'deps' which is local, we rely on setDependencies if exported.
+    // Step 935 implies supportTicketService exports it.
+    // superAdminController.js usually doesn't export setDependencies if not designed for it?
+    // Wait, test uses controller.setDependencies.
+    // Let's assume the controller exports it.
+    if (controller.setDependencies) {
+        controller.setDependencies({
+            db: mockDb,
+            ActivityService: mockActivityService,
+            BillingService: mockBillingService,
+            UsageService: mockUsageService,
+            RealtimeService: mockRealtimeService,
+            StorageService: mockStorageService,
+            LegalService: mockLegalService,
+            LegalEventLogger: mockLegalEventLogger,
+            AttributionService: mockAttributionService,
+            InvitationService: mockInvitationService,
+            jwt: mockJwt,
+            bcrypt: mockBcrypt,
+            uuid: mockUuid,
+            RefreshTokenService: mockRefreshTokenService
+        });
+    }
 });
 
 describe('SuperAdmin Controller', () => {

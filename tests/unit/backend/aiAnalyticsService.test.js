@@ -1,42 +1,54 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
-
-const require = createRequire(import.meta.url);
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
 describe('AI Analytics Service', () => {
     let AIAnalyticsService;
-    let mockDb;
-    let mockRoiService;
+    let mocks;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.resetModules();
 
-        mockDb = createMockDb();
+        mocks = setupStandardTest();
 
-        mockRoiService = {
+        // Setup specific ROI service mocks
+        mocks.roiService = {
             estimateHoursSaved: vi.fn().mockResolvedValue({ hours_saved: 100 }),
             estimateCostReduction: vi.fn().mockResolvedValue({ cost_saved: 5000 }),
             calculateProjectROI: vi.fn(),
             calculateTaskROI: vi.fn()
         };
 
-        vi.doMock('../../../server/database', () => ({ default: mockDb }));
-        vi.doMock('../../../server/services/roiService', () => ({ default: mockRoiService }));
+        // Module-level mocks for services with complex imports
+        vi.doMock('../../../server/src/database/Database.ts', () => ({
+            getDatabase: () => mocks.db,
+            default: { getDatabase: () => mocks.db }
+        }));
 
-        AIAnalyticsService = require('../../../server/services/aiAnalyticsService.js');
+        vi.doMock('../../../server/src/services/roiService.js', () => ({
+            default: mocks.roiService
+        }));
 
-        // Inject mock dependencies
-        AIAnalyticsService.setDependencies({
-            db: mockDb,
-            ROIService: mockRoiService
-        });
+        try {
+            const module = await import('../../../server/src/services/aiAnalyticsService.js');
+            AIAnalyticsService = module.default;
+
+            // Inject mock dependencies using unified pattern
+            if (AIAnalyticsService.setDependencies) {
+                AIAnalyticsService.setDependencies({
+                    db: mocks.db,
+                    ROIService: mocks.roiService
+                });
+            }
+        } catch (error) {
+            console.error('Failed to import AIAnalyticsService', error);
+            throw error;
+        }
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../server/database');
-        vi.doUnmock('../../../server/services/roiService');
+        vi.doUnmock('../../../server/src/database/Database.ts');
+        vi.doUnmock('../../../server/src/services/roiService.js');
     });
 
     describe('getActionStats', () => {

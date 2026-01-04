@@ -94,5 +94,3 @@ describe('Cron Jobs Integration', () => {
         });
     });
 });
-
-

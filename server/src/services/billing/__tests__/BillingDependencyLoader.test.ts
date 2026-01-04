@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { BillingDependencyLoader as BillingDependencyLoaderType } from '../billingDependencyLoader.js';
 
 // Global Mocks (DB)
@@ -8,7 +8,6 @@ vi.mock('../../database/Database.js', () => ({
 }));
 
 describe('BillingDependencyLoader', () => {
-
     beforeEach(() => {
         vi.resetModules();
     });

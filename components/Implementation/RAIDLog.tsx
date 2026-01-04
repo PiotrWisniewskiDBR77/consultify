@@ -548,5 +548,3 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, onItemClick }) =
 };
 
 export default RAIDLog;
-
-

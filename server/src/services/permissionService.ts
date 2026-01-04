@@ -296,7 +296,7 @@ export function can(user: User | null | undefined, capability: Capability, _cont
     const allowedCaps = ROLE_CAPABILITIES[user.role as Role] || [];
     if (!allowedCaps.includes(capability)) return false;
 
-    if ([CAPABILITIES.MANAGE_USERS, CAPABILITIES.MANAGE_ORG_SETTINGS].includes(capability)) {
+    if (capability === CAPABILITIES.MANAGE_USERS || capability === CAPABILITIES.MANAGE_ORG_SETTINGS) {
         if (user.role !== ROLES.ADMIN) return false;
     }
 
@@ -348,7 +348,7 @@ export async function hasPermission(
 
         return !!rolePermission;
     } catch (err: unknown) {
-        logger.error('[PermissionService] Permission query error:', err);
+        logger.error('[PermissionService] Permission query error:', err as Error);
         return false;
     }
 }
@@ -411,12 +411,13 @@ export async function grantPermission(
     }
 
     const id = uuidv4();
-    const result = await DbPromise.run(
+    await DbPromise.run(
         db,
         `INSERT OR REPLACE INTO org_user_permissions 
          (id, user_id, organization_id, permission_key, grant_type, granted_by, created_at)
          VALUES (?, ?, ?, ?, 'GRANT', ?, datetime('now'))`,
         [id, userId, orgId, permissionKey, grantedBy],
+        { fallback: false },
     );
 
     logger.info(`[PermissionService] Permission granted: ${permissionKey} to ${userId} by ${grantedBy}`);
@@ -453,6 +454,7 @@ export async function revokePermission(
          (id, user_id, organization_id, permission_key, grant_type, granted_by, created_at)
          VALUES (?, ?, ?, ?, 'REVOKE', ?, datetime('now'))`,
         [id, userId, orgId, permissionKey, revokedBy],
+        { fallback: false },
     );
 
     logger.info(`[PermissionService] Permission revoked: ${permissionKey} from ${userId} by ${revokedBy}`);
@@ -584,7 +586,7 @@ export async function hasContentPermission(
         // Fall back to general permission check
         return await hasPermission(userId, orgId, permissionKey, userRole);
     } catch (err: unknown) {
-        logger.error('[PermissionService] Content permission query error:', err);
+        logger.error('[PermissionService] Content permission query error:', err as Error);
         // Fall back to general permission check
         return await hasPermission(userId, orgId, permissionKey, userRole);
     }

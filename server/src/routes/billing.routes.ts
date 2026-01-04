@@ -7,10 +7,12 @@ import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
+import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware.js';
 import BillingWebhookService, { BILLING_EVENT_TYPES } from '../services/BillingWebhookService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
+import logger from '../utils/Logger.ts';
 import {
     _CreditNoteIdParamSchema,
     BillingStatsQuerySchema,
@@ -38,13 +40,15 @@ import {
 
 const router = Router();
 
+// Apply rate limiting
+router.use(defaultRateLimiter);
+
 // Database helpers with proper typing
 type SQLParam = string | number | boolean | null | undefined;
 type SQLParams = SQLParam[];
 
 // Billing access middleware
 const requireBillingAccess = (req: AuthRequest, res: Response, next: () => void): void => {
-import logger from '../utils/Logger.js';
     const allowedRoles = ['SUPERADMIN', 'ADMIN', 'billing_manager', 'owner'];
     if (!req.user || !allowedRoles.includes(req.user.role)) {
         res.status(403).json({ error: 'Billing access required' });

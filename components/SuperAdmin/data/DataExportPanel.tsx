@@ -406,5 +406,3 @@ export const DataExportPanel: React.FC = () => {
 };
 
 export default DataExportPanel;
-
-

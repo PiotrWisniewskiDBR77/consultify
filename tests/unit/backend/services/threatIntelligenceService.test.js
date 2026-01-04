@@ -2,22 +2,36 @@
  * Unit tests for Threat Intelligence Service
  */
 
-const { describe, it, expect, beforeEach, vi } = require('vitest');
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock database
-const mockDb = {
-    run: vi.fn(),
-    get: vi.fn(),
-    all: vi.fn()
-};
+const { mockDb } = vi.hoisted(() => {
+    return {
+        mockDb: {
+            run: vi.fn(),
+            get: vi.fn(),
+            all: vi.fn()
+        }
+    };
+});
 
 // Import service
-const threatIntelligenceService = require('../../../../server/services/threatIntelligenceService');
+vi.mock('../../../../server/src/database/Database.ts', () => ({
+    default: mockDb,
+    getDatabase: () => mockDb,
+    run: mockDb.run,
+    get: mockDb.get,
+    all: mockDb.all
+}));
+
+import threatIntelligenceService from '../../../../server/services/threatIntelligenceService.js';
 
 describe('ThreatIntelligenceService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        threatIntelligenceService.setDependencies({ db: mockDb });
+        if (threatIntelligenceService.setDependencies) {
+            threatIntelligenceService.setDependencies({ db: mockDb });
+        }
     });
 
     describe('addThreat', () => {
@@ -422,12 +436,3 @@ describe('ThreatIntelligenceService', () => {
         });
     });
 });
-
-
-
-
-
-
-
-
-

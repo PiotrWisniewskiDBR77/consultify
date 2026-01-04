@@ -59,5 +59,3 @@ export const TextNode: React.FC<NodeProps<TextNodeData>> = memo(({ data, selecte
 TextNode.displayName = 'TextNode';
 
 export default TextNode;
-
-

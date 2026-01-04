@@ -14,7 +14,7 @@
 
 import axios, { type AxiosInstance } from 'axios';
 
-import logger from '../utils/Logger.js';
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // TYPES

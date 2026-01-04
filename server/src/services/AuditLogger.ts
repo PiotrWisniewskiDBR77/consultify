@@ -7,7 +7,7 @@
  */
 
 import { getDatabase } from '../database/Database.js';
-import logger from '../utils/Logger.js';
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // TYPES
@@ -281,7 +281,11 @@ class AuditLogger {
     /**
      * Get audit log statistics
      */
-    async getStats(organizationId?: string, startDate?: number, endDate?: number): Promise<{
+    async getStats(
+        organizationId?: string,
+        startDate?: number,
+        endDate?: number,
+    ): Promise<{
         total: number;
         byAction: Record<string, number>;
         byResourceType: Record<string, number>;
@@ -368,5 +372,3 @@ export function getAuditLogger(): AuditLogger {
 
 export default AuditLogger;
 export type { AuditLogEntry, AuditLogQuery };
-
-

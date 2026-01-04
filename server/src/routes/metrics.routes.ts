@@ -8,10 +8,14 @@
 
 import { Router } from 'express';
 
+import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { getMetricsService } from '../services/MetricsService.js';
-import logger from '../utils/Logger.js';
+import logger from '../utils/Logger.ts';
 
 const router = Router();
+
+// Apply rate limiting
+router.use(defaultRateLimiter);
 
 // ==========================================
 // METRICS ENDPOINT

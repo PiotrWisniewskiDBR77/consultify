@@ -393,5 +393,3 @@ export default {
     modalAnimation,
     listAnimation,
 };
-
-

@@ -419,5 +419,3 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({ curr
 };
 
 export default WorkingHoursSettings;
-
-

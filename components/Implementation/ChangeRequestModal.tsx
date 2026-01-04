@@ -349,5 +349,3 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
         </div>
     );
 };
-
-

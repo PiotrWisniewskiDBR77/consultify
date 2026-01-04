@@ -88,7 +88,7 @@
     "config/**/*",
     "types/**/*"
   ],
-  "exclude": [
+    "exclude": [
     "node_modules",
     "dist",
     "tests/integration/managementReports.integration.test.ts",
@@ -108,6 +108,8 @@
     "src/utils/ShutdownManager.js",
     "src/database/index.js",
     "src/utils/auditLogger.js",
-    "src/services/ActivityService.js"
+    "src/services/ActivityService.js",
+    "src/cron/backupCron.ts",
+    "src/cron/billingCron.ts"
   ]
 }

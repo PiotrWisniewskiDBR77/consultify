@@ -27,18 +27,46 @@ const mockReport: ManagementReport = {
 };
 
 describe('ApprovalWorkflow Component', () => {
+    const mockApprovalStatus = {
+        currentLevel: 2,
+        totalLevels: 2,
+        overallStatus: 'PENDING' as const,
+        canApprove: true,
+        canReject: true,
+        levels: [
+            {
+                id: 's1',
+                approvalLevel: 1,
+                requiredRole: 'MANAGER',
+                status: 'APPROVED' as const,
+                assignedToName: 'John PM',
+                decidedByName: 'John PM',
+                decidedAt: '2025-12-28T10:00:00Z'
+            },
+            {
+                id: 's2',
+                approvalLevel: 2,
+                requiredRole: 'SPONSOR',
+                status: 'PENDING' as const,
+                assignedToName: 'Sponsor Alice',
+                slaDueAt: '2025-12-30T10:00:00Z'
+            }
+        ]
+    };
+
     const defaultProps = {
-        report: mockReport,
+        reportId: 'rep-1',
+        approvalStatus: mockApprovalStatus,
         onApprove: vi.fn(),
         onReject: vi.fn(),
-        onAddApprover: vi.fn()
+        onSubmitForApproval: vi.fn()
     };
 
     it('renders the approval chain', () => {
         render(<ApprovalWorkflow {...defaultProps} />);
-        expect(screen.getByText('Project Manager')).toBeInTheDocument();
+        expect(screen.getByText(/Project Manager/i)).toBeInTheDocument();
         expect(screen.getByText('John PM')).toBeInTheDocument();
-        expect(screen.getByText('Business Owner')).toBeInTheDocument();
+        expect(screen.getByText(/Level 2: Sponsor/i)).toBeInTheDocument();
     });
 
     it('displays status badges for steps', () => {
@@ -61,7 +89,7 @@ describe('ApprovalWorkflow Component', () => {
         fireEvent.click(screen.getByRole('button', { name: /approve/i }));
 
         // Should show a modal/textarea for comments
-        const textarea = screen.getByPlaceholderText(/optional comments/i);
+        const textarea = screen.getByPlaceholderText(/optional comment/i);
         fireEvent.change(textarea, { target: { value: 'All good.' } });
 
         fireEvent.click(screen.getByRole('button', { name: /confirm approval/i }));

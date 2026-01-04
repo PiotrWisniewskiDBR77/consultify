@@ -1,14 +1,14 @@
 /**
  * API Key Service
  * Enterprise SaaS Architecture - Security & Compliance
- * 
+ *
  * Manages API keys for programmatic access with:
  * - Secure key generation and hashing
  * - Key rotation with grace periods
  * - Rate limiting per key
  * - Scoped permissions
  * - Audit logging
- * 
+ *
  * Security:
  * - Keys are hashed (SHA-256) before storage
  * - Only prefix shown after creation (for identification)
@@ -21,8 +21,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import * as DbPromise from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
+import * as DbPromise from '../utils/DbPromise.ts';
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // TYPES
@@ -219,11 +219,11 @@ class ApiKeyServiceImpl {
         });
 
         // Update new key to reference old key
-        await DbPromise.run(
-            db,
-            `UPDATE api_keys SET rotated_from_id = ?, name = ? WHERE id = ?`,
-            [options.keyId, existingRow.name, newKey.id],
-        );
+        await DbPromise.run(db, `UPDATE api_keys SET rotated_from_id = ?, name = ? WHERE id = ?`, [
+            options.keyId,
+            existingRow.name,
+            newKey.id,
+        ]);
 
         // Mark old key as rotated with grace period
         const graceExpiry = new Date(Date.now() + gracePeriodHours * 60 * 60 * 1000);
@@ -276,11 +276,10 @@ class ApiKeyServiceImpl {
         }
 
         // Update last used
-        await DbPromise.run(
-            db,
-            `UPDATE api_keys SET last_used_at = datetime('now'), last_used_ip = ? WHERE id = ?`,
-            [ip || null, row.id],
-        );
+        await DbPromise.run(db, `UPDATE api_keys SET last_used_at = datetime('now'), last_used_ip = ? WHERE id = ?`, [
+            ip || null,
+            row.id,
+        ]);
 
         return this.rowToApiKey(row);
     }
@@ -291,11 +290,9 @@ class ApiKeyServiceImpl {
     async revokeKey(keyId: string, userId: string): Promise<void> {
         const db = this.getDb();
 
-        await DbPromise.run(
-            db,
-            `UPDATE api_keys SET status = 'revoked', updated_at = datetime('now') WHERE id = ?`,
-            [keyId],
-        );
+        await DbPromise.run(db, `UPDATE api_keys SET status = 'revoked', updated_at = datetime('now') WHERE id = ?`, [
+            keyId,
+        ]);
 
         logger.info('[ApiKey] Revoked API key', { keyId, userId });
     }

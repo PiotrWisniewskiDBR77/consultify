@@ -5,7 +5,7 @@
  * Handles file storage, text extraction, AI summarization, and full-text search.
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import PDFParserService from './pdfParserService.js';
 import { v4 as uuidv4 } from 'uuid';

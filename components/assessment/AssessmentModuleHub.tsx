@@ -52,13 +52,19 @@ import { ReportEditor } from './ReportEditor';
 import { WorkflowStatusBar } from './WorkflowStatusBar';
 
 // Lazy load heavy components
-const InitiativesTable = React.lazy(() => import('./InitiativesTable').then(m => ({ default: m.InitiativesTable })));
-const ADMAAssessmentMap = React.lazy(() => import('./maps/ADMAAssessmentMap').then(m => ({ default: m.ADMAAssessmentMap })));
-const CMPracticeMap = React.lazy(() => import('./maps/CMPracticeMap').then(m => ({ default: m.CMPracticeMap })));
-const DBR77LeanMap = React.lazy(() => import('./maps/DBR77LeanMap').then(m => ({ default: m.DBR77LeanMap })));
-const SIRIAssessmentMap = React.lazy(() => import('./maps/SIRIAssessmentMap').then(m => ({ default: m.SIRIAssessmentMap })));
-const ReportBuilderWorkspace = React.lazy(() => import('./ReportBuilderWorkspace').then(m => ({ default: m.ReportBuilderWorkspace })));
-const ReportsTable = React.lazy(() => import('./ReportsTable').then(m => ({ default: m.ReportsTable })));
+const InitiativesTable = React.lazy(() => import('./InitiativesTable').then((m) => ({ default: m.InitiativesTable })));
+const ADMAAssessmentMap = React.lazy(() =>
+    import('./maps/ADMAAssessmentMap').then((m) => ({ default: m.ADMAAssessmentMap })),
+);
+const CMPracticeMap = React.lazy(() => import('./maps/CMPracticeMap').then((m) => ({ default: m.CMPracticeMap })));
+const DBR77LeanMap = React.lazy(() => import('./maps/DBR77LeanMap').then((m) => ({ default: m.DBR77LeanMap })));
+const SIRIAssessmentMap = React.lazy(() =>
+    import('./maps/SIRIAssessmentMap').then((m) => ({ default: m.SIRIAssessmentMap })),
+);
+const ReportBuilderWorkspace = React.lazy(() =>
+    import('./ReportBuilderWorkspace').then((m) => ({ default: m.ReportBuilderWorkspace })),
+);
+const ReportsTable = React.lazy(() => import('./ReportsTable').then((m) => ({ default: m.ReportsTable })));
 
 // Type for axis selection including dashboard
 type AxisSelection = 'dashboard' | DRDAxis;
@@ -506,14 +512,14 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                         ...data.axisData,
                         completedAxes: data.isComplete
                             ? [
-                                'processes',
-                                'digitalProducts',
-                                'businessModels',
-                                'dataManagement',
-                                'culture',
-                                'cybersecurity',
-                                'aiMaturity',
-                            ]
+                                  'processes',
+                                  'digitalProducts',
+                                  'businessModels',
+                                  'dataManagement',
+                                  'culture',
+                                  'cybersecurity',
+                                  'aiMaturity',
+                              ]
                             : fullSessionData.assessment?.completedAxes || [],
                     },
                 });
@@ -855,13 +861,15 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                                 className={`
                                     scroll-snap-item touch-target touch-ripple flex items-center justify-center gap-2 
                                     rounded-lg font-medium transition-all whitespace-nowrap shrink-0
-                                    ${isCompact
-                                        ? 'px-3 py-2.5 text-xs min-w-[90px]'
-                                        : 'px-4 py-2 text-sm min-w-[130px]'
+                                    ${
+                                        isCompact
+                                            ? 'px-3 py-2.5 text-xs min-w-[90px]'
+                                            : 'px-4 py-2 text-sm min-w-[130px]'
                                     }
-                                    ${isActive
-                                        ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
-                                        : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 active:bg-slate-100 dark:active:bg-white/10 border border-slate-200 dark:border-white/10'
+                                    ${
+                                        isActive
+                                            ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+                                            : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 active:bg-slate-100 dark:active:bg-white/10 border border-slate-200 dark:border-white/10'
                                     }
                                 `}
                             >
@@ -894,9 +902,10 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                                         scroll-snap-item touch-target touch-ripple flex items-center gap-1 
                                         rounded-md font-medium transition-all whitespace-nowrap shrink-0
                                         ${isCompact ? 'px-2.5 py-1' : 'px-3 py-1'} text-xs
-                                        ${selectedAxis === 'dashboard'
-                                            ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/20'
-                                            : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 active:bg-purple-50 dark:active:bg-purple-900/20 border border-slate-200 dark:border-white/10'
+                                        ${
+                                            selectedAxis === 'dashboard'
+                                                ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/20'
+                                                : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 active:bg-purple-50 dark:active:bg-purple-900/20 border border-slate-200 dark:border-white/10'
                                         }
                                     `}
                                 >
@@ -930,11 +939,12 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                                                 scroll-snap-item touch-target touch-ripple flex items-center gap-1 
                                                 rounded-md font-medium transition-all whitespace-nowrap shrink-0
                                                 ${isCompact ? 'px-2.5 py-1' : 'px-3 py-1'} text-xs
-                                                ${isActive
-                                                    ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/20'
-                                                    : progressStatus === 'complete'
-                                                        ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-500/30'
-                                                        : progressStatus === 'partial'
+                                                ${
+                                                    isActive
+                                                        ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/20'
+                                                        : progressStatus === 'complete'
+                                                          ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-500/30'
+                                                          : progressStatus === 'partial'
                                                             ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/30'
                                                             : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 active:bg-purple-50 dark:active:bg-purple-900/20 border border-slate-200 dark:border-white/10'
                                                 }
@@ -1054,11 +1064,12 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                                 disabled={isSaving}
                                 className={`
                                     flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all
-                                    ${isSaving
-                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
-                                        : hasUnsavedChanges
-                                            ? 'bg-green-600 hover:bg-green-500 text-white shadow-md shadow-green-600/20'
-                                            : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                                    ${
+                                        isSaving
+                                            ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                                            : hasUnsavedChanges
+                                              ? 'bg-green-600 hover:bg-green-500 text-white shadow-md shadow-green-600/20'
+                                              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                                     }
                                 `}
                             >

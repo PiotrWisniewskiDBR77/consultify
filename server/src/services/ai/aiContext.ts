@@ -8,7 +8,7 @@
 // Lazy load the JS service module
 // @ts-ignore - JS module without types, will be migrated to TS
 import service from '../../../services/ai/aiContext.js';
-import { createCachedLazyService } from '../../../utils/lazyServiceLoader.js';
+import { createCachedLazyService } from '../../../utils/lazyServiceLoader.ts';
 
 // Export default instance (for backward compatibility)
 export default service;

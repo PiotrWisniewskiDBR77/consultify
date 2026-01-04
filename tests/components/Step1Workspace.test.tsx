@@ -5,6 +5,23 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Step1Workspace } from '../../components/Step1Workspace';
 
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) => {
+            if (key === 'step1') return {
+                title: 'Assessment',
+                subtitle: 'Step 1',
+                profile: 'Profile',
+                industry: 'Industry',
+                size: 'Size',
+                country: 'Country',
+                nextStep: 'Next Step'
+            };
+            return key;
+        }
+    })
+}));
+
 const mockSession = {
     id: 'session-1',
     assessment: {}
@@ -12,7 +29,7 @@ const mockSession = {
 
 describe('Step1Workspace Component', () => {
     it('renders step 1 workspace', () => {
-        render(<Step1Workspace fullSession={mockSession} onStartAxis={vi.fn()} onNextStep={vi.fn()} />);
+        render(<Step1Workspace profile={{ industry: 'Tech' }} sessionData={mockSession} isStepComplete={true} onNextStep={vi.fn()} />);
 
         expect(screen.getByText(/Assessment/i) || screen.getByText(/Step 1/i)).toBeInTheDocument();
     });

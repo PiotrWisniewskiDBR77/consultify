@@ -236,6 +236,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                     </div>
                     <button
                         onClick={fetchAssessments}
+                        aria-label="Refresh assessments"
                         className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
                     >
                         <RefreshCw size={18} />

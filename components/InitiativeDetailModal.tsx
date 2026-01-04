@@ -463,7 +463,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Button variant="ghost" onClick={onClose}>
+                                <Button variant="ghost" onClick={onClose} aria-label="Close">
                                     <X size={20} />
                                 </Button>
                             </div>

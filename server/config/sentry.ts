@@ -6,8 +6,9 @@
  */
 
 import * as Sentry from '@sentry/node';
+import { expressErrorHandler, expressIntegration, httpIntegration } from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
-import { Express, NextFunction, Request, Response } from 'express';
+import type { Express, NextFunction, Request, Response } from 'express';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const isStaging = process.env.NODE_ENV === 'staging';
@@ -35,13 +36,13 @@ interface Context {
 /**
  * Initialize Sentry
  */
-export function initSentry(app: Express): SentryHandlers {
+export function initSentry(_app: Express): SentryHandlers {
     if (!isEnabled) {
         console.log('[Sentry] Disabled (no SENTRY_DSN or not in production/staging)');
         return {
-            requestHandler: () => (req: Request, res: Response, next: NextFunction) => next(),
-            tracingHandler: () => (req: Request, res: Response, next: NextFunction) => next(),
-            errorHandler: () => (err: Error, req: Request, res: Response, next: NextFunction) => next(err),
+            requestHandler: (_req: Request, _res: Response, next: NextFunction) => next(),
+            tracingHandler: (_req: Request, _res: Response, next: NextFunction) => next(),
+            errorHandler: (err: Error, _req: Request, _res: Response, next: NextFunction) => next(err),
         };
     }
 
@@ -52,10 +53,10 @@ export function initSentry(app: Express): SentryHandlers {
 
         // Integrations
         integrations: [
-            // Express integration
-            new Sentry.Integrations.Express({ app }),
+            // Express integration for request tracing
+            expressIntegration(),
             // HTTP integration for tracing outgoing requests
-            new Sentry.Integrations.Http({ tracing: true }),
+            httpIntegration(),
             // Profiling (optional, requires @sentry/profiling-node)
             nodeProfilingIntegration(),
         ],
@@ -65,20 +66,21 @@ export function initSentry(app: Express): SentryHandlers {
         profilesSampleRate: isProduction ? 0.1 : 1.0,
 
         // Filter sensitive data
-        beforeSend(event, hint) {
+        beforeSend(event, _hint) {
             // Remove sensitive headers
-            if (event.request && event.request.headers) {
+            if (event.request?.headers) {
                 delete event.request.headers['authorization'];
                 delete event.request.headers['cookie'];
                 delete event.request.headers['x-access-token'];
             }
 
             // Remove sensitive data from request body
-            if (event.request && event.request.data) {
+            if (event.request?.data) {
                 const sensitiveFields = ['password', 'token', 'secret', 'apiKey', 'mfaToken', 'backupCode'];
+                const requestData = event.request.data;
                 sensitiveFields.forEach((field) => {
-                    if (typeof event.request.data === 'object' && event.request.data && field in event.request.data) {
-                        (event.request.data as Record<string, unknown>)[field] = '[REDACTED]';
+                    if (typeof requestData === 'object' && requestData && field in requestData) {
+                        (requestData as Record<string, unknown>)[field] = '[REDACTED]';
                     }
                 });
             }
@@ -99,18 +101,27 @@ export function initSentry(app: Express): SentryHandlers {
 
     console.log(`[Sentry] Initialized for ${process.env.NODE_ENV} environment`);
 
+    // Sentry v10 - expressIntegration automatically handles request/tracing
     return {
-        // Request handler - must be first middleware
-        requestHandler: Sentry.Handlers.requestHandler({
-            user: ['id', 'email', 'role'],
-            ip: true,
-        }),
+        // Request handler - expressIntegration handles this automatically
+        // But we provide a no-op for backward compatibility
+        requestHandler: (_req: Request, _res: Response, next: NextFunction) => {
+            // Extract user context if available
+            if ((_req as any).user) {
+                Sentry.setUser({
+                    id: (_req as any).user.id,
+                    email: (_req as any).user.email,
+                    role: (_req as any).user.role,
+                });
+            }
+            next();
+        },
 
-        // Tracing handler - must be after request handler and before routes
-        tracingHandler: Sentry.Handlers.tracingHandler(),
+        // Tracing handler - expressIntegration handles this automatically
+        tracingHandler: (_req: Request, _res: Response, next: NextFunction) => next(),
 
         // Error handler - must be after routes and before other error handlers
-        errorHandler: Sentry.Handlers.errorHandler({
+        errorHandler: expressErrorHandler({
             shouldHandleError(error: Error & { status?: number }) {
                 // Only report 500+ errors automatically
                 if (error.status && error.status >= 500) {

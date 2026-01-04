@@ -245,5 +245,3 @@ export const validateRequest = (schema: ValidationSchema) => {
         next();
     };
 };
-
-

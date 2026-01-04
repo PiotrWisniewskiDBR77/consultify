@@ -10,8 +10,8 @@
  * - Error rates
  */
 
-import defaultLogger from '../dist/utils/logger.js';
-import * as defaultQueryHelpers from '../dist/utils/queryHelpers.js';
+import defaultLogger from '../src/utils/Logger.ts';
+import * as defaultQueryHelpers from '../src/utils/queryHelpers.ts';
 
 let logger = defaultLogger;
 let queryHelpers = defaultQueryHelpers;

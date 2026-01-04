@@ -28,7 +28,7 @@ const mockDependencyService = vi.hoisted(() => ({
 }));
 
 vi.mock('../../../server/database', () => ({ default: mockDb }));
-vi.mock('../../../server/services/dependencyService', () => ({ default: mockDependencyService }));
+vi.mock('../../../server/src/services/dependencyService', () => ({ default: mockDependencyService }));
 
 describe('Scenario Service', () => {
     let ScenarioService;
@@ -37,7 +37,7 @@ describe('Scenario Service', () => {
         vi.clearAllMocks();
 
         // Dynamic import for ESM compatibility
-        const module = await import('../../../server/services/scenarioService.js');
+        const module = await import('../../../server/src/services/scenarioService.js');
         ScenarioService = module.default;
 
         // Inject mock dependencies

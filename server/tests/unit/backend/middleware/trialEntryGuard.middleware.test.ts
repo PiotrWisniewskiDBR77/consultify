@@ -12,29 +12,32 @@ import {
     BLOCKED_ROUTES,
     isTrialEntryUser,
     requireOrgContext,
-    setDependencies,
     trialEntryGuard,
 } from '../../../../src/middleware/trialEntryGuard.middleware.js';
+
+// Mock DbPromise
+const { mockGet } = vi.hoisted(() => {
+    return { mockGet: vi.fn() };
+});
+
+vi.mock('../../../../src/utils/DbPromise.js', () => ({
+    get: mockGet,
+}));
 
 describe('Trial Entry Guard Middleware', () => {
     let mockReq: Partial<AuthRequest>;
     let mockRes: Partial<Response>;
     let mockNext: NextFunction;
-    let mockDb: {
-        get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
-    };
 
     beforeEach(() => {
+        vi.clearAllMocks();
         mockNext = vi.fn();
         mockRes = {
             status: vi.fn().mockReturnThis(),
             json: vi.fn(),
         };
-        mockDb = {
-            get: vi.fn((_sql, _params, callback) => callback(null, { user_status: 'ORG_MEMBER' })),
-        };
-
-        setDependencies({ db: mockDb });
+        // Default mock implementation
+        mockGet.mockResolvedValue({ user_status: 'ORG_MEMBER' });
 
         mockReq = {
             user: {
@@ -62,9 +65,7 @@ describe('Trial Entry Guard Middleware', () => {
         });
 
         it('should block blocked routes for trial entry users', async () => {
-            mockDb.get = vi.fn((_sql, _params, callback) => {
-                callback(null, { user_status: 'TRIAL_ENTRY' });
-            });
+            mockGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
             mockReq.method = 'POST';
             mockReq.path = '/api/initiatives';
             await trialEntryGuard(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -78,9 +79,7 @@ describe('Trial Entry Guard Middleware', () => {
         });
 
         it('should allow non-blocked routes for trial entry users', async () => {
-            mockDb.get = vi.fn((_sql, _params, callback) => {
-                callback(null, { user_status: 'TRIAL_ENTRY' });
-            });
+            mockGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
             mockReq.method = 'GET';
             mockReq.path = '/api/ai/chat';
             await trialEntryGuard(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -89,9 +88,7 @@ describe('Trial Entry Guard Middleware', () => {
         });
 
         it('should handle database errors gracefully', async () => {
-            mockDb.get = vi.fn((_sql, _params, callback) => {
-                callback(new Error('DB error'), null);
-            });
+            mockGet.mockRejectedValue(new Error('DB error'));
             await trialEntryGuard(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockNext).toHaveBeenCalled();
@@ -132,17 +129,13 @@ describe('Trial Entry Guard Middleware', () => {
 
     describe('isTrialEntryUser', () => {
         it('should return true for trial entry users', async () => {
-            mockDb.get = vi.fn((_sql, _params, callback) => {
-                callback(null, { user_status: 'TRIAL_ENTRY' });
-            });
+            mockGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
             const result = await isTrialEntryUser('user-123');
             expect(result).toBe(true);
         });
 
         it('should return false for non-trial-entry users', async () => {
-            mockDb.get = vi.fn((_sql, _params, callback) => {
-                callback(null, { user_status: 'ORG_MEMBER' });
-            });
+            mockGet.mockResolvedValue({ user_status: 'ORG_MEMBER' });
             const result = await isTrialEntryUser('user-123');
             expect(result).toBe(false);
         });
@@ -160,5 +153,3 @@ describe('Trial Entry Guard Middleware', () => {
         });
     });
 });
-
-

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
+
 
 // Mock dependencies
 const mockDb = {
@@ -40,7 +40,7 @@ describe.skip('AssessmentReportService (SKIPPED - CJS mock limitation)', () => {
 
         // Try to import the service
         try {
-            const module = await import('../../../server/services/assessmentReportService.js');
+            const module = await import('../../../server/src/services/assessmentReportService.js');
             AssessmentReportService = module.default || module;
         } catch (e) {
             // Create mock service for testing if module doesn't exist

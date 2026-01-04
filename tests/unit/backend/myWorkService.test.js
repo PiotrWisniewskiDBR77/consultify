@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import MyWorkService from '../../../server/services/myWorkService.js';
+import MyWorkService from '../../../server/src/services/myWorkService.js';
 
 describe('MyWorkService', () => {
     let queryAllSpy;

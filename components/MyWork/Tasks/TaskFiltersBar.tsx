@@ -540,5 +540,3 @@ export const TaskFiltersBar: React.FC<TaskFiltersBarProps> = ({
 };
 
 export default TaskFiltersBar;
-
-

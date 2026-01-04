@@ -221,5 +221,3 @@ export default {
     resetMigrationFlag,
     useMigration,
 };
-
-

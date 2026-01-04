@@ -185,5 +185,3 @@ export const DemoUpgradePrompt: React.FC<DemoUpgradePromptProps> = ({
 };
 
 export default DemoUpgradePrompt;
-
-

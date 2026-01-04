@@ -144,10 +144,8 @@ describe('OrganizationsView', () => {
             expect(screen.getByText('Test Org 1')).toBeInTheDocument();
         });
 
-        const orgRow = screen.getByText('Test Org 1').closest('tr');
-        if (orgRow) {
-            fireEvent.click(orgRow);
-        }
+        const viewDetailsButton = screen.getAllByRole('button', { name: /View Details/i })[0];
+        fireEvent.click(viewDetailsButton);
 
         await waitFor(() => {
             expect(screen.getByTestId('org-details-modal')).toBeInTheDocument();
@@ -186,7 +184,7 @@ describe('OrganizationsView', () => {
             expect(screen.getByText('New Org')).toBeInTheDocument();
         });
 
-        const approveButton = screen.getByText(/Approve/i);
+        const approveButton = screen.getByRole('button', { name: /Approve/i });
         fireEvent.click(approveButton);
 
         await waitFor(() => {
@@ -210,7 +208,7 @@ describe('OrganizationsView', () => {
             expect(screen.getByText('New Org')).toBeInTheDocument();
         });
 
-        const rejectButton = screen.getByText(/Reject/i);
+        const rejectButton = screen.getByRole('button', { name: /Reject/i });
         fireEvent.click(rejectButton);
 
         await waitFor(() => {

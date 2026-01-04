@@ -16,7 +16,7 @@ let deps = {
  */
 async function initDeps() {
     if (!deps.db) {
-        const dbModule = await import('../src/database/index.js')
+        const dbModule = await import('../src/database/Database.ts')
         const { getDatabase } = dbModule;
         deps.db = getDatabase();
     }

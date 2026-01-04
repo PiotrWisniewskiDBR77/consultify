@@ -229,5 +229,3 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
 };
 
 export default GaugeChart;
-
-

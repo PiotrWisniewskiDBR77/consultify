@@ -223,5 +223,3 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({ content, class
 };
 
 export default DiagramRenderer;
-
-

@@ -161,5 +161,3 @@ export const adminClasses = {
 } as const;
 
 export default adminTokens;
-
-

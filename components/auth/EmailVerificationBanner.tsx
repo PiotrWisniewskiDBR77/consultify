@@ -161,5 +161,3 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
 };
 
 export default EmailVerificationBanner;
-
-

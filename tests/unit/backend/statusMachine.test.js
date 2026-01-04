@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import StatusMachine from '../../../server/services/statusMachine.js';
+import StatusMachine from '../../../server/src/services/statusMachine.js';
 
 describe('StatusMachine', () => {
     describe('canTransitionInitiative', () => {

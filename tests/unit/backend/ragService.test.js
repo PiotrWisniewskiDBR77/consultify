@@ -38,7 +38,7 @@ describe('RagService - Integration', () => {
         // Mock OpenAI or other internals if needed
         // Assuming RagService imports DB directly or via BaseService
 
-        const mod = await import('../../../server/services/ragService.js');
+        const mod = await import('../../../server/src/services/ragService.js');
         RagService = mod.default || mod;
 
         // Inject dependencies to prevent real DB connection

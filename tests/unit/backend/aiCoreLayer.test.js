@@ -3,8 +3,9 @@
 // Focus on exports and structure (database integration tests are in integration suite)
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
-// Mock database
+// Mock database at module level for services that require it
 vi.mock('../../../server/database', () => ({
     default: {
         get: vi.fn((sql, params, callback) => callback(null, null)),
@@ -18,7 +19,7 @@ describe('AIContextBuilder', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        AIContextBuilder = (await import('../../../server/services/aiContextBuilder.js')).default;
+        AIContextBuilder = (await import('../../../server/src/services/aiContextBuilder.js')).default;
     });
 
     describe('Service Structure', () => {
@@ -81,7 +82,7 @@ describe('AIPolicyEngine', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        AIPolicyEngine = (await import('../../../server/services/aiPolicyEngine.js')).default;
+        AIPolicyEngine = (await import('../../../server/src/services/aiPolicyEngine.js')).default;
     });
 
     describe('POLICY_LEVELS', () => {
@@ -144,7 +145,7 @@ describe('AIMemoryManager', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        AIMemoryManager = (await import('../../../server/services/aiMemoryManager.js')).default;
+        AIMemoryManager = (await import('../../../server/src/services/aiMemoryManager.js')).default;
     });
 
     describe('MEMORY_TYPES', () => {
@@ -166,31 +167,31 @@ describe('AIMemoryManager', () => {
     });
 
     describe('createSession', () => {
-        it('should create session with unique conversationId', () => {
-            const session1 = AIMemoryManager.createSession();
-            const session2 = AIMemoryManager.createSession();
+        it('should create session with unique conversationId', async () => {
+            const session1 = await AIMemoryManager.createSession();
+            const session2 = await AIMemoryManager.createSession();
 
             expect(session1.conversationId).toBeTruthy();
             expect(session2.conversationId).toBeTruthy();
             expect(session1.conversationId).not.toBe(session2.conversationId);
         });
 
-        it('should create session with empty messages array', () => {
-            const session = AIMemoryManager.createSession();
+        it('should create session with empty messages array', async () => {
+            const session = await AIMemoryManager.createSession();
 
             expect(session.messages).toEqual([]);
         });
 
-        it('should create session with startedAt timestamp', () => {
-            const session = AIMemoryManager.createSession();
+        it('should create session with startedAt timestamp', async () => {
+            const session = await AIMemoryManager.createSession();
 
             expect(session.startedAt).toBeTruthy();
         });
     });
 
     describe('addMessage', () => {
-        it('should add message to session', () => {
-            const session = AIMemoryManager.createSession();
+        it('should add message to session', async () => {
+            const session = await AIMemoryManager.createSession();
 
             AIMemoryManager.addMessage(session, 'user', 'Hello');
 
@@ -199,8 +200,8 @@ describe('AIMemoryManager', () => {
             expect(session.messages[0].content).toBe('Hello');
         });
 
-        it('should add timestamp to message', () => {
-            const session = AIMemoryManager.createSession();
+        it('should add timestamp to message', async () => {
+            const session = await AIMemoryManager.createSession();
 
             AIMemoryManager.addMessage(session, 'ai', 'Hello back');
 
@@ -228,7 +229,7 @@ describe('AIOrchestrator', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        AIOrchestrator = (await import('../../../server/services/aiOrchestrator.js')).default;
+        AIOrchestrator = (await import('../../../server/src/services/aiOrchestrator.js')).default;
     });
 
     describe('AI_ROLES', () => {

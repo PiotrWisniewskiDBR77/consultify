@@ -8,7 +8,7 @@
  * - Generic Reports
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const defaultDb = getDatabase();
 import RapidLeanService from './rapidLeanService.js';
 import ExternalAssessmentService from './externalAssessmentService.js';

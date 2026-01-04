@@ -8,7 +8,8 @@
  */
 
 import { z } from 'zod';
-import logger from '../utils/Logger.js';
+
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // ZOD SCHEMAS
@@ -41,21 +42,23 @@ const ServerConfigSchema = z.object({
  * OAuth configuration schema
  * If any OAuth provider is configured, all its fields become required
  */
-const OAuthProviderSchema = z.object({
-    CLIENT_ID: z.string().optional(),
-    CLIENT_SECRET: z.string().optional(),
-    CALLBACK_URL: z.string().url().optional(),
-}).refine(
-    (data) => {
-        // If any field is set, all must be set
-        const hasAny = data.CLIENT_ID || data.CLIENT_SECRET || data.CALLBACK_URL;
-        const hasAll = data.CLIENT_ID && data.CLIENT_SECRET && data.CALLBACK_URL;
-        return !hasAny || hasAll;
-    },
-    {
-        message: 'If any OAuth field is set, all fields (CLIENT_ID, CLIENT_SECRET, CALLBACK_URL) must be set',
-    },
-);
+const OAuthProviderSchema = z
+    .object({
+        CLIENT_ID: z.string().optional(),
+        CLIENT_SECRET: z.string().optional(),
+        CALLBACK_URL: z.string().url().optional(),
+    })
+    .refine(
+        (data) => {
+            // If any field is set, all must be set
+            const hasAny = data.CLIENT_ID || data.CLIENT_SECRET || data.CALLBACK_URL;
+            const hasAll = data.CLIENT_ID && data.CLIENT_SECRET && data.CALLBACK_URL;
+            return !hasAny || hasAll;
+        },
+        {
+            message: 'If any OAuth field is set, all fields (CLIENT_ID, CLIENT_SECRET, CALLBACK_URL) must be set',
+        },
+    );
 
 const OAuthConfigSchema = z.object({
     GOOGLE: OAuthProviderSchema.optional(),
@@ -67,37 +70,39 @@ const OAuthConfigSchema = z.object({
  * Database configuration schema
  * In production, database credentials are REQUIRED
  */
-const DatabaseConfigSchema = z.object({
-    DB_TYPE: z.enum(['sqlite', 'postgres']).optional(),
-    DATABASE_URL: z.string().url().optional(),
-    // PostgreSQL individual fields (required if DB_TYPE=postgres in production)
-    DB_HOST: z.string().optional(),
-    DB_PORT: z.number().int().positive().optional(),
-    DB_NAME: z.string().optional(),
-    DB_USER: z.string().optional(),
-    DB_PASSWORD: z.string().optional(),
-    DB_SSL: z.enum(['true', 'false', 'require', 'disable']).optional(),
-    DB_SSL_REJECT_UNAUTHORIZED: z.enum(['true', 'false']).optional(),
-    DB_POOL_SIZE: z.number().int().positive().default(10),
-    DB_CONNECTION_TIMEOUT: z.number().int().positive().default(30000),
-    DB_STATEMENT_TIMEOUT: z.number().int().positive().default(60000),
-    // SQLite
-    SQLITE_PATH: z.string().optional(),
-}).refine(
-    (data) => {
-        if (isProduction && data.DB_TYPE === 'postgres') {
-            // In production with PostgreSQL, we need either DATABASE_URL or all individual fields
-            if (data.DATABASE_URL) return true;
-            if (data.DB_HOST && data.DB_NAME && data.DB_USER && data.DB_PASSWORD) return true;
-            return false;
-        }
-        return true;
-    },
-    {
-        message:
-            'In production with PostgreSQL, either DATABASE_URL or all DB_* fields (DB_HOST, DB_NAME, DB_USER, DB_PASSWORD) must be set',
-    },
-);
+const DatabaseConfigSchema = z
+    .object({
+        DB_TYPE: z.enum(['sqlite', 'postgres']).optional(),
+        DATABASE_URL: z.string().url().optional(),
+        // PostgreSQL individual fields (required if DB_TYPE=postgres in production)
+        DB_HOST: z.string().optional(),
+        DB_PORT: z.number().int().positive().optional(),
+        DB_NAME: z.string().optional(),
+        DB_USER: z.string().optional(),
+        DB_PASSWORD: z.string().optional(),
+        DB_SSL: z.enum(['true', 'false', 'require', 'disable']).optional(),
+        DB_SSL_REJECT_UNAUTHORIZED: z.enum(['true', 'false']).optional(),
+        DB_POOL_SIZE: z.number().int().positive().default(10),
+        DB_CONNECTION_TIMEOUT: z.number().int().positive().default(30000),
+        DB_STATEMENT_TIMEOUT: z.number().int().positive().default(60000),
+        // SQLite
+        SQLITE_PATH: z.string().optional(),
+    })
+    .refine(
+        (data) => {
+            if (isProduction && data.DB_TYPE === 'postgres') {
+                // In production with PostgreSQL, we need either DATABASE_URL or all individual fields
+                if (data.DATABASE_URL) return true;
+                if (data.DB_HOST && data.DB_NAME && data.DB_USER && data.DB_PASSWORD) return true;
+                return false;
+            }
+            return true;
+        },
+        {
+            message:
+                'In production with PostgreSQL, either DATABASE_URL or all DB_* fields (DB_HOST, DB_NAME, DB_USER, DB_PASSWORD) must be set',
+        },
+    );
 
 /**
  * Redis configuration schema
@@ -145,8 +150,10 @@ const AppConfigSchema = JWTConfigSchema.merge(ServerConfigSchema)
             if (linkedinHasAny && !linkedinHasAll) return false;
 
             // Microsoft OAuth validation
-            const microsoftHasAny = data.MICROSOFT_CLIENT_ID || data.MICROSOFT_CLIENT_SECRET || data.MICROSOFT_CALLBACK_URL;
-            const microsoftHasAll = data.MICROSOFT_CLIENT_ID && data.MICROSOFT_CLIENT_SECRET && data.MICROSOFT_CALLBACK_URL;
+            const microsoftHasAny =
+                data.MICROSOFT_CLIENT_ID || data.MICROSOFT_CLIENT_SECRET || data.MICROSOFT_CALLBACK_URL;
+            const microsoftHasAll =
+                data.MICROSOFT_CLIENT_ID && data.MICROSOFT_CLIENT_SECRET && data.MICROSOFT_CALLBACK_URL;
             if (microsoftHasAny && !microsoftHasAll) return false;
 
             return true;
@@ -237,7 +244,10 @@ export function validateConfig(): ValidatedConfig {
     // Additional production checks
     if (isProduction) {
         if (!result.data.JWT_SECRET || result.data.JWT_SECRET.length < 32) {
-            logger.error('\n\x1b[31m%s\x1b[0m', 'FATAL ERROR: JWT_SECRET must be at least 32 characters in production.');
+            logger.error(
+                '\n\x1b[31m%s\x1b[0m',
+                'FATAL ERROR: JWT_SECRET must be at least 32 characters in production.',
+            );
             logger.error('Please set a secure JWT_SECRET environment variable.\n');
             process.exit(1);
         }
@@ -267,7 +277,9 @@ export function validateDatabaseConfig(): void {
     if (isProduction && dbType === 'postgres') {
         if (!databaseUrl && (!hasDbHost || !hasDbName || !hasDbUser || !hasDbPassword)) {
             logger.error('\n\x1b[31m%s\x1b[0m', 'FATAL ERROR: PostgreSQL configuration incomplete in production.');
-            logger.error('Either DATABASE_URL or all DB_* fields (DB_HOST, DB_NAME, DB_USER, DB_PASSWORD) must be set.\n');
+            logger.error(
+                'Either DATABASE_URL or all DB_* fields (DB_HOST, DB_NAME, DB_USER, DB_PASSWORD) must be set.\n',
+            );
             process.exit(1);
         }
     }
@@ -278,5 +290,3 @@ export function validateDatabaseConfig(): void {
 // ==========================================
 
 export default validateConfig;
-
-

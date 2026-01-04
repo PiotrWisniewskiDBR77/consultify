@@ -291,5 +291,3 @@ export const SocialLinksSection: React.FC<SocialLinksSectionProps> = ({ currentU
 };
 
 export default SocialLinksSection;
-
-

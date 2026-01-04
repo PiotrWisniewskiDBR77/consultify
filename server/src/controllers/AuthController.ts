@@ -8,8 +8,8 @@ import { Request, Response } from 'express';
 import type { IDatabase } from '../database/IDatabase.js';
 import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
+import logger from '../utils/Logger.ts';
 import type { _AuthRequest, LoginRequest } from '../validators/auth.validators.js';
-import logger from '../utils/Logger.js';
 
 // Dependencies interface for dependency injection
 interface Dependencies {

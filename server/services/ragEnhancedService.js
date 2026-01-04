@@ -16,7 +16,7 @@
 
 import RagService from './ragService.js';
 import KnowledgeGraphService from './knowledgeGraphService.js';
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import { embeddingService } from './ai/embeddingService.js';
 import { v4 as uuidv4 } from 'uuid';

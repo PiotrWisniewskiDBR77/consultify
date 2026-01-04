@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { aiLogger } from '../../../services/ai/logger.js';
 import { getDatabase } from '../../database/Database.js';
-import * as DbPromise from '../../utils/DbPromise.js';
+import * as DbPromise from '../../utils/DbPromise.ts';
 import { embeddingService } from './embeddingService.js';
 
 export const ORG_MEMORY_TYPES = {

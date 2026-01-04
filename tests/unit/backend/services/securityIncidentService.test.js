@@ -3,24 +3,35 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
 
 // Mock database
-const mockDb = {
-    run: vi.fn(),
-    get: vi.fn(),
-    all: vi.fn()
-};
+const { mockDb } = vi.hoisted(() => {
+    return {
+        mockDb: {
+            run: vi.fn(),
+            get: vi.fn(),
+            all: vi.fn()
+        }
+    };
+});
 
 // Import service
-const securityIncidentService = require('../../../../server/services/securityIncidentService');
+vi.mock('../../../../server/src/database/Database.ts', () => ({
+    default: mockDb,
+    getDatabase: () => mockDb,
+    run: mockDb.run,
+    get: mockDb.get,
+    all: mockDb.all
+}));
+
+import securityIncidentService from '../../../../server/services/securityIncidentService.js';
 
 describe('SecurityIncidentService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        securityIncidentService.setDependencies({ db: mockDb });
+        if (securityIncidentService.setDependencies) {
+            securityIncidentService.setDependencies({ db: mockDb });
+        }
     });
 
     describe('createIncident', () => {
@@ -313,7 +324,3 @@ describe('SecurityIncidentService', () => {
         });
     });
 });
-
-
-
-

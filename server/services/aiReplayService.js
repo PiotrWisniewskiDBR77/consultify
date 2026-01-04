@@ -10,7 +10,7 @@
  * - Support for prompt version testing
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import AIService from './aiService.js';
 import { v4 as uuidv4 } from 'uuid';

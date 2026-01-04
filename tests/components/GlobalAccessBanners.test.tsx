@@ -2,28 +2,28 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { GlobalAccessBanners } from '../../components/GlobalAccessBanners';
+import { render, screen, waitFor } from '@testing-library/react';
+import GlobalAccessBanners from '../../components/GlobalAccessBanners';
 import { usePolicySnapshot, useIsDemo, useIsTrial, useIsTrialExpired } from '../../contexts/AccessPolicyContext';
 
-vi.mock('../../../contexts/AccessPolicyContext', () => ({
+vi.mock('../../contexts/AccessPolicyContext', () => ({
     usePolicySnapshot: vi.fn(),
     useIsDemo: vi.fn(),
     useIsTrial: vi.fn(),
     useIsTrialExpired: vi.fn()
 }));
 
-vi.mock('../../../components/TrialBanner', () => ({
+vi.mock('../../components/TrialBanner', () => ({
     __esModule: true,
     default: () => <div>TrialBanner</div>
 }));
 
-vi.mock('../../../components/DemoBanner', () => ({
+vi.mock('../../components/DemoBanner', () => ({
     __esModule: true,
     default: () => <div>DemoBanner</div>
 }));
 
-vi.mock('../../../components/TrialExpirationModal', () => ({
+vi.mock('../../components/TrialExpirationModal', () => ({
     __esModule: true,
     default: () => <div>TrialExpirationModal</div>
 }));
@@ -82,7 +82,7 @@ describe('GlobalAccessBanners Component', () => {
         expect(screen.getByText('TrialBanner')).toBeInTheDocument();
     });
 
-    it('renders TrialExpirationModal when trial expired', () => {
+    it('renders TrialExpirationModal when trial expired', async () => {
         (usePolicySnapshot as any).mockReturnValue({
             snapshot: { isPaid: false, isTrial: true },
             loading: false
@@ -92,7 +92,9 @@ describe('GlobalAccessBanners Component', () => {
         (useIsTrialExpired as any).mockReturnValue(true);
 
         render(<GlobalAccessBanners />);
-        expect(screen.getByText('TrialExpirationModal')).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByText('TrialExpirationModal')).toBeInTheDocument();
+        });
     });
 
     it('calls onStartTrial when provided', () => {
@@ -110,14 +112,3 @@ describe('GlobalAccessBanners Component', () => {
         expect(screen.getByText('DemoBanner')).toBeInTheDocument();
     });
 });
-
-
-
-
-
-
-
-
-
-
-

@@ -11,7 +11,7 @@ export default defineConfig({
         include: ['tests/security/**/*.test.js'],
         exclude: ['node_modules/**'],
         env: {
-            MOCK_DB: 'true',
+            MOCK_DB: 'false',
             MOCK_REDIS: 'true',
             DB_TYPE: 'sqlite',
         },

@@ -36,5 +36,5 @@ export const storage = {
         } catch (error) {
             console.warn('Error clearing localStorage:', error);
         }
-    }
+    },
 };

@@ -56,7 +56,7 @@ if (process.env.MOCK_DB === 'true') {
     // CRITICAL: We dynamic import here to avoid loading sqlite3 bindings 
     // when MOCK_DB is true, which avoids native crashes in Vitest workers.
     try {
-        const { default: sqliteDb } = await import('./database.sqlite.active.js');
+        const { default: sqliteDb } = await import('./database.sqlite.js');
         db = sqliteDb;
     } catch (e) {
         console.error('[Database] Failed to load SQLite active database:', e);

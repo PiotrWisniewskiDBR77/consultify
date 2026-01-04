@@ -217,5 +217,3 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({ documentId
 };
 
 export default StudioExportModal;
-
-

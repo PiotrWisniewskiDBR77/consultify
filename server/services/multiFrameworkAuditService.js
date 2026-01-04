@@ -5,7 +5,7 @@
  * Logs all changes with actor information, timestamps, and diff calculation.
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 
 

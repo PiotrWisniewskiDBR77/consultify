@@ -6,6 +6,7 @@ import db from '../../../../server/database';
 
 describe('AuthMiddleware (DI Refactored)', () => {
     let req, res, next;
+    let mockJwt;
 
     beforeEach(() => {
         req = { headers: {} };
@@ -20,9 +21,15 @@ describe('AuthMiddleware (DI Refactored)', () => {
         db.get = vi.fn();
         db.all = vi.fn();
 
+        // Create local mock for JWT
+        mockJwt = {
+            verify: vi.fn(),
+            decode: vi.fn()
+        };
+
         // Inject dependencies directly
         verifyToken.setDependencies({
-            jwt: jwt,
+            jwt: mockJwt, // Inject our mock
             config: { JWT_SECRET: 'test-secret' },
             db: db,
             PermissionService: {
@@ -39,8 +46,8 @@ describe('AuthMiddleware (DI Refactored)', () => {
 
     it('should return 401 if token expired', () => {
         req.headers['authorization'] = 'Bearer expired-token';
-        // Mock jwt.verify to call callback with error asynchronously
-        jwt.verify.mockImplementation((token, secret, cb) => {
+        // Mock verify to call callback with error asynchronously
+        mockJwt.verify.mockImplementation((token, secret, cb) => {
             process.nextTick(() => {
                 const error = new Error('Token expired');
                 error.name = 'TokenExpiredError';
@@ -61,7 +68,7 @@ describe('AuthMiddleware (DI Refactored)', () => {
 
     it('should return 401 if token invalid', () => {
         req.headers['authorization'] = 'Bearer invalid-token';
-        jwt.verify.mockImplementation((token, secret, cb) => {
+        mockJwt.verify.mockImplementation((token, secret, cb) => {
             cb(new Error('Invalid'), null);
         });
 
@@ -73,7 +80,7 @@ describe('AuthMiddleware (DI Refactored)', () => {
     it('should call next() if token valid and no revocation check needed (no jti)', () => {
         req.headers['authorization'] = 'Bearer valid-token';
         const decoded = { id: 1, role: 'USER' };
-        jwt.verify.mockImplementation((token, secret, cb) => {
+        mockJwt.verify.mockImplementation((token, secret, cb) => {
             process.nextTick(() => {
                 cb(null, decoded);
             });
@@ -95,23 +102,21 @@ describe('AuthMiddleware (DI Refactored)', () => {
         const decoded = { id: 1, role: 'USER', jti: 'uuid', iat: Math.floor(Date.now() / 1000) };
 
         let callCount = 0;
-        jwt.verify.mockImplementation((token, secret, cb) => {
+        mockJwt.verify.mockImplementation((token, secret, cb) => {
             process.nextTick(() => {
                 cb(null, decoded);
             });
         });
 
-        // Mock db.get to handle nested calls - first for jti check, second for revoke-all
+        // Mock db.get to handle nested calls
         db.get.mockImplementation((query, params, cb) => {
             callCount++;
             const callback = typeof params === 'function' ? params : cb;
-            // First call checks specific token revocation
             if (callCount === 1) {
                 process.nextTick(() => {
                     callback(null, undefined); // Not revoked
                 });
             }
-            // Second call (nested) checks global revocation
             else if (callCount === 2) {
                 process.nextTick(() => {
                     callback(null, undefined); // No global revoke
@@ -133,7 +138,7 @@ describe('AuthMiddleware (DI Refactored)', () => {
     it('should return 401 if token is revoked', () => {
         req.headers['authorization'] = 'Bearer valid-token';
         const decoded = { id: 1, role: 'USER', jti: 'uuid' };
-        jwt.verify.mockImplementation((token, secret, cb) => {
+        mockJwt.verify.mockImplementation((token, secret, cb) => {
             process.nextTick(() => {
                 cb(null, decoded);
             });
@@ -141,7 +146,6 @@ describe('AuthMiddleware (DI Refactored)', () => {
 
         db.get.mockImplementation((query, params, cb) => {
             const callback = typeof params === 'function' ? params : cb;
-            // Token is revoked - return row
             process.nextTick(() => {
                 callback(null, { jti: 'uuid' });
             });

@@ -34,6 +34,14 @@ describe('RBAC Middleware', () => {
                 isConsultant: false,
                 role: 'ADMIN',
             },
+            user: {
+                id: 'user-123',
+                role: 'team_member',
+                email: 'test@example.com',
+                name: 'Test User',
+                organizationId: 'org-123',
+                isSuperAdmin: false,
+            },
         };
     });
 
@@ -95,6 +103,9 @@ describe('RBAC Middleware', () => {
                 isMember: false,
                 isConsultant: true,
                 role: 'CONSULTANT',
+                permissionScope: {
+                    permissions: ['read:projects'],
+                },
             };
             const middleware = requireOrgAccess({ allowConsultant: false });
             middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -105,7 +116,7 @@ describe('RBAC Middleware', () => {
 
     describe('requireOrgRole', () => {
         it('should allow when role matches', () => {
-            const middleware = requireOrgRole('ADMIN');
+            const middleware = requireOrgRole(['ADMIN']);
             middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockNext).toHaveBeenCalled();
@@ -113,7 +124,7 @@ describe('RBAC Middleware', () => {
 
         it('should deny when role does not match', () => {
             mockReq.org!.role = 'MEMBER';
-            const middleware = requireOrgRole('ADMIN');
+            const middleware = requireOrgRole(['ADMIN']);
             middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockRes.status).toHaveBeenCalledWith(403);
@@ -123,7 +134,8 @@ describe('RBAC Middleware', () => {
     describe('requireOwnerOrSuperadmin', () => {
         it('should allow OWNER', () => {
             mockReq.org!.role = 'OWNER';
-            requireOwnerOrSuperadmin(mockReq as AuthRequest, mockRes as Response, mockNext);
+            const middleware = requireOwnerOrSuperadmin();
+            middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockNext).toHaveBeenCalled();
         });
@@ -131,17 +143,22 @@ describe('RBAC Middleware', () => {
         it('should allow SUPERADMIN', () => {
             mockReq.user = {
                 id: 'user-123',
-                role: 'SUPERADMIN',
+                role: 'SUPERADMIN', // Global role check if implemented
                 isSuperAdmin: true,
+                organizationId: 'org-123',
+                email: 'super@test.com',
+                name: 'Super',
             };
-            requireOwnerOrSuperadmin(mockReq as AuthRequest, mockRes as Response, mockNext);
+            const middleware = requireOwnerOrSuperadmin();
+            middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockNext).toHaveBeenCalled();
         });
 
         it('should deny non-owner non-superadmin', () => {
             mockReq.org!.role = 'ADMIN';
-            requireOwnerOrSuperadmin(mockReq as AuthRequest, mockRes as Response, mockNext);
+            const middleware = requireOwnerOrSuperadmin();
+            middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockRes.status).toHaveBeenCalledWith(403);
         });
@@ -156,5 +173,3 @@ describe('RBAC Middleware', () => {
         });
     });
 });
-
-

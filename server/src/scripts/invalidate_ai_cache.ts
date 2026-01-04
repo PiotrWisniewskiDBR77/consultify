@@ -1,5 +1,5 @@
 import { appCache } from '../services/redis/CacheService.js';
-import logger from '../utils/Logger.js';
+import logger from '../utils/Logger.ts';
 
 const invalidate = async () => {
     try {

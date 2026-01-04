@@ -2,7 +2,7 @@ import AIContextBuilder from './aiContextBuilder.js';
 import SignalEngine from './signalEngine.js';
 import RecommendationEngine from './recommendationEngine.js';
 import SimulationEngineClass from './simulationEngine.js';
-import * as auditLogger from '../dist/utils/auditLogger.js';
+import * as auditLogger from '../src/utils/auditLogger.ts';
 import AiService from '../services/aiService.js';
 import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();

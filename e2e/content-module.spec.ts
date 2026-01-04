@@ -511,5 +511,3 @@ test.describe('Responsive Design', () => {
         await expect(page.locator('[data-testid="email-templates-view"]')).toBeVisible();
     });
 });
-
-

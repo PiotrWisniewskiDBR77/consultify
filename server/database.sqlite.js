@@ -7,8 +7,13 @@
  * @deprecated Use database.sqlite.active.js
  */
 
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 const sqlite3 = require('sqlite3').verbose();
 import path from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -283,12 +288,12 @@ function initDb() {
         )`);
 
         // Add indexes for audit_logs
-        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp DESC)`, (err) => {});
-        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)`, (err) => {});
-        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_action_type ON audit_logs(action_type)`, (err) => {});
-        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_resource ON audit_logs(resource_type, resource_id)`, (err) => {});
-        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_risk_level ON audit_logs(risk_level)`, (err) => {});
-        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_org_id ON audit_logs(organization_id)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp DESC)`, (err) => { });
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)`, (err) => { });
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_action_type ON audit_logs(action_type)`, (err) => { });
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_resource ON audit_logs(resource_type, resource_id)`, (err) => { });
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_risk_level ON audit_logs(risk_level)`, (err) => { });
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_org_id ON audit_logs(organization_id)`, (err) => { });
 
         // User Token Quota (Add columns to users - we'll use ALTER TABLE to add if not exists)
         db.run(`ALTER TABLE users ADD COLUMN token_limit INTEGER DEFAULT 100000`, (err) => {
@@ -985,9 +990,9 @@ function initDb() {
         )`);
 
         // Add indexes for webhook_deliveries
-        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_webhook_id ON webhook_deliveries(webhook_id)`, (err) => {});
-        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_status ON webhook_deliveries(status)`, (err) => {});
-        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_created_at ON webhook_deliveries(created_at DESC)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_webhook_id ON webhook_deliveries(webhook_id)`, (err) => { });
+        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_status ON webhook_deliveries(status)`, (err) => { });
+        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_created_at ON webhook_deliveries(created_at DESC)`, (err) => { });
 
         // Extend existing webhooks table with missing columns
         db.run(`ALTER TABLE webhooks ADD COLUMN retry_policy TEXT`, (err) => {
@@ -1041,7 +1046,7 @@ function initDb() {
         )`);
 
         // Add indexes for system_metrics
-        db.run(`CREATE INDEX IF NOT EXISTS idx_system_metrics_name_time ON system_metrics(metric_name, timestamp DESC)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_system_metrics_name_time ON system_metrics(metric_name, timestamp DESC)`, (err) => { });
 
         // Security Events Table
         db.run(`CREATE TABLE IF NOT EXISTS security_events (

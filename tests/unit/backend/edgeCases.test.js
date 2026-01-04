@@ -23,7 +23,7 @@ describe('Edge Cases and Error Scenarios', () => {
 
     describe('Null and Undefined Handling', () => {
         it('should handle null organizationId gracefully', async () => {
-            const StorageService = (await import('../../../server/services/storageService.js')).default;
+            const StorageService = (await import('../../../server/src/services/storageService.js')).default;
 
             expect(() => {
                 StorageService.getIsolatedPath(null, 'project-123', 'type');
@@ -31,7 +31,7 @@ describe('Edge Cases and Error Scenarios', () => {
         });
 
         it('should handle undefined projectId in storage', async () => {
-            const StorageService = (await import('../../../server/services/storageService.js')).default;
+            const StorageService = (await import('../../../server/src/services/storageService.js')).default;
 
             const result = StorageService.getIsolatedPath(
                 testOrganizations.org1.id,
@@ -45,7 +45,7 @@ describe('Edge Cases and Error Scenarios', () => {
 
     describe('Empty Data Handling', () => {
         it('should handle empty arrays in queries', async () => {
-            const RoadmapService = (await import('../../../server/services/roadmapService.js')).default;
+            const RoadmapService = (await import('../../../server/src/services/roadmapService.js')).default;
             RoadmapService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
 
             mockDb.all.mockImplementation((query, params, callback) => {
@@ -57,7 +57,7 @@ describe('Edge Cases and Error Scenarios', () => {
         });
 
         it('should handle empty search results', async () => {
-            const EscalationService = (await import('../../../server/services/escalationService.js')).default;
+            const EscalationService = (await import('../../../server/src/services/escalationService.js')).default;
             EscalationService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
 
             mockDb.all.mockImplementation((query, params, callback) => {
@@ -71,7 +71,7 @@ describe('Edge Cases and Error Scenarios', () => {
 
     describe('Boundary Conditions', () => {
         it('should handle maximum token limit', async () => {
-            const UsageService = (await import('../../../server/services/usageService.js')).default;
+            const UsageService = (await import('../../../server/src/services/usageService.js')).default;
             const mockBillingService = {
                 getOrganizationBilling: vi.fn().mockResolvedValue({
                     subscription_plan_id: 'plan-123'
@@ -99,7 +99,7 @@ describe('Edge Cases and Error Scenarios', () => {
         });
 
         it('should handle zero token limit (unlimited)', async () => {
-            const UsageService = (await import('../../../server/services/usageService.js')).default;
+            const UsageService = (await import('../../../server/src/services/usageService.js')).default;
             const mockBillingService = {
                 getOrganizationBilling: vi.fn().mockResolvedValue({
                     subscription_plan_id: 'plan-123'
@@ -129,7 +129,7 @@ describe('Edge Cases and Error Scenarios', () => {
 
     describe('Invalid Input Handling', () => {
         it('should reject invalid email format in invitations', async () => {
-            const InvitationService = (await import('../../../server/services/invitationService.js')).default;
+            const InvitationService = (await import('../../../server/src/services/invitationService.js')).default;
 
             // Mock database for InvitationService
             InvitationService.setDependencies({
@@ -149,7 +149,7 @@ describe('Edge Cases and Error Scenarios', () => {
         });
 
         it('should reject invalid evidence type', async () => {
-            const EvidenceLedgerService = (await import('../../../server/services/evidenceLedgerService.js')).default;
+            const EvidenceLedgerService = (await import('../../../server/src/services/evidenceLedgerService.js')).default;
             EvidenceLedgerService.setDependencies({
                 db: mockDb,
                 uuidv4: () => 'uuid'
@@ -166,7 +166,7 @@ describe('Edge Cases and Error Scenarios', () => {
         });
 
         it('should reject invalid entity type in evidence linking', async () => {
-            const EvidenceLedgerService = (await import('../../../server/services/evidenceLedgerService.js')).default;
+            const EvidenceLedgerService = (await import('../../../server/src/services/evidenceLedgerService.js')).default;
             EvidenceLedgerService.setDependencies({
                 db: mockDb,
                 uuidv4: () => 'uuid'
@@ -184,7 +184,7 @@ describe('Edge Cases and Error Scenarios', () => {
 
     describe('Database Error Handling', () => {
         it('should handle database connection errors gracefully', async () => {
-            const GovernanceService = (await import('../../../server/services/governanceService.js')).default;
+            const GovernanceService = (await import('../../../server/src/services/governanceService.js')).default;
             GovernanceService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
             const dbError = new Error('Database connection failed');
 
@@ -209,7 +209,7 @@ describe('Edge Cases and Error Scenarios', () => {
         });
 
         it('should handle constraint violations', async () => {
-            const OrganizationService = (await import('../../../server/services/organizationService.js')).default;
+            const OrganizationService = (await import('../../../server/src/services/organizationService.js')).default;
             OrganizationService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
             const constraintError = new Error('UNIQUE constraint failed');
 
@@ -240,7 +240,7 @@ describe('Edge Cases and Error Scenarios', () => {
 
     describe('Concurrent Modification Handling', () => {
         it('should handle optimistic locking failures', async () => {
-            const RoadmapService = (await import('../../../server/services/roadmapService.js')).default;
+            const RoadmapService = (await import('../../../server/src/services/roadmapService.js')).default;
             RoadmapService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
 
             // Simulate concurrent modification
@@ -278,7 +278,7 @@ describe('Edge Cases and Error Scenarios', () => {
             });
 
             const start = Date.now();
-            const RoadmapService = (await import('../../../server/services/roadmapService.js')).default;
+            const RoadmapService = (await import('../../../server/src/services/roadmapService.js')).default;
             RoadmapService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
 
             const result = await RoadmapService.getWaves('project-123');
@@ -289,7 +289,7 @@ describe('Edge Cases and Error Scenarios', () => {
         });
 
         it('should handle large payloads in storage', async () => {
-            const StorageService = (await import('../../../server/services/storageService.js')).default;
+            const StorageService = (await import('../../../server/src/services/storageService.js')).default;
             const largePayload = 'x'.repeat(10 * 1024 * 1024); // 10MB string
 
             // Should not throw on large payloads
@@ -301,7 +301,7 @@ describe('Edge Cases and Error Scenarios', () => {
 
     describe('Timeout Handling', () => {
         it('should handle slow database queries', async () => {
-            const GovernanceService = (await import('../../../server/services/governanceService.js')).default;
+            const GovernanceService = (await import('../../../server/src/services/governanceService.js')).default;
             GovernanceService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
 
             mockDb.run.mockImplementation((query, params, callback) => {

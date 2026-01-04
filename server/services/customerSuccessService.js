@@ -3,7 +3,7 @@
  * Manages customer success notes and interactions
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 

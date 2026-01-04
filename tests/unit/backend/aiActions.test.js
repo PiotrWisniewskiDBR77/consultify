@@ -2,46 +2,25 @@
 // Focus on structure and constants (database integration tests in separate suite)
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-// Hoisted mock - defined inline since imports aren't available yet
-const mockDb = vi.hoisted(() => ({
-    get: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, null));
-    }),
-    all: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, []));
-    }),
-    run: vi.fn(function(sql, params, callback) {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
-    }),
-    exec: vi.fn((sql, callback) => {
-        if (callback) process.nextTick(() => callback(null));
-    }),
-    serialize: vi.fn((cb) => { if (cb) cb(); }),
-    prepare: vi.fn(),
-    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    initPromise: Promise.resolve()
-}));
-
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
 describe('AIActionExecutor', () => {
     let AIActionExecutor;
+    let mocks;
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        const module = await import('../../../server/services/aiActionExecutor.js');
+        vi.resetModules();
+
+        mocks = setupStandardTest();
+
+        const module = await import('../../../server/src/services/aiActionExecutor.js');
         AIActionExecutor = module.default;
-        
-        // Inject mock dependencies
+
+        // Inject mock dependencies using unified pattern
         AIActionExecutor.setDependencies({
-            db: mockDb,
-            uuidv4: () => 'mock-uuid-action'
+            db: mocks.db,
+            uuidv4: mocks.uuid
         });
     });
 
@@ -129,7 +108,7 @@ describe('AIAuditLogger', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        AIAuditLogger = (await import('../../../server/services/aiAuditLogger.js')).default;
+        AIAuditLogger = (await import('../../../server/src/services/aiAuditLogger.js')).default;
     });
 
     describe('Service Structure', () => {

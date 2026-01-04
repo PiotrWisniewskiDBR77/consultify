@@ -33,7 +33,7 @@ describe('Backend Service Test: FeedbackService', () => {
         };
 
         // Import Service
-        const mod = await import('../../../server/services/feedbackService.js');
+        const mod = await import('../../../server/src/services/feedbackService.js');
         FeedbackService = mod.default || mod;
 
         // Inject Dependencies

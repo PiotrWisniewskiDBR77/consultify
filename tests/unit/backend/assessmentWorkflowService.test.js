@@ -8,7 +8,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
-import { AssessmentWorkflowService, WORKFLOW_STATES, REVIEW_STATUS, WORKFLOW_CONFIG } from '../../../server/services/assessmentWorkflowService.js';
+import { AssessmentWorkflowService, WORKFLOW_STATES, REVIEW_STATUS, WORKFLOW_CONFIG } from '../../../server/src/services/assessmentWorkflowService.js';
 
 describe('AssessmentWorkflowService (Modernized DI)', () => {
     let mockDb;

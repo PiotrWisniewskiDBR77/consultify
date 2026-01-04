@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import BudgetService from '../../../server/services/budgetService';
+import BudgetService from '../../../server/src/services/budgetService';
 
 // Mock dependencies
 const mockQueryHelpers = {

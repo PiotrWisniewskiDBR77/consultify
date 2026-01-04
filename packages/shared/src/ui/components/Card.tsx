@@ -83,8 +83,8 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         const hoverShadow =
             variant === 'elevated' || variant === 'glass'
                 ? {
-                    boxShadow: '0 10px 15px rgba(0,0,0,0.04), 0 4px 6px rgba(0,0,0,0.05)',
-                }
+                      boxShadow: '0 10px 15px rgba(0,0,0,0.04), 0 4px 6px rgba(0,0,0,0.05)',
+                  }
                 : {};
 
         const darkHoverShadow = {

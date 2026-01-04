@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testOrganizations, testUsers } from '../../fixtures/testData.js';
-import BudgetManagementService from '../../../server/services/budgetManagementService.js';
+import BudgetManagementService from '../../../server/src/services/budgetManagementService.js';
 
 describe('BudgetManagementService', () => {
     let mockDb;

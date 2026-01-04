@@ -32,7 +32,7 @@ vi.mock('../../../server/database', () => ({
 }));
 
 // Import service after mock is set up
-import EconomicsService from '../../../server/services/economicsService.js';
+import EconomicsService from '../../../server/src/services/economicsService.js';
 
 describe('EconomicsService', () => {
     beforeEach(() => {

@@ -256,5 +256,3 @@ export const TableRenderer: React.FC<TableRendererProps> = ({ content, className
 };
 
 export default TableRenderer;
-
-

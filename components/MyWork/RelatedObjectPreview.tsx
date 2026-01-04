@@ -305,5 +305,3 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({ type
 };
 
 export default RelatedObjectPreview;
-
-

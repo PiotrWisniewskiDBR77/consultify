@@ -1,0 +1,47 @@
+# Snyk Configuration
+# https://docs.snyk.io/features/snyk-cli/configure-the-snyk-cli
+
+# Language settings
+language-settings:
+  javascript:
+    # Scan dev dependencies
+    dev-dependencies: true
+
+# Severity threshold
+severity-threshold: high
+
+# Fail on issues
+fail-on: upgradeable
+
+# Exclude paths
+exclude:
+  - "**/node_modules/**"
+  - "**/dist/**"
+  - "**/build/**"
+  - "**/coverage/**"
+  - "**/tests/**"
+  - "**/__mocks__/**"
+  - "**/*.test.*"
+  - "**/*.spec.*"
+
+# Policy
+policy: |
+  # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+  version: v1.0.0
+  # Ignore vulnerabilities (use with caution)
+  ignore: {}
+  # Patch vulnerabilities
+  patch: {}
+
+# Test settings
+test:
+  # Test all dependencies
+  all-projects: false
+  # Detect package managers
+  detect: true
+
+# Monitor settings
+monitor:
+  # Monitor all projects
+  all-projects: false
+

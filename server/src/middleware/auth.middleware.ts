@@ -8,8 +8,8 @@ import jwt from 'jsonwebtoken';
 
 import { AuthenticatedRequest, AuthenticatedUser as GlobalUser, UserRole } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { get as dbGet } from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
+import { get as dbGet } from '../utils/DbPromise.ts';
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // TYPES

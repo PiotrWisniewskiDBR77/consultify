@@ -253,5 +253,3 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({ onClose, onSuccess }
 };
 
 export default AddCardModal;
-
-

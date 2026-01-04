@@ -282,5 +282,3 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
 };
 
 export default InlineResponseFeedback;
-
-

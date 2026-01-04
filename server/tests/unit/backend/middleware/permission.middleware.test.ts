@@ -145,5 +145,3 @@ describe('Permission Middleware', () => {
         });
     });
 });
-
-

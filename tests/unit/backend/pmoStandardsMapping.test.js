@@ -6,8 +6,8 @@ describe('PMOStandardsMapping', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        PMOStandardsMapping = (await import('../../../server/services/pmoStandardsMapping.js')).default;
-        PMODomainRegistry = (await import('../../../server/services/pmoDomainRegistry.js')).default;
+        PMOStandardsMapping = (await import('../../../server/src/services/pmoStandardsMapping.js')).default;
+        PMODomainRegistry = (await import('../../../server/src/services/pmoDomainRegistry.js')).default;
     });
 
     describe('getMapping', () => {

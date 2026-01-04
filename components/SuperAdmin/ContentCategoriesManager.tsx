@@ -438,5 +438,3 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
 };
 
 export default ContentCategoriesManager;
-
-

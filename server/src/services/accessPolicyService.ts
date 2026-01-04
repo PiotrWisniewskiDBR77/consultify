@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import logger from '../utils/Logger.ts';
 // Import Sub-Services
 import { AccessLimitService } from './access/AccessLimitService.js';
 import { AccessResourceService } from './access/AccessResourceService.js';
@@ -27,7 +28,6 @@ import {
     TrialUsage,
 } from './access/AccessTypes.js';
 import { AccessUsageService } from './access/AccessUsageService.js';
-import logger from '../utils/Logger.js';
 
 // Interfaces for Deps
 interface AccessPolicyDeps {

@@ -36,7 +36,7 @@ describe('DocIndexer Service', () => {
         fs.existsSync.mockReturnValue(true);
         fs.readFileSync.mockReturnValue('# Test Document\n\n## Section 1\n\nContent here.\n\n## Section 2\n\nMore content.');
 
-        const module = require('../../../server/services/ai/docIndexer');
+        const module = require('../../../server/src/services/ai/docIndexer');
         DocIndexer = module.DocIndexer;
         docIndexer = new DocIndexer();
     });
@@ -237,7 +237,7 @@ describe('DocIndexer Service', () => {
 
     describe('PROMPT_ENGINEERING_KB', () => {
         it('should export prompt engineering knowledge base', () => {
-            const module = require('../../../server/services/ai/docIndexer');
+            const module = require('../../../server/src/services/ai/docIndexer');
             expect(module.PROMPT_ENGINEERING_KB).toBeDefined();
             expect(module.PROMPT_ENGINEERING_KB.length).toBeGreaterThan(0);
         });

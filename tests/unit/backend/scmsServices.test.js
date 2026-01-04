@@ -2,9 +2,7 @@
 // Tests for Roadmap, Execution, Stabilization, Economics - Constants & Structure
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
+// Removed createRequire - using ESM imports
 
 // Mock database
 vi.mock('../../../server/database', () => ({
@@ -16,17 +14,17 @@ vi.mock('../../../server/database', () => ({
 }));
 
 // Mock NotificationService dependencies to avoid circular loops
-vi.mock('../../../server/services/slackService.js', () => ({
+vi.mock('../../../server/src/services/slackService.js', () => ({
     default: {
         sendSystemAlert: vi.fn(),
         sendClientTicket: vi.fn(),
         sendNewFeedbackAlert: vi.fn()
     }
 }));
-vi.mock('../../../server/services/userIntegrationService.js', () => ({
+vi.mock('../../../server/src/services/userIntegrationService.js', () => ({
     default: {}
 }));
-vi.mock('../../../server/services/userNotificationPreferencesService.js', () => ({
+vi.mock('../../../server/src/services/userNotificationPreferencesService.js', () => ({
     default: {}
 }));
 vi.mock('../../../server/src/services/event/EventBus.js', () => ({
@@ -42,7 +40,7 @@ describe.skip('NotificationService', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        NotificationService = (await import('../../../server/services/notificationService.js')).default;
+        NotificationService = (await import('../../../server/src/services/notificationService.js')).default;
     });
 
     describe('NOTIFICATION_TYPES', () => {
@@ -83,7 +81,7 @@ describe('MyWorkService', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        MyWorkService = (await import('../../../server/services/myWorkService.js')).default;
+        MyWorkService = (await import('../../../server/src/services/myWorkService.js')).default;
     });
 
     describe('Service Structure', () => {
@@ -106,7 +104,7 @@ describe('ExecutionMonitorService', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        ExecutionMonitorService = (await import('../../../server/services/executionMonitorService.js')).default;
+        ExecutionMonitorService = (await import('../../../server/src/services/executionMonitorService.js')).default;
     });
 
     describe('Service Structure', () => {
@@ -125,7 +123,7 @@ describe('EscalationService', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        EscalationService = (await import('../../../server/services/escalationService.js')).default;
+        EscalationService = (await import('../../../server/src/services/escalationService.js')).default;
     });
 
     describe('Service Structure', () => {
@@ -156,7 +154,7 @@ describe('StabilizationService', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        StabilizationService = (await import('../../../server/services/stabilizationService.js')).default;
+        StabilizationService = (await import('../../../server/src/services/stabilizationService.js')).default;
     });
 
     describe('STABILIZATION_STATUSES', () => {
@@ -197,7 +195,7 @@ describe('EconomicsService', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        EconomicsService = (await import('../../../server/services/economicsService.js')).default;
+        EconomicsService = (await import('../../../server/src/services/economicsService.js')).default;
     });
 
     describe('VALUE_TYPES', () => {
@@ -246,7 +244,7 @@ describe('ReportingService', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        ReportingService = (await import('../../../server/services/reportingService.js')).default;
+        ReportingService = (await import('../../../server/src/services/reportingService.js')).default;
     });
 
     describe('Service Structure', () => {
@@ -269,7 +267,7 @@ describe('NarrativeService', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        NarrativeService = (await import('../../../server/services/narrativeService.js')).default;
+        NarrativeService = (await import('../../../server/src/services/narrativeService.js')).default;
     });
 
     describe('Service Structure', () => {

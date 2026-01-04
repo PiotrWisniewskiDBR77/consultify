@@ -793,5 +793,3 @@ const EditTaxRateModal: React.FC<EditTaxRateModalProps> = ({ rate, onSave, onClo
 };
 
 export default TaxSettingsPanel;
-
-

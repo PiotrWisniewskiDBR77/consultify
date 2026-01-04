@@ -2,7 +2,7 @@ import pdf from 'pdf-parse';
 import fs from 'fs';
 import path from 'path';
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import RagService from './ragService.js';
 

@@ -1,12 +1,12 @@
 /**
  * CSRF Protection Middleware
  * Enterprise SaaS Architecture - Security Hardening
- * 
+ *
  * Implements Double Submit Cookie pattern for CSRF protection
  */
 
-import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
+import { NextFunction, Request, Response } from 'express';
 
 // ==========================================
 // CONFIGURATION
@@ -56,12 +56,9 @@ function validateToken(tokenA: string, tokenB: string): boolean {
     if (!tokenA || !tokenB || tokenA.length !== tokenB.length) {
         return false;
     }
-    
+
     try {
-        return crypto.timingSafeEqual(
-            Buffer.from(tokenA),
-            Buffer.from(tokenB)
-        );
+        return crypto.timingSafeEqual(Buffer.from(tokenA), Buffer.from(tokenB));
     } catch {
         return false;
     }
@@ -78,18 +75,18 @@ function validateToken(tokenA: string, tokenB: string): boolean {
 export function csrfTokenMiddleware(req: Request, res: Response, next: NextFunction): void {
     // Check if token already exists in cookie
     let token = req.cookies?.[CSRF_COOKIE_NAME];
-    
+
     if (!token) {
         token = generateCsrfToken();
         res.cookie(CSRF_COOKIE_NAME, token, CSRF_COOKIE_OPTIONS);
     }
-    
+
     // Expose token in response header for SPA consumption
     res.setHeader('X-CSRF-Token', token);
-    
+
     // Make token available in request for templates
     (req as Request & { csrfToken?: string }).csrfToken = token;
-    
+
     next();
 }
 
@@ -102,25 +99,20 @@ export function csrfValidationMiddleware(req: Request, res: Response, next: Next
     if (CSRF_EXEMPT_METHODS.includes(req.method)) {
         return next();
     }
-    
+
     // Skip validation for exempt paths
-    const isExempt = CSRF_EXEMPT_PATHS.some(path => 
-        req.path === path || req.path.startsWith(path + '/')
-    );
-    
+    const isExempt = CSRF_EXEMPT_PATHS.some((path) => req.path === path || req.path.startsWith(path + '/'));
+
     if (isExempt) {
         return next();
     }
-    
+
     // Get token from cookie
     const cookieToken = req.cookies?.[CSRF_COOKIE_NAME];
-    
+
     // Get token from header or body
-    const submittedToken = 
-        req.headers[CSRF_HEADER_NAME] as string ||
-        req.body?._csrf ||
-        req.query?._csrf as string;
-    
+    const submittedToken = (req.headers[CSRF_HEADER_NAME] as string) || req.body?._csrf || (req.query?._csrf as string);
+
     if (!cookieToken || !submittedToken) {
         res.status(403).json({
             error: 'CSRF validation failed',
@@ -129,7 +121,7 @@ export function csrfValidationMiddleware(req: Request, res: Response, next: Next
         });
         return;
     }
-    
+
     if (!validateToken(cookieToken, submittedToken)) {
         res.status(403).json({
             error: 'CSRF validation failed',
@@ -138,7 +130,7 @@ export function csrfValidationMiddleware(req: Request, res: Response, next: Next
         });
         return;
     }
-    
+
     next();
 }
 
@@ -173,5 +165,3 @@ export default {
     CSRF_COOKIE_NAME,
     CSRF_HEADER_NAME,
 };
-
-

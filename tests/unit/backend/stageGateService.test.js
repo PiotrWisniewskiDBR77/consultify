@@ -1,31 +1,34 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createMockDatabaseWithResults } from '../../../server/tests/helpers/mockDatabase.ts';
+import StageGateService from '../../../server/src/services/stageGateService.js';
 
-// Mock dependencies
-const mockDb = {
-    get: vi.fn(),
-    all: vi.fn(),
-    run: vi.fn(),
-    serialize: vi.fn((cb) => cb()),
-    initPromise: Promise.resolve()
-};
-
-vi.mock('../../../server/database', () => ({
-    default: mockDb
+// Minimal mock to prevent real DB connection on import
+vi.mock('../../../server/src/database/Database.js', () => ({
+    getDatabase: () => ({
+        get: vi.fn(),
+        all: vi.fn(),
+        run: vi.fn(),
+        exec: vi.fn(),
+        close: vi.fn()
+    }),
+    default: {
+        getDatabase: () => ({})
+    }
 }));
 
-import StageGateService from '../../../server/services/stageGateService.js';
-
 describe('StageGateService', () => {
+    let mockDb;
+
     beforeEach(() => {
         vi.clearAllMocks();
-        if (StageGateService._setDb) StageGateService._setDb(mockDb);
+        // Use standard helper
+        mockDb = createMockDatabaseWithResults();
 
-        // Default DB responses
-        mockDb.get.mockImplementation((...args) => {
-            const cb = args[args.length - 1];
-            if (typeof cb === 'function') cb(null, null);
-        });
+        // Inject standardized mock
+        if (StageGateService._setDb) StageGateService._setDb(mockDb);
     });
+
+    // ... rest of tests use mockDb variable freely ...
 
     describe('getGateType', () => {
         it('should return correct gate for transition', () => {

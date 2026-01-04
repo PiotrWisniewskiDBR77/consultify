@@ -441,5 +441,3 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
 };
 
 export default BillingCore;
-
-

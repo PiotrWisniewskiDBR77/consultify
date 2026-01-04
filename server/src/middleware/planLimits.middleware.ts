@@ -8,9 +8,9 @@
 import { NextFunction, Response } from 'express';
 
 import { getDatabase } from '../database/Database.js';
-import { get as dbGet } from '../utils/DbPromise.js';
+import { get as dbGet } from '../utils/DbPromise.ts';
+import logger from '../utils/Logger.ts';
 import type { AuthRequest } from './auth.middleware.js';
-import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES

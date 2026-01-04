@@ -205,5 +205,3 @@ export const EmptyStateInline: React.FC<{
 };
 
 export default EmptyState;
-
-

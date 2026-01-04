@@ -187,5 +187,3 @@ export const checkPermission = (requiredPermission: string) => {
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
     deps = { ...deps, ...newDeps };
 };
-
-

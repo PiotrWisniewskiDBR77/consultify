@@ -7,11 +7,15 @@
 
 import { Response, Router } from 'express';
 
+import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll } from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
+import { all as dbAll } from '../utils/DbPromise.ts';
+import logger from '../utils/Logger.ts';
 
 const router = Router();
+
+// Apply rate limiting
+router.use(aiRateLimiter);
 
 // Service interfaces
 interface LLMHealthMonitorInterface {

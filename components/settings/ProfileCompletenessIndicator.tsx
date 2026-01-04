@@ -125,5 +125,3 @@ export const ProfileCompletenessIndicator: React.FC<ProfileCompletenessIndicator
 };
 
 export default ProfileCompletenessIndicator;
-
-

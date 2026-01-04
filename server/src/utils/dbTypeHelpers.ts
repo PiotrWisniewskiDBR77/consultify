@@ -15,7 +15,7 @@ export function asRecord<T = Record<string, unknown>>(obj: unknown): T {
  * Type assertion helper for array of database query results
  */
 export function asRecordArray<T = Record<string, unknown>>(arr: unknown): T[] {
-    return (arr as unknown[]) as T[];
+    return arr as unknown[] as T[];
 }
 
 /**
@@ -45,4 +45,3 @@ export function getProperty<T = unknown>(record: Record<string, unknown>, key: s
 export function getPropertyWithDefault<T>(record: Record<string, unknown>, key: string, defaultValue: T): T {
     return (record[key] as T | undefined) ?? defaultValue;
 }
-

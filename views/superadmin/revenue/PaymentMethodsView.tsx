@@ -365,5 +365,3 @@ export const PaymentMethodsView: React.FC = () => {
 };
 
 export default PaymentMethodsView;
-
-

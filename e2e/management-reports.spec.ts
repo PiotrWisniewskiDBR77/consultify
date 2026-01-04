@@ -479,5 +479,3 @@ test.describe('Management Reports Module', () => {
         });
     });
 });
-
-

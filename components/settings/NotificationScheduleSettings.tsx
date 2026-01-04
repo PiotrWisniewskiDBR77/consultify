@@ -83,5 +83,3 @@ export const NotificationScheduleSettings: React.FC<NotificationScheduleSettings
 };
 
 export default NotificationScheduleSettings;
-
-

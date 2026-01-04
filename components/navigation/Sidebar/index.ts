@@ -12,5 +12,3 @@ export { SidebarFooter } from './SidebarFooter';
 export { SidebarHeader } from './SidebarHeader';
 export * from './types';
 export { useSidebarState } from './useSidebarState';
-
-

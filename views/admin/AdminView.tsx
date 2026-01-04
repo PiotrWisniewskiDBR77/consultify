@@ -45,17 +45,37 @@ import { useTranslation } from 'react-i18next';
 
 // New AI Admin Components (6-tab structure)
 // New AI Admin Components (6-tab structure) - Lazy Loaded
-const AccessLimitsTab = React.lazy(() => import('../../components/Admin/AI').then(m => ({ default: m.AccessLimitsTab })));
-const AuditComplianceTab = React.lazy(() => import('../../components/Admin/AI').then(m => ({ default: m.AuditComplianceTab })));
-const FeaturesPrivacyTab = React.lazy(() => import('../../components/Admin/AI').then(m => ({ default: m.FeaturesPrivacyTab })));
-const HealthMonitoringTab = React.lazy(() => import('../../components/Admin/AI').then(m => ({ default: m.HealthMonitoringTab })));
-const ModelsProvidersTab = React.lazy(() => import('../../components/Admin/AI').then(m => ({ default: m.ModelsProvidersTab })));
-const PolicyGovernanceTab = React.lazy(() => import('../../components/Admin/AI').then(m => ({ default: m.PolicyGovernanceTab })));
+const AccessLimitsTab = React.lazy(() =>
+    import('../../components/Admin/AI').then((m) => ({ default: m.AccessLimitsTab })),
+);
+const AuditComplianceTab = React.lazy(() =>
+    import('../../components/Admin/AI').then((m) => ({ default: m.AuditComplianceTab })),
+);
+const FeaturesPrivacyTab = React.lazy(() =>
+    import('../../components/Admin/AI').then((m) => ({ default: m.FeaturesPrivacyTab })),
+);
+const HealthMonitoringTab = React.lazy(() =>
+    import('../../components/Admin/AI').then((m) => ({ default: m.HealthMonitoringTab })),
+);
+const ModelsProvidersTab = React.lazy(() =>
+    import('../../components/Admin/AI').then((m) => ({ default: m.ModelsProvidersTab })),
+);
+const PolicyGovernanceTab = React.lazy(() =>
+    import('../../components/Admin/AI').then((m) => ({ default: m.PolicyGovernanceTab })),
+);
 
-const AIMissionControl = React.lazy(() => import('../../components/Admin/AIMissionControl').then(m => ({ default: m.AIMissionControl })));
-const AuditLogViewer = React.lazy(() => import('../../components/Admin/AuditLogViewer').then(m => ({ default: m.AuditLogViewer })));
-const SecuritySettings = React.lazy(() => import('../../components/Admin/SecuritySettings').then(m => ({ default: m.SecuritySettings })));
-const WorkModeSettings = React.lazy(() => import('../../components/Admin/WorkModeSettings').then(m => ({ default: m.WorkModeSettings })));
+const AIMissionControl = React.lazy(() =>
+    import('../../components/Admin/AIMissionControl').then((m) => ({ default: m.AIMissionControl })),
+);
+const AuditLogViewer = React.lazy(() =>
+    import('../../components/Admin/AuditLogViewer').then((m) => ({ default: m.AuditLogViewer })),
+);
+const SecuritySettings = React.lazy(() =>
+    import('../../components/Admin/SecuritySettings').then((m) => ({ default: m.SecuritySettings })),
+);
+const WorkModeSettings = React.lazy(() =>
+    import('../../components/Admin/WorkModeSettings').then((m) => ({ default: m.WorkModeSettings })),
+);
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Api } from '../../services/api';
@@ -63,37 +83,87 @@ import { useAppStore } from '../../store/useAppStore';
 import { AppView, Project, User } from '../../types';
 
 // Lazy load views
-const AdminAnalyticsView = React.lazy(() => import('./AdminAnalyticsView').then(m => ({ default: m.AdminAnalyticsView })));
-const AdminBillingManagement = React.lazy(() => import('./AdminBillingManagement').then(m => ({ default: m.AdminBillingManagement })));
-const AdminDashboard = React.lazy(() => import('./AdminDashboard').then(m => ({ default: m.AdminDashboard })));
-const AdminFeedbackView = React.lazy(() => import('./AdminFeedbackView').then(m => ({ default: m.AdminFeedbackView })));
-const AdminKnowledgeView = React.lazy(() => import('./AdminKnowledgeView').then(m => ({ default: m.AdminKnowledgeView })));
-const AdminLLMView = React.lazy(() => import('./AdminLLMView').then(m => ({ default: m.AdminLLMView })));
-const AdminMetricsDashboardView = React.lazy(() => import('./AdminMetricsDashboardView').then(m => ({ default: m.AdminMetricsDashboardView })));
-const AdminProjectManagement = React.lazy(() => import('./AdminProjectManagement').then(m => ({ default: m.AdminProjectManagement })));
-const AdminSecuritySettings = React.lazy(() => import('./AdminSecuritySettings').then(m => ({ default: m.AdminSecuritySettings })));
-const AdminSettingsConsultants = React.lazy(() => import('./AdminSettingsConsultants').then(m => ({ default: m.AdminSettingsConsultants })));
-const AdminTokenPackages = React.lazy(() => import('./AdminTokenPackages').then(m => ({ default: m.AdminTokenPackages })));
-const AdminUserManagement = React.lazy(() => import('./AdminUserManagement').then(m => ({ default: m.AdminUserManagement })));
-const ApiKeysManagementView = React.lazy(() => import('./ApiKeysManagementView').then(m => ({ default: m.ApiKeysManagementView })));
-const AuditLogView = React.lazy(() => import('./AuditLogView').then(m => ({ default: m.AuditLogView })));
-const BillingSettingsView = React.lazy(() => import('./BillingSettingsView').then(m => ({ default: m.BillingSettingsView })));
-const BulkOperationsView = React.lazy(() => import('./BulkOperationsView').then(m => ({ default: m.BulkOperationsView })));
-const CostAllocationView = React.lazy(() => import('./CostAllocationView').then(m => ({ default: m.CostAllocationView })));
-const DataManagementView = React.lazy(() => import('./DataManagementView').then(m => ({ default: m.DataManagementView })));
-const HelpAnalyticsDashboard = React.lazy(() => import('./HelpAnalyticsDashboard').then(m => ({ default: m.HelpAnalyticsDashboard })));
-const InvitationsManagement = React.lazy(() => import('./InvitationsManagement').then(m => ({ default: m.InvitationsManagement })));
-const InvoicesView = React.lazy(() => import('./InvoicesView').then(m => ({ default: m.InvoicesView })));
-const OrgAISettingsView = React.lazy(() => import('./OrgAISettingsView').then(m => ({ default: m.OrgAISettingsView })));
-const OrganizationProfileView = React.lazy(() => import('./OrganizationProfileView').then(m => ({ default: m.OrganizationProfileView })));
-const OwnershipManagementView = React.lazy(() => import('./OwnershipManagementView').then(m => ({ default: m.OwnershipManagementView })));
-const PaymentMethodsView = React.lazy(() => import('./PaymentMethodsView').then(m => ({ default: m.PaymentMethodsView })));
-const PlaybookRunsView = React.lazy(() => import('./PlaybookRunsView').then(m => ({ default: m.PlaybookRunsView })));
-const ProjectDetailsView = React.lazy(() => import('./ProjectDetailsView').then(m => ({ default: m.ProjectDetailsView })));
-const RolesPermissionsView = React.lazy(() => import('./RolesPermissionsView').then(m => ({ default: m.RolesPermissionsView })));
-const SpendingAlertsView = React.lazy(() => import('./SpendingAlertsView').then(m => ({ default: m.SpendingAlertsView })));
-const UsageDashboardView = React.lazy(() => import('./UsageDashboardView').then(m => ({ default: m.UsageDashboardView })));
-const UserGroupsView = React.lazy(() => import('./UserGroupsView').then(m => ({ default: m.UserGroupsView })));
+const AdminAnalyticsView = React.lazy(() =>
+    import('./AdminAnalyticsView').then((m) => ({ default: m.AdminAnalyticsView })),
+);
+const AdminBillingManagement = React.lazy(() =>
+    import('./AdminBillingManagement').then((m) => ({ default: m.AdminBillingManagement })),
+);
+const AdminDashboard = React.lazy(() => import('./AdminDashboard').then((m) => ({ default: m.AdminDashboard })));
+const AdminFeedbackView = React.lazy(() =>
+    import('./AdminFeedbackView').then((m) => ({ default: m.AdminFeedbackView })),
+);
+const AdminKnowledgeView = React.lazy(() =>
+    import('./AdminKnowledgeView').then((m) => ({ default: m.AdminKnowledgeView })),
+);
+const AdminLLMView = React.lazy(() => import('./AdminLLMView').then((m) => ({ default: m.AdminLLMView })));
+const AdminMetricsDashboardView = React.lazy(() =>
+    import('./AdminMetricsDashboardView').then((m) => ({ default: m.AdminMetricsDashboardView })),
+);
+const AdminProjectManagement = React.lazy(() =>
+    import('./AdminProjectManagement').then((m) => ({ default: m.AdminProjectManagement })),
+);
+const AdminSecuritySettings = React.lazy(() =>
+    import('./AdminSecuritySettings').then((m) => ({ default: m.AdminSecuritySettings })),
+);
+const AdminSettingsConsultants = React.lazy(() =>
+    import('./AdminSettingsConsultants').then((m) => ({ default: m.AdminSettingsConsultants })),
+);
+const AdminTokenPackages = React.lazy(() =>
+    import('./AdminTokenPackages').then((m) => ({ default: m.AdminTokenPackages })),
+);
+const AdminUserManagement = React.lazy(() =>
+    import('./AdminUserManagement').then((m) => ({ default: m.AdminUserManagement })),
+);
+const ApiKeysManagementView = React.lazy(() =>
+    import('./ApiKeysManagementView').then((m) => ({ default: m.ApiKeysManagementView })),
+);
+const AuditLogView = React.lazy(() => import('./AuditLogView').then((m) => ({ default: m.AuditLogView })));
+const BillingSettingsView = React.lazy(() =>
+    import('./BillingSettingsView').then((m) => ({ default: m.BillingSettingsView })),
+);
+const BulkOperationsView = React.lazy(() =>
+    import('./BulkOperationsView').then((m) => ({ default: m.BulkOperationsView })),
+);
+const CostAllocationView = React.lazy(() =>
+    import('./CostAllocationView').then((m) => ({ default: m.CostAllocationView })),
+);
+const DataManagementView = React.lazy(() =>
+    import('./DataManagementView').then((m) => ({ default: m.DataManagementView })),
+);
+const HelpAnalyticsDashboard = React.lazy(() =>
+    import('./HelpAnalyticsDashboard').then((m) => ({ default: m.HelpAnalyticsDashboard })),
+);
+const InvitationsManagement = React.lazy(() =>
+    import('./InvitationsManagement').then((m) => ({ default: m.InvitationsManagement })),
+);
+const InvoicesView = React.lazy(() => import('./InvoicesView').then((m) => ({ default: m.InvoicesView })));
+const OrgAISettingsView = React.lazy(() =>
+    import('./OrgAISettingsView').then((m) => ({ default: m.OrgAISettingsView })),
+);
+const OrganizationProfileView = React.lazy(() =>
+    import('./OrganizationProfileView').then((m) => ({ default: m.OrganizationProfileView })),
+);
+const OwnershipManagementView = React.lazy(() =>
+    import('./OwnershipManagementView').then((m) => ({ default: m.OwnershipManagementView })),
+);
+const PaymentMethodsView = React.lazy(() =>
+    import('./PaymentMethodsView').then((m) => ({ default: m.PaymentMethodsView })),
+);
+const PlaybookRunsView = React.lazy(() => import('./PlaybookRunsView').then((m) => ({ default: m.PlaybookRunsView })));
+const ProjectDetailsView = React.lazy(() =>
+    import('./ProjectDetailsView').then((m) => ({ default: m.ProjectDetailsView })),
+);
+const RolesPermissionsView = React.lazy(() =>
+    import('./RolesPermissionsView').then((m) => ({ default: m.RolesPermissionsView })),
+);
+const SpendingAlertsView = React.lazy(() =>
+    import('./SpendingAlertsView').then((m) => ({ default: m.SpendingAlertsView })),
+);
+const UsageDashboardView = React.lazy(() =>
+    import('./UsageDashboardView').then((m) => ({ default: m.UsageDashboardView })),
+);
+const UserGroupsView = React.lazy(() => import('./UserGroupsView').then((m) => ({ default: m.UserGroupsView })));
 
 // Admin section type - expanded to 8 modules (with dedicated Feedback module)
 type AdminSection = 'overview' | 'organization' | 'team' | 'workspace' | 'ai' | 'billing' | 'security' | 'feedback';

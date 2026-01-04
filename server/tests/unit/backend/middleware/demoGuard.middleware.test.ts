@@ -196,5 +196,3 @@ describe('Demo Guard Middleware', () => {
         });
     });
 });
-
-

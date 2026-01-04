@@ -575,5 +575,3 @@ test.describe('Access Control', () => {
         await expect(page.locator('[data-testid="publish-btn"]')).not.toBeVisible();
     });
 });
-
-

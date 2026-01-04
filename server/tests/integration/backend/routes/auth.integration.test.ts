@@ -37,5 +37,3 @@ describe('Auth Routes Integration', () => {
     // - POST /api/auth/logout
     // etc.
 });
-
-

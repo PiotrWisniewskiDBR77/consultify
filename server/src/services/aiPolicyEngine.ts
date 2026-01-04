@@ -3,7 +3,12 @@
  * AI Core Layer — Enterprise PMO Brain
  */
 
-import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { get as dbGetOrig, run as dbRunOrig } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
+
+// Mutable dependency references for injection
+let dbGet = dbGetOrig;
+let dbRun = dbRunOrig;
 
 // Types and Enums
 export type PolicyLevel = 'ADVISORY' | 'ASSISTED' | 'PROACTIVE' | 'AUTOPILOT';
@@ -95,6 +100,18 @@ async function getRegulatoryModeGuard() {
 const AIPolicyEngine = {
     POLICY_LEVELS,
     AI_ROLES,
+
+    /**
+     * Set dependencies for testing
+     */
+    setDependencies(deps: any) {
+        if (deps.db) {
+            if (deps.db.get) dbGet = deps.db.get;
+            if (deps.db.run) dbRun = deps.db.run;
+        }
+        if (deps.RegulatoryModeGuard) _regulatoryModeGuard = deps.RegulatoryModeGuard;
+        if (deps.AIRoleGuard) _aiRoleGuard = deps.AIRoleGuard;
+    },
 
     /**
      * Get effective policy for a context
@@ -206,7 +223,6 @@ const AIPolicyEngine = {
 
         const isAllowed = currentIndex >= requiredIndex;
         const requiresApproval =
-import logger from '../utils/Logger.js';
             policy.policyLevel !== 'AUTOPILOT' &&
             (actionType.startsWith('CREATE_') || actionType.startsWith('SUGGEST_'));
 

@@ -38,19 +38,27 @@ import { AppView, User } from '../../types';
 import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
 
 // Lazy load heavy modules
-const AIDevelopmentModule = React.lazy(() => import('./AIDevelopmentModule').then(m => ({ default: m.AIDevelopmentModule })));
-const AIInfrastructureModule = React.lazy(() => import('./AIInfrastructureModule').then(m => ({ default: m.AIInfrastructureModule })));
-const AIOperationsModule = React.lazy(() => import('./AIOperationsModule').then(m => ({ default: m.AIOperationsModule })));
+const AIDevelopmentModule = React.lazy(() =>
+    import('./AIDevelopmentModule').then((m) => ({ default: m.AIDevelopmentModule })),
+);
+const AIInfrastructureModule = React.lazy(() =>
+    import('./AIInfrastructureModule').then((m) => ({ default: m.AIInfrastructureModule })),
+);
+const AIOperationsModule = React.lazy(() =>
+    import('./AIOperationsModule').then((m) => ({ default: m.AIOperationsModule })),
+);
 // AIPlatformModule legacy kept for compatibility
-const AIPlatformModule = React.lazy(() => import('./AIPlatformModule').then(m => ({ default: m.AIPlatformModule })));
-const AnalyticsModuleView = React.lazy(() => import('./analytics').then(m => ({ default: m.AnalyticsModuleView })));
-const ConfigurationModule = React.lazy(() => import('./ConfigurationModule').then(m => ({ default: m.ConfigurationModule })));
-const ContentModule = React.lazy(() => import('./ContentModule').then(m => ({ default: m.ContentModule })));
-const CustomersModule = React.lazy(() => import('./CustomersModule').then(m => ({ default: m.CustomersModule })));
-const OverviewModule = React.lazy(() => import('./OverviewModule').then(m => ({ default: m.OverviewModule })));
-const RevenueModule = React.lazy(() => import('./RevenueModule').then(m => ({ default: m.RevenueModule })));
-const SecurityModule = React.lazy(() => import('./SecurityModule').then(m => ({ default: m.SecurityModule })));
-const SystemModule = React.lazy(() => import('./SystemModule').then(m => ({ default: m.SystemModule })));
+const AIPlatformModule = React.lazy(() => import('./AIPlatformModule').then((m) => ({ default: m.AIPlatformModule })));
+const AnalyticsModuleView = React.lazy(() => import('./analytics').then((m) => ({ default: m.AnalyticsModuleView })));
+const ConfigurationModule = React.lazy(() =>
+    import('./ConfigurationModule').then((m) => ({ default: m.ConfigurationModule })),
+);
+const ContentModule = React.lazy(() => import('./ContentModule').then((m) => ({ default: m.ContentModule })));
+const CustomersModule = React.lazy(() => import('./CustomersModule').then((m) => ({ default: m.CustomersModule })));
+const OverviewModule = React.lazy(() => import('./OverviewModule').then((m) => ({ default: m.OverviewModule })));
+const RevenueModule = React.lazy(() => import('./RevenueModule').then((m) => ({ default: m.RevenueModule })));
+const SecurityModule = React.lazy(() => import('./SecurityModule').then((m) => ({ default: m.SecurityModule })));
+const SystemModule = React.lazy(() => import('./SystemModule').then((m) => ({ default: m.SystemModule })));
 
 interface SuperAdminViewProps {
     currentUser: User;
@@ -148,10 +156,10 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                                         currentView === AppView.SUPERADMIN_ORGANIZATIONS
                                             ? 'organizations'
                                             : currentView === AppView.SUPERADMIN_USERS
-                                                ? 'users'
-                                                : currentView === AppView.SUPERADMIN_FEEDBACK
-                                                    ? 'feedback'
-                                                    : 'bulk-ops'
+                                              ? 'users'
+                                              : currentView === AppView.SUPERADMIN_FEEDBACK
+                                                ? 'feedback'
+                                                : 'bulk-ops'
                                     }
                                 />
                             );
@@ -161,7 +169,9 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                         case AppView.SUPERADMIN_AI_CONFIG:
                             return (
                                 <AIInfrastructureModule
-                                    initialTab={currentView === AppView.SUPERADMIN_LLM_MANAGEMENT ? 'llm-config' : 'settings'}
+                                    initialTab={
+                                        currentView === AppView.SUPERADMIN_LLM_MANAGEMENT ? 'llm-config' : 'settings'
+                                    }
                                 />
                             );
 
@@ -169,14 +179,20 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                         case AppView.SUPERADMIN_KNOWLEDGE:
                             return (
                                 <AIDevelopmentModule
-                                    initialTab={currentView === AppView.SUPERADMIN_AI_INTELLIGENCE ? 'intelligence' : 'knowledge'}
+                                    initialTab={
+                                        currentView === AppView.SUPERADMIN_AI_INTELLIGENCE
+                                            ? 'intelligence'
+                                            : 'knowledge'
+                                    }
                                 />
                             );
 
                         case AppView.SUPERADMIN_BILLING:
                         case AppView.SUPERADMIN_INVOICES:
                             return (
-                                <RevenueModule initialTab={currentView === AppView.SUPERADMIN_INVOICES ? 'invoices' : 'billing'} />
+                                <RevenueModule
+                                    initialTab={currentView === AppView.SUPERADMIN_INVOICES ? 'invoices' : 'billing'}
+                                />
                             );
 
                         case AppView.SUPERADMIN_SSO:
@@ -189,10 +205,10 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                                         currentView === AppView.SUPERADMIN_SSO
                                             ? 'sso'
                                             : currentView === AppView.SUPERADMIN_SECURITY_POLICIES
-                                                ? 'policies'
-                                                : currentView === AppView.SUPERADMIN_API_MANAGEMENT
-                                                    ? 'api-keys'
-                                                    : 'compliance'
+                                              ? 'policies'
+                                              : currentView === AppView.SUPERADMIN_API_MANAGEMENT
+                                                ? 'api-keys'
+                                                : 'compliance'
                                     }
                                 />
                             );
@@ -201,7 +217,9 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                         case AppView.SUPERADMIN_WHITELABEL:
                             return (
                                 <ConfigurationModule
-                                    initialTab={currentView === AppView.SUPERADMIN_WHITELABEL ? 'whitelabel' : 'settings'}
+                                    initialTab={
+                                        currentView === AppView.SUPERADMIN_WHITELABEL ? 'whitelabel' : 'settings'
+                                    }
                                 />
                             );
 

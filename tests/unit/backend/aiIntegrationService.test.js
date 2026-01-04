@@ -8,20 +8,32 @@ describe('AI Integration Service', () => {
     beforeEach(async () => {
         vi.resetModules();
 
+        const defaultCallback = (sql, params, cb) => {
+            if (typeof params === 'function') cb = params;
+            if (cb) cb(null, []);
+        };
+
         mockDb = {
-            all: vi.fn(),
-            get: vi.fn(),
-            run: vi.fn()
+            all: vi.fn().mockImplementation(defaultCallback),
+            get: vi.fn().mockImplementation((sql, params, cb) => {
+                if (typeof params === 'function') cb = params;
+                if (cb) cb(null, {});
+            }),
+            run: vi.fn().mockImplementation((sql, params, cb) => {
+                if (typeof params === 'function') cb = params;
+                if (cb) cb.call({ changes: 1 }, null);
+            }),
+            exec: vi.fn()
         };
 
         mockUuid = {
             v4: vi.fn(() => 'mock-uuid-action')
         };
 
-        vi.doMock('../../../server/database', () => ({ default: mockDb }));
+        vi.doMock('../../../server/src/database/Database.ts', () => ({ default: mockDb, getDatabase: () => mockDb }));
         vi.doMock('uuid', () => ({ v4: mockUuid.v4 }));
 
-        AIIntegrationService = (await import('../../../server/services/aiIntegrationService.js')).default;
+        AIIntegrationService = (await import('../../../server/src/services/aiIntegrationService.js')).default;
         AIIntegrationService.setDependencies({ db: mockDb });
     });
 

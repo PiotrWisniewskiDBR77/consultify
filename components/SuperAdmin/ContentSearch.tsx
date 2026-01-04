@@ -468,5 +468,3 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
 };
 
 export default ContentSearch;
-
-

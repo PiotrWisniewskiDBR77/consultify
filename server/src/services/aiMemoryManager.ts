@@ -5,7 +5,11 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { all, get, run } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+
+let all = dbAll;
+let get = dbGet;
+let run = dbRun;
 import logger from '../utils/Logger.js';
 
 // ==========================================
@@ -80,6 +84,14 @@ export interface PersonalizationProfile {
 
 export const AIMemoryManager = {
     MEMORY_TYPES,
+
+    setDependencies: (deps: any) => {
+        if (deps.db) {
+            if (deps.db.all) all = deps.db.all;
+            if (deps.db.get) get = deps.db.get;
+            if (deps.db.run) run = deps.db.run;
+        }
+    },
 
     // ==================== SESSION MEMORY ====================
     // (Handled in-memory, not persisted to DB)
@@ -245,7 +257,7 @@ export const AIMemoryManager = {
                 if (typeof row.content === 'string') {
                     row.content = JSON.parse(row.content);
                 }
-            } catch { }
+            } catch {}
             return row;
         });
     },
@@ -904,9 +916,9 @@ export const AIMemoryManager = {
             recommendations:
                 totalTokens > availableForContext
                     ? {
-                        trimMemoryBy: Math.min(memoryTokens, totalTokens - availableForContext),
-                        trimHistoryBy: Math.max(0, totalTokens - availableForContext - memoryTokens),
-                    }
+                          trimMemoryBy: Math.min(memoryTokens, totalTokens - availableForContext),
+                          trimHistoryBy: Math.max(0, totalTokens - availableForContext - memoryTokens),
+                      }
                     : null,
         };
     },

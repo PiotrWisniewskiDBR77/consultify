@@ -13,7 +13,7 @@
 
 import * as cron from 'node-cron';
 
-import logger from '../utils/Logger.js';
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // TYPES
@@ -134,5 +134,3 @@ export const stopDunningJob = (deps?: Partial<Dependencies>): void => {
 };
 
 export default DunningCron;
-
-

@@ -5,29 +5,40 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// Import the real modules
-// We use 'require' to ensure we get the same CJS module instances as the implementation
-const templateValidationService = require('../../server/ai/templateValidationService');
-const templateGraphService = require('../../server/ai/templateGraphService');
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// Mock templateGraphService to include default export with NODE_TYPES and methods
+vi.mock('../../server/ai/templateGraphService', () => {
+    return {
+        default: {
+            NODE_TYPES: {
+                START: 'START',
+                END: 'END',
+                ACTION: 'ACTION',
+                BRANCH: 'BRANCH'
+            },
+            validateDAG: vi.fn(),
+            findDeadEnds: vi.fn(),
+            findBranchesWithoutElse: vi.fn()
+        }
+    };
+});
+
+// Import modules
+import * as templateValidationService from '../../server/ai/templateValidationService';
+import templateGraphService from '../../server/ai/templateGraphService'; // Default import
+
 
 describe('templateValidationService', () => {
     const { validate, validateGraph, ERROR_CODES } = templateValidationService;
 
-    // Spies
-    let validateDAGSpy;
-    let findDeadEndsSpy;
-    let findBranchesWithoutElseSpy;
-
     beforeEach(() => {
-        // Create spies on the real service methods
-        validateDAGSpy = vi.spyOn(templateGraphService, 'validateDAG')
-            .mockReturnValue({ isValid: true, cycles: [] });
+        vi.clearAllMocks();
 
-        findDeadEndsSpy = vi.spyOn(templateGraphService, 'findDeadEnds')
-            .mockReturnValue([]);
-
-        findBranchesWithoutElseSpy = vi.spyOn(templateGraphService, 'findBranchesWithoutElse')
-            .mockReturnValue([]);
+        // Default mock implementations
+        vi.mocked(templateGraphService.validateDAG).mockReturnValue({ isValid: true, cycles: [] });
+        vi.mocked(templateGraphService.findDeadEnds).mockReturnValue([]);
+        vi.mocked(templateGraphService.findBranchesWithoutElse).mockReturnValue([]);
     });
 
     afterEach(() => {
@@ -96,8 +107,8 @@ describe('templateValidationService', () => {
         });
 
         it('calls validateDAG and reports cycles', () => {
-            // Setup the cyclic failure response via SPY
-            validateDAGSpy.mockReturnValue({
+            // Setup the cyclic failure response
+            vi.mocked(templateGraphService.validateDAG).mockReturnValue({
                 isValid: false,
                 cycles: [['a', 'b', 'a']]
             });
@@ -120,11 +131,11 @@ describe('templateValidationService', () => {
             const errors = validateGraph(graph);
 
             expect(errors.some(e => e.code === ERROR_CODES.CYCLIC_GRAPH)).toBe(true);
-            expect(validateDAGSpy).toHaveBeenCalled();
+            expect(templateGraphService.validateDAG).toHaveBeenCalled();
         });
 
         it('calls findDeadEnds and reports dead-end nodes', () => {
-            findDeadEndsSpy.mockReturnValue(['orphan']);
+            vi.mocked(templateGraphService.findDeadEnds).mockReturnValue(['orphan']);
 
             const graph = {
                 nodes: [
@@ -137,11 +148,11 @@ describe('templateValidationService', () => {
 
             const errors = validateGraph(graph);
             expect(errors.some(e => e.code === ERROR_CODES.DEAD_END_NODE)).toBe(true);
-            expect(findDeadEndsSpy).toHaveBeenCalled();
+            expect(templateGraphService.findDeadEnds).toHaveBeenCalled();
         });
 
         it('calls findBranchesWithoutElse and reports missing else', () => {
-            findBranchesWithoutElseSpy.mockReturnValue(['branch1']);
+            vi.mocked(templateGraphService.findBranchesWithoutElse).mockReturnValue(['branch1']);
 
             const graph = {
                 nodes: [
@@ -157,7 +168,7 @@ describe('templateValidationService', () => {
 
             const errors = validateGraph(graph);
             expect(errors.some(e => e.code === ERROR_CODES.BRANCH_MISSING_ELSE)).toBe(true);
-            expect(findBranchesWithoutElseSpy).toHaveBeenCalled();
+            expect(templateGraphService.findBranchesWithoutElse).toHaveBeenCalled();
         });
     });
 });

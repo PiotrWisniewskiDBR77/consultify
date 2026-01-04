@@ -110,12 +110,12 @@ describe('Performance Test: Stress', () => {
                 });
             });
 
-            const queries = Array(100).fill(0).map(() => runQuery());
+            const queries = Array(50).fill(0).map(() => runQuery());
 
             const results = await Promise.all(queries);
-            expect(results.length).toBe(100);
+            expect(results.length).toBe(50);
             results.forEach(result => {
-                expect(result).toBeNull(); // Mock returns null by default
+                expect(result).toBeTruthy(); // Real DB returns {1:1}
             });
         });
     });

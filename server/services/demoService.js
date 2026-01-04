@@ -5,7 +5,7 @@
  * Demo orgs are ephemeral, read-only, and expire after 24 hours.
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import AccessPolicyService from './accessPolicyService.js';
 import ActivityService from '../src/services/ActivityService.js';

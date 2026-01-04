@@ -1,0 +1,89 @@
+# Codecov Configuration
+# https://docs.codecov.com/docs/codecov-yaml
+
+codecov:
+  require_ci_to_pass: yes
+  notify:
+    wait_for_ci: yes
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+  
+  # Status settings
+  status:
+    project:
+      default:
+        target: 85%
+        threshold: 1%
+        base: auto
+        branches:
+          - main
+          - develop
+    patch:
+      default:
+        target: 80%
+        threshold: 1%
+        base: auto
+
+  # Ignore patterns
+  ignore:
+    - "**/*.test.ts"
+    - "**/*.test.tsx"
+    - "**/*.test.js"
+    - "**/*.spec.ts"
+    - "**/*.spec.tsx"
+    - "**/*.spec.js"
+    - "tests/**"
+    - "**/__mocks__/**"
+    - "**/node_modules/**"
+    - "**/dist/**"
+    - "**/build/**"
+    - "**/*.d.ts"
+    - "**/*.map"
+    - "server/scripts/**"
+    - "server/workers/**"
+    - "server/seed_*.js"
+    - "server/fix_*.js"
+    - "server/inspect_*.js"
+    - "server/migrate_*.js"
+    - "server/test-*.js"
+    - "server/database.postgres.js"
+    - "server/database.sqlite.js"
+
+  # Per-file coverage targets
+  parsers:
+    javascript:
+      enable_partials: yes
+    typescript:
+      enable_partials: yes
+
+# Flags for different test suites
+flags:
+  frontend:
+    paths:
+      - "src/**"
+    carryforward: true
+  backend:
+    paths:
+      - "server/**"
+    carryforward: true
+  component:
+    paths:
+      - "components/**"
+    carryforward: true
+  integration:
+    paths:
+      - "server/**"
+      - "src/**"
+    carryforward: true
+
+# Comment settings for PRs
+comment:
+  layout: "reach,diff,flags,tree,reach"
+  behavior: default
+  require_changes: no
+  require_base: no
+  require_head: yes
+

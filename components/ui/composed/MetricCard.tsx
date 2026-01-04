@@ -198,5 +198,3 @@ export const MetricCard = forwardRef<HTMLDivElement, MetricCardProps>(
 MetricCard.displayName = 'MetricCard';
 
 export default MetricCard;
-
-

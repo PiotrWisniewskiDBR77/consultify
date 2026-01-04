@@ -14,9 +14,11 @@ import { Request, Response, Router } from 'express';
 import rateLimit from 'express-rate-limit';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.js';
+import logger from '../utils/Logger.ts';
 
+// Apply rate limiting
 const router = Router();
 
 // Service interfaces

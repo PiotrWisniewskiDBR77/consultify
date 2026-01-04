@@ -9,8 +9,8 @@ import { NextFunction, Request, Response } from 'express';
 import * as fs from 'fs';
 
 import usageService from '../../services/usageService.js';
+import logger from '../utils/Logger.ts';
 import type { _AuthRequest } from './auth.middleware.js';
-import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES

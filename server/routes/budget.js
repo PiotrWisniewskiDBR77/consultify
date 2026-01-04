@@ -14,8 +14,8 @@ const router = express.Router();
 import * as BudgetServiceModule from '../services/budgetService.js';
 const BudgetService = BudgetServiceModule.default || BudgetServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
-import { asyncHandler  } from '../dist/utils/asyncHandler.js';
-import * as queryHelpers from '../dist/utils/queryHelpers.js';
+import { asyncHandler } from '../src/utils/asyncHandler.ts';
+import * as queryHelpers from '../src/utils/queryHelpers.ts';
 
 router.use(verifyToken);
 
@@ -29,9 +29,9 @@ router.get('/initiative/:initiativeId', asyncHandler(async (req, res) => {
     const budget = await BudgetService.getBudget(initiativeId, orgId);
 
     if (!budget) {
-        return res.json({ 
-            budget: null, 
-            message: 'No budget configured for this initiative' 
+        return res.json({
+            budget: null,
+            message: 'No budget configured for this initiative'
         });
     }
 
@@ -50,7 +50,7 @@ router.post('/initiative/:initiativeId', asyncHandler(async (req, res) => {
     // Check if budget already exists
     const existing = await BudgetService.getBudget(initiativeId, orgId);
     if (existing) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             error: 'Budget already exists for this initiative',
             budgetId: existing.id
         });
@@ -58,7 +58,7 @@ router.post('/initiative/:initiativeId', asyncHandler(async (req, res) => {
 
     const budget = await BudgetService.createBudget(orgId, initiativeId, budgetData, userId);
 
-    res.status(201).json({ 
+    res.status(201).json({
         success: true,
         budget,
         message: 'Budget created successfully'
@@ -131,7 +131,7 @@ router.post('/:budgetId/line-items', asyncHandler(async (req, res) => {
 
     const lineItem = await BudgetService.addLineItem(budgetId, itemData);
 
-    res.status(201).json({ 
+    res.status(201).json({
         success: true,
         lineItem,
         message: 'Line item added'
@@ -147,7 +147,7 @@ router.put('/:budgetId/line-items/:itemId', asyncHandler(async (req, res) => {
 
     const allowedFields = [
         'category', 'subcategory', 'description', 'budget_type',
-        'planned_amount', 'actual_amount', 'committed_amount', 
+        'planned_amount', 'actual_amount', 'committed_amount',
         'forecast_amount', 'sort_order'
     ];
 
@@ -218,7 +218,7 @@ router.post('/:budgetId/transactions', asyncHandler(async (req, res) => {
 
     const transaction = await BudgetService.addTransaction(budgetId, transactionData, userId);
 
-    res.status(201).json({ 
+    res.status(201).json({
         success: true,
         transaction,
         message: 'Transaction recorded'
@@ -261,7 +261,7 @@ router.get('/:budgetId/transactions', asyncHandler(async (req, res) => {
 
     const transactions = await queryHelpers.queryAll(sql, params);
 
-    res.json({ 
+    res.json({
         transactions: transactions.map(t => ({
             id: t.id,
             type: t.transaction_type,
@@ -332,7 +332,7 @@ router.get('/:budgetId/alerts', asyncHandler(async (req, res) => {
     const { includeAcknowledged } = req.query;
 
     const alerts = await BudgetService.getAlerts(
-        budgetId, 
+        budgetId,
         includeAcknowledged === 'true'
     );
 
@@ -361,7 +361,7 @@ router.post('/:budgetId/snapshots', asyncHandler(async (req, res) => {
 
     const snapshot = await BudgetService.createSnapshot(budgetId, snapshotType, userId);
 
-    res.status(201).json({ 
+    res.status(201).json({
         success: true,
         snapshot,
         message: 'Snapshot created'
@@ -381,7 +381,7 @@ router.get('/:budgetId/snapshots', asyncHandler(async (req, res) => {
         ORDER BY snapshot_date DESC
     `, [budgetId]);
 
-    res.json({ 
+    res.json({
         snapshots: snapshots.map(s => ({
             id: s.id,
             type: s.snapshot_type,

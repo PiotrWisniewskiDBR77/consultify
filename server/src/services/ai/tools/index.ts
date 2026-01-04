@@ -2,13 +2,13 @@
  * Tool Registry - Connects handlers to MCP Server
  */
 
+import logger from '../../../utils/Logger.ts';
 import { mcpServer } from '../mcpServer.js';
 import { calculateRoiDraft } from './calculateRoiDraft.js';
 import { createInitiative } from './createInitiative.js';
 import { getProjectDetails } from './getProjectDetails.js';
 import { searchKnowledgeBase } from './searchKnowledgeBase.js';
 import { updateAssessmentScore } from './updateAssessmentScore.js';
-import logger from '../../../utils/Logger.js';
 
 export function registerAllTools(): void {
     mcpServer.registerHandler('get_project_details', getProjectDetails);

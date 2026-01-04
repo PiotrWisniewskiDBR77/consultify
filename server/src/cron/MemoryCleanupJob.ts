@@ -7,7 +7,7 @@
  */
 
 import { getMemoryMonitor } from '../services/MemoryMonitor.js';
-import logger from '../utils/Logger.js';
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // MEMORY CLEANUP JOB
@@ -104,8 +104,8 @@ export async function runMemoryCleanup(): Promise<CleanupResult> {
  * Clean up cache entries
  */
 async function cleanupCache(): Promise<{ itemsCleaned: number; memoryFreed: number }> {
-    let itemsCleaned = 0;
-    let memoryFreed = 0;
+    const itemsCleaned = 0;
+    const memoryFreed = 0;
 
     try {
         // Clean up Redis cache if available
@@ -139,8 +139,8 @@ async function cleanupCache(): Promise<{ itemsCleaned: number; memoryFreed: numb
  * Clean up temporary data
  */
 async function cleanupTemporaryData(): Promise<{ itemsCleaned: number; memoryFreed: number }> {
-    let itemsCleaned = 0;
-    let memoryFreed = 0;
+    const itemsCleaned = 0;
+    const memoryFreed = 0;
 
     try {
         // Clean up old partial responses, temporary files, etc.
@@ -158,5 +158,3 @@ async function cleanupTemporaryData(): Promise<{ itemsCleaned: number; memoryFre
 export default {
     run: runMemoryCleanup,
 };
-
-

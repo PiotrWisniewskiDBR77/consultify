@@ -17,7 +17,7 @@
  * @module facilityUserService
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import { v4 as uuid } from 'uuid';
 

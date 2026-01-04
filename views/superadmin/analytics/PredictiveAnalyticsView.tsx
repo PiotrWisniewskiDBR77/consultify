@@ -580,5 +580,3 @@ const PredictiveAnalyticsView: React.FC = () => {
 };
 
 export default PredictiveAnalyticsView;
-
-

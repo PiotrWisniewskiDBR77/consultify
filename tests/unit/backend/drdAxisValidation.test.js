@@ -3,18 +3,11 @@ import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 
-// Mock the module since it doesn't exist
-vi.mock('../../../server/services/drdAxisValidationService.js', () => {
-    return {
-        default: {
-            validateAxis: vi.fn(),
-            validateAllAxes: vi.fn()
-        }
-    };
-});
+// No mock for drdAxisValidationService needed as it doesn't exist and isn't used meaningfully in tests below
+// The tests cover DRD_AXES from aiAssessmentPartnerService
 
-const DRDAxisValidationService = require('../../../server/services/drdAxisValidationService.js');
-const { aiAssessmentPartner, DRD_AXES, AI_PARTNER_CONFIG } = require('../../../server/services/aiAssessmentPartnerService.js');
+// const DRDAxisValidationService = require('../../../server/src/services/drdAxisValidationService.js');
+const { aiAssessmentPartner, DRD_AXES, AI_PARTNER_CONFIG } = require('../../../server/src/services/aiAssessmentPartnerService.js');
 const { GoogleGenerativeAI } = require('../../__mocks__/@google/generative-ai');
 
 // Explicitly inject the mock client into the singleton

@@ -8,13 +8,19 @@
  */
 
 import { Router } from 'express';
-import logger from '../utils/Logger.js';
+
+import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import logger from '../utils/Logger.ts';
+// Import the JS implementation for now (will be fully migrated later)
+
+const router = Router();
+
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/user-settings-history.js');
 const user_settings_historyRoutesJS = module.default || module;
 
-// Create router and apply JS routes
-const router = Router();
+// Apply rate limiting
+router.use(defaultRateLimiter);
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly

@@ -16,7 +16,7 @@
  * @version 1.0.0 (DEPRECATED)
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import RagService from './ragService.js';
 import FinancialService from './financialService.js';

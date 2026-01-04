@@ -8,11 +8,11 @@ import { v4 as uuid } from 'uuid';
 
 import ActivityService from '../services/ActivityService.js';
 import NotificationService from '../services/NotificationService.js';
-import DbPromise from '../utils/DbPromise.js';
+import DbPromise from '../utils/DbPromise.ts';
+import logger from '../utils/Logger.ts';
 import { PMO_DOMAIN_IDS } from './pmoDomainRegistry.js';
 import PMOStandardsMapping from './pmoStandardsMapping.js';
 import ProjectMemberService from './projectMemberService.js';
-import logger from '../utils/Logger.js';
 
 /**
  * Default SLA hours by priority

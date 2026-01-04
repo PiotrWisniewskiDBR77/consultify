@@ -17,7 +17,7 @@ describe('StatusMachine', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        StatusMachine = (await import('../../../server/services/statusMachine.js')).default;
+        StatusMachine = (await import('../../../server/src/services/statusMachine.js')).default;
     });
 
     describe('Initiative Status Transitions', () => {

@@ -2,10 +2,10 @@
  * Model Router - Dynamic LLM Provider Selection & Fallback
  */
 
-import * as DbPromise from '../../utils/DbPromise.js';
+import * as DbPromise from '../../utils/DbPromise.ts';
+import { appCache } from '../redis/CacheService.js';
 import type { LLMConfigService } from './llmConfigService.js';
 import { aiLogger } from './logger.js';
-import { appCache } from '../redis/CacheService.js';
 
 export const TIER_HIERARCHY = ['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING'] as const;
 export type Tier = (typeof TIER_HIERARCHY)[number] | 'VISION';
@@ -164,7 +164,7 @@ export class ModelRouter {
         try {
             await appCache.subscribe('router:config_update', (msg) => {
                 aiLogger.info('ModelRouter', `Received invalidation message: ${msg}`);
-                this.clearCache().catch(err => aiLogger.error('ModelRouter', 'Failed to clear cache', err));
+                this.clearCache().catch((err) => aiLogger.error('ModelRouter', 'Failed to clear cache', err));
             });
         } catch (error) {
             aiLogger.error('ModelRouter', 'Failed to subscribe to updates', error);
@@ -598,7 +598,9 @@ export class ModelRouter {
         try {
             const cached = await appCache.get<ProviderRow>(CACHE_KEY);
             if (cached) return cached;
-        } catch (err) { /* ignore */ }
+        } catch (err) {
+            /* ignore */
+        }
 
         const row = await DbPromise.get<ProviderRow>(
             'SELECT * FROM llm_providers WHERE is_default = 1 AND is_active = 1 LIMIT 1',
@@ -620,7 +622,9 @@ export class ModelRouter {
         try {
             const cached = await appCache.get<OverrideRow>(CACHE_KEY);
             if (cached) return cached;
-        } catch (err) { /* ignore */ }
+        } catch (err) {
+            /* ignore */
+        }
 
         const row = await DbPromise.get<OverrideRow>(
             `SELECT * FROM ai_model_overrides WHERE organization_id = ? AND capability = ?`,

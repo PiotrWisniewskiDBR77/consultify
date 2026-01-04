@@ -2,8 +2,8 @@
 // Tests the AI playbook service for automated workflow execution
 
 import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vitest';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+
+
 
 const { initTestDb, cleanTables, dbRun, db } = require('../../helpers/dbHelper.cjs');
 const AIPlaybookService = require('../../../server/ai/aiPlaybookService');

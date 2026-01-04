@@ -359,10 +359,12 @@ const ApiKeyService: ApiKeyServiceInterface = {
         const keyPrefix = plainKey.substring(0, 12);
 
         // Find potential matches by prefix
-        const potentialKeys = (await dbAll(`SELECT * FROM api_keys WHERE key_prefix = ? AND is_active = 1`, [keyPrefix])) as Array<Record<string, unknown>>;
+        const potentialKeys = (await dbAll(`SELECT * FROM api_keys WHERE key_prefix = ? AND is_active = 1`, [
+            keyPrefix,
+        ])) as Array<Record<string, unknown>>;
 
         for (const keyRecord of potentialKeys) {
-            const match = await bcrypt.compare(plainKey, (keyRecord.key_hash as string));
+            const match = await bcrypt.compare(plainKey, keyRecord.key_hash as string);
             if (match) {
                 // Check expiration
                 if (keyRecord.expires_at && new Date(keyRecord.expires_at as string) < new Date()) {
@@ -437,15 +439,19 @@ const ApiKeyService: ApiKeyServiceInterface = {
         }
 
         // Get key limits
-        const key = (await dbGet(`SELECT rate_limit_per_minute, rate_limit_per_day FROM api_keys WHERE id = ?`, [keyId])) as Record<string, unknown>;
-        const limit = (type === 'minute' ? (key.rate_limit_per_minute as number) : (key.rate_limit_per_day as number));
+        const key = (await dbGet(`SELECT rate_limit_per_minute, rate_limit_per_day FROM api_keys WHERE id = ?`, [
+            keyId,
+        ])) as Record<string, unknown>;
+        const limit = type === 'minute' ? (key.rate_limit_per_minute as number) : (key.rate_limit_per_day as number);
 
         if ((rateLimit.request_count as number) >= limit) {
             return { allowed: false, remaining: 0, retryAfter: type === 'minute' ? 60 : 86400 };
         }
 
         // Increment counter
-        await dbRun(`UPDATE api_key_rate_limits SET request_count = request_count + 1 WHERE id = ?`, [rateLimit.id as string]);
+        await dbRun(`UPDATE api_key_rate_limits SET request_count = request_count + 1 WHERE id = ?`, [
+            rateLimit.id as string,
+        ]);
 
         return { allowed: true, remaining: limit - (rateLimit.request_count as number) - 1 };
     },

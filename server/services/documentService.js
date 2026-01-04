@@ -3,7 +3,7 @@
  * Handles document library operations with project/user scope separation
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import path from 'path';
 import fs from 'fs';

@@ -3,7 +3,7 @@
  * Responsibility: Merge System Prompt, Context, and User Input
  * Supports Prompt Stacking: GLOBAL + ROLE + VISUAL_CONTEXT
  */
-import { getDatabase } from '../../src/database/index.js';
+import { getDatabase } from '../../src/database/Database.ts';
 const db = getDatabase();
 
 /**

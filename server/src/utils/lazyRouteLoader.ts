@@ -6,7 +6,8 @@
  */
 
 import { NextFunction, Request, Response, Router } from 'express';
-import logger from './Logger.js';
+
+import logger from './Logger.ts';
 
 interface RouteModule {
     default?: unknown;
@@ -31,6 +32,9 @@ export function createLazyRoute(routePath: string): Router {
     router.use(async (req: Request, res: Response, next: NextFunction) => {
         try {
             const routes = await loadRoute();
+            if (!routes) {
+                return next(new Error('Failed to load routes'));
+            }
             const routesHandler = routes.default || routes;
 
             if (typeof routesHandler === 'function') {
@@ -51,5 +55,3 @@ export function createLazyRoute(routePath: string): Router {
 
     return router;
 }
-
-

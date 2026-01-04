@@ -14,7 +14,7 @@ const router = express.Router();
 import * as StatusReportServiceModule from '../services/statusReportService.js';
 const StatusReportService = StatusReportServiceModule.default || StatusReportServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
-import { asyncHandler  } from '../dist/utils/asyncHandler.js';
+import { asyncHandler } from '../src/utils/asyncHandler.ts';
 
 router.use(verifyToken);
 
@@ -28,21 +28,21 @@ router.post('/initiative/:initiativeId/generate', asyncHandler(async (req, res) 
     const { periodType = 'WEEKLY', periodDate } = req.body;
 
     if (!['WEEKLY', 'MONTHLY', 'QUARTERLY'].includes(periodType)) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             error: 'Invalid period type',
             validTypes: ['WEEKLY', 'MONTHLY', 'QUARTERLY']
         });
     }
 
     const report = await StatusReportService.generateReport(
-        orgId, 
-        initiativeId, 
-        periodType, 
+        orgId,
+        initiativeId,
+        periodType,
         userId,
         { periodDate, method: 'MANUAL' }
     );
 
-    res.status(201).json({ 
+    res.status(201).json({
         success: true,
         report,
         message: 'Report generated successfully'
@@ -58,7 +58,7 @@ router.get('/initiative/:initiativeId', asyncHandler(async (req, res) => {
     const { limit = 20, offset = 0, status } = req.query;
 
     const reports = await StatusReportService.listReports(
-        initiativeId, 
+        initiativeId,
         orgId,
         { limit: parseInt(limit), offset: parseInt(offset), status }
     );
@@ -153,8 +153,8 @@ router.post('/:reportId/distribute', asyncHandler(async (req, res) => {
         await StatusReportService.markDistributionSent(dist.id);
     }
 
-    res.json({ 
-        success: true, 
+    res.json({
+        success: true,
         message: `Report distributed to ${recipients.length} recipients`,
         distributions
     });
@@ -168,7 +168,7 @@ router.get('/:reportId/export/:format', asyncHandler(async (req, res) => {
     const { reportId, format } = req.params;
 
     if (!['pdf', 'pptx'].includes(format.toLowerCase())) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             error: 'Invalid export format',
             validFormats: ['pdf', 'pptx']
         });
@@ -184,31 +184,31 @@ router.get('/:reportId/export/:format', asyncHandler(async (req, res) => {
         if (format.toLowerCase() === 'pdf') {
             const PdfExportServiceModule = await import('../services/pdfExportService.js');
             const PdfExportService = PdfExportServiceModule.default || PdfExportServiceModule;
-            
+
             // Generate PDF buffer
             const pdfBuffer = await PdfExportService.generateStatusReportPdf(report);
-            
+
             res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 
+            res.setHeader('Content-Disposition',
                 `attachment; filename="status-report-${report.periodLabel.replace(/[^a-zA-Z0-9]/g, '-')}.pdf"`);
             res.send(pdfBuffer);
         } else {
             const PptxExportServiceModule = await import('../services/pptxExportService.js');
             const PptxExportService = PptxExportServiceModule.default || PptxExportServiceModule;
-            
+
             // Generate PPTX buffer
             const pptxBuffer = await PptxExportService.generateStatusReportPptx(report);
-            
+
             res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
-            res.setHeader('Content-Disposition', 
+            res.setHeader('Content-Disposition',
                 `attachment; filename="status-report-${report.periodLabel.replace(/[^a-zA-Z0-9]/g, '-')}.pptx"`);
             res.send(pptxBuffer);
         }
     } catch (error) {
         console.error('[StatusReports] Export error:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             error: 'Failed to export report',
-            message: error.message 
+            message: error.message
         });
     }
 }));

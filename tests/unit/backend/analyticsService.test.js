@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
-import AnalyticsService from '../../../server/services/analyticsService.js';
+import AnalyticsService from '../../../server/src/services/analyticsService.js';
 
 /**
  * Unit tests for AnalyticsService

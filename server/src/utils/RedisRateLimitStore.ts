@@ -9,7 +9,7 @@
 import type { IncrementResponse, Store } from 'express-rate-limit';
 
 import { getRedisClient, isRedisConnected } from '../../services/ai/redisClient.js';
-import logger from './Logger.js';
+import logger from './Logger.ts';
 
 // ==========================================
 // TYPES
@@ -142,5 +142,3 @@ export class RedisRateLimitStore implements Store {
 }
 
 export default RedisRateLimitStore;
-
-

@@ -1,26 +1,27 @@
 /**
  * API Versioning Middleware
  * Enterprise SaaS Architecture - API Management
- * 
+ *
  * Implements API versioning strategy:
  * - Header-based versioning (X-API-Version)
  * - URL-based versioning (/api/v1/, /api/v2/)
  * - Query parameter fallback (?version=1)
  * - Deprecation warnings
- * 
+ *
  * Strategy: Semantic versioning with major versions in URL
- * 
+ *
  * Usage:
  * - Current: /api/* (v1, default)
  * - Future: /api/v2/* (breaking changes)
- * 
+ *
  * Backward Compatibility:
  * - Old versions supported for 12 months after deprecation
  * - Sunset header indicates end-of-life date
  */
 
-import { Request, Response, NextFunction } from 'express';
-import logger from '../utils/Logger.js';
+import { NextFunction, Request, Response } from 'express';
+
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // TYPES
@@ -105,15 +106,15 @@ export function apiVersionMiddleware(req: VersionedRequest, res: Response, next:
     try {
         // Priority: URL > Header > Query > Default
         let version = extractVersionFromUrl(req.path);
-        
+
         if (!version) {
             version = req.headers[VERSION_HEADER] as string;
         }
-        
+
         if (!version) {
             version = req.query.version as string;
         }
-        
+
         if (!version) {
             version = CURRENT_VERSION;
         }
@@ -126,7 +127,7 @@ export function apiVersionMiddleware(req: VersionedRequest, res: Response, next:
             res.status(400).json({
                 error: 'Invalid API version',
                 message: `Unsupported API version: ${version}`,
-                supportedVersions: Object.keys(API_VERSIONS).filter(v => !v.includes('.')),
+                supportedVersions: Object.keys(API_VERSIONS).filter((v) => !v.includes('.')),
                 currentVersion: LATEST_VERSION,
             });
             return;
@@ -141,7 +142,7 @@ export function apiVersionMiddleware(req: VersionedRequest, res: Response, next:
         // Handle deprecated versions
         if (versionInfo.deprecated) {
             res.setHeader(DEPRECATION_HEADER, 'true');
-            
+
             if (versionInfo.sunsetDate) {
                 res.setHeader(SUNSET_HEADER, versionInfo.sunsetDate.toISOString());
             }
@@ -199,14 +200,14 @@ export function requireVersion(minVersion: string) {
 export function deprecatedEndpoint(sunsetDate?: Date, alternativeEndpoint?: string) {
     return (_req: Request, res: Response, next: NextFunction): void => {
         res.setHeader(DEPRECATION_HEADER, 'true');
-        
+
         if (sunsetDate) {
             res.setHeader(SUNSET_HEADER, sunsetDate.toISOString());
         }
 
         // Add deprecation warning to response
         const originalJson = res.json.bind(res);
-        res.json = function(body: unknown): Response {
+        res.json = function (body: unknown): Response {
             if (body && typeof body === 'object') {
                 return originalJson({
                     ...body,
@@ -244,12 +245,12 @@ function extractVersionFromUrl(path: string): string | null {
 function normalizeVersion(version: string): string {
     // Remove 'v' prefix if present
     const cleaned = version.replace(/^v/i, '');
-    
+
     // Return as-is if it's a known format
     if (API_VERSIONS[cleaned]) {
         return cleaned;
     }
-    
+
     // Try major version only
     const major = cleaned.split('.')[0];
     return major;
@@ -317,5 +318,3 @@ export default {
     CURRENT_VERSION,
     LATEST_VERSION,
 };
-
-

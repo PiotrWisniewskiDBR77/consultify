@@ -42,6 +42,16 @@ class AIAssessmentFormHelper {
         this.aiPartner = aiAssessmentPartner;
     }
 
+    /**
+     * Set dependencies for testing
+     * @param {Object} deps - Dependencies to inject
+     */
+    setDependencies(deps) {
+        if (deps.aiPartner) {
+            this.aiPartner = deps.aiPartner;
+        }
+    }
+
     // =========================================================================
     // REAL-TIME FORM ASSISTANCE
     // =========================================================================

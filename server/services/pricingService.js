@@ -7,7 +7,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 

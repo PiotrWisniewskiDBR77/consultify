@@ -14,7 +14,7 @@ const mockDependencyService = {
     detectDeadlocks: vi.fn()
 };
 
-import CriticalPathService from '../../../server/services/criticalPathService.js';
+import CriticalPathService from '../../../server/src/services/criticalPathService.js';
 
 describe('CriticalPathService', () => {
     beforeEach(() => {

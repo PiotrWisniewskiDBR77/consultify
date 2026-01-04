@@ -31,7 +31,7 @@ vi.mock('../../../server/database', () => ({
 }));
 
 // Import service after mock is set up
-import AIFailureHandler from '../../../server/services/aiFailureHandler.js';
+import AIFailureHandler from '../../../server/src/services/aiFailureHandler.js';
 
 describe('AIFailureHandler', () => {
     beforeEach(() => {

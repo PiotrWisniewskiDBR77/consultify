@@ -370,5 +370,3 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({ isOpen, 
 };
 
 export default MoveToProjectModal;
-
-

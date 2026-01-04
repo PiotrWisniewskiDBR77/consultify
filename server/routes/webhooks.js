@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import * as DunningServiceModule from '../dist/services/dunningService.js';
+import * as DunningServiceModule from '../src/services/dunningService.ts';
 const DunningService = DunningServiceModule.default || DunningServiceModule;
 import * as InvoiceServiceModule from 'invoiceService.js';
 const InvoiceService = InvoiceServiceModule.default || InvoiceServiceModule;

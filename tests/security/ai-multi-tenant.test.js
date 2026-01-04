@@ -10,9 +10,7 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
+// Removed createRequire - using ESM imports
 
 // Mock database and services
 const mockDb = {

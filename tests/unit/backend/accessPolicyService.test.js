@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import AccessPolicyService from '../../../server/services/accessPolicyService.js';
+import AccessPolicyService from '../../../server/src/services/accessPolicyService.js';
 import { getDatabase } from '../../../server/database.js'; // This import might be redundant if vi.mock handles it, but included as per instruction
 
 // Mock the database dependencies

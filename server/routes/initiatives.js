@@ -1,5 +1,5 @@
 // AI Service - Using unified pipeline with fallback to legacy service
-import { suggestTasks, validateInitiative, enrichInitiative  } from '../services/ai/aiPipeline.js';
+import { suggestTasks, validateInitiative, enrichInitiative } from '../services/ai/aiPipeline.js';
 // Legacy AiService kept for backward compatibility (deprecated)
 import * as AiServiceModule from '../services/aiService.js';
 const AiService = AiServiceModule.default || AiServiceModule;
@@ -19,8 +19,8 @@ import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import verifyToken from '../middleware/authMiddleware.js';
-import { asyncHandler  } from '../dist/utils/asyncHandler.js';
-import * as queryHelpers from '../dist/utils/queryHelpers.js';
+import { asyncHandler } from '../src/utils/asyncHandler.ts';
+import * as queryHelpers from '../src/utils/queryHelpers.ts';
 
 router.use(verifyToken);
 

@@ -1,7 +1,7 @@
 // AI Policy Engine - Controls what AI is allowed to do
 // AI Core Layer — Enterprise PMO Brain
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 
 // Lazy-load dependencies to avoid circular dependencies

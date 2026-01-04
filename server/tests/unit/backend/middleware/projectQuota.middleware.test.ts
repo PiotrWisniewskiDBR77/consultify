@@ -96,5 +96,3 @@ describe('Project Quota Middleware', () => {
         });
     });
 });
-
-

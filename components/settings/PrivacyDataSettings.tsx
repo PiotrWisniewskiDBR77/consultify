@@ -696,5 +696,3 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
 };
 
 export default PrivacyDataSettings;
-
-

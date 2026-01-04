@@ -4,15 +4,16 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Mock database with callback-style API
-const mockDb = {
-    all: vi.fn(),
-    run: vi.fn(),
-    get: vi.fn()
-};
+const { mockDb } = vi.hoisted(() => ({
+    mockDb: {
+        all: vi.fn(),
+        run: vi.fn(),
+        get: vi.fn()
+    }
+}));
 
-vi.mock('../../../../server/database', () => ({
-    default: mockDb
+vi.mock('../../../../server/src/database/Database.ts', () => ({
+    getDatabase: () => mockDb
 }));
 
 import OrganizationMetadataService from '../../../../server/services/organizationMetadataService';
@@ -27,7 +28,7 @@ describe('OrganizationMetadataService', () => {
             const mockMetadata = [
                 { id: '1', organization_id: 'org1', key: 'custom_field', value: 'test' }
             ];
-            
+
             mockDb.all.mockImplementation((query, params, callback) => {
                 // The service uses callback-style API wrapped in Promise
                 if (typeof callback === 'function') {
@@ -61,7 +62,7 @@ describe('OrganizationMetadataService', () => {
 
     describe('setMetadata', () => {
         it('should set metadata value', async () => {
-            mockDb.run.mockImplementation(function(query, params, callback) {
+            mockDb.run.mockImplementation(function (query, params, callback) {
                 // The service uses `this.changes` in callback, simulate it
                 callback.call({ changes: 1, lastID: 1 }, null);
             });
@@ -77,7 +78,7 @@ describe('OrganizationMetadataService', () => {
 
     describe('deleteMetadata', () => {
         it('should delete metadata by key', async () => {
-            mockDb.run.mockImplementation(function(query, params, callback) {
+            mockDb.run.mockImplementation(function (query, params, callback) {
                 // Simulate `this.changes` for delete
                 callback.call({ changes: 1 }, null);
             });

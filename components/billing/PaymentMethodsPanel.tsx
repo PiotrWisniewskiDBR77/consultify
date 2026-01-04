@@ -262,5 +262,3 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({ onPaym
 };
 
 export default PaymentMethodsPanel;
-
-

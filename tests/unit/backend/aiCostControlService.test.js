@@ -1,15 +1,31 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// Mock dependencies
-const mockDb = {
-    get: vi.fn(),
-    all: vi.fn(),
-    run: vi.fn(),
-    serialize: vi.fn((cb) => cb()),
-    initPromise: Promise.resolve()
-};
+// Mock dependencies with hoisting
+const { mockDb } = vi.hoisted(() => {
+    const mockDbInstance = {
+        get: vi.fn(),
+        all: vi.fn(),
+        run: vi.fn(),
+        serialize: vi.fn((cb) => cb()),
+        initPromise: Promise.resolve()
+    };
+    return { mockDb: mockDbInstance };
+});
 
-import AICostControlService from '../../../server/services/aiCostControlService.js';
+vi.mock('../../../server/src/database/Database.js', () => ({
+    getDatabase: vi.fn(() => mockDb)
+}));
+
+vi.mock('../../../server/src/utils/Logger.js', () => ({
+    default: {
+        error: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+        warn: vi.fn()
+    }
+}));
+
+import AICostControlService, { MODEL_CATEGORIES } from '../../../server/src/services/aiCostControlService.ts';
 
 describe('AICostControlService', () => {
     afterEach(() => {
@@ -240,41 +256,41 @@ describe('AICostControlService', () => {
 
     describe('Model Selection', () => {
         it('should return correct category for action', () => {
-            expect(AICostControlService.getCategoryForAction('analysis')).toBe(AICostControlService.MODEL_CATEGORIES.REASONING);
-            expect(AICostControlService.getCategoryForAction('chat')).toBe(AICostControlService.MODEL_CATEGORIES.CHAT);
+            expect(AICostControlService.getCategoryForAction('analysis')).toBe(MODEL_CATEGORIES.REASONING);
+            expect(AICostControlService.getCategoryForAction('chat')).toBe(MODEL_CATEGORIES.CHAT);
         });
 
         it('should fallback to CHAT for unknown action', () => {
-            expect(AICostControlService.getCategoryForAction('UNKNOWN')).toBe(AICostControlService.MODEL_CATEGORIES.CHAT);
+            expect(AICostControlService.getCategoryForAction('UNKNOWN')).toBe(MODEL_CATEGORIES.CHAT);
         });
 
         it('should prioritize role if present', () => {
-            expect(AICostControlService.getCategoryForAction(null, 'EXECUTOR')).toBe(AICostControlService.MODEL_CATEGORIES.EXECUTION);
+            expect(AICostControlService.getCategoryForAction(null, 'EXECUTOR')).toBe(MODEL_CATEGORIES.EXECUTION);
         });
     });
 
     describe('getTierForBudget', () => {
         it('should return tier 1 for non-downgraded reasoning', () => {
             const status = { shouldDowngrade: false, percentUsed: 0 };
-            const tier = AICostControlService.getTierForBudget(status, AICostControlService.MODEL_CATEGORIES.REASONING);
+            const tier = AICostControlService.getTierForBudget(status, MODEL_CATEGORIES.REASONING);
             expect(tier).toBe(1);
         });
 
         it('should downgrade premium to standard when budget constrained', () => {
             const status = { shouldDowngrade: true, percentUsed: 90 };
-            const tier = AICostControlService.getTierForBudget(status, AICostControlService.MODEL_CATEGORIES.REASONING);
+            const tier = AICostControlService.getTierForBudget(status, MODEL_CATEGORIES.REASONING);
             expect(tier).toBe(2);
         });
 
         it('should downgrade standard to budget when constrained', () => {
             const status = { shouldDowngrade: true, percentUsed: 90 };
-            const tier = AICostControlService.getTierForBudget(status, AICostControlService.MODEL_CATEGORIES.EXECUTION);
+            const tier = AICostControlService.getTierForBudget(status, MODEL_CATEGORIES.EXECUTION);
             expect(tier).toBe(3);
         });
 
         it('should keep budget tier at 3 even when constrained', () => {
             const status = { shouldDowngrade: true, percentUsed: 95 };
-            const tier = AICostControlService.getTierForBudget(status, AICostControlService.MODEL_CATEGORIES.CHAT);
+            const tier = AICostControlService.getTierForBudget(status, MODEL_CATEGORIES.CHAT);
             expect(tier).toBe(3);
         });
     });

@@ -5,27 +5,25 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import { BillingWebhookServiceClass, BILLING_EVENT_TYPES } from '../../../server/src/services/BillingWebhookService.ts';
 
 describe('BillingWebhookService', () => {
-    let mockDb;
     let mockWebhookService;
-    let mockUuid;
     let deps;
+    let mocks;
 
     beforeEach(async () => {
-        mockDb = createMockDb();
-        mockUuid = () => 'test-uuid';
+        mocks = setupStandardTest();
 
-        // Mock webhook service
+        // Setup specific webhook service mock
         mockWebhookService = {
             trigger: vi.fn().mockResolvedValue({ triggered: 1, results: [{ success: true }] })
         };
 
         deps = {
-            db: mockDb,
-            uuidv4: mockUuid,
+            db: mocks.db,
+            uuidv4: mocks.uuid,
             webhookService: mockWebhookService
         };
     });

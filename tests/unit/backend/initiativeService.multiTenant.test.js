@@ -1,26 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-// Mock dependencies
-const mockDb = {
-    get: vi.fn(),
-    all: vi.fn(),
-    run: vi.fn(),
-    serialize: vi.fn((cb) => cb()),
-    initPromise: Promise.resolve()
-};
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
 // Import the TS source directly
 import InitiativeService from '../../../server/src/services/initiativeService.ts';
 
 describe('InitiativeService - Multi-Tenant Isolation', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        // Set dependencies on the singleton instance
-        InitiativeService.setDependencies({ db: mockDb });
+    let mocks;
 
-        // Default DB mocks
-        mockDb.all.mockResolvedValue([]);
-        mockDb.run.mockResolvedValue({ changes: 1, lastID: 0 });
+    beforeEach(() => {
+        mocks = setupStandardTest();
+        vi.clearAllMocks();
+
+        // Set dependencies on the singleton instance using unified pattern
+        InitiativeService.setDependencies({ db: mocks.db });
+
+        // Default DB mocks using unified infrastructure
+        mocks.db.all.mockResolvedValue([]);
+        mocks.db.run.mockResolvedValue({ changes: 1, lastID: 0 });
     });
 
     describe('recalculateProgress with organizationId', () => {

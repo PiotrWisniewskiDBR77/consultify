@@ -1,5 +1,5 @@
 /**
-import logger from '../../../utils/Logger.js';
+import logger from '../../../utils/Logger.ts';
  * Tool: search_knowledge_base
  * Searches the DRD methodology knowledge base using RAG.
  */

@@ -12,8 +12,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.js';
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // TYPES
@@ -121,6 +122,9 @@ interface IStorageService {
 }
 
 const router = Router();
+
+// Apply rate limiting
+router.use(authRateLimiter);
 
 // Dynamic imports for services that may not be migrated yet
 let KnowledgeService: IKnowledgeService | null = null;

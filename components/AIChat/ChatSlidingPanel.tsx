@@ -261,5 +261,3 @@ export const ChatSlidingPanel: React.FC<ChatSlidingPanelProps> = ({
 };
 
 export default ChatSlidingPanel;
-
-

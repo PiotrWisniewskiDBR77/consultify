@@ -28,4 +28,11 @@ export * from './modules';
 // Phase 7 - Advanced
 export * from './advanced';
 
-
+// Phase 8 - New Settings Components (Settings Redesign)
+export { AIUsageDashboard } from './AIUsageDashboard';
+export { DeveloperSettings } from './DeveloperSettings';
+export { EmailSignaturesSettings } from './EmailSignaturesSettings';
+export { ExportDataSettings } from './ExportDataSettings';
+export { type PresenceStatus, QuickProfileCard } from './QuickProfileCard';
+export { RecoveryOptionsSettings } from './RecoveryOptionsSettings';
+export { type SettingsSection, SettingsSidebar } from './SettingsSidebar';

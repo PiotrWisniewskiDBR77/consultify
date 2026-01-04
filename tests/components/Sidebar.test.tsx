@@ -2,16 +2,16 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Sidebar } from '../../components/Sidebar';
-import { useAppStore } from '../../../store/useAppStore';
+import { useAppStore } from '../../store/useAppStore';
 
-vi.mock('../../../store/useAppStore', () => ({
+vi.mock('../../store/useAppStore', () => ({
     useAppStore: vi.fn()
 }));
 
-vi.mock('../../../hooks/useDeviceType', () => ({
+vi.mock('../../hooks/useDeviceType', () => ({
     useDeviceType: () => ({ isMobile: false, isTablet: false })
 }));
 
@@ -25,26 +25,28 @@ describe('Sidebar Component', () => {
         (useAppStore as any).mockReturnValue({
             currentView: 'dashboard',
             currentUser: { id: 'user-1', role: 'USER' },
-            setCurrentView: vi.fn()
+            setCurrentView: vi.fn(),
+            freeSessionData: { step1Completed: false, step2Completed: false, step3Completed: false },
+            fullSessionData: { step1Completed: false, step2Completed: false, step3Completed: false }
         });
     });
 
     it('renders sidebar navigation', () => {
         render(<Sidebar />);
 
-        expect(screen.getByRole('navigation')).toBeInTheDocument();
+        expect(screen.getByRole('navigation', { hidden: true })).toBeInTheDocument();
     });
 
     it('displays dashboard menu item', () => {
         render(<Sidebar />);
 
-        expect(screen.getByText(/Dashboard/i)).toBeInTheDocument();
+        expect(screen.getByText(/My Work/i)).toBeInTheDocument();
     });
 
     it('highlights current view', () => {
         render(<Sidebar />);
 
-        const dashboardItem = screen.getByText(/Dashboard/i);
+        const dashboardItem = screen.getByText(/My Work/i);
         expect(dashboardItem.closest('a') || dashboardItem.closest('button')).toHaveClass(/active|current/i);
     });
 
@@ -53,12 +55,14 @@ describe('Sidebar Component', () => {
         (useAppStore as any).mockReturnValue({
             currentView: 'dashboard',
             currentUser: { id: 'user-1', role: 'USER' },
-            setCurrentView
+            setCurrentView,
+            freeSessionData: { step1Completed: false, step2Completed: false, step3Completed: false },
+            fullSessionData: { step1Completed: false, step2Completed: false, step3Completed: false }
         });
 
         render(<Sidebar />);
 
-        const projectsItem = screen.getByText(/Projects/i);
+        const projectsItem = screen.getByText(/Project Intelligence/i);
         if (projectsItem) {
             await user.click(projectsItem);
             expect(setCurrentView).toHaveBeenCalled();
@@ -68,7 +72,8 @@ describe('Sidebar Component', () => {
     it('shows user profile section', () => {
         render(<Sidebar />);
 
-        expect(screen.getByText(/Profile/i) || screen.getByText(/Settings/i)).toBeInTheDocument();
+        const settingsItem = screen.getByText(/Settings/i);
+        expect(settingsItem).toBeInTheDocument();
     });
 
     it('handles logout', async () => {

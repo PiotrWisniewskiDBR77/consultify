@@ -9,7 +9,7 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 
 const { initTestDb, cleanTables, dbRun, db } = require('../../helpers/dbHelper.cjs');
-const WorkqueueService = require('../../../server/services/workqueueService');
+const WorkqueueService = require('../../../server/src/services/workqueueService');
 const { v4: uuidv4 } = require('uuid');
 
 describe('WorkqueueService', () => {

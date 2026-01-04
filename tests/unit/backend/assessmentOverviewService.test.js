@@ -23,8 +23,8 @@ vi.mock('../../../server/database', () => ({
     default: {} // Return empty object, we inject mockDb via DI
 }));
 
-vi.mock('../../../server/services/rapidLeanService', () => ({ default: {} }));
-vi.mock('../../../server/services/externalAssessmentService', () => ({ default: {} }));
+vi.mock('../../../server/src/services/rapidLeanService', () => ({ default: {} }));
+vi.mock('../../../server/src/services/externalAssessmentService', () => ({ default: {} }));
 
 describe('AssessmentOverviewService', () => {
     let AssessmentOverviewService;
@@ -35,7 +35,7 @@ describe('AssessmentOverviewService', () => {
 
         try {
             // Import the service instance
-            const module = await import('../../../server/services/assessmentOverviewService.js');
+            const module = await import('../../../server/src/services/assessmentOverviewService.js');
             AssessmentOverviewService = module.default || module;
 
             // Inject dependencies

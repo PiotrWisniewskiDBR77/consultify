@@ -19,7 +19,7 @@ vi.mock('uuid', () => ({
     v4: mockUuidv4
 }));
 
-import ROIService from '../../../server/services/roiService.js';
+import ROIService from '../../../server/src/services/roiService.js';
 
 describe('ROIService', () => {
     beforeEach(() => {

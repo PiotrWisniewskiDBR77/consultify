@@ -9,7 +9,7 @@
  * - Critical notification bypass
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import BaseService from './BaseService.js';
 import NotificationService from './notificationService.js';

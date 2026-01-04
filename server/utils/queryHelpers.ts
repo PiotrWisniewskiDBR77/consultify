@@ -124,7 +124,6 @@ export function buildUserFilter(tableAlias: string, _userId: string): string {
 // Performance tracking callback
 let performanceCallback: ((queryType: string, duration: number) => void) | null = null;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _performanceCallback = performanceCallback; // Prevent unused variable warning
 
 /**
@@ -140,7 +139,6 @@ export function enablePerformanceTracking(callback: (queryType: string, duration
 export function disablePerformanceTracking(): void {
     performanceCallback = null;
 }
-
 
 export async function transaction<T>(callback: (db: Database) => Promise<T>): Promise<T> {
     // SQLite transaction support

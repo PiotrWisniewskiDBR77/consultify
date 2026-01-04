@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import DbPromise from '../utils/DbPromise.js';
+import DbPromise from '../utils/DbPromise.ts';
 
 /**
  * Global Benchmarking Service

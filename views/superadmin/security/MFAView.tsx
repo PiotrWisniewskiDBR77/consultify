@@ -117,5 +117,3 @@ export const MFAView: React.FC = () => {
         </div>
     );
 };
-
-

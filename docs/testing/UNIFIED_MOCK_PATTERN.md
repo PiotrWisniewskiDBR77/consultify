@@ -1,0 +1,348 @@
+# Unified Mock Pattern - Testing Standards
+
+## Overview
+
+This document describes the unified mock pattern for all tests in the Consultify codebase. Following this pattern ensures consistent, reliable, and maintainable tests.
+
+## Quick Start
+
+### Basic Usage
+
+```typescript
+import { setupStandardTest } from '../../helpers/unifiedMockSetup';
+
+const { mocks } = setupStandardTest();
+
+describe('MyService', () => {
+  it('should work', () => {
+    // Use mocks.db, mocks.redis, mocks.llmApi, etc.
+    mocks.db.get.mockResolvedValue({ id: '123', name: 'Test' });
+    
+    // Your test code here
+  });
+});
+```
+
+### Advanced Usage
+
+```typescript
+import { createUnifiedMockSetup } from '../../helpers/unifiedMockSetup';
+
+const { mocks, setup, teardown } = createUnifiedMockSetup({
+  useRealDb: false,      // Use mock DB
+  useRealRedis: false,   // Use mock Redis
+  useRealLLM: false,     // Use mock LLM
+  customMocks: {
+    customService: { method: vi.fn() }
+  },
+  autoCleanup: true,
+  resetMocks: true
+});
+
+describe('MyService', () => {
+  beforeEach(() => setup());
+  afterEach(() => teardown());
+  
+  it('should work', () => {
+    // Your test code
+  });
+});
+```
+
+## Available Mocks
+
+### Database (`mocks.db`)
+
+```typescript
+// Callback-style (SQLite3)
+mocks.db.get(sql, params, callback);
+mocks.db.all(sql, params, callback);
+mocks.db.run(sql, params, callback);
+
+// Promise-style (Postgres-compatible)
+mocks.db.query(sql, params).then(...);
+mocks.db.getAsync(sql, params).then(...);
+mocks.db.allAsync(sql, params).then(...);
+mocks.db.runAsync(sql, params).then(...);
+```
+
+### Redis (`mocks.redis`)
+
+```typescript
+mocks.redis.get(key).then(...);
+mocks.redis.set(key, value).then(...);
+mocks.redis.del(key).then(...);
+mocks.redis.exists(key).then(...);
+```
+
+### LLM API (`mocks.llmApi`)
+
+```typescript
+mocks.llmApi.chat(messages).then(...);
+for await (const chunk of mocks.llmApi.stream(messages)) {
+  // Handle stream
+}
+```
+
+### AI Services
+
+```typescript
+mocks.aiContextBuilder.buildContext().then(...);
+mocks.aiPipeline.execute(prompt).then(...);
+```
+
+### Other Services
+
+```typescript
+mocks.tokenBilling.hasSufficientBalance().then(...);
+mocks.analytics.logEvent(event).then(...);
+mocks.accessPolicy.checkAccess().then(...);
+mocks.permission.hasPermission().then(...);
+mocks.stripe.createCustomer().then(...);
+```
+
+## Mock Setup Patterns
+
+### Pattern 1: Standard Setup (Recommended)
+
+Use for most tests:
+
+```typescript
+const { mocks } = setupStandardTest();
+```
+
+### Pattern 2: Custom Setup
+
+Use when you need specific configuration:
+
+```typescript
+const { mocks } = createUnifiedMockSetup({
+  useRealDb: true,  // Use real DB for integration tests
+  customMocks: {
+    myService: createMockMyService()
+  }
+});
+```
+
+### Pattern 3: Minimal Setup
+
+Use when you need manual control:
+
+```typescript
+const { mocks, setup, teardown } = setupMinimalTest();
+
+beforeEach(() => setup());
+afterEach(() => teardown());
+```
+
+## Best Practices
+
+### 1. Always Use Unified Setup
+
+❌ **Don't:**
+```typescript
+const mockDb = {
+  get: vi.fn(),
+  all: vi.fn(),
+  // ... manual setup
+};
+```
+
+✅ **Do:**
+```typescript
+const { mocks } = setupStandardTest();
+// Use mocks.db
+```
+
+### 2. Reset Mocks Between Tests
+
+The unified setup automatically resets mocks, but if you're using minimal setup:
+
+```typescript
+beforeEach(() => {
+  mocks.reset();
+});
+```
+
+### 3. Use Appropriate Mock Types
+
+- **Unit tests:** Use all mocks (`useRealDb: false`)
+- **Integration tests:** Use real DB (`useRealDb: true`)
+- **E2E tests:** Use real services
+
+### 4. Mock Only What You Need
+
+```typescript
+// Don't mock everything
+const { mocks } = setupStandardTest();
+
+// Mock only what your test needs
+mocks.db.get.mockResolvedValue({ id: '123' });
+```
+
+### 5. Clean Up After Tests
+
+The unified setup handles cleanup automatically, but for manual cleanup:
+
+```typescript
+afterEach(async () => {
+  await mocks.cleanup();
+});
+```
+
+## Migration Guide
+
+### Migrating Existing Tests
+
+1. **Replace manual mock setup:**
+   ```typescript
+   // Before
+   const mockDb = { get: vi.fn(), all: vi.fn() };
+   
+   // After
+   const { mocks } = setupStandardTest();
+   ```
+
+2. **Update mock references:**
+   ```typescript
+   // Before
+   mockDb.get.mockResolvedValue(...);
+   
+   // After
+   mocks.db.get.mockResolvedValue(...);
+   ```
+
+3. **Remove manual cleanup:**
+   ```typescript
+   // Before
+   afterEach(() => {
+     vi.clearAllMocks();
+   });
+   
+   // After
+   // Cleanup is automatic with setupStandardTest()
+   ```
+
+## Troubleshooting
+
+### Mocks Not Resetting
+
+If mocks aren't resetting between tests:
+
+```typescript
+const { mocks, reset } = setupStandardTest();
+
+beforeEach(() => {
+  reset(); // Manual reset
+});
+```
+
+### Mock Not Working
+
+Check that you're using the correct mock:
+
+```typescript
+// Check available mocks
+console.log(Object.keys(mocks));
+
+// Verify mock is set up
+expect(mocks.db.get).toBeDefined();
+```
+
+### Async Issues
+
+Use `flushPromises()` before assertions:
+
+```typescript
+import { flushPromises } from '../../helpers/flakyTestFixer';
+
+it('should work', async () => {
+  // Trigger async operation
+  await someAsyncFunction();
+  
+  // Wait for all promises
+  await flushPromises();
+  
+  // Now assert
+  expect(mocks.db.get).toHaveBeenCalled();
+});
+```
+
+## Examples
+
+### Example 1: Simple Unit Test
+
+```typescript
+import { setupStandardTest } from '../../helpers/unifiedMockSetup';
+import { MyService } from '../../services/MyService';
+
+const { mocks } = setupStandardTest();
+
+describe('MyService', () => {
+  it('should fetch user', async () => {
+    mocks.db.get.mockResolvedValue({ id: '123', name: 'Test' });
+    
+    const service = new MyService(mocks.db);
+    const user = await service.getUser('123');
+    
+    expect(user).toEqual({ id: '123', name: 'Test' });
+    expect(mocks.db.get).toHaveBeenCalledWith('SELECT * FROM users WHERE id = ?', ['123']);
+  });
+});
+```
+
+### Example 2: Integration Test with Real DB
+
+```typescript
+import { createUnifiedMockSetup } from '../../helpers/unifiedMockSetup';
+import { initTestDb, cleanTables } from '../../helpers/dbHelper.cjs';
+
+const { mocks } = createUnifiedMockSetup({
+  useRealDb: true  // Use real DB
+});
+
+describe('MyService Integration', () => {
+  beforeEach(async () => {
+    await initTestDb();
+  });
+  
+  afterEach(async () => {
+    await cleanTables(['users']);
+  });
+  
+  it('should work with real DB', async () => {
+    // Test with real database
+  });
+});
+```
+
+### Example 3: Test with Custom Mocks
+
+```typescript
+import { createUnifiedMockSetup } from '../../helpers/unifiedMockSetup';
+
+const customService = {
+  doSomething: vi.fn().mockResolvedValue('result')
+};
+
+const { mocks } = createUnifiedMockSetup({
+  customMocks: {
+    customService
+  }
+});
+
+describe('MyService', () => {
+  it('should use custom service', async () => {
+    // Use mocks.customService
+    expect(mocks.customService.doSomething).toBeDefined();
+  });
+});
+```
+
+## Reference
+
+- [Dependency Injector](./helpers/dependencyInjector.js)
+- [Unified Mock Setup](./helpers/unifiedMockSetup.ts)
+- [Flaky Test Fixer](./helpers/flakyTestFixer.ts)
+- [Test Cleanup](./helpers/testCleanup.ts)
+

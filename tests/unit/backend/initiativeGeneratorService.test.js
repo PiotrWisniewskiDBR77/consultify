@@ -5,32 +5,15 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// Mock database
-const mockDb = vi.hoisted(() => ({
-    get: vi.fn(),
-    run: vi.fn(),
-    all: vi.fn()
-}));
-
-vi.mock('../../../server/database', () => ({
-    default: mockDb,
-    getDatabase: () => mockDb
-}));
-
-// Mock uuid
-vi.mock('uuid', () => ({
-    v4: () => 'test-uuid-123'
-}));
-
 // Mock RapidLeanService
-vi.mock('../../../server/services/rapidLeanService', () => ({
+vi.mock('../../../server/src/services/rapidLeanService', () => ({
     default: {
         getAssessment: vi.fn()
     }
 }));
 
 // Mock ExternalAssessmentService
-vi.mock('../../../server/services/externalAssessmentService', () => ({
+vi.mock('../../../server/src/services/externalAssessmentService', () => ({
     default: {
         getAssessment: vi.fn()
     }
@@ -38,12 +21,15 @@ vi.mock('../../../server/services/externalAssessmentService', () => ({
 
 describe('InitiativeGeneratorService', () => {
     let InitiativeGeneratorService;
+    let mocks;
 
     beforeEach(async () => {
         vi.resetModules();
         vi.clearAllMocks();
 
-        const module = await import('../../../server/services/initiativeGeneratorService.js');
+        mocks = setupStandardTest();
+
+        const module = await import('../../../server/src/services/initiativeGeneratorService.js');
         InitiativeGeneratorService = module.default;
     });
 

@@ -1,7 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
 
 // Mock database
 const createMockDb = () => ({
@@ -17,22 +14,28 @@ const createMockStageGateService = () => ({
     evaluateGate: vi.fn()
 });
 
-// Import service
-const PMOHealthService = require('../../../../server/services/pmoHealthService');
-
 describe('PMOHealthService', () => {
     let mockDb;
     let mockStageGateService;
+    let PMOHealthService;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.clearAllMocks();
         mockDb = createMockDb();
         mockStageGateService = createMockStageGateService();
 
-        PMOHealthService.setDependencies({
-            db: mockDb,
-            StageGateService: mockStageGateService
-        });
+        // Dynamic import to handle ESM/TS correctly
+        const module = await import('../../../../server/services/pmoHealthService');
+        PMOHealthService = module.default || module;
+
+        if (PMOHealthService.setDependencies) {
+            PMOHealthService.setDependencies({
+                db: mockDb,
+                stageGateService: mockStageGateService
+            });
+        } else {
+            console.warn('PMOHealthService.setDependencies not found', Object.keys(PMOHealthService));
+        }
     });
 
     describe('getHealthSnapshot', () => {

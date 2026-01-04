@@ -6,7 +6,7 @@
  * Provides standard metrics for monitoring and observability
  */
 
-import { Registry, Counter, Histogram, Gauge, collectDefaultMetrics } from 'prom-client';
+import { collectDefaultMetrics, Counter, Gauge, Histogram, Registry } from 'prom-client';
 
 // ==========================================
 // METRICS REGISTRY
@@ -374,7 +374,10 @@ class MetricsService {
      * Note: Prometheus histograms automatically calculate percentiles
      * This method extracts them from the metrics
      */
-    async getPercentiles(histogramName: string, labels?: Record<string, string>): Promise<{
+    async getPercentiles(
+        histogramName: string,
+        labels?: Record<string, string>,
+    ): Promise<{
         p50: number;
         p95: number;
         p99: number;

@@ -10,6 +10,7 @@ import { Router } from 'express';
 import ProjectController from '../controllers/ProjectController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { checkPlanLimit } from '../middleware/planLimits.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { _validateQuery, validateBody } from '../middleware/validation.middleware.js';
 import {
     CreateProjectSchema,
@@ -20,6 +21,9 @@ import {
 } from '../validators/project.validators.js';
 
 const router = Router();
+
+// Apply rate limiting
+router.use(authRateLimiter);
 
 // Apply auth middleware to all routes
 router.use(verifyToken);

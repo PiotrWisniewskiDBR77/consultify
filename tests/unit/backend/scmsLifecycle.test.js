@@ -17,7 +17,7 @@ describe('StageGateService', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        StageGateService = (await import('../../../server/services/stageGateService.js')).default;
+        StageGateService = (await import('../../../server/src/services/stageGateService.js')).default;
     });
 
     describe('Gate Types', () => {

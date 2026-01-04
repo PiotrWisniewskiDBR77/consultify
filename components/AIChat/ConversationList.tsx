@@ -70,5 +70,3 @@ export const ConversationList: React.FC<ConversationListProps> = ({ groups, acti
 };
 
 export default ConversationList;
-
-

@@ -4,25 +4,23 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
+// Removed createRequire
 
 describe('BackupCron', () => {
     let BackupCron;
     let mockBackupService;
     let mockCron;
 
-    beforeEach(() => {
+    beforeEach(async () => { // Async beforeEach
         vi.resetModules();
-        
+
         // Mock BackupService
         mockBackupService = {
             createBackup: vi.fn().mockResolvedValue({ id: 'backup-123' }),
             runRetentionPolicy: vi.fn().mockResolvedValue({ deleted: 5 })
         };
 
-        vi.doMock('../../../server/services/backupService', () => ({
+        vi.doMock('../../../../server/services/backupService', () => ({
             default: mockBackupService
         }));
 
@@ -33,27 +31,31 @@ describe('BackupCron', () => {
             })
         };
 
-        vi.doMock('node-cron', () => mockCron);
+        vi.doMock('node-cron', () => ({
+            default: mockCron
+        }));
 
         // Mock Sentry
-        vi.doMock('../../../server/config/sentry', () => ({
+        vi.doMock('../../../../server/config/sentry', () => ({
             captureException: vi.fn()
         }));
 
-        BackupCron = require('../../../server/cron/backupCron.js');
+        // Dynamic import
+        const module = await import('../../../../server/cron/backupCron.ts');
+        BackupCron = module.default;
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../server/services/backupService');
+        vi.doUnmock('../../../../server/services/backupService');
         vi.doUnmock('node-cron');
-        vi.doUnmock('../../../server/config/sentry');
+        vi.doUnmock('../../../../server/config/sentry');
     });
 
     describe('startBackupJob', () => {
         it('should schedule backup job when not disabled', () => {
             delete process.env.DISABLE_BACKUP_CRON;
-            
+
             BackupCron.startBackupJob();
 
             expect(mockCron.schedule).toHaveBeenCalledWith(
@@ -65,22 +67,22 @@ describe('BackupCron', () => {
 
         it('should not schedule job when DISABLE_BACKUP_CRON is true', () => {
             process.env.DISABLE_BACKUP_CRON = 'true';
-            
+
             BackupCron.startBackupJob();
 
             expect(mockCron.schedule).not.toHaveBeenCalled();
-            
+
             delete process.env.DISABLE_BACKUP_CRON;
         });
 
         it('should create backup when scheduled job runs', async () => {
             delete process.env.DISABLE_BACKUP_CRON;
-            
+
             BackupCron.startBackupJob();
-            
+
             // Get the scheduled callback
             const scheduledCallback = mockCron.schedule.mock.calls[0][1];
-            
+
             await scheduledCallback();
 
             expect(mockBackupService.createBackup).toHaveBeenCalledWith('full', 'scheduled');
@@ -90,11 +92,11 @@ describe('BackupCron', () => {
         it('should handle backup errors gracefully', async () => {
             delete process.env.DISABLE_BACKUP_CRON;
             mockBackupService.createBackup.mockRejectedValue(new Error('Backup failed'));
-            
+
             BackupCron.startBackupJob();
-            
+
             const scheduledCallback = mockCron.schedule.mock.calls[0][1];
-            
+
             // Should not throw
             await expect(scheduledCallback()).resolves.not.toThrow();
         });
@@ -105,7 +107,7 @@ describe('BackupCron', () => {
             delete process.env.DISABLE_BACKUP_CRON;
             const mockJob = { stop: vi.fn() };
             mockCron.schedule.mockReturnValue(mockJob);
-            
+
             BackupCron.startBackupJob();
             BackupCron.stopBackupJob();
 

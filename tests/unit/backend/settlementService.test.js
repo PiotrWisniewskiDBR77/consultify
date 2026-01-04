@@ -6,25 +6,23 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
 describe('SettlementService', () => {
-    let mockDb;
     let SettlementService;
-    let mockAttributionService;
-    let mockPartnerService;
-    let mockMetricsCollector;
+    let mocks;
 
     beforeEach(async () => {
         vi.resetModules();
-        
-        mockDb = createMockDb();
 
-        mockAttributionService = {
+        mocks = setupStandardTest();
+
+        // Setup specific service mocks
+        mocks.attributionService = {
             exportAttribution: vi.fn().mockResolvedValue([])
         };
 
-        mockPartnerService = {
+        mocks.partnerService = {
             getByPartnerCode: vi.fn().mockResolvedValue(null),
             getActiveAgreement: vi.fn().mockResolvedValue({
                 revenue_share_percent: 20
@@ -36,7 +34,7 @@ describe('SettlementService', () => {
             })
         };
 
-        mockMetricsCollector = {
+        mocks.metricsCollector = {
             recordEvent: vi.fn().mockResolvedValue({}),
             EVENT_TYPES: {
                 SETTLEMENT_GENERATED: 'SETTLEMENT_GENERATED'
@@ -46,14 +44,14 @@ describe('SettlementService', () => {
             }
         };
 
-        SettlementService = (await import('../../../server/services/settlementService.js')).default;
-        
+        SettlementService = (await import('../../../server/src/services/settlementService.js')).default;
+
         SettlementService.setDependencies({
-            db: mockDb,
-            uuidv4: () => 'settlement-1',
-            AttributionService: mockAttributionService,
-            PartnerService: mockPartnerService,
-            MetricsCollector: mockMetricsCollector
+            db: mocks.db,
+            uuidv4: mocks.uuid,
+            AttributionService: mocks.attributionService,
+            PartnerService: mocks.partnerService,
+            MetricsCollector: mocks.metricsCollector
         });
     });
 

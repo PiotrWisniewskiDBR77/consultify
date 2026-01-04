@@ -322,5 +322,3 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
 };
 
 export default PortfolioHealthScore;
-
-

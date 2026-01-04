@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../database/Database.js';
 import type { IDatabase } from '../../database/IDatabase.js';
-import * as DbPromise from '../../utils/DbPromise.js';
+import * as DbPromise from '../../utils/DbPromise.ts';
 import {
     DEFAULT_DEMO_LIMITS,
     DEFAULT_TRIAL_LIMITS,

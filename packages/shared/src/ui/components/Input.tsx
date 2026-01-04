@@ -72,8 +72,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         const borderColor = hasError
             ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/20'
             : hasSuccess
-                ? 'border-success-500 focus:border-success-500 focus:ring-success-500/20'
-                : 'border-transparent focus:border-primary-500 focus:ring-primary-500/20';
+              ? 'border-success-500 focus:border-success-500 focus:ring-success-500/20'
+              : 'border-transparent focus:border-primary-500 focus:ring-primary-500/20';
 
         return (
             <div className={`${fullWidth ? 'w-full' : ''} ${containerClassName}`}>
@@ -141,8 +141,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                             <span className="text-slate-400 dark:text-slate-500">
                                 {React.isValidElement(iconRight)
                                     ? React.cloneElement(iconRight as React.ReactElement<{ size?: number }>, {
-                                        size: iconSize,
-                                    })
+                                          size: iconSize,
+                                      })
                                     : iconRight}
                             </span>
                         )}
@@ -152,8 +152,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 {/* Helper/Error text */}
                 {(error || helperText) && (
                     <p
-                        className={`mt-2 text-sm ${hasError ? 'text-danger-500' : 'text-slate-500 dark:text-slate-400'
-                            }`}
+                        className={`mt-2 text-sm ${
+                            hasError ? 'text-danger-500' : 'text-slate-500 dark:text-slate-400'
+                        }`}
                     >
                         {error || helperText}
                     </p>

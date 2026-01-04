@@ -1,154 +1,73 @@
 /**
- * SettingsView - Main Settings Panel with 6-Module Tab Structure
+ * SettingsView - Modern two-column Settings Panel
  *
- * Modules: Profile | AI Preferences | Notifications | Security | Integrations | Appearance
+ * Architecture:
+ * - Left sidebar (280px) with grouped navigation and search
+ * - Right content area with dynamic component rendering
+ * - Quick Profile Card at top of sidebar
  *
- * Uses tabs within the content area - NO separate sidebar.
- * Navigation is handled via the main Sidebar floating menu.
+ * Based on UI/UX best practices from ClickUp, HubSpot, and Slack.
  */
 
-import {
-    Accessibility,
-    Bell,
-    Brain,
-    Calendar,
-    ClipboardList,
-    Clock,
-    CreditCard,
-    Database,
-    EyeOff,
-    Fingerprint,
-    Globe,
-    History,
-    Image,
-    Key,
-    LayoutGrid,
-    Link,
-    Mail,
-    MessageSquare,
-    Mic,
-    Monitor,
-    Moon,
-    Palette,
-    Settings,
-    Shield,
-    Sliders,
-    Smartphone,
-    Sun,
-    Trash2,
-    User as UserIcon,
-    UserCircle,
-    Volume2,
-    Webhook,
-    Zap,
-} from 'lucide-react';
-import React, { useMemo } from 'react';
+import { ArrowLeft } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+// Profile components
 import { MFASetup } from '../components/Profile/MFASetup';
+// Settings components
 import { AccessibilitySettings } from '../components/settings/AccessibilitySettings';
 import AccountManagementSettings from '../components/settings/AccountManagementSettings';
 import { ActiveSessionsSettings } from '../components/settings/ActiveSessionsSettings';
+// Advanced settings (existing components)
+import { SettingsExportImport } from '../components/settings/advanced/SettingsExportImport';
+import { SettingsHistory } from '../components/settings/advanced/SettingsHistory';
+import { SettingsTemplates } from '../components/settings/advanced/SettingsTemplates';
 import { AIAutoCompleteSettings } from '../components/settings/AIAutoCompleteSettings';
 import { AIInstructionsSettings } from '../components/settings/AIInstructionsSettings';
-import { AIIntegrationsSettings } from '../components/settings/AIIntegrationsSettings';
 import { AIMemorySettings } from '../components/settings/AIMemorySettings';
 import { AIModelSelectionSettings } from '../components/settings/AIModelSelectionSettings';
 import { AIParametersSettings } from '../components/settings/AIParametersSettings';
 import { AIPersonalitySettings } from '../components/settings/AIPersonalitySettings';
+// New components (to be created)
+import { AIUsageDashboard } from '../components/settings/AIUsageDashboard';
 import { APIAccessSettings } from '../components/settings/APIAccessSettings';
-import { AppearanceSettings } from '../components/settings/AppearanceSettings';
 import { AvatarUploader } from '../components/settings/AvatarUploader';
-import { BillingSettings } from '../components/settings/BillingSettings';
 import { CalendarSyncSettings } from '../components/settings/CalendarSyncSettings';
-import { ChatHistorySettings } from '../components/settings/ChatHistorySettings';
 import { ConnectedAppsSettings } from '../components/settings/ConnectedAppsSettings';
 import { DashboardPreferencesSettings } from '../components/settings/DashboardPreferencesSettings';
 import { DataControlsSettings } from '../components/settings/DataControlsSettings';
+import { DeveloperSettings } from '../components/settings/DeveloperSettings';
 import { DNDModeSettings } from '../components/settings/DNDModeSettings';
 import { EmailNotificationsSettings } from '../components/settings/EmailNotificationsSettings';
+import { EmailSignaturesSettings } from '../components/settings/EmailSignaturesSettings';
+import { ExportDataSettings } from '../components/settings/ExportDataSettings';
 import { KeyboardShortcutsSettings } from '../components/settings/KeyboardShortcutsSettings';
 import { LanguageSettings } from '../components/settings/LanguageSettings';
 import { LoginHistorySettings } from '../components/settings/LoginHistorySettings';
 import { NotificationDigestSettings } from '../components/settings/NotificationDigestSettings';
-import { NotificationGroupingSettings } from '../components/settings/NotificationGroupingSettings';
-import { NotificationScheduleSettings } from '../components/settings/NotificationScheduleSettings';
 import { NotificationSettings } from '../components/settings/NotificationSettings';
 import { PasswordSettings } from '../components/settings/PasswordSettings';
 import { PrivacySettings } from '../components/settings/PrivacySettings';
-// Import settings components
 import { ProfileSettings } from '../components/settings/ProfileSettings';
 import { PushNotificationsSettings } from '../components/settings/PushNotificationsSettings';
+import { QuickProfileCard } from '../components/settings/QuickProfileCard';
 import { QuietHoursSettings } from '../components/settings/QuietHoursSettings';
+import { RecoveryOptionsSettings } from '../components/settings/RecoveryOptionsSettings';
 import { RegionalSettings } from '../components/settings/RegionalSettings';
-import { ResponseStyleSettings } from '../components/settings/ResponseStyleSettings';
+import SettingsSidebar, { SettingsSection } from '../components/settings/SettingsSidebar';
 import { SoundNotificationsSettings } from '../components/settings/SoundNotificationsSettings';
 import { ThemeSettings } from '../components/settings/ThemeSettings';
 import { VoiceSettings } from '../components/settings/VoiceSettings';
 import { WebhooksSettings } from '../components/settings/WebhooksSettings';
+import { WorkingHoursSettings } from '../components/settings/WorkingHoursSettings';
 import { WorkPreferencesSettings } from '../components/settings/WorkPreferencesSettings';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+// UI components
+import { Button } from '../components/ui/button';
+import { ScrollArea } from '../components/ui/scroll-area';
+// Store and types
 import { useAppStore } from '../store/useAppStore';
 import { AppView, User } from '../types';
-
-// Settings section type
-type SettingsSection = 'profile' | 'ai-preferences' | 'notifications' | 'security' | 'integrations' | 'appearance';
-
-// Map AppView to SettingsSection
-const getSettingsSection = (view: AppView): SettingsSection => {
-    // New module-based navigation
-    if (view === AppView.SETTINGS_PROFILE_MODULE) return 'profile';
-    if (view === AppView.SETTINGS_AI_MODULE) return 'ai-preferences';
-    if (view === AppView.SETTINGS_NOTIFICATIONS_MODULE) return 'notifications';
-    if (view === AppView.SETTINGS_SECURITY_MODULE) return 'security';
-    if (view === AppView.SETTINGS_INTEGRATIONS_MODULE) return 'integrations';
-    if (view === AppView.SETTINGS_APPEARANCE_MODULE) return 'appearance';
-
-    // Legacy views mapping
-    if (view === AppView.SETTINGS_PROFILE || view === AppView.SETTINGS_BILLING) {
-        return 'profile';
-    }
-    if (
-        view === AppView.SETTINGS_AI ||
-        view === AppView.SETTINGS_AI_MEMORY ||
-        view === AppView.SETTINGS_AI_RESPONSE_STYLE ||
-        view === AppView.SETTINGS_AI_CHAT_HISTORY ||
-        view === AppView.SETTINGS_AI_VOICE
-    ) {
-        return 'ai-preferences';
-    }
-    if (view === AppView.SETTINGS_NOTIFICATIONS) {
-        return 'notifications';
-    }
-    if (
-        view === AppView.SETTINGS_SECURITY ||
-        view === AppView.SETTINGS_MFA ||
-        view === AppView.SETTINGS_ACTIVE_SESSIONS ||
-        view === AppView.SETTINGS_LOGIN_HISTORY ||
-        view === AppView.SETTINGS_DATA_CONTROLS ||
-        view === AppView.SETTINGS_PRIVACY
-    ) {
-        return 'security';
-    }
-    if (
-        view === AppView.SETTINGS_INTEGRATIONS ||
-        view === AppView.SETTINGS_API_ACCESS ||
-        view === AppView.SETTINGS_WEBHOOKS ||
-        view === AppView.SETTINGS_CALENDAR_SYNC
-    ) {
-        return 'integrations';
-    }
-    if (
-        view === AppView.SETTINGS_APPEARANCE ||
-        view === AppView.SETTINGS_REGIONALIZATION ||
-        view === AppView.SETTINGS_ACCESSIBILITY ||
-        view === AppView.SETTINGS_WORK_PREFERENCES ||
-        view === AppView.SETTINGS_DASHBOARD_PREFERENCES
-    ) {
-        return 'appearance';
-    }
-    return 'profile';
-};
 
 interface SettingsViewProps {
     currentUser: User;
@@ -157,437 +76,252 @@ interface SettingsViewProps {
     toggleTheme: (newTheme?: 'light' | 'dark' | 'system') => void;
 }
 
+// Section metadata for headers
+const sectionMeta: Record<SettingsSection, { title: string; subtitle: string }> = {
+    // My Settings
+    profile: { title: 'Profile', subtitle: 'Manage your personal information and account details' },
+    avatar: { title: 'Avatar & Photo', subtitle: 'Upload and manage your profile picture' },
+    signatures: { title: 'Email Signatures', subtitle: 'Create and manage your email signatures' },
+    'working-hours': { title: 'Working Hours', subtitle: 'Set your availability schedule' },
+    // Work Preferences
+    dashboard: { title: 'Dashboard', subtitle: 'Customize your dashboard layout and widgets' },
+    'work-preferences': { title: 'Work Preferences', subtitle: 'Configure default task and project settings' },
+    regional: { title: 'Regional Settings', subtitle: 'Set your timezone, date format, and language preferences' },
+    language: { title: 'Language', subtitle: 'Choose your preferred language' },
+    // AI & Automation
+    'ai-instructions': { title: 'AI Instructions', subtitle: 'Customize how AI responds to you' },
+    'ai-model': { title: 'Model Selection', subtitle: 'Choose your preferred AI model' },
+    'ai-parameters': { title: 'AI Parameters', subtitle: 'Fine-tune AI response settings' },
+    'ai-usage': { title: 'AI Usage Dashboard', subtitle: 'Monitor your AI usage and token consumption' },
+    'ai-voice': { title: 'Voice & TTS', subtitle: 'Configure voice input and text-to-speech' },
+    'ai-memory': { title: 'AI Memory', subtitle: 'Manage AI context and memory settings' },
+    'ai-personality': { title: 'AI Personality', subtitle: 'Set AI tone and communication style' },
+    'ai-autocomplete': { title: 'Auto-Complete', subtitle: 'Configure AI-powered suggestions' },
+    // Notifications
+    'notifications-overview': { title: 'Notifications', subtitle: 'Control how and when you receive notifications' },
+    'notifications-email': { title: 'Email Notifications', subtitle: 'Manage email notification preferences' },
+    'notifications-push': { title: 'Push Notifications', subtitle: 'Configure browser and mobile push notifications' },
+    'notifications-sounds': { title: 'Sound Notifications', subtitle: 'Set notification sounds and volume' },
+    'notifications-quiet-hours': { title: 'Quiet Hours', subtitle: 'Schedule times when notifications are muted' },
+    'notifications-digest': { title: 'Notification Digest', subtitle: 'Configure notification summary emails' },
+    'notifications-dnd': { title: 'Do Not Disturb', subtitle: 'Temporarily pause all notifications' },
+    // Security
+    password: { title: 'Password', subtitle: 'Change your password and security settings' },
+    mfa: { title: 'Two-Factor Authentication', subtitle: 'Add an extra layer of security to your account' },
+    sessions: { title: 'Active Sessions', subtitle: 'View and manage your logged-in devices' },
+    'login-history': { title: 'Login History', subtitle: 'Review recent account activity' },
+    recovery: { title: 'Recovery Options', subtitle: 'Set up account recovery methods' },
+    // Integrations
+    'connected-apps': { title: 'Connected Apps', subtitle: 'Manage third-party app connections' },
+    'calendar-sync': { title: 'Calendar Sync', subtitle: 'Connect your calendars' },
+    'api-keys': { title: 'API Keys', subtitle: 'Manage your API access keys' },
+    webhooks: { title: 'Webhooks', subtitle: 'Configure webhook endpoints' },
+    // Data & Privacy
+    'data-controls': { title: 'Data Controls', subtitle: 'Manage your data retention and storage' },
+    privacy: { title: 'Privacy', subtitle: 'Control your privacy settings' },
+    'export-data': { title: 'Export Data', subtitle: 'Download a copy of your data' },
+    'delete-account': { title: 'Delete Account', subtitle: 'Permanently delete your account' },
+    // Appearance
+    theme: { title: 'Theme', subtitle: 'Choose your preferred color theme' },
+    accessibility: { title: 'Accessibility', subtitle: 'Configure accessibility options' },
+    shortcuts: { title: 'Keyboard Shortcuts', subtitle: 'View and customize keyboard shortcuts' },
+    // Advanced
+    'import-export': { title: 'Import/Export Settings', subtitle: 'Backup and restore your settings' },
+    templates: { title: 'Settings Templates', subtitle: 'Save and apply settings presets' },
+    developer: { title: 'Developer Mode', subtitle: 'Access developer tools and debugging' },
+    'beta-features': { title: 'Beta Features', subtitle: 'Try experimental features before release' },
+    'settings-history': { title: 'Settings History', subtitle: 'View and restore previous settings' },
+};
+
 export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdateUser, theme, toggleTheme }) => {
-    const { currentView, setCurrentView } = useAppStore();
+    const { setCurrentView } = useAppStore();
     const { t } = useTranslation();
+    const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
 
-    // Derive active section from currentView
-    const activeSection = useMemo<SettingsSection>(() => {
-        return getSettingsSection(currentView);
-    }, [currentView]);
+    // Handle section change
+    const handleSectionChange = useCallback((section: SettingsSection) => {
+        setActiveSection(section);
+    }, []);
 
-    // Handle section change - using new module AppView values
-    const handleSectionChange = (section: string) => {
-        switch (section) {
-            case 'profile':
-                setCurrentView(AppView.SETTINGS_PROFILE_MODULE);
-                break;
-            case 'ai-preferences':
-                setCurrentView(AppView.SETTINGS_AI_MODULE);
-                break;
-            case 'notifications':
-                setCurrentView(AppView.SETTINGS_NOTIFICATIONS_MODULE);
-                break;
-            case 'security':
-                setCurrentView(AppView.SETTINGS_SECURITY_MODULE);
-                break;
-            case 'integrations':
-                setCurrentView(AppView.SETTINGS_INTEGRATIONS_MODULE);
-                break;
-            case 'appearance':
-                setCurrentView(AppView.SETTINGS_APPEARANCE_MODULE);
-                break;
-        }
-    };
+    // Handle back to dashboard
+    const handleBackToDashboard = useCallback(() => {
+        setCurrentView(AppView.DASHBOARD);
+    }, [setCurrentView]);
 
-    // Get section title and subtitle
-    const getSectionInfo = () => {
-        switch (activeSection) {
-            case 'profile':
-                return {
-                    title: t('settings.profile.title', 'Profile'),
-                    subtitle: t('settings.profile.subtitle', 'Manage your personal information and account settings'),
-                };
-            case 'ai-preferences':
-                return {
-                    title: t('settings.aiPreferences.title', 'AI Preferences'),
-                    subtitle: t('settings.aiPreferences.subtitle', 'Customize how AI responds to you'),
-                };
-            case 'notifications':
-                return {
-                    title: t('settings.notifications.title', 'Notifications'),
-                    subtitle: t('settings.notifications.subtitle', 'Control how and when you receive notifications'),
-                };
-            case 'security':
-                return {
-                    title: t('settings.security.title', 'Security & Privacy'),
-                    subtitle: t('settings.security.subtitle', 'Manage your security settings and data'),
-                };
-            case 'integrations':
-                return {
-                    title: t('settings.integrations.title', 'Integrations'),
-                    subtitle: t(
-                        'settings.integrations.subtitle',
-                        'Connect apps, manage API keys, and configure webhooks',
-                    ),
-                };
-            case 'appearance':
-                return {
-                    title: t('settings.appearance.title', 'Appearance & Regional'),
-                    subtitle: t(
-                        'settings.appearance.subtitle',
-                        'Customize your visual preferences and regional settings',
-                    ),
-                };
-            default:
-                return { title: 'Settings', subtitle: '' };
-        }
-    };
-
-    const sectionInfo = getSectionInfo();
+    // Get current section metadata
+    const currentMeta = useMemo(() => {
+        const meta = sectionMeta[activeSection];
+        return {
+            title: t(`settings.sections.${activeSection}.title`, meta.title),
+            subtitle: t(`settings.sections.${activeSection}.subtitle`, meta.subtitle),
+        };
+    }, [activeSection, t]);
 
     // Render content based on active section
-    const renderContent = () => {
+    const renderContent = useCallback(() => {
         switch (activeSection) {
+            // My Settings
             case 'profile':
-                return (
-                    <Tabs defaultValue="personal" className="w-full">
-                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg">
-                            <TabsTrigger value="personal" className="flex items-center gap-2">
-                                <UserIcon size={16} />
-                                {t('settings.profile.tabs.personal', 'Personal Info')}
-                            </TabsTrigger>
-                            <TabsTrigger value="avatar" className="flex items-center gap-2">
-                                <Image size={16} />
-                                {t('settings.profile.tabs.avatar', 'Avatar')}
-                            </TabsTrigger>
-                            <TabsTrigger value="password" className="flex items-center gap-2">
-                                <Key size={16} />
-                                {t('settings.profile.tabs.password', 'Password')}
-                            </TabsTrigger>
-                            <TabsTrigger value="billing" className="flex items-center gap-2">
-                                <CreditCard size={16} />
-                                {t('settings.profile.tabs.billing', 'Billing')}
-                            </TabsTrigger>
-                            <TabsTrigger value="account" className="flex items-center gap-2">
-                                <Trash2 size={16} />
-                                {t('settings.profile.tabs.account', 'Account')}
-                            </TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="personal" className="mt-6">
-                            <ProfileSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                        <TabsContent value="avatar" className="mt-6">
-                            <AvatarUploader currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                        <TabsContent value="password" className="mt-6">
-                            <PasswordSettings />
-                        </TabsContent>
-                        <TabsContent value="billing" className="mt-6">
-                            <BillingSettings currentUser={currentUser} />
-                        </TabsContent>
-                        <TabsContent value="account" className="mt-6">
-                            <AccountManagementSettings />
-                        </TabsContent>
-                    </Tabs>
-                );
+                return <ProfileSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'avatar':
+                return <AvatarUploader currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'signatures':
+                return <EmailSignaturesSettings currentUser={currentUser} />;
+            case 'working-hours':
+                return <WorkingHoursSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
 
-            case 'ai-preferences':
-                return (
-                    <Tabs defaultValue="instructions" className="w-full">
-                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg flex-wrap">
-                            <TabsTrigger value="instructions" className="flex items-center gap-2">
-                                <MessageSquare size={16} />
-                                {t('settings.ai.tabs.instructions', 'Instructions')}
-                            </TabsTrigger>
-                            <TabsTrigger value="model" className="flex items-center gap-2">
-                                <Brain size={16} />
-                                {t('settings.ai.tabs.model', 'Model')}
-                            </TabsTrigger>
-                            <TabsTrigger value="parameters" className="flex items-center gap-2">
-                                <Sliders size={16} />
-                                {t('settings.ai.tabs.parameters', 'Parameters')}
-                            </TabsTrigger>
-                            <TabsTrigger value="personality" className="flex items-center gap-2">
-                                <UserIcon size={16} />
-                                {t('settings.ai.tabs.personality', 'Personality')}
-                            </TabsTrigger>
-                            <TabsTrigger value="autocomplete" className="flex items-center gap-2">
-                                <Zap size={16} />
-                                {t('settings.ai.tabs.autocomplete', 'Auto-Complete')}
-                            </TabsTrigger>
-                            <TabsTrigger value="memory" className="flex items-center gap-2">
-                                <Brain size={16} />
-                                {t('settings.ai.tabs.memory', 'Memory')}
-                            </TabsTrigger>
-                            <TabsTrigger value="style" className="flex items-center gap-2">
-                                <Settings size={16} />
-                                {t('settings.ai.tabs.style', 'Response Style')}
-                            </TabsTrigger>
-                            <TabsTrigger value="history" className="flex items-center gap-2">
-                                <History size={16} />
-                                {t('settings.ai.tabs.history', 'Chat History')}
-                            </TabsTrigger>
-                            <TabsTrigger value="voice" className="flex items-center gap-2">
-                                <Mic size={16} />
-                                {t('settings.ai.tabs.voice', 'Voice')}
-                            </TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="instructions" className="mt-6">
-                            <AIInstructionsSettings />
-                        </TabsContent>
-                        <TabsContent value="model" className="mt-6">
-                            <AIModelSelectionSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                        <TabsContent value="parameters" className="mt-6">
-                            <AIParametersSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                        <TabsContent value="personality" className="mt-6">
-                            <AIPersonalitySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                        <TabsContent value="autocomplete" className="mt-6">
-                            <AIAutoCompleteSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                        <TabsContent value="memory" className="mt-6">
-                            <AIMemorySettings />
-                        </TabsContent>
-                        <TabsContent value="style" className="mt-6">
-                            <ResponseStyleSettings />
-                        </TabsContent>
-                        <TabsContent value="history" className="mt-6">
-                            <ChatHistorySettings />
-                        </TabsContent>
-                        <TabsContent value="voice" className="mt-6">
-                            <VoiceSettings />
-                        </TabsContent>
-                    </Tabs>
-                );
+            // Work Preferences
+            case 'dashboard':
+                return <DashboardPreferencesSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'work-preferences':
+                return <WorkPreferencesSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'regional':
+                return <RegionalSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'language':
+                return <LanguageSettings />;
 
-            case 'notifications':
-                return (
-                    <Tabs defaultValue="all" className="w-full">
-                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg flex-wrap">
-                            <TabsTrigger value="all" className="flex items-center gap-2">
-                                <Bell size={16} />
-                                {t('settings.notifications.tabs.all', 'All')}
-                            </TabsTrigger>
-                            <TabsTrigger value="email" className="flex items-center gap-2">
-                                <Mail size={16} />
-                                {t('settings.notifications.tabs.email', 'Email')}
-                            </TabsTrigger>
-                            <TabsTrigger value="push" className="flex items-center gap-2">
-                                <Smartphone size={16} />
-                                {t('settings.notifications.tabs.push', 'Push')}
-                            </TabsTrigger>
-                            <TabsTrigger value="sounds" className="flex items-center gap-2">
-                                <Volume2 size={16} />
-                                {t('settings.notifications.tabs.sounds', 'Sounds')}
-                            </TabsTrigger>
-                            <TabsTrigger value="grouping" className="flex items-center gap-2">
-                                <LayoutGrid size={16} />
-                                {t('settings.notifications.tabs.grouping', 'Grouping')}
-                            </TabsTrigger>
-                            <TabsTrigger value="digest" className="flex items-center gap-2">
-                                <Mail size={16} />
-                                {t('settings.notifications.tabs.digest', 'Digest')}
-                            </TabsTrigger>
-                            <TabsTrigger value="quiet-hours" className="flex items-center gap-2">
-                                <Clock size={16} />
-                                {t('settings.notifications.tabs.quietHours', 'Quiet Hours')}
-                            </TabsTrigger>
-                            <TabsTrigger value="dnd" className="flex items-center gap-2">
-                                <Moon size={16} />
-                                {t('settings.notifications.tabs.dnd', 'DND')}
-                            </TabsTrigger>
-                            <TabsTrigger value="schedule" className="flex items-center gap-2">
-                                <Clock size={16} />
-                                {t('settings.notifications.tabs.schedule', 'Schedule')}
-                            </TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="all" className="mt-6">
-                            <NotificationSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                        <TabsContent value="email" className="mt-6">
-                            <EmailNotificationsSettings />
-                        </TabsContent>
-                        <TabsContent value="push" className="mt-6">
-                            <PushNotificationsSettings />
-                        </TabsContent>
-                        <TabsContent value="sounds" className="mt-6">
-                            <SoundNotificationsSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                        <TabsContent value="grouping" className="mt-6">
-                            <NotificationGroupingSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                        <TabsContent value="digest" className="mt-6">
-                            <NotificationDigestSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                        <TabsContent value="quiet-hours" className="mt-6">
-                            <QuietHoursSettings currentUser={currentUser} onUpdate={() => onUpdateUser({})} />
-                        </TabsContent>
-                        <TabsContent value="dnd" className="mt-6">
-                            <DNDModeSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                        <TabsContent value="schedule" className="mt-6">
-                            <NotificationScheduleSettings />
-                        </TabsContent>
-                    </Tabs>
-                );
+            // AI & Automation
+            case 'ai-instructions':
+                return <AIInstructionsSettings />;
+            case 'ai-model':
+                return <AIModelSelectionSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'ai-parameters':
+                return <AIParametersSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'ai-usage':
+                return <AIUsageDashboard currentUser={currentUser} />;
+            case 'ai-voice':
+                return <VoiceSettings />;
+            case 'ai-memory':
+                return <AIMemorySettings />;
+            case 'ai-personality':
+                return <AIPersonalitySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'ai-autocomplete':
+                return <AIAutoCompleteSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
 
-            case 'security':
-                return (
-                    <Tabs defaultValue="mfa" className="w-full">
-                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg">
-                            <TabsTrigger value="mfa" className="flex items-center gap-2">
-                                <Fingerprint size={16} />
-                                {t('settings.security.tabs.mfa', 'MFA')}
-                            </TabsTrigger>
-                            <TabsTrigger value="sessions" className="flex items-center gap-2">
-                                <Monitor size={16} />
-                                {t('settings.security.tabs.sessions', 'Sessions')}
-                            </TabsTrigger>
-                            <TabsTrigger value="history" className="flex items-center gap-2">
-                                <History size={16} />
-                                {t('settings.security.tabs.history', 'Login History')}
-                            </TabsTrigger>
-                            <TabsTrigger value="data" className="flex items-center gap-2">
-                                <Database size={16} />
-                                {t('settings.security.tabs.data', 'Data Controls')}
-                            </TabsTrigger>
-                            <TabsTrigger value="privacy" className="flex items-center gap-2">
-                                <EyeOff size={16} />
-                                {t('settings.security.tabs.privacy', 'Privacy')}
-                            </TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="mfa" className="mt-6">
-                            <MFASetup isEnabled={currentUser?.mfaEnabled || false} onUpdate={() => onUpdateUser({})} />
-                        </TabsContent>
-                        <TabsContent value="sessions" className="mt-6">
-                            <ActiveSessionsSettings />
-                        </TabsContent>
-                        <TabsContent value="history" className="mt-6">
-                            <LoginHistorySettings />
-                        </TabsContent>
-                        <TabsContent value="data" className="mt-6">
-                            <DataControlsSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                        <TabsContent value="privacy" className="mt-6">
-                            <PrivacySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                    </Tabs>
-                );
+            // Notifications
+            case 'notifications-overview':
+                return <NotificationSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'notifications-email':
+                return <EmailNotificationsSettings />;
+            case 'notifications-push':
+                return <PushNotificationsSettings />;
+            case 'notifications-sounds':
+                return <SoundNotificationsSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'notifications-quiet-hours':
+                return <QuietHoursSettings currentUser={currentUser} onUpdate={() => onUpdateUser({})} />;
+            case 'notifications-digest':
+                return <NotificationDigestSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'notifications-dnd':
+                return <DNDModeSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
 
-            case 'integrations':
-                return (
-                    <Tabs defaultValue="apps" className="w-full">
-                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg flex-wrap">
-                            <TabsTrigger value="apps" className="flex items-center gap-2">
-                                <LayoutGrid size={16} />
-                                {t('settings.integrations.tabs.apps', 'Apps')}
-                            </TabsTrigger>
-                            <TabsTrigger value="ai" className="flex items-center gap-2">
-                                <Brain size={16} />
-                                {t('settings.integrations.tabs.ai', 'AI')}
-                            </TabsTrigger>
-                            <TabsTrigger value="api" className="flex items-center gap-2">
-                                <Key size={16} />
-                                {t('settings.integrations.tabs.api', 'API Keys')}
-                            </TabsTrigger>
-                            <TabsTrigger value="webhooks" className="flex items-center gap-2">
-                                <Webhook size={16} />
-                                {t('settings.integrations.tabs.webhooks', 'Webhooks')}
-                            </TabsTrigger>
-                            <TabsTrigger value="calendar" className="flex items-center gap-2">
-                                <Calendar size={16} />
-                                {t('settings.integrations.tabs.calendar', 'Calendar')}
-                            </TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="apps" className="mt-6">
-                            <ConnectedAppsSettings />
-                        </TabsContent>
-                        <TabsContent value="ai" className="mt-6">
-                            <AIIntegrationsSettings currentUser={currentUser} />
-                        </TabsContent>
-                        <TabsContent value="api" className="mt-6">
-                            <APIAccessSettings currentUser={currentUser} />
-                        </TabsContent>
-                        <TabsContent value="webhooks" className="mt-6">
-                            <WebhooksSettings currentUser={currentUser} />
-                        </TabsContent>
-                        <TabsContent value="calendar" className="mt-6">
-                            <CalendarSyncSettings />
-                        </TabsContent>
-                    </Tabs>
-                );
+            // Security
+            case 'password':
+                return <PasswordSettings />;
+            case 'mfa':
+                return <MFASetup isEnabled={currentUser?.mfaEnabled || false} onUpdate={() => onUpdateUser({})} />;
+            case 'sessions':
+                return <ActiveSessionsSettings />;
+            case 'login-history':
+                return <LoginHistorySettings />;
+            case 'recovery':
+                return <RecoveryOptionsSettings currentUser={currentUser} />;
 
-            case 'appearance':
-                return (
-                    <Tabs defaultValue="general" className="w-full">
-                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg flex-wrap">
-                            <TabsTrigger value="general" className="flex items-center gap-2">
-                                <Palette size={16} />
-                                {t('settings.appearance.tabs.general', 'General')}
-                            </TabsTrigger>
-                            <TabsTrigger value="theme" className="flex items-center gap-2">
-                                <Sun size={16} />
-                                {t('settings.appearance.tabs.theme', 'Theme')}
-                            </TabsTrigger>
-                            <TabsTrigger value="regional" className="flex items-center gap-2">
-                                <Clock size={16} />
-                                {t('settings.appearance.tabs.regional', 'Regional')}
-                            </TabsTrigger>
-                            <TabsTrigger value="accessibility" className="flex items-center gap-2">
-                                <Accessibility size={16} />
-                                {t('settings.appearance.tabs.accessibility', 'Accessibility')}
-                            </TabsTrigger>
-                            <TabsTrigger value="shortcuts" className="flex items-center gap-2">
-                                <Settings size={16} />
-                                {t('settings.appearance.tabs.shortcuts', 'Shortcuts')}
-                            </TabsTrigger>
-                            <TabsTrigger value="work" className="flex items-center gap-2">
-                                <ClipboardList size={16} />
-                                {t('settings.appearance.tabs.work', 'Work')}
-                            </TabsTrigger>
-                            <TabsTrigger value="dashboard" className="flex items-center gap-2">
-                                <LayoutGrid size={16} />
-                                {t('settings.appearance.tabs.dashboard', 'Dashboard')}
-                            </TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="general" className="mt-6">
-                            <AppearanceSettings
-                                currentUser={currentUser}
-                                onUpdateUser={onUpdateUser}
-                                theme={theme}
-                                toggleTheme={toggleTheme}
-                            />
-                        </TabsContent>
-                        <TabsContent value="theme" className="mt-6">
-                            <ThemeSettings />
-                        </TabsContent>
-                        <TabsContent value="regional" className="mt-6">
-                            <RegionalSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                        <TabsContent value="accessibility" className="mt-6">
-                            <AccessibilitySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                        <TabsContent value="shortcuts" className="mt-6">
-                            <KeyboardShortcutsSettings currentUser={currentUser} />
-                        </TabsContent>
-                        <TabsContent value="work" className="mt-6">
-                            <WorkPreferencesSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                        <TabsContent value="dashboard" className="mt-6">
-                            <DashboardPreferencesSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
-                        </TabsContent>
-                    </Tabs>
-                );
+            // Integrations
+            case 'connected-apps':
+                return <ConnectedAppsSettings />;
+            case 'calendar-sync':
+                return <CalendarSyncSettings />;
+            case 'api-keys':
+                return <APIAccessSettings currentUser={currentUser} />;
+            case 'webhooks':
+                return <WebhooksSettings currentUser={currentUser} />;
+
+            // Data & Privacy
+            case 'data-controls':
+                return <DataControlsSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'privacy':
+                return <PrivacySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'export-data':
+                return <ExportDataSettings currentUser={currentUser} />;
+            case 'delete-account':
+                return <AccountManagementSettings />;
+
+            // Appearance
+            case 'theme':
+                return <ThemeSettings />;
+            case 'accessibility':
+                return <AccessibilitySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'shortcuts':
+                return <KeyboardShortcutsSettings currentUser={currentUser} />;
+
+            // Advanced
+            case 'import-export':
+                return <SettingsExportImport currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'templates':
+                return <SettingsTemplates currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+            case 'developer':
+                return <DeveloperSettings currentUser={currentUser} />;
+            case 'beta-features':
+                return <DeveloperSettings currentUser={currentUser} showBetaFeatures />;
+            case 'settings-history':
+                return <SettingsHistory currentUser={currentUser} onUpdateUser={onUpdateUser} />;
 
             default:
-                return null;
+                return (
+                    <div className="flex items-center justify-center h-64 text-slate-500">
+                        {t('settings.sectionNotFound', 'Section not found')}
+                    </div>
+                );
         }
-    };
+    }, [activeSection, currentUser, onUpdateUser, t]);
 
     return (
-        <div className="h-full overflow-auto">
-            <div className="p-6">
-                {/* Header */}
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{sectionInfo.title}</h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">{sectionInfo.subtitle}</p>
-                </div>
+        <div className="flex h-full bg-white dark:bg-navy-900">
+            {/* Left Sidebar */}
+            <div className="w-72 flex-shrink-0 flex flex-col border-r border-slate-200 dark:border-navy-700">
+                {/* Quick Profile Card */}
+                <QuickProfileCard
+                    currentUser={currentUser}
+                    onUpdateUser={onUpdateUser}
+                    onEditProfile={() => setActiveSection('profile')}
+                />
 
-                {/* Content with tabs */}
-                {renderContent()}
+                {/* Settings Navigation */}
+                <SettingsSidebar
+                    activeSection={activeSection}
+                    onSectionChange={handleSectionChange}
+                    className="flex-1"
+                />
+            </div>
+
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col min-w-0">
+                {/* Header */}
+                <header className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+                    <div className="flex items-center gap-4">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleBackToDashboard}
+                            className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                        >
+                            <ArrowLeft className="w-4 h-4 mr-2" />
+                            {t('settings.backToDashboard', 'Back to Dashboard')}
+                        </Button>
+                        <div className="h-6 w-px bg-slate-200 dark:bg-navy-700" />
+                        <div>
+                            <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
+                                {currentMeta.title}
+                            </h1>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{currentMeta.subtitle}</p>
+                        </div>
+                    </div>
+                </header>
+
+                {/* Content */}
+                <ScrollArea className="flex-1">
+                    <div className="p-6 max-w-4xl">{renderContent()}</div>
+                </ScrollArea>
             </div>
         </div>
     );

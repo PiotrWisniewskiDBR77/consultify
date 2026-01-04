@@ -6,11 +6,11 @@
  * Handles encryption of secrets and RBAC enforcement.
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import secretsVault from './secretsVault.js';
 import connectorRegistry from './connectorRegistry.js';
-import * as auditLogger from '../dist/utils/auditLogger.js';
+import * as auditLogger from '../src/utils/auditLogger.js';
 import { v4 as uuidv4 } from 'uuid';
 
 

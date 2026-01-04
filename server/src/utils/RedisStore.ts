@@ -9,7 +9,7 @@
 import type { RedisClientType } from 'redis';
 
 import { getRedisClient, isRedisConnected } from '../services/ai/redisClient.js';
-import logger from './Logger.js';
+import logger from './Logger.ts';
 
 // ==========================================
 // TYPES
@@ -286,15 +286,18 @@ export class RedisStore {
             return;
         }
 
-        this.cleanupInterval = setInterval(() => {
-            const now = Date.now();
-            Object.keys(this.inMemoryStore).forEach((key) => {
-                const entry = this.inMemoryStore[key];
-                if (entry.expiresAt && entry.expiresAt < now) {
-                    delete this.inMemoryStore[key];
-                }
-            });
-        }, 5 * 60 * 1000); // Every 5 minutes
+        this.cleanupInterval = setInterval(
+            () => {
+                const now = Date.now();
+                Object.keys(this.inMemoryStore).forEach((key) => {
+                    const entry = this.inMemoryStore[key];
+                    if (entry.expiresAt && entry.expiresAt < now) {
+                        delete this.inMemoryStore[key];
+                    }
+                });
+            },
+            5 * 60 * 1000,
+        ); // Every 5 minutes
     }
 
     /**
@@ -309,5 +312,3 @@ export class RedisStore {
 }
 
 export default RedisStore;
-
-

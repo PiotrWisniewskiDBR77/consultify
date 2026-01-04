@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
-import PMOHealthService from '../../../server/services/pmoHealthService.js';
+import PMOHealthService from '../../../server/src/services/pmoHealthService.js';
 
 describe('PMOHealthService', () => {
     let mockDb;

@@ -37,7 +37,7 @@ describe('StorageService', () => {
         };
 
         // Import fresh copy of the service
-        const module = await import('../../../server/services/storageService.js');
+        const module = await import('../../../server/src/services/storageService.js');
         StorageService = module.default || module;
 
         // Inject dependencies

@@ -35,5 +35,3 @@ describe('RequestStore', () => {
         expect(typeof correlationMiddleware).toBe('function');
     });
 });
-
-

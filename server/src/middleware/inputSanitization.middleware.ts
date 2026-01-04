@@ -1,13 +1,14 @@
 /**
  * Input Sanitization Middleware
  * Enterprise SaaS Architecture - Security Hardening
- * 
+ *
  * Applies input sanitization to all incoming requests
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
+
+import logger from '../utils/Logger.ts';
 import { sanitizeObject, sanitizeString, stripHtml } from '../utils/security.utils.js';
-import logger from '../utils/Logger.js';
 
 // ==========================================
 // CONFIGURATION
@@ -34,15 +35,7 @@ const PRESERVE_HTML_FIELDS = new Set([
 /**
  * Fields that should be stripped of HTML entirely
  */
-const STRIP_HTML_FIELDS = new Set([
-    'name',
-    'title',
-    'firstName',
-    'lastName',
-    'companyName',
-    'email',
-    'phone',
-]);
+const STRIP_HTML_FIELDS = new Set(['name', 'title', 'firstName', 'lastName', 'companyName', 'email', 'phone']);
 
 // ==========================================
 // SANITIZATION HELPERS
@@ -97,9 +90,7 @@ function deepSanitize(obj: unknown, parentKey = '', depth = 0): unknown {
  */
 export function inputSanitizationMiddleware(req: Request, res: Response, next: NextFunction): void {
     // Skip for exempted paths
-    const shouldSkip = SKIP_SANITIZATION_PATHS.some(path =>
-        req.path.startsWith(path)
-    );
+    const shouldSkip = SKIP_SANITIZATION_PATHS.some((path) => req.path.startsWith(path));
 
     if (shouldSkip) {
         return next();
@@ -117,9 +108,7 @@ export function inputSanitizationMiddleware(req: Request, res: Response, next: N
                 if (typeof value === 'string') {
                     (req.query as any)[key] = sanitizeString(value);
                 } else if (Array.isArray(value)) {
-                    (req.query as any)[key] = value.map(v =>
-                        typeof v === 'string' ? sanitizeString(v) : v
-                    );
+                    (req.query as any)[key] = value.map((v) => (typeof v === 'string' ? sanitizeString(v) : v));
                 }
             }
         }
@@ -197,5 +186,3 @@ export default {
     sqlParamValidationMiddleware,
     deepSanitize,
 };
-
-

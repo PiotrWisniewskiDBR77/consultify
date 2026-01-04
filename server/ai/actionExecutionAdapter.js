@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import ActionDecisionService from './actionDecisionService.js';
-import * as auditLogger from '../dist/utils/auditLogger.js';
+import * as auditLogger from '../src/utils/auditLogger.ts';
 import actionErrors from './actionErrors.js';
 const { ACTION_ERROR_CODES, classifyError } = actionErrors;
 import TaskExecutor from './actionExecutors/taskExecutor.js';

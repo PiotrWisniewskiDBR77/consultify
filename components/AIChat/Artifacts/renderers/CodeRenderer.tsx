@@ -237,5 +237,3 @@ export const CodeRenderer: React.FC<CodeRendererProps> = ({
 };
 
 export default CodeRenderer;
-
-

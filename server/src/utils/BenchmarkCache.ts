@@ -87,5 +87,3 @@ setInterval(() => {
 }, 600000);
 
 export default benchmarkCache;
-
-

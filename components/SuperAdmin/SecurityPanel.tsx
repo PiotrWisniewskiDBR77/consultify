@@ -200,5 +200,3 @@ export const SecurityPanel: React.FC = () => {
 };
 
 export default SecurityPanel;
-
-

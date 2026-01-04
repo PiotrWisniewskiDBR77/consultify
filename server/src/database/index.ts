@@ -13,4 +13,3 @@ export {
 export { createDatabase, getDatabase, type MockDatabase } from './Database.ts';
 export { default } from './Database.ts';
 export type { IDatabase, QueryResult, RunResult } from './IDatabase.ts';
-

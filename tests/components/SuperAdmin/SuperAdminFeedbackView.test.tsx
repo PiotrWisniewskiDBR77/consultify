@@ -6,16 +6,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { SuperAdminFeedbackView } from '../../../views/superadmin/SuperAdminFeedbackView';
 
-// Mock fetch
-global.fetch = vi.fn();
-
-// Mock i18n
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string) => key,
-        i18n: { language: 'en' }
-    })
+// Mock Api
+vi.mock('../../../services/api', () => ({
+    Api: {
+        getFeedback: vi.fn(),
+        updateFeedbackStatus: vi.fn()
+    }
 }));
+
+import { Api } from '../../../services/api';
 
 // Mock date-fns
 vi.mock('date-fns', () => ({
@@ -49,29 +48,26 @@ describe('SuperAdminFeedbackView', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         localStorage.setItem('token', 'test-token');
+        (Api.getFeedback as any).mockResolvedValue(mockFeedback);
+        (Api.updateFeedbackStatus as any).mockResolvedValue({ success: true });
     });
 
     it('should render loading state initially', () => {
-        vi.mocked(global.fetch).mockImplementation(() => new Promise(() => {}));
-        
+        vi.mocked(global.fetch).mockImplementation(() => new Promise(() => { }));
+
         render(<SuperAdminFeedbackView />);
-        
+
         // Loading state should be shown
         expect(screen.getByText(/feedback/i)).toBeInTheDocument();
     });
 
     it('should fetch and display feedback', async () => {
-        vi.mocked(global.fetch).mockResolvedValue({
-            ok: true,
-            json: async () => mockFeedback
-        } as Response);
+        (Api.getFeedback as any).mockResolvedValue(mockFeedback);
 
         render(<SuperAdminFeedbackView />);
 
         await waitFor(() => {
-            expect(global.fetch).toHaveBeenCalledWith('/api/feedback', {
-                headers: { 'Authorization': 'Bearer test-token' }
-            });
+            expect(Api.getFeedback).toHaveBeenCalled();
         });
 
         await waitFor(() => {
@@ -80,10 +76,7 @@ describe('SuperAdminFeedbackView', () => {
     });
 
     it('should filter feedback by status', async () => {
-        vi.mocked(global.fetch).mockResolvedValue({
-            ok: true,
-            json: async () => mockFeedback
-        } as Response);
+        (Api.getFeedback as any).mockResolvedValue(mockFeedback);
 
         render(<SuperAdminFeedbackView />);
 
@@ -92,8 +85,10 @@ describe('SuperAdminFeedbackView', () => {
         });
 
         // Filter by NEW
-        const newFilter = screen.getByText('NEW');
-        fireEvent.click(newFilter);
+        const newFilter = screen.getByText('NEW'); // Note: This might need adjustment if it's a select option
+        // The component uses a select for filtering, so we should change the select value
+        const filterSelect = screen.getByRole('combobox');
+        fireEvent.change(filterSelect, { target: { value: 'NEW' } });
 
         await waitFor(() => {
             expect(screen.getByText('Found a bug')).toBeInTheDocument();
@@ -102,10 +97,7 @@ describe('SuperAdminFeedbackView', () => {
     });
 
     it('should search feedback', async () => {
-        vi.mocked(global.fetch).mockResolvedValue({
-            ok: true,
-            json: async () => mockFeedback
-        } as Response);
+        (Api.getFeedback as any).mockResolvedValue(mockFeedback);
 
         render(<SuperAdminFeedbackView />);
 
@@ -123,9 +115,9 @@ describe('SuperAdminFeedbackView', () => {
     });
 
     it('should handle API errors', async () => {
-        vi.mocked(global.fetch).mockRejectedValue(new Error('API Error'));
+        (Api.getFeedback as any).mockRejectedValue(new Error('API Error'));
 
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
         render(<SuperAdminFeedbackView />);
 
@@ -136,24 +128,8 @@ describe('SuperAdminFeedbackView', () => {
         consoleSpy.mockRestore();
     });
 
-    it('should handle non-ok response', async () => {
-        vi.mocked(global.fetch).mockResolvedValue({
-            ok: false,
-            status: 500
-        } as Response);
-
-        render(<SuperAdminFeedbackView />);
-
-        await waitFor(() => {
-            expect(global.fetch).toHaveBeenCalled();
-        });
-    });
-
     it('should display feedback type icons', async () => {
-        vi.mocked(global.fetch).mockResolvedValue({
-            ok: true,
-            json: async () => mockFeedback
-        } as Response);
+        (Api.getFeedback as any).mockResolvedValue(mockFeedback);
 
         render(<SuperAdminFeedbackView />);
 
@@ -163,10 +139,7 @@ describe('SuperAdminFeedbackView', () => {
     });
 
     it('should display user email', async () => {
-        vi.mocked(global.fetch).mockResolvedValue({
-            ok: true,
-            json: async () => mockFeedback
-        } as Response);
+        (Api.getFeedback as any).mockResolvedValue(mockFeedback);
 
         render(<SuperAdminFeedbackView />);
 
@@ -176,10 +149,7 @@ describe('SuperAdminFeedbackView', () => {
     });
 
     it('should display created date', async () => {
-        vi.mocked(global.fetch).mockResolvedValue({
-            ok: true,
-            json: async () => mockFeedback
-        } as Response);
+        (Api.getFeedback as any).mockResolvedValue(mockFeedback);
 
         render(<SuperAdminFeedbackView />);
 
@@ -189,15 +159,12 @@ describe('SuperAdminFeedbackView', () => {
     });
 
     it('should handle empty feedback list', async () => {
-        vi.mocked(global.fetch).mockResolvedValue({
-            ok: true,
-            json: async () => []
-        } as Response);
+        (Api.getFeedback as any).mockResolvedValue([]);
 
         render(<SuperAdminFeedbackView />);
 
         await waitFor(() => {
-            expect(global.fetch).toHaveBeenCalled();
+            expect(Api.getFeedback).toHaveBeenCalled();
         });
     });
 });

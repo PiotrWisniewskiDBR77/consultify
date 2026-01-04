@@ -495,5 +495,3 @@ export const SubscriptionsPanel: React.FC = () => {
 };
 
 export default SubscriptionsPanel;
-
-

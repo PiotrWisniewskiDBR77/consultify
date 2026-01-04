@@ -211,5 +211,3 @@ describe('Feature Gate Middleware', () => {
         });
     });
 });
-
-

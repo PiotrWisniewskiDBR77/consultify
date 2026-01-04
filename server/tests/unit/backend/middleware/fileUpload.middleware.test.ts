@@ -11,7 +11,7 @@ import { fileFilter, upload } from '../../../../src/middleware/fileUpload.middle
 describe('File Upload Middleware', () => {
     let mockReq: Partial<{ user?: { organizationId?: string } }>;
     let mockFile: Partial<Express.Multer.File>;
-    let mockCallback: (error: Error | null, acceptFile: boolean) => void;
+    let mockCallback: (error: Error | null, acceptFile?: boolean) => void;
 
     beforeEach(() => {
         mockFile = {
@@ -49,7 +49,10 @@ describe('File Upload Middleware', () => {
             mockFile.mimetype = 'application/x-msdownload';
             fileFilter(mockReq as any, mockFile as Express.Multer.File, mockCallback);
 
-            expect(mockCallback).toHaveBeenCalledWith(expect.any(Error), false);
+            // Middleware calls cb(new Error(...)) with only one argument
+            expect(mockCallback).toHaveBeenCalledWith(
+                expect.objectContaining({ message: 'Only PDF, Excel, and Word documents are allowed' }),
+            );
         });
 
         it('should reject files with wrong extension', () => {
@@ -57,7 +60,10 @@ describe('File Upload Middleware', () => {
             mockFile.mimetype = 'text/plain';
             fileFilter(mockReq as any, mockFile as Express.Multer.File, mockCallback);
 
-            expect(mockCallback).toHaveBeenCalledWith(expect.any(Error), false);
+            // Middleware calls cb(new Error(...)) with only one argument
+            expect(mockCallback).toHaveBeenCalledWith(
+                expect.objectContaining({ message: 'Only PDF, Excel, and Word documents are allowed' }),
+            );
         });
     });
 
@@ -78,5 +84,3 @@ describe('File Upload Middleware', () => {
         });
     });
 });
-
-

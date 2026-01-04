@@ -190,5 +190,3 @@ export const CitationMarker: React.FC<CitationMarkerProps> = ({ number, citation
 };
 
 export default CitationList;
-
-

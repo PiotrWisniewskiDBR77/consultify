@@ -206,5 +206,3 @@ export const ExecutionScoreCard: React.FC<Partial<ExecutionScoreCardProps> & { c
 };
 
 export default ExecutionScoreCard;
-
-

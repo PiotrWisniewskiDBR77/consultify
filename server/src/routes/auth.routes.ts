@@ -13,7 +13,7 @@ import _emailVerificationService from '../services/EmailVerificationService.js';
 import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as _dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { all as _dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
 import {
     _MFASetupRequestSchema,
     ChangePasswordRequestSchema,
@@ -29,13 +29,17 @@ import {
 } from '../validators/auth.validators.js';
 
 const router = Router();
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
 import config from '../../config.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import ActivityService from '../services/ActivityService.js';
-import crypto from 'crypto';
-import logger from '../utils/Logger.js';
+import logger from '../utils/Logger.ts';
+
+// Apply rate limiting to all auth routes
+router.use(authRateLimiter);
 
 // Helper to add timeout to promises
 const _withTimeout = <T>(promise: Promise<T>, timeoutMs = 1000): Promise<T> => {
@@ -133,7 +137,7 @@ router.get(
                  FROM users u
                  LEFT JOIN organizations o ON u.organization_id = o.id
                  WHERE u.id = ?`,
-                [req.user!.id]
+                [req.user!.id],
             );
 
             if (!user) {
@@ -237,10 +241,12 @@ router.post(
             const expiresAt = new Date((decoded.exp || 0) * 1000).toISOString();
 
             // Add token to revocation list
-            await dbRun(
-                `INSERT OR IGNORE INTO revoked_tokens (jti, user_id, expires_at, reason) VALUES (?, ?, ?, ?)`,
-                [decoded.jti, req.user!.id, expiresAt, 'logout']
-            );
+            await dbRun(`INSERT OR IGNORE INTO revoked_tokens (jti, user_id, expires_at, reason) VALUES (?, ?, ?, ?)`, [
+                decoded.jti,
+                req.user!.id,
+                expiresAt,
+                'logout',
+            ]);
             res.json({ message: 'Logged out successfully' });
         } catch (error: unknown) {
             logger.error('Logout error:', error);
@@ -561,10 +567,10 @@ router.post(
                     token,
                     promoApplied: promoCode
                         ? {
-                            code: promoCode,
-                            discountType: promoValidation?.discountType,
-                            discountValue: promoValidation?.discountValue,
-                        }
+                              code: promoCode,
+                              discountType: promoValidation?.discountType,
+                              discountValue: promoValidation?.discountValue,
+                          }
                         : null,
                 });
             } catch (regErr) {
@@ -627,20 +633,24 @@ router.post(
             const marker = `revoke-all-${userIdToRevoke}-${Date.now()}`;
             const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-            dbRun(
-                `INSERT INTO revoked_tokens (jti, user_id, expires_at, reason) VALUES (?, ?, ?, ?)`,
-                [marker, userIdToRevoke, expiresAt, 'revoke-all']
-            ).then((result) => {
-                if (!result.success) {
-                    // logger.error('Error revoking all tokens:', result.error);
+            dbRun(`INSERT INTO revoked_tokens (jti, user_id, expires_at, reason) VALUES (?, ?, ?, ?)`, [
+                marker,
+                userIdToRevoke,
+                expiresAt,
+                'revoke-all',
+            ])
+                .then((result) => {
+                    if (!result.success) {
+                        // logger.error('Error revoking all tokens:', result.error);
+                        res.status(500).json({ error: 'Failed to revoke tokens' });
+                        return;
+                    }
+                    res.json({ message: 'All tokens revoked successfully' });
+                })
+                .catch((err) => {
+                    logger.error('Error revoking all tokens:', err);
                     res.status(500).json({ error: 'Failed to revoke tokens' });
-                    return;
-                }
-                res.json({ message: 'All tokens revoked successfully' });
-            }).catch(err => {
-                logger.error('Error revoking all tokens:', err);
-                res.status(500).json({ error: 'Failed to revoke tokens' });
-            });
+                });
         };
 
         if (req.user!.role !== 'SUPERADMIN' && userId && userId !== req.user!.id) {
@@ -821,7 +831,7 @@ router.post(
                  email_verification_expires_at = ?,
                  email_verification_sent_at = datetime('now')
                  WHERE id = ?`,
-                [token, expiresAt, userId]
+                [token, expiresAt, userId],
             );
 
             const verifyLink = `${process.env.APP_URL || 'http://localhost:3000'}/auth/verify-email?token=${token}`;

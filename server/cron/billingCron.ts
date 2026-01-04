@@ -56,7 +56,7 @@ async function initDeps() {
         deps._db = db;
     }
     if (!deps._budgetManagementService) {
-        const { default: budgetManagementService } = await import('../services/budgetManagementService.js');
+        const { default: budgetManagementService } = await import('../services/budgetService.js');
         deps._budgetManagementService = budgetManagementService;
     }
     if (!deps._adminAlertService) {

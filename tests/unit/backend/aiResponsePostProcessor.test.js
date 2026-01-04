@@ -12,7 +12,7 @@ import {
     stripPrefixes,
     MEMORY_PREFIX,
     EXTERNAL_PREFIX
-} from '../../../server/services/aiResponsePostProcessor.js';
+} from '../../../server/src/services/aiResponsePostProcessor.js';
 
 describe('aiResponsePostProcessor', () => {
     describe('Memory Prefix', () => {

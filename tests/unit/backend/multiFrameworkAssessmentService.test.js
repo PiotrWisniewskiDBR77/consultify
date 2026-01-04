@@ -1,14 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
-import multiFrameworkAssessmentService from '../../../server/services/multiFrameworkAssessmentService.js';
-import * as frameworkScoreCalculators from '../../../server/services/frameworkScoreCalculators.js';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
+import multiFrameworkAssessmentService from '../../../server/src/services/multiFrameworkAssessmentService.js';
+import * as frameworkScoreCalculators from '../../../server/src/services/frameworkScoreCalculators.js';
 
 describe('MultiFrameworkAssessmentService', () => {
-    let mockDb;
+    let mocks;
     let mockAuditService;
 
     beforeEach(async () => {
-        mockDb = createMockDb();
+        mocks = setupStandardTest();
+
         mockAuditService = {
             logCreate: vi.fn().mockResolvedValue(1),
             logUpdate: vi.fn().mockResolvedValue(2),
@@ -23,8 +24,8 @@ describe('MultiFrameworkAssessmentService', () => {
         };
 
         multiFrameworkAssessmentService.setDependencies({
-            db: mockDb,
-            uuidv4: () => 'test-id',
+            db: mocks.db,
+            uuidv4: mocks.uuid,
             frameworkScoreCalculators: frameworkScoreCalculators,
             multiFrameworkAuditService: mockAuditService
         });

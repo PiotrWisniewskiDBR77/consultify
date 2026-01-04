@@ -2,60 +2,108 @@
  * UserSessionService Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Unit tests for UserSessionService - 85%+ coverage target
+ * Unit tests for UserSessionService - Covering Redis Session Management
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { IDatabase } from '../../../../src/database/IDatabase.js';
+// Mock Session Cache - Hoisted
+const { mockSessionCache } = vi.hoisted(() => {
+    return {
+        mockSessionCache: {
+            set: vi.fn(),
+            get: vi.fn(),
+            del: vi.fn(),
+        },
+    };
+});
+
+vi.mock('../../../../src/services/redis/CacheService.js', () => ({
+    sessionCache: mockSessionCache,
+}));
+
+vi.mock('../../../../src/utils/Logger.ts', () => ({
+    default: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+    },
+}));
+
 import UserSessionService from '../../../../src/services/userSessionService.js';
 
 describe('UserSessionService', () => {
-    let mockDb: IDatabase;
-
     beforeEach(() => {
         vi.clearAllMocks();
-
-        mockDb = {
-            get: vi.fn(),
-            all: vi.fn(),
-            run: vi.fn((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                const dbObj = {
-                    ...mockDb,
-                    changes: 1,
-                    lastID: 1,
-                };
-                if (callback) {
-                    callback(null);
-                }
-                return dbObj;
-            }),
-            exec: vi.fn(),
-            serialize: vi.fn(),
-            close: vi.fn(),
-            query: vi.fn(),
-        } as unknown as IDatabase;
-
-        if (UserSessionService.setDependencies) {
-            UserSessionService.setDependencies({ db: mockDb });
-        }
     });
 
-    describe('Service Methods', () => {
-        it('should have required methods', () => {
-            expect(UserSessionService).toBeDefined();
+    describe('createSession', () => {
+        it('should create session in redis', async () => {
+            const userId = 'user-1';
+            const token = 'token-123';
+
+            await UserSessionService.createSession(userId, token, { role: 'user' });
+
+            expect(mockSessionCache.set).toHaveBeenCalledWith(
+                userId,
+                expect.objectContaining({
+                    userId,
+                    token,
+                    metadata: { role: 'user' },
+                }),
+                86400,
+            );
         });
     });
 
-    describe('Error Handling', () => {
-        it('should handle database errors gracefully', () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
-                (sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                    callback(new Error('Database error'));
-                },
-            );
+    describe('isValidSession', () => {
+        it('should return true for valid session', async () => {
+            const validSession = {
+                userId: 'user-1',
+                token: 'token-123',
+                expiresAt: Date.now() + 10000,
+            };
+            mockSessionCache.get.mockResolvedValue(validSession);
 
-            expect(true).toBe(true);
+            const isValid = await UserSessionService.isValidSession('user-1', 'token-123');
+            expect(isValid).toBe(true);
+        });
+
+        it('should return false if session not found', async () => {
+            mockSessionCache.get.mockResolvedValue(null);
+            const isValid = await UserSessionService.isValidSession('user-1', 'token-123');
+            expect(isValid).toBe(false);
+        });
+
+        it('should return false if token mismatch', async () => {
+            const validSession = {
+                userId: 'user-1',
+                token: 'other-token',
+                expiresAt: Date.now() + 10000,
+            };
+            mockSessionCache.get.mockResolvedValue(validSession);
+
+            const isValid = await UserSessionService.isValidSession('user-1', 'token-123');
+            expect(isValid).toBe(false);
+        });
+
+        it('should return false if expired', async () => {
+            const expiredSession = {
+                userId: 'user-1',
+                token: 'token-123',
+                expiresAt: Date.now() - 10000,
+            };
+            mockSessionCache.get.mockResolvedValue(expiredSession);
+
+            const isValid = await UserSessionService.isValidSession('user-1', 'token-123');
+            expect(isValid).toBe(false);
+        });
+    });
+
+    describe('invalidateSession', () => {
+        it('should delete session from redis', async () => {
+            await UserSessionService.invalidateSession('user-1');
+            expect(mockSessionCache.del).toHaveBeenCalledWith('user-1');
         });
     });
 });

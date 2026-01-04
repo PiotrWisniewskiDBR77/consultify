@@ -1,5 +1,5 @@
 // Placeholder tests for connectorHealthService
-import ConnectorHealthService from '../../../server/services/connectorHealthService';
+import ConnectorHealthService from '../../../server/src/services/connectorHealthService';
 
 describe('Connector Health Service', () => {
     test('should perform health check (DB interaction) [SKIPPED]', () => {

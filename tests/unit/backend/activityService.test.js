@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+
+
 const dbHelper = require('../../helpers/dbHelper.cjs');
 const { initTestDb, cleanTables, dbRun, dbAll, dbGet } = dbHelper;
 import ActivityService from '../../../server/src/services/ActivityService.ts';

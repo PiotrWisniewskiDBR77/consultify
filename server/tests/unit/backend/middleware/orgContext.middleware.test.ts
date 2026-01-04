@@ -10,17 +10,25 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import orgContextMiddleware, {
     type AuthRequest,
     resolveUserOrgAccess,
-    setDependencies,
 } from '../../../../src/middleware/orgContext.middleware.js';
+
+// Use hoisted mock for DbPromise
+const { mockGet, mockAll } = vi.hoisted(() => {
+    return {
+        mockGet: vi.fn(),
+        mockAll: vi.fn(),
+    };
+});
+
+vi.mock('../../../../src/utils/DbPromise.js', () => ({
+    get: mockGet,
+    all: mockAll,
+}));
 
 describe('Organization Context Middleware', () => {
     let mockReq: Partial<AuthRequest>;
     let mockRes: Partial<Response>;
     let mockNext: NextFunction;
-    let mockDb: {
-        get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
-        all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
-    };
 
     beforeEach(() => {
         mockNext = vi.fn();
@@ -28,16 +36,14 @@ describe('Organization Context Middleware', () => {
             status: vi.fn().mockReturnThis(),
             json: vi.fn(),
         };
-        mockDb = {
-            get: vi.fn((_sql, _params, callback) => {
-                callback(null, { id: 'membership-123', role: 'ADMIN', status: 'active' });
-            }),
-            all: vi.fn((_sql, _params, callback) => {
-                callback(null, []);
-            }),
-        };
 
-        setDependencies({ db: mockDb });
+        // Reset mocks
+        mockGet.mockReset();
+        mockAll.mockReset();
+
+        // Default mock behaviors
+        mockGet.mockResolvedValue({ id: 'membership-123', role: 'ADMIN', status: 'active' });
+        mockAll.mockResolvedValue([]);
 
         mockReq = {
             user: {
@@ -99,9 +105,8 @@ describe('Organization Context Middleware', () => {
 
         it('should deny access when user has no access to org', async () => {
             mockReq.params = { orgId: 'other-org' };
-            mockDb.get = vi.fn((_sql, _params, callback) => {
-                callback(null, null); // No membership found
-            });
+            mockGet.mockResolvedValue(null); // No membership found
+
             const middleware = orgContextMiddleware();
             await middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
 
@@ -111,12 +116,11 @@ describe('Organization Context Middleware', () => {
 
     describe('resolveUserOrgAccess', () => {
         it('should return access info for member', async () => {
-            mockDb.get = vi.fn((sql, _params, callback) => {
+            mockGet.mockImplementation((sql: string) => {
                 if (sql.includes('organization_members')) {
-                    callback(null, { id: 'membership-123', role: 'ADMIN', status: 'active' });
-                } else {
-                    callback(null, null);
+                    return Promise.resolve({ id: 'membership-123', role: 'ADMIN', status: 'active' });
                 }
+                return Promise.resolve(null);
             });
             const result = await resolveUserOrgAccess('user-123', 'org-123');
 
@@ -126,12 +130,11 @@ describe('Organization Context Middleware', () => {
         });
 
         it('should return access info for consultant', async () => {
-            mockDb.get = vi.fn((sql, _params, callback) => {
+            mockGet.mockImplementation((sql: string) => {
                 if (sql.includes('consultant_org_links')) {
-                    callback(null, { id: 'link-123', status: 'active' });
-                } else {
-                    callback(null, null);
+                    return Promise.resolve({ id: 'link-123', status: 'active' });
                 }
+                return Promise.resolve(null);
             });
             const result = await resolveUserOrgAccess('user-123', 'org-123');
 
@@ -140,14 +143,10 @@ describe('Organization Context Middleware', () => {
         });
 
         it('should return no access when neither member nor consultant', async () => {
-            mockDb.get = vi.fn((_sql, _params, callback) => {
-                callback(null, null);
-            });
+            mockGet.mockResolvedValue(null);
             const result = await resolveUserOrgAccess('user-123', 'org-123');
 
             expect(result.allowed).toBe(false);
         });
     });
 });
-
-

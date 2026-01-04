@@ -4,9 +4,9 @@
  * Backward-compatible API over CircuitBreakerService.
  */
 
+import logger from '../../utils/Logger.ts';
 import CircuitBreakerService, { STATES } from '../circuitBreakerService.js';
 import { aiLogger } from './logger.js';
-import logger from '../../utils/Logger.js';
 
 export const STATE = STATES;
 

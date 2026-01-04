@@ -7,9 +7,9 @@
 
 import { z } from 'zod';
 
-import * as DbPromise from '../../utils/DbPromise.js';
+import * as DbPromise from '../../utils/DbPromise.ts';
+import logger from '../../utils/Logger.ts';
 import { isOpenAIResponse, validateDatabaseRow } from '../../utils/typeGuards.js';
-import logger from '../../utils/Logger.js';
 
 type RerankDocument = {
     id?: string | number;

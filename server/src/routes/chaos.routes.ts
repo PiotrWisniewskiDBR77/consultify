@@ -4,7 +4,7 @@
  *
  * Provides endpoints to simulate failures for testing resilience
  * ONLY AVAILABLE IN DEVELOPMENT MODE
- * 
+ *
  * Endpoints:
  *   POST /api/chaos/simulate-redis-failure - Simulate Redis failure
  *   POST /api/chaos/simulate-db-failure - Simulate database failure
@@ -12,10 +12,15 @@
  *   POST /api/chaos/reset - Reset all chaos simulations
  */
 
-import { Router, type Request, type Response } from 'express';
-import logger from '../utils/Logger.js';
+import { type Request, type Response, Router } from 'express';
+
+import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import logger from '../utils/Logger.ts';
 
 const router = Router();
+
+// Apply rate limiting
+router.use(aiRateLimiter);
 
 // ==========================================
 // SECURITY CHECK
@@ -199,4 +204,3 @@ router.get('/status', (_req: Request, res: Response) => {
 });
 
 export default router;
-

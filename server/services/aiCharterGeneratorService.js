@@ -9,7 +9,7 @@
  * @see docs/AI_ENTERPRISE_AUDIT_REPORT.md for migration status
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import AIService from './aiService.js';
 import InitiativeTemplateService from './initiativeTemplateService.js';

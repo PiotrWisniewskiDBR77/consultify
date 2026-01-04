@@ -25,7 +25,7 @@ async function initDeps() {
             deps._db = dbModule.db || dbModule.default?.db;
         } catch {
             // Fallback to regular database
-            const { default: db } = await import('../src/database/index.js');
+            const { default: db } = await import('../src/database/Database.ts');
             deps._db = db;
         }
     }

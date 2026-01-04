@@ -5,7 +5,7 @@
  * Health monitoring for connector integrations.
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import connectorService from './connectorService.js';
 import { v4 as uuidv4 } from 'uuid';

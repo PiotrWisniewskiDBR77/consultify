@@ -20,7 +20,7 @@ describe.skip('KnowledgeService - Integration', () => {
         delete process.env.MOCK_DB;
 
         // Import the real service (no mocks)
-        const mod = await import('../../../server/services/knowledgeService.js');
+        const mod = await import('../../../server/src/services/knowledgeService.js');
         KnowledgeService = mod.default;
     });
 

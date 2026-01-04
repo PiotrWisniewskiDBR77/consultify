@@ -3,10 +3,12 @@
  * Monitors database connectivity and sends alerts on failure.
  */
 
-const cron = require('node-cron');
+import cron from 'node-cron';
+
+import EmailService from '../services/emailService.js';
 import { getDatabase } from '../src/database/Database.js';
+
 const db = getDatabase();
-const EmailService = import('emailService.js');
 
 let isSystemHealthy = true; // Track previous state to avoid spamming
 let consecutiveFailures = 0;

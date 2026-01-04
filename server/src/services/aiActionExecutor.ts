@@ -3,9 +3,14 @@
  * AI Core Layer — Enterprise PMO Brain
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidPackage } from 'uuid';
+let uuidv4 = uuidPackage;
 
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { all, get, run } from '../utils/DbPromise.js';
+let dbAll = all;
+let dbGet = get;
+let dbRun = run;
+import logger from '../utils/Logger.ts';
 import AIPolicyEngine from './aiPolicyEngine.js';
 
 // Enums and Constants
@@ -82,6 +87,17 @@ const getApprovalPatternService = async () => {
 const AIActionExecutor = {
     ACTION_TYPES,
     ACTION_STATUS,
+
+    setDependencies(deps: any) {
+        if (deps.db) {
+            dbAll = deps.db.all || dbAll;
+            dbGet = deps.db.get || dbGet;
+            dbRun = deps.db.run || dbRun;
+        }
+        if (deps.uuidv4) {
+            uuidv4 = deps.uuidv4;
+        }
+    },
 
     /**
      * Request an AI action
@@ -183,7 +199,6 @@ const AIActionExecutor = {
 
         const id = uuidv4();
         const finalStatus = requiresApproval ? ACTION_STATUS.PENDING : ACTION_STATUS.APPROVED;
-import logger from '../utils/Logger.js';
 
         await dbRun(
             `INSERT INTO ai_actions 

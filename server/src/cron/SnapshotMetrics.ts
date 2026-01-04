@@ -7,7 +7,7 @@
 
 import * as cron from 'node-cron';
 
-import logger from '../utils/Logger.js';
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // TYPES
@@ -97,5 +97,3 @@ export const initMetricsSnapshotJob = (deps?: Partial<Dependencies>): void => {
 };
 
 export default SnapshotMetricsCron;
-
-

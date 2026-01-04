@@ -97,5 +97,3 @@ describe('BenchmarkCache', () => {
         });
     });
 });
-
-

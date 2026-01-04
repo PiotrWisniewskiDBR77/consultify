@@ -13,9 +13,9 @@
 
 import { _Request, NextFunction, Response } from 'express';
 
-import { get as dbGet } from '../utils/DbPromise.js';
+import { get as dbGet } from '../utils/DbPromise.ts';
+import logger from '../utils/Logger.ts';
 import type { AuthRequest } from './auth.middleware.js';
-import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES

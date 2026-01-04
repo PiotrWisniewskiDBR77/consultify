@@ -184,5 +184,3 @@ export const AvatarGroupSkeleton: React.FC<AvatarGroupSkeletonProps> = ({ count 
 };
 
 export default Skeleton;
-
-

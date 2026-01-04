@@ -15,7 +15,7 @@ const mockReport: ManagementReport = {
     period: '2025-W52',
     data: {},
     comments: [
-        { id: 'c1', authorName: 'John Doe', content: 'Needs more detail on ROI.', createdAt: new Date().toISOString(), resolved: false }
+        { id: 'c1', createdBy: 'user-2', createdByName: 'John Doe', content: 'Needs more detail on ROI.', createdAt: new Date().toISOString(), resolved: false, isResolved: false }
     ],
     version: 1,
     createdAt: new Date().toISOString(),
@@ -24,7 +24,10 @@ const mockReport: ManagementReport = {
 
 describe('ReportComments Component', () => {
     const defaultProps = {
-        report: mockReport,
+        reportId: 'rep-1',
+        sectionId: 'section-1',
+        comments: mockReport.comments || [],
+        currentUserId: 'user-1',
         onAddComment: vi.fn(),
         onResolveComment: vi.fn(),
         onDeleteComment: vi.fn()
@@ -43,15 +46,18 @@ describe('ReportComments Component', () => {
         const input = screen.getByPlaceholderType ? screen.getByPlaceholderText(/add a comment/i) : screen.getByRole('textbox');
         fireEvent.change(input, { target: { value: 'Looks good to me.' } });
 
-        const sendButton = screen.getByRole('button', { name: /send/i }) || screen.getByRole('button', { name: '' });
+        const sendButton = screen.getByRole('button', { name: /send comment/i });
         fireEvent.click(sendButton);
 
-        expect(onAddComment).toHaveBeenCalledWith('Looks good to me.');
+        expect(onAddComment).toHaveBeenCalledWith('Looks good to me.', [], undefined);
     });
 
     it('calls onResolveComment when resolve button is clicked', () => {
         const onResolveComment = vi.fn();
         render(<ReportComments {...defaultProps} onResolveComment={onResolveComment} />);
+
+        const moreButton = screen.getByRole('button', { name: /more options/i });
+        fireEvent.click(moreButton);
 
         const resolveButton = screen.getByRole('button', { name: /resolve/i });
         fireEvent.click(resolveButton);

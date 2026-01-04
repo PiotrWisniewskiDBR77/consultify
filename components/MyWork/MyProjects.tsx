@@ -98,5 +98,3 @@ export const MyProjects: React.FC = () => {
 };
 
 export default MyProjects;
-
-

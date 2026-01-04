@@ -1,5 +1,6 @@
 import { Redis } from 'ioredis';
-import logger from '../../utils/Logger.js';
+
+import logger from '../../utils/Logger.ts';
 
 class RedisClient {
     private client: Redis | null = null;
@@ -22,7 +23,7 @@ class RedisClient {
                     return delay;
                 },
                 maxRetriesPerRequest: 3,
-                enableOfflineQueue: false // Fail fast if Redis is down
+                enableOfflineQueue: false, // Fail fast if Redis is down
             });
 
             this.client.on('connect', () => {

@@ -5,8 +5,8 @@ const db = getDatabase();
 
 import { v4 as uuidv4 } from 'uuid';
 import verifyToken from '../middleware/authMiddleware.js';
-import { asyncHandler  } from '../dist/utils/asyncHandler.js';
-import * as queryHelpers from '../dist/utils/queryHelpers.js';
+import { asyncHandler } from '../src/utils/asyncHandler.ts';
+import * as queryHelpers from '../src/utils/queryHelpers.ts';
 
 router.use(verifyToken);
 
@@ -44,7 +44,7 @@ router.get('/', asyncHandler(async (req, res) => {
     })));
 }));
 
-const { checkPlanLimit   } = await import('../middleware/planLimits.js');
+const { checkPlanLimit } = await import('../middleware/planLimits.js');
 
 // CREATE Project
 // REFACTORED: Uses asyncHandler and queryHelpers

@@ -8,7 +8,7 @@
 import puppeteer from 'puppeteer';
 import Handlebars from 'handlebars';
 import path from 'path';
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import { promises as fs } from 'fs';
 

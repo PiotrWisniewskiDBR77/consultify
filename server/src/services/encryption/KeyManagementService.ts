@@ -1,14 +1,14 @@
 /**
  * Key Management Service
  * Enterprise SaaS Architecture - Security & Compliance
- * 
+ *
  * Implements secure key management strategy:
  * - Key generation and derivation
  * - Key rotation scheduling
  * - Key versioning
  * - Audit logging for key operations
  * - Integration ready for external KMS (AWS KMS, HashiCorp Vault)
- * 
+ *
  * Security Best Practices:
  * - Keys never stored in plaintext
  * - Automatic rotation reminders
@@ -17,8 +17,9 @@
  */
 
 import crypto from 'crypto';
-import logger from '../../utils/Logger.js';
-import logger from '../../utils/Logger.js';
+
+import logger from '../../utils/Logger.ts';
+import logger from '../../utils/Logger.ts';
 
 // ==========================================
 // CONFIGURATION
@@ -79,12 +80,12 @@ class KeyManagementServiceImpl {
      */
     private initializeKeyMetadata(): void {
         const encryptionKeySet = !!process.env.ENCRYPTION_KEY;
-        
+
         if (encryptionKeySet) {
             const createdAt = new Date(process.env.ENCRYPTION_KEY_CREATED_AT || Date.now());
             const expiresAt = new Date(createdAt);
             expiresAt.setDate(expiresAt.getDate() + this.rotationPolicy.maxAgeInDays);
-            
+
             this.keyMetadata.set('primary-encryption-key', {
                 id: 'primary-encryption-key',
                 version: 1,
@@ -116,7 +117,7 @@ class KeyManagementServiceImpl {
     generateKey(keyLength: number = 32): string {
         const key = crypto.randomBytes(keyLength);
         const keyHex = key.toString('hex');
-        
+
         this.logAudit({
             timestamp: new Date(),
             operation: 'KEY_GENERATION',
@@ -125,7 +126,7 @@ class KeyManagementServiceImpl {
             success: true,
             details: `Generated ${keyLength * 8}-bit key`,
         });
-        
+
         logger.info('[KeyManagement] New encryption key generated');
         return keyHex;
     }
@@ -143,7 +144,7 @@ class KeyManagementServiceImpl {
     needsRotation(keyId: string = 'primary-encryption-key'): boolean {
         const metadata = this.keyMetadata.get(keyId);
         if (!metadata || !metadata.expiresAt) return false;
-        
+
         const now = new Date();
         return now >= metadata.expiresAt;
     }
@@ -154,11 +155,11 @@ class KeyManagementServiceImpl {
     rotationWarningNeeded(keyId: string = 'primary-encryption-key'): boolean {
         const metadata = this.keyMetadata.get(keyId);
         if (!metadata || !metadata.expiresAt) return false;
-        
+
         const now = new Date();
         const warningDate = new Date(metadata.expiresAt);
         warningDate.setDate(warningDate.getDate() - this.rotationPolicy.warningDaysBeforeExpiry);
-        
+
         return now >= warningDate && now < metadata.expiresAt;
     }
 
@@ -173,7 +174,7 @@ class KeyManagementServiceImpl {
         warningNeeded: boolean;
     } {
         const metadata = this.keyMetadata.get(keyId);
-        
+
         if (!metadata) {
             return {
                 exists: false,
@@ -183,12 +184,12 @@ class KeyManagementServiceImpl {
                 warningNeeded: false,
             };
         }
-        
+
         const now = new Date();
         const daysUntilExpiry = metadata.expiresAt
             ? Math.ceil((metadata.expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
             : null;
-        
+
         return {
             exists: true,
             status: metadata.status,
@@ -203,11 +204,11 @@ class KeyManagementServiceImpl {
      */
     getAllKeyStatuses(): Record<string, ReturnType<typeof this.getKeyStatus>> {
         const statuses: Record<string, ReturnType<typeof this.getKeyStatus>> = {};
-        
+
         for (const [keyId] of this.keyMetadata) {
             statuses[keyId] = this.getKeyStatus(keyId);
         }
-        
+
         return statuses;
     }
 
@@ -216,12 +217,12 @@ class KeyManagementServiceImpl {
      */
     logAudit(entry: AuditLogEntry): void {
         this.auditLog.push(entry);
-        
+
         // Keep only last 1000 entries in memory
         if (this.auditLog.length > 1000) {
             this.auditLog.shift();
         }
-        
+
         // Log to persistent logger
         logger.info('[KeyManagement] Audit', {
             operation: entry.operation,
@@ -245,7 +246,7 @@ class KeyManagementServiceImpl {
         const metadata = this.keyMetadata.get(keyId);
         if (metadata) {
             metadata.status = 'compromised';
-            
+
             this.logAudit({
                 timestamp: new Date(),
                 operation: 'KEY_COMPROMISED',
@@ -254,7 +255,7 @@ class KeyManagementServiceImpl {
                 success: true,
                 details: reason,
             });
-            
+
             logger.error('[KeyManagement] KEY COMPROMISED:', { keyId, reason });
         }
     }
@@ -302,19 +303,19 @@ Run: node -e "logger.info(require('crypto').randomBytes(32).toString('hex'))"
     } {
         const issues: string[] = [];
         const recommendations: string[] = [];
-        
+
         // Check if encryption key is set
         if (!process.env.ENCRYPTION_KEY && !process.env.DATA_ENCRYPTION_KEY) {
             issues.push('No ENCRYPTION_KEY configured');
             recommendations.push('Set ENCRYPTION_KEY environment variable for production');
         }
-        
+
         // Check if salt is set
         if (!process.env.ENCRYPTION_SALT && process.env.NODE_ENV === 'production') {
             issues.push('No ENCRYPTION_SALT configured in production');
             recommendations.push('Set ENCRYPTION_SALT environment variable');
         }
-        
+
         // Check key rotation status
         const status = this.getKeyStatus();
         if (status.needsRotation) {
@@ -323,7 +324,7 @@ Run: node -e "logger.info(require('crypto').randomBytes(32).toString('hex'))"
         } else if (status.warningNeeded) {
             recommendations.push(`Key expires in ${status.daysUntilExpiry} days - plan rotation`);
         }
-        
+
         return {
             healthy: issues.length === 0,
             issues,
@@ -364,5 +365,3 @@ ENCRYPTION_KEY_CREATED_AT=
 `;
 
 export default KeyManagementService;
-
-

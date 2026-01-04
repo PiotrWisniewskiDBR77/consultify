@@ -34,7 +34,7 @@ describe('CapacityService', () => {
         vi.clearAllMocks();
         
         // Dynamic import for ESM compatibility
-        const module = await import('../../../server/services/capacityService.js');
+        const module = await import('../../../server/src/services/capacityService.js');
         CapacityService = module.default;
         
         // Inject mock dependencies

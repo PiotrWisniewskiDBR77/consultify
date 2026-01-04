@@ -1,7 +1,7 @@
 import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 
-import PIIRedactor from '../dist/utils/piiRedactor.js';
+import PIIRedactor from '../src/utils/piiRedactor.ts';
 
 /**
  * Audit Export Service

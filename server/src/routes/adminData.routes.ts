@@ -10,9 +10,11 @@ import { Router } from 'express';
 import AdminDataController from '../controllers/AdminDataController.js';
 import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import { UpdateUserTierSchema } from '../validators/admin.validators.js';
 
+// Apply rate limiting
 const router = Router();
 
 // Apply auth and admin middleware to all routes

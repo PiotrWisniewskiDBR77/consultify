@@ -7,9 +7,10 @@ import { getDatabase } from '../src/database/index.ts';
 const db = getDatabase();
 
 import { v4 as uuidv4 } from 'uuid';
+
 import verifyToken from '../middleware/authMiddleware.js';
-import notificationsRouter from './notifications.js';
 import * as ActivityServiceModule from '../src/services/ActivityService.js';
+import notificationsRouter from './notifications.js';
 const ActivityService = ActivityServiceModule.default || ActivityServiceModule;
 import * as InitiativeServiceModule from '../services/initiativeService.js';
 const InitiativeService = InitiativeServiceModule.default || InitiativeServiceModule;
@@ -25,8 +26,6 @@ const { validateBody } = await import('../middleware/validationMiddleware.js');
 import { createTaskSchema, updateTaskSchema } from '../validators/taskValidator.js';
 
 router.use(verifyToken);
-
-
 
 // ==========================================
 // GET TASKS (Filtered)
@@ -97,7 +96,7 @@ router.get('/', (req, res) => {
     db.all(sql, params, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
 
-        const tasks = rows.map(t => ({
+        const tasks = rows.map((t) => ({
             id: t.id,
             projectId: t.project_id,
             projectName: t.project_name,
@@ -107,19 +106,23 @@ router.get('/', (req, res) => {
             status: t.status,
             priority: t.priority,
             assigneeId: t.assignee_id,
-            assignee: t.assignee_id ? {
-                id: t.assignee_id,
-                firstName: t.assignee_first_name,
-                lastName: t.assignee_last_name,
-                avatarUrl: t.assignee_avatar
-            } : null,
+            assignee: t.assignee_id
+                ? {
+                      id: t.assignee_id,
+                      firstName: t.assignee_first_name,
+                      lastName: t.assignee_last_name,
+                      avatarUrl: t.assignee_avatar,
+                  }
+                : null,
             reporterId: t.reporter_id,
-            reporter: t.reporter_id ? {
-                id: t.reporter_id,
-                firstName: t.reporter_first_name,
-                lastName: t.reporter_last_name,
-                avatarUrl: t.reporter_avatar
-            } : null,
+            reporter: t.reporter_id
+                ? {
+                      id: t.reporter_id,
+                      firstName: t.reporter_first_name,
+                      lastName: t.reporter_last_name,
+                      avatarUrl: t.reporter_avatar,
+                  }
+                : null,
             dueDate: t.due_date,
             estimatedHours: t.estimated_hours,
             checklist: t.checklist ? JSON.parse(t.checklist) : [],
@@ -145,7 +148,7 @@ router.get('/', (req, res) => {
             initiativeId: t.initiative_id,
             initiativeName: t.initiative_name,
             progress: t.progress || 0,
-            blockedReason: t.blocked_reason || ''
+            blockedReason: t.blocked_reason || '',
         }));
 
         res.json(tasks);
@@ -192,19 +195,23 @@ router.get('/:id', (req, res) => {
             status: t.status,
             priority: t.priority,
             assigneeId: t.assignee_id,
-            assignee: t.assignee_id ? {
-                id: t.assignee_id,
-                firstName: t.assignee_first_name,
-                lastName: t.assignee_last_name,
-                avatarUrl: t.assignee_avatar
-            } : null,
+            assignee: t.assignee_id
+                ? {
+                      id: t.assignee_id,
+                      firstName: t.assignee_first_name,
+                      lastName: t.assignee_last_name,
+                      avatarUrl: t.assignee_avatar,
+                  }
+                : null,
             reporterId: t.reporter_id,
-            reporter: t.reporter_id ? {
-                id: t.reporter_id,
-                firstName: t.reporter_first_name,
-                lastName: t.reporter_last_name,
-                avatarUrl: t.reporter_avatar
-            } : null,
+            reporter: t.reporter_id
+                ? {
+                      id: t.reporter_id,
+                      firstName: t.reporter_first_name,
+                      lastName: t.reporter_last_name,
+                      avatarUrl: t.reporter_avatar,
+                  }
+                : null,
             dueDate: t.due_date,
             estimatedHours: t.estimated_hours,
             checklist: t.checklist ? JSON.parse(t.checklist) : [],
@@ -231,7 +238,7 @@ router.get('/:id', (req, res) => {
             initiativeId: t.initiative_id,
             initiativeName: t.initiative_name,
             progress: t.progress || 0,
-            blockedReason: t.blocked_reason || ''
+            blockedReason: t.blocked_reason || '',
         };
 
         res.json(task);
@@ -246,16 +253,30 @@ router.post('/', validateBody(createTaskSchema), async (req, res) => {
         const orgId = req.user.organizationId;
         const userId = req.user.id;
         const {
-            projectId, title, description,
-            status, priority, assigneeId,
-            dueDate, estimatedHours, tags,
-            taskType, initiativeId, why,
+            projectId,
+            title,
+            description,
+            status,
+            priority,
+            assigneeId,
+            dueDate,
+            estimatedHours,
+            tags,
+            taskType,
+            initiativeId,
+            why,
             // New Strategic Fields
-            expectedOutcome, decisionImpact,
-            evidenceRequired, strategicContribution,
+            expectedOutcome,
+            decisionImpact,
+            evidenceRequired,
+            strategicContribution,
             // My Work Fields
-            roadmapInitiativeId, kpiId, raidItemId, assignees,
-            progress, blockedReason
+            roadmapInitiativeId,
+            kpiId,
+            raidItemId,
+            assignees,
+            progress,
+            blockedReason,
         } = req.body;
 
         const id = uuidv4();
@@ -287,17 +308,36 @@ router.post('/', validateBody(createTaskSchema), async (req, res) => {
         `);
 
         stmt.run(
-            id, projectId, orgId, title, description,
-            finalStatus, finalPriority, assigneeId, userId,
-            dueDate, estimatedHours, tags ? JSON.stringify(tags) : '[]',
-            finalTaskType, initiativeId, why,
-            finalExpectedOutcome, finalDecisionImpact, finalEvidenceRequired, finalStrategicContribution,
-            roadmapInitiativeId, kpiId, raidItemId, assignees ? JSON.stringify(assignees) : '[]',
-            finalProgress, finalBlockedReason,
-            now, now,
+            id,
+            projectId,
+            orgId,
+            title,
+            description,
+            finalStatus,
+            finalPriority,
+            assigneeId,
+            userId,
+            dueDate,
+            estimatedHours,
+            tags ? JSON.stringify(tags) : '[]',
+            finalTaskType,
+            initiativeId,
+            why,
+            finalExpectedOutcome,
+            finalDecisionImpact,
+            finalEvidenceRequired,
+            finalStrategicContribution,
+            roadmapInitiativeId,
+            kpiId,
+            raidItemId,
+            assignees ? JSON.stringify(assignees) : '[]',
+            finalProgress,
+            finalBlockedReason,
+            now,
+            now,
             function (err) {
                 if (err) {
-                    console.error("Error creating task:", err.message);
+                    console.error('Error creating task:', err.message);
                     return res.status(500).json({ error: err.message });
                 }
 
@@ -308,7 +348,7 @@ router.post('/', validateBody(createTaskSchema), async (req, res) => {
                         'task_assigned',
                         `New Task Assignment`,
                         `You have been assigned to task "${title}"`,
-                        { entityType: 'task', entityId: id }
+                        { entityType: 'task', entityId: id },
                     );
                 }
 
@@ -320,7 +360,7 @@ router.post('/', validateBody(createTaskSchema), async (req, res) => {
                     entityType: 'task',
                     entityId: id,
                     entityName: title,
-                    newValue: req.body
+                    newValue: req.body,
                 });
 
                 // Fetch created task
@@ -335,7 +375,7 @@ router.post('/', validateBody(createTaskSchema), async (req, res) => {
 
                     res.status(201).json(row); // Use raw row or parse function if available
                 });
-            }
+            },
         );
 
         // Recalculate Initiative Progress if linked
@@ -344,9 +384,8 @@ router.post('/', validateBody(createTaskSchema), async (req, res) => {
         }
 
         stmt.finalize();
-
     } catch (e) {
-        console.error("Server error creating task:", e);
+        console.error('Server error creating task:', e);
         res.status(500).json({ error: e.message });
     }
 });
@@ -361,15 +400,35 @@ router.put('/:id', validateBody(updateTaskSchema), async (req, res) => {
 
     // Allowed fields to update
     const allowedFields = [
-        'title', 'description', 'status', 'priority',
-        'assignee_id', 'due_date', 'estimated_hours',
-        'checklist', 'attachments', 'tags', 'custom_status_id',
-        'task_type', 'initiative_id', 'why',
-        'expected_outcome', 'decision_impact', 'evidence_required',
-        'evidence_items', 'strategic_contribution', 'ai_insight',
-        'evidence_items', 'strategic_contribution', 'ai_insight',
-        'roadmap_initiative_id', 'kpi_id', 'raid_item_id', 'assignees',
-        'progress', 'blocked_reason'
+        'title',
+        'description',
+        'status',
+        'priority',
+        'assignee_id',
+        'due_date',
+        'estimated_hours',
+        'checklist',
+        'attachments',
+        'tags',
+        'custom_status_id',
+        'task_type',
+        'initiative_id',
+        'why',
+        'expected_outcome',
+        'decision_impact',
+        'evidence_required',
+        'evidence_items',
+        'strategic_contribution',
+        'ai_insight',
+        'evidence_items',
+        'strategic_contribution',
+        'ai_insight',
+        'roadmap_initiative_id',
+        'kpi_id',
+        'raid_item_id',
+        'assignees',
+        'progress',
+        'blocked_reason',
     ];
 
     // Helper to map generic names to DB column names if mixed
@@ -392,190 +451,241 @@ router.put('/:id', validateBody(updateTaskSchema), async (req, res) => {
         raidItemId: 'raid_item_id',
         raidItemId: 'raid_item_id',
         assignees: 'assignees',
-        blockedReason: 'blocked_reason'
+        blockedReason: 'blocked_reason',
     };
 
-    db.get(`SELECT * FROM tasks WHERE id = ? AND organization_id = ?`, [id, req.user.organizationId], (err, currentTask) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (!currentTask) return res.status(404).json({ error: 'Task not found' });
-
-        const sqlUpdates = [];
-        const params = [];
-        const historyEntries = [];
-
-        Object.keys(updates).forEach(key => {
-            const dbKey = fieldMap[key] || key;
-            if (allowedFields.includes(dbKey)) {
-                let value = updates[key];
-
-                // Serialize JSON fields
-                if (['checklist', 'attachments', 'tags', 'decision_impact', 'evidence_required', 'evidence_items', 'strategic_contribution', 'ai_insight', 'assignees'].includes(dbKey)) {
-                    if (typeof value === 'object') value = JSON.stringify(value);
-                }
-
-                // Check for change to log
-                const oldValue = currentTask[dbKey];
-                // Simple equality check (loose for numbers/strings)
-                if (value != oldValue) {
-                    sqlUpdates.push(`${dbKey} = ?`);
-                    params.push(value);
-
-                    // Add to history log
-                    historyEntries.push({
-                        taskId: id,
-                        field: dbKey,
-                        oldValue: oldValue ? String(oldValue) : '',
-                        newValue: value ? String(value) : '',
-                        changedBy: userId
-                    });
-                }
-            }
-        });
-
-        if (sqlUpdates.length === 0) {
-            return res.json(currentTask);
-        }
-
-        // Special handling for completion
-        if (updates.status === 'done' && currentTask.status !== 'done') {
-            sqlUpdates.push(`completed_at = ?`);
-            params.push(new Date().toISOString());
-
-            // EVENT MAP: Force progress to 100% when Done
-            if (!updates.progress || updates.progress < 100) {
-                sqlUpdates.push(`progress = ?`);
-                params.push(100);
-                updates.progress = 100; // Update local obj for history/logging
-            }
-        }
-
-        // EVENT MAP: Validate Blocked Reason
-        if (updates.status === 'blocked') {
-            if (!updates.blockedReason && !currentTask.blocked_reason) {
-                // We enforce it, or at least warn. For now, we allow it but log a warning if strict mode is off. 
-                // To follow the user instructions "Kategorie eventow -> Blocked -> require reason":
-                // If the user didn't send blockedReason, and it's not set in DB, we should technically fail.
-                // However, to avoid breaking UI that might not send it immediately, we will default it if missing.
-                if (updates.blockedReason === undefined) {
-                    // If purely missing from payload, do nothing (maybe just status update). 
-                } else if (updates.blockedReason === '') {
-                    return res.status(400).json({ error: 'Blocked reason is required when marking task as blocked.' });
-                }
-            }
-        }
-
-        sqlUpdates.push(`updated_at = ?`);
-        params.push(new Date().toISOString());
-
-        const sql = `UPDATE tasks SET ${sqlUpdates.join(', ')} WHERE id = ?`;
-        params.push(id);
-
-        db.run(sql, params, function (err) {
+    db.get(
+        `SELECT * FROM tasks WHERE id = ? AND organization_id = ?`,
+        [id, req.user.organizationId],
+        (err, currentTask) => {
             if (err) return res.status(500).json({ error: err.message });
+            if (!currentTask) return res.status(404).json({ error: 'Task not found' });
 
-            // Insert history logs asynchronously
-            if (historyEntries.length > 0) {
-                const historyStmt = db.prepare(`INSERT INTO task_history (id, task_id, field, old_value, new_value, changed_by) VALUES (?, ?, ?, ?, ?, ?)`);
-                historyEntries.forEach(entry => {
-                    historyStmt.run(uuidv4(), entry.taskId, entry.field, entry.oldValue, entry.newValue, entry.changedBy);
-                });
-                historyStmt.finalize();
-            }
+            const sqlUpdates = [];
+            const params = [];
+            const historyEntries = [];
 
-            // Log Activity
-            ActivityService.log({
-                organizationId: req.user.organizationId,
-                userId: userId,
-                action: 'updated',
-                entityType: 'task',
-                entityId: id,
-                entityName: currentTask.title, // Use old title
-                newValue: updates
-            });
+            Object.keys(updates).forEach((key) => {
+                const dbKey = fieldMap[key] || key;
+                if (allowedFields.includes(dbKey)) {
+                    let value = updates[key];
 
-            // Notifications & Side Effects
-            const notify = (type, title, msg) => {
-                if (currentTask.assignee_id) {
-                    notificationsRouter.createNotification(currentTask.assignee_id, type, title, msg, { entityType: 'task', entityId: id });
-                }
-            };
+                    // Serialize JSON fields
+                    if (
+                        [
+                            'checklist',
+                            'attachments',
+                            'tags',
+                            'decision_impact',
+                            'evidence_required',
+                            'evidence_items',
+                            'strategic_contribution',
+                            'ai_insight',
+                            'assignees',
+                        ].includes(dbKey)
+                    ) {
+                        if (typeof value === 'object') value = JSON.stringify(value);
+                    }
 
-            // 1. Assignment Change
-            if (updates.assigneeId && updates.assigneeId !== currentTask.assignee_id) {
-                if (userId !== updates.assigneeId) { // Don't notify if assigning to self
-                    notificationsRouter.createNotification(updates.assigneeId, 'task_assigned', 'Task Assigned', `You have been assigned to "${currentTask.title}"`, { entityType: 'task', entityId: id });
-                }
-            }
+                    // Check for change to log
+                    const oldValue = currentTask[dbKey];
+                    // Simple equality check (loose for numbers/strings)
+                    if (value != oldValue) {
+                        sqlUpdates.push(`${dbKey} = ?`);
+                        params.push(value);
 
-            // 2. Status Change
-            if (updates.status && updates.status !== currentTask.status) {
-                // Blocked - also trigger decision creation
-                if (updates.status === 'blocked') {
-                    notify('task_blocked', 'Task Blocked', `Task "${currentTask.title}" is now BLOCKED. Reason: ${updates.blockedReason || 'No reason provided'}`);
-
-                    // Auto-create unblock decision
-                    try {
-                        const taskData = {
-                            id: currentTask.id,
-                            title: currentTask.title,
-                            project_id: currentTask.project_id,
-                            assignee_id: currentTask.assignee_id
-                        };
-
-                        DecisionTriggerService.safeTrigger(
-                            () => DecisionTriggerService.onTaskBlocked(
-                                taskData,
-                                updates.blockedReason || 'Not specified',
-                                userId
-                            ),
-                            'TASK',
-                            currentTask.id,
-                            'TASK_UNBLOCK'
-                        ).then(decision => {
-                            if (decision && decision.id) {
-                                console.log(`[Tasks] Auto-created unblock decision: ${decision.id}`);
-                            }
-                        }).catch(err => {
-                            console.warn('[Tasks] Failed to create unblock decision:', err.message);
+                        // Add to history log
+                        historyEntries.push({
+                            taskId: id,
+                            field: dbKey,
+                            oldValue: oldValue ? String(oldValue) : '',
+                            newValue: value ? String(value) : '',
+                            changedBy: userId,
                         });
-                    } catch (triggerErr) {
-                        console.warn('[Tasks] Decision trigger error:', triggerErr.message);
                     }
                 }
-                // Done
-                else if (updates.status === 'done') {
-                    notify('task_completed', 'Task Completed', `Task "${currentTask.title}" marked as DONE.`);
-                }
-                // General Status Change
-                else {
-                    notify('task_updated', 'Task Status Updated', `Task "${currentTask.title}" moved to ${updates.status.toUpperCase()}`);
+            });
+
+            if (sqlUpdates.length === 0) {
+                return res.json(currentTask);
+            }
+
+            // Special handling for completion
+            if (updates.status === 'done' && currentTask.status !== 'done') {
+                sqlUpdates.push(`completed_at = ?`);
+                params.push(new Date().toISOString());
+
+                // EVENT MAP: Force progress to 100% when Done
+                if (!updates.progress || updates.progress < 100) {
+                    sqlUpdates.push(`progress = ?`);
+                    params.push(100);
+                    updates.progress = 100; // Update local obj for history/logging
                 }
             }
 
-            // Return updated task
-            db.get(`SELECT * FROM tasks WHERE id = ?`, [id], async (err, row) => {
+            // EVENT MAP: Validate Blocked Reason
+            if (updates.status === 'blocked') {
+                if (!updates.blockedReason && !currentTask.blocked_reason) {
+                    // We enforce it, or at least warn. For now, we allow it but log a warning if strict mode is off.
+                    // To follow the user instructions "Kategorie eventow -> Blocked -> require reason":
+                    // If the user didn't send blockedReason, and it's not set in DB, we should technically fail.
+                    // However, to avoid breaking UI that might not send it immediately, we will default it if missing.
+                    if (updates.blockedReason === undefined) {
+                        // If purely missing from payload, do nothing (maybe just status update).
+                    } else if (updates.blockedReason === '') {
+                        return res
+                            .status(400)
+                            .json({ error: 'Blocked reason is required when marking task as blocked.' });
+                    }
+                }
+            }
+
+            sqlUpdates.push(`updated_at = ?`);
+            params.push(new Date().toISOString());
+
+            const sql = `UPDATE tasks SET ${sqlUpdates.join(', ')} WHERE id = ?`;
+            params.push(id);
+
+            db.run(sql, params, function (err) {
                 if (err) return res.status(500).json({ error: err.message });
 
-                // Invalidate cache for affected users
-                const affectedUserIds = new Set();
-                if (currentTask.assignee_id) affectedUserIds.add(currentTask.assignee_id);
-                if (updates.assigneeId) affectedUserIds.add(updates.assigneeId);
-
-                for (const userId of affectedUserIds) {
-                    await cacheHelper.invalidateUserCache(userId, req.user.organizationId);
+                // Insert history logs asynchronously
+                if (historyEntries.length > 0) {
+                    const historyStmt = db.prepare(
+                        `INSERT INTO task_history (id, task_id, field, old_value, new_value, changed_by) VALUES (?, ?, ?, ?, ?, ?)`,
+                    );
+                    historyEntries.forEach((entry) => {
+                        historyStmt.run(
+                            uuidv4(),
+                            entry.taskId,
+                            entry.field,
+                            entry.oldValue,
+                            entry.newValue,
+                            entry.changedBy,
+                        );
+                    });
+                    historyStmt.finalize();
                 }
-                await cacheHelper.invalidateProjectCache(currentTask.project_id);
 
-                // Recalculate Initiative Progress if linked (use old or new initiative ID)
-                const linkedInitiativeId = updates.initiativeId || currentTask.initiative_id;
-                if (linkedInitiativeId) {
-                    InitiativeService.recalculateProgress({ organizationId: req.user.organizationId, initiativeId: linkedInitiativeId }).catch(err => console.error("Error recalc:", err));
+                // Log Activity
+                ActivityService.log({
+                    organizationId: req.user.organizationId,
+                    userId: userId,
+                    action: 'updated',
+                    entityType: 'task',
+                    entityId: id,
+                    entityName: currentTask.title, // Use old title
+                    newValue: updates,
+                });
+
+                // Notifications & Side Effects
+                const notify = (type, title, msg) => {
+                    if (currentTask.assignee_id) {
+                        notificationsRouter.createNotification(currentTask.assignee_id, type, title, msg, {
+                            entityType: 'task',
+                            entityId: id,
+                        });
+                    }
+                };
+
+                // 1. Assignment Change
+                if (updates.assigneeId && updates.assigneeId !== currentTask.assignee_id) {
+                    if (userId !== updates.assigneeId) {
+                        // Don't notify if assigning to self
+                        notificationsRouter.createNotification(
+                            updates.assigneeId,
+                            'task_assigned',
+                            'Task Assigned',
+                            `You have been assigned to "${currentTask.title}"`,
+                            { entityType: 'task', entityId: id },
+                        );
+                    }
                 }
 
-                res.json(row);
+                // 2. Status Change
+                if (updates.status && updates.status !== currentTask.status) {
+                    // Blocked - also trigger decision creation
+                    if (updates.status === 'blocked') {
+                        notify(
+                            'task_blocked',
+                            'Task Blocked',
+                            `Task "${currentTask.title}" is now BLOCKED. Reason: ${updates.blockedReason || 'No reason provided'}`,
+                        );
+
+                        // Auto-create unblock decision
+                        try {
+                            const taskData = {
+                                id: currentTask.id,
+                                title: currentTask.title,
+                                project_id: currentTask.project_id,
+                                assignee_id: currentTask.assignee_id,
+                            };
+
+                            DecisionTriggerService.safeTrigger(
+                                () =>
+                                    DecisionTriggerService.onTaskBlocked(
+                                        taskData,
+                                        updates.blockedReason || 'Not specified',
+                                        userId,
+                                    ),
+                                'TASK',
+                                currentTask.id,
+                                'TASK_UNBLOCK',
+                            )
+                                .then((decision) => {
+                                    if (decision && decision.id) {
+                                        console.log(`[Tasks] Auto-created unblock decision: ${decision.id}`);
+                                    }
+                                })
+                                .catch((err) => {
+                                    console.warn('[Tasks] Failed to create unblock decision:', err.message);
+                                });
+                        } catch (triggerErr) {
+                            console.warn('[Tasks] Decision trigger error:', triggerErr.message);
+                        }
+                    }
+                    // Done
+                    else if (updates.status === 'done') {
+                        notify('task_completed', 'Task Completed', `Task "${currentTask.title}" marked as DONE.`);
+                    }
+                    // General Status Change
+                    else {
+                        notify(
+                            'task_updated',
+                            'Task Status Updated',
+                            `Task "${currentTask.title}" moved to ${updates.status.toUpperCase()}`,
+                        );
+                    }
+                }
+
+                // Return updated task
+                db.get(`SELECT * FROM tasks WHERE id = ?`, [id], async (err, row) => {
+                    if (err) return res.status(500).json({ error: err.message });
+
+                    // Invalidate cache for affected users
+                    const affectedUserIds = new Set();
+                    if (currentTask.assignee_id) affectedUserIds.add(currentTask.assignee_id);
+                    if (updates.assigneeId) affectedUserIds.add(updates.assigneeId);
+
+                    for (const userId of affectedUserIds) {
+                        await cacheHelper.invalidateUserCache(userId, req.user.organizationId);
+                    }
+                    await cacheHelper.invalidateProjectCache(currentTask.project_id);
+
+                    // Recalculate Initiative Progress if linked (use old or new initiative ID)
+                    const linkedInitiativeId = updates.initiativeId || currentTask.initiative_id;
+                    if (linkedInitiativeId) {
+                        InitiativeService.recalculateProgress({
+                            organizationId: req.user.organizationId,
+                            initiativeId: linkedInitiativeId,
+                        }).catch((err) => console.error('Error recalc:', err));
+                    }
+
+                    res.json(row);
+                });
             });
-        });
-    });
+        },
+    );
 });
 
 // ==========================================
@@ -603,7 +713,10 @@ router.delete('/:id', (req, res) => {
 
             // EVENT MAP: Recalculate Initiative Progress on Delete
             if (task.initiative_id) {
-                InitiativeService.recalculateProgress({ organizationId: orgId, initiativeId: task.initiative_id }).catch(console.error);
+                InitiativeService.recalculateProgress({
+                    organizationId: orgId,
+                    initiativeId: task.initiative_id,
+                }).catch(console.error);
             }
 
             // Log Activity
@@ -613,7 +726,7 @@ router.delete('/:id', (req, res) => {
                 action: 'deleted',
                 entityType: 'task',
                 entityId: id,
-                entityName: task.title
+                entityName: task.title,
             });
 
             res.json({ message: 'Task deleted' });
@@ -646,7 +759,7 @@ router.get('/:taskId/comments', (req, res) => {
         db.all(sql, [taskId], (err, rows) => {
             if (err) return res.status(500).json({ error: err.message });
 
-            const comments = rows.map(c => ({
+            const comments = rows.map((c) => ({
                 id: c.id,
                 taskId: c.task_id,
                 userId: c.user_id,
@@ -654,11 +767,11 @@ router.get('/:taskId/comments', (req, res) => {
                     id: c.user_id,
                     firstName: c.first_name,
                     lastName: c.last_name,
-                    avatarUrl: c.avatar_url
+                    avatarUrl: c.avatar_url,
                 },
                 content: c.content,
                 createdAt: c.created_at,
-                updatedAt: c.updated_at
+                updatedAt: c.updated_at,
             }));
 
             res.json(comments);
@@ -699,7 +812,7 @@ router.post('/:taskId/comments', (req, res) => {
                 userId,
                 content,
                 createdAt: now,
-                updatedAt: now
+                updatedAt: now,
             });
         });
     });
@@ -762,7 +875,7 @@ router.post('/:id/assign', async (req, res) => {
         const hasPermission = await ProjectMemberService.checkPermission(
             task.project_id,
             assignedById,
-            'canAssignTasks'
+            'canAssignTasks',
         );
 
         if (!hasPermission && req.user.role !== 'SUPERADMIN' && req.user.role !== 'ADMIN') {
@@ -771,7 +884,7 @@ router.post('/:id/assign', async (req, res) => {
 
         const result = await TaskAssignmentService.assignTask(id, assigneeId, {
             assignedById,
-            slaHours
+            slaHours,
         });
 
         res.json(result);
@@ -798,7 +911,7 @@ router.post('/:id/reassign', async (req, res) => {
         const result = await TaskAssignmentService.reassignTask(id, assigneeId, {
             reassignedById,
             reason,
-            resetSla
+            resetSla,
         });
 
         res.json(result);
@@ -847,11 +960,7 @@ router.post('/:id/escalate', async (req, res) => {
         }
 
         // Check if user can escalate
-        const hasPermission = await ProjectMemberService.checkPermission(
-            task.project_id,
-            escalatedById,
-            'canEscalate'
-        );
+        const hasPermission = await ProjectMemberService.checkPermission(task.project_id, escalatedById, 'canEscalate');
 
         if (!hasPermission && req.user.role !== 'SUPERADMIN' && req.user.role !== 'ADMIN') {
             return res.status(403).json({ error: 'You do not have permission to escalate tasks' });
@@ -860,7 +969,7 @@ router.post('/:id/escalate', async (req, res) => {
         const result = await TaskAssignmentService.escalateTask(id, {
             reason: reason || 'Manual escalation',
             triggerType: triggerType || 'MANUAL',
-            escalatedById
+            escalatedById,
         });
 
         res.json(result);
@@ -882,7 +991,7 @@ router.post('/:taskId/escalations/:escalationId/resolve', async (req, res) => {
 
         const result = await TaskAssignmentService.resolveEscalation(escalationId, {
             resolutionNote,
-            resolvedById
+            resolvedById,
         });
 
         res.json(result);
@@ -923,7 +1032,7 @@ router.get('/overdue', async (req, res) => {
 
         const tasks = await TaskAssignmentService.getOverdueTasks(projectId, {
             escalationLevel: escalationLevel ? parseInt(escalationLevel) : undefined,
-            limit: limit ? parseInt(limit) : undefined
+            limit: limit ? parseInt(limit) : undefined,
         });
 
         res.json(tasks);
@@ -947,7 +1056,7 @@ router.get('/at-risk', async (req, res) => {
 
         const tasks = await TaskAssignmentService.getTasksApproachingSLA(
             projectId,
-            hoursAhead ? parseInt(hoursAhead) : 4
+            hoursAhead ? parseInt(hoursAhead) : 4,
         );
 
         res.json(tasks);
@@ -967,7 +1076,7 @@ router.get('/workload/:userId', async (req, res) => {
         const { projectId } = req.query;
 
         const workload = await TaskAssignmentService.getUserWorkload(userId, {
-            projectId
+            projectId,
         });
 
         res.json(workload);
@@ -987,7 +1096,7 @@ router.get('/my-workload', async (req, res) => {
         const { projectId } = req.query;
 
         const workload = await TaskAssignmentService.getUserWorkload(userId, {
-            projectId
+            projectId,
         });
 
         res.json(workload);

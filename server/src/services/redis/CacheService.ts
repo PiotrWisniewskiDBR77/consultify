@@ -1,5 +1,5 @@
+import logger from '../../utils/Logger.ts';
 import { redisClient } from './RedisClient.js';
-import logger from '../../utils/Logger.js';
 
 export class CacheService {
     private prefix: string = 'cache:';
@@ -53,7 +53,7 @@ export class CacheService {
     }
 
     static generateKey(base: string, ...args: any[]): string {
-        return `${base}:${args.map(a => String(a)).join(':')}`;
+        return `${base}:${args.map((a) => String(a)).join(':')}`;
     }
 }
 

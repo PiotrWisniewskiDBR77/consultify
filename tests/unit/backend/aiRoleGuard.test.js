@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import AIRoleGuard from '../../../server/services/aiRoleGuard.js';
+import AIRoleGuard from '../../../server/src/services/aiRoleGuard.js';
 
 describe('AI Role Guard', () => {
     const mockDb = {

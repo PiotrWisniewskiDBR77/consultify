@@ -42,7 +42,7 @@ let db = null;
 async function getDb() {
     if (!db) {
         try {
-            const mod = await import('../src/database/index.js');
+            const mod = await import('../src/database/Database.ts');
             db = mod.default || mod;
         } catch (e) {
             // Database not available

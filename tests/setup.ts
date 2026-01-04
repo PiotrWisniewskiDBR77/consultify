@@ -1,10 +1,7 @@
 import '@testing-library/jest-dom';
 import { beforeAll, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
 import { mockLLMApi } from './__mocks__/llmApi.js';
 import { setupAutoCleanup } from './helpers/testCleanup.js';
-
-const require = createRequire(import.meta.url);
 
 // Setup automatic cleanup for all tests
 setupAutoCleanup();
@@ -185,6 +182,9 @@ if (typeof process !== 'undefined' && process.env) {
 
     // Assign to global for server/database.js to use
     (global as any).__TEST_DB_MOCK__ = mockDb;
+
+// Remove require usage - use dynamic imports instead
+// const someModule = await import('./path/to/module.js');
 }
 
 // Removed global jsonwebtoken mock to allow real JWT usage in integration tests
@@ -290,17 +290,18 @@ vi.mock('../server/src/middleware/inputSanitization.middleware.js', () => ({
 }));
 
 // Mock Permission Service to avoid DB calls
-vi.mock('../server/services/permissionService.js', () => ({
-    default: {
-        can: vi.fn().mockReturnValue(true),
-    },
-}));
+// COMMENTED OUT: We need real PermissionService for unit tests. Use DI instead.
+// vi.mock('../server/services/permissionService.js', () => ({
+//     default: {
+//         can: vi.fn().mockReturnValue(true),
+//     },
+// }));
 // Also mock the TS path just in case
-vi.mock('../server/src/services/permissionService.js', () => ({
-    default: {
-        can: vi.fn().mockReturnValue(true),
-    },
-}));
+// vi.mock('../server/src/services/permissionService.js', () => ({
+//     default: {
+//         can: vi.fn().mockReturnValue(true),
+//     },
+// }));
 
 // Mock Auth Middleware to bypass complex checks and DB calls
 vi.mock('../server/src/middleware/auth.middleware.js', () => ({

@@ -561,5 +561,3 @@ export default {
     CMMI_CATEGORIES,
     CMMI_PRACTICE_AREAS,
 };
-
-

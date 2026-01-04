@@ -4,7 +4,7 @@
  */
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import RegulatoryModeGuard from '../../../server/services/regulatoryModeGuard.js';
+import RegulatoryModeGuard from '../../../server/src/services/regulatoryModeGuard.js';
 
 describe('Regulatory Mode Guard', () => {
     const mockDb = {

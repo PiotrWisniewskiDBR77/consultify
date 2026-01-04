@@ -10,24 +10,12 @@
  * - PRINCE2: Lessons Learned
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import ReportAuditService from './reportAuditService.js';
+import NotificationOutboxService from './notificationOutboxService.js';
 import { v4 as uuidv4 } from 'uuid';
 
-// Lazy-load to avoid circular dependency
-let NotificationOutboxService = null;
-const getNotificationService = () => {
-    if (!NotificationOutboxService) {
-        try {
-            NotificationOutboxService = require('./notificationOutboxService');
-        } catch (e) {
-            // Service might not exist
-            NotificationOutboxService = { send: async () => {} };
-        }
-    }
-    return NotificationOutboxService;
-};
 
 const ReportCommentsService = {
     /**
@@ -101,7 +89,7 @@ const ReportCommentsService = {
                  (id, report_id, version_id, section_id, parent_comment_id, content, mentions, is_resolved, created_by, created_at, updated_at)
                  VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
                 [id, reportId, versionId, sectionId, parentCommentId, content, JSON.stringify(mentions), userId, now, now],
-                function(err) {
+                function (err) {
                     if (err) reject(err);
                     else resolve({ lastID: this.lastID, changes: this.changes });
                 }
@@ -118,7 +106,7 @@ const ReportCommentsService = {
 
         // Send notifications for mentions
         if (mentions.length > 0) {
-            const notificationService = getNotificationService();
+            const notificationService = NotificationOutboxService;
             for (const mentionedUserId of mentions) {
                 try {
                     await notificationService.send({
@@ -290,7 +278,7 @@ const ReportCommentsService = {
             db.run(
                 `UPDATE management_report_comments SET ${updates.join(', ')} WHERE id = ?`,
                 params,
-                function(err) {
+                function (err) {
                     if (err) reject(err);
                     else resolve({ changes: this.changes });
                 }
@@ -328,7 +316,7 @@ const ReportCommentsService = {
                  SET is_resolved = 1, resolved_by = ?, resolved_at = ?, updated_at = ?
                  WHERE id = ?`,
                 [userId, now, now, commentId],
-                function(err) {
+                function (err) {
                     if (err) reject(err);
                     else resolve({ changes: this.changes });
                 }
@@ -342,7 +330,7 @@ const ReportCommentsService = {
                  SET is_resolved = 1, resolved_by = ?, resolved_at = ?, updated_at = ?
                  WHERE parent_comment_id = ?`,
                 [userId, now, now, commentId],
-                function(err) {
+                function (err) {
                     if (err) reject(err);
                     else resolve({ changes: this.changes });
                 }
@@ -374,7 +362,7 @@ const ReportCommentsService = {
                  SET is_resolved = 0, resolved_by = NULL, resolved_at = NULL, updated_at = ?
                  WHERE id = ?`,
                 [now, commentId],
-                function(err) {
+                function (err) {
                     if (err) reject(err);
                     else resolve({ changes: this.changes });
                 }
@@ -420,7 +408,7 @@ const ReportCommentsService = {
             db.run(
                 `DELETE FROM management_report_comments WHERE parent_comment_id = ?`,
                 [commentId],
-                function(err) {
+                function (err) {
                     if (err) reject(err);
                     else resolve({ changes: this.changes });
                 }
@@ -432,7 +420,7 @@ const ReportCommentsService = {
             db.run(
                 `DELETE FROM management_report_comments WHERE id = ?`,
                 [commentId],
-                function(err) {
+                function (err) {
                     if (err) reject(err);
                     else resolve({ changes: this.changes });
                 }

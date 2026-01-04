@@ -6,8 +6,8 @@
  * Integrates with emailService.ts for actual email delivery
  */
 
+import logger from '../utils/Logger.ts';
 import { send as sendEmail } from './emailService.js';
-import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -107,8 +107,9 @@ function generateEmailTemplate(alert: AlertEmailData): EmailTemplate {
                 ${alert.environment ? `<p class="timestamp">Environment: ${alert.environment}</p>` : ''}
             </div>
             
-            ${alert.data && Object.keys(alert.data).length > 0
-                ? `
+            ${
+                alert.data && Object.keys(alert.data).length > 0
+                    ? `
             <h3>Additional Details:</h3>
             <table class="data-table">
                 <thead>
@@ -124,7 +125,8 @@ function generateEmailTemplate(alert: AlertEmailData): EmailTemplate {
                 </tbody>
             </table>
             `
-                : ''}
+                    : ''
+            }
         </div>
         <div class="footer">
             <p>This is an automated alert from Consultify Enterprise SaaS Platform</p>
@@ -219,7 +221,9 @@ class AlertEmailService {
         const now = Date.now();
 
         if (lastSent && now - lastSent < criticalRateLimit) {
-            logger.debug(`[AlertEmail] Critical alert rate limited (last sent ${Math.round((now - lastSent) / 1000)}s ago)`);
+            logger.debug(
+                `[AlertEmail] Critical alert rate limited (last sent ${Math.round((now - lastSent) / 1000)}s ago)`,
+            );
             return false;
         }
 
@@ -262,5 +266,3 @@ export function getAlertEmailService(): AlertEmailService {
 
 export default AlertEmailService;
 export type { AlertEmailData };
-
-

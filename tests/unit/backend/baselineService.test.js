@@ -23,7 +23,7 @@ vi.mock('../../../server/database', () => ({
 }));
 
 // Import service after mock is set up
-import BaselineService from '../../../server/services/baselineService.js';
+import BaselineService from '../../../server/src/services/baselineService.js';
 
 describe('Baseline Service', () => {
     beforeEach(() => {

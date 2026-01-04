@@ -22,7 +22,7 @@ describe('SubscriptionAnalyticsService', () => {
         }));
 
         // Import after mocks
-        subscriptionAnalyticsService = (await import('../../../server/services/subscriptionAnalyticsService.js')).default;
+        subscriptionAnalyticsService = (await import('../../../server/src/services/subscriptionAnalyticsService.js')).default;
         subscriptionAnalyticsService.setDependencies({
             db: mockDb,
             uuidv4: () => 'test-uuid'

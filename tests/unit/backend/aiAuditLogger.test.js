@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import AIAuditLogger from '../../../server/services/aiAuditLogger.js';
+import AIAuditLogger from '../../../server/src/services/aiAuditLogger.js';
 
 describe('AIAuditLogger', () => {
     const mockDb = {
@@ -10,30 +10,14 @@ describe('AIAuditLogger', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+
+        // Setup default mock behaviors (Promises)
+        mockDb.run.mockResolvedValue({ success: true, changes: 1, lastID: 1 });
+        mockDb.get.mockResolvedValue(null);
+        mockDb.all.mockResolvedValue([]);
+
         AIAuditLogger._setDependencies({
             db: mockDb
-        });
-
-        // Setup default mock behaviors
-        mockDb.run.mockImplementation(function (...args) {
-            const cb = args[args.length - 1];
-            if (typeof cb === 'function') {
-                cb.call({ changes: 1, lastID: 1 }, null);
-            }
-        });
-
-        mockDb.get.mockImplementation((...args) => {
-            const cb = args[args.length - 1];
-            if (typeof cb === 'function') {
-                cb(null, null);
-            }
-        });
-
-        mockDb.all.mockImplementation((...args) => {
-            const cb = args[args.length - 1];
-            if (typeof cb === 'function') {
-                cb(null, []);
-            }
         });
     });
 
@@ -67,16 +51,20 @@ describe('AIAuditLogger', () => {
 
             expect(result).toBeDefined();
             const sqlArgs = mockDb.run.mock.calls[0][1];
+            // Last argument in params array is correlationId
             expect(sqlArgs[sqlArgs.length - 1]).toBe('corr-123');
         });
 
         it('should handle database error', async () => {
-            mockDb.run.mockImplementation(function (...args) {
-                const cb = args[args.length - 1];
-                if (typeof cb === 'function') {
-                    cb(new Error('Database write failed'));
-                }
-            });
+            // Mock run to return "success: false" or throw error depending on how DbPromise.run works
+            // Based on service code: if (!result.success) throw new Error...
+            // But checking aiAuditLogger.ts, it calls run() and checks result.success.
+            // Wait, DbPromise.ts usually returns { success: true/false, error?: string } or throws.
+            // Let's assume DbPromise.run returns generic object.
+            // Actually, looking at aiAuditLogger.ts:127: if (!result.success) ...
+            // So we need to mock it to return { success: false, error: '...' }
+
+            mockDb.run.mockResolvedValue({ success: false, error: 'Database write failed' });
 
             const entry = {
                 userId: 'user-1',
@@ -128,17 +116,15 @@ describe('AIAuditLogger', () => {
 
     describe('getAuditLogs', () => {
         it('should return audit logs for organization', async () => {
-            mockDb.all.mockImplementation((sql, params, cb) => {
-                cb(null, [
-                    {
-                        id: 'audit-1',
-                        action_type: 'AI_RESPONSE',
-                        ai_role: 'ADVISOR',
-                        created_at: '2024-12-20T10:00:00Z',
-                        data_sources_used: '["source1"]'
-                    }
-                ]);
-            });
+            mockDb.all.mockResolvedValue([
+                {
+                    id: 'audit-1',
+                    action_type: 'AI_RESPONSE',
+                    ai_role: 'ADVISOR',
+                    created_at: '2024-12-20T10:00:00Z',
+                    data_sources_used: '["source1"]'
+                }
+            ]);
 
             const result = await AIAuditLogger.getAuditLogs('org-1');
 
@@ -150,11 +136,9 @@ describe('AIAuditLogger', () => {
 
     describe('getAuditStats', () => {
         it('should return statistics for organization', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
-                cb(null, {
-                    total: 100, accepted: 60, rejected: 10,
-                    modified: 20, ignored: 5, pending: 5
-                });
+            mockDb.get.mockResolvedValue({
+                total: 100, accepted: 60, rejected: 10,
+                modified: 20, ignored: 5, pending: 5
             });
 
             const result = await AIAuditLogger.getAuditStats('org-1');

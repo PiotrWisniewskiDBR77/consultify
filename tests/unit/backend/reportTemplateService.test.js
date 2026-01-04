@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'vitest';
 import { initTestDb, cleanTables, dbAll, dbRun } from '../../helpers/dbHelper.cjs';
-import ReportTemplateService from '../../../server/services/reportTemplateService.js';
+import ReportTemplateService from '../../../server/src/services/reportTemplateService.js';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../../../server/database.sqlite.active.js';
 

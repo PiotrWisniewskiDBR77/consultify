@@ -212,5 +212,3 @@ export const UpgradePromptBanner: React.FC<UpgradePromptBannerProps> = ({
 };
 
 export default UpgradePromptBanner;
-
-

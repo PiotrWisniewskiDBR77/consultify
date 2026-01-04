@@ -5,9 +5,9 @@
  * Provides aggregated data, stats, and bulk operations.
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
-import * as queryHelpers from '../dist/utils/queryHelpers.js';
+import * as queryHelpers from '../src/utils/queryHelpers.js';
 import { v4 as uuidv4 } from 'uuid';
 
 

@@ -54,5 +54,3 @@ export const SecurityModuleView: React.FC = () => {
         </TabLayout>
     );
 };
-
-

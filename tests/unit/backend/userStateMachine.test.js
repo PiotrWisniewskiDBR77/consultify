@@ -4,7 +4,7 @@
  * Tests for user state machine transitions and permissions.
  */
 
-const UserStateMachine = require('../../../server/services/userStateMachine');
+const UserStateMachine = require('../../../server/src/services/userStateMachine');
 
 describe('UserStateMachine', () => {
     describe('Constants', () => {

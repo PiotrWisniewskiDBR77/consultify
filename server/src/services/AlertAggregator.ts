@@ -6,9 +6,9 @@
  * Implements rate limiting and priority system
  */
 
-import { getAlertEmailService } from './AlertEmailService.js';
+import logger from '../utils/Logger.ts';
 import { alerts } from './ai/alerting.js';
-import logger from '../utils/Logger.js';
+import { getAlertEmailService } from './AlertEmailService.js';
 
 // ==========================================
 // TYPES
@@ -52,11 +52,13 @@ class AlertAggregator {
     private rateLimitMs: number;
     private deduplicationWindowMs: number;
 
-    constructor(options: {
-        maxHistorySize?: number;
-        rateLimitMs?: number;
-        deduplicationWindowMs?: number;
-    } = {}) {
+    constructor(
+        options: {
+            maxHistorySize?: number;
+            rateLimitMs?: number;
+            deduplicationWindowMs?: number;
+        } = {},
+    ) {
         this.maxHistorySize = options.maxHistorySize || 1000;
         this.rateLimitMs = options.rateLimitMs || RATE_LIMIT_MS;
         this.deduplicationWindowMs = options.deduplicationWindowMs || DEDUPLICATION_WINDOW_MS;
@@ -121,14 +123,18 @@ class AlertAggregator {
 
             // Check if alert is suppressed
             if (group.suppressed && group.suppressedUntil && now < group.suppressedUntil) {
-                logger.debug(`[AlertAggregator] Alert suppressed: ${alertKey} (until ${new Date(group.suppressedUntil).toISOString()})`);
+                logger.debug(
+                    `[AlertAggregator] Alert suppressed: ${alertKey} (until ${new Date(group.suppressedUntil).toISOString()})`,
+                );
                 return false;
             }
 
             // Check rate limiting
             const timeSinceLastAlert = now - group.alert.lastOccurrence;
             if (timeSinceLastAlert < this.rateLimitMs) {
-                logger.debug(`[AlertAggregator] Alert rate limited: ${alertKey} (last sent ${Math.round(timeSinceLastAlert / 1000)}s ago)`);
+                logger.debug(
+                    `[AlertAggregator] Alert rate limited: ${alertKey} (last sent ${Math.round(timeSinceLastAlert / 1000)}s ago)`,
+                );
                 return false;
             }
 
@@ -138,7 +144,9 @@ class AlertAggregator {
                 // Suppress for extended period
                 group.suppressed = true;
                 group.suppressedUntil = now + this.rateLimitMs * 2; // Suppress for 2x rate limit
-                logger.warn(`[AlertAggregator] Alert flooding detected, suppressing: ${alertKey} (${group.alert.count} alerts in ${Math.round(timeSinceFirst / 1000)}s)`);
+                logger.warn(
+                    `[AlertAggregator] Alert flooding detected, suppressing: ${alertKey} (${group.alert.count} alerts in ${Math.round(timeSinceFirst / 1000)}s)`,
+                );
                 return false;
             }
 
@@ -276,9 +284,12 @@ export function getAlertAggregator(): AlertAggregator {
     if (!instance) {
         instance = new AlertAggregator();
         // Clean up old groups every hour
-        setInterval(() => {
-            instance?.clearOldGroups();
-        }, 60 * 60 * 1000);
+        setInterval(
+            () => {
+                instance?.clearOldGroups();
+            },
+            60 * 60 * 1000,
+        );
     }
     return instance;
 }
@@ -289,5 +300,3 @@ export function getAlertAggregator(): AlertAggregator {
 
 export default AlertAggregator;
 export type { AggregatedAlert, AlertGroup };
-
-

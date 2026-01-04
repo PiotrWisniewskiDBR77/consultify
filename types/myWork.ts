@@ -590,5 +590,3 @@ export interface PMOCategoryConfig {
  * Export all types
  */
 export type { Task, TaskPriority, TaskStatus, User };
-
-

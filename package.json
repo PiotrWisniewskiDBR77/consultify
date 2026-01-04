@@ -34,6 +34,12 @@
     "test:complete": "npm run test:all && npm run test:e2e && npm run test:performance && npm run test:security",
     "test:coverage": "npm run test:all -- --coverage",
     "test:coverage:check": "npm run test:coverage && node --loader ts-node/esm scripts/check-coverage.ts",
+    "test:coverage:lcov": "npm run test:coverage -- --reporter=lcov",
+    "test:coverage:html": "npm run test:coverage -- --reporter=html",
+    "test:performance:budget": "node scripts/check-performance-budget.js",
+    "test:contract:consumer": "vitest run tests/contracts/**/*.consumer.test.js",
+    "test:contract:provider": "vitest run tests/contracts/**/*.provider.test.js",
+    "test:contract": "npm run test:contract:consumer && npm run test:contract:provider",
     "nx": "nx",
     "nx:build": "nx run-many -t build",
     "nx:test": "nx run-many -t test",
@@ -143,7 +149,9 @@
     "winston-daily-rotate-file": "^5.0.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz",
     "zod": "^4.1.13",
-    "zustand": "^5.0.9"
+    "zustand": "^5.0.9",
+    "@faker-js/faker": "^9.3.0",
+    "@pact-foundation/pact": "^14.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

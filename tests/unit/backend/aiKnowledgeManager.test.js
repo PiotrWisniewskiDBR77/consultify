@@ -1,41 +1,47 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
-
-const require = createRequire(import.meta.url);
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
 describe('AI Knowledge Manager Service', () => {
     let AIKnowledgeManager;
-    let mockDb;
-    let mockRagService;
+    let mocks;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.resetModules();
 
-        mockDb = createMockDb();
+        mocks = setupStandardTest();
 
-        mockRagService = {
+        // Setup specific RAG service mocks
+        mocks.ragService = {
             generateEmbedding: vi.fn().mockResolvedValue([0.1, 0.2, 0.3]),
             storeChunks: vi.fn().mockResolvedValue({})
         };
 
-        vi.doMock('../../../server/database', () => ({ default: mockDb }));
-        vi.doMock('../../../server/services/ragService', () => ({ default: mockRagService }));
+        // Module-level mocks for complex services
+        vi.doMock('../../../server/src/database/Database.ts', () => ({
+            default: mocks.db,
+            getDatabase: () => mocks.db
+        }));
+        vi.doMock('../../../server/src/services/ragService', () => ({
+            default: mocks.ragService
+        }));
 
-        AIKnowledgeManager = require('../../../server/services/aiKnowledgeManager.js');
-        
-        // Inject mock dependencies
-        AIKnowledgeManager.setDependencies({
-            db: mockDb,
-            RagService: mockRagService,
-            uuidv4: () => 'mock-uuid-doc'
-        });
+        const module = await import('../../../server/src/services/aiKnowledgeManager.js');
+        AIKnowledgeManager = module.default || module;
+
+        // Inject mock dependencies using unified pattern
+        if (AIKnowledgeManager.setDependencies) {
+            AIKnowledgeManager.setDependencies({
+                db: mocks.db,
+                RagService: mocks.ragService,
+                uuidv4: mocks.uuid
+            });
+        }
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
         vi.doUnmock('../../../server/database');
-        vi.doUnmock('../../../server/services/ragService');
+        vi.doUnmock('../../../server/src/services/ragService');
     });
 
     describe('Logic: _cosineSimilarity', () => {
@@ -80,10 +86,10 @@ describe('AI Knowledge Manager Service', () => {
 
             mockDb.all.mockImplementation((sql, params, cb) => {
                 cb(null, [
-                    { 
-                        id: 'c1', 
-                        content: 'Test content', 
-                        embedding: JSON.stringify([1, 0, 0]), 
+                    {
+                        id: 'c1',
+                        content: 'Test content',
+                        embedding: JSON.stringify([1, 0, 0]),
                         doc_id: 'doc1',
                         filename: 'f1.pdf',
                         phase: 'Planning',
@@ -117,12 +123,12 @@ describe('AI Knowledge Manager Service', () => {
 
     describe('captureDecision', () => {
         it('should store decision and generate embeddings', async () => {
-            mockDb.run.mockImplementation(function (sql, params, cb) { 
-                if (cb) cb.call({ changes: 1 }, null); 
+            mockDb.run.mockImplementation(function (sql, params, cb) {
+                if (cb) cb.call({ changes: 1 }, null);
             });
 
-            const result = await AIKnowledgeManager.captureDecision({ 
-                organizationId: 'o1', 
+            const result = await AIKnowledgeManager.captureDecision({
+                organizationId: 'o1',
                 projectId: 'p1',
                 title: 'Test Decision',
                 rationale: 'Test rationale',
@@ -130,7 +136,7 @@ describe('AI Knowledge Manager Service', () => {
                 phase: 'Planning',
                 createdBy: 'user-1'
             });
-            
+
             expect(result.captured).toBe(true);
             expect(result.docId).toBeDefined();
             expect(mockRagService.storeChunks).toHaveBeenCalled();

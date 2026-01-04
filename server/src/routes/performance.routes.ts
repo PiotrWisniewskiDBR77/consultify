@@ -6,14 +6,22 @@
  * GET /api/performance/metrics - Returns performance metrics in JSON format
  */
 
-import { Router, type Request, type Response } from 'express';
+import { type Request, type Response, Router } from 'express';
 
+import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { getMetricsService } from '../services/MetricsService.js';
-import { httpRequestDurationSeconds, dbQueryDurationSeconds, llmCallDurationSeconds } from '../services/MetricsService.js';
-import { httpRequestsPerSecond, dbQueriesPerSecond, llmRequestsPerSecond } from '../services/MetricsService.js';
-import logger from '../utils/Logger.js';
+import {
+    dbQueryDurationSeconds,
+    httpRequestDurationSeconds,
+    llmCallDurationSeconds,
+} from '../services/MetricsService.js';
+import { dbQueriesPerSecond, httpRequestsPerSecond, llmRequestsPerSecond } from '../services/MetricsService.js';
+import logger from '../utils/Logger.ts';
 
 const router = Router();
+
+// Apply rate limiting
+router.use(defaultRateLimiter);
 
 // ==========================================
 // PERFORMANCE METRICS ENDPOINT
@@ -22,7 +30,7 @@ const router = Router();
 /**
  * GET /api/performance/metrics
  * Returns performance metrics including P95/P99 latency and throughput
- * 
+ *
  * Response format:
  * {
  *   timestamp: string,
@@ -162,5 +170,3 @@ async function extractErrorMetrics(prometheusMetrics: string): Promise<{
 }
 
 export default router;
-
-

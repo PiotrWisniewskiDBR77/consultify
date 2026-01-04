@@ -242,6 +242,158 @@ export const resetDependencies = (deps) => {
     });
 };
 
+/**
+ * Create a mock AI context builder
+ * @returns {Object} Mock AI Context Builder
+ */
+export const createMockAIContextBuilder = () => ({
+    buildContext: vi.fn().mockResolvedValue({
+        context: 'Mock AI Context',
+        tokens: 100
+    }),
+    addDocument: vi.fn().mockResolvedValue({ success: true }),
+    clearContext: vi.fn().mockResolvedValue({ success: true })
+});
+
+/**
+ * Create a mock AI pipeline
+ * @returns {Object} Mock AI Pipeline
+ */
+export const createMockAIPipeline = () => ({
+    execute: vi.fn().mockResolvedValue({
+        response: 'Mock AI Response',
+        tokens: { input: 100, output: 50 },
+        cost: 0.001
+    }),
+    stream: vi.fn().mockImplementation(async function* () {
+        yield { text: 'Mock', tokens: 10 };
+        yield { text: ' AI', tokens: 10 };
+        yield { text: ' Response', tokens: 30 };
+    })
+});
+
+/**
+ * Create a mock Stripe service
+ * @returns {Object} Mock Stripe Service
+ */
+export const createMockStripeService = () => ({
+    createCustomer: vi.fn().mockResolvedValue({ id: 'cus_mock' }),
+    createSubscription: vi.fn().mockResolvedValue({ id: 'sub_mock' }),
+    createWebhookEvent: vi.fn().mockResolvedValue({ id: 'evt_mock' }),
+    verifyWebhook: vi.fn().mockResolvedValue({ valid: true })
+});
+
+/**
+ * Create a mock Redis client
+ * @returns {Object} Mock Redis Client
+ */
+export const createMockRedis = () => ({
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue('OK'),
+    del: vi.fn().mockResolvedValue(1),
+    exists: vi.fn().mockResolvedValue(0),
+    expire: vi.fn().mockResolvedValue(1),
+    keys: vi.fn().mockResolvedValue([]),
+    flushdb: vi.fn().mockResolvedValue('OK')
+});
+
+export const createMockPMOHealthService = () => ({
+    getHealthSnapshot: vi.fn().mockResolvedValue({
+        projectId: 'test-project',
+        projectName: 'Test Project',
+        phase: { id: 1, name: 'Planning' },
+        overall: 'healthy',
+        metrics: {
+            tasks: { overdueCount: 0, dueSoonCount: 1, blockedCount: 0 },
+            decisions: { pendingCount: 2, overdueCount: 0 },
+            initiatives: { atRiskCount: 0, blockedCount: 0 }
+        },
+        recommendations: []
+    })
+});
+
+export const createMockAISettingsService = () => ({
+    getEffectiveSettings: vi.fn().mockResolvedValue({
+        policyLevel: 'ASSISTED',
+        proactivityMode: 'BALANCED',
+        contextDepth: 'DETAILED',
+        actionThreshold: 'MEDIUM'
+    }),
+    getSuperAdminSettings: vi.fn(),
+    getOrgSettings: vi.fn(),
+    getUserSettings: vi.fn()
+});
+
+/**
+ * Create unified test setup helper
+ * Standardizes mock setup across all tests
+ * @param {Object} options - Setup options
+ * @returns {Object} Standardized test setup
+ */
+export const createUnifiedTestSetup = (options = {}) => {
+    const {
+        useRealDb = false,
+        useRealRedis = false,
+        useRealLLM = false,
+        customMocks = {}
+    } = options;
+
+    const setup = {
+        db: useRealDb ? null : createMockDb(),
+        redis: useRealRedis ? null : createMockRedis(),
+        llmApi: useRealLLM ? null : createMockLLMApi(),
+        aiContextBuilder: createMockAIContextBuilder(),
+        aiPipeline: createMockAIPipeline(),
+        stripe: createMockStripeService(),
+        tokenBilling: createMockTokenBillingService(),
+        analytics: createMockAnalyticsService(),
+        accessPolicy: createMockAccessPolicyService(),
+        permission: createMockPermissionService(),
+        pmoHealthService: createMockPMOHealthService(),
+        aiSettingsService: createMockAISettingsService(),
+        uuid: createMockUuid(),
+        ...customMocks
+    };
+
+    return {
+        ...setup,
+        /**
+         * Reset all mocks in the setup
+         */
+        reset: () => {
+            resetDependencies(setup);
+        },
+        /**
+         * Cleanup all resources
+         */
+        cleanup: async () => {
+            resetDependencies(setup);
+            if (setup.db && typeof setup.db.close === 'function') {
+                await Promise.resolve(setup.db.close());
+            }
+        }
+    };
+};
+
+/**
+ * Standard beforeEach setup for tests
+ * Use this in every test file for consistent setup
+ * @param {Object} options - Setup options
+ * @returns {Object} Test setup object
+ */
+export const setupTest = (options = {}) => {
+    const testSetup = createUnifiedTestSetup(options);
+    
+    // Auto-reset before each test
+    if (typeof beforeEach !== 'undefined') {
+        beforeEach(() => {
+            testSetup.reset();
+        });
+    }
+
+    return testSetup;
+};
+
 export default {
     createMockDb,
     createMockLLMApi,
@@ -250,9 +402,17 @@ export default {
     createMockAnalyticsService,
     createMockAccessPolicyService,
     createMockPermissionService,
+    createMockAIContextBuilder,
+    createMockAIPipeline,
+    createMockStripeService,
+    createMockRedis,
+    createMockPMOHealthService,
+    createMockAISettingsService,
     injectDependencies,
     createStandardDeps,
-    resetDependencies
+    resetDependencies,
+    createUnifiedTestSetup,
+    setupTest
 };
 
 

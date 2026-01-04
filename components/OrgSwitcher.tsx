@@ -64,7 +64,11 @@ const OrgSwitcher: React.FC<OrgSwitcherProps> = ({ className = '', compact = fal
     if (isLoading) {
         return (
             <div className={`px-3 py-2 ${className}`}>
-                <div className="animate-pulse bg-slate-700 h-6 w-32 rounded"></div>
+                <div
+                    role="status"
+                    aria-label="Loading organizations"
+                    className="animate-pulse bg-slate-700 h-6 w-32 rounded"
+                ></div>
             </div>
         );
     }

@@ -1,6 +1,6 @@
 import { getDatabase } from '../../database/Database.js';
 import type { IDatabase } from '../../database/IDatabase.js';
-import * as DbPromise from '../../utils/DbPromise.js';
+import * as DbPromise from '../../utils/DbPromise.ts';
 import { CountRow } from './AccessTypes.js';
 
 export class AccessResourceService {

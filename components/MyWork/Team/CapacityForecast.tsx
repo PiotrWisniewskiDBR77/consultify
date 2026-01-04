@@ -277,5 +277,3 @@ export const CapacityForecast: React.FC<CapacityForecastProps> = ({ forecasts = 
 };
 
 export default CapacityForecast;
-
-

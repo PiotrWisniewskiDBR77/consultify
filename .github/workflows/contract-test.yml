@@ -1,0 +1,78 @@
+# Contract Testing Workflow
+# Runs Pact contract tests
+
+name: Contract Testing
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+
+env:
+  NODE_VERSION: '20.11.0'
+
+jobs:
+  contract-tests:
+    name: Contract Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Consumer Contract Tests
+        run: npm run test:contract:consumer
+        env:
+          PACT_BROKER_URL: ${{ secrets.PACT_BROKER_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
+        continue-on-error: true
+
+      - name: Publish Contracts to Pact Broker
+        if: success()
+        run: |
+          npx pact-broker publish tests/contracts/pacts \
+            --consumer-app-version ${{ github.sha }} \
+            --broker-base-url ${{ secrets.PACT_BROKER_URL }} \
+            --broker-username ${{ secrets.PACT_BROKER_USERNAME }} \
+            --broker-password ${{ secrets.PACT_BROKER_PASSWORD }}
+        continue-on-error: true
+        env:
+          PACT_BROKER_URL: ${{ secrets.PACT_BROKER_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
+
+      - name: Start Backend Server
+        run: |
+          npm run build
+          npm run start &
+          sleep 10
+        continue-on-error: true
+
+      - name: Run Provider Contract Verification
+        run: npm run test:contract:provider
+        env:
+          PACT_BROKER_URL: ${{ secrets.PACT_BROKER_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
+        continue-on-error: true
+
+      - name: Upload Contract Files
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contract-files
+          path: |
+            tests/contracts/pacts/**
+            tests/contracts/logs/**
+          retention-days: 30
+

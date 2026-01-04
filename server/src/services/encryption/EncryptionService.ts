@@ -1,16 +1,16 @@
 /**
  * Encryption Service
  * Enterprise SaaS Architecture - Data Protection
- * 
+ *
  * Provides field-level encryption for PII and sensitive data.
- * 
+ *
  * Features:
  * - AES-256-GCM encryption (authenticated encryption)
  * - Key derivation with PBKDF2
  * - Key rotation support
  * - Deterministic encryption for searchable fields
  * - Non-deterministic encryption for maximum security
- * 
+ *
  * Security:
  * - Keys stored in environment variables (production: use Vault/KMS)
  * - Automatic key versioning for rotation
@@ -18,7 +18,8 @@
  */
 
 import crypto from 'crypto';
-import logger from '../../utils/Logger.js';
+
+import logger from '../../utils/Logger.ts';
 
 // ==========================================
 // CONFIGURATION
@@ -61,7 +62,7 @@ class KeyManager {
     private initializeKeys(): void {
         // Primary encryption key (required)
         const primaryKey = process.env.ENCRYPTION_KEY || process.env.DATA_ENCRYPTION_KEY;
-        
+
         if (!primaryKey) {
             logger.warn('[Encryption] No ENCRYPTION_KEY set. Using development fallback key.');
             logger.warn('[Encryption] SET ENCRYPTION_KEY in production!');
@@ -69,15 +70,9 @@ class KeyManager {
 
         const masterKey = primaryKey || this.generateDevelopmentKey();
         const salt = this.getSalt();
-        
+
         // Derive key using PBKDF2
-        const derivedKey = crypto.pbkdf2Sync(
-            masterKey,
-            salt,
-            PBKDF2_ITERATIONS,
-            KEY_LENGTH,
-            'sha256'
-        );
+        const derivedKey = crypto.pbkdf2Sync(masterKey, salt, PBKDF2_ITERATIONS, KEY_LENGTH, 'sha256');
 
         this.keys.set(1, {
             version: 1,
@@ -95,7 +90,8 @@ class KeyManager {
      * Generate a development-only key (deterministic for dev consistency)
      */
     private generateDevelopmentKey(): string {
-        return crypto.createHash('sha256')
+        return crypto
+            .createHash('sha256')
             .update('consultify-dev-encryption-key-do-not-use-in-production')
             .digest('hex');
     }
@@ -108,15 +104,12 @@ class KeyManager {
         if (saltEnv) {
             return Buffer.from(saltEnv, 'hex');
         }
-        
+
         // For development, use deterministic salt
         if (process.env.NODE_ENV !== 'production') {
-            return crypto.createHash('sha256')
-                .update('consultify-dev-salt')
-                .digest()
-                .slice(0, SALT_LENGTH);
+            return crypto.createHash('sha256').update('consultify-dev-salt').digest().slice(0, SALT_LENGTH);
         }
-        
+
         // Production requires explicit salt
         logger.error('[Encryption] ENCRYPTION_SALT required in production!');
         throw new Error('ENCRYPTION_SALT environment variable required in production');
@@ -131,14 +124,8 @@ class KeyManager {
             const keyEnv = process.env[`ENCRYPTION_KEY_V${v}`];
             if (keyEnv) {
                 const salt = this.getSalt();
-                const derivedKey = crypto.pbkdf2Sync(
-                    keyEnv,
-                    salt,
-                    PBKDF2_ITERATIONS,
-                    KEY_LENGTH,
-                    'sha256'
-                );
-                
+                const derivedKey = crypto.pbkdf2Sync(keyEnv, salt, PBKDF2_ITERATIONS, KEY_LENGTH, 'sha256');
+
                 this.keys.set(v, {
                     version: v,
                     key: derivedKey,
@@ -146,7 +133,7 @@ class KeyManager {
                     createdAt: new Date(),
                     expiresAt: null,
                 });
-                
+
                 this.currentVersion = Math.max(this.currentVersion, v);
             }
         }
@@ -191,21 +178,21 @@ const keyManager = new KeyManager();
  */
 export function encrypt(plaintext: string): string {
     if (!plaintext) return plaintext;
-    
+
     try {
         const key = keyManager.getCurrentKey();
         const iv = crypto.randomBytes(IV_LENGTH);
-        
+
         const cipher = crypto.createCipheriv(ALGORITHM, key.key, iv, {
             authTagLength: AUTH_TAG_LENGTH,
         });
-        
+
         let ciphertext = cipher.update(plaintext, 'utf8', 'hex');
         ciphertext += cipher.final('hex');
-        
+
         const authTag = cipher.getAuthTag();
         const version = key.version.toString().padStart(KEY_VERSION_LENGTH, '0');
-        
+
         return `${ENCRYPTION_PREFIX}${version}:${iv.toString('hex')}:${authTag.toString('hex')}:${ciphertext}`;
     } catch (error) {
         logger.error('[Encryption] Encryption failed:', error);
@@ -220,32 +207,32 @@ export function decrypt(encrypted: string): string {
     if (!encrypted || !encrypted.startsWith(ENCRYPTION_PREFIX)) {
         return encrypted; // Not encrypted, return as-is
     }
-    
+
     try {
         const parts = encrypted.slice(ENCRYPTION_PREFIX.length).split(':');
         if (parts.length !== 4) {
             throw new Error('Invalid encrypted format');
         }
-        
+
         const [versionStr, ivHex, authTagHex, ciphertext] = parts;
         const version = parseInt(versionStr, 10);
-        
+
         const key = keyManager.getKeyByVersion(version);
         if (!key) {
             throw new Error(`Encryption key version ${version} not found`);
         }
-        
+
         const iv = Buffer.from(ivHex, 'hex');
         const authTag = Buffer.from(authTagHex, 'hex');
-        
+
         const decipher = crypto.createDecipheriv(ALGORITHM, key.key, iv, {
             authTagLength: AUTH_TAG_LENGTH,
         });
         decipher.setAuthTag(authTag);
-        
+
         let plaintext = decipher.update(ciphertext, 'hex', 'utf8');
         plaintext += decipher.final('utf8');
-        
+
         return plaintext;
     } catch (error) {
         logger.error('[Encryption] Decryption failed:', error);
@@ -260,29 +247,24 @@ export function decrypt(encrypted: string): string {
  */
 export function encryptDeterministic(plaintext: string): string {
     if (!plaintext) return plaintext;
-    
+
     try {
         const key = keyManager.getCurrentKey();
-        
+
         // Derive IV deterministically from plaintext using HMAC
-        const ivKey = crypto.createHmac('sha256', key.key)
-            .update('iv-derivation')
-            .digest();
-        const iv = crypto.createHmac('sha256', ivKey)
-            .update(plaintext)
-            .digest()
-            .slice(0, IV_LENGTH);
-        
+        const ivKey = crypto.createHmac('sha256', key.key).update('iv-derivation').digest();
+        const iv = crypto.createHmac('sha256', ivKey).update(plaintext).digest().slice(0, IV_LENGTH);
+
         const cipher = crypto.createCipheriv(ALGORITHM, key.key, iv, {
             authTagLength: AUTH_TAG_LENGTH,
         });
-        
+
         let ciphertext = cipher.update(plaintext, 'utf8', 'hex');
         ciphertext += cipher.final('hex');
-        
+
         const authTag = cipher.getAuthTag();
         const version = key.version.toString().padStart(KEY_VERSION_LENGTH, '0');
-        
+
         return `${ENCRYPTION_PREFIX}d${version}:${iv.toString('hex')}:${authTag.toString('hex')}:${ciphertext}`;
     } catch (error) {
         logger.error('[Encryption] Deterministic encryption failed:', error);
@@ -295,11 +277,9 @@ export function encryptDeterministic(plaintext: string): string {
  */
 export function hashForIndex(value: string): string {
     if (!value) return value;
-    
+
     const key = keyManager.getCurrentKey();
-    return crypto.createHmac('sha256', key.key)
-        .update(value.toLowerCase().trim())
-        .digest('hex');
+    return crypto.createHmac('sha256', key.key).update(value.toLowerCase().trim()).digest('hex');
 }
 
 /**
@@ -317,7 +297,7 @@ export function reencrypt(encrypted: string): string {
     if (!isEncrypted(encrypted)) {
         return encrypt(encrypted);
     }
-    
+
     const plaintext = decrypt(encrypted);
     return encrypt(plaintext);
 }
@@ -357,17 +337,17 @@ export const SEARCHABLE_PII_FIELDS = [
     'email', // Often used for login/lookup
 ] as const;
 
-type PIIField = typeof PII_FIELDS[number];
-type SearchablePIIField = typeof SEARCHABLE_PII_FIELDS[number];
+type PIIField = (typeof PII_FIELDS)[number];
+type SearchablePIIField = (typeof SEARCHABLE_PII_FIELDS)[number];
 
 /**
  * Encrypt PII fields in an object
  */
 export function encryptPII<T extends Record<string, unknown>>(obj: T): T {
     if (!obj || typeof obj !== 'object') return obj;
-    
+
     const result = { ...obj };
-    
+
     for (const field of PII_FIELDS) {
         if (field in result && typeof result[field] === 'string') {
             const value = result[field] as string;
@@ -381,7 +361,7 @@ export function encryptPII<T extends Record<string, unknown>>(obj: T): T {
             }
         }
     }
-    
+
     return result;
 }
 
@@ -390,9 +370,9 @@ export function encryptPII<T extends Record<string, unknown>>(obj: T): T {
  */
 export function decryptPII<T extends Record<string, unknown>>(obj: T): T {
     if (!obj || typeof obj !== 'object') return obj;
-    
+
     const result = { ...obj };
-    
+
     for (const field of PII_FIELDS) {
         if (field in result && typeof result[field] === 'string') {
             const value = result[field] as string;
@@ -401,7 +381,7 @@ export function decryptPII<T extends Record<string, unknown>>(obj: T): T {
             }
         }
     }
-    
+
     return result;
 }
 
@@ -415,20 +395,17 @@ export function decryptPII<T extends Record<string, unknown>>(obj: T): T {
 export function encryptBuffer(buffer: Buffer): Buffer {
     const key = keyManager.getCurrentKey();
     const iv = crypto.randomBytes(IV_LENGTH);
-    
+
     const cipher = crypto.createCipheriv(ALGORITHM, key.key, iv, {
         authTagLength: AUTH_TAG_LENGTH,
     });
-    
-    const ciphertext = Buffer.concat([
-        cipher.update(buffer),
-        cipher.final(),
-    ]);
-    
+
+    const ciphertext = Buffer.concat([cipher.update(buffer), cipher.final()]);
+
     const authTag = cipher.getAuthTag();
     const version = Buffer.alloc(KEY_VERSION_LENGTH);
     version.writeUInt16BE(key.version);
-    
+
     // Format: version(2) + iv(16) + authTag(16) + ciphertext
     return Buffer.concat([version, iv, authTag, ciphertext]);
 }
@@ -439,26 +416,20 @@ export function encryptBuffer(buffer: Buffer): Buffer {
 export function decryptBuffer(encrypted: Buffer): Buffer {
     const version = encrypted.readUInt16BE(0);
     const iv = encrypted.slice(KEY_VERSION_LENGTH, KEY_VERSION_LENGTH + IV_LENGTH);
-    const authTag = encrypted.slice(
-        KEY_VERSION_LENGTH + IV_LENGTH,
-        KEY_VERSION_LENGTH + IV_LENGTH + AUTH_TAG_LENGTH
-    );
+    const authTag = encrypted.slice(KEY_VERSION_LENGTH + IV_LENGTH, KEY_VERSION_LENGTH + IV_LENGTH + AUTH_TAG_LENGTH);
     const ciphertext = encrypted.slice(KEY_VERSION_LENGTH + IV_LENGTH + AUTH_TAG_LENGTH);
-    
+
     const key = keyManager.getKeyByVersion(version);
     if (!key) {
         throw new Error(`Encryption key version ${version} not found`);
     }
-    
+
     const decipher = crypto.createDecipheriv(ALGORITHM, key.key, iv, {
         authTagLength: AUTH_TAG_LENGTH,
     });
     decipher.setAuthTag(authTag);
-    
-    return Buffer.concat([
-        decipher.update(ciphertext),
-        decipher.final(),
-    ]);
+
+    return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
 }
 
 // ==========================================
@@ -477,10 +448,10 @@ export function getCurrentKeyVersion(): number {
  */
 export function needsReencryption(encrypted: string): boolean {
     if (!isEncrypted(encrypted)) return false;
-    
+
     const versionStr = encrypted.slice(ENCRYPTION_PREFIX.length, ENCRYPTION_PREFIX.length + KEY_VERSION_LENGTH);
     const version = parseInt(versionStr, 10);
-    
+
     return version < keyManager.getCurrentVersion();
 }
 
@@ -496,22 +467,20 @@ export const EncryptionService = {
     hashForIndex,
     isEncrypted,
     reencrypt,
-    
+
     // PII encryption
     encryptPII,
     decryptPII,
     PII_FIELDS,
     SEARCHABLE_PII_FIELDS,
-    
+
     // File encryption
     encryptBuffer,
     decryptBuffer,
-    
+
     // Key management
     getCurrentKeyVersion,
     needsReencryption,
 };
 
 export default EncryptionService;
-
-

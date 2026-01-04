@@ -365,5 +365,3 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
 };
 
 export default ProfileVisibilitySettings;
-
-

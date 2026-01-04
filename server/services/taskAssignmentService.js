@@ -1,3 +1,3 @@
-import Service from '../dist/services/taskAssignmentService.js';
-export * from '../dist/services/taskAssignmentService.js';
+import Service from '../src/services/taskAssignmentService.js';
+export * from '../src/services/taskAssignmentService.js';
 export default Service;

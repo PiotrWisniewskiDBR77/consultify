@@ -92,34 +92,32 @@ const config = {
     postgres: databaseUrl
         ? parsePostgresUrl(databaseUrl)
         : (() => {
-            // Determine SSL configuration
-            let sslConfig: boolean | { rejectUnauthorized: boolean } = false;
-            if (process.env.DB_SSL === 'true' || process.env.DB_SSL === 'require') {
-                sslConfig = { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' };
-            } else if (process.env.DB_SSL === 'false' || process.env.DB_SSL === 'disable') {
-                sslConfig = false;
-            } else {
-                // Default: No SSL for Railway/internal connections
-                sslConfig = false;
-            }
+              // Determine SSL configuration
+              let sslConfig: boolean | { rejectUnauthorized: boolean } = false;
+              if (process.env.DB_SSL === 'true' || process.env.DB_SSL === 'require') {
+                  sslConfig = { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' };
+              } else if (process.env.DB_SSL === 'false' || process.env.DB_SSL === 'disable') {
+                  sslConfig = false;
+              } else {
+                  // Default: No SSL for Railway/internal connections
+                  sslConfig = false;
+              }
 
-            return {
-                host: process.env.DB_HOST || 'localhost',
-                port: parseInt(process.env.DB_PORT || '5432', 10),
-                database: process.env.DB_NAME || 'consultify',
-                user: process.env.DB_USER || 'postgres',
-                password: process.env.DB_PASSWORD || '',
-                ssl: sslConfig,
-                max: parseInt(process.env.DB_POOL_SIZE || '10', 10),
-                idleTimeoutMillis: 30000,
-                connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000'),
-            };
-        })(),
+              return {
+                  host: process.env.DB_HOST || 'localhost',
+                  port: parseInt(process.env.DB_PORT || '5432', 10),
+                  database: process.env.DB_NAME || 'consultify',
+                  user: process.env.DB_USER || 'postgres',
+                  password: process.env.DB_PASSWORD || '',
+                  ssl: sslConfig,
+                  max: parseInt(process.env.DB_POOL_SIZE || '10', 10),
+                  idleTimeoutMillis: 30000,
+                  connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000'),
+              };
+          })(),
 
     // Read Replica Configuration (Optional)
-    readReplica: process.env.DATABASE_READ_URL
-        ? parsePostgresUrl(process.env.DATABASE_READ_URL)
-        : null,
+    readReplica: process.env.DATABASE_READ_URL ? parsePostgresUrl(process.env.DATABASE_READ_URL) : null,
 
     // Common settings
     debug: process.env.DB_DEBUG === 'true',

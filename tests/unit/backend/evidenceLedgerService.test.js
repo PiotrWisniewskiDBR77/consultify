@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
-import EvidenceLedgerService from '../../../server/services/evidenceLedgerService.js';
+import EvidenceLedgerService from '../../../server/src/services/evidenceLedgerService.js';
 
 describe('EvidenceLedgerService', () => {
     let mockDb;

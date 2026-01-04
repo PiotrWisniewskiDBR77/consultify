@@ -328,5 +328,3 @@ export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =
             totalPages: z.number().int().nonnegative(),
         }),
     });
-
-

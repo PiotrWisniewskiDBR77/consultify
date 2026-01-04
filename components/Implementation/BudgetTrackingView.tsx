@@ -717,5 +717,3 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({ initiati
 };
 
 export default BudgetTrackingView;
-
-

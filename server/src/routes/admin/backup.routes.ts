@@ -11,7 +11,7 @@ import { Router } from 'express';
 import { verifyAdmin } from '../../middleware/admin.middleware.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { verifySuperAdmin } from '../../middleware/superAdmin.middleware.js';
-import logger from '../../utils/Logger.js';
+import logger from '../../utils/Logger.ts';
 
 const router = Router();
 
@@ -58,7 +58,7 @@ router.get('/status', async (req, res) => {
     try {
         const BackupService = await import('../../../services/backupService.js').then((m) => m.default || m);
         const BackupCron = await import('../../cron/BackupCron.js').then((m) => m.default || m);
-        
+
         const status = await BackupService.getBackupStatus();
         const cron = BackupCron.getBackupCron();
         const metrics = cron.getMetrics();
@@ -218,5 +218,3 @@ router.post('/manual', verifySuperAdmin, async (req, res) => {
 });
 
 export default router;
-
-

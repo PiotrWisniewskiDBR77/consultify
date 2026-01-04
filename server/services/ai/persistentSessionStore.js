@@ -5,7 +5,7 @@
  * Replaces the ephemeral in-memory map to ensure context survives server restarts.
  */
 
-import { getDatabase } from '../../src/database/index.js';
+import { getDatabase } from '../../src/database/Database.ts';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import { aiLogger } from './logger.js';

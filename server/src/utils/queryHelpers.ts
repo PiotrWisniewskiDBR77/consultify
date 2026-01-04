@@ -6,7 +6,7 @@
  */
 
 import { getDatabase } from '../database/Database.js';
-import logger from './Logger.js';
+import logger from './Logger.ts';
 
 interface Database {
     all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;

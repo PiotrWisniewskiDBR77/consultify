@@ -9,6 +9,7 @@
 
 import { NextFunction, Request, Response } from 'express';
 
+import logger from '../utils/Logger.ts';
 import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
@@ -258,7 +259,6 @@ export function requireAccess(requirements: FeatureRequirements) {
  */
 export function isFeatureAccessible(featureId: string, context: FeatureContext): boolean {
     const requirements = FEATURE_REQUIREMENTS[featureId];
-import logger from '../utils/Logger.js';
     if (!requirements) return false;
 
     const { phase, state, role } = context;
@@ -286,5 +286,3 @@ import logger from '../utils/Logger.js';
 export function getAccessibleFeatures(context: FeatureContext): string[] {
     return Object.keys(FEATURE_REQUIREMENTS).filter((featureId) => isFeatureAccessible(featureId, context));
 }
-
-

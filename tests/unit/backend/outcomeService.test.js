@@ -5,7 +5,7 @@
  * Tests for deterministic measurement computation and success criteria evaluation.
  */
 
-const OutcomeService = require('../../../server/services/outcomeService');
+const OutcomeService = require('../../../server/src/services/outcomeService');
 
 describe('OutcomeService', () => {
     // ==========================================

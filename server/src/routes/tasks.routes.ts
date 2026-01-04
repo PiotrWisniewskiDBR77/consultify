@@ -9,9 +9,10 @@ import { Router } from 'express';
 
 import TaskController from '../controllers/TaskController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
+import logger from '../utils/Logger.ts';
 import {
-import logger from '../utils/Logger.js';
     AddTaskCommentSchema,
     AssignTaskSchema,
     CreateTaskSchema,
@@ -22,6 +23,9 @@ import logger from '../utils/Logger.js';
 } from '../validators/task.validators.js';
 
 const router = Router();
+
+// Apply rate limiting
+router.use(authRateLimiter);
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
@@ -34,7 +38,14 @@ router.use(verifyToken);
  * GET /api/tasks
  * Get all tasks with filters
  */
-router.get('/', (req, res, next) => { logger.info('[TasksRoute] GET / matched'); next(); }, TaskController.getTasks);
+router.get(
+    '/',
+    (req, res, next) => {
+        logger.info('[TasksRoute] GET / matched');
+        next();
+    },
+    TaskController.getTasks,
+);
 
 /**
  * POST /api/tasks

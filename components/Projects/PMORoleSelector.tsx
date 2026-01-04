@@ -246,5 +246,3 @@ export const PMORoleSelector: React.FC<PMORoleSelectorProps> = ({
 };
 
 export default PMORoleSelector;
-
-

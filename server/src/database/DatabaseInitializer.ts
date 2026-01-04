@@ -7,8 +7,8 @@
  */
 
 import { databaseConfig } from '../config/DatabaseConfig.ts';
-import { getDatabase, getDatabaseAsync } from './Database.ts';
 import logger from '../utils/Logger.ts';
+import { getDatabase, getDatabaseAsync } from './Database.ts';
 
 // ==========================================
 // SCHEMA VERIFICATION
@@ -65,7 +65,10 @@ async function verifySchema(): Promise<{ valid: boolean; missing: string[]; erro
                         `SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name=?`,
                         [table],
                     );
-                    const count = typeof result.rows[0]?.count === 'number' ? result.rows[0].count : parseInt(String(result.rows[0]?.count || '0'), 10);
+                    const count =
+                        typeof result.rows[0]?.count === 'number'
+                            ? result.rows[0].count
+                            : parseInt(String(result.rows[0]?.count || '0'), 10);
                     if (count === 0) {
                         missing.push(table);
                     }
@@ -115,9 +118,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
             const verification = await verifySchema();
             if (!verification.valid) {
                 if (verification.missing.length > 0) {
-                    logger.error(
-                        `[DatabaseInitializer] Missing critical tables: ${verification.missing.join(', ')}`,
-                    );
+                    logger.error(`[DatabaseInitializer] Missing critical tables: ${verification.missing.join(', ')}`);
                     // Try to initialize schema manually
                     logger.info('[DatabaseInitializer] Attempting to initialize schema...');
                     const { initDb } = await import('./PostgresDatabase.ts');
@@ -201,35 +202,37 @@ export async function verifyDatabaseHealth(): Promise<boolean> {
         // Simple connection test
         await db.query('SELECT 1');
 
-            // Verify critical tables exist
-            const verification = await verifySchema();
-            if (!verification.valid) {
-                logger.warn(
-                    `[DatabaseInitializer] Schema integrity check failed. Missing: ${verification.missing.join(', ')}`,
-                );
-                
-                // Attempt to reinitialize if tables are missing
-                if (verification.missing.length > 0) {
-                    logger.info('[DatabaseInitializer] Attempting to reinitialize missing tables...');
-                    const reinitResult = await initializeDatabase();
-                    if (!reinitResult.success) {
-                        logger.error(`[DatabaseInitializer] Failed to reinitialize: ${reinitResult.message}`);
-                        return false;
-                    }
-                    // Verify again after reinit
-                    const recheck = await verifySchema();
-                    if (!recheck.valid) {
-                        logger.error(`[DatabaseInitializer] Schema still invalid after reinit. Missing: ${recheck.missing.join(', ')}`);
-                        return false;
-                    }
-                    logger.info('[DatabaseInitializer] Schema reinitialized successfully');
-                }
-                
-                if (verification.errors.length > 0) {
-                    logger.error(`[DatabaseInitializer] Schema verification errors: ${verification.errors.join(', ')}`);
+        // Verify critical tables exist
+        const verification = await verifySchema();
+        if (!verification.valid) {
+            logger.warn(
+                `[DatabaseInitializer] Schema integrity check failed. Missing: ${verification.missing.join(', ')}`,
+            );
+
+            // Attempt to reinitialize if tables are missing
+            if (verification.missing.length > 0) {
+                logger.info('[DatabaseInitializer] Attempting to reinitialize missing tables...');
+                const reinitResult = await initializeDatabase();
+                if (!reinitResult.success) {
+                    logger.error(`[DatabaseInitializer] Failed to reinitialize: ${reinitResult.message}`);
                     return false;
                 }
+                // Verify again after reinit
+                const recheck = await verifySchema();
+                if (!recheck.valid) {
+                    logger.error(
+                        `[DatabaseInitializer] Schema still invalid after reinit. Missing: ${recheck.missing.join(', ')}`,
+                    );
+                    return false;
+                }
+                logger.info('[DatabaseInitializer] Schema reinitialized successfully');
             }
+
+            if (verification.errors.length > 0) {
+                logger.error(`[DatabaseInitializer] Schema verification errors: ${verification.errors.join(', ')}`);
+                return false;
+            }
+        }
 
         return true;
     } catch (err: unknown) {
@@ -244,4 +247,3 @@ export default {
     verifyDatabaseHealth,
     verifySchema,
 };
-

@@ -5,8 +5,11 @@
  * Also runs retention policy cleanup.
  */
 
-const cron = require('node-cron');
-const BackupService = import('backupService.js');
+import cron from 'node-cron';
+
+// @ts-ignore
+import { captureException } from '../config/sentry.js';
+import BackupService from '../services/backupService.js';
 
 let backupJob = null;
 
@@ -38,7 +41,6 @@ function startBackupJob() {
 
                 // Report to Sentry if available
                 try {
-                    const { captureException } = require('../config/sentry');
                     captureException(error, {
                         tags: { component: 'backup', job: 'scheduled' },
                     });

@@ -740,5 +740,3 @@ const CustomRolesBuilder: React.FC = () => {
 };
 
 export default CustomRolesBuilder;
-
-

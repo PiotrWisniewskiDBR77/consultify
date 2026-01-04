@@ -1,5 +1,5 @@
+import logger from '../utils/Logger.ts';
 import { sessionCache } from './redis/CacheService.js';
-import logger from '../utils/Logger.js';
 
 export interface UserSession {
     userId: string;
@@ -16,7 +16,7 @@ class UserSessionService {
             userId,
             token,
             expiresAt: Date.now() + this.TTL * 1000,
-            metadata
+            metadata,
         };
         await sessionCache.set(userId, session, this.TTL);
         logger.info(`[Session] Created session for ${userId}`);

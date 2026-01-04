@@ -104,5 +104,3 @@ const CategoriesTab: React.FC<CategoriesTabProps> = ({
 };
 
 export default CategoriesTab;
-
-

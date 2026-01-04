@@ -5,7 +5,7 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { validateOrFallback, GapAnalysisSchema, EvidenceSchema, InitiativeListSchema, PrioritizedListSchema, ROIEstimateSchema } from '../dist/utils/aiSchemaValidator.js';
+import { validateOrFallback, GapAnalysisSchema, EvidenceSchema, InitiativeListSchema, PrioritizedListSchema, ROIEstimateSchema } from '../src/utils/AISchemaValidator.js';
 
 // AI THINKING_PARTNER Mode Configuration
 const AI_PARTNER_CONFIG = {

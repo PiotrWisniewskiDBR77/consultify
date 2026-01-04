@@ -806,5 +806,3 @@ const SocialLinkInput: React.FC<SocialLinkInputProps> = ({ icon, label, value, o
 };
 
 export default ProfessionalProfileSection;
-
-

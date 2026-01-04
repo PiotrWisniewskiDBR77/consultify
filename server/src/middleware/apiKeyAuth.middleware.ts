@@ -1,13 +1,13 @@
 /**
  * API Key Authentication Middleware
  * Enterprise SaaS Architecture - API Security
- * 
+ *
  * Authenticates requests using API keys for programmatic access.
- * 
+ *
  * Usage:
  * - Authorization: Bearer ck_<key>
  * - X-API-Key: ck_<key>
- * 
+ *
  * Features:
  * - Rate limiting per key
  * - Permission validation
@@ -15,9 +15,10 @@
  * - Usage tracking
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { ApiKeyService, ApiKey, API_KEY_PERMISSIONS } from '../services/ApiKeyService.js';
-import logger from '../utils/Logger.js';
+import { NextFunction, Request, Response } from 'express';
+
+import { API_KEY_PERMISSIONS, ApiKey, ApiKeyService } from '../services/ApiKeyService.js';
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // TYPES
@@ -42,17 +43,17 @@ const rateLimitStore = new Map<string, RateLimitEntry>();
 function checkRateLimit(keyId: string, limit: number): { allowed: boolean; remaining: number; resetAt: number } {
     const now = Date.now();
     const windowMs = 60 * 1000; // 1 minute window
-    
+
     let entry = rateLimitStore.get(keyId);
-    
+
     if (!entry || entry.resetAt < now) {
         entry = { count: 0, resetAt: now + windowMs };
         rateLimitStore.set(keyId, entry);
     }
-    
+
     entry.count++;
     const remaining = Math.max(0, limit - entry.count);
-    
+
     return {
         allowed: entry.count <= limit,
         remaining,
@@ -78,14 +79,10 @@ setInterval(() => {
  * Authenticate request using API key
  * Extracts key from Authorization header or X-API-Key header
  */
-export async function apiKeyAuth(
-    req: ApiKeyRequest,
-    res: Response,
-    next: NextFunction,
-): Promise<void> {
+export async function apiKeyAuth(req: ApiKeyRequest, res: Response, next: NextFunction): Promise<void> {
     try {
         const apiKey = extractApiKey(req);
-        
+
         if (!apiKey) {
             res.status(401).json({
                 error: 'API key required',
@@ -99,7 +96,7 @@ export async function apiKeyAuth(
 
         // Validate key
         const validatedKey = await ApiKeyService.validateKey(apiKey, ip);
-        
+
         if (!validatedKey) {
             logger.warn('[APIKeyAuth] Invalid API key attempt', { ip, keyPrefix: apiKey.substring(0, 11) });
             res.status(401).json({
@@ -111,7 +108,7 @@ export async function apiKeyAuth(
 
         // Check rate limit
         const rateLimit = checkRateLimit(validatedKey.id, validatedKey.rateLimit);
-        
+
         res.setHeader('X-RateLimit-Limit', validatedKey.rateLimit.toString());
         res.setHeader('X-RateLimit-Remaining', rateLimit.remaining.toString());
         res.setHeader('X-RateLimit-Reset', Math.ceil(rateLimit.resetAt / 1000).toString());
@@ -162,13 +159,9 @@ export function requireApiKeyPermission(permission: string) {
 /**
  * Optional API key auth - continues if no key provided
  */
-export async function optionalApiKeyAuth(
-    req: ApiKeyRequest,
-    res: Response,
-    next: NextFunction,
-): Promise<void> {
+export async function optionalApiKeyAuth(req: ApiKeyRequest, res: Response, next: NextFunction): Promise<void> {
     const apiKey = extractApiKey(req);
-    
+
     if (!apiKey) {
         // No key provided, continue without
         next();
@@ -185,7 +178,7 @@ export async function optionalApiKeyAuth(
 export function hybridAuth(jwtMiddleware: (req: Request, res: Response, next: NextFunction) => void) {
     return async (req: ApiKeyRequest, res: Response, next: NextFunction): Promise<void> => {
         const apiKey = extractApiKey(req);
-        
+
         if (apiKey) {
             // Use API key auth
             await apiKeyAuth(req, res, next);
@@ -240,10 +233,7 @@ function getClientIp(req: Request): string {
 // EXPORTS
 // ==========================================
 
-export {
-    ApiKeyRequest,
-    API_KEY_PERMISSIONS,
-};
+export { API_KEY_PERMISSIONS, ApiKeyRequest };
 
 export default {
     apiKeyAuth,
@@ -251,5 +241,3 @@ export default {
     optionalApiKeyAuth,
     hybridAuth,
 };
-
-

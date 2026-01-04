@@ -5,7 +5,7 @@
  * Supports SIRI, ADMA, CMMI, and LEAN 4.0 report templates.
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import multiFrameworkAuditService from './multiFrameworkAuditService.js';
 import { v4 as uuidv4 } from 'uuid';

@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const FinancialCalculatorService = require('../../../server/services/financialCalculatorService');
+const FinancialCalculatorService = require('../../../server/src/services/financialCalculatorService');
 
 describe('FinancialCalculatorService', () => {
     describe('calculateNPV', () => {

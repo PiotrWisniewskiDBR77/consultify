@@ -16,7 +16,7 @@ import _StageGateService, {
 } from '../services/stageGateService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import * as DbPromise from '../utils/DbPromise.js';
+import * as DbPromise from '../utils/DbPromise.ts';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type { PassGateRequest } from '../validators/stageGate.validators.js';
 

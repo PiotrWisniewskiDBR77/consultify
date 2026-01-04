@@ -14,16 +14,8 @@
 // ==========================================
 
 export interface Database {
-    all: (
-        sql: string,
-        params: unknown[],
-        callback: (err: Error | null, rows: unknown[]) => void,
-    ) => void;
-    get: (
-        sql: string,
-        params: unknown[],
-        callback: (err: Error | null, row: unknown) => void,
-    ) => void;
+    all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
+    get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
     run: (
         sql: string,
         params: unknown[],
@@ -94,8 +86,8 @@ const dbLogger: DbLogger = {
 // DATABASE INSTANCE
 // ==========================================
 
-import { getDatabase } from '../database/Database.js';
-import logger from './Logger.js';
+import { getDatabase } from '../database/Database.ts';
+import logger from './Logger.ts';
 
 const getDb = (): Database => {
     return getDatabase() as unknown as Database;
@@ -178,7 +170,12 @@ export function all<T = unknown>(
  * Promise wrapper for db.get() - returns single row
  */
 export function get<T = unknown>(sql: string, params?: unknown[], options?: QueryOptions): Promise<T | null>;
-export function get<T = unknown>(db: Database, sql: string, params?: unknown[], options?: QueryOptions): Promise<T | null>;
+export function get<T = unknown>(
+    db: Database,
+    sql: string,
+    params?: unknown[],
+    options?: QueryOptions,
+): Promise<T | null>;
 export function get<T = unknown>(
     dbOrSql: Database | string,
     sqlOrParams?: string | unknown[],

@@ -1,31 +1,41 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
 describe('AI Risk & Change Control Service', () => {
     let AIRiskChangeControl;
-    let mockDb;
-    let mockUuid;
+    let mocks;
 
     beforeEach(async () => {
         vi.resetModules();
 
-        mockDb = {
-            all: vi.fn(),
-            get: vi.fn(),
-            run: vi.fn()
-        };
+        mocks = setupStandardTest();
 
-        mockUuid = {
-            v4: vi.fn(() => 'mock-uuid-risk')
-        };
+        // Module-level mocks for specific dependencies
+        vi.doMock('../../../server/src/utils/DbPromise.ts', () => ({
+            all: mocks.db.all,
+            get: mocks.db.get,
+            run: mocks.db.run,
+            default: {
+                all: mocks.db.all,
+                get: mocks.db.get,
+                run: mocks.db.run
+            }
+        }));
 
-        vi.doMock('../../../server/database', () => ({ default: mockDb }));
-        vi.doMock('uuid', () => ({ v4: mockUuid.v4 }));
+        vi.doMock('uuid', () => ({ v4: mocks.uuid }));
 
-        AIRiskChangeControl = (await import('../../../server/services/aiRiskChangeControl.js')).default;
+        try {
+            const module = await import('../../../server/src/services/aiRiskChangeControl.ts');
+            AIRiskChangeControl = module.default || module;
+        } catch (e) {
+            console.error("Failed to import AIRiskChangeControl", e);
+            throw e;
+        }
     });
 
     afterEach(() => {
         vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('Logic: _suggestMitigation', () => {
@@ -45,56 +55,53 @@ describe('AI Risk & Change Control Service', () => {
             });
 
             // Mock org ID fetch
-            mockDb.get.mockImplementation((sql, params, cb) => {
-                const s = sql.toLowerCase();
-                if (s.includes('organization_id') || s.includes('select organization_id') || s.includes('from projects')) {
-                    return cb(null, { organization_id: 'org-1' });
-                }
-                cb(null, { organization_id: 'org-1' });
-            });
+            mockDb.get.mockResolvedValue({ organization_id: 'org-1' });
 
             // Mock sub-detectors via DB responses
-            mockDb.all.mockImplementation((sql, params, cb) => {
-                const s = sql.toLowerCase();
+            mockDb.all.mockImplementation(async (db, sql) => {
+                // Handle case where db is sql (if called without db arg? No, source passes db)
+                // But wait, source: return DbPromise.all(db, sql, params) OR DbPromise.all(sql, params)
+                // If db is missing, DbPromise.all(sql, params).
+                // I should handle both.
+                const query = typeof db === 'string' ? db : sql;
+                const s = query.toLowerCase();
                 // Delivery: Overdue tasks
                 if (s.includes('select t.') && s.includes('due_date < date')) {
-                    const longAgo = new Date(); 
+                    const longAgo = new Date();
                     longAgo.setDate(longAgo.getDate() - 100);
-                    return cb(null, [{ id: 't1', title: 'Late Task', due_date: longAgo.toISOString(), initiative_name: 'Initiative 1' }]);
+                    return [{ id: 't1', title: 'Late Task', due_date: longAgo.toISOString(), initiative_name: 'Initiative 1' }];
                 }
                 // Delivery: Stalled initiatives
                 if (s.includes('from initiatives') && s.includes('updated_at < datetime')) {
-                    return cb(null, [{ id: 'i1', name: 'Stalled Initiative', status: 'EXECUTING' }]);
+                    return [{ id: 'i1', name: 'Stalled Initiative', status: 'EXECUTING' }];
                 }
                 // Capacity: Overloaded users
                 if (s.includes('having') && s.includes('task_count > 10')) {
-                    return cb(null, [{ id: 'u1', task_count: 25, first_name: 'Over', last_name: 'Loaded' }]);
+                    return [{ id: 'u1', task_count: 25, first_name: 'Over', last_name: 'Loaded' }];
                 }
                 // Dependency: Blocked tasks
                 if (s.includes('status') && s.includes('blocked')) {
-                    return cb(null, [{ id: 't2', title: 'Blocked Task', blocked_reason: 'Waiting for dependency' }]);
+                    return [{ id: 't2', title: 'Blocked Task', blocked_reason: 'Waiting for dependency' }];
                 }
                 // Decision: Pending decisions
                 if (s.includes('from decisions') && s.includes('status') && s.includes('pending')) {
-                    return cb(null, [{ id: 'd1', title: 'Pending Decision', status: 'PENDING' }]);
+                    return [{ id: 'd1', title: 'Pending Decision', status: 'PENDING' }];
                 }
                 // Change fatigue: Recent scope changes
                 if (s.includes('from scope_changes') || s.includes('scope_change')) {
-                    return cb(null, [
+                    return [
                         { id: 'sc1', change_type: 'add', created_at: new Date().toISOString() },
                         { id: 'sc2', change_type: 'modify', created_at: new Date().toISOString() },
                         { id: 'sc3', change_type: 'expand', created_at: new Date().toISOString() }
-                    ]);
+                    ];
                 }
 
                 // Return empty for others
-                cb(null, []);
+                return [];
             });
 
             // Mock risk registration
-            mockDb.run.mockImplementation(function (sql, params, cb) { 
-                if (cb) cb.call({ changes: 1 }, null); 
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await AIRiskChangeControl.detectRisks('p-1');
 
@@ -106,16 +113,8 @@ describe('AI Risk & Change Control Service', () => {
 
     describe('trackScopeChange', () => {
         it('should log scope change', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
-                const s = sql.toLowerCase();
-                if (s.includes('organization_id') || s.includes('select organization_id')) {
-                    return cb(null, { organization_id: 'org-1' });
-                }
-                cb(null, { organization_id: 'org-1' });
-            });
-            mockDb.run.mockImplementation(function (sql, params, cb) {
-                if (cb) cb.call({ changes: 1, lastID: 'mock-change-id' }, null);
-            });
+            mockDb.get.mockResolvedValue({ organization_id: 'org-1' });
+            mockDb.run.mockResolvedValue({ changes: 1, lastID: 'mock-change-id' });
 
             const change = {
                 projectId: 'p-1',
@@ -136,9 +135,9 @@ describe('AI Risk & Change Control Service', () => {
         it('should identify when escalation is NOT needed (Logic Check)', async () => {
             // Mock retrieval of a low severity recent risk
             const recent = new Date().toISOString();
-            mockDb.get.mockImplementation((sql, params, cb) => cb(null, {
+            mockDb.get.mockResolvedValue({
                 id: 'r-1', severity: 'low', detected_at: recent, status: 'identified', title: 'Small Delay'
-            }));
+            });
 
             // Even if DB mock is bypassed, if it returns null (not found in real DB),
             // the service returns null.
@@ -150,25 +149,13 @@ describe('AI Risk & Change Control Service', () => {
         });
 
         it('should trigger warning for critical risks', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
-                const s = sql.toLowerCase();
-                if (s.includes('from ai_risk') || s.includes('where id')) {
-                    return cb(null, {
-                        id: 'r-1', 
-                        severity: 'critical', 
-                        detected_at: new Date().toISOString(), 
-                        status: 'identified', 
-                        title: 'Fire',
-                        risk_type: 'delivery'
-                    });
-                }
-                cb(null, {
-                    id: 'r-1', 
-                    severity: 'critical', 
-                    detected_at: new Date().toISOString(), 
-                    status: 'identified', 
-                    title: 'Fire'
-                });
+            mockDb.get.mockResolvedValue({
+                id: 'r-1',
+                severity: 'critical',
+                detected_at: new Date().toISOString(),
+                status: 'identified',
+                title: 'Fire',
+                risk_type: 'delivery'
             });
 
             const result = await AIRiskChangeControl.preEscalationWarning('r-1');

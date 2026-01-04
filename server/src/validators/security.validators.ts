@@ -1,7 +1,7 @@
 /**
  * Security Validators
  * Enterprise SaaS Architecture - Security Hardening
- * 
+ *
  * Centralized Zod schemas for security-critical operations
  */
 
@@ -30,16 +30,20 @@ export const OptionalUUIDSchema = UUIDSchema.optional().nullable();
 /**
  * Email schema with strict validation
  */
-export const EmailSchema = z.string().email({
-    message: 'Invalid email format',
-}).max(320, 'Email too long');
+export const EmailSchema = z
+    .string()
+    .email({
+        message: 'Invalid email format',
+    })
+    .max(320, 'Email too long');
 
 /**
  * Normalized email (lowercase, trimmed)
  */
-export const NormalizedEmailSchema = z.string()
+export const NormalizedEmailSchema = z
+    .string()
     .email()
-    .transform(email => email.toLowerCase().trim());
+    .transform((email) => email.toLowerCase().trim());
 
 // ==========================================
 // PASSWORD VALIDATION
@@ -48,7 +52,8 @@ export const NormalizedEmailSchema = z.string()
 /**
  * Password complexity requirements
  */
-export const PasswordSchema = z.string()
+export const PasswordSchema = z
+    .string()
     .min(8, 'Password must be at least 8 characters')
     .max(128, 'Password too long')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
@@ -68,15 +73,17 @@ export const LoginPasswordSchema = z.string().min(1, 'Password is required');
 /**
  * Safe string - no HTML, max length
  */
-export const SafeStringSchema = z.string()
+export const SafeStringSchema = z
+    .string()
     .max(10000, 'String too long')
-    .transform(s => s.trim())
-    .transform(s => s.replace(/[<>]/g, '')); // Basic XSS prevention
+    .transform((s) => s.trim())
+    .transform((s) => s.replace(/[<>]/g, '')); // Basic XSS prevention
 
 /**
  * Safe name (alphanumeric, spaces, basic punctuation)
  */
-export const SafeNameSchema = z.string()
+export const SafeNameSchema = z
+    .string()
     .min(1, 'Name is required')
     .max(255, 'Name too long')
     .regex(/^[a-zA-Z0-9\s\-_.,'()]+$/, 'Invalid characters in name');
@@ -84,17 +91,19 @@ export const SafeNameSchema = z.string()
 /**
  * Safe title
  */
-export const SafeTitleSchema = z.string()
+export const SafeTitleSchema = z
+    .string()
     .min(1, 'Title is required')
     .max(500, 'Title too long')
-    .transform(s => s.trim());
+    .transform((s) => s.trim());
 
 /**
  * Safe description (allows more characters)
  */
-export const SafeDescriptionSchema = z.string()
+export const SafeDescriptionSchema = z
+    .string()
     .max(50000, 'Description too long')
-    .transform(s => s.trim())
+    .transform((s) => s.trim())
     .optional()
     .nullable();
 
@@ -105,27 +114,30 @@ export const SafeDescriptionSchema = z.string()
 /**
  * Safe URL (http/https only)
  */
-export const SafeURLSchema = z.string().url().refine(
-    url => {
-        try {
-            const parsed = new URL(url);
-            return ['http:', 'https:'].includes(parsed.protocol);
-        } catch {
-            return false;
-        }
-    },
-    { message: 'Only HTTP and HTTPS URLs are allowed' }
-);
+export const SafeURLSchema = z
+    .string()
+    .url()
+    .refine(
+        (url) => {
+            try {
+                const parsed = new URL(url);
+                return ['http:', 'https:'].includes(parsed.protocol);
+            } catch {
+                return false;
+            }
+        },
+        { message: 'Only HTTP and HTTPS URLs are allowed' },
+    );
 
 /**
  * Safe filename (no path traversal)
  */
-export const SafeFilenameSchema = z.string()
+export const SafeFilenameSchema = z
+    .string()
     .max(255, 'Filename too long')
-    .refine(
-        name => !name.includes('..') && !name.includes('/') && !name.includes('\\'),
-        { message: 'Invalid filename' }
-    );
+    .refine((name) => !name.includes('..') && !name.includes('/') && !name.includes('\\'), {
+        message: 'Invalid filename',
+    });
 
 // ==========================================
 // NUMERIC VALIDATION
@@ -134,29 +146,23 @@ export const SafeFilenameSchema = z.string()
 /**
  * Positive integer
  */
-export const PositiveIntSchema = z.coerce.number()
-    .int('Must be an integer')
-    .positive('Must be positive');
+export const PositiveIntSchema = z.coerce.number().int('Must be an integer').positive('Must be positive');
 
 /**
  * Non-negative integer (0 or more)
  */
-export const NonNegativeIntSchema = z.coerce.number()
-    .int('Must be an integer')
-    .min(0, 'Must be non-negative');
+export const NonNegativeIntSchema = z.coerce.number().int('Must be an integer').min(0, 'Must be non-negative');
 
 /**
  * Pagination page number
  */
-export const PageNumberSchema = z.coerce.number()
-    .int()
-    .min(1, 'Page must be at least 1')
-    .default(1);
+export const PageNumberSchema = z.coerce.number().int().min(1, 'Page must be at least 1').default(1);
 
 /**
  * Pagination limit
  */
-export const PageLimitSchema = z.coerce.number()
+export const PageLimitSchema = z.coerce
+    .number()
     .int()
     .min(1, 'Limit must be at least 1')
     .max(1000, 'Limit cannot exceed 1000')
@@ -181,13 +187,14 @@ export const OptionalISODateSchema = ISODateSchema.optional().nullable();
 /**
  * Date range schema
  */
-export const DateRangeSchema = z.object({
-    startDate: ISODateSchema,
-    endDate: ISODateSchema,
-}).refine(
-    data => new Date(data.startDate) <= new Date(data.endDate),
-    { message: 'Start date must be before or equal to end date' }
-);
+export const DateRangeSchema = z
+    .object({
+        startDate: ISODateSchema,
+        endDate: ISODateSchema,
+    })
+    .refine((data) => new Date(data.startDate) <= new Date(data.endDate), {
+        message: 'Start date must be before or equal to end date',
+    });
 
 // ==========================================
 // COMMON REQUEST SCHEMAS
@@ -225,27 +232,24 @@ export const SearchQuerySchema = PaginationQuerySchema.extend({
 /**
  * API Key format
  */
-export const ApiKeySchema = z.string()
-    .min(32, 'API key too short')
-    .max(256, 'API key too long');
+export const ApiKeySchema = z.string().min(32, 'API key too short').max(256, 'API key too long');
 
 /**
  * JWT Token format (basic validation)
  */
-export const JWTTokenSchema = z.string()
+export const JWTTokenSchema = z
+    .string()
     .regex(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/, 'Invalid JWT format');
 
 /**
  * CSRF Token schema
  */
-export const CSRFTokenSchema = z.string()
-    .length(64, 'Invalid CSRF token'); // 32 bytes = 64 hex chars
+export const CSRFTokenSchema = z.string().length(64, 'Invalid CSRF token'); // 32 bytes = 64 hex chars
 
 /**
  * IP Address schema
  */
-export const IPAddressSchema = z.string()
-    .ip({ message: 'Invalid IP address' });
+export const IPAddressSchema = z.string().ip({ message: 'Invalid IP address' });
 
 // ==========================================
 // COMMON ENUMS

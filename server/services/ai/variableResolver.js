@@ -8,7 +8,7 @@
  * - runtime: Computed at runtime (functions)
  */
 
-import { getDatabase } from '../../src/database/index.js';
+import { getDatabase } from '../../src/database/Database.ts';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import { promptBlockLibrary } from './promptBlockLibrary.js';

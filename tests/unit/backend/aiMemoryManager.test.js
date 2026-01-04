@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testProjects } from '../../fixtures/testData.js';
 
-import AIMemoryManager from '../../../server/services/aiMemoryManager.js';
+import AIMemoryManager from '../../../server/src/services/aiMemoryManager.js';
 
 describe('AIMemoryManager', () => {
     let mockDb;
@@ -77,36 +77,28 @@ describe('AIMemoryManager', () => {
             let runCallCount = 0;
 
             // Mock db.get to return organization_id - this is called from within db.run callback
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mockDb.get.mockImplementation(async (query, params) => {
                 // Mock db.get to return organization_id
                 expect(query).toContain('SELECT organization_id FROM projects');
                 expect(params).toContain(projectId);
-                // Call callback synchronously since it's called from within db.run callback
-                callback(null, { organization_id: 'org-123' });
+                return { organization_id: 'org-123' };
             });
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mockDb.run.mockImplementation(async (query, params) => {
                 runCallCount++;
                 if (runCallCount === 1) {
                     // First call: INSERT INTO ai_project_memory
                     expect(query).toContain('ai_project_memory');
                     expect(params).toContain(projectId);
                     expect(params).toContain(memoryType);
-                    // Call callback synchronously - this will trigger db.get inside
-                    if (callback) {
-                        callback.call({ changes: 1 }, null);
-                    }
+                    return { success: true, changes: 1 };
                 } else if (runCallCount === 2) {
-                    // Second call: INSERT INTO activity_logs (called after db.get)
+                    // Second call: INSERT INTO activity_logs
                     expect(query).toContain('activity_logs');
                     expect(params).toContain('org-123'); // organization_id
-                    // Call callback synchronously
-                    if (callback) {
-                        callback.call({ changes: 1 }, null);
-                    }
-                } else if (callback) {
-                    callback.call({ changes: 1 }, null);
+                    return { success: true, changes: 1 };
                 }
+                return { success: true, changes: 1 };
             });
 
             const result = await AIMemoryManager.recordProjectMemory(
@@ -130,19 +122,16 @@ describe('AIMemoryManager', () => {
             const userId = testUsers.user.id;
 
             // Mock db.get - won't be called if first INSERT fails
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { organization_id: 'org-123' });
+            mockDb.get.mockImplementation(async (query, params) => {
+                return { organization_id: 'org-123' };
             });
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                // First INSERT fails - this should reject the promise
+            mockDb.run.mockImplementation(async (query, params) => {
+                // First INSERT fails - this should reject the promise or return success: false
                 if (query.includes('ai_project_memory')) {
-                    if (callback) {
-                        callback(new Error('DB Error'));
-                    }
-                } else if (callback) {
-                    callback.call({ changes: 1 }, null);
+                    return { success: false, error: 'DB Error' };
                 }
+                return { success: true, changes: 1 };
             });
 
             await expect(
@@ -161,16 +150,14 @@ describe('AIMemoryManager', () => {
             const userId = testUsers.user.id;
 
             // Mock db.get to return organization_id
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { organization_id: 'org-123' });
+            mockDb.get.mockImplementation(async (query, params) => {
+                return { organization_id: 'org-123' };
             });
 
             let runCallCount = 0;
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mockDb.run.mockImplementation(async (query, params) => {
                 runCallCount++;
-                if (callback) {
-                    callback.call({ changes: 1 }, null);
-                }
+                return { success: true, changes: 1 };
             });
 
             const result = await AIMemoryManager.recordDecision(
@@ -197,14 +184,12 @@ describe('AIMemoryManager', () => {
             const userId = testUsers.user.id;
 
             // Mock db.get to return organization_id
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { organization_id: 'org-123' });
+            mockDb.get.mockImplementation(async (query, params) => {
+                return { organization_id: 'org-123' };
             });
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                if (callback) {
-                    callback.call({ changes: 1 }, null);
-                }
+            mockDb.run.mockImplementation(async (query, params) => {
+                return { success: true, changes: 1 };
             });
 
             const result = await AIMemoryManager.recordPhaseTransition(
@@ -228,14 +213,12 @@ describe('AIMemoryManager', () => {
             const userId = testUsers.user.id;
 
             // Mock db.get to return organization_id
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { organization_id: 'org-123' });
+            mockDb.get.mockImplementation(async (query, params) => {
+                return { organization_id: 'org-123' };
             });
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                if (callback) {
-                    callback.call({ changes: 1 }, null);
-                }
+            mockDb.run.mockImplementation(async (query, params) => {
+                return { success: true, changes: 1 };
             });
 
             const result = await AIMemoryManager.recordRecommendation(
@@ -257,14 +240,14 @@ describe('AIMemoryManager', () => {
             // Reset mock to ensure clean state
             mockDb.all.mockClear();
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mockDb.all.mockImplementation(async (query, params) => {
                 // Verify query and params
                 expect(query).toContain('SELECT');
                 expect(query).toContain('ai_project_memory');
                 expect(params).toContain(projectId);
                 expect(params).toContain(20); // limit
 
-                callback(null, [
+                return [
                     {
                         id: 'mem-1',
                         memory_type: AIMemoryManager.MEMORY_TYPES.DECISION,
@@ -275,7 +258,7 @@ describe('AIMemoryManager', () => {
                         memory_type: AIMemoryManager.MEMORY_TYPES.RECOMMENDATION,
                         content: JSON.stringify({ recommendation: 'test' })
                     }
-                ]);
+                ];
             });
 
             const memories = await AIMemoryManager.getProjectMemory(projectId);
@@ -288,10 +271,10 @@ describe('AIMemoryManager', () => {
             const projectId = testProjects.project1.id;
             const memoryType = AIMemoryManager.MEMORY_TYPES.DECISION;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mockDb.all.mockImplementation(async (query, params) => {
                 // Verify query filters by memory_type
                 expect(params).toContain(memoryType);
-                callback(null, []);
+                return [];
             });
 
             await AIMemoryManager.getProjectMemory(projectId, memoryType);
@@ -303,24 +286,24 @@ describe('AIMemoryManager', () => {
             const projectId = testProjects.project1.id;
 
             let callCount = 0;
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mockDb.all.mockImplementation(async (query, params) => {
                 callCount++;
                 // Return different data for each call (decisions, transitions, recommendations)
                 if (callCount === 1) {
                     // Decisions
-                    callback(null, [
+                    return [
                         { id: 'mem-1', memory_type: AIMemoryManager.MEMORY_TYPES.DECISION, content: JSON.stringify({ decision: 'test' }) }
-                    ]);
+                    ];
                 } else if (callCount === 2) {
                     // Transitions
-                    callback(null, [
+                    return [
                         { id: 'mem-2', memory_type: AIMemoryManager.MEMORY_TYPES.PHASE_TRANSITION, content: JSON.stringify({ transition: 'test' }) }
-                    ]);
+                    ];
                 } else {
                     // Recommendations
-                    callback(null, [
+                    return [
                         { id: 'mem-3', memory_type: AIMemoryManager.MEMORY_TYPES.RECOMMENDATION, content: JSON.stringify({ recommendation: 'test' }) }
-                    ]);
+                    ];
                 }
             });
 

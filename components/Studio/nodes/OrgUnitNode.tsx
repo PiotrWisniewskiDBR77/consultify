@@ -111,5 +111,3 @@ export const OrgUnitNode: React.FC<NodeProps<OrgUnitData>> = memo(({ data, selec
 OrgUnitNode.displayName = 'OrgUnitNode';
 
 export default OrgUnitNode;
-
-

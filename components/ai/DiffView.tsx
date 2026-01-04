@@ -239,5 +239,3 @@ export function DiffView({
 }
 
 export default DiffView;
-
-

@@ -42,7 +42,7 @@ describe('RoadmapService', () => {
         uuidCounter = 0;
 
         // Dynamic import for ESM compatibility
-        const module = await import('../../../server/services/roadmapService.js');
+        const module = await import('../../../server/src/services/roadmapService.js');
         RoadmapService = module.default;
         
         RoadmapService.setDependencies({

@@ -459,5 +459,3 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
 };
 
 export default PrivacyVisibilitySettings;
-
-

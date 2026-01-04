@@ -9,12 +9,14 @@ import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { _verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import NotificationService from '../services/NotificationService.js';
 import WhatsAppService from '../services/WhatsAppService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
+import logger from '../utils/Logger.ts';
 
+// Apply rate limiting
 const router = Router();
 
 /**

@@ -1,9 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect, beforeAll } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-const db = require('../../server/database.js');
+import db from '../../server/database.js';
 
 /**
  * Level 5: Performance Tests - Database Performance
@@ -55,7 +52,7 @@ describe('Performance Test: Database', () => {
     describe('Query Performance Benchmarks', () => {
         it('should execute simple SELECT in < 10ms', async () => {
             const startTime = Date.now();
-            
+
             await new Promise((resolve) => {
                 db.get('SELECT COUNT(*) as count FROM organizations', [], resolve);
             });

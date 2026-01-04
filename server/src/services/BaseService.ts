@@ -11,9 +11,9 @@
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase, RunResult } from '../database/IDatabase.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-import * as DbPromise from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
+import * as DbPromise from '../utils/DbPromise.ts';
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // TYPES

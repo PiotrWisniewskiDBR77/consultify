@@ -4,7 +4,7 @@
 const performanceMetrics = require('../../../server/middleware/performanceMetrics');
 
 // Load service
-const MetricsPersistenceService = require('../../../server/services/metricsPersistenceService');
+const MetricsPersistenceService = require('../../../server/src/services/metricsPersistenceService');
 
 describe('MetricsPersistenceService', () => {
     // Manually create mock DB

@@ -5,8 +5,8 @@
 
 import type { NextFunction, Request, Response } from 'express';
 
-import { _AuthenticationError, _AuthorizationError, _NotFoundError, AppError, ValidationError } from '../types.js';
-import logger from '../utils/Logger.js';
+import { AppError, AuthenticationError, AuthorizationError, NotFoundError, ValidationError } from '../types/index.js';
+import logger from '../utils/Logger.ts';
 
 interface ErrorResponse {
     success: false;
@@ -35,7 +35,8 @@ export const errorHandler = (err: Error, req: Request, res: Response, _next: Nex
     };
 
     // Handle known error types
-    if (err instanceof AppError) {
+    // Verify AppError is defined (implying valid import) to prevent crash
+    if (AppError && err instanceof AppError) {
         statusCode = err.statusCode;
         response = {
             success: false,

@@ -1,5 +1,5 @@
 /**
-import logger from '../utils/Logger.js';
+import logger from '../utils/Logger.ts';
  * Service to handle active alerting based on performance metrics.
  */
 
@@ -109,7 +109,7 @@ const AlertService = {
                             message: alert.message,
                             severity: 'CRITICAL',
                             isActionable: false,
-                            expiresAt: undefined
+                            expiresAt: undefined,
                         });
                     }
                 } catch (error) {

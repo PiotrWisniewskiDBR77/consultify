@@ -74,5 +74,3 @@ export const EmailNotificationsSettings: React.FC<EmailNotificationsSettingsProp
 };
 
 export default EmailNotificationsSettings;
-
-

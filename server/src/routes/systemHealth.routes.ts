@@ -12,8 +12,12 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 
+// Apply rate limiting
+router.use(defaultRateLimiter);
+
 import SystemHealthService from '../../services/systemHealthService.js';
-import logger from '../utils/Logger.js';
+import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import logger from '../utils/Logger.ts';
 
 /**
  * GET /api/system-health
@@ -135,11 +139,11 @@ router.get(
         try {
             // Dynamic import to avoid circular dependencies
             const { KeyManagementService, getCurrentKeyVersion } = await import('../services/encryption/index.js');
-            
+
             const health = KeyManagementService.checkHealth();
             const keyStatus = KeyManagementService.getKeyStatus();
             const currentVersion = getCurrentKeyVersion();
-            
+
             res.json({
                 healthy: health.healthy,
                 currentKeyVersion: currentVersion,
@@ -150,7 +154,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[SystemHealth] Encryption health check error:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Encryption health check failed',
                 healthy: false,
             });

@@ -18,7 +18,7 @@ async function initDeps() {
     if (deps.db && deps.uuidv4) return;
 
     const [dbModule, uuidModule] = await Promise.all([
-        import('../src/database/index.js'),
+        import('../src/database/Database.ts'),
         import('uuid')
     ]);
 

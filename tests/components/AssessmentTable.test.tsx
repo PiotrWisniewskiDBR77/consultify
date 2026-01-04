@@ -97,14 +97,14 @@ describe('AssessmentTable', () => {
     describe('Loading State', () => {
         it('should show loading spinner initially', () => {
             renderComponent();
-            
+
             // Loading spinner should be visible
             expect(document.querySelector('.animate-spin')).toBeInTheDocument();
         });
 
         it('should hide loading after data loads', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(document.querySelector('.animate-spin')).not.toBeInTheDocument();
             });
@@ -118,7 +118,7 @@ describe('AssessmentTable', () => {
     describe('Data Display', () => {
         it('should display assessments after loading', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('Q1 2024 Assessment')).toBeInTheDocument();
                 expect(screen.getByText('Annual Review')).toBeInTheDocument();
@@ -128,7 +128,7 @@ describe('AssessmentTable', () => {
 
         it('should display project names', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getAllByText('Digital Transformation').length).toBeGreaterThan(0);
             });
@@ -136,7 +136,7 @@ describe('AssessmentTable', () => {
 
         it('should display progress bars', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('42%')).toBeInTheDocument();
                 expect(screen.getAllByText('100%').length).toBe(2);
@@ -145,7 +145,7 @@ describe('AssessmentTable', () => {
 
         it('should display axes completion', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('3/7 axes')).toBeInTheDocument();
                 expect(screen.getAllByText('7/7 axes').length).toBe(2);
@@ -160,7 +160,7 @@ describe('AssessmentTable', () => {
     describe('Status Badges', () => {
         it('should show Draft badge', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('Draft')).toBeInTheDocument();
             });
@@ -168,7 +168,7 @@ describe('AssessmentTable', () => {
 
         it('should show In Review badge', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('In Review')).toBeInTheDocument();
             });
@@ -176,7 +176,7 @@ describe('AssessmentTable', () => {
 
         it('should show Approved badge', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('Approved')).toBeInTheDocument();
             });
@@ -190,7 +190,7 @@ describe('AssessmentTable', () => {
     describe('Status Filters', () => {
         it('should show filter buttons with counts', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText(/All \(3\)/)).toBeInTheDocument();
                 expect(screen.getByText(/Draft \(1\)/)).toBeInTheDocument();
@@ -201,7 +201,7 @@ describe('AssessmentTable', () => {
 
         it('should filter by draft status', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('Q1 2024 Assessment')).toBeInTheDocument();
             });
@@ -215,7 +215,7 @@ describe('AssessmentTable', () => {
 
         it('should filter by approved status', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('Final Assessment')).toBeInTheDocument();
             });
@@ -228,7 +228,7 @@ describe('AssessmentTable', () => {
 
         it('should show all when All filter clicked', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('Final Assessment')).toBeInTheDocument();
             });
@@ -251,7 +251,7 @@ describe('AssessmentTable', () => {
     describe('Search', () => {
         it('should filter by search query', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('Q1 2024 Assessment')).toBeInTheDocument();
             });
@@ -265,7 +265,7 @@ describe('AssessmentTable', () => {
 
         it('should be case insensitive', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('Q1 2024 Assessment')).toBeInTheDocument();
             });
@@ -278,7 +278,7 @@ describe('AssessmentTable', () => {
 
         it('should search by project name', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('Final Assessment')).toBeInTheDocument();
             });
@@ -298,7 +298,7 @@ describe('AssessmentTable', () => {
     describe('Action Buttons', () => {
         it('should call onOpenInMap when Edit clicked', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('Q1 2024 Assessment')).toBeInTheDocument();
             });
@@ -311,7 +311,7 @@ describe('AssessmentTable', () => {
 
         it('should show View for non-draft assessments', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getAllByText('View').length).toBeGreaterThan(0);
             });
@@ -319,7 +319,7 @@ describe('AssessmentTable', () => {
 
         it('should show Create Report for approved assessments', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('Create Report')).toBeInTheDocument();
             });
@@ -327,7 +327,7 @@ describe('AssessmentTable', () => {
 
         it('should call onCreateReport when clicked', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('Create Report')).toBeInTheDocument();
             });
@@ -339,7 +339,7 @@ describe('AssessmentTable', () => {
 
         it('should call onNewAssessment when New Assessment clicked', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('New Assessment')).toBeInTheDocument();
             });
@@ -357,7 +357,7 @@ describe('AssessmentTable', () => {
     describe('Row Menu', () => {
         it('should show menu on more button click', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('Q1 2024 Assessment')).toBeInTheDocument();
             });
@@ -403,7 +403,7 @@ describe('AssessmentTable', () => {
 
         it('should show no matches message for empty search', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('Q1 2024 Assessment')).toBeInTheDocument();
             });
@@ -422,7 +422,7 @@ describe('AssessmentTable', () => {
     describe('Refresh', () => {
         it('should refetch on refresh button click', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 expect(screen.getByText('Q1 2024 Assessment')).toBeInTheDocument();
             });
@@ -430,10 +430,8 @@ describe('AssessmentTable', () => {
             expect(mockFetch).toHaveBeenCalledTimes(1);
 
             // Find refresh button
-            const refreshButton = document.querySelector('button[class*="RefreshCw"]');
-            if (refreshButton) {
-                fireEvent.click(refreshButton);
-            }
+            const refreshButton = screen.getByLabelText('Refresh assessments');
+            fireEvent.click(refreshButton);
 
             // Wait for refetch
             await waitFor(() => {
@@ -449,7 +447,7 @@ describe('AssessmentTable', () => {
     describe('Date Formatting', () => {
         it('should format dates correctly', async () => {
             renderComponent();
-            
+
             await waitFor(() => {
                 // Dates should be formatted as "Jan 20, 2024"
                 expect(screen.getByText(/Jan.*20.*2024/)).toBeInTheDocument();

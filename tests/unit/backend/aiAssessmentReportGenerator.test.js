@@ -18,7 +18,7 @@ const mockEstimateInitiativeROI = vi.fn();
 // Mock @google/generative-ai is now handled globally via Dependency Injection in setup.ts
 // to ensure consistency across all tests.
 
-const { aiAssessmentPartner } = require('../../../server/services/aiAssessmentPartnerService.js');
+const { aiAssessmentPartner } = require('../../../server/src/services/aiAssessmentPartnerService.js');
 const { GoogleGenerativeAI } = require('../../__mocks__/@google/generative-ai');
 
 // Explicitly inject the mock client into the singleton
@@ -38,7 +38,7 @@ const mockAIResponse = {
     }
 };
 
-vi.mock('../../../server/services/aiAssessmentPartnerService', () => ({
+vi.mock('../../../server/src/services/aiAssessmentPartnerService', () => ({
     aiAssessmentPartner: {
         generateExecutiveSummary: mockGenerateExecutiveSummary,
         generateBenchmarkCommentary: mockGenerateBenchmarkCommentary,
@@ -76,7 +76,7 @@ describe('AIAssessmentReportGenerator', () => {
         vi.resetModules();
         vi.clearAllMocks();
 
-        const module = await import('../../../server/services/aiAssessmentReportGenerator.js');
+        const module = await import('../../../server/src/services/aiAssessmentReportGenerator.js');
         AIAssessmentReportGenerator = module.AIAssessmentReportGenerator;
         aiAssessmentReportGenerator = module.aiAssessmentReportGenerator;
         REPORT_TYPES = module.REPORT_TYPES;

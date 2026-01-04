@@ -196,5 +196,3 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
         </motion.div>
     );
 };
-
-

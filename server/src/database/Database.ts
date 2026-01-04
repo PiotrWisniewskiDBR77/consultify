@@ -12,6 +12,7 @@ import { databaseConfig } from '../config/DatabaseConfig.ts';
 import type { IDatabase } from './IDatabase.ts';
 import PostgresDatabase from './PostgresDatabase.ts';
 const require = createRequire(import.meta.url);
+import logger from '../utils/Logger.ts';
 
 // SQLiteDatabase will be imported using dynamic import for ES modules compatibility
 
@@ -102,8 +103,23 @@ export async function createDatabase(): Promise<IDatabase> {
         logger.info('[Database] Selected: SQLite (Legacy)');
         // Use dynamic import for ES modules compatibility
         try {
-            const sqliteModule = await import('../../database.sqlite.active.ts').then((m) => m.default || m);
-            return (sqliteModule.default || sqliteModule) as IDatabase;
+            const sqliteModule = await import('../../database.sqlite.js').then((m) => m.default || m);
+            const db = (sqliteModule.default || sqliteModule) as IDatabase;
+
+            // SHIM: Ensure .query exists (critical for DatabaseInitializer)
+            if (db && typeof (db as any).query !== 'function') {
+                logger.info('[Database] Shimming .query() method on async SQLite instance');
+                (db as any).query = function (text: string, params: any[]) {
+                    return new Promise((resolve, reject) => {
+                        db.all(text, params, (err: Error, rows: any[]) => {
+                            if (err) reject(err);
+                            else resolve({ rows: rows || [], rowCount: rows ? rows.length : 0 });
+                        });
+                    });
+                };
+            }
+
+            return db;
         } catch (err: unknown) {
             logger.error('[Database] Failed to load legacy SQLite database:', err);
             // Fallback to mock to prevent total crash in some environments, or re-throw
@@ -144,8 +160,16 @@ export function getDatabase(): IDatabase {
     // Mock database logic:
     // 1. Explicitly enabled via MOCK_DB='true'
     // 2. Implicitly enabled in 'test' env, UNLESS explicitly disabled via MOCK_DB='false'
-    const shouldMock = process.env.MOCK_DB === 'true' || (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false');
-    logger.info('[Database:DEBUG] MOCK_DB:', process.env.MOCK_DB, 'NODE_ENV:', process.env.NODE_ENV, 'shouldMock:', shouldMock);
+    const shouldMock =
+        process.env.MOCK_DB === 'true' || (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false');
+    logger.info(
+        '[Database:DEBUG] MOCK_DB:',
+        process.env.MOCK_DB,
+        'NODE_ENV:',
+        process.env.NODE_ENV,
+        'shouldMock:',
+        shouldMock,
+    );
 
     if (shouldMock) {
         const globalMock = (global as any).__TEST_DB_MOCK__ as MockDatabase | undefined;
@@ -174,8 +198,8 @@ export function getDatabase(): IDatabase {
         // const { createRequire } = require('module'); // BROKEN IN ESM
         // const requireSync = createRequire(import.meta.url); // Already created at top level
         // Dynamic import for ESM compatibility - using createRequire for synchronous access
-        const sqliteModule = require('../../database.sqlite.active.ts');
-import logger from '../utils/Logger.js';
+        const sqliteModule = require('../../database.sqlite.js');
+
         dbInstance = (sqliteModule.default || sqliteModule) as IDatabase;
 
         // SHIM: Ensure .query exists (critical for DatabaseInitializer)

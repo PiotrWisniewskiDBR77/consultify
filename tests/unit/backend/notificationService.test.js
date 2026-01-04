@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach, vi, afterEach } from 'vite
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const { initTestDb, cleanTables, dbRun, dbAll, db } = require('../../helpers/dbHelper.cjs');
-const NotificationService = require('../../../server/services/notificationService.js');
+const NotificationService = require('../../../server/src/services/notificationService.js');
 const { v4: uuidv4 } = require('uuid');
 
 // Mock SlackService

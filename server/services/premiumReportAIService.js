@@ -26,7 +26,7 @@ async function initDeps() {
         deps._AiService = AiService;
     }
     if (!deps._db) {
-        const { default: db } = await import('../src/database/index.js');
+        const { default: db } = await import('../src/database/Database.ts');
         deps._db = db;
     }
 }

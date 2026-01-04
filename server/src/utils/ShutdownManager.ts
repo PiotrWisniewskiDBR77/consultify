@@ -6,7 +6,7 @@
  * Handles cleanup of connections, jobs, and resources
  */
 
-import logger from './Logger.js';
+import logger from './Logger.ts';
 
 // ==========================================
 // TYPES
@@ -135,5 +135,3 @@ export function getShutdownManager(timeoutMs?: number): ShutdownManager {
 // ==========================================
 
 export default ShutdownManager;
-
-

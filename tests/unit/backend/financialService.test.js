@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import FinancialService from '../../../server/services/financialService.js';
+import FinancialService from '../../../server/src/services/financialService.js';
 
 describe('FinancialService', () => {
     describe('estimateCost', () => {

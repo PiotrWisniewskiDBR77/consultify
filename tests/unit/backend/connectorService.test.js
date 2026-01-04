@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+
 const { initTestDb, cleanTables, dbRun, db } = require('../../helpers/dbHelper.cjs');
-const ConnectorService = require('../../../server/services/connectorService');
+const ConnectorService = require('../../../server/src/services/connectorService');
 const { v4: uuidv4 } = require('uuid');
 
 describe('ConnectorService', () => {

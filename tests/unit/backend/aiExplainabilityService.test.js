@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import AIExplainabilityService from '../../../server/services/aiExplainabilityService.js';
+import AIExplainabilityService from '../../../server/src/services/aiExplainabilityService.js';
 
 describe('AIExplainabilityService', () => {
     describe('computeConfidenceLevel', () => {

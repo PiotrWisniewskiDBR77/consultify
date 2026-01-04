@@ -4,7 +4,7 @@
  * Tests for demo session state management.
  */
 
-const DemoSessionService = require('../../../server/services/demoSessionService');
+const DemoSessionService = require('../../../server/src/services/demoSessionService');
 
 describe('DemoSessionService', () => {
     const testSessionId = 'test-session-123';

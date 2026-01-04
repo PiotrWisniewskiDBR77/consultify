@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+
 import { getDatabase } from '../database/Database.js';
 
 /**

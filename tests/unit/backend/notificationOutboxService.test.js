@@ -10,7 +10,7 @@ const { initTestDb, cleanTables, dbAll, dbRun, db } = require('../../helpers/dbH
 // This ensures that server/database.js uses our active test DB instance
 global.__TEST_DB_MOCK__ = db;
 
-const NotificationOutboxService = require('../../../server/services/notificationOutboxService');
+const NotificationOutboxService = require('../../../server/src/services/notificationOutboxService');
 const { v4: uuidv4 } = require('uuid');
 
 describe('NotificationOutboxService', () => {

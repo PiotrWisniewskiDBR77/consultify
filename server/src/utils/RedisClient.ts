@@ -7,7 +7,8 @@
  */
 
 import { createClient, type RedisClientType } from 'redis';
-import logger from './Logger.js';
+
+import logger from './Logger.ts';
 
 let redisUrl: string | null = process.env.REDIS_URL || 'redis://localhost:6379';
 

@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import { IDatabase } from '../database/IDatabase.js';
+import logger from '../utils/Logger.ts';
 import {
     CreateInitiativeData,
     Initiative,
@@ -11,7 +12,6 @@ import {
 import { InitiativeFinancialService } from './initiative/InitiativeFinancialService.js';
 import { InitiativeProgressService } from './initiative/InitiativeProgressService.js';
 import { InitiativeRiskService } from './initiative/InitiativeRiskService.js';
-import logger from '../utils/Logger.js';
 
 export class InitiativeService {
     public definition: InitiativeDefinitionService;

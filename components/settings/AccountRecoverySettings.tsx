@@ -360,5 +360,3 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
 };
 
 export default AccountRecoverySettings;
-
-

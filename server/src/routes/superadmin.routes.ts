@@ -13,6 +13,7 @@ import { Response, Router } from 'express';
 
 import SuperAdminController from '../controllers/SuperAdminController.js';
 import type { AuthRequest } from '../middleware/auth.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { _validateParams, validateBody } from '../middleware/validation.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -25,6 +26,9 @@ import {
 } from '../validators/admin.validators.js';
 
 const router = Router();
+
+// Apply rate limiting
+router.use(authRateLimiter);
 // Note: SuperAdminController is imported as SuperAdminController above
 // Legacy require removed - using SuperAdminController import instead
 

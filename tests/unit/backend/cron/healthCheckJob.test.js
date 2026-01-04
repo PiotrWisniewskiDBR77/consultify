@@ -4,9 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
+// Removed createRequire
 
 describe('HealthCheckJob', () => {
     let HealthCheckJob;
@@ -14,7 +12,7 @@ describe('HealthCheckJob', () => {
     let mockEmailService;
     let mockCron;
 
-    beforeEach(() => {
+    beforeEach(async () => { // Async beforeEach
         vi.resetModules();
 
         mockDb = {
@@ -31,23 +29,27 @@ describe('HealthCheckJob', () => {
             })
         };
 
-        vi.doMock('../../../server/database', () => ({
-            default: mockDb
+        vi.doMock('../../../../server/src/database/Database.js', () => ({
+            default: {}, // Mock default export if needed
+            getDatabase: () => mockDb
         }));
 
-        vi.doMock('../../../server/services/emailService', () => ({
+        vi.doMock('../../../../server/services/emailService.js', () => ({
             default: mockEmailService
         }));
 
-        vi.doMock('node-cron', () => mockCron);
+        vi.doMock('node-cron', () => ({
+            default: mockCron
+        }));
 
-        HealthCheckJob = require('../../../server/cron/healthCheckJob.js');
+        const module = await import('../../../../server/cron/healthCheckJob.ts');
+        HealthCheckJob = module.default;
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../server/database');
-        vi.doUnmock('../../../server/services/emailService');
+        vi.doUnmock('../../../../server/src/database/Database.js');
+        vi.doUnmock('../../../../server/services/emailService.js');
         vi.doUnmock('node-cron');
     });
 
@@ -63,9 +65,9 @@ describe('HealthCheckJob', () => {
 
         it('should send alert when database check fails', async () => {
             HealthCheckJob.startHealthCheck();
-            
+
             const scheduledCallback = mockCron.schedule.mock.calls[0][1];
-            
+
             mockDb.get.mockImplementation((query, params, callback) => {
                 callback(new Error('Connection failed'), null);
             });
@@ -77,9 +79,9 @@ describe('HealthCheckJob', () => {
 
         it('should not send alert when database check succeeds', async () => {
             HealthCheckJob.startHealthCheck();
-            
+
             const scheduledCallback = mockCron.schedule.mock.calls[0][1];
-            
+
             mockDb.get.mockImplementation((query, params, callback) => {
                 callback(null, { '1': 1 });
             });
@@ -92,9 +94,9 @@ describe('HealthCheckJob', () => {
 
         it('should send recovery email when system recovers', async () => {
             HealthCheckJob.startHealthCheck();
-            
+
             const scheduledCallback = mockCron.schedule.mock.calls[0][1];
-            
+
             // First call - failure
             mockDb.get.mockImplementationOnce((query, params, callback) => {
                 callback(new Error('Connection failed'), null);
@@ -109,6 +111,9 @@ describe('HealthCheckJob', () => {
             });
 
             await scheduledCallback();
+
+            // Wait for async callback to execute
+            await vi.waitUntil(() => mockEmailService.sendEmail.mock.calls.length > 0);
 
             expect(mockEmailService.sendEmail).toHaveBeenCalledWith(
                 expect.any(String),

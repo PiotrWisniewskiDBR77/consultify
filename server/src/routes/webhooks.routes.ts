@@ -21,12 +21,16 @@ import {
 } from '../validators/webhooks.validators.js';
 
 const router = Router();
+
+// Apply rate limiting
+router.use(authRateLimiter);
 import Stripe from 'stripe';
 
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import type { DunningService } from '../services/DunningService.js';
 import type { InvoiceServiceClass } from '../services/InvoiceService.js';
 import webhookService from '../services/WebhookService.js';
-import logger from '../utils/Logger.js';
+import logger from '../utils/Logger.ts';
 
 // Type definitions for lazy-loaded services
 interface DunningServiceInstance {

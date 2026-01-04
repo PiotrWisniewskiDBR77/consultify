@@ -148,5 +148,3 @@ describe('Admin Alerts Routes', () => {
         });
     });
 });
-
-

@@ -4,8 +4,8 @@
  * Uses Redis for distributed caching
  */
 
+import logger from './Logger.ts';
 import client from './RedisClient.js';
-import logger from './Logger.js';
 
 export const DEFAULT_TTL = {
     SHORT: 60, // 1 minute - frequently changing data

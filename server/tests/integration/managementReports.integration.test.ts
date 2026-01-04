@@ -1,14 +1,14 @@
 /**
  * Integration Tests for Management Reports API
- * 
+ *
  * Tests the complete API endpoints for management reports
  * including generation, approval workflows, versioning, and export.
  */
 
-import request from 'supertest';
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
+import request from 'supertest';
+import { v4 as uuidv4 } from 'uuid';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 let app: any;
 let db: any;
@@ -17,7 +17,7 @@ let getDatabase: any;
 // Test data
 const testOrganization = {
     id: uuidv4(),
-    name: 'Test Organization'
+    name: 'Test Organization',
 };
 
 const testUser = {
@@ -26,14 +26,14 @@ const testUser = {
     first_name: 'Test',
     last_name: 'User',
     organization_id: testOrganization.id,
-    role: 'ADMIN'
+    role: 'ADMIN',
 };
 
 const testProject = {
     id: uuidv4(),
     name: 'Test Project',
     organization_id: testOrganization.id,
-    status: 'ACTIVE'
+    status: 'ACTIVE',
 };
 
 let authToken: string;
@@ -43,7 +43,7 @@ const generateAuthToken = (user: typeof testUser) => {
     return jwt.sign(
         { id: user.id, email: user.email, organization_id: user.organization_id, role: user.role },
         process.env.JWT_SECRET || 'test-secret',
-        { expiresIn: '1h' }
+        { expiresIn: '1h' },
     );
 };
 
@@ -79,18 +79,25 @@ beforeAll(async () => {
     // Setup test data
     await new Promise<void>((resolve, reject) => {
         db.serialize(() => {
-            db.run(
-                `INSERT OR REPLACE INTO organizations (id, name) VALUES (?, ?)`,
-                [testOrganization.id, testOrganization.name]
-            );
+            db.run(`INSERT OR REPLACE INTO organizations (id, name) VALUES (?, ?)`, [
+                testOrganization.id,
+                testOrganization.name,
+            ]);
             db.run(
                 `INSERT OR REPLACE INTO users (id, email, first_name, last_name, organization_id, role) VALUES (?, ?, ?, ?, ?, ?)`,
-                [testUser.id, testUser.email, testUser.first_name, testUser.last_name, testUser.organization_id, testUser.role]
+                [
+                    testUser.id,
+                    testUser.email,
+                    testUser.first_name,
+                    testUser.last_name,
+                    testUser.organization_id,
+                    testUser.role,
+                ],
             );
             db.run(
                 `INSERT OR REPLACE INTO projects (id, name, organization_id, status) VALUES (?, ?, ?, ?)`,
                 [testProject.id, testProject.name, testProject.organization_id, testProject.status],
-                (err: Error | null) => err ? reject(err) : resolve()
+                (err: Error | null) => (err ? reject(err) : resolve()),
             );
         });
     });
@@ -102,14 +109,28 @@ afterAll(async () => {
     // Cleanup test data
     await new Promise<void>((resolve, reject) => {
         db.serialize(() => {
-            db.run(`DELETE FROM management_report_comments WHERE report_id IN (SELECT id FROM management_reports WHERE organization_id = ?)`, [testOrganization.id]);
-            db.run(`DELETE FROM management_report_audit_log WHERE report_id IN (SELECT id FROM management_reports WHERE organization_id = ?)`, [testOrganization.id]);
-            db.run(`DELETE FROM management_report_versions WHERE report_id IN (SELECT id FROM management_reports WHERE organization_id = ?)`, [testOrganization.id]);
-            db.run(`DELETE FROM management_report_approvals WHERE report_id IN (SELECT id FROM management_reports WHERE organization_id = ?)`, [testOrganization.id]);
+            db.run(
+                `DELETE FROM management_report_comments WHERE report_id IN (SELECT id FROM management_reports WHERE organization_id = ?)`,
+                [testOrganization.id],
+            );
+            db.run(
+                `DELETE FROM management_report_audit_log WHERE report_id IN (SELECT id FROM management_reports WHERE organization_id = ?)`,
+                [testOrganization.id],
+            );
+            db.run(
+                `DELETE FROM management_report_versions WHERE report_id IN (SELECT id FROM management_reports WHERE organization_id = ?)`,
+                [testOrganization.id],
+            );
+            db.run(
+                `DELETE FROM management_report_approvals WHERE report_id IN (SELECT id FROM management_reports WHERE organization_id = ?)`,
+                [testOrganization.id],
+            );
             db.run(`DELETE FROM management_reports WHERE organization_id = ?`, [testOrganization.id]);
             db.run(`DELETE FROM projects WHERE id = ?`, [testProject.id]);
             db.run(`DELETE FROM users WHERE id = ?`, [testUser.id]);
-            db.run(`DELETE FROM organizations WHERE id = ?`, [testOrganization.id], (err: Error | null) => err ? reject(err) : resolve());
+            db.run(`DELETE FROM organizations WHERE id = ?`, [testOrganization.id], (err: Error | null) =>
+                err ? reject(err) : resolve(),
+            );
         });
     });
 });
@@ -128,7 +149,7 @@ describe('Management Reports API', () => {
                     projectId: testProject.id,
                     organizationId: testOrganization.id,
                     periodDays: 7,
-                    aiEnhancement: false
+                    aiEnhancement: false,
                 });
 
             if (response.status !== 200) {
@@ -155,7 +176,7 @@ describe('Management Reports API', () => {
                     scope: 'PORTFOLIO',
                     organizationId: testOrganization.id,
                     periodDays: 30,
-                    aiEnhancement: false
+                    aiEnhancement: false,
                 });
 
             expect(response.status).toBe(200);
@@ -165,13 +186,11 @@ describe('Management Reports API', () => {
         });
 
         it('should require authentication', async () => {
-            const response = await request(app)
-                .post('/api/management-reports/generate')
-                .send({
-                    reportType: 'TEAM_MEETING',
-                    scope: 'PORTFOLIO',
-                    organizationId: testOrganization.id
-                });
+            const response = await request(app).post('/api/management-reports/generate').send({
+                reportType: 'TEAM_MEETING',
+                scope: 'PORTFOLIO',
+                organizationId: testOrganization.id,
+            });
 
             expect(response.status).toBe(401);
         });
@@ -181,7 +200,7 @@ describe('Management Reports API', () => {
                 .post('/api/management-reports/generate')
                 .set('Authorization', `Bearer ${authToken}`)
                 .send({
-                    reportType: 'INVALID_TYPE'
+                    reportType: 'INVALID_TYPE',
                 });
 
             expect(response.status).toBe(400);
@@ -226,7 +245,7 @@ describe('Management Reports API', () => {
                 .get('/api/management-reports/history')
                 .query({
                     organizationId: testOrganization.id,
-                    reportType: 'TEAM_MEETING'
+                    reportType: 'TEAM_MEETING',
                 })
                 .set('Authorization', `Bearer ${authToken}`);
 
@@ -252,10 +271,8 @@ describe('Management Reports API', () => {
                     periodDays: 30,
                     requiresApproval: true,
                     approvalConfig: {
-                        levels: [
-                            { level: 1, role: 'MANAGER', required: true }
-                        ]
-                    }
+                        levels: [{ level: 1, role: 'MANAGER', required: true }],
+                    },
                 });
 
             approvalReportId = response.body.report.id;
@@ -348,7 +365,7 @@ describe('Management Reports API', () => {
                 .set('Authorization', `Bearer ${authToken}`)
                 .send({
                     sectionId: 'executiveSummary',
-                    content: 'This section needs more detail.'
+                    content: 'This section needs more detail.',
                 });
 
             expect(response.status).toBe(201);
@@ -437,7 +454,7 @@ describe('Management Reports API', () => {
                     projectId: testProject.id,
                     organizationId: testOrganization.id,
                     periodDays: 7,
-                    requiresApproval: false
+                    requiresApproval: false,
                 });
 
             finalizeReportId = genResponse.body.report.id;
@@ -533,7 +550,7 @@ describe('Management Reports API', () => {
                 .set('Authorization', `Bearer ${authToken}`)
                 .send({
                     reportIds: [createdReportId],
-                    format: 'pdf'
+                    format: 'pdf',
                 });
 
             expect([200, 202]).toContain(response.status);

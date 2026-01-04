@@ -8,7 +8,7 @@
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 
 
@@ -16,6 +16,7 @@ const db = getDatabase();
 // Dependency injection for testing
 const deps = {
     db,
+    uuidv4,
 };
 
 /**
@@ -43,8 +44,7 @@ const generateSessionToken = () => {
  * @returns {Promise<Object>} Created session
  */
 const createSession = async ({ adminId, ipAddress, userAgent, mfaVerified = false, expiresInHours = 24 }) => {
-        await initDeps();
-        const id = deps.uuidv4();
+    const id = deps.uuidv4();
     const sessionToken = generateSessionToken();
     const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000).toISOString();
 
@@ -85,7 +85,7 @@ const getSession = async (sessionToken) => {
     `;
 
     const session = await deps.db.get(sql, [sessionToken]);
-    
+
     if (!session) return null;
 
     return {
@@ -254,7 +254,7 @@ const updateMfaStatus = async (sessionId, mfaVerified) => {
 };
 
 export {
-setDependencies,
+    setDependencies,
     createSession,
     getSession,
     verifySession,

@@ -6,12 +6,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock dependencies before importing
-vi.mock('../../../server/services/rapidLeanService');
-vi.mock('../../../server/services/rapidLeanObservationMapper');
+vi.mock('../../../server/src/services/rapidLeanService');
+vi.mock('../../../server/src/services/rapidLeanObservationMapper');
 vi.mock('../../../server/database');
 
 // Use dynamic import to avoid native module crash
-const RapidLeanReportService = await vi.importActual('../../../server/services/rapidLeanReportService').then(m => m.default);
+const RapidLeanReportService = await vi.importActual('../../../server/src/services/rapidLeanReportService').then(m => m.default);
 
 describe('RapidLeanReportService', () => {
     describe('getStatus', () => {

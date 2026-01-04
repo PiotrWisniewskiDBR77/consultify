@@ -8,11 +8,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
+import logger from '../utils/Logger.ts';
 import {
-import logger from '../utils/Logger.js';
     ActionIdParamSchema,
     ActionTypeParamSchema,
     AIContextQuerySchema,
@@ -54,6 +55,9 @@ import logger from '../utils/Logger.js';
 } from '../validators/ai.validators.js';
 
 const router = Router();
+
+// Apply rate limiting to all AI routes
+router.use(aiRateLimiter);
 
 // Lazy load services to avoid circular dependencies
 
@@ -268,7 +272,9 @@ router.post(
                                 accumulatedContent,
                                 req.userId!,
                                 req.organizationId!,
-                            ).catch((err: Error | null) => logger.warn('[Stream] Partial save failed:', (err as Error).message));
+                            ).catch((err: Error | null) =>
+                                logger.warn('[Stream] Partial save failed:', (err as Error).message),
+                            );
                             lastSaveTime = Date.now();
                         }
                     }

@@ -26,7 +26,7 @@ describe('AIRecommendationService', () => {
         vi.clearAllMocks();
 
         try {
-            const module = await import('../../../server/services/aiRecommendationService.js');
+            const module = await import('../../../server/src/services/aiRecommendationService.js');
             AIRecommendationService = module.default || module;
 
             // Inject dependencies

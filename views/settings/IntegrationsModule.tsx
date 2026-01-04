@@ -309,5 +309,3 @@ export const IntegrationsModule: React.FC<IntegrationsModuleProps> = ({ initialT
 };
 
 export default IntegrationsModule;
-
-

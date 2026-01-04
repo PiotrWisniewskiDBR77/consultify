@@ -13,7 +13,7 @@ import * as AIMemoryManagerModule from '../services/ai/aiMemoryManager.js';
 import * as AIOrchestratorModule from '../services/ai/aiOrchestrator.js';
 import * as AIActionExecutorModule from '../services/ai/aiActionExecutor.js';
 import * as AIAuditLoggerModule from '../services/ai/aiAuditLogger.js';
-import logger from '../dist/utils/logger.js';
+import logger from '../src/utils/Logger.ts';
 import ActionProposalEngine from '../services/ai/actionProposalEngine.js';
 
 // Resolve default exports if necessary
@@ -92,7 +92,7 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
     const enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
 
     // Use New Professional AIPipeline
-    const { AIPipeline   } = await import('../services/ai/aiPipeline.js');
+    const { AIPipeline } = await import('../services/ai/aiPipeline.js');
     const aiPipeline = new AIPipeline();
 
     // Set headers for SSE BEFORE any data is written
@@ -122,7 +122,7 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
     // Helper: Save partial response to database
     const savePartialResponse = async (sessionId, content, userId, orgId) => {
         const { getDatabase } = await import('../src/database/index.js');
-        
+
 
         return new Promise((resolve, reject) => {
             db.run(`
@@ -142,7 +142,7 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
         // RESUME FROM PARTIAL: Check if we should resume from saved partial
         if (resumeFromPartial && conversationId) {
             const { getDatabase } = await import('../src/database/index.js');
-            
+
             const partial = await new Promise((resolve) => {
                 db.get(`SELECT content FROM ai_partial_responses WHERE session_id = ? AND user_id = ?`,
                     [conversationId, req.userId], (err, row) => {
@@ -216,7 +216,7 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
 
                 // Delete partial response on successful completion
                 const { getDatabase } = await import('../src/database/index.js');
-                
+
                 db.run(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId], () => { });
             }
             res.end();
@@ -256,7 +256,7 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
 // GET /a../services/ai/stream/partial/:sessionId - Get partial response for resume
 router.get('/stream/partial/:sessionId', verifyToken, async (req, res) => {
     const { getDatabase } = await import('../src/database/index.js');
-    
+
 
     db.get(`
         SELECT content, updated_at 
@@ -505,7 +505,7 @@ router.get('/actions/proposals', verifyToken, async (req, res) => {
 
     try {
 
-        const { getRequestContext   } = await import('../utils/requestContext.js');
+        const { getRequestContext } = await import('../utils/requestContext.js');
 
         logger.info('Generating action proposals', {
             ...getRequestContext(req),
@@ -543,7 +543,7 @@ router.post('/recommend', verifyToken, async (req, res) => {
     }
 
     try {
-        const { AIPipeline   } = await import('../services/ai/aiPipeline.js');
+        const { AIPipeline } = await import('../services/ai/aiPipeline.js');
         const aiPipeline = new AIPipeline();
 
         // Build a rich prompt for initiative generation
@@ -683,7 +683,7 @@ router.post('/roadmap', verifyToken, async (req, res) => {
     }
 
     try {
-        const { AIPipeline   } = await import('../services/ai/aiPipeline.js');
+        const { AIPipeline } = await import('../services/ai/aiPipeline.js');
         const aiPipeline = new AIPipeline();
 
         // Format initiatives for the prompt
@@ -904,7 +904,7 @@ router.get('/explanations/export', verifyToken, async (req, res) => {
 // GET /a../services/ai/health - AI System Health Status
 router.get('/health', async (req, res) => {
     try {
-        const { healthMonitor   } = await import('../services/ai/healthMonitor.js');
+        const { healthMonitor } = await import('../services/ai/healthMonitor.js');
         const status = healthMonitor.getStatus();
 
         res.json({
@@ -926,7 +926,7 @@ router.get('/health', async (req, res) => {
 // POST /a../services/ai/health/diagnose - Run Full Diagnostics
 router.post('/health/diagnose', verifyToken, async (req, res) => {
     try {
-        const { healthMonitor   } = await import('../services/ai/healthMonitor.js');
+        const { healthMonitor } = await import('../services/ai/healthMonitor.js');
         const results = await healthMonitor.runDiagnostics();
 
         res.json(results);

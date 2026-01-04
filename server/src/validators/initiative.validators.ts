@@ -115,5 +115,3 @@ export type CreateKPIRequest = z.infer<typeof CreateKPISchema>;
 export type UpdateKPIRequest = z.infer<typeof UpdateKPISchema>;
 export type CreateKPIMeasurementRequest = z.infer<typeof CreateKPIMeasurementSchema>;
 export type GetInitiativesQuery = z.infer<typeof GetInitiativesQuerySchema>;
-
-

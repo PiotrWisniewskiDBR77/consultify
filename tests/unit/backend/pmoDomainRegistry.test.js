@@ -7,7 +7,7 @@ describe('PMODomainRegistry', () => {
 
     beforeEach(async () => {
         vi.resetModules();
-        PMODomainRegistry = (await import('../../../server/services/pmoDomainRegistry.js')).default;
+        PMODomainRegistry = (await import('../../../server/src/services/pmoDomainRegistry.js')).default;
 
         dbMock = {
             all: vi.fn(),

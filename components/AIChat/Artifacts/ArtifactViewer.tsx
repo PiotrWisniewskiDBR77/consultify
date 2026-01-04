@@ -7,14 +7,17 @@ import React from 'react';
 
 import { Artifact } from '../../../types';
 // Lazy load DiagramRenderer to avoid bundling mermaidjs (2MB+) in initial chunks
-const DiagramRenderer = React.lazy(() => import('./renderers/DiagramRenderer').then(m => ({ default: m.DiagramRenderer })));
+const DiagramRenderer = React.lazy(() =>
+    import('./renderers/DiagramRenderer').then((m) => ({ default: m.DiagramRenderer })),
+);
+
+import { Loader2 } from 'lucide-react';
 
 import { CodeRenderer } from './renderers/CodeRenderer';
 import { HTMLPreview } from './renderers/HTMLPreview';
 import { MarkdownRenderer } from './renderers/MarkdownRenderer';
 import { PMODocumentRenderer } from './renderers/PMODocumentRenderer';
 import { TableRenderer } from './renderers/TableRenderer';
-import { Loader2 } from 'lucide-react';
 
 interface ArtifactViewerProps {
     artifact: Artifact;
@@ -74,5 +77,3 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ artifact, classN
 };
 
 export default ArtifactViewer;
-
-

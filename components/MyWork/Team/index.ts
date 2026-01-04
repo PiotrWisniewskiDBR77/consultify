@@ -7,5 +7,3 @@ export { BottleneckMap } from './BottleneckMap';
 export { CapacityForecast } from './CapacityForecast';
 export { TeamPerformancePanel } from './TeamPerformancePanel';
 export { VelocityTrend } from './VelocityTrend';
-
-

@@ -22,7 +22,7 @@ const deps = {
  */
 async function initDeps() {
     if (!deps._db) {
-        const { default: dbInstance } = await import('../src/database/index.js');
+        const { default: dbInstance } = await import('../src/database/Database.ts');
         deps._db = dbInstance;
     }
     if (!deps._notificationService) {

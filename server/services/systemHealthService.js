@@ -1,5 +1,5 @@
 import os from 'os';
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 
 

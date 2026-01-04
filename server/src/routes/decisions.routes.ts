@@ -9,9 +9,11 @@ import { Router } from 'express';
 
 import DecisionController from '../controllers/DecisionController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import { CreateDecisionSchema, DecideSchema, EscalateDecisionSchema } from '../validators/decision.validators.js';
 
+// Apply rate limiting
 const router = Router();
 
 // Apply auth middleware to all routes

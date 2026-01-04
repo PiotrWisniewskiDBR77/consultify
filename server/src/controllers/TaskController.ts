@@ -8,24 +8,24 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import TaskAssignmentService from '../../services/taskAssignmentService.js';
 import ActivityService from '../services/ActivityService.js';
 import NotificationService from '../services/NotificationService.js';
 import { PMO_DOMAIN_IDS } from '../services/pmoDomainRegistry.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import DbPromise from '../utils/DbPromise.js';
+import DbPromise from '../utils/DbPromise.ts';
+import logger from '../utils/Logger.ts';
 import type {
     AddTaskCommentRequest,
-    EscalateTaskRequest,
     AssignTaskRequest,
     CreateTaskRequest,
+    EscalateTaskRequest,
     GetTasksQuery,
     ReassignTaskRequest,
     ResolveEscalationRequest,
     UpdateTaskRequest,
 } from '../validators/task.validators.js';
-import TaskAssignmentService from '../../services/taskAssignmentService.js';
-import logger from '../utils/Logger.js';
 
 const ESCALATION_TRIGGERS = {
     SLA_BREACH: 'SLA_BREACH',
@@ -37,7 +37,6 @@ const ESCALATION_TRIGGERS = {
 // ==========================================
 // TYPES
 // ==========================================
-
 
 type SQLParam = string | number | boolean | null | undefined;
 
@@ -131,7 +130,7 @@ export class TaskController {
 
         const { projectId, status, assigneeId, priority, initiativeId } = query;
 
-        let sql = `
+        const sql = `
             SELECT 
                 t.*,
                 a.first_name as assignee_first_name,
@@ -232,20 +231,20 @@ export class TaskController {
             assigneeId: t.assignee_id,
             assignee: t.assignee_id
                 ? {
-                    id: t.assignee_id,
-                    firstName: t.assignee_first_name,
-                    lastName: t.assignee_last_name,
-                    avatarUrl: t.assignee_avatar,
-                }
+                      id: t.assignee_id,
+                      firstName: t.assignee_first_name,
+                      lastName: t.assignee_last_name,
+                      avatarUrl: t.assignee_avatar,
+                  }
                 : null,
             reporterId: t.reporter_id,
             reporter: t.reporter_id
                 ? {
-                    id: t.reporter_id,
-                    firstName: t.reporter_first_name,
-                    lastName: t.reporter_last_name,
-                    avatarUrl: t.reporter_avatar,
-                }
+                      id: t.reporter_id,
+                      firstName: t.reporter_first_name,
+                      lastName: t.reporter_last_name,
+                      avatarUrl: t.reporter_avatar,
+                  }
                 : null,
             dueDate: t.due_date,
             estimatedHours: t.estimated_hours,
@@ -331,20 +330,20 @@ export class TaskController {
             assigneeId: t.assignee_id,
             assignee: t.assignee_id
                 ? {
-                    id: t.assignee_id,
-                    firstName: t.assignee_first_name,
-                    lastName: t.assignee_last_name,
-                    avatarUrl: t.assignee_avatar,
-                }
+                      id: t.assignee_id,
+                      firstName: t.assignee_first_name,
+                      lastName: t.assignee_last_name,
+                      avatarUrl: t.assignee_avatar,
+                  }
                 : null,
             reporterId: t.reporter_id,
             reporter: t.reporter_id
                 ? {
-                    id: t.reporter_id,
-                    firstName: t.reporter_first_name,
-                    lastName: t.reporter_last_name,
-                    avatarUrl: t.reporter_avatar,
-                }
+                      id: t.reporter_id,
+                      firstName: t.reporter_first_name,
+                      lastName: t.reporter_last_name,
+                      avatarUrl: t.reporter_avatar,
+                  }
                 : null,
             dueDate: t.due_date,
             estimatedHours: t.estimated_hours,
@@ -731,8 +730,8 @@ export class TaskController {
         if (initiativeId) {
             const InitiativeService = await import('../services/initiativeService.js').then((m) => m.default || m);
             if (InitiativeService && InitiativeService.recalculateProgress) {
-                InitiativeService.recalculateProgress({ organizationId: orgId, initiativeId }).catch((err: Error | null) =>
-                    logger.error('[TaskController] Recalc failed:', err),
+                InitiativeService.recalculateProgress({ organizationId: orgId, initiativeId }).catch(
+                    (err: Error | null) => logger.error('[TaskController] Recalc failed:', err),
                 );
             }
         }
@@ -823,10 +822,10 @@ export class TaskController {
         }
 
         // Verify task belongs to org
-        const task = await DbPromise.get<{ id: string }>(
-            'SELECT id FROM tasks WHERE id = ? AND organization_id = ?',
-            [taskId, orgId],
-        );
+        const task = await DbPromise.get<{ id: string }>('SELECT id FROM tasks WHERE id = ? AND organization_id = ?', [
+            taskId,
+            orgId,
+        ]);
 
         if (!task) {
             res.status(404).json({ error: 'Task not found' });
@@ -919,21 +918,16 @@ export class TaskController {
         }
 
         // Check if user owns the comment or is admin
-        const comment = await DbPromise.get<{ user_id: string }>(
-            'SELECT user_id FROM task_comments WHERE id = ?',
-            [commentId],
-        );
+        const comment = await DbPromise.get<{ user_id: string }>('SELECT user_id FROM task_comments WHERE id = ?', [
+            commentId,
+        ]);
 
         if (!comment) {
             res.status(404).json({ error: 'Comment not found' });
             return;
         }
 
-        if (
-            req.user?.role !== 'owner' &&
-            req.user?.role !== 'administrator' &&
-            comment.user_id !== userId
-        ) {
+        if (req.user?.role !== 'owner' && req.user?.role !== 'administrator' && comment.user_id !== userId) {
             res.status(403).json({ error: 'You can only delete your own comments' });
             return;
         }

@@ -260,5 +260,3 @@ export const MoreActionsButton: React.FC<{
 };
 
 export default QuickActions;
-
-

@@ -7,7 +7,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import * as DbPromise from '../utils/DbPromise.js';
+import * as DbPromise from '../utils/DbPromise.ts';
 
 type Database = {
     all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;

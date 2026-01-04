@@ -7,7 +7,7 @@
  */
 
 // Dependency injection container (for deterministic unit tests)
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import RagService from './ragService.js';
 import { v4 as uuidv4 } from 'uuid';

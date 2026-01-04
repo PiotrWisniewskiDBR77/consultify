@@ -10,7 +10,7 @@ import { aiLogger } from './logger.js';
 import { createTrace, calculateCost } from './observability.js';
 import metrics from './metrics.js';
 import crypto from 'crypto';
-import { getDatabase } from '../../src/database/index.js';
+import { getDatabase } from '../../src/database/Database.ts';
 const db = getDatabase();
 
 // Enterprise AI Services Integration
@@ -576,33 +576,36 @@ class AIPipeline extends BaseService {
             };
 
             if (!request.stream && cacheQuery) {
-                const cached = await cacheService.get(cacheQuery, cacheContext);
-                if (cached) {
-                    cacheHit = true;
-                    const cacheLatency = Date.now() - startTime;
-                    aiLogger.cache('get', true);
+                if (cacheService) {
+                    const cached = await cacheService.get(cacheQuery, cacheContext);
+                    if (cached) {
+                        const cacheLatency = Date.now() - startTime;
+                        aiLogger.cache('get', true);
 
-                    // Record cache hit metrics
-                    metrics.recordRequest({
-                        capability: request.capability,
-                        model: cached.metadata?.model || 'cached',
-                        success: true,
-                        durationSeconds: cacheLatency / 1000,
-                        cached: true
-                    });
-
-                    trace.complete({ status: 'cache_hit' });
-
-                    return {
-                        ...cached,
-                        metadata: {
-                            model: cached.metadata?.model || 'cached',
-                            latency: cacheLatency,
-                            cached: true
+                        // Record cache hit metrics
+                        if (metrics) {
+                            metrics.recordRequest({
+                                capability: request.capability,
+                                model: cached.metadata?.model || 'cached',
+                                success: true,
+                                durationSeconds: cacheLatency / 1000,
+                                cached: true
+                            });
                         }
-                    };
+
+                        if (trace) trace.complete({ status: 'cache_hit' });
+
+                        return {
+                            ...cached,
+                            metadata: {
+                                model: cached.metadata?.model || 'cached',
+                                latency: cacheLatency,
+                                cached: true
+                            }
+                        };
+                    }
+                    aiLogger.cache('get', false);
                 }
-                aiLogger.cache('get', false);
             }
 
             // 4. RAG Query - Fetch relevant knowledge chunks
@@ -813,13 +816,16 @@ class AIPipeline extends BaseService {
 
             // 9. Save to Cache (non-streaming only)
             if (!request.stream && cacheQuery && response.content) {
-                await cacheService.set(cacheQuery, cacheContext, response);
+                if (this.cacheService) {
+                    await this.cacheService.set(cacheQuery, cacheContext, response);
+                }
                 aiLogger.cache('set', true);
             }
 
             // 10. Consume tokens from quota
             const tokenCount = costInfo.totalTokens || 1000;
-            await quotaService.consumeTokens(
+            // Use injected quota service for testing
+            await this.quotaService.consumeTokens(
                 request.userId,
                 request.organizationId,
                 request.projectId,
@@ -985,6 +991,58 @@ class AIPipeline extends BaseService {
 
             aiLogger.error('Pipeline', 'Process failed', { error: err.message, traceId: trace.traceId });
             throw err;
+        }
+    }
+
+    /**
+     * Stream a chat response
+     * @param {Array} messages - Chat messages
+     * @param {Object} context - Context object (userId, organizationId, projectId)
+     * @returns {Promise<AsyncIterator>} Stream iterator
+     */
+    async streamChat(messages, context = {}) {
+        await this.initDeps();
+
+        const { userId, organizationId, projectId } = context;
+        let finalMessages = messages;
+
+        // 1. Rate Limit & Quota (Fail Open)
+        await this.safeCheckRateLimit(organizationId, 'chat_stream');
+        await this.safeCheckQuota(userId, organizationId, projectId);
+
+        // 2. Gateway Check
+        const gatewayResult = await this.safeGatewayProcess({
+            messages,
+            userId,
+            organizationId,
+            capability: 'chat_stream'
+        });
+
+        if (gatewayResult && gatewayResult.blocked) {
+            throw new Error(`Request blocked by AI Gateway: ${gatewayResult.reason}`);
+        }
+
+        // 3. Model Routing
+        const modelSelection = this.modelRouter.select('chat_stream', 'gemini-pro');
+        const providerConfig = await this.modelRouter.getProviderConfig(modelSelection.id);
+
+        // 4. Call LLM Service Stream
+        if (this.llmService && this.llmService.stream) {
+            try {
+                // Track start of stream
+                const trace = this.observability.createTrace('ai_stream_chat');
+                trace.startSpan('stream_generation');
+
+                const stream = await this.llmService.stream(finalMessages, providerConfig);
+
+                trace.endSpan('stream_generation');
+                return stream;
+            } catch (error) {
+                this.observability.recordError(error, { capability: 'chat_stream' });
+                throw error;
+            }
+        } else {
+            throw new Error('LLMService does not support streaming');
         }
     }
 
@@ -1444,26 +1502,24 @@ async function chat(message, history = [], roleName = 'CONSULTANT', userId, orga
  * @param {string} organizationId - Organization ID
  * @returns {AsyncGenerator} Stream of chunks
  */
-async function* streamChat(message, history = [], roleName = 'CONSULTANT', userId, organizationId) {
-    const pipeline = new AIPipeline();
+async function* streamChat(message, history = [], roleName = 'CONSULTANT', userId, organizationId, pipelineInstance = null) {
+    const pipeline = pipelineInstance || new AIPipeline();
 
-    const result = await pipeline.process({
-        capability: 'chat',
-        prompt: message,
-        messages: history,
+    // Construct messages
+    const messages = [...(history || [])];
+    if (message) {
+        messages.push({ role: 'user', content: message });
+    }
+
+    const iterator = await pipeline.streamChat(messages, {
         userId,
         organizationId,
         role: roleName,
-        stream: true
+        capability: 'chat'
     });
 
-    // If streaming is supported, yield chunks
-    if (result && typeof result[Symbol.asyncIterator] === 'function') {
-        for await (const chunk of result) {
-            yield chunk;
-        }
-    } else {
-        yield result.content;
+    for await (const chunk of iterator) {
+        yield chunk;
     }
 }
 
@@ -1744,6 +1800,32 @@ function enhanceResponse(response) {
 // ============================================================================
 const aiPipeline = new AIPipeline();
 
+/**
+ * Stream chat wrapper for backward compatibility / testing
+ * @param {string} prompt - User prompt
+ * @param {Array} history - Chat history
+ * @param {string} role - User role
+ * @param {string} userId - User ID
+ * @param {string} organizationId - Organization ID
+ * @param {AIPipeline} [pipelineInstance] - Optional pipeline instance
+ * @returns {Promise<AsyncIterator>} Stream iterator
+ */
+async function streamChat(prompt, history, role, userId, organizationId, pipelineInstance = null) {
+    const pipeline = pipelineInstance || aiPipeline;
+    // Basic message construction
+    const messages = [...(history || [])];
+    if (prompt) {
+        messages.push({ role: 'user', content: prompt });
+    }
+
+    return pipeline.streamChat(messages, {
+        userId,
+        organizationId,
+        role,
+        capability: 'chat_stream'
+    });
+}
+
 export {
     AIPipeline,
     aiPipeline,
@@ -1752,7 +1834,11 @@ export {
     FALLBACK_ROLES,
     extractThinkingSteps,
     extractArtifacts,
-    enhanceResponse
+    enhanceResponse,
+    chat,
+    streamChat,
+    suggestTasks,
+    generateStructuredContent
 };
 
 export default aiPipeline;

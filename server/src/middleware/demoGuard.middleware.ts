@@ -8,8 +8,8 @@
 
 import { NextFunction, Response } from 'express';
 
+import logger from '../utils/Logger.ts';
 import type { AuthRequest } from './auth.middleware.js';
-import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -125,5 +125,3 @@ export const demoGuard = (req: DemoRequest, res: Response, next: NextFunction): 
         isDemoRestriction: true,
     });
 };
-
-

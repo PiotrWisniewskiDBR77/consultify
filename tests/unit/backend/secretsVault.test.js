@@ -4,7 +4,7 @@
  * Tests for secrets encryption and decryption service.
  */
 
-const SecretsVault = require('../../../server/services/secretsVault');
+const SecretsVault = require('../../../server/src/services/secretsVault');
 
 describe('SecretsVault', () => {
     const originalEnv = process.env.CONNECTOR_ENCRYPTION_KEY;

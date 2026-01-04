@@ -9,7 +9,7 @@ const mockDb = {
     initPromise: Promise.resolve()
 };
 
-import MetricsCollector from '../../../server/services/metricsCollector.js';
+import MetricsCollector from '../../../server/src/services/metricsCollector.js';
 
 describe('MetricsCollector', () => {
     beforeEach(() => {

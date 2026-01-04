@@ -9,9 +9,11 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet } from '../utils/DbPromise.ts';
 
+// Apply rate limiting
 const router = Router();
 
 // Apply auth middleware to all routes

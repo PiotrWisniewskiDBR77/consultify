@@ -396,5 +396,3 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
 };
 
 export default SteeringCommitteeReport;
-
-

@@ -11,15 +11,16 @@ const mockInitiatives = [
 
 describe('RoadmapGantt Component', () => {
     it('renders Gantt chart', () => {
-        render(<RoadmapGantt initiatives={mockInitiatives} />);
+        render(<RoadmapGantt initiatives={mockInitiatives} onUpdateInitiative={vi.fn()} />);
 
-        expect(screen.getByText(/Gantt/i) || screen.getByText(/Timeline/i)).toBeInTheDocument();
+        expect(screen.getByText(/Strategic Roadmap/i)).toBeInTheDocument();
     });
 
     it('displays initiatives', () => {
-        render(<RoadmapGantt initiatives={mockInitiatives} />);
+        render(<RoadmapGantt initiatives={mockInitiatives} onUpdateInitiative={vi.fn()} />);
 
-        expect(screen.getByText('Initiative 1')).toBeInTheDocument();
+        const initiatives = screen.getAllByText('Initiative 1');
+        expect(initiatives.length).toBeGreaterThan(0);
     });
 });
 

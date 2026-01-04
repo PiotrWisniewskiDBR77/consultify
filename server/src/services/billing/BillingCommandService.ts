@@ -1,9 +1,9 @@
 import type Stripe from 'stripe';
 
+import logger from '../../utils/Logger.ts';
 import { BillingEventService } from './BillingEventService.js';
 import { BillingQueryService } from './BillingQueryService.js';
 import type {
-import logger from '../../utils/Logger.js';
     _SeatPricing,
     BillingPlan,
     BillingServiceDependencies,

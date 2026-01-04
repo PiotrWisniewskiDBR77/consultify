@@ -1,8 +1,13 @@
-import { AppError, asyncHandler: catchAsync } from '../src/utils/errorHandler.js';
+import { AppError, asyncHandler as catchAsync } from '../src/utils/ErrorHandler.js';
 
 // Default Dependencies
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
+import config from '../config.js';
+
 const deps = {
-    db: require('../database'),
+    db: null, // Initialized below or via injection
     ActivityService: import('../src/services/ActivityService.js'),
     BillingService: null, // Lazy loaded
     UsageService: import('usageService.js'),
@@ -11,10 +16,10 @@ const deps = {
     LegalService: import('legalService.js'),
     LegalEventLogger: import('legalEventLogger.js').LegalEventLogger,
     AttributionService: null, // Lazy loaded
-    jwt: require('jsonwebtoken'),
-    bcrypt: require('bcryptjs'),
-    config: require('../config'),
-    uuid: require('uuid'),
+    jwt,
+    bcrypt,
+    config,
+    uuid: { v4: uuidv4 },
     InvitationService: import('invitationService.js'),
     RefreshTokenService: import('refreshTokenService.js'),
     // Enterprise Customers Module Services
@@ -46,6 +51,15 @@ const deps = {
     DLPService: import('dlpService.js'),
     DashboardBuilderService: import('dashboardBuilderService.js')
 };
+
+// Initialize DB synchronously for non-test env
+if (process.env.NODE_ENV !== 'test') {
+    try {
+        deps.db = require('../database');
+    } catch (e) {
+        // Ignore if module not found
+    }
+}
 
 /**
  * Lazy load AttributionService (ES module)
@@ -4299,7 +4313,7 @@ const getDashboardWidgetData = catchAsync(async (req, res, next) => {
 });
 
 export {
-setDependencies,
+    setDependencies,
     getOrganizations,
     getActivities,
     getDashboardStats,

@@ -3,31 +3,35 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
 
 // Mock database
-const mockDb = {
-    run: vi.fn(),
-    get: vi.fn(),
-    all: vi.fn()
-};
+const { mockDb } = vi.hoisted(() => {
+    return {
+        mockDb: {
+            run: vi.fn(),
+            get: vi.fn(),
+            all: vi.fn()
+        }
+    };
+});
 
 // Mock the service with dependency injection
-vi.mock('../../../../server/database', () => ({
+vi.mock('../../../../server/src/database/Database.ts', () => ({
     default: mockDb,
+    getDatabase: () => mockDb,
     run: mockDb.run,
     get: mockDb.get,
     all: mockDb.all
 }));
 
-const permissionsMatrixService = require('../../../../server/services/permissionsMatrixService');
-permissionsMatrixService.setDependencies({ db: mockDb });
+import permissionsMatrixService from '../../../../server/services/permissionsMatrixService.js';
 
 describe('PermissionsMatrixService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        if (permissionsMatrixService.setDependencies) {
+            permissionsMatrixService.setDependencies({ db: mockDb });
+        }
     });
 
     describe('ROLE_HIERARCHY', () => {
@@ -260,7 +264,3 @@ describe('PermissionsMatrixService', () => {
         });
     });
 });
-
-
-
-

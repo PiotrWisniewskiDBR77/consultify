@@ -28,7 +28,7 @@ describe('Variable Resolver Service', () => {
             warn: vi.fn()
         };
 
-        const module = await import('../../../server/services/ai/variableResolver.js');
+        const module = await import('../../../server/src/services/ai/variableResolver.js');
         VariableResolver = module.VariableResolver || module.default?.VariableResolver;
         RUNTIME_FUNCTIONS = module.RUNTIME_FUNCTIONS || module.default?.RUNTIME_FUNCTIONS;
 

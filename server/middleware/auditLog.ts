@@ -3,7 +3,7 @@
 import AuditLogService from '../services/auditLogService.ts';
 
 const deps = {
-    AuditLogService
+    AuditLogService,
 };
 
 /**
@@ -31,41 +31,42 @@ const auditLogMiddleware = (req, res, next) => {
                 const user = req.user;
                 const userId = user ? user.id : 'anonymous';
                 const userEmail = user ? user.email : 'anonymous';
-                const organizationId = user ? user.organizationId : ((req.body && req.body.organizationId) || 'unknown');
+                const organizationId = user ? user.organizationId : (req.body && req.body.organizationId) || 'unknown';
 
                 // Determine Entity & Action
                 // URL: /api/projects/:id -> Entity: project, ID: :id
-                const parts = req.originalUrl.split('/').filter(p => p);
+                const parts = req.originalUrl.split('/').filter((p) => p);
                 const entityType = parts[1] || 'unknown'; // api / [entity]
                 const entityId = parts[2] || (req.body && req.body.id) || 'new';
 
                 const actionMap = {
-                    'POST': 'created',
-                    'PUT': 'updated',
-                    'PATCH': 'updated',
-                    'DELETE': 'deleted'
+                    POST: 'created',
+                    PUT: 'updated',
+                    PATCH: 'updated',
+                    DELETE: 'deleted',
                 };
                 const action = actionMap[req.method] || 'modified';
 
                 // Prepare metadata
                 const metadata = {
-                    entityName: (req.body && (req.body.name || req.body.title)) || entityType
+                    entityName: (req.body && (req.body.name || req.body.title)) || entityType,
                 };
 
                 // Log asynchronously
-                Promise.resolve(deps.AuditLogService.createLog({
-                    user_id: userId,
-                    user_email: userEmail,
-                    organization_id: organizationId,
-                    action_type: action,
-                    resource_type: entityType.replace(/s$/, ''),
-                    resource_id: entityId,
-                    after_data: (req.method !== 'DELETE' && req.body) ? req.body : null,
-                    ip_address: req.ip,
-                    user_agent: req.get('user-agent'),
-                    metadata
-                })).catch(err => console.error('[AuditLog] Failed to log:', err.message));
-
+                Promise.resolve(
+                    deps.AuditLogService.createLog({
+                        user_id: userId,
+                        user_email: userEmail,
+                        organization_id: organizationId,
+                        action_type: action,
+                        resource_type: entityType.replace(/s$/, ''),
+                        resource_id: entityId,
+                        after_data: req.method !== 'DELETE' && req.body ? req.body : null,
+                        ip_address: req.ip,
+                        user_agent: req.get('user-agent'),
+                        metadata,
+                    }),
+                ).catch((err) => console.error('[AuditLog] Failed to log:', err.message));
             } catch (err) {
                 console.error('[AuditLog] Error processing log:', err);
             }

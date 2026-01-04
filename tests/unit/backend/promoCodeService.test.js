@@ -28,7 +28,7 @@ vi.mock('uuid', () => ({
     v4: vi.fn(() => 'test-uuid-1234')
 }));
 
-import PromoCodeService from '../../../server/services/promoCodeService';
+import PromoCodeService from '../../../server/src/services/promoCodeService';
 
 describe('PromoCodeService', () => {
     beforeEach(() => {

@@ -49,20 +49,20 @@ describe('AIService Test Suite', () => {
 
         // 2. Register doMocks for static dependencies
         vi.doMock('../../../server/queues/aiQueue', () => ({ default: { add: mockAiQueue.add, getJob: mockAiQueue.getJob } }));
-        vi.doMock('../../../server/services/modelRouter.js', () => ({ default: mockModelRouter }));
-        vi.doMock('../../../server/services/circuitBreakerService.js', () => ({ default: mockCircuitBreakerService }));
+        vi.doMock('../../../server/src/services/modelRouter.js', () => ({ default: mockModelRouter }));
+        vi.doMock('../../../server/src/services/circuitBreakerService.js', () => ({ default: mockCircuitBreakerService }));
 
         mockAccessPolicyService = {
             checkAccess: vi.fn(async () => ({ allowed: true })),
             trackTokenUsage: vi.fn().mockResolvedValue(true), // Fixed: Returns Promise
             setDependencies: vi.fn()
         };
-        vi.doMock('../../../server/services/accessPolicyService.js', () => ({
+        vi.doMock('../../../server/src/services/accessPolicyService.js', () => ({
             default: mockAccessPolicyService
         }));
 
         // 3. Import Services (Dynamic)
-        AIService = (await import('../../../server/services/aiService.js')).default;
+        AIService = (await import('../../../server/src/services/aiService.js')).default;
 
         // 4. Initialize other mocks - ALL MUST RETURN PROMISES for void/async methods
         mockTokenBillingService = {

@@ -10,7 +10,7 @@
 import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import ManagementReportsService from './managementReportsService.js';
 

@@ -2,7 +2,7 @@
 // AI Core Layer — Enterprise PMO Brain
 // Enhanced with HITL pending approvals context
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import crypto from 'crypto';
 

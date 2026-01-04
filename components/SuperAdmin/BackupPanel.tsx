@@ -148,5 +148,3 @@ export const BackupPanel: React.FC = () => {
 };
 
 export default BackupPanel;
-
-

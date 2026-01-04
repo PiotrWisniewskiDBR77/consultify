@@ -6,7 +6,7 @@
  * Respects sandbox mode and dry-run flags.
  */
 
-import * as auditLogger from '../dist/utils/auditLogger.js';
+import * as auditLogger from '../src/utils/auditLogger.ts';
 import * as connectorService from '../services/connectorService.js';
 import * as connectorRegistry from '../services/connectorRegistry.js';
 

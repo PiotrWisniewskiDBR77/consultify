@@ -601,5 +601,3 @@ const BusinessMetricsView: React.FC = () => {
 };
 
 export default BusinessMetricsView;
-
-

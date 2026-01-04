@@ -59,6 +59,9 @@ const DRDAuditReportView = React.lazy(() =>
 );
 const KpiOkrView = React.lazy(() => import('./views/KpiOkrView').then((m) => ({ default: m.KpiOkrView })));
 const PortfolioView = React.lazy(() => import('./views/PortfolioView'));
+const PartnerPortalView = React.lazy(() =>
+    import('./views/PartnerPortalView').then((m) => ({ default: m.PartnerPortalView })),
+);
 const BenefitsRealizationView = React.lazy(() =>
     import('./views/BenefitsRealizationView').then((m) => ({ default: m.BenefitsRealizationView })),
 );
@@ -184,6 +187,25 @@ export const ViewRenderer: React.FC<ViewRendererProps> = ({
             <React.Suspense fallback={<LoadingScreen />}>
                 <AnimationWrapper variant="slideUp">
                     <ProjectIntelligenceView />
+                </AnimationWrapper>
+            </React.Suspense>
+        );
+    }
+
+    const partnerViews = [
+        AppView.PARTNER_PROVIDER_HOME,
+        AppView.PARTNER_DASHBOARD,
+        AppView.PARTNER_CLIENT_ACCESS,
+        AppView.PARTNER_COMMISSION,
+        AppView.PARTNER_DIRECTORY,
+        AppView.PARTNER_RESOURCES,
+    ];
+
+    if (partnerViews.includes(currentView)) {
+        return (
+            <React.Suspense fallback={<LoadingScreen />}>
+                <AnimationWrapper variant="slideUp">
+                    <PartnerPortalView currentSection={currentView} onNavigate={setCurrentView} />
                 </AnimationWrapper>
             </React.Suspense>
         );

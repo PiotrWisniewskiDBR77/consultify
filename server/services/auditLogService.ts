@@ -1,6 +1,6 @@
 /**
  * Audit Log Service
- * 
+ *
  * Comprehensive audit logging for enterprise compliance and security.
  * Features:
  * - Immutable audit trail
@@ -14,8 +14,6 @@
 import { getDatabase } from '../src/database/index.ts';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
-
-
 
 class AuditLogService {
     /**
@@ -36,7 +34,7 @@ class AuditLogService {
             compliance_tags = [],
             request_id,
             organization_id,
-            metadata = {}
+            metadata = {},
         } = logData;
 
         const id = uuidv4();
@@ -50,12 +48,22 @@ class AuditLogService {
                     risk_level, compliance_tags, request_id, organization_id, metadata
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    id, timestamp, user_id, user_email, ip_address, user_agent,
-                    action_type, resource_type, resource_id,
+                    id,
+                    timestamp,
+                    user_id,
+                    user_email,
+                    ip_address,
+                    user_agent,
+                    action_type,
+                    resource_type,
+                    resource_id,
                     before_data ? JSON.stringify(before_data) : null,
                     after_data ? JSON.stringify(after_data) : null,
-                    risk_level, JSON.stringify(compliance_tags), request_id,
-                    organization_id, JSON.stringify(metadata)
+                    risk_level,
+                    JSON.stringify(compliance_tags),
+                    request_id,
+                    organization_id,
+                    JSON.stringify(metadata),
                 ],
                 function (err) {
                     if (err) {
@@ -63,7 +71,7 @@ class AuditLogService {
                         return reject(err);
                     }
                     resolve({ id, timestamp });
-                }
+                },
             );
         });
     }
@@ -83,7 +91,7 @@ class AuditLogService {
             resourceType,
             resourceId,
             organizationId,
-            complianceTag
+            complianceTag,
         } = filters;
 
         const { page = 1, pageSize = 50 } = pagination;
@@ -159,12 +167,12 @@ class AuditLogService {
                 }
 
                 // Parse JSON fields
-                const logs = rows.map(row => ({
+                const logs = rows.map((row) => ({
                     ...row,
                     before_data: row.before_data ? JSON.parse(row.before_data) : null,
                     after_data: row.after_data ? JSON.parse(row.after_data) : null,
                     compliance_tags: row.compliance_tags ? JSON.parse(row.compliance_tags) : [],
-                    metadata: row.metadata ? JSON.parse(row.metadata) : {}
+                    metadata: row.metadata ? JSON.parse(row.metadata) : {},
                 }));
 
                 resolve(logs);
@@ -176,16 +184,7 @@ class AuditLogService {
      * Get total count of logs matching filters
      */
     async getLogsCount(filters = {}) {
-        const {
-            search,
-            riskLevel,
-            startDate,
-            endDate,
-            userId,
-            actionType,
-            resourceType,
-            organizationId
-        } = filters;
+        const { search, riskLevel, startDate, endDate, userId, actionType, resourceType, organizationId } = filters;
 
         let query = 'SELECT COUNT(*) as count FROM audit_logs WHERE 1=1';
         const params = [];
@@ -267,7 +266,7 @@ class AuditLogService {
                     before_data: row.before_data ? JSON.parse(row.before_data) : null,
                     after_data: row.after_data ? JSON.parse(row.after_data) : null,
                     compliance_tags: row.compliance_tags ? JSON.parse(row.compliance_tags) : [],
-                    metadata: row.metadata ? JSON.parse(row.metadata) : {}
+                    metadata: row.metadata ? JSON.parse(row.metadata) : {},
                 });
             });
         });
@@ -324,12 +323,21 @@ class AuditLogService {
         const logs = await this.getLogs(filters, { page: 1, pageSize: 10000 });
 
         const headers = [
-            'ID', 'Timestamp', 'User ID', 'User Email', 'IP Address',
-            'Action Type', 'Resource Type', 'Resource ID', 'Risk Level',
-            'Compliance Tags', 'Request ID', 'Organization ID'
+            'ID',
+            'Timestamp',
+            'User ID',
+            'User Email',
+            'IP Address',
+            'Action Type',
+            'Resource Type',
+            'Resource ID',
+            'Risk Level',
+            'Compliance Tags',
+            'Request ID',
+            'Organization ID',
         ];
 
-        const rows = logs.map(log => [
+        const rows = logs.map((log) => [
             log.id,
             log.timestamp,
             log.user_id || '',
@@ -341,12 +349,12 @@ class AuditLogService {
             log.risk_level,
             Array.isArray(log.compliance_tags) ? log.compliance_tags.join(',') : '',
             log.request_id || '',
-            log.organization_id || ''
+            log.organization_id || '',
         ]);
 
         const csv = [
             headers.join(','),
-            ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+            ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
         ].join('\n');
 
         return csv;
@@ -388,12 +396,12 @@ class AuditLogService {
                     return reject(err);
                 }
 
-                const logs = rows.map(row => ({
+                const logs = rows.map((row) => ({
                     ...row,
                     before_data: row.before_data ? JSON.parse(row.before_data) : null,
                     after_data: row.after_data ? JSON.parse(row.after_data) : null,
                     compliance_tags: row.compliance_tags ? JSON.parse(row.compliance_tags) : [],
-                    metadata: row.metadata ? JSON.parse(row.metadata) : {}
+                    metadata: row.metadata ? JSON.parse(row.metadata) : {},
                 }));
 
                 resolve(logs);
@@ -404,11 +412,3 @@ class AuditLogService {
 
 const auditLogServiceInstance = new AuditLogService();
 export default auditLogServiceInstance;
-
-
-
-
-
-
-
-

@@ -8,7 +8,7 @@
 
 import { _databaseConfig } from '../config/DatabaseConfig.js';
 import type { _QueryResult, IDatabase, RunResult } from '../database/IDatabase.js';
-import { run as dbRunPromise } from './DbPromise.js';
+import { run as dbRunPromise } from './DbPromise.ts';
 
 export type DatabaseType = 'sqlite' | 'postgres';
 

@@ -1,21 +1,23 @@
 /**
  * API Keys Routes
  * Enterprise SaaS Architecture - API Management
- * 
+ *
  * Endpoints for managing API keys:
  * - Create, list, revoke API keys
  * - Rotate keys with grace periods
  * - View key usage statistics
  */
 
-import { Router, Response } from 'express';
+import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { requireOrgAccess, requireOrgRole } from '../middleware/rbac.middleware.js';
 import orgContextMiddleware from '../middleware/orgContext.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { requireOrgAccess, requireOrgRole } from '../middleware/rbac.middleware.js';
+import { API_KEY_PERMISSIONS, ApiKeyService } from '../services/ApiKeyService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { ApiKeyService, API_KEY_PERMISSIONS } from '../services/ApiKeyService.js';
 
+// Apply rate limiting
 const router = Router();
 
 // All routes require authentication and org context

@@ -1,5 +1,5 @@
 const { initTestDb, cleanTables, dbRun, db } = require('../../helpers/dbHelper.cjs');
-const BreakGlassService = require('../../../server/services/breakGlassService');
+const BreakGlassService = require('../../../server/src/services/breakGlassService');
 const { v4: uuidv4 } = require('uuid');
 
 describe('BreakGlassService', () => {

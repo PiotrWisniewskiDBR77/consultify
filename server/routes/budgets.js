@@ -1,8 +1,8 @@
 import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
-import { requireOrgAccess  } from '../middleware/rbac.js';
-import budgetManagementService from '../dist/services/budgetManagementService.js';
+import { requireOrgAccess } from '../middleware/rbac.js';
+import budgetManagementService from '../src/services/budgetManagementService.ts';
 
 /**
  * GET /api/budgets/user/:userId

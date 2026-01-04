@@ -7,7 +7,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 
 
@@ -15,6 +15,13 @@ const db = getDatabase();
 // Dependency injection for testing
 const deps = {
     db,
+    uuidv4
+};
+
+const initDeps = async () => {
+    if (!deps.db) {
+        deps.db = await getDatabase();
+    }
 };
 
 /**
@@ -34,19 +41,19 @@ const RISK_LEVELS = {
     change_superadmin_role: 95,
     export_all_data: 85,
     modify_security_policy: 80,
-    
+
     // High risk actions
     change_user_role: 70,
     modify_billing: 65,
     bulk_delete: 75,
     access_sensitive_data: 60,
-    
+
     // Medium risk actions
     create_user: 40,
     modify_settings: 35,
     create_organization: 30,
     modify_user: 35,
-    
+
     // Low risk actions
     view_data: 10,
     login: 5,
@@ -73,24 +80,24 @@ const ACTION_CATEGORIES = {
  */
 const calculateRiskScore = (actionType, context = {}) => {
     let baseScore = RISK_LEVELS[actionType] || 30;
-    
+
     // Adjust based on context
     if (context.affectedCount && context.affectedCount > 10) {
         baseScore += Math.min(20, context.affectedCount);
     }
-    
+
     if (context.isFirstTime) {
         baseScore += 5;
     }
-    
+
     if (context.unusualHour) {
         baseScore += 10;
     }
-    
+
     if (context.newIpAddress) {
         baseScore += 15;
     }
-    
+
     return Math.min(100, baseScore);
 };
 
@@ -109,11 +116,11 @@ const logAction = async ({
     status = 'success',
     context = {}
 }) => {
-        await initDeps();
-        const id = deps.uuidv4();
+    await initDeps();
+    const id = deps.uuidv4();
     const riskScore = calculateRiskScore(actionType, context);
     const detailsJson = JSON.stringify(details);
-    
+
     const sql = `
         INSERT INTO admin_audit_logs (
             id, admin_id, action_type, resource_type, resource_id,
@@ -122,13 +129,13 @@ const logAction = async ({
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
     `;
-    
+
     await deps.db.run(sql, [
         id, adminId, actionType, resourceType, resourceId,
         description, detailsJson, ipAddress, userAgent, riskScore,
         status
     ]);
-    
+
     return {
         id,
         adminId,
@@ -161,7 +168,7 @@ const getLogs = async (filters = {}) => {
         limit = 100,
         offset = 0
     } = filters;
-    
+
     let sql = `
         SELECT 
             l.id, l.admin_id, l.action_type, l.resource_type, l.resource_id,
@@ -172,29 +179,29 @@ const getLogs = async (filters = {}) => {
         LEFT JOIN users u ON l.admin_id = u.id
         WHERE 1=1
     `;
-    
+
     const params = [];
-    
+
     if (adminId) {
         sql += ' AND l.admin_id = ?';
         params.push(adminId);
     }
-    
+
     if (actionType) {
         sql += ' AND l.action_type = ?';
         params.push(actionType);
     }
-    
+
     if (resourceType) {
         sql += ' AND l.resource_type = ?';
         params.push(resourceType);
     }
-    
+
     if (status) {
         sql += ' AND l.status = ?';
         params.push(status);
     }
-    
+
     if (riskLevel) {
         switch (riskLevel) {
             case 'critical':
@@ -211,34 +218,34 @@ const getLogs = async (filters = {}) => {
                 break;
         }
     }
-    
+
     if (fromDate) {
         sql += ' AND l.created_at >= ?';
         params.push(fromDate);
     }
-    
+
     if (toDate) {
         sql += ' AND l.created_at <= ?';
         params.push(toDate);
     }
-    
+
     if (searchTerm) {
         sql += ' AND (l.description LIKE ? OR l.details LIKE ?)';
         const searchPattern = `%${searchTerm}%`;
         params.push(searchPattern, searchPattern);
     }
-    
+
     // Get total count
     const countSql = sql.replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) as count FROM');
     const countResult = await deps.db.get(countSql, params);
     const total = countResult?.count || 0;
-    
+
     // Add ordering and pagination
     sql += ' ORDER BY l.created_at DESC LIMIT ? OFFSET ?';
     params.push(limit, offset);
-    
+
     const logs = await deps.db.all(sql, params);
-    
+
     return {
         logs: logs.map(l => ({
             id: l.id,
@@ -290,11 +297,11 @@ const getLogById = async (logId) => {
         LEFT JOIN users u ON l.admin_id = u.id
         WHERE l.id = ?
     `;
-    
+
     const log = await deps.db.get(sql, [logId]);
-    
+
     if (!log) return null;
-    
+
     return {
         id: log.id,
         adminId: log.admin_id,
@@ -329,7 +336,7 @@ const resolveLog = async (logId, resolverId, comment = null) => {
             details = json_set(COALESCE(details, '{}'), '$.resolvedBy', ?, '$.resolveComment', ?)
         WHERE id = ?
     `;
-    
+
     await deps.db.run(sql, [resolverId, comment, logId]);
     return getLogById(logId);
 };
@@ -352,7 +359,7 @@ const getStats = async (period = 'day') => {
         default: // day
             dateFilter = "datetime('now', '-24 hours')";
     }
-    
+
     const sql = `
         SELECT 
             COUNT(*) as total_logs,
@@ -366,9 +373,9 @@ const getStats = async (period = 'day') => {
         FROM admin_audit_logs
         WHERE created_at >= ${dateFilter}
     `;
-    
+
     const stats = await deps.db.get(sql);
-    
+
     // Get action type breakdown
     const actionSql = `
         SELECT action_type, COUNT(*) as count
@@ -378,9 +385,9 @@ const getStats = async (period = 'day') => {
         ORDER BY count DESC
         LIMIT 10
     `;
-    
+
     const actionBreakdown = await deps.db.all(actionSql);
-    
+
     // Get top admins by activity
     const adminSql = `
         SELECT 
@@ -394,9 +401,9 @@ const getStats = async (period = 'day') => {
         ORDER BY action_count DESC
         LIMIT 10
     `;
-    
+
     const topAdmins = await deps.db.all(adminSql);
-    
+
     return {
         totalLogs: stats?.total_logs || 0,
         byRiskLevel: {
@@ -427,13 +434,13 @@ const getStats = async (period = 'day') => {
  */
 const exportToCsv = async (filters = {}) => {
     const { logs } = await getLogs({ ...filters, limit: 10000, offset: 0 });
-    
+
     const headers = [
         'ID', 'Admin Email', 'Action Type', 'Resource Type', 'Resource ID',
         'Description', 'Risk Score', 'Risk Level', 'Status', 'IP Address',
         'Created At', 'Resolved At'
     ];
-    
+
     const rows = logs.map(log => [
         log.id,
         log.admin.email || '',
@@ -448,12 +455,12 @@ const exportToCsv = async (filters = {}) => {
         log.createdAt,
         log.resolvedAt || ''
     ]);
-    
+
     const csvContent = [
         headers.join(','),
         ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
     ].join('\n');
-    
+
     return csvContent;
 };
 
@@ -472,9 +479,9 @@ const getRecentHighRisk = async (limit = 10) => {
         ORDER BY l.created_at DESC
         LIMIT ?
     `;
-    
+
     const logs = await deps.db.all(sql, [limit]);
-    
+
     return logs.map(l => ({
         id: l.id,
         adminId: l.admin_id,
@@ -499,13 +506,13 @@ const cleanupOldLogs = async (retentionDays = 365) => {
         WHERE created_at < datetime('now', '-' || ? || ' days')
         AND status = 'resolved'
     `;
-    
+
     const result = await deps.db.run(sql, [retentionDays]);
     return result.changes;
 };
 
 export {
-setDependencies,
+    setDependencies,
     RISK_LEVELS,
     ACTION_CATEGORIES,
     calculateRiskScore,

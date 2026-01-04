@@ -6,48 +6,26 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import { testUsers, testProjects } from '../../fixtures/testData.js';
-
-// Hoisted mock - defined inline since imports aren't available yet
-const mockDb = vi.hoisted(() => ({
-    get: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, null));
-    }),
-    all: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, []));
-    }),
-    run: vi.fn(function(sql, params, callback) {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
-    }),
-    exec: vi.fn((sql, callback) => {
-        if (callback) process.nextTick(() => callback(null));
-    }),
-    serialize: vi.fn((cb) => { if (cb) cb(); }),
-    prepare: vi.fn(),
-    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    initPromise: Promise.resolve()
-}));
-
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
 
 describe('AIPromptHierarchy', () => {
     let AIPromptHierarchy;
+    let mocks;
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        
+        vi.resetModules();
+
+        mocks = setupStandardTest();
+
         // Dynamic import for ESM compatibility
-        const module = await import('../../../server/services/aiPromptHierarchy.js');
+        const module = await import('../../../server/src/services/aiPromptHierarchy.js');
         AIPromptHierarchy = module.default;
-        
-        // Inject mock dependencies using the service's method
+
+        // Inject mock dependencies using unified pattern
         AIPromptHierarchy._setDependencies({
-            db: mockDb
+            db: mocks.db
         });
     });
 

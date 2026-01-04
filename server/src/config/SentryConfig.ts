@@ -7,14 +7,12 @@
  */
 
 import * as Sentry from '@sentry/node';
+import { expressIntegration, httpIntegration } from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import type { Express, NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
-import logger from '../utils/Logger.js';
 
-// Use Handlers from @sentry/node for compatibility
-
-const Handlers = (Sentry as any).Handlers;
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // ZOD SCHEMAS
@@ -96,12 +94,10 @@ export function initSentry(app: Express): SentryHandlers {
 
         // Integrations
         integrations: [
-            // Express integration (legacy API for compatibility)
-
-            new (Sentry as any).Integrations.Express({ app }),
+            // Express integration for request tracing
+            expressIntegration({ app }),
             // HTTP integration for tracing outgoing requests
-
-            new (Sentry as any).Integrations.Http({ tracing: true }),
+            httpIntegration({ tracing: true }),
             // Profiling (optional, requires @sentry/profiling-node)
             nodeProfilingIntegration(),
         ],
@@ -146,18 +142,29 @@ export function initSentry(app: Express): SentryHandlers {
 
     logger.info(`[Sentry] Initialized for ${validatedConfig.environment} environment`);
 
+    // Sentry v10 - expressIntegration automatically handles request/tracing
+    // We need to manually add request handler for user context
+    // Error handler is separate
     return {
-        // Request handler - must be first middleware
-        requestHandler: Handlers.requestHandler({
-            user: ['id', 'email', 'role'],
-            ip: true,
-        }),
+        // Request handler - setupExpressErrorHandler configures the integration
+        // But we still need middleware for user context extraction
+        requestHandler: (req: Request, res: Response, next: NextFunction) => {
+            // Extract user context if available
+            if ((req as any).user) {
+                Sentry.setUser({
+                    id: (req as any).user.id,
+                    email: (req as any).user.email,
+                    role: (req as any).user.role,
+                });
+            }
+            next();
+        },
 
-        // Tracing handler - must be after request handler and before routes
-        tracingHandler: Handlers.tracingHandler(),
+        // Tracing handler - expressIntegration handles this automatically
+        tracingHandler: (_req: Request, _res: Response, next: NextFunction) => next(),
 
         // Error handler - must be after routes and before other error handlers
-        errorHandler: Handlers.errorHandler({
+        errorHandler: expressErrorHandler({
             shouldHandleError(error: Error & { status?: number }) {
                 // Only report 500+ errors automatically
                 if (error.status && error.status >= 500) {

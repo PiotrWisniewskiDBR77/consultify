@@ -10,8 +10,9 @@ import path from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { z } from 'zod';
+
+import logger from '../utils/Logger.ts';
 import { validateDatabaseConfig } from './ConfigValidator.js';
-import logger from '../utils/Logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

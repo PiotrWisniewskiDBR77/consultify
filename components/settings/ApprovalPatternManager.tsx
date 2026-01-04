@@ -472,5 +472,3 @@ export const ApprovalPatternManager: React.FC = () => {
 };
 
 export default ApprovalPatternManager;
-
-

@@ -9,10 +9,14 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { demoGuard } from '../middleware/demoGuard.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.js';
+import logger from '../utils/Logger.ts';
 
 const router = Router();
+
+// Apply rate limiting
+router.use(authRateLimiter);
 
 // Service interfaces
 interface TrialServiceInterface {

@@ -1,7 +1,7 @@
 /**
  * Security Utilities
  * Enterprise SaaS Architecture - Security Hardening Layer
- * 
+ *
  * Centralized security functions for:
  * - Input sanitization
  * - SQL injection prevention
@@ -36,7 +36,7 @@ const HTML_ENTITIES: Record<string, string> = {
 export function sanitizeString(input: unknown): string {
     if (input === null || input === undefined) return '';
     if (typeof input !== 'string') return String(input);
-    
+
     return input.replace(/[&<>"'`=/]/g, (char) => HTML_ENTITIES[char] || char);
 }
 
@@ -46,17 +46,17 @@ export function sanitizeString(input: unknown): string {
  */
 export function sanitizeObject<T>(obj: T, maxDepth = 10): T {
     if (maxDepth <= 0) return obj;
-    
+
     if (obj === null || obj === undefined) return obj;
-    
+
     if (typeof obj === 'string') {
         return sanitizeString(obj) as unknown as T;
     }
-    
+
     if (Array.isArray(obj)) {
-        return obj.map(item => sanitizeObject(item, maxDepth - 1)) as unknown as T;
+        return obj.map((item) => sanitizeObject(item, maxDepth - 1)) as unknown as T;
     }
-    
+
     if (typeof obj === 'object') {
         const sanitized: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(obj)) {
@@ -64,7 +64,7 @@ export function sanitizeObject<T>(obj: T, maxDepth = 10): T {
         }
         return sanitized as T;
     }
-    
+
     return obj;
 }
 
@@ -179,7 +179,7 @@ export function validateColumnName(columnName: string): string {
 export function safeIdentifier(identifier: string, type: 'table' | 'column' = 'column'): string {
     // Remove any non-alphanumeric characters except underscore
     const cleaned = identifier.replace(/[^a-zA-Z0-9_]/g, '');
-    
+
     if (type === 'table') {
         return validateTableName(cleaned);
     }
@@ -215,12 +215,12 @@ const csrfTokenStore = new Map<string, { token: string; expiresAt: number }>();
 export function generateCsrfToken(sessionId: string): string {
     const token = crypto.randomBytes(CSRF_TOKEN_LENGTH).toString('hex');
     const expiresAt = Date.now() + CSRF_TOKEN_EXPIRY_MS;
-    
+
     csrfTokenStore.set(sessionId, { token, expiresAt });
-    
+
     // Cleanup expired tokens periodically
     cleanupExpiredCsrfTokens();
-    
+
     return token;
 }
 
@@ -229,18 +229,15 @@ export function generateCsrfToken(sessionId: string): string {
  */
 export function validateCsrfToken(sessionId: string, token: string): boolean {
     const stored = csrfTokenStore.get(sessionId);
-    
+
     if (!stored) return false;
     if (Date.now() > stored.expiresAt) {
         csrfTokenStore.delete(sessionId);
         return false;
     }
-    
+
     // Constant-time comparison to prevent timing attacks
-    return crypto.timingSafeEqual(
-        Buffer.from(stored.token),
-        Buffer.from(token)
-    );
+    return crypto.timingSafeEqual(Buffer.from(stored.token), Buffer.from(token));
 }
 
 /**
@@ -339,27 +336,25 @@ export default {
     sanitizeString,
     sanitizeObject,
     stripHtml,
-    
+
     // SQL Injection Prevention
     validateTableName,
     validateColumnName,
     safeIdentifier,
     escapeLikePattern,
-    
+
     // CSRF Protection
     generateCsrfToken,
     validateCsrfToken,
     invalidateCsrfToken,
-    
+
     // Input Validation
     isValidUUID,
     isValidEmail,
     isValidInteger,
     sanitizeFilename,
     sanitizeUrl,
-    
+
     // Rate Limiting
     generateRateLimitKey,
 };
-
-

@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
 // Hoisted mock - MUST be before imports
 const mockHelpService = vi.hoisted(() => ({
@@ -12,14 +13,16 @@ const mockHelpService = vi.hoisted(() => ({
     getUserProgress: vi.fn()
 }));
 
-vi.mock('../../../server/services/helpService', () => ({
+vi.mock('../../../server/src/services/helpService', () => ({
     default: mockHelpService
 }));
 
 // Import after mock setup
-import PlaybookResolver from '../../../server/services/playbookResolver.js';
+import PlaybookResolver from '../../../server/src/services/playbookResolver.js';
 
 describe('PlaybookResolver', () => {
+    let mocks;
+
     const mockContext = {
         orgType: 'PAID',
         role: 'client',
@@ -62,6 +65,7 @@ describe('PlaybookResolver', () => {
     ];
 
     beforeEach(() => {
+        mocks = setupStandardTest();
         vi.clearAllMocks();
     });
 

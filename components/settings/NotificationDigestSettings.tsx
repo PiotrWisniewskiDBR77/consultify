@@ -231,5 +231,3 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
 };
 
 export default NotificationDigestSettings;
-
-

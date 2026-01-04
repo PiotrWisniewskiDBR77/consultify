@@ -431,5 +431,3 @@ const FilterSection: React.FC<FilterSectionProps> = ({ title, icon, expanded, on
 };
 
 export default ContentFilters;
-
-

@@ -812,5 +812,3 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 };
 
 export default NotificationRulesBuilder;
-
-

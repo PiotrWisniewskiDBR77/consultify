@@ -275,5 +275,3 @@ export const SupportTicketsView: React.FC = () => {
         </div>
     );
 };
-
-

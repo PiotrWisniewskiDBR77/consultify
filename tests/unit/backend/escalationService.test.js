@@ -18,7 +18,7 @@ const mockDb = vi.hoisted(() => ({
         const cb = typeof params === 'function' ? params : callback;
         if (cb) process.nextTick(() => cb(null, []));
     }),
-    run: vi.fn(function(sql, params, callback) {
+    run: vi.fn(function (sql, params, callback) {
         const cb = typeof params === 'function' ? params : callback;
         if (cb) process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
     }),
@@ -41,13 +41,13 @@ describe('EscalationService', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        
+
         mockNotificationService = {
             create: vi.fn().mockResolvedValue({ id: 'notif-123' })
         };
 
-        EscalationService = (await import('../../../server/services/escalationService.js')).default;
-        
+        EscalationService = (await import('../../../server/src/services/escalationService.js')).default;
+
         EscalationService.setDependencies({
             db: mockDb,
             uuidv4: () => 'escalation-1',
@@ -381,10 +381,6 @@ describe('EscalationService', () => {
                     callback(null, mockProject);
                 })
                 .mockImplementationOnce((query, params, callback) => {
-                    // Check existing escalation
-                    callback(null, null);
-                })
-                .mockImplementationOnce((query, params, callback) => {
                     // Get PM
                     callback(null, mockPM);
                 })
@@ -439,6 +435,7 @@ describe('EscalationService', () => {
             };
 
             mockDb.get.mockImplementation((query, params, callback) => {
+                console.log('DEBUG: mockDb.get called with:', query);
                 expect(query).toContain('SELECT organization_id FROM projects');
                 callback(null, { organization_id: testOrganizations.org1.id });
             });

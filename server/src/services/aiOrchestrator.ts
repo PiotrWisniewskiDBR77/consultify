@@ -4,8 +4,9 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { appCache } from './redis/CacheService.js';
+
 import logger from '../utils/Logger.js';
+import { appCache } from './redis/CacheService.js';
 
 // ==========================================
 // TYPES & CONSTANTS
@@ -127,6 +128,19 @@ async function initDeps() {
 export const AIOrchestrator = {
     AI_ROLES,
     CHAT_MODES,
+
+    _setDependencies: (deps: any) => {
+        if (deps.aiContextBuilder) _AIContextBuilder = deps.aiContextBuilder;
+        if (deps.aiPolicyEngine) _AIPolicyEngine = deps.aiPolicyEngine;
+        if (deps.aiMemoryManager) _AIMemoryManager = deps.aiMemoryManager;
+        if (deps.aiRoleGuard) _AIRoleGuard = deps.aiRoleGuard;
+        if (deps.regulatoryModeGuard) _RegulatoryModeGuard = deps.regulatoryModeGuard;
+        if (deps.aiExplainabilityService) _AIExplainabilityService = deps.aiExplainabilityService;
+        if (deps.accessPolicyService) _AccessPolicyService = deps.accessPolicyService;
+        if (deps.tokenBillingService) _TokenBillingService = deps.tokenBillingService;
+        if (deps.aiResponsePostProcessor) _AIResponsePostProcessor = deps.aiResponsePostProcessor;
+        if (deps.aiAgents) _AIAgents = deps.aiAgents;
+    },
 
     /**
      * Process a chat message
@@ -727,12 +741,12 @@ USER MESSAGE: ${userMessage}`;
             },
             project: context.project
                 ? {
-                    id: projectId,
-                    name: context.project.projectName,
-                    phase: context.project.currentPhase,
-                    status: context.project.status,
-                    progress: context.project.progressPercent,
-                }
+                      id: projectId,
+                      name: context.project.projectName,
+                      phase: context.project.currentPhase,
+                      status: context.project.status,
+                      progress: context.project.progressPercent,
+                  }
                 : null,
             initiatives: context.project?.initiatives || [],
             assessment: context.project?.assessment,

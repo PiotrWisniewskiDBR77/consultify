@@ -71,5 +71,3 @@ export const DecisionNode: React.FC<NodeProps<DecisionData>> = memo(({ data, sel
 DecisionNode.displayName = 'DecisionNode';
 
 export default DecisionNode;
-
-

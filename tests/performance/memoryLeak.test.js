@@ -9,9 +9,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
+// Removed createRequire - using ESM imports
 const dbModule = await import('../../server/database.js');
 const db = dbModule.default || dbModule;
 

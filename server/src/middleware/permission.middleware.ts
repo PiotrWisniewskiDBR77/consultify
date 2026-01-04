@@ -10,8 +10,8 @@ import { NextFunction, Request, Response } from 'express';
 
 import GovernanceAuditService from '../services/governanceAuditService.js';
 import PermissionService from '../services/permissionService.js';
+import logger from '../utils/Logger.ts';
 import type { AuthRequest } from './auth.middleware.js';
-import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES

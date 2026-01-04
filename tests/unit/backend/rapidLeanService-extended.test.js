@@ -22,7 +22,7 @@ vi.mock('../../../server/database.js', () => ({
     getDatabase: () => mockDb
 }));
 
-import RapidLeanService from '../../../server/services/rapidLeanService.js';
+import RapidLeanService from '../../../server/src/services/rapidLeanService.js';
 
 describe('RapidLeanService - Extended Methods', () => {
     beforeEach(() => {

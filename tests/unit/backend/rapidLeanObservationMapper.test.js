@@ -3,7 +3,7 @@
  * Tests mapping of production floor observations to RapidLean questionnaire responses
  */
 
-const RapidLeanObservationMapper = require('../../../server/services/rapidLeanObservationMapper');
+const RapidLeanObservationMapper = require('../../../server/src/services/rapidLeanObservationMapper');
 
 describe('RapidLeanObservationMapper', () => {
     describe('mapObservationsToResponses', () => {

@@ -8,10 +8,14 @@
 import { Router } from 'express';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import type { AuthenticatedRequest, Response } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
+
+// Apply rate limiting
+router.use(authRateLimiter);
 
 // Apply auth middleware to all routes
 router.use(verifyToken);

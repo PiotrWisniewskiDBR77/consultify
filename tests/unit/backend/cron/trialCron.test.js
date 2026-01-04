@@ -4,16 +4,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
+// Removed createRequire
 
 describe('TrialCron', () => {
     let TrialCron;
     let mockDemoService;
     let mockTrialService;
 
-    beforeEach(() => {
+    beforeEach(async () => { // Async beforeEach
         vi.resetModules();
 
         mockDemoService = {
@@ -25,21 +23,22 @@ describe('TrialCron', () => {
             processExpiredTrials: vi.fn().mockResolvedValue(2)
         };
 
-        vi.doMock('../../../server/services/demoService', () => ({
+        vi.doMock('../../../../server/services/demoService', () => ({
             default: mockDemoService
         }));
 
-        vi.doMock('../../../server/services/trialService', () => ({
+        vi.doMock('../../../../server/src/services/trialService.ts', () => ({
             default: mockTrialService
         }));
 
-        TrialCron = require('../../../server/cron/trialCron.js');
+        const module = await import('../../../../server/cron/trialCron.ts');
+        TrialCron = module.default;
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../server/services/demoService');
-        vi.doUnmock('../../../server/services/trialService');
+        vi.doUnmock('../../../../server/services/demoService');
+        vi.doUnmock('../../../../server/services/trialService');
     });
 
     describe('runDailyTrialTasks', () => {

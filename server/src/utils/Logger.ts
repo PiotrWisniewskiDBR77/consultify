@@ -6,11 +6,12 @@
  * Powered by Winston
  */
 
-import type { NextFunction, Request, Response } from 'express';
-import winston from 'winston';
 import 'winston-daily-rotate-file';
 
-import { getCorrelationId } from './RequestStore.js';
+import type { NextFunction, Request, Response } from 'express';
+import winston from 'winston';
+
+import { getCorrelationId } from './RequestStore.ts';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -41,15 +42,13 @@ const addCorrelationId = winston.format((info) => {
 });
 
 // Configure transports
-const transports: winston.transport[] = [
-    new winston.transports.Console(),
-];
+const transports: winston.transport[] = [new winston.transports.Console()];
 
 // Add file logging in production or if explicitly enabled
 if (isProduction || process.env.ENABLE_FILE_LOGGING === 'true') {
     // Import 'winston-daily-rotate-file' dynamically or assume it's available if added to project
-    // Note: In ESM/TS, we might need a require or import. 
-    // Since we are in TS, we rely on the import above. 
+    // Note: In ESM/TS, we might need a require or import.
+    // Since we are in TS, we rely on the import above.
     // However, winston-daily-rotate-file usually needs to be required to attach itself to winston.transports
     // @ts-ignore
     await import('winston-daily-rotate-file');
@@ -84,13 +83,13 @@ const winstonLogger = winston.createLogger({
         isProduction
             ? winston.format.json()
             : winston.format.combine(
-                winston.format.colorize(),
-                winston.format.printf(({ timestamp, level, message, correlationId, ...meta }) => {
-                    const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
-                    const cid = correlationId ? `[${correlationId}] ` : '';
-                    return `${timestamp} ${level}: ${cid}${message} ${metaStr}`;
-                }),
-            ),
+                  winston.format.colorize(),
+                  winston.format.printf(({ timestamp, level, message, correlationId, ...meta }) => {
+                      const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
+                      const cid = correlationId ? `[${correlationId}] ` : '';
+                      return `${timestamp} ${level}: ${cid}${message} ${metaStr}`;
+                  }),
+              ),
     ),
     transports,
 });

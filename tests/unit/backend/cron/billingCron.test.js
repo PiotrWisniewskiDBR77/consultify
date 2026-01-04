@@ -4,9 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
+// Removed createRequire
 
 describe('BillingCron', () => {
     let BillingCron;
@@ -16,7 +14,7 @@ describe('BillingCron', () => {
     let mockPayAsYouGoService;
     let mockSeatManagementService;
 
-    beforeEach(() => {
+    beforeEach(async () => { // Async beforeEach
         vi.resetModules();
 
         mockDb = {
@@ -39,36 +37,37 @@ describe('BillingCron', () => {
             updateSeatCount: vi.fn().mockResolvedValue(undefined)
         };
 
-        vi.doMock('../../../server/database', () => ({
+        vi.doMock('../../../../server/database', () => ({
             default: mockDb
         }));
 
-        vi.doMock('../../../server/services/budgetManagementService', () => ({
+        vi.doMock('../../../../server/services/budgetService', () => ({
             default: mockBudgetService
         }));
 
-        vi.doMock('../../../server/services/adminAlertService', () => ({
+        vi.doMock('../../../../server/services/adminAlertService', () => ({
             default: mockAdminAlertService
         }));
 
-        vi.doMock('../../../server/services/payAsYouGoService', () => ({
+        vi.doMock('../../../../server/services/payAsYouGoService', () => ({
             default: mockPayAsYouGoService
         }));
 
-        vi.doMock('../../../server/services/seatManagementService', () => ({
+        vi.doMock('../../../../server/services/seatManagementService', () => ({
             default: mockSeatManagementService
         }));
 
-        BillingCron = require('../../../server/cron/billingCron.js');
+        const module = await import('../../../../server/cron/billingCron.ts');
+        BillingCron = module.default;
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../server/database');
-        vi.doUnmock('../../../server/services/budgetManagementService');
-        vi.doUnmock('../../../server/services/adminAlertService');
-        vi.doUnmock('../../../server/services/payAsYouGoService');
-        vi.doUnmock('../../../server/services/seatManagementService');
+        vi.doUnmock('../../../../server/database');
+        vi.doUnmock('../../../../server/services/budgetManagementService');
+        vi.doUnmock('../../../../server/services/adminAlertService');
+        vi.doUnmock('../../../../server/services/payAsYouGoService');
+        vi.doUnmock('../../../../server/services/seatManagementService');
     });
 
     describe('resetMonthlyBudgets', () => {

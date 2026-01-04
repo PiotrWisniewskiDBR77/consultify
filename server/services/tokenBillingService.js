@@ -19,7 +19,7 @@ if (process.env.NODE_ENV === 'test') {
     // In production/dev, we expect the built artifact
     try {
         // Use dynamic import to avoid static resolution failure
-        const module = await import('../dist/services/tokenBillingService.js');
+        const module = await import('../src/services/tokenBillingService.js');
         TokenBillingService = module.default;
     } catch (error) {
         console.error('Failed to load TokenBillingService from dist:', error);

@@ -88,5 +88,3 @@ export const AI_TOOLS_TOUR: TourConfig = {
 };
 
 export default AI_TOOLS_TOUR;
-
-

@@ -4,7 +4,7 @@
  * Tests for connector catalog and registry service.
  */
 
-const ConnectorRegistry = require('../../../server/services/connectorRegistry');
+const ConnectorRegistry = require('../../../server/src/services/connectorRegistry');
 
 describe('ConnectorRegistry', () => {
     describe('getAllConnectors', () => {

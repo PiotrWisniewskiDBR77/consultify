@@ -19,7 +19,7 @@ import { v4 as uuidv4 } from 'uuid';
 import verifyToken from '../middleware/authMiddleware.js';
 import * as NotificationServiceModule from '../services/notificationService.js';
 const NotificationService = NotificationServiceModule.default || NotificationServiceModule;
-import * as auditLogger from '../dist/utils/auditLogger.js';
+import * as auditLogger from '../src/utils/auditLogger.ts';
 
 // Request type definitions
 const REQUEST_TYPES = {

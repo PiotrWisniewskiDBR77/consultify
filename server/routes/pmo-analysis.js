@@ -3,7 +3,7 @@ import PMOAnalysisService from '../services/pmoAnalysisService.js';
 import ProgressService from '../services/progressService.js';
 import DependencyService from '../services/dependencyService.js';
 import verifyToken from '../middleware/authMiddleware.js';
-import { asyncHandler } from '../dist/utils/asyncHandler.js';
+import { asyncHandler } from '../src/utils/asyncHandler.ts';
 
 const router = express.Router();
 

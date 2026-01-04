@@ -4,7 +4,8 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import logger from '../../utils/Logger.js';
+
+import logger from '../../utils/Logger.ts';
 
 export const LOG_LEVELS = {
     DEBUG: 0,

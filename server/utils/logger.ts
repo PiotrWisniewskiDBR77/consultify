@@ -1,7 +1,7 @@
 /**
  * Production Logger (Winston)
  * Enterprise SaaS Architecture
- * 
+ *
  * Replaces custom console logger with structured Winston logging.
  * Supports log rotation, levels, and JSON formatting.
  */
@@ -37,8 +37,8 @@ const format = winston.format.combine(
     winston.format.errors({ stack: true }), // Include stack trace on errors
     isProduction ? winston.format.json() : winston.format.colorize({ all: true }),
     winston.format.printf(
-        (info) => `${info.timestamp} ${info.level}: ${info.message}${info.stack ? '\n' + info.stack : ''}`
-    )
+        (info) => `${info.timestamp} ${info.level}: ${info.message}${info.stack ? '\n' + info.stack : ''}`,
+    ),
 );
 
 const transports: winston.transport[] = [
@@ -59,7 +59,7 @@ if (isProduction) {
             maxSize: '20m',
             maxFiles: '14d',
             level: 'error',
-        })
+        }),
     );
     transports.push(
         new DailyRotateFile({
@@ -68,7 +68,7 @@ if (isProduction) {
             zippedArchive: true,
             maxSize: '20m',
             maxFiles: '14d',
-        })
+        }),
     );
 }
 
@@ -125,4 +125,3 @@ const logger = {
 };
 
 export default logger;
-

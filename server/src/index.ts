@@ -25,11 +25,11 @@ import Scheduler from './cron/Scheduler.js';
 import { getDatabase, getDatabaseAsync } from './database/Database.js';
 // TypeScript routes (migrated)
 import { apiGateway } from './Gateway.js';
-import { get as dbGet } from './utils/DbPromise.js';
-import logger from './utils/Logger.js';
-import RedisRateLimitStore from './utils/RedisRateLimitStore.js';
-import { correlationMiddleware } from './utils/RequestStore.js';
-import { getShutdownManager } from './utils/ShutdownManager.js';
+import { get as dbGet } from './utils/DbPromise.ts';
+import logger from './utils/Logger.ts';
+import RedisRateLimitStore from './utils/RedisRateLimitStore.ts';
+import { correlationMiddleware } from './utils/RequestStore.ts';
+import { getShutdownManager } from './utils/ShutdownManager.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,15 +44,14 @@ const isTest = process.env.NODE_ENV === 'test';
 app.set('trust proxy', 1);
 
 // Health Check Routes
-import healthRoutes from './routes/healthRoutes.js';
 import { HealthCheckController } from './controllers/HealthCheckController.js';
+import healthRoutes from './routes/healthRoutes.js';
 
 // Health Check (Ping) - synchronous
 app.get('/ping', HealthCheckController.ping);
 
 // Mount Health Check Routes
 app.use('/api/health', healthRoutes);
-
 
 // Initialize Sentry (must be before other middleware)
 const sentryHandlers = initSentry(app);
@@ -86,18 +85,21 @@ const sentryHandlers = initSentry(app);
 
         // Schedule periodic schema verification (every 5 minutes)
         if (!isTest) {
-            setInterval(async () => {
-                try {
-                    const { verifyDatabaseHealth } = await import('./database/DatabaseInitializer.js');
-                    const healthy = await verifyDatabaseHealth();
-                    if (!healthy) {
-                        logger.warn('[Server] Database health check failed - schema may be incomplete');
+            setInterval(
+                async () => {
+                    try {
+                        const { verifyDatabaseHealth } = await import('./database/DatabaseInitializer.js');
+                        const healthy = await verifyDatabaseHealth();
+                        if (!healthy) {
+                            logger.warn('[Server] Database health check failed - schema may be incomplete');
+                        }
+                    } catch (err: unknown) {
+                        const error = err as Error;
+                        logger.error(`[Server] Database health check error: ${error.message}`);
                     }
-                } catch (err: unknown) {
-                    const error = err as Error;
-                    logger.error(`[Server] Database health check error: ${error.message}`);
-                }
-            }, 5 * 60 * 1000); // Every 5 minutes
+                },
+                5 * 60 * 1000,
+            ); // Every 5 minutes
         }
     } catch (err: unknown) {
         const error = err as Error;
@@ -238,42 +240,42 @@ app.use(
     helmet({
         contentSecurityPolicy: isProduction
             ? {
-                directives: {
-                    defaultSrc: ["'self'"],
-                    scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
-                    styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-                    imgSrc: [
-                        "'self'",
-                        'data:',
-                        'blob:',
-                        'https://www.transparenttextures.com',
-                        'https://*.stripe.com',
-                        'https://www.gravatar.com',
-                        'https://*.googleusercontent.com',
-                    ],
-                    connectSrc: [
-                        "'self'",
-                        'wss:',
-                        'https://api.openai.com',
-                        'https://generativelanguage.googleapis.com',
-                        'https://api.anthropic.com',
-                        'https://api.mistral.ai',
-                        'https://api.stripe.com',
-                        'https://*.sentry.io',
-                    ],
-                    fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
-                    objectSrc: ["'none'"],
-                    mediaSrc: ["'self'", 'blob:'],
-                    frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
-                    workerSrc: ["'self'", 'blob:'],
-                    childSrc: ["'self'", 'blob:'],
-                    formAction: ["'self'"],
-                    frameAncestors: ["'none'"],
-                    baseUri: ["'self'"],
-                    upgradeInsecureRequests: isProduction ? [] : null,
-                },
-                reportOnly: false,
-            }
+                  directives: {
+                      defaultSrc: ["'self'"],
+                      scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
+                      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+                      imgSrc: [
+                          "'self'",
+                          'data:',
+                          'blob:',
+                          'https://www.transparenttextures.com',
+                          'https://*.stripe.com',
+                          'https://www.gravatar.com',
+                          'https://*.googleusercontent.com',
+                      ],
+                      connectSrc: [
+                          "'self'",
+                          'wss:',
+                          'https://api.openai.com',
+                          'https://generativelanguage.googleapis.com',
+                          'https://api.anthropic.com',
+                          'https://api.mistral.ai',
+                          'https://api.stripe.com',
+                          'https://*.sentry.io',
+                      ],
+                      fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+                      objectSrc: ["'none'"],
+                      mediaSrc: ["'self'", 'blob:'],
+                      frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
+                      workerSrc: ["'self'", 'blob:'],
+                      childSrc: ["'self'", 'blob:'],
+                      formAction: ["'self'"],
+                      frameAncestors: ["'none'"],
+                      baseUri: ["'self'"],
+                      upgradeInsecureRequests: isProduction ? [] : null,
+                  },
+                  reportOnly: false,
+              }
             : false,
         hsts: {
             maxAge: 31536000,
@@ -401,8 +403,8 @@ app.use(correlationMiddleware);
 // INPUT SANITIZATION & CSRF PROTECTION (Security Hardening)
 // ============================================================
 
-import { inputSanitizationMiddleware } from './middleware/inputSanitization.middleware.js';
 import { csrfTokenMiddleware, getCsrfTokenHandler } from './middleware/csrf.middleware.js';
+import { inputSanitizationMiddleware } from './middleware/inputSanitization.middleware.js';
 
 // Apply input sanitization to all requests
 app.use(inputSanitizationMiddleware);
@@ -421,8 +423,8 @@ if (isProduction) {
 // PERFORMANCE METRICS & LOGGING MIDDLEWARE
 // ============================================================
 
-import { performanceMetricsMiddleware } from './middleware/performanceMetrics.middleware.js';
 import { metricsMiddleware } from './middleware/metrics.middleware.js';
+import { performanceMetricsMiddleware } from './middleware/performanceMetrics.middleware.js';
 
 // Prometheus metrics middleware - collect HTTP request metrics
 app.use('/api/', metricsMiddleware);
@@ -448,7 +450,10 @@ app.use('/api/auth/register', authLimiter);
 // ============================================================
 
 // Initialize API Gateway Routes
-app.use((req, res, next) => { logger.info('[Index] Pre-Gateway:', req.path); next(); });
+app.use((req, res, next) => {
+    logger.info('[Index] Pre-Gateway:', req.path);
+    next();
+});
 apiGateway.initializeRoutes(app);
 
 // ============================================================
@@ -456,10 +461,12 @@ apiGateway.initializeRoutes(app);
 // ============================================================
 
 // Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../dist'), {
-    maxAge: '1y', // Cache static assets for 1 year
-    etag: true,
-}));
+app.use(
+    express.static(path.join(__dirname, '../dist'), {
+        maxAge: '1y', // Cache static assets for 1 year
+        etag: true,
+    }),
+);
 
 // The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
 app.use((req: Request, res: Response) => {
@@ -489,7 +496,7 @@ app.use(alertWatchdog);
 
 // Error Handler Middleware (must be last, after all routes)
 import { errorHandlerMiddleware } from './utils/ErrorHandler.js';
-import logger from './utils/Logger.js';
+import logger from './utils/Logger.ts';
 app.use(errorHandlerMiddleware);
 
 // 404 Handler (must be after error handler)

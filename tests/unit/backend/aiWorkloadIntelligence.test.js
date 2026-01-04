@@ -21,7 +21,7 @@ describe('AI Workload Intelligence Service', () => {
         };
 
         // Static import is fine because we modify the instance via DI
-        const module = await import('../../../server/services/aiWorkloadIntelligence.js');
+        const module = await import('../../../server/src/services/aiWorkloadIntelligence.js');
         AIWorkloadIntelligence = module.default || module;
 
         // Use the built-in DI method

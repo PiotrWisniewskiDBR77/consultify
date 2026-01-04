@@ -8,7 +8,7 @@ const ReportingService = ReportingServiceModule.default || ReportingServiceModul
 import * as NarrativeServiceModule from '../services/narrativeService.js';
 const NarrativeService = NarrativeServiceModule.default || NarrativeServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
-import { asyncHandler  } from '../dist/utils/asyncHandler.js';
+import { asyncHandler } from '../src/utils/asyncHandler.ts';
 
 // GET /api/reports/executive-overview
 // REFACTORED: Uses asyncHandler

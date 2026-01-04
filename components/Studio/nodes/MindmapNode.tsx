@@ -81,5 +81,3 @@ export const MindmapNode: React.FC<NodeProps<MindmapNodeData>> = memo(({ data, s
 MindmapNode.displayName = 'MindmapNode';
 
 export default MindmapNode;
-
-

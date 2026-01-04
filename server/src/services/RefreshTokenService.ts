@@ -24,8 +24,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config/Config.js';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase, RunResult } from '../database/IDatabase.js';
-import { run as dbRun } from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
+import { run as dbRun } from '../utils/DbPromise.ts';
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // TYPES

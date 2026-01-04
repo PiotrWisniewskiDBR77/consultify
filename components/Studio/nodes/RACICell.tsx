@@ -69,5 +69,3 @@ export const RACICell: React.FC<NodeProps<RACICellData>> = memo(({ data, selecte
 RACICell.displayName = 'RACICell';
 
 export default RACICell;
-
-

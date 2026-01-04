@@ -100,5 +100,3 @@ export const REPORT_TOUR: TourConfig = {
 };
 
 export default REPORT_TOUR;
-
-

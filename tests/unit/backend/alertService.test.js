@@ -1,5 +1,5 @@
 // Reliant on global describe/it from Vitest runner
-const AlertService = require('../../../server/services/alertService');
+const AlertService = require('../../../server/src/services/alertService');
 
 describe('AlertService', () => {
     it('should detect CRITICAL response time', () => {

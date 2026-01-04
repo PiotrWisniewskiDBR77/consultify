@@ -4,9 +4,10 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
 // Mock aiAssessmentPartnerService
-vi.mock('../../../server/services/aiAssessmentPartnerService', () => ({
+vi.mock('../../../server/src/services/aiAssessmentPartnerService', () => ({
     aiAssessmentPartner: {
         suggestJustification: vi.fn(),
         suggestEvidence: vi.fn(),
@@ -84,26 +85,28 @@ describe('AIAssessmentFormHelper', () => {
     let FIELD_TYPES;
     let VALIDATION_RULES;
     let mockAiPartner;
+    let mocks;
 
     beforeEach(async () => {
         vi.resetModules();
         vi.clearAllMocks();
 
-        const module = await import('../../../server/services/aiAssessmentFormHelper.js');
+        mocks = setupStandardTest();
+
+        const module = await import('../../../server/src/services/aiAssessmentFormHelper.js');
         AIAssessmentFormHelper = module.AIAssessmentFormHelper;
         aiAssessmentFormHelper = module.aiAssessmentFormHelper;
         FIELD_TYPES = module.FIELD_TYPES;
         VALIDATION_RULES = module.VALIDATION_RULES;
 
-        const { aiAssessmentPartner } = await import('../../../server/services/aiAssessmentPartnerService');
+        const { aiAssessmentPartner } = await import('../../../server/src/services/aiAssessmentPartnerService');
         mockAiPartner = aiAssessmentPartner;
 
-        // precise sanity check
-        if (aiAssessmentFormHelper.aiPartner !== mockAiPartner) {
-            console.warn('[WARN] aiAssessmentFormHelper.aiPartner !== mockAiPartner. Dependency injection mismatch.');
-            // Force inject for test
-            aiAssessmentFormHelper.aiPartner = mockAiPartner;
-        }
+        // Inject mock dependencies
+        aiAssessmentFormHelper.setDependencies({
+            aiPartner: mockAiPartner
+        });
+
         // Set default mock implementations to prevent 'undefined' returns
         mockAiPartner.suggestJustification.mockResolvedValue({ suggestion: 'Default Mock Suggestion', mode: 'MOCK' });
         mockAiPartner.suggestEvidence.mockResolvedValue({ evidence: ['Default Evidence'] });
@@ -111,14 +114,6 @@ describe('AIAssessmentFormHelper', () => {
         mockAiPartner.autocompleteJustification.mockResolvedValue({ completion: '...completed text' });
         mockAiPartner.validateScoreConsistency.mockResolvedValue({ hasInconsistencies: false, inconsistencies: [] });
         mockAiPartner.correctJustificationLanguage.mockResolvedValue({ correctedText: 'Corrected text', mode: 'NO_CHANGE' });
-
-
-        // precise sanity check
-        if (aiAssessmentFormHelper.aiPartner !== mockAiPartner) {
-            console.warn('[WARN] aiAssessmentFormHelper.aiPartner !== mockAiPartner. Dependency injection mismatch.');
-            // Force inject for test
-            aiAssessmentFormHelper.aiPartner = mockAiPartner;
-        }
     });
 
     // afterEach(() => {

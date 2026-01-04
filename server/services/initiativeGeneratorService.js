@@ -5,7 +5,7 @@
  * Converts multi-source assessment data (DRD, Lean, SIRI/ADMA) into actionable initiatives.
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import RapidLeanService from './rapidLeanService.js';
 import ExternalAssessmentService from './externalAssessmentService.js';

@@ -333,5 +333,3 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
 };
 
 export default WhatsNewModal;
-
-

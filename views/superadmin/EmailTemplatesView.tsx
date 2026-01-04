@@ -288,6 +288,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                                     placeholder="Search templates..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
+                                    aria-label="Search templates"
                                     className="w-full pl-10 pr-4 py-2.5 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50"
                                 />
                             </div>
@@ -297,6 +298,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value as EmailTemplateStatus | '')}
+                            aria-label="Filter by status"
                             className="px-4 py-2.5 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                         >
                             <option value="">All Statuses</option>
@@ -309,6 +311,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                         <select
                             value={categoryFilter}
                             onChange={(e) => setCategoryFilter(e.target.value)}
+                            aria-label="Filter by category"
                             className="px-4 py-2.5 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                         >
                             <option value="">All Categories</option>
@@ -336,6 +339,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                         <button
                             onClick={loadTemplates}
                             disabled={loading}
+                            aria-label="Refresh templates"
                             className="p-2.5 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors disabled:opacity-50"
                         >
                             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
@@ -478,6 +482,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                                                                 actionMenuOpen === template.id ? null : template.id,
                                                             )
                                                         }
+                                                        aria-label="More actions"
                                                         className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
                                                     >
                                                         <MoreVertical size={16} />
@@ -585,5 +590,3 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
 };
 
 export default EmailTemplatesView;
-
-

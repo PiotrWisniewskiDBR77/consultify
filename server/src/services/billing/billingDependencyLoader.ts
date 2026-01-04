@@ -3,8 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { config } from '../../config/index.js';
 import { getDatabase } from '../../database/Database.js';
+import logger from '../../utils/Logger.ts';
 import type { BillingServiceDependencies } from './types.js';
-import logger from '../../utils/Logger.js';
 
 export class BillingDependencyLoader {
     #deps: BillingServiceDependencies | null = null;

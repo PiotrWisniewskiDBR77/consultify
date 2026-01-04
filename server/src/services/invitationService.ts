@@ -4,12 +4,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import logger from '../utils/Logger.js';
+import logger from '../utils/Logger.ts';
 import { InvitationDataService } from './invitation/InvitationDataService.js';
 import { InvitationSendingService } from './invitation/InvitationSendingService.js';
 import { InvitationTokenService } from './invitation/InvitationTokenService.js';
 import {
-import logger from '../utils/Logger.js';
     AcceptInvitationParams,
     CreateOrgInvitationParams,
     CreateProjectInvitationParams,

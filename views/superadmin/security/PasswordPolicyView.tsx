@@ -243,5 +243,3 @@ export const PasswordPolicyView: React.FC = () => {
         </div>
     );
 };
-
-

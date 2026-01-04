@@ -5,7 +5,11 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { all, get, run } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+
+let all = dbAll;
+let get = dbGet;
+let run = dbRun;
 
 // ==========================================
 // TYPES & CONSTANTS
@@ -61,6 +65,17 @@ export interface AIAuditLogRecord extends AIAuditEntry {
 // ==========================================
 
 export const AIAuditLogger = {
+    /**
+     * Set dependencies for testing
+     */
+    _setDependencies(deps: any) {
+        if (deps.db) {
+            all = deps.db.all;
+            get = deps.db.get;
+            run = deps.db.run;
+        }
+    },
+
     /**
      * Log an AI interaction with full explainability support
      */

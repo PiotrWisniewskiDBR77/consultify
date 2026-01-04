@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import DbPromise from '../utils/DbPromise.js';
+import DbPromise from '../utils/DbPromise.ts';
+import logger from '../utils/Logger.ts';
 import PDFParserService from './pdfParserService.js';
-import logger from '../utils/Logger.js';
 
 /**
  * External Assessment Service

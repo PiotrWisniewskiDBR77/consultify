@@ -7,7 +7,7 @@
  * PMO Standards: ISO 21500, PMBOK 7, PRINCE2 (Highlight Report)
  */
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 
 

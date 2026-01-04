@@ -18,7 +18,7 @@ describe('GovernanceService', () => {
         
         mockDb = createMockDb();
 
-        GovernanceService = (await import('../../../server/services/governanceService.js')).default;
+        GovernanceService = (await import('../../../server/src/services/governanceService.js')).default;
         
         GovernanceService.setDependencies({
             db: mockDb,

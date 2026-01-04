@@ -9,10 +9,14 @@ import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as _dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { all as dbAll, get as _dbGet, run as dbRun } from '../utils/DbPromise.ts';
 
 const router = Router();
+
+// Apply rate limiting
+router.use(authRateLimiter);
 
 /**
  * GET /api/sessions

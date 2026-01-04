@@ -246,5 +246,3 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
 };
 
 export default NotificationQuickActions;
-
-

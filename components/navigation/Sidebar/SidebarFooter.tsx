@@ -48,5 +48,3 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({ showFull, onLogout
 };
 
 export default SidebarFooter;
-
-

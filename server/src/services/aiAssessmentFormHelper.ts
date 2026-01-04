@@ -10,3 +10,6 @@ import service from '../../services/aiAssessmentFormHelper.js';
 
 // Export default instance (for backward compatibility)
 export default service;
+
+// Re-export named exports
+export const { AIAssessmentFormHelper, aiAssessmentFormHelper, FIELD_TYPES, VALIDATION_RULES } = service;

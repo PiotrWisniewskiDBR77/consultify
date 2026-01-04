@@ -9,7 +9,7 @@ const mockDb = {
     initPromise: Promise.resolve()
 };
 
-import DependencyService from '../../../server/services/dependencyService.js';
+import DependencyService from '../../../server/src/services/dependencyService.js';
 
 describe('DependencyService', () => {
     beforeEach(() => {

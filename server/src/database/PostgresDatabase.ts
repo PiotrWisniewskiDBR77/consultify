@@ -9,8 +9,8 @@
 import { Pool, type PoolClient, type PoolConfig } from 'pg';
 
 import databaseConfig from '../config/DatabaseConfig.ts';
+import logger from '../utils/Logger.ts';
 import type { IDatabase, QueryResult, RunResult } from './IDatabase.ts';
-import logger from '../utils/Logger.js';
 
 let pool: Pool | null = null;
 let readPool: Pool | null = null;
@@ -81,7 +81,7 @@ async function executeWithLogging<T>(
     poolFn: () => Pool,
     sql: string,
     params: unknown[],
-    method: 'RUN' | 'GET' | 'ALL' | 'QUERY'
+    method: 'RUN' | 'GET' | 'ALL' | 'QUERY',
 ): Promise<{ rows: T[]; rowCount: number | null }> {
     const start = Date.now();
     try {
@@ -223,12 +223,7 @@ class PostgresDatabase implements IDatabase {
                     params = args.slice(0, -1) as unknown[];
                 }
 
-                executeWithLogging<unknown>(
-                    getPool,
-                    adaptedSql,
-                    params,
-                    'RUN'
-                )
+                executeWithLogging<unknown>(getPool, adaptedSql, params, 'RUN')
                     .then((res) => {
                         if (callback) callback.call({ changes: res.rowCount, lastID: null }, null);
                     })
@@ -237,7 +232,7 @@ class PostgresDatabase implements IDatabase {
                         if (callback) callback(err);
                     });
             },
-            finalize: () => { },
+            finalize: () => {},
         };
     }
 
@@ -250,12 +245,7 @@ class PostgresDatabase implements IDatabase {
 
         const adaptedSql = adaptQuery(sql);
 
-        const promise = executeWithLogging<unknown>(
-            getPool,
-            adaptedSql,
-            params,
-            'RUN'
-        )
+        const promise = executeWithLogging<unknown>(getPool, adaptedSql, params, 'RUN')
             .then((res) => {
                 const result: RunResult = { changes: res.rowCount, lastID: undefined };
                 if (callback) {
@@ -288,12 +278,7 @@ class PostgresDatabase implements IDatabase {
 
         const adaptedSql = adaptQuery(sql);
 
-        const promise = executeWithLogging<T>(
-            getReadPool,
-            adaptedSql,
-            params,
-            'GET'
-        )
+        const promise = executeWithLogging<T>(getReadPool, adaptedSql, params, 'GET')
             .then((res) => {
                 const row = res.rows[0] || null;
                 if (callback) callback(null, row as T);
@@ -324,12 +309,7 @@ class PostgresDatabase implements IDatabase {
 
         const adaptedSql = adaptQuery(sql);
 
-        const promise = executeWithLogging<T>(
-            getReadPool,
-            adaptedSql,
-            params,
-            'ALL'
-        )
+        const promise = executeWithLogging<T>(getReadPool, adaptedSql, params, 'ALL')
             .then((res) => {
                 if (callback) callback(null, res.rows);
                 return res.rows;
@@ -374,7 +354,9 @@ class PostgresDatabase implements IDatabase {
             .then(() => {
                 pool = null;
                 if (readPool) {
-                    return readPool.end().then(() => { readPool = null; });
+                    return readPool.end().then(() => {
+                        readPool = null;
+                    });
                 }
             })
             .then(() => {
@@ -398,7 +380,7 @@ class PostgresDatabase implements IDatabase {
                 getPool, // Generic query defaults to primary often used for writes too
                 adapted,
                 params || [],
-                'QUERY'
+                'QUERY',
             );
             return {
                 rows: result.rows,
@@ -524,8 +506,6 @@ async function initDb(): Promise<void> {
             value TEXT,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
-
-
 
         // Sessions (references users and projects - must come after both)
         await query(`CREATE TABLE IF NOT EXISTS sessions(
@@ -1190,9 +1170,15 @@ async function initDb(): Promise<void> {
 
         // Indexes for approval_assignments
         await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_org ON approval_assignments(org_id)`);
-        await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_user ON approval_assignments(assigned_to_user_id, status)`);
-        await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_proposal ON approval_assignments(proposal_id)`);
-        await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_sla ON approval_assignments(sla_due_at, status)`);
+        await query(
+            `CREATE INDEX IF NOT EXISTS idx_approval_assignments_user ON approval_assignments(assigned_to_user_id, status)`,
+        );
+        await query(
+            `CREATE INDEX IF NOT EXISTS idx_approval_assignments_proposal ON approval_assignments(proposal_id)`,
+        );
+        await query(
+            `CREATE INDEX IF NOT EXISTS idx_approval_assignments_sla ON approval_assignments(sla_due_at, status)`,
+        );
 
         // MFA Attempts
         await query(`CREATE TABLE IF NOT EXISTS mfa_attempts(
@@ -1223,7 +1209,9 @@ async function initDb(): Promise<void> {
         )`);
 
         await query(`CREATE INDEX IF NOT EXISTS idx_trusted_devices_user ON trusted_devices(user_id)`);
-        await query(`CREATE INDEX IF NOT EXISTS idx_trusted_devices_fingerprint ON trusted_devices(device_fingerprint)`);
+        await query(
+            `CREATE INDEX IF NOT EXISTS idx_trusted_devices_fingerprint ON trusted_devices(device_fingerprint)`,
+        );
 
         // Refresh Tokens
         await query(`CREATE TABLE IF NOT EXISTS refresh_tokens(
@@ -1259,7 +1247,9 @@ async function initDb(): Promise<void> {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        await query(`CREATE INDEX IF NOT EXISTS idx_scheduled_emails_status_time ON scheduled_emails(status, scheduled_time)`);
+        await query(
+            `CREATE INDEX IF NOT EXISTS idx_scheduled_emails_status_time ON scheduled_emails(status, scheduled_time)`,
+        );
         await query(`CREATE INDEX IF NOT EXISTS idx_scheduled_emails_report ON scheduled_emails(report_id)`);
 
         // Add MFA columns to existing tables if they don't exist (migration)
@@ -1434,9 +1424,13 @@ async function initDb(): Promise<void> {
         // System Activities & Logs
         await query(`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id)`);
         await query(`CREATE INDEX IF NOT EXISTS idx_activity_logs_org ON activity_logs(organization_id)`);
-        await query(`CREATE INDEX IF NOT EXISTS idx_activity_logs_org_time ON activity_logs(organization_id, created_at DESC)`);
+        await query(
+            `CREATE INDEX IF NOT EXISTS idx_activity_logs_org_time ON activity_logs(organization_id, created_at DESC)`,
+        );
         await query(`CREATE INDEX IF NOT EXISTS idx_activity_logs_user ON activity_logs(user_id)`);
-        await query(`CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, read, created_at DESC)`);
+        await query(
+            `CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, read, created_at DESC)`,
+        );
         await query(`CREATE INDEX IF NOT EXISTS idx_feedback_user ON feedback(user_id)`);
 
         // AI & Customizations
@@ -1450,19 +1444,30 @@ async function initDb(): Promise<void> {
         // Core Modules
         await query(`CREATE INDEX IF NOT EXISTS idx_initiatives_org ON initiatives(organization_id)`);
         await query(`CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_doc ON knowledge_chunks(doc_id)`);
-        await query(`CREATE INDEX IF NOT EXISTS idx_usage_records_org_time ON usage_records(organization_id, recorded_at)`);
-
+        await query(
+            `CREATE INDEX IF NOT EXISTS idx_usage_records_org_time ON usage_records(organization_id, recorded_at)`,
+        );
 
         logger.info('[Postgres] Schema Check Complete.');
 
         // Verify critical tables exist
-        const criticalTables = ['organizations', 'users', 'sessions', 'projects', 'tasks', 'teams', 'invitations', 'notifications', 'settings'];
+        const criticalTables = [
+            'organizations',
+            'users',
+            'sessions',
+            'projects',
+            'tasks',
+            'teams',
+            'invitations',
+            'notifications',
+            'settings',
+        ];
         const missingTables: string[] = [];
         for (const table of criticalTables) {
             try {
                 const checkResult = await getPool().query<{ count: string }>(
                     `SELECT COUNT(*)::text as count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
-                    [table]
+                    [table],
                 );
                 const count = parseInt(checkResult.rows[0]?.count || '0', 10);
                 if (count === 0) {

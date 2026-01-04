@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
-const EmailService = require('../../../server/services/emailService.js');
+const EmailService = require('../../../server/src/services/emailService.js');
 
 /**
  * Integration tests for EmailService

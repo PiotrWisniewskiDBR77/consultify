@@ -317,5 +317,3 @@ export const DataTable = forwardRef<HTMLDivElement, DataTableProps<Record<string
 (DataTable as React.FC).displayName = 'DataTable';
 
 export default DataTable;
-
-

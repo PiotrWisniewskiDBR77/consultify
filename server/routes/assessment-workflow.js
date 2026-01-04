@@ -6,11 +6,11 @@
 import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
-import { assessmentRBAC  } from '../middleware/assessmentRBAC.js';
+import { assessmentRBAC } from '../middleware/assessmentRBAC.js';
 import assessmentWorkflowModule from '../services/assessmentWorkflowService.js';
 const AssessmentWorkflowService = assessmentWorkflowModule.AssessmentWorkflowService || assessmentWorkflowModule;
 const WORKFLOW_STATES = assessmentWorkflowModule.WORKFLOW_STATES || {};
-import AssessmentAuditLogger from '../dist/utils/assessmentAuditLogger.js';
+import AssessmentAuditLogger from '../src/utils/AssessmentAuditLogger.ts';
 import path from 'path';
 
 /**

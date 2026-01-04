@@ -2,7 +2,7 @@
 // Critical Path Service - Dependency-aware sequencing
 // Step 4: Roadmap, Sequencing & Capacity
 
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 import DependencyService from './dependencyService.js';
 

@@ -100,5 +100,3 @@ export const INITIATIVE_TOUR: TourConfig = {
 };
 
 export default INITIATIVE_TOUR;
-
-

@@ -615,9 +615,9 @@ export const calculateFrameworkScore = (framework, answers) => {
         case 'ADMA':
             return calculateADMAScore(answers);
         case 'CMMI':
-            return calculateCMMIScore(data);
+            return calculateCMMIScore(answers);
         case 'LEAN':
-            return calculateLeanScore(data);
+            return calculateLeanScore(answers);
         default:
             throw new Error(`Unknown framework: ${framework}`);
     }

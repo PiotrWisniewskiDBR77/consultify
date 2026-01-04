@@ -1,24 +1,20 @@
 /**
  * PII Encryption Middleware
  * Enterprise SaaS Architecture - Data Protection
- * 
+ *
  * Automatically encrypts/decrypts PII fields in API requests/responses.
- * 
+ *
  * Usage:
  * - Encryption: Request body PII fields are encrypted before reaching handlers
  * - Decryption: Response PII fields are decrypted before sending to client
- * 
+ *
  * Note: This middleware is opt-in and should be applied to routes handling PII.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { 
-    encryptPII, 
-    decryptPII, 
-    PII_FIELDS,
-    isEncrypted 
-} from '../services/encryption/EncryptionService.js';
-import logger from '../utils/Logger.js';
+import { NextFunction, Request, Response } from 'express';
+
+import { decryptPII, encryptPII, isEncrypted, PII_FIELDS } from '../services/encryption/EncryptionService.js';
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // CONFIGURATION
@@ -38,11 +34,7 @@ const PII_ENCRYPTION_ROUTES = [
 /**
  * Routes that should skip PII processing
  */
-const SKIP_ROUTES = [
-    '/api/health',
-    '/api/ping',
-    '/api/csrf-token',
-];
+const SKIP_ROUTES = ['/api/health', '/api/ping', '/api/csrf-token'];
 
 // ==========================================
 // MIDDLEWARE
@@ -55,7 +47,7 @@ const SKIP_ROUTES = [
 export function encryptRequestPII(req: Request, _res: Response, next: NextFunction): void {
     try {
         // Skip for non-applicable routes
-        if (SKIP_ROUTES.some(route => req.path.startsWith(route))) {
+        if (SKIP_ROUTES.some((route) => req.path.startsWith(route))) {
             return next();
         }
 
@@ -82,7 +74,7 @@ export function encryptRequestPII(req: Request, _res: Response, next: NextFuncti
  */
 export function decryptResponsePII(req: Request, res: Response, next: NextFunction): void {
     // Skip for non-applicable routes
-    if (SKIP_ROUTES.some(route => req.path.startsWith(route))) {
+    if (SKIP_ROUTES.some((route) => req.path.startsWith(route))) {
         return next();
     }
 
@@ -90,14 +82,12 @@ export function decryptResponsePII(req: Request, res: Response, next: NextFuncti
     const originalJson = res.json.bind(res);
 
     // Override json to decrypt PII before sending
-    res.json = function(body: unknown): Response {
+    res.json = function (body: unknown): Response {
         try {
             if (body && typeof body === 'object') {
                 if (Array.isArray(body)) {
-                    body = body.map(item => 
-                        typeof item === 'object' && item !== null 
-                            ? decryptPII(item as Record<string, unknown>)
-                            : item
+                    body = body.map((item) =>
+                        typeof item === 'object' && item !== null ? decryptPII(item as Record<string, unknown>) : item,
                     );
                 } else {
                     body = decryptPII(body as Record<string, unknown>);
@@ -107,7 +97,7 @@ export function decryptResponsePII(req: Request, res: Response, next: NextFuncti
             logger.error('[PIIEncryption] Response decryption error:', error);
             // Send original body on error
         }
-        
+
         return originalJson(body);
     };
 
@@ -120,8 +110,8 @@ export function decryptResponsePII(req: Request, res: Response, next: NextFuncti
  */
 export function piiEncryptionMiddleware(req: Request, res: Response, next: NextFunction): void {
     // Check if route should have PII encryption
-    const shouldApply = PII_ENCRYPTION_ROUTES.some(route => req.path.startsWith(route));
-    
+    const shouldApply = PII_ENCRYPTION_ROUTES.some((route) => req.path.startsWith(route));
+
     if (!shouldApply) {
         return next();
     }
@@ -152,13 +142,13 @@ export function piiProtection(req: Request, res: Response, next: NextFunction): 
  */
 export function hasEncryptedPII(obj: Record<string, unknown>): boolean {
     if (!obj || typeof obj !== 'object') return false;
-    
+
     for (const field of PII_FIELDS) {
         if (field in obj && typeof obj[field] === 'string' && isEncrypted(obj[field] as string)) {
             return true;
         }
     }
-    
+
     return false;
 }
 
@@ -167,15 +157,15 @@ export function hasEncryptedPII(obj: Record<string, unknown>): boolean {
  */
 export function getEncryptedFields(obj: Record<string, unknown>): string[] {
     if (!obj || typeof obj !== 'object') return [];
-    
+
     const encryptedFields: string[] = [];
-    
+
     for (const field of PII_FIELDS) {
         if (field in obj && typeof obj[field] === 'string' && isEncrypted(obj[field] as string)) {
             encryptedFields.push(field);
         }
     }
-    
+
     return encryptedFields;
 }
 
@@ -192,5 +182,3 @@ export default {
     getEncryptedFields,
     PII_ENCRYPTION_ROUTES,
 };
-
-

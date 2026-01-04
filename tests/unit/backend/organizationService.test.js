@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
+import { getDatabase } from '../../../server/src/database/index.js';
 import { testUsers, testOrganizations } from '../../fixtures/testData.js';
 
 describe('OrganizationService', () => {
@@ -16,14 +16,20 @@ describe('OrganizationService', () => {
     beforeEach(async () => {
         vi.resetModules();
 
-        mockDb = createMockDb();
-        global.__TEST_DB_MOCK__ = mockDb;
+        // Use global standard mock
+        mockDb = getDatabase();
 
         OrganizationService = (await import('../../../server/src/services/organizationService.ts')).default;
         OrganizationService.setDependencies({
             db: mockDb,
             uuidv4: () => 'org-uuid-1'
         });
+
+        // Clear mocks before each test
+        mockDb.run.mockClear();
+        mockDb.get.mockClear();
+        mockDb.all.mockClear();
+        mockDb.serialize.mockClear();
     });
 
     afterEach(() => {

@@ -1,27 +1,43 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
 describe('AI Decision Governance Service', () => {
     let AIDecisionGovernance;
-    let mockDb;
+    let mocks;
 
     beforeEach(async () => {
         vi.resetModules();
 
-        mockDb = createMockDb();
+        mocks = setupStandardTest();
 
-        vi.doMock('../../../server/database', () => ({
-            default: mockDb,
-            getDatabase: () => mockDb
+        // Setup specific database mocks for this service
+        mocks.db.all.mockImplementation((sql, params, cb) => {
+            if (typeof params === 'function') cb = params;
+            if (cb) cb(null, []);
+        });
+
+        mocks.db.get.mockImplementation((sql, params, cb) => {
+            if (typeof params === 'function') cb = params;
+            if (cb) cb(null, {});
+        });
+
+        mocks.db.run.mockImplementation((sql, params, cb) => {
+            if (typeof params === 'function') cb = params;
+            if (cb) cb.call({ changes: 1 }, null);
+        });
+
+        vi.doMock('../../../server/src/database/Database.ts', () => ({
+            default: mocks.db,
+            getDatabase: () => mocks.db
         }));
 
-        const module = await import('../../../server/services/aiDecisionGovernance.js');
+        const module = await import('../../../server/src/services/aiDecisionGovernance.js');
         AIDecisionGovernance = module.default;
 
-        // Inject mock dependencies
+        // Inject mock dependencies using unified pattern
         AIDecisionGovernance.setDependencies({
-            db: mockDb,
-            uuidv4: () => 'mock-uuid-1234'
+            db: mocks.db,
+            uuidv4: mocks.uuid
         });
     });
 

@@ -1,13 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-// Mock dependencies
-const mockDb = {
-    get: vi.fn(),
-    all: vi.fn(),
-    run: vi.fn(),
-    serialize: vi.fn((cb) => cb()),
-    initPromise: Promise.resolve()
-};
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
 // Import the service (TS source)
 import InitiativeTemplateService from '../../../server/src/services/initiativeTemplateService.ts';
@@ -26,16 +18,16 @@ vi.mock('../../../server/src/utils/DbPromise.ts', () => ({
 }));
 
 describe('InitiativeTemplateService', () => {
+    let mocks;
     const testUserId = 'user-123';
     const testOrgId = 'org-123';
 
     beforeEach(() => {
+        mocks = setupStandardTest();
         vi.clearAllMocks();
-        // Set dependencies if needed, though we are mocking DbPromise directly 
-        // which the service uses. But the service matches this.db = getDatabase()
-        // and DbPromise uses getDb() which calls getDatabase().
-        // To permit strict isolation, we can also inject the mockDb into the service instance
-        InitiativeTemplateService.setDependencies({ db: mockDb });
+
+        // Set dependencies using unified pattern
+        InitiativeTemplateService.setDependencies({ db: mocks.db });
 
         // Default mock responses
         vi.mocked(DbPromise.all).mockResolvedValue([]);

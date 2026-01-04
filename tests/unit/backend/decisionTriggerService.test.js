@@ -1,33 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-
-// Hoisted mock - define mock inside vi.hoisted
-const mockDb = vi.hoisted(() => ({
-    run: vi.fn(),
-    get: vi.fn(),
-    all: vi.fn(),
-    exec: vi.fn()
-}));
-
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
 // Import after mock is set up
-import DecisionTriggerService from '../../../server/services/decisionTriggerService';
+import DecisionTriggerService from '../../../server/src/services/decisionTriggerService';
 
 describe('DecisionTriggerService', () => {
+    let mocks;
+
     beforeEach(() => {
+        mocks = setupStandardTest();
         vi.clearAllMocks();
-        
-        // Setup run mock to properly handle callback-based API
-        mockDb.run.mockImplementation(function(sql, params, callback) {
+
+        // Setup database mocks using unified pattern
+        mocks.db.run.mockImplementation(function(sql, params, callback) {
             if (typeof callback === 'function') {
                 callback.call({ lastID: 1, changes: 1 }, null);
             }
         });
 
-        // Setup get mock to return project owner data
-        mockDb.get.mockImplementation((sql, params, callback) => {
+        mocks.db.get.mockImplementation((sql, params, callback) => {
             if (typeof callback === 'function') {
                 callback(null, { owner_id: 'owner-123', first_name: 'John', last_name: 'Doe' });
             }

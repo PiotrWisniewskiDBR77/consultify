@@ -14,13 +14,17 @@ let cleanupInterval: NodeJS.Timeout | null = null;
 function cleanupRevokedTokens() {
     console.log('[Cron] Cleaning up expired revoked tokens...');
 
-    db.run("DELETE FROM revoked_tokens WHERE expires_at < datetime('now')", [], function (this: { changes: number }, err: Error | null) {
-        if (err) {
-            console.error('[Cron] Error cleaning up revoked tokens:', err);
-        } else if (this.changes > 0) {
-            console.log(`[Cron] Removed ${this.changes} expired revoked tokens`);
-        }
-    });
+    db.run(
+        "DELETE FROM revoked_tokens WHERE expires_at < datetime('now')",
+        [],
+        function (this: { changes: number }, err: Error | null) {
+            if (err) {
+                console.error('[Cron] Error cleaning up revoked tokens:', err);
+            } else if (this.changes > 0) {
+                console.log(`[Cron] Removed ${this.changes} expired revoked tokens`);
+            }
+        },
+    );
 }
 
 function startCleanupJob() {

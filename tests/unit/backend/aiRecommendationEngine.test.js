@@ -16,7 +16,7 @@ const { mockDb, mockAIPipeline } = vi.hoisted(() => {
 });
 
 vi.mock('../../../server/database', () => mockDb);
-vi.mock('../../../server/services/ai/aiPipeline', () => ({ aiPipeline: mockAIPipeline }));
+vi.mock('../../../server/src/services/ai/aiPipeline', () => ({ aiPipeline: mockAIPipeline }));
 
 const AIRecommendationEngine = require('../../../server/ai/recommendationEngine');
 

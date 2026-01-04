@@ -8,8 +8,8 @@
 
 import type { NextFunction, Response } from 'express';
 
+import logger from '../utils/Logger.ts';
 import type { AuthRequest } from './auth.middleware.js';
-import logger from '../utils/Logger.js';
 
 // Dynamic import for ActivityService to avoid circular dependencies
 let ActivityService: {

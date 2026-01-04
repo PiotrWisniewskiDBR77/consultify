@@ -10,8 +10,8 @@ import express from 'express';
 import Stripe from 'stripe';
 import { v4 as uuidv4 } from 'uuid';
 
-import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
-import logger from '../../utils/Logger.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.ts';
+import logger from '../../utils/Logger.ts';
 
 const router = Router();
 

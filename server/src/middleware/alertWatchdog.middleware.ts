@@ -10,7 +10,8 @@
  */
 
 import type { NextFunction, Request, Response } from 'express';
-import logger from '../utils/Logger.js';
+
+import logger from '../utils/Logger.ts';
 
 // Dynamic import for NotificationService to avoid circular dependencies
 let NotificationService: {

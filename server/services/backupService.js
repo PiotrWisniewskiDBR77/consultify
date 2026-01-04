@@ -21,7 +21,7 @@ import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../src/database/Database.ts';
 const db = getDatabase();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -88,7 +88,7 @@ const BackupService = {
         try {
             // 1. Create SQLite backup (using VACUUM INTO for consistent snapshot)
             // Dynamic import for ESM compatibility within function
-            const { getDatabase } = await import('../src/database/index.js');
+            const { getDatabase } = await import('../src/database/Database.ts');
 
             await new Promise((resolve, reject) => {
                 db.run(`VACUUM INTO ?`, [backupPath], (err) => {

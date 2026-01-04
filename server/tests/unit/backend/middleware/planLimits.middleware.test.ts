@@ -14,13 +14,21 @@ import {
     setDependencies,
 } from '../../../../src/middleware/planLimits.middleware.js';
 
+// Use hoisted mock for DbPromise
+const { mockGet } = vi.hoisted(() => {
+    return {
+        mockGet: vi.fn(),
+    };
+});
+
+vi.mock('../../../../src/utils/DbPromise.js', () => ({
+    get: mockGet,
+}));
+
 describe('Plan Limits Middleware', () => {
     let mockReq: Partial<AuthRequest>;
     let mockRes: Partial<Response>;
     let mockNext: NextFunction;
-    let mockDb: {
-        get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
-    };
 
     beforeEach(() => {
         mockNext = vi.fn();
@@ -28,10 +36,14 @@ describe('Plan Limits Middleware', () => {
             status: vi.fn().mockReturnThis(),
             json: vi.fn(),
         };
-        mockDb = {
-            get: vi.fn((_sql, _params, callback) => callback(null, null)),
-        };
-        setDependencies({ db: mockDb });
+
+        // Reset and default mock
+        mockGet.mockReset();
+        mockGet.mockResolvedValue(null);
+
+        // setDependencies is not needed for db since we mock module,
+        // but we can call it to satisfy any other dependencies if updated later.
+        setDependencies({});
 
         mockReq = {
             user: {
@@ -44,21 +56,22 @@ describe('Plan Limits Middleware', () => {
     });
 
     describe('checkPlanLimit', () => {
-        it('should return 403 when no organization found', () => {
+        it('should return 403 when no organization found', async () => {
             mockReq.user = {
                 id: 'user-123',
                 role: 'user',
                 isSuperAdmin: false,
+                // No organizationId
             };
             const middleware = checkPlanLimit('max_projects');
-            middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
+            await middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
 
             expect(mockRes.status).toHaveBeenCalledWith(403);
             expect(mockRes.json).toHaveBeenCalledWith({ error: 'No organization found' });
         });
 
         it('should return 404 when organization not found in DB', async () => {
-            mockDb.get = vi.fn((_sql, _params, callback) => callback(null, null));
+            mockGet.mockResolvedValue(null);
             const middleware = checkPlanLimit('max_projects');
             await middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
 
@@ -67,14 +80,13 @@ describe('Plan Limits Middleware', () => {
         });
 
         it('should allow when limit not reached', async () => {
-            mockDb.get = vi.fn((sql, _params, callback) => {
+            mockGet.mockImplementation((sql: string) => {
                 if (sql.includes('SELECT plan')) {
-                    callback(null, { plan: 'pro', status: 'active' });
+                    return Promise.resolve({ plan: 'pro', status: 'active' });
                 } else if (sql.includes('SELECT COUNT(*)')) {
-                    callback(null, { count: 5 }); // Below limit of 10
-                } else {
-                    callback(null, null);
+                    return Promise.resolve({ count: 5 }); // Below pro limit (10)
                 }
+                return Promise.resolve(null);
             });
             const middleware = checkPlanLimit('max_projects');
             await middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -83,14 +95,13 @@ describe('Plan Limits Middleware', () => {
         });
 
         it('should block when limit reached', async () => {
-            mockDb.get = vi.fn((sql, _params, callback) => {
+            mockGet.mockImplementation((sql: string) => {
                 if (sql.includes('SELECT plan')) {
-                    callback(null, { plan: 'pro', status: 'active' });
+                    return Promise.resolve({ plan: 'pro', status: 'active' });
                 } else if (sql.includes('SELECT COUNT(*)')) {
-                    callback(null, { count: 10 }); // At limit
-                } else {
-                    callback(null, null);
+                    return Promise.resolve({ count: 10 }); // At/Over pro limit (10)
                 }
+                return Promise.resolve(null);
             });
             const middleware = checkPlanLimit('max_projects');
             await middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -104,14 +115,13 @@ describe('Plan Limits Middleware', () => {
         });
 
         it('should treat trial as pro plan', async () => {
-            mockDb.get = vi.fn((sql, _params, callback) => {
+            mockGet.mockImplementation((sql: string) => {
                 if (sql.includes('SELECT plan')) {
-                    callback(null, { plan: 'free', status: 'trial' });
+                    return Promise.resolve({ plan: 'free', status: 'trial' });
                 } else if (sql.includes('SELECT COUNT(*)')) {
-                    callback(null, { count: 5 }); // Within pro limits
-                } else {
-                    callback(null, null);
+                    return Promise.resolve({ count: 5 }); // Within pro limits (trial = pro)
                 }
+                return Promise.resolve(null);
             });
             const middleware = checkPlanLimit('max_projects');
             await middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -120,14 +130,13 @@ describe('Plan Limits Middleware', () => {
         });
 
         it('should check max_members limit', async () => {
-            mockDb.get = vi.fn((sql, _params, callback) => {
+            mockGet.mockImplementation((sql: string) => {
                 if (sql.includes('SELECT plan')) {
-                    callback(null, { plan: 'free', status: 'active' });
+                    return Promise.resolve({ plan: 'free', status: 'active' });
                 } else if (sql.includes('users WHERE organization_id')) {
-                    callback(null, { count: 0 }); // Below limit of 1
-                } else {
-                    callback(null, null);
+                    return Promise.resolve({ count: 0 }); // Below free limit (1)
                 }
+                return Promise.resolve(null);
             });
             const middleware = checkPlanLimit('max_members');
             await middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -136,9 +145,7 @@ describe('Plan Limits Middleware', () => {
         });
 
         it('should handle database errors gracefully', async () => {
-            mockDb.get = vi.fn((_sql, _params, callback) => {
-                callback(new Error('DB error'), null);
-            });
+            mockGet.mockRejectedValue(new Error('DB error'));
             const middleware = checkPlanLimit('max_projects');
             await middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
 
@@ -146,12 +153,11 @@ describe('Plan Limits Middleware', () => {
         });
 
         it('should allow when limit key not defined for plan', async () => {
-            mockDb.get = vi.fn((sql, _params, callback) => {
+            mockGet.mockImplementation((sql: string) => {
                 if (sql.includes('SELECT plan')) {
-                    callback(null, { plan: 'free', status: 'active' });
-                } else {
-                    callback(null, null);
+                    return Promise.resolve({ plan: 'free', status: 'active' });
                 }
+                return Promise.resolve(null);
             });
             // Use a limit key that doesn't exist in PLAN_LIMITS
             const middleware = checkPlanLimit('max_custom' as any);
@@ -179,5 +185,3 @@ describe('Plan Limits Middleware', () => {
         });
     });
 });
-
-

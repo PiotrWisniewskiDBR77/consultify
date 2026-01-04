@@ -2,7 +2,7 @@
  * AI Proactivity Engine Tests
  */
 
-const AIProactivityEngine = require('../../../server/services/aiProactivityEngine');
+const AIProactivityEngine = require('../../../server/src/services/aiProactivityEngine');
 
 describe('AIProactivityEngine', () => {
     describe('MODES', () => {

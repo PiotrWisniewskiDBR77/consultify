@@ -9,7 +9,7 @@ import { Request } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../middleware/auth.middleware.js';
-import { run as dbRun } from '../utils/DbPromise.js';
+import { run as dbRun } from '../utils/DbPromise.ts';
 
 // ==========================================
 // TYPES

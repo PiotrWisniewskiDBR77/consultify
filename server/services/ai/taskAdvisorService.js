@@ -12,7 +12,7 @@ import { ModelRouter } from './modelRouter.js';
 import { draftService } from './draftService.js';
 import { memoryManager } from './memoryManager.js';
 import { aiLogger } from './logger.js';
-import { getDatabase } from '../../src/database/index.js';
+import { getDatabase } from '../../src/database/Database.ts';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import { fileURLToPath } from 'url';

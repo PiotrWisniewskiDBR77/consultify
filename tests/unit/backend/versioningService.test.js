@@ -55,7 +55,7 @@ describe('VersioningService', () => {
         });
 
         // Dynamic import for ESM compatibility
-        const mod = await import('../../../server/services/versioningService');
+        const mod = await import('../../../server/src/services/versioningService');
         VersioningService = mod.default || mod;
     });
 
