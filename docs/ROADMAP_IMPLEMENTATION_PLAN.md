@@ -397,3 +397,6 @@ info:
 *Status: Gotowy do przeglądu i realizacji*
 
 
+
+
+

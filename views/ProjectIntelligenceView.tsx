@@ -49,7 +49,7 @@ import {
 } from '../components/Intelligence/CategoryIcon';
 import { InsightDetectionCard } from '../components/Intelligence/InsightDetectionCard';
 import { InterviewProgress } from '../components/Intelligence/InterviewProgress';
-import { SplitLayout } from '../components/SplitLayout';
+import { SplitLayout } from '../components/layout/SplitLayout';
 import { Api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import { Project } from '../types';

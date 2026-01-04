@@ -62,49 +62,6 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
             viewId: AppView.MY_WORK,
         },
         {
-            id: 'PARTNER_PORTAL',
-            label: t('sidebar.partnerPortal', 'Partner Portal'),
-            icon: React.createElement(Sparkles, { size: 20 }),
-            subItems: [
-                {
-                    id: 'PARTNER_PROVIDER_HOME',
-                    label: t('sidebar.partnerProviderHome', 'Provider Home'),
-                    viewId: AppView.PARTNER_PROVIDER_HOME,
-                    icon: React.createElement(Home, { size: 16 }),
-                },
-                {
-                    id: 'PARTNER_DASHBOARD',
-                    label: t('sidebar.partnerDashboard', 'Dashboard'),
-                    viewId: AppView.PARTNER_DASHBOARD,
-                    icon: React.createElement(LayoutDashboard, { size: 16 }),
-                },
-                {
-                    id: 'PARTNER_CLIENT_ACCESS',
-                    label: t('sidebar.partnerClientAccess', 'Client Access Manager'),
-                    viewId: AppView.PARTNER_CLIENT_ACCESS,
-                    icon: React.createElement(Users, { size: 16 }),
-                },
-                {
-                    id: 'PARTNER_COMMISSION',
-                    label: t('sidebar.partnerCommission', 'Commission'),
-                    viewId: AppView.PARTNER_COMMISSION,
-                    icon: React.createElement(CreditCard, { size: 16 }),
-                },
-                {
-                    id: 'PARTNER_DIRECTORY',
-                    label: t('sidebar.partnerDirectory', 'Directory Profile'),
-                    viewId: AppView.PARTNER_DIRECTORY,
-                    icon: React.createElement(ClipboardList, { size: 16 }),
-                },
-                {
-                    id: 'PARTNER_RESOURCES',
-                    label: t('sidebar.partnerResources', 'Resources'),
-                    viewId: AppView.PARTNER_RESOURCES,
-                    icon: React.createElement(BookOpen, { size: 16 }),
-                },
-            ],
-        },
-        {
             id: 'PROJECT_INTELLIGENCE',
             label: t('sidebar.projectIntelligence', 'Project Intelligence'),
             icon: React.createElement(Brain, { size: 20 }),
@@ -267,6 +224,12 @@ export function getAdminMenuItem(t: TranslationFn): MenuItem {
                 icon: React.createElement(CreditCard, { size: 16 }),
             },
             {
+                id: 'APP_PRICING',
+                label: t('admin.modules.pricing', 'Cennik'),
+                viewId: AppView.APP_PRICING,
+                icon: React.createElement(Sparkles, { size: 16 }),
+            },
+            {
                 id: 'ADMIN_SECURITY',
                 label: t('admin.modules.security', 'Security'),
                 viewId: AppView.ADMIN_SECURITY,
@@ -359,6 +322,15 @@ export function getSettingsMenuItem(t: TranslationFn): MenuItem {
                 icon: React.createElement(Globe, { size: 16 }),
             },
         ],
+    };
+}
+
+export function getPartnerMenuItem(t: TranslationFn): MenuItem {
+    return {
+        id: 'PARTNER_PORTAL',
+        label: t('sidebar.partnerPortal', 'Partner Portal'),
+        icon: React.createElement(Users, { size: 20 }),
+        viewId: AppView.PARTNER_LANDING,
     };
 }
 

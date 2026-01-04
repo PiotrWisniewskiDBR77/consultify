@@ -6,48 +6,34 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
 
-// Hoisted mock - defined inline
-const mockDb = vi.hoisted(() => ({
-    get: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, null));
-    }),
-    all: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, []));
-    }),
-    run: vi.fn(function(sql, params, callback) {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
-    }),
-    exec: vi.fn((sql, callback) => {
-        if (callback) process.nextTick(() => callback(null));
-    }),
-    serialize: vi.fn((cb) => { if (cb) cb(); }),
-    prepare: vi.fn(),
-    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    initPromise: Promise.resolve()
-}));
-
-vi.mock('../../../server/database', () => ({ default: mockDb }));
-
+/**
+ * Roadmap Service Tests
+ * HIGH PRIORITY BUSINESS SERVICE - Must have 85%+ coverage
+ * Tests wave management, initiative assignment, baselining, and governance integration.
+ * CRITICAL FOR ENTERPRISE STRATEGIC PLANNING
+ */
 describe('RoadmapService', () => {
     let RoadmapService;
+    let mocks;
     let uuidCounter = 0;
 
     beforeEach(async () => {
         vi.clearAllMocks();
         uuidCounter = 0;
 
+        mocks = setupStandardTest();
+
         // Dynamic import for ESM compatibility
         const module = await import('../../../server/src/services/roadmapService.js');
         RoadmapService = module.default;
         
+        // Inject dependencies using unified pattern
         RoadmapService.setDependencies({
-            db: mockDb,
-            uuidv4: () => `wave-${++uuidCounter}`
+            db: mocks.db,
+            uuidv4: mocks.uuid || (() => `wave-${++uuidCounter}`)
         });
     });
 
@@ -63,7 +49,7 @@ describe('RoadmapService', () => {
                 { id: 'wave-2', name: 'Wave 2', sort_order: 2 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 expect(query).toContain('SELECT * FROM roadmap_waves');
                 expect(query).toContain('project_id = ?');
                 expect(query).toContain('ORDER BY sort_order');
@@ -80,7 +66,7 @@ describe('RoadmapService', () => {
         it('should return empty array when no waves exist', async () => {
             const projectId = testProjects.project1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, []);
             });
 
@@ -93,7 +79,7 @@ describe('RoadmapService', () => {
             const projectId = testProjects.project1.id;
             const dbError = new Error('Database error');
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(dbError, null);
             });
 
@@ -114,7 +100,7 @@ describe('RoadmapService', () => {
                 sortOrder: 1
             };
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 expect(query).toContain('INSERT INTO roadmap_waves');
                 expect(params[0]).toBe('wave-1'); // UUID
                 expect(params[1]).toBe(projectId);
@@ -139,7 +125,7 @@ describe('RoadmapService', () => {
                 endDate: '2024-03-31'
             };
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 expect(params[6]).toBe(0); // sortOrder default
                 callback.call({ changes: 1 }, null);
             });
@@ -152,7 +138,7 @@ describe('RoadmapService', () => {
             const waveData = { name: 'Wave 1' };
             const dbError = new Error('Database error');
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 callback.call({ changes: 0 }, dbError);
             });
 
@@ -167,7 +153,7 @@ describe('RoadmapService', () => {
             const initiativeId = 'init-123';
             const waveId = 'wave-1';
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 expect(query).toContain('UPDATE initiatives');
                 expect(query).toContain('wave_id = ?');
                 expect(query).toContain('WHERE id = ?');
@@ -188,7 +174,7 @@ describe('RoadmapService', () => {
             const waveId = 'wave-1';
             const dbError = new Error('Database error');
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 callback.call({ changes: 0 }, dbError);
             });
 
@@ -203,7 +189,7 @@ describe('RoadmapService', () => {
             const projectId = testProjects.project1.id;
 
             let callCount = 0;
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 callCount++;
                 if (callCount === 1) {
                     // First call: mark waves as baselined
@@ -224,14 +210,14 @@ describe('RoadmapService', () => {
 
             expect(result.projectId).toBe(projectId);
             expect(result.success).toBe(true);
-            expect(mockDb.run).toHaveBeenCalledTimes(2);
+            expect(mocks.db.run).toHaveBeenCalledTimes(2);
         });
 
         it('should handle database errors on wave update', async () => {
             const projectId = testProjects.project1.id;
             const dbError = new Error('Database error');
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 if (query.includes('roadmap_waves')) {
                     callback.call({ changes: 0 }, dbError);
                 }
@@ -282,7 +268,7 @@ describe('RoadmapService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 expect(query).toContain('LEFT JOIN initiatives');
                 expect(params[0]).toBe(projectId);
                 callback(null, mockRows);
@@ -300,7 +286,7 @@ describe('RoadmapService', () => {
         it('should handle empty roadmap', async () => {
             const projectId = testProjects.project1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, []);
             });
 
@@ -320,7 +306,7 @@ describe('RoadmapService', () => {
             const userId = testUsers.admin.id;
             const projectId = testProjects.project1.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, {
                     wave_id: 'wave-1',
                     is_baselined: 0,
@@ -328,7 +314,7 @@ describe('RoadmapService', () => {
                 });
             });
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 expect(query).toContain('UPDATE initiatives');
                 expect(query).toContain('start_date = ?');
                 expect(query).toContain('end_date = ?');
@@ -354,7 +340,7 @@ describe('RoadmapService', () => {
             const userId = testUsers.admin.id;
             const projectId = testProjects.project1.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, {
                     wave_id: 'wave-1',
                     is_baselined: 1,
@@ -364,7 +350,7 @@ describe('RoadmapService', () => {
                 });
             });
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 if (query.includes('INSERT INTO decisions')) {
                     expect(query).toContain('decision_type');
                     expect(query).toContain('SCHEDULE_CHANGE');
@@ -392,7 +378,7 @@ describe('RoadmapService', () => {
             const userId = testUsers.admin.id;
             const projectId = testProjects.project1.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, {
                     wave_id: 'wave-1',
                     is_baselined: 1,
@@ -402,7 +388,7 @@ describe('RoadmapService', () => {
                 });
             });
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 callback.call({ changes: 1 }, null);
             });
 
@@ -425,7 +411,7 @@ describe('RoadmapService', () => {
             const userId = testUsers.admin.id;
             const projectId = testProjects.project1.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, {
                     wave_id: 'wave-1',
                     is_baselined: 0,
@@ -433,7 +419,7 @@ describe('RoadmapService', () => {
                 });
             });
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 expect(query).toContain('wave_id = ?');
                 expect(params[0]).toBe('wave-2');
                 callback.call({ changes: 1 }, null);
@@ -455,7 +441,7 @@ describe('RoadmapService', () => {
             const userId = testUsers.admin.id;
             const projectId = testProjects.project1.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, {
                     wave_id: 'wave-1',
                     is_baselined: 0,
@@ -479,7 +465,7 @@ describe('RoadmapService', () => {
         it('should filter waves by project_id', async () => {
             const projectId = testProjects.project1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 expect(params[0]).toBe(projectId);
                 callback(null, []);
             });
@@ -490,7 +476,7 @@ describe('RoadmapService', () => {
         it('should ensure initiatives belong to correct project in summary', async () => {
             const projectId = testProjects.project1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 expect(query).toContain('WHERE w.project_id = ?');
                 expect(params[0]).toBe(projectId);
                 callback(null, []);

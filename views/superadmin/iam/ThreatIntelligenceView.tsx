@@ -804,3 +804,6 @@ const ThreatIntelligenceView: React.FC = () => {
 };
 
 export default ThreatIntelligenceView;
+
+
+

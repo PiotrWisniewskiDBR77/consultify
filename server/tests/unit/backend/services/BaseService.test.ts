@@ -61,3 +61,6 @@ describe('BaseService', () => {
         expect((service as unknown as { db: IDatabase }).db).toBeDefined();
     });
 });
+
+
+

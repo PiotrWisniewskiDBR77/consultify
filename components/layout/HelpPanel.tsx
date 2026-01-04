@@ -10,8 +10,8 @@ import { ArrowRight, BookOpen, CheckCircle, ChevronRight, Lightbulb, X, XCircle 
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { usePolicySnapshot } from '../contexts/AccessPolicyContext';
-import { Playbook, PlaybookStep, useHelp } from '../contexts/HelpContext';
+import { usePolicySnapshot } from '../../contexts/AccessPolicyContext';
+import { Playbook, PlaybookStep, useHelp } from '../../contexts/HelpContext';
 
 interface HelpPanelProps {
     isOpen: boolean;

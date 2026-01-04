@@ -9,7 +9,7 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { useIsDemo, useIsTrial, useIsTrialExpired, usePolicySnapshot } from '../contexts/AccessPolicyContext';
+import { useIsDemo, useIsTrial, useIsTrialExpired, usePolicySnapshot } from '../../contexts/AccessPolicyContext';
 import DemoBanner from './DemoBanner';
 import TrialBanner from './TrialBanner';
 import TrialExpirationModal from './TrialExpirationModal';

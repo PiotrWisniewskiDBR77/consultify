@@ -21,8 +21,8 @@ import {
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useAppStore } from '../store/useAppStore';
-import { AppView } from '../types';
+import { useAppStore } from '../../store/useAppStore';
+import { AppView } from '../../types';
 
 // 6-module structure for Settings
 export type SettingsSection =

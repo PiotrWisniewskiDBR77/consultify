@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
+// Removed createRequire - using ESM imports
 import * as fs from 'fs';
 import * as path from 'path';
-
-const require = createRequire(import.meta.url);
 
 // Mock usageService to control quota responses
 const mockUsageService = {

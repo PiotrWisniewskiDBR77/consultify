@@ -4,24 +4,28 @@
  */
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import RegulatoryModeGuard from '../../../server/src/services/regulatoryModeGuard.js';
 
+/**
+ * Regulatory Mode Guard Unit Tests
+ * Tests for strict compliance mode enforcement
+ * CRITICAL ENTERPRISE SECURITY - Zero-trust validation
+ */
 describe('Regulatory Mode Guard', () => {
-    const mockDb = {
-        get: vi.fn(),
-        run: vi.fn(),
-        all: vi.fn()
-    };
-
-    const mockAIAuditLogger = {
-        logInteraction: vi.fn().mockResolvedValue({ id: 'audit-1' })
-    };
+    let mocks;
 
     beforeEach(() => {
-        vi.clearAllMocks();
+        mocks = setupStandardTest();
+
+        // Setup specific audit logger mock
+        mocks.aiAuditLogger = {
+            logInteraction: vi.fn().mockResolvedValue({ id: 'audit-1' })
+        };
+
         RegulatoryModeGuard.setDependencies({
-            db: mockDb,
-            AIAuditLogger: mockAIAuditLogger
+            db: mocks.db,
+            AIAuditLogger: mocks.aiAuditLogger
         });
     });
 

@@ -119,3 +119,6 @@ export const ADMIN_SETUP_TOUR: TourConfig = {
 };
 
 export default ADMIN_SETUP_TOUR;
+
+
+

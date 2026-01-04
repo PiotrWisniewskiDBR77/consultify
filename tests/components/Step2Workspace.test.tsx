@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { Step2Workspace } from '../../components/Step2Workspace';
+import { Step2Workspace } from '../../components/workspaces/Step2Workspace';
 
 const mockSession = {
     id: 'session-1',
@@ -17,6 +17,9 @@ describe('Step2Workspace Component', () => {
         expect(screen.getByText(/Step 2/i) || screen.getByText(/Initiatives/i)).toBeInTheDocument();
     });
 });
+
+
+
 
 
 

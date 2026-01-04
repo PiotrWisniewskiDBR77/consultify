@@ -1,31 +1,27 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
-const mockDb = vi.hoisted(() => ({
-    run: vi.fn(),
-    get: vi.fn(),
-    all: vi.fn(),
-    exec: vi.fn(),
-    query: vi.fn(),
-    serialize: vi.fn((cb) => cb()),
-    on: vi.fn(),
-    initPromise: Promise.resolve()
-}));
-
-vi.mock('../../../server/database', () => ({ default: mockDb }));
-
+/**
+ * Versioning Service Tests
+ * Tests for data versioning and rollback capabilities
+ * CRITICAL FOR ENTERPRISE DATA MANAGEMENT
+ */
 describe('VersioningService', () => {
     let VersioningService;
+    let mocks;
 
     beforeEach(async () => {
         vi.clearAllMocks();
 
-        // Default mock implementations - MUST USE CALLBACKS
-        mockDb.run.mockImplementation(function(sql, params, callback) {
+        mocks = setupStandardTest();
+
+        // Custom mock implementations for versioning logic
+        mocks.db.run.mockImplementation(function(sql, params, callback) {
             const cb = typeof params === 'function' ? params : callback;
             if (typeof cb === 'function') cb.call({ lastID: 1, changes: 1 }, null);
         });
 
-        mockDb.get.mockImplementation((sql, params, callback) => {
+        mocks.db.get.mockImplementation((sql, params, callback) => {
             const cb = typeof params === 'function' ? params : callback;
             if (typeof cb === 'function') {
                 if (sql.includes('MAX(version_number)')) {
@@ -49,7 +45,7 @@ describe('VersioningService', () => {
             }
         });
 
-        mockDb.all.mockImplementation((sql, params, callback) => {
+        mocks.db.all.mockImplementation((sql, params, callback) => {
             const cb = typeof params === 'function' ? params : callback;
             if (typeof cb === 'function') cb(null, []);
         });

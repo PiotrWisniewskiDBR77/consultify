@@ -9,6 +9,7 @@ import { vi, beforeEach, afterEach } from 'vitest';
 import { createUnifiedTestSetup, resetDependencies } from './dependencyInjector.js';
 import { setupAutoCleanup, registerCleanup } from './testCleanup.js';
 import { resetAllMocks, flushPromises } from './flakyTestFixer.js';
+import { createMockDb, createMockLogger, createMockDependencies } from './mockDb.js';
 
 export interface MockSetupOptions {
     /**
@@ -155,12 +156,28 @@ export function createUnifiedMockSetup(options: MockSetupOptions = {}) {
  *   });
  * });
  * ```
+ * 
+ * This function now uses createMockDb() and createMockLogger() from mockDb.ts
+ * which use vi.hoisted() for proper hoisting in Vitest.
  */
 export function setupStandardTest(options: MockSetupOptions = {}) {
+    // Use new mockDb helper with vi.hoisted()
+    const { mockDb, mockLogger } = createMockDependencies({
+        enableLogging: options.customMocks?.enableLogging || false
+    });
+    
+    // Merge with custom mocks
+    const customMocks = {
+        db: mockDb,
+        logger: mockLogger,
+        ...options.customMocks
+    };
+    
     return createUnifiedMockSetup({
         autoCleanup: true,
         resetMocks: true,
-        ...options
+        ...options,
+        customMocks
     });
 }
 
@@ -179,6 +196,12 @@ export function setupMinimalTest(options: MockSetupOptions = {}) {
 export default {
     createUnifiedMockSetup,
     setupStandardTest,
-    setupMinimalTest
+    setupMinimalTest,
+    createMockDb,
+    createMockLogger,
+    createMockDependencies
 };
+
+
+
 

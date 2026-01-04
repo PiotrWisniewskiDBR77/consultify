@@ -2,9 +2,9 @@ import { Loader2 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { LoadingScreen } from './components/LoadingScreen';
+import { LoadingScreen } from './components/ui/LoadingScreen';
 import { AnimationWrapper } from './components/shared/AnimationWrapper';
-import { SplitLayout } from './components/SplitLayout';
+import { SplitLayout } from './components/layout/SplitLayout';
 import { AppView } from './types';
 
 // View Imports - These will match the ones in App.tsx
@@ -59,8 +59,32 @@ const DRDAuditReportView = React.lazy(() =>
 );
 const KpiOkrView = React.lazy(() => import('./views/KpiOkrView').then((m) => ({ default: m.KpiOkrView })));
 const PortfolioView = React.lazy(() => import('./views/PortfolioView'));
-const PartnerPortalView = React.lazy(() =>
-    import('./views/PartnerPortalView').then((m) => ({ default: m.PartnerPortalView })),
+const PartnerLandingView = React.lazy(() =>
+    import('./views/PartnerPortalView').then((m) => ({ default: m.default })),
+);
+const ProviderHomeView = React.lazy(() =>
+    import('./views/partner/ProviderHomeView').then((m) => ({ default: m.default })),
+);
+const PartnerDashboardView = React.lazy(() =>
+    import('./views/partner/PartnerDashboardView').then((m) => ({ default: m.default })),
+);
+const PartnerPricingView = React.lazy(() =>
+    import('./views/partner/PartnerPricingView').then((m) => ({ default: m.default })),
+);
+const AppPricingView = React.lazy(() =>
+    import('./views/AppPricingView').then((m) => ({ default: m.default })),
+);
+const ClientAccessView = React.lazy(() =>
+    import('./views/partner/ClientAccessView').then((m) => ({ default: m.default })),
+);
+const CommissionView = React.lazy(() =>
+    import('./views/partner/CommissionView').then((m) => ({ default: m.default })),
+);
+const DirectoryView = React.lazy(() =>
+    import('./views/partner/DirectoryView').then((m) => ({ default: m.default })),
+);
+const ResourcesView = React.lazy(() =>
+    import('./views/partner/ResourcesView').then((m) => ({ default: m.default })),
 );
 const BenefitsRealizationView = React.lazy(() =>
     import('./views/BenefitsRealizationView').then((m) => ({ default: m.BenefitsRealizationView })),
@@ -192,20 +216,91 @@ export const ViewRenderer: React.FC<ViewRendererProps> = ({
         );
     }
 
-    const partnerViews = [
-        AppView.PARTNER_PROVIDER_HOME,
-        AppView.PARTNER_DASHBOARD,
-        AppView.PARTNER_CLIENT_ACCESS,
-        AppView.PARTNER_COMMISSION,
-        AppView.PARTNER_DIRECTORY,
-        AppView.PARTNER_RESOURCES,
-    ];
-
-    if (partnerViews.includes(currentView)) {
+    if (currentView === AppView.PARTNER_LANDING) {
         return (
             <React.Suspense fallback={<LoadingScreen />}>
                 <AnimationWrapper variant="slideUp">
-                    <PartnerPortalView currentSection={currentView} onNavigate={setCurrentView} />
+                    <PartnerLandingView currentSection={currentView} onNavigate={setCurrentView} />
+                </AnimationWrapper>
+            </React.Suspense>
+        );
+    }
+
+    if (currentView === AppView.PARTNER_PRICING) {
+        return (
+            <React.Suspense fallback={<LoadingScreen />}>
+                <AnimationWrapper variant="slideUp">
+                    <PartnerPricingView />
+                </AnimationWrapper>
+            </React.Suspense>
+        );
+    }
+
+    if (currentView === AppView.APP_PRICING) {
+        return (
+            <React.Suspense fallback={<LoadingScreen />}>
+                <AnimationWrapper variant="slideUp">
+                    <AppPricingView />
+                </AnimationWrapper>
+            </React.Suspense>
+        );
+    }
+
+    if (currentView === AppView.PARTNER_PROVIDER_HOME) {
+        return (
+            <React.Suspense fallback={<LoadingScreen />}>
+                <AnimationWrapper variant="slideUp">
+                    <ProviderHomeView />
+                </AnimationWrapper>
+            </React.Suspense>
+        );
+    }
+
+    if (currentView === AppView.PARTNER_DASHBOARD) {
+        return (
+            <React.Suspense fallback={<LoadingScreen />}>
+                <AnimationWrapper variant="slideUp">
+                    <PartnerDashboardView />
+                </AnimationWrapper>
+            </React.Suspense>
+        );
+    }
+
+    if (currentView === AppView.PARTNER_CLIENT_ACCESS) {
+        return (
+            <React.Suspense fallback={<LoadingScreen />}>
+                <AnimationWrapper variant="slideUp">
+                    <ClientAccessView />
+                </AnimationWrapper>
+            </React.Suspense>
+        );
+    }
+
+    if (currentView === AppView.PARTNER_COMMISSION) {
+        return (
+            <React.Suspense fallback={<LoadingScreen />}>
+                <AnimationWrapper variant="slideUp">
+                    <CommissionView />
+                </AnimationWrapper>
+            </React.Suspense>
+        );
+    }
+
+    if (currentView === AppView.PARTNER_DIRECTORY) {
+        return (
+            <React.Suspense fallback={<LoadingScreen />}>
+                <AnimationWrapper variant="slideUp">
+                    <DirectoryView />
+                </AnimationWrapper>
+            </React.Suspense>
+        );
+    }
+
+    if (currentView === AppView.PARTNER_RESOURCES) {
+        return (
+            <React.Suspense fallback={<LoadingScreen />}>
+                <AnimationWrapper variant="slideUp">
+                    <ResourcesView />
                 </AnimationWrapper>
             </React.Suspense>
         );

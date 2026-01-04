@@ -407,3 +407,6 @@ const InvestmentDecisionCard: React.FC<{
 };
 
 export default FinancialMetricsPanel;
+
+
+

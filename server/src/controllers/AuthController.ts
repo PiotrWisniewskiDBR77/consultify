@@ -268,6 +268,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             organizationId: user.organization_id,
             companyName: org.name,
             mfaEnabled: mfaStatus.enabled,
+            isAuthenticated: true,
+            accessLevel: org.status === 'active' && (org.plan === 'enterprise' || org.plan === 'pro') ? 'full' : 'free',
         };
 
         // Log activity

@@ -5,10 +5,15 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { createRequire } from 'module';
+// Removed createRequire - using ESM imports
 
-const require = createRequire(import.meta.url);
-const FinancialCalculatorService = require('../../../server/src/services/financialCalculatorService');
+let FinancialCalculatorService;
+
+// Dynamic import in beforeEach to ensure proper module loading
+beforeEach(async () => {
+    const module = await import('../../../server/src/services/financialCalculatorService.js');
+    FinancialCalculatorService = module.default || module;
+});
 
 describe('FinancialCalculatorService', () => {
     describe('calculateNPV', () => {

@@ -1,16 +1,21 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import AssessmentService from '../../../server/src/services/assessmentService.js';
 
+/**
+ * Assessment Service Tests
+ * Tests for assessment management and gap analysis
+ * CRITICAL FOR ENTERPRISE ASSESSMENT CAPABILITIES
+ */
 describe('Assessment Service', () => {
-    let mockDb;
+    let mocks;
 
     beforeEach(() => {
-        mockDb = createMockDb();
+        mocks = setupStandardTest();
 
         AssessmentService.setDependencies({
-            db: mockDb,
-            uuidv4: () => 'mock-uuid-assessment'
+            db: mocks.db,
+            uuidv4: mocks.uuid || (() => 'mock-uuid-assessment')
         });
     });
 
@@ -38,7 +43,7 @@ describe('Assessment Service', () => {
 
     describe('getAssessment', () => {
         it('should retrieve and parse assessment', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
+            mocks.db.get.mockImplementation((sql, params, cb) => {
                 cb(null, {
                     id: 'assessment-1',
                     project_id: 'p-1',
@@ -54,7 +59,7 @@ describe('Assessment Service', () => {
         });
 
         it('should return null for non-existent assessment', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
+            mocks.db.get.mockImplementation((sql, params, cb) => {
                 cb(null, null);
             });
 
@@ -65,7 +70,7 @@ describe('Assessment Service', () => {
 
     describe('saveAssessment', () => {
         it('should calculate totals and save', async () => {
-            mockDb.run.mockImplementation(function (sql, params, cb) {
+            mocks.db.run.mockImplementation(function (sql, params, cb) {
                 cb.call({ changes: 1 }, null);
             });
 
@@ -78,11 +83,11 @@ describe('Assessment Service', () => {
             expect(result.overallGap).toBe(2);
             expect(result.overallAsIs).toBe(3);
             expect(result.overallToBe).toBe(5);
-            expect(mockDb.run).toHaveBeenCalled();
+            expect(mocks.db.run).toHaveBeenCalled();
         });
 
         it('should calculate average for multiple axes', async () => {
-            mockDb.run.mockImplementation(function (sql, params, cb) {
+            mocks.db.run.mockImplementation(function (sql, params, cb) {
                 cb.call({ changes: 1 }, null);
             });
 
@@ -102,7 +107,7 @@ describe('Assessment Service', () => {
         });
 
         it('should mark as complete when all 7 axes done', async () => {
-            mockDb.run.mockImplementation(function (sql, params, cb) {
+            mocks.db.run.mockImplementation(function (sql, params, cb) {
                 cb.call({ changes: 1 }, null);
             });
 
@@ -127,7 +132,7 @@ describe('Assessment Service', () => {
 
     describe('getAssessmentStatus', () => {
         it('should return IN_PROGRESS by default', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
+            mocks.db.get.mockImplementation((sql, params, cb) => {
                 cb(null, { assessment_status: null });
             });
 
@@ -136,7 +141,7 @@ describe('Assessment Service', () => {
         });
 
         it('should return FINALIZED when assessment is finalized', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
+            mocks.db.get.mockImplementation((sql, params, cb) => {
                 cb(null, { assessment_status: 'FINALIZED' });
             });
 
@@ -147,7 +152,7 @@ describe('Assessment Service', () => {
 
     describe('canEditAssessment', () => {
         it('should return true for IN_PROGRESS assessment', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
+            mocks.db.get.mockImplementation((sql, params, cb) => {
                 cb(null, { assessment_status: 'IN_PROGRESS' });
             });
 
@@ -156,7 +161,7 @@ describe('Assessment Service', () => {
         });
 
         it('should return false for FINALIZED assessment', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
+            mocks.db.get.mockImplementation((sql, params, cb) => {
                 cb(null, { assessment_status: 'FINALIZED' });
             });
 
@@ -167,7 +172,7 @@ describe('Assessment Service', () => {
 
     describe('finalizeAssessment', () => {
         it('should reject if not all axes completed', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
+            mocks.db.get.mockImplementation((sql, params, cb) => {
                 cb(null, {
                     axis_scores: JSON.stringify([
                         { axis: 'A', asIs: 3, toBe: 5 },
@@ -182,7 +187,7 @@ describe('Assessment Service', () => {
         });
 
         it('should reject if missing actual or target scores', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
+            mocks.db.get.mockImplementation((sql, params, cb) => {
                 cb(null, {
                     axis_scores: JSON.stringify([
                         { axis: 'A', asIs: 3, toBe: 0 },  // Missing toBe
@@ -212,7 +217,7 @@ describe('Assessment Service', () => {
                 { axis: 'aiMaturity', asIs: 3, toBe: 5 }
             ];
 
-            mockDb.get.mockImplementation((sql, params, cb) => {
+            mocks.db.get.mockImplementation((sql, params, cb) => {
                 if (sql.includes('axis_scores')) {
                     cb(null, {
                         axis_scores: JSON.stringify(completeAxes),
@@ -229,7 +234,7 @@ describe('Assessment Service', () => {
                 }
             });
 
-            mockDb.run.mockImplementation(function (sql, params, cb) {
+            mocks.db.run.mockImplementation(function (sql, params, cb) {
                 cb.call({ changes: 1 }, null);
             });
 
@@ -241,7 +246,7 @@ describe('Assessment Service', () => {
 
     describe('Error Handling', () => {
         it('should handle database error on getAssessment', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
+            mocks.db.get.mockImplementation((sql, params, cb) => {
                 cb(new Error('Database connection failed'), null);
             });
 
@@ -250,7 +255,7 @@ describe('Assessment Service', () => {
         });
 
         it('should handle invalid JSON in axis_scores', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
+            mocks.db.get.mockImplementation((sql, params, cb) => {
                 cb(null, {
                     id: 'assessment-1',
                     project_id: 'p-1',

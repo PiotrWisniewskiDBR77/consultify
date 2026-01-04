@@ -714,3 +714,6 @@ function getDefaultHtmlTemplate(): string {
 }
 
 export default EmailTemplateEditor;
+
+
+

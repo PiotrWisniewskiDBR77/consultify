@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { FullStep4Workspace } from '../../components/FullStep4Workspace';
+import { FullStep4Workspace } from '../../components/workspaces/FullStep4Workspace';
 
 vi.mock('react-i18next', () => ({
     useTranslation: () => ({
@@ -33,6 +33,9 @@ describe('FullStep4Workspace Component', () => {
         expect(screen.getByText(/Step 4/i) || screen.getByText(/Economics/i)).toBeInTheDocument();
     });
 });
+
+
+
 
 
 

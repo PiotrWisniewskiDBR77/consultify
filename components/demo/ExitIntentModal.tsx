@@ -137,3 +137,6 @@ export const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ isOpen, onClos
 };
 
 export default ExitIntentModal;
+
+
+

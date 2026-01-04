@@ -4,6 +4,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
+
+/**
+ * Initiative Generator Service Tests
+ * Complete test coverage for AI-powered initiative generation from assessments
+ * CRITICAL FOR ENTERPRISE AI AUTOMATION
+ */
 
 // Mock RapidLeanService
 vi.mock('../../../server/src/services/rapidLeanService', () => ({

@@ -1,50 +1,37 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
-// Hoisted mock - defined inline
-const mockDb = vi.hoisted(() => ({
-    get: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, null));
-    }),
-    all: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, []));
-    }),
-    run: vi.fn(function(sql, params, callback) {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
-    }),
-    exec: vi.fn((sql, callback) => {
-        if (callback) process.nextTick(() => callback(null));
-    }),
-    serialize: vi.fn((cb) => { if (cb) cb(); }),
-    prepare: vi.fn(),
-    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    initPromise: Promise.resolve()
-}));
+/**
+ * Scenario Service Tests
+ * Tests for what-if analysis and scenario comparison
+ * CRITICAL FOR ENTERPRISE DECISION SUPPORT
+ */
 
+// Hoisted mock for dependency service
 const mockDependencyService = vi.hoisted(() => ({
     buildDependencyGraph: vi.fn()
 }));
 
-vi.mock('../../../server/database', () => ({ default: mockDb }));
 vi.mock('../../../server/src/services/dependencyService', () => ({ default: mockDependencyService }));
 
 describe('Scenario Service', () => {
     let ScenarioService;
+    let mocks;
 
     beforeEach(async () => {
         vi.clearAllMocks();
+
+        mocks = setupStandardTest();
 
         // Dynamic import for ESM compatibility
         const module = await import('../../../server/src/services/scenarioService.js');
         ScenarioService = module.default;
 
-        // Inject mock dependencies
+        // Inject mock dependencies using unified pattern
         if (ScenarioService.setDependencies) {
             ScenarioService.setDependencies({
-                db: mockDb,
-                uuidv4: () => 'mock-uuid-scenario',
+                db: mocks.db,
+                uuidv4: mocks.uuid || (() => 'mock-uuid-scenario'),
                 DependencyService: mockDependencyService
             });
         }
@@ -77,7 +64,7 @@ describe('Scenario Service', () => {
 
     describe('analyzeImpact', () => {
         it('should detect dependency breaks', async () => {
-            mockDb.all.mockImplementation((sql, params, cb) => cb(null, [
+            mocks.db.all.mockImplementation((sql, params, cb) => cb(null, [
                 { id: 'i1', name: 'Init 1', planned_end_date: '2025-01-10', planned_start_date: '2025-01-01', owner_business_id: 'b1' },
                 { id: 'i2', name: 'Init 2', planned_start_date: '2025-01-12', planned_end_date: '2025-01-20', owner_business_id: 'b2' }
             ]));
@@ -101,9 +88,9 @@ describe('Scenario Service', () => {
 
     describe('createScenario', () => {
         it('should persist scenario', async () => {
-            mockDb.all.mockImplementation((sql, params, cb) => cb(null, []));
+            mocks.db.all.mockImplementation((sql, params, cb) => cb(null, []));
             mockDependencyService.buildDependencyGraph.mockResolvedValue({ edges: [] });
-            mockDb.run.mockImplementation(function (sql, params, cb) { if (cb) cb.call({ changes: 1 }, null); });
+            mocks.db.run.mockImplementation(function (sql, params, cb) { if (cb) cb.call({ changes: 1 }, null); });
 
             const result = await ScenarioService.createScenario('p-1', 'Test', [], 'u-1', true);
             expect(result.persisted).toBe(true);

@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '../services/api';
 import { FullInitiative, Task, TaskStatus } from '../types';
-import { TaskCard } from './TaskCard';
+import { TaskCard } from './ui/TaskCard';
 
 interface InitiativeTaskBoardProps {
     initiative: FullInitiative;

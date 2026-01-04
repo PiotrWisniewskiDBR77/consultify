@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { PilotDecisionWorkspace } from '../../components/PilotDecisionWorkspace';
+import { PilotDecisionWorkspace } from '../../components/workspaces/PilotDecisionWorkspace';
 
 const mockSession = {
     id: 'session-1',
@@ -61,6 +61,9 @@ describe('PilotDecisionWorkspace Component', () => {
         expect(onNextStep).toHaveBeenCalled();
     });
 });
+
+
+
 
 
 

@@ -1,7 +1,7 @@
 import { AlertTriangle, CheckCircle2, ChevronRight, Lock, ShieldCheck } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { ChatPanel } from '../components/ChatPanel';
+import { ChatPanel } from '../components/layout/ChatPanel';
 import { useAIStream } from '../hooks/useAIStream';
 import { AIMessageHistory } from '../services/ai/gemini';
 import { Api } from '../services/api'; // Using Api service for consistency
@@ -181,14 +181,14 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({
                     messages={
                         isStreaming
                             ? [
-                                  ...messages,
-                                  {
-                                      id: 'streaming-ai',
-                                      role: 'ai',
-                                      content: streamedContent,
-                                      timestamp: new Date(),
-                                  } as ChatMessage,
-                              ]
+                                ...messages,
+                                {
+                                    id: 'streaming-ai',
+                                    role: 'ai',
+                                    content: streamedContent,
+                                    timestamp: new Date(),
+                                } as ChatMessage,
+                            ]
                             : messages
                     }
                     onSendMessage={handleSendMessage}
@@ -230,11 +230,10 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({
                 <button
                     onClick={handleProceed}
                     disabled={!sufficiency.isReady}
-                    className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
-                        sufficiency.isReady
+                    className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${sufficiency.isReady
                             ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-green-500/30 cursor-pointer transform hover:-translate-y-0.5'
                             : 'bg-slate-200 dark:bg-navy-800 text-slate-400 cursor-not-allowed'
-                    }`}
+                        }`}
                 >
                     {sufficiency.isReady ? (
                         <>

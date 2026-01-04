@@ -160,3 +160,6 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ currentDocumentId,
 };
 
 export default StudioSidebar;
+
+
+

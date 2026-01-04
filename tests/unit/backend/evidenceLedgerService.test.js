@@ -6,20 +6,26 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
 import EvidenceLedgerService from '../../../server/src/services/evidenceLedgerService.js';
 
+/**
+ * Evidence Ledger Service Tests
+ * HIGH PRIORITY BUSINESS SERVICE - Must have 85%+ coverage
+ * Tests evidence management, PII redaction, explainability links, and reasoning ledger.
+ * CRITICAL FOR AUDIT COMPLIANCE
+ */
 describe('EvidenceLedgerService', () => {
-    let mockDb;
+    let mocks;
     let uuidCounter = 0;
 
     beforeEach(async () => {
         uuidCounter = 0;
-        mockDb = createMockDb();
+        mocks = setupStandardTest();
 
         EvidenceLedgerService.setDependencies({
-            db: mockDb,
+            db: mocks.db,
             uuidv4: () => `evidence-${++uuidCounter}`
         });
     });

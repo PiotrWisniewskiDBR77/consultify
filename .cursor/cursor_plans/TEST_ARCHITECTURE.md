@@ -294,10 +294,10 @@ export const mockLLMApi = {
 **Goal**: Test critical React components.
 
 #### Component Tests:
-- [ ] `tests/components/Sidebar.test.tsx`
-- [ ] `tests/components/ChatPanel.test.tsx`
-- [ ] `tests/components/Select.test.tsx`
-- [ ] `tests/components/SplitLayout.test.tsx`
+- [ ] `tests/components/layout/Sidebar.test.tsx`
+- [ ] `tests/components/layout/ChatPanel.test.tsx`
+- [ ] `tests/components/ui/Select.test.tsx`
+- [ ] `tests/components/layout/SplitLayout.test.tsx`
 - [ ] `tests/components/ModelSelector.test.tsx`
 - [ ] `tests/components/AIAnalyticsDashboard.test.tsx`
 - [ ] `tests/components/InitiativeCard.test.tsx` (extend)

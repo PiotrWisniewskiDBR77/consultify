@@ -76,3 +76,6 @@ jobs:
             tests/contracts/logs/**
           retention-days: 30
 
+
+
+

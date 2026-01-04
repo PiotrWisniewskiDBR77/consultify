@@ -398,3 +398,6 @@ Po zakończeniu wszystkich batchów:
 
 
 
+
+
+

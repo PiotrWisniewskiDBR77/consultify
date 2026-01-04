@@ -237,3 +237,6 @@ export const AXIS_ICONS: Record<string, string> = {
     transformation_culture: 'Users',
     cybersecurity: 'Shield',
 };
+
+
+

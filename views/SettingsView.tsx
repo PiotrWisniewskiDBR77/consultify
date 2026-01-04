@@ -63,7 +63,7 @@ import { WebhooksSettings } from '../components/settings/WebhooksSettings';
 import { WorkingHoursSettings } from '../components/settings/WorkingHoursSettings';
 import { WorkPreferencesSettings } from '../components/settings/WorkPreferencesSettings';
 // UI components
-import { Button } from '../components/ui/button';
+import { Button } from '../components/ui/Button';
 import { ScrollArea } from '../components/ui/scroll-area';
 // Store and types
 import { useAppStore } from '../store/useAppStore';

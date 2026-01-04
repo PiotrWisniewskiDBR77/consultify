@@ -2,8 +2,8 @@ import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AIFeedbackButton } from '../components/AIFeedbackButton';
-import { FullStep5Workspace } from '../components/FullStep5Workspace';
-import { SplitLayout } from '../components/SplitLayout';
+import { FullStep5Workspace } from '../components/workspaces/FullStep5Workspace';
+import { SplitLayout } from '../components/layout/SplitLayout';
 import { useScreenContext } from '../hooks/useScreenContext';
 import { sendMessageToAI } from '../services/ai/gemini';
 import { useAppStore } from '../store/useAppStore';

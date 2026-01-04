@@ -419,3 +419,6 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({ curren
 };
 
 export default PerformanceSettings;
+
+
+

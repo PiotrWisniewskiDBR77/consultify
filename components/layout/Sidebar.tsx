@@ -51,12 +51,12 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
-import { useDeviceType } from '../hooks/useDeviceType';
-import { useAppStore } from '../store/useAppStore';
-import { useConversationStore } from '../store/useConversationStore';
-import { AppView, UserRole } from '../types';
-import { createWorkspaceContext, getDefaultWorkspaceType } from '../types/workspace';
-import { PhaseIndicator } from './PMO/PhaseIndicator';
+import { useDeviceType } from '../../hooks/useDeviceType';
+import { useAppStore } from '../../store/useAppStore';
+import { useConversationStore } from '../../store/useConversationStore';
+import { AppView, UserRole } from '../../types';
+import { createWorkspaceContext, getDefaultWorkspaceType } from '../../types/workspace';
+import { PhaseIndicator } from '../PMO/PhaseIndicator';
 
 interface MenuItem {
     id: string;

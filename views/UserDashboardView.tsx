@@ -7,7 +7,7 @@ import { DashboardOverview } from '../components/dashboard/DashboardOverview';
 import { TaskDetailModal } from '../components/MyWork/TaskDetailModal';
 import { GateStatus } from '../components/PMO/GateStatus'; // CRIT-01
 import { PMOHealthSection } from '../components/PMO/PMOHealthSection'; // Step A: PMO Health
-import { SplitLayout } from '../components/SplitLayout';
+import { SplitLayout } from '../components/layout/SplitLayout';
 import { useDashboardShortcuts } from '../hooks/useDashboardShortcuts';
 import { Api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';

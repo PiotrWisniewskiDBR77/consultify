@@ -63,6 +63,9 @@ class BillingCron {
             adminAlertService: deps?.adminAlertService,
             payAsYouGoService: deps?.payAsYouGoService,
             seatManagementService: deps?.seatManagementService,
+            BudgetService: deps?.BudgetService || BudgetService,
+            BillingService: deps?.BillingService || BillingService,
+            SubscriptionService: deps?.SubscriptionService || SubscriptionService,
         };
     }
 
@@ -290,3 +293,8 @@ export const calculateMonthlyUsage = async (deps?: Partial<Dependencies>): Promi
 };
 
 export default BillingCron;
+
+
+
+
+

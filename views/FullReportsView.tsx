@@ -8,7 +8,7 @@
 import React from 'react';
 
 import { ManagementReportsView } from '../components/Reports/Management/ManagementReportsView';
-import { SplitLayout } from '../components/SplitLayout';
+import { SplitLayout } from '../components/layout/SplitLayout';
 
 export const FullReportsView: React.FC = () => {
     return (

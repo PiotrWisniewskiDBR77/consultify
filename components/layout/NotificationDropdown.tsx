@@ -2,8 +2,8 @@ import { AlertCircle, ArrowRight, Bell, Check, CheckCircle, Info, Sparkles, Tras
 import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { Api } from '../services/api';
-import { Notification } from '../types';
+import { Api } from '../../services/api';
+import { Notification } from '../../types';
 
 export const NotificationDropdown = () => {
     const [isOpen, setIsOpen] = useState(false);

@@ -31,8 +31,8 @@ import {
     sectionToAppView,
     SuperAdminSection,
     SuperAdminSidebar,
-} from '../../components/SuperAdminSidebar';
-import { UserProfileMenu } from '../../components/UserProfileMenu';
+} from '../../components/layout/SuperAdminSidebar';
+import { UserProfileMenu } from '../../components/layout/UserProfileMenu';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, User } from '../../types';
 import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
@@ -156,10 +156,10 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                                         currentView === AppView.SUPERADMIN_ORGANIZATIONS
                                             ? 'organizations'
                                             : currentView === AppView.SUPERADMIN_USERS
-                                              ? 'users'
-                                              : currentView === AppView.SUPERADMIN_FEEDBACK
-                                                ? 'feedback'
-                                                : 'bulk-ops'
+                                                ? 'users'
+                                                : currentView === AppView.SUPERADMIN_FEEDBACK
+                                                    ? 'feedback'
+                                                    : 'bulk-ops'
                                     }
                                 />
                             );
@@ -205,10 +205,10 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                                         currentView === AppView.SUPERADMIN_SSO
                                             ? 'sso'
                                             : currentView === AppView.SUPERADMIN_SECURITY_POLICIES
-                                              ? 'policies'
-                                              : currentView === AppView.SUPERADMIN_API_MANAGEMENT
-                                                ? 'api-keys'
-                                                : 'compliance'
+                                                ? 'policies'
+                                                : currentView === AppView.SUPERADMIN_API_MANAGEMENT
+                                                    ? 'api-keys'
+                                                    : 'compliance'
                                     }
                                 />
                             );

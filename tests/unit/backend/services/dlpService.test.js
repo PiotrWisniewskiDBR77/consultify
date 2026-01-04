@@ -3,9 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
+// Removed createRequire - using ESM imports
 
 // Mock database
 const mockDb = {
@@ -14,13 +12,17 @@ const mockDb = {
     all: vi.fn()
 };
 
-// Import service
-const dlpService = require('../../../../server/services/dlpService');
+let dlpService;
 
 describe('DLPService', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.clearAllMocks();
-        dlpService.setDependencies({ db: mockDb });
+        // Dynamic import to ensure proper module loading
+        const module = await import('../../../../server/services/dlpService.js');
+        dlpService = module.default || module;
+        if (dlpService && typeof dlpService.setDependencies === 'function') {
+            dlpService.setDependencies({ db: mockDb });
+        }
     });
 
     describe('Policies', () => {

@@ -470,3 +470,6 @@ describe('DataPrivacySettings Component', () => {
 
 
 
+
+
+

@@ -1,8 +1,8 @@
 import React, { useCallback } from 'react';
 
 import { AIFeedbackButton } from '../components/AIFeedbackButton';
-import { FullRolloutWorkspace } from '../components/FullRolloutWorkspace'; // New Component
-import { SplitLayout } from '../components/SplitLayout';
+import { FullRolloutWorkspace } from '../components/workspaces/FullRolloutWorkspace'; // New Component
+import { SplitLayout } from '../components/layout/SplitLayout';
 import { sendMessageToAI } from '../services/ai/gemini';
 import { useAppStore } from '../store/useAppStore';
 import { AIMessageHistory, AppView, FullInitiative } from '../types';

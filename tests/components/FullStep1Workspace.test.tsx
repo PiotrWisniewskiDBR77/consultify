@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FullStep1Workspace } from '../../components/FullStep1Workspace';
+import { FullStep1Workspace } from '../../components/workspaces/FullStep1Workspace';
 
 
 const mockSession = {
@@ -55,6 +55,9 @@ describe('FullStep1Workspace Component', () => {
         }
     });
 });
+
+
+
 
 
 

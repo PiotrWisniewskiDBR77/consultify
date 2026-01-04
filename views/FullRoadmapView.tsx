@@ -12,10 +12,10 @@ import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AIFeedbackButton } from '../components/AIFeedbackButton';
-import { FullStep3Workspace } from '../components/FullStep3Workspace';
+import { FullStep3Workspace } from '../components/workspaces/FullStep3Workspace';
 import { RebalanceModal } from '../components/RebalanceModal';
 import { RoadmapSummary } from '../components/RoadmapSummary';
-import { SplitLayout } from '../components/SplitLayout';
+import { SplitLayout } from '../components/layout/SplitLayout';
 import { WorkloadChart } from '../components/WorkloadChart';
 import { formatChatError } from '../services/ai/errorMessages';
 import { Api } from '../services/api';

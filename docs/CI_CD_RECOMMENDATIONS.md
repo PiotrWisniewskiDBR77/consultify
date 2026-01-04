@@ -493,3 +493,6 @@ monitor-deployment:
 **Total**: ~7 godzin pracy dla najważniejszych ulepszeń
 
 
+
+
+

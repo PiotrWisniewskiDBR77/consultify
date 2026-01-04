@@ -13,7 +13,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { SplitLayout } from '../components/SplitLayout';
+import { SplitLayout } from '../components/layout/SplitLayout';
 import { useUserCan } from '../hooks/useUserCan';
 import { useAppStore } from '../store/useAppStore';
 

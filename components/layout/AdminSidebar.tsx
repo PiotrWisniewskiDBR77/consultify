@@ -24,9 +24,9 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '../services/api';
-import { useAppStore } from '../store/useAppStore';
-import { AppView } from '../types';
+import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
+import { AppView } from '../../types';
 
 // 8-module structure for Admin (matching AdminView)
 export type AdminSection =

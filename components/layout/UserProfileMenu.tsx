@@ -2,8 +2,8 @@ import { ChevronDown, Cpu, CreditCard, Languages, LogOut, Monitor, Moon, Sun, Us
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useAppStore } from '../store/useAppStore';
-import { AppView } from '../types';
+import { useAppStore } from '../../store/useAppStore';
+import { AppView } from '../../types';
 
 interface UserProfileMenuProps {
     className?: string;

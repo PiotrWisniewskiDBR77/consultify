@@ -2,7 +2,7 @@ import { ArrowRight, CheckCircle, CheckSquare, Clock, Plus, Square, XCircle } fr
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { FullInitiative, InitiativeStatus, Task, TaskStatus, User } from '../types';
-import { Button } from './Button';
+import { Button } from './ui/Button';
 import { TaskDetailModal } from './TaskDetailModal';
 
 interface Props {

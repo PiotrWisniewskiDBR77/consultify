@@ -105,3 +105,6 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({ diagramType, onAdd
 };
 
 export default StudioToolbar;
+
+
+

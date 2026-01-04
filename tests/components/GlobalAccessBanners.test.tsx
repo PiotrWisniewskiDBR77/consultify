@@ -112,3 +112,6 @@ describe('GlobalAccessBanners Component', () => {
         expect(screen.getByText('DemoBanner')).toBeInTheDocument();
     });
 });
+
+
+

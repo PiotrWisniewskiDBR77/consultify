@@ -6,17 +6,23 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import { testOrganizations } from '../../fixtures/testData.js';
 import WebhookService from '../../../server/src/services/webhookService.js';
 
+/**
+ * Webhook Service Tests
+ * HIGH PRIORITY BUSINESS SERVICE - Must have 85%+ coverage
+ * Tests webhook triggering, signature generation, and multi-tenant isolation.
+ * CRITICAL FOR ENTERPRISE EXTERNAL INTEGRATIONS
+ */
 describe('WebhookService', () => {
-    let mockDb;
+    let mocks;
     let mockFetch;
 
     beforeEach(() => {
-        // Initialize mocks
-        mockDb = createMockDb();
+        // Setup unified mocks
+        mocks = setupStandardTest();
 
         // Create fetch mock
         mockFetch = vi.fn().mockResolvedValue({
@@ -25,22 +31,22 @@ describe('WebhookService', () => {
             statusText: 'OK'
         });
 
-        // Inject mock dependencies
+        // Inject mock dependencies using unified pattern
         const mockQueryHelpers = {
             queryAll: (sql, params) => new Promise((resolve, reject) => {
-                mockDb.all(sql, params, (err, rows) => {
+                mocks.db.all(sql, params, (err, rows) => {
                     if (err) reject(err);
                     else resolve(rows);
                 });
             }),
             queryOne: (sql, params) => new Promise((resolve, reject) => {
-                mockDb.get(sql, params, (err, row) => {
+                mocks.db.get(sql, params, (err, row) => {
                     if (err) reject(err);
                     else resolve(row);
                 });
             }),
             queryRun: (sql, params) => new Promise((resolve, reject) => {
-                mockDb.run(sql, params, function (err) {
+                mocks.db.run(sql, params, function (err) {
                     if (err) reject(err);
                     else resolve({ lastID: this?.lastID, changes: this?.changes });
                 });
@@ -48,7 +54,7 @@ describe('WebhookService', () => {
         };
 
         WebhookService.setDependencies({
-            db: mockDb,
+            db: mocks.db,
             fetch: mockFetch,
             queryHelpers: mockQueryHelpers
         });
@@ -73,7 +79,7 @@ describe('WebhookService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 expect(query).toContain('SELECT * FROM webhooks');
                 expect(query).toContain('organization_id = ?');
                 expect(query).toContain('is_active = 1');
@@ -95,7 +101,7 @@ describe('WebhookService', () => {
             const orgId = testOrganizations.org1.id;
             const eventType = 'initiative.created';
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, []);
             });
 
@@ -123,7 +129,7 @@ describe('WebhookService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, mockWebhooks);
             });
 
@@ -145,7 +151,7 @@ describe('WebhookService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, mockWebhooks);
             });
 
@@ -162,7 +168,7 @@ describe('WebhookService', () => {
             const orgId = testOrganizations.org1.id;
             const eventType = 'initiative.created';
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(new Error('Database error'));
             });
 
@@ -173,13 +179,13 @@ describe('WebhookService', () => {
             const orgId = testOrganizations.org1.id;
             const eventType = 'test.event';
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 expect(params[0]).toBe(orgId);
                 callback(null, []);
             });
 
             await WebhookService.trigger(orgId, eventType, {});
-            expect(mockDb.all).toHaveBeenCalled();
+            expect(mocks.db.all).toHaveBeenCalled();
         });
     });
 
@@ -289,7 +295,7 @@ describe('WebhookService', () => {
             const org2Id = testOrganizations.org2.id;
 
             const capturedParams = [];
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 capturedParams.push([...params]);
                 callback(null, []);
             });
@@ -305,7 +311,7 @@ describe('WebhookService', () => {
         it('should filter webhooks by organization_id', async () => {
             const orgId = testOrganizations.org1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 expect(query).toContain('organization_id = ?');
                 callback(null, []);
             });
@@ -316,7 +322,7 @@ describe('WebhookService', () => {
         it('should only query active webhooks', async () => {
             const orgId = testOrganizations.org1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 expect(query).toContain('is_active = 1');
                 callback(null, []);
             });

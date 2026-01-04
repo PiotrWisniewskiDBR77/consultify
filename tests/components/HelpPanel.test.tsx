@@ -78,3 +78,6 @@ describe('HelpPanel Component', () => {
         expect(screen.getByRole('status')).toBeInTheDocument();
     });
 });
+
+
+

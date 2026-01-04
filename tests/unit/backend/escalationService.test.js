@@ -6,52 +6,35 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
 
-// Hoisted mock - defined inline
-const mockDb = vi.hoisted(() => ({
-    get: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, null));
-    }),
-    all: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, []));
-    }),
-    run: vi.fn(function (sql, params, callback) {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
-    }),
-    exec: vi.fn((sql, callback) => {
-        if (callback) process.nextTick(() => callback(null));
-    }),
-    serialize: vi.fn((cb) => { if (cb) cb(); }),
-    prepare: vi.fn(),
-    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    initPromise: Promise.resolve()
-}));
-
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
+/**
+ * Escalation Service Tests
+ * HIGH PRIORITY BUSINESS SERVICE - Must have 85%+ coverage
+ * Tests escalation workflows, auto-escalation, and notification integration.
+ * CRITICAL FOR ENTERPRISE ERROR HANDLING
+ */
 describe('EscalationService', () => {
     let EscalationService;
-    let mockNotificationService;
+    let mocks;
 
     beforeEach(async () => {
         vi.clearAllMocks();
 
-        mockNotificationService = {
+        mocks = setupStandardTest();
+
+        // Setup specific notification service mock
+        mocks.notificationService = {
             create: vi.fn().mockResolvedValue({ id: 'notif-123' })
         };
 
         EscalationService = (await import('../../../server/src/services/escalationService.js')).default;
 
         EscalationService.setDependencies({
-            db: mockDb,
-            uuidv4: () => 'escalation-1',
-            NotificationService: mockNotificationService
+            db: mocks.db,
+            uuidv4: mocks.uuid,
+            NotificationService: mocks.notificationService
         });
     });
 

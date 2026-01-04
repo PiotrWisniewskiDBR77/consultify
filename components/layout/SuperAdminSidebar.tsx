@@ -18,9 +18,9 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Api } from '../services/api';
-import { useAppStore } from '../store/useAppStore';
-import { AppView } from '../types';
+import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
+import { AppView } from '../../types';
 
 // Modular structure with 3 AI modules (Variant A)
 export type SuperAdminSection =

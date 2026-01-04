@@ -1,23 +1,29 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
+/**
+ * Ingestion Service Tests
+ * Tests for data import/export and document processing
+ * CRITICAL FOR ENTERPRISE DATA MANAGEMENT
+ */
 describe('Ingestion Service', () => {
     let IngestionService;
-    let mockDb;
-    let mockRagService;
+    let mocks;
 
     beforeEach(async () => {
         vi.resetModules();
 
-        // 1. Setup mocks
-        mockDb = createMockDb();
-        mockRagService = {
+        // Setup unified mocks
+        mocks = setupStandardTest();
+        
+        // Service-specific RAG service mock
+        mocks.ragService = {
             storeChunks: vi.fn().mockResolvedValue({})
         };
 
-        // 2. Register mocks for subsequent imports
-        vi.doMock('../../../server/database.js', () => ({ default: mockDb }));
-        vi.doMock('../../../server/src/services/ragService.js', () => ({ default: mockRagService }));
+        // Register mocks for subsequent imports
+        vi.doMock('../../../server/database.js', () => ({ default: mocks.db }));
+        vi.doMock('../../../server/src/services/ragService.js', () => ({ default: mocks.ragService }));
 
         // Mock fs and pdf-parse just in case they are used or cause issues
         vi.doMock('fs', () => ({
@@ -30,14 +36,14 @@ describe('Ingestion Service', () => {
         }));
         vi.doMock('pdf-parse', () => ({ default: vi.fn() }));
 
-        // 3. Dynamic import of the system under test
+        // Dynamic import of the system under test
         const module = await import('../../../server/src/services/ingestionService.js');
         IngestionService = module.default;
 
-        // 4. Manual injection (redundant but safe)
+        // Inject dependencies using unified pattern
         IngestionService.setDependencies({
-            db: mockDb,
-            RagService: mockRagService
+            db: mocks.db,
+            RagService: mocks.ragService
         });
     });
 
@@ -80,14 +86,14 @@ describe('Ingestion Service', () => {
                 if (cb) cb(null);
             });
 
-            mockDb.prepare.mockReturnValue({
+            mocks.db.prepare.mockReturnValue({
                 run: mockStmtRun,
                 finalize: vi.fn()
             });
 
             await IngestionService.storeDocument(docId, organizationId, metadata, content);
 
-            expect(mockDb.prepare).toHaveBeenCalled();
+            expect(mocks.db.prepare).toHaveBeenCalled();
             expect(mockStmtRun).toHaveBeenCalled();
         });
     });

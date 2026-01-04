@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll, beforeEach, vi, afterEach } from 'vitest';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const { initTestDb, cleanTables, dbRun, dbAll, db } = require('../../helpers/dbHelper.cjs');
-const NotificationService = require('../../../server/src/services/notificationService.js');
-const { v4: uuidv4 } = require('uuid');
+// Removed createRequire - using ESM imports
+
+let initTestDb, cleanTables, dbRun, dbAll, db;
+let NotificationService;
+let uuidv4;
 
 // Mock SlackService
 const mockSlackService = {
@@ -17,6 +17,20 @@ describe('Backend Service Test: NotificationService', () => {
     let testOrgId;
 
     beforeAll(async () => {
+        // Dynamic imports for CommonJS modules
+        const dbHelperModule = await import('../../helpers/dbHelper.cjs');
+        initTestDb = dbHelperModule.initTestDb;
+        cleanTables = dbHelperModule.cleanTables;
+        dbRun = dbHelperModule.dbRun;
+        dbAll = dbHelperModule.dbAll;
+        db = dbHelperModule.db;
+        
+        const notificationModule = await import('../../../server/src/services/notificationService.js');
+        NotificationService = notificationModule.default || notificationModule;
+        
+        const uuidModule = await import('uuid');
+        uuidv4 = uuidModule.v4;
+        
         await initTestDb();
     });
 

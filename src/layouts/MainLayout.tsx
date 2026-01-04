@@ -11,14 +11,14 @@ import { HelpSidePanel } from '../../components/Help/HelpSidePanel';
 import { HelpToggleButton } from '../../components/Help/HelpToggleButton';
 import { LLMSelector } from '../../components/LLMSelector';
 import { BottomNavigation } from '../../components/navigation';
-import { NotificationDropdown } from '../../components/NotificationDropdown';
+import { NotificationDropdown } from '../../components/layout/NotificationDropdown';
 import { PMOStatusBar } from '../../components/PMO';
-import { Sidebar } from '../../components/Sidebar';
+import { Sidebar } from '../../components/layout/Sidebar';
 import { SystemHealth } from '../../components/SystemHealth';
 import { TaskDropdown } from '../../components/TaskDropdown';
 import { TrialBanner } from '../../components/Trial/TrialBanner';
 import { TrialExpiredGate } from '../../components/Trial/TrialExpiredGate';
-import { UserProfileMenu } from '../../components/UserProfileMenu';
+import { UserProfileMenu } from '../../components/layout/UserProfileMenu';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 

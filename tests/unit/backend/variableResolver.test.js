@@ -1,26 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
-// Mock database
-const mockDb = {
-    get: vi.fn((query, params, callback) => {
-        callback(null, null);
-    })
-};
-
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
+/**
+ * Variable Resolver Service Tests
+ * Tests for dynamic content resolution and variable processing
+ * CRITICAL FOR ENTERPRISE CONTENT MANAGEMENT
+ */
 describe('Variable Resolver Service', () => {
     let VariableResolver;
     let resolver;
     let RUNTIME_FUNCTIONS;
+    let mocks;
 
     beforeEach(async () => {
         vi.clearAllMocks();
         vi.resetModules();
+
+        mocks = setupStandardTest();
 
         // Mock console
         global.console = {

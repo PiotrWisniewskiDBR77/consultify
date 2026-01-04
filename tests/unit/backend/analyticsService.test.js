@@ -1,21 +1,20 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import AnalyticsService from '../../../server/src/services/analyticsService.js';
 
 /**
- * Unit tests for AnalyticsService
+ * Unit tests for AnalyticsService - Business Intelligence & Analytics
+ * HIGH PRIORITY - Must have 85%+ coverage for enterprise reporting
  */
 describe('AnalyticsService', () => {
-    let mockDb;
-    let mockUuid;
+    let mocks;
 
     beforeEach(() => {
-        mockDb = createMockDb();
-        mockUuid = vi.fn(() => 'test-uuid-123');
+        mocks = setupStandardTest();
 
         AnalyticsService.setDependencies({
-            db: mockDb,
-            uuidv4: mockUuid
+            db: mocks.db,
+            uuidv4: mocks.uuid
         });
     });
 

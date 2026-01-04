@@ -115,10 +115,10 @@ jobs:
     name: Unit Tests (Sharded)
     runs-on: ubuntu-latest
     needs: [lint-and-typecheck, migration-tests]
-    strategy:
+        strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]  # 10 parallel shards
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]  # 20 parallel shards for <15 min execution
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -150,7 +150,7 @@ jobs:
           START=$((matrix.shard * SHARD_SIZE))
           END=$((START + SHARD_SIZE))
           
-          if [ $matrix.shard -eq 9 ]; then
+          if [ $matrix.shard -eq 19 ]; then
             # Last shard gets remainder
             SHARD_FILES=$(echo "$TEST_FILES" | sed -n "${START},\$p")
           else
@@ -232,6 +232,15 @@ jobs:
           MOCK_DB: 'true'
           MOCK_REDIS: 'true'
           CI: 'true'
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+        continue-on-error: true
+
+      - name: Percy Visual Regression (Shard ${{ matrix.shard }})
+        if: matrix.shard == 0 && env.PERCY_TOKEN != ''
+        run: |
+          npx percy exec -- playwright test tests/components/**/*.visual.test.* --reporter=list
+        env:
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
         continue-on-error: true
 
       - name: Upload Test Results (Shard ${{ matrix.shard }})
@@ -285,6 +294,19 @@ jobs:
           DB_TYPE: 'sqlite'
           REDIS_URL: redis://localhost:6379
           CI: 'true'
+        continue-on-error: true
+
+      - name: Run Contract Tests (Pact)
+        if: env.PACT_BROKER_URL != ''
+        run: |
+          npm run test:contract:consumer
+          npm run test:contract:provider
+        env:
+          PACT_BROKER_URL: ${{ secrets.PACT_BROKER_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
+          GIT_COMMIT: ${{ github.sha }}
+          GIT_BRANCH: ${{ github.ref_name }}
         continue-on-error: true
 
       - name: Upload Test Results (JUnit)
@@ -676,6 +698,22 @@ jobs:
           uploadArtifacts: true
           temporaryPublicStorage: true
           budgetPath: .github/lighthouse-budget.json
+        continue-on-error: true
+
+      - name: k6 Load Testing
+        uses: grafana/k6-action@v0.3.0
+        with:
+          filename: tests/performance/load-test.js
+          cloud: false
+          summary: true
+        env:
+          BASE_URL: http://localhost:3005
+          K6_VUS: 50
+          K6_DURATION: 60s
+        continue-on-error: true
+
+      - name: Performance Budget Check
+        run: npm run test:performance:budget
         continue-on-error: true
 
   # ==========================================

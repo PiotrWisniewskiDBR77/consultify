@@ -1,36 +1,38 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
-// Mock dependencies
-const mockDb = {
-    get: vi.fn(),
-    all: vi.fn(),
-    run: vi.fn(),
-    serialize: vi.fn((cb) => cb()),
-    initPromise: Promise.resolve()
-};
+/**
+ * Dependency Service Tests
+ * Tests for dependency management and graph building
+ * CRITICAL FOR ENTERPRISE PROJECT DEPENDENCY TRACKING
+ */
 
 import DependencyService from '../../../server/src/services/dependencyService.js';
 
 describe('DependencyService', () => {
+    let mocks;
+
     beforeEach(() => {
         vi.clearAllMocks();
+        mocks = setupStandardTest();
+
         DependencyService.setDependencies({
-            db: mockDb,
-            uuidv4: () => 'uuid-1234'
+            db: mocks.db,
+            uuidv4: mocks.uuid || (() => 'uuid-1234')
         });
 
-        mockDb.all.mockImplementation((...args) => {
+        mocks.db.all.mockImplementation((...args) => {
             const cb = args[args.length - 1];
             if (typeof cb === 'function') cb(null, []);
         });
 
-        mockDb.run.mockImplementation((...args) => {
+        mocks.db.run.mockImplementation((...args) => {
             const cb = args[args.length - 1];
             if (typeof cb === 'function') cb.call({ changes: 1 }, null);
         });
 
         // Keep compatibility for legacy tests
-        if (DependencyService._setDb) DependencyService._setDb(mockDb);
+        if (DependencyService._setDb) DependencyService._setDb(mocks.db);
     });
 
     describe('addDependency', () => {
@@ -39,7 +41,7 @@ describe('DependencyService', () => {
 
             expect(result.id).toBe('uuid-1234');
             expect(result.fromInitiativeId).toBe('i1');
-            expect(mockDb.run).toHaveBeenCalledWith(
+            expect(mocks.db.run).toHaveBeenCalledWith(
                 expect.stringContaining('INSERT INTO initiative_dependencies'),
                 expect.any(Array),
                 expect.any(Function)
@@ -61,7 +63,7 @@ describe('DependencyService', () => {
 
     describe('getDependencies', () => {
         it('should return dependencies', async () => {
-            mockDb.all.mockImplementation((...args) => {
+            mocks.db.all.mockImplementation((...args) => {
                 const cb = args[args.length - 1];
                 if (typeof cb === 'function') {
                     cb(null, [{ id: 'd1', from_initiative_id: 'i1', to_initiative_id: 'i2' }]);
@@ -75,7 +77,7 @@ describe('DependencyService', () => {
 
     describe('buildDependencyGraph', () => {
         it('should build graph structure', async () => {
-            mockDb.all.mockImplementation((...args) => {
+            mocks.db.all.mockImplementation((...args) => {
                 const cb = args[args.length - 1];
                 if (typeof cb === 'function') {
                     cb(null, [
@@ -98,7 +100,7 @@ describe('DependencyService', () => {
     describe('detectDeadlocks', () => {
         it('should detect cycles', async () => {
             // A -> B -> A cycle
-            mockDb.all.mockImplementation((...args) => {
+            mocks.db.all.mockImplementation((...args) => {
                 const cb = args[args.length - 1];
                 if (typeof cb === 'function') {
                     cb(null, [
@@ -116,7 +118,7 @@ describe('DependencyService', () => {
 
         it('should return false for acyclic graph', async () => {
             // A -> B -> C
-            mockDb.all.mockImplementation((...args) => {
+            mocks.db.all.mockImplementation((...args) => {
                 const cb = args[args.length - 1];
                 if (typeof cb === 'function') {
                     cb(null, [
@@ -138,7 +140,7 @@ describe('DependencyService', () => {
         });
 
         it('should be false if blockers exist', async () => {
-            mockDb.all.mockImplementation((...args) => {
+            mocks.db.all.mockImplementation((...args) => {
                 const cb = args[args.length - 1];
                 if (typeof cb === 'function') {
                     cb(null, [

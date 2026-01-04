@@ -143,3 +143,6 @@ export const LegalPanel: React.FC = () => {
 };
 
 export default LegalPanel;
+
+
+

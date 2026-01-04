@@ -6,18 +6,24 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import { testUsers, testOrganizations } from '../../fixtures/testData.js';
 import LegalService from '../../../server/src/services/legalService.js';
 
+/**
+ * Legal Service Tests
+ * HIGH PRIORITY BUSINESS SERVICE - Must have 85%+ coverage
+ * Tests legal document management, acceptance tracking, and compliance.
+ * CRITICAL FOR ENTERPRISE COMPLIANCE
+ */
 describe('LegalService', () => {
-    let mockDb;
+    let mocks;
     let mockLegalEventLogger;
 
     beforeEach(async () => {
         vi.resetModules();
 
-        mockDb = createMockDb();
+        mocks = setupStandardTest();
 
         mockLegalEventLogger = {
             logAccept: vi.fn().mockResolvedValue({ success: true }),
@@ -29,10 +35,10 @@ describe('LegalService', () => {
             }
         };
 
-        // Inject mock dependencies
+        // Inject mock dependencies using unified pattern
         LegalService.setDependencies({
-            db: mockDb,
-            uuidv4: () => 'legal-uuid-1',
+            db: mocks.db,
+            uuidv4: mocks.uuid || (() => 'legal-uuid-1'),
             crypto: {
                 createHash: vi.fn().mockReturnValue({
                     update: vi.fn().mockReturnThis(),
@@ -50,7 +56,7 @@ describe('LegalService', () => {
 
     describe('getActiveDocuments()', () => {
         it('should return active documents', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, [
                     {
                         id: 'doc-1',
@@ -72,7 +78,7 @@ describe('LegalService', () => {
             const documents = await LegalService.getActiveDocuments();
 
             expect(documents).toHaveLength(2);
-            expect(mockDb.all).toHaveBeenCalledWith(
+            expect(mocks.db.all).toHaveBeenCalledWith(
                 expect.stringContaining('SELECT'),
                 expect.any(Array),
                 expect.any(Function)
@@ -82,7 +88,7 @@ describe('LegalService', () => {
         it('should filter by effective date', async () => {
             const now = new Date().toISOString();
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 // Verify query includes effective_from check
                 expect(params).toContain(now);
                 callback(null, []);
@@ -98,7 +104,7 @@ describe('LegalService', () => {
                 licenseTier: 'enterprise'
             };
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, [
                     {
                         id: 'doc-1',
@@ -126,7 +132,7 @@ describe('LegalService', () => {
         it('should return active document by type', async () => {
             const docType = 'TOS';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, {
                     id: 'doc-1',
                     doc_type: docType,
@@ -146,7 +152,7 @@ describe('LegalService', () => {
         it('should return null when document not found', async () => {
             const docType = 'NONEXISTENT';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, null);
             });
 
@@ -161,7 +167,7 @@ describe('LegalService', () => {
             const userId = testUsers.user.id;
             const orgId = testOrganizations.org1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, [
                     {
                         doc_type: 'TOS',
@@ -174,7 +180,7 @@ describe('LegalService', () => {
             const acceptances = await LegalService.getUserAcceptances(userId, orgId);
 
             expect(acceptances).toHaveLength(1);
-            expect(mockDb.all).toHaveBeenCalledWith(
+            expect(mocks.db.all).toHaveBeenCalledWith(
                 expect.stringContaining('SELECT'),
                 expect.arrayContaining([userId]),
                 expect.any(Function)
@@ -185,7 +191,7 @@ describe('LegalService', () => {
             const userId = testUsers.user.id;
             const orgId = testOrganizations.org1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 // Verify query includes organization_id filter
                 expect(params).toContain(orgId);
                 callback(null, []);
@@ -202,7 +208,7 @@ describe('LegalService', () => {
             const docType = 'TOS';
             const version = '1.0';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 if (query.includes('legal_documents')) {
                     callback(null, {
                         id: 'doc-1',
@@ -215,7 +221,7 @@ describe('LegalService', () => {
                 }
             });
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 callback.call({ changes: 1 }, null);
             });
 
@@ -236,7 +242,7 @@ describe('LegalService', () => {
             const userId = testUsers.user.id;
             const docType = 'NONEXISTENT';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, null);
             });
 
@@ -295,7 +301,7 @@ describe('LegalService', () => {
             const userId = testUsers.user.id;
             const docType = 'TOS';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 if (query.includes('legal_documents')) {
                     callback(null, {
                         id: 'doc-1',
@@ -317,7 +323,7 @@ describe('LegalService', () => {
             const userId = testUsers.user.id;
             const docType = 'TOS';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 if (query.includes('legal_documents')) {
                     callback(null, {
                         id: 'doc-1',
@@ -329,7 +335,7 @@ describe('LegalService', () => {
                 }
             });
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 // getUserAcceptances returns acceptance
                 callback(null, [{
                     doc_type: docType,
@@ -350,7 +356,7 @@ describe('LegalService', () => {
             const org1Id = testOrganizations.org1.id;
             const org2Id = testOrganizations.org2.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 // Verify query filters by user_id and organization_id
                 expect(params).toContain(userId);
                 expect(params).toContain(org1Id);

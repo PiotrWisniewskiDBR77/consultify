@@ -85,7 +85,7 @@ vi.mock('../../components/SplitLayout', () => ({
     )
 }));
 
-vi.mock('../../components/FullStep3Workspace', () => ({
+vi.mock('../../components/workspaces/FullStep3Workspace', () => ({
     FullStep3Workspace: ({ initiatives, onUpdate }: any) => (
         <div data-testid="step3-workspace">
             Workspace with {initiatives?.length || 0} initiatives

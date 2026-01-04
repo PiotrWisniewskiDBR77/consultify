@@ -2,8 +2,8 @@ import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AIFeedbackButton } from '../components/AIFeedbackButton';
-import { FullStep2Workspace } from '../components/FullStep2Workspace';
-import { SplitLayout } from '../components/SplitLayout';
+import { FullStep2Workspace } from '../components/workspaces/FullStep2Workspace';
+import { SplitLayout } from '../components/layout/SplitLayout';
 import { useAIStream } from '../hooks/useAIStream';
 import { Agent } from '../services/ai/agent';
 import { formatChatError } from '../services/ai/errorMessages';

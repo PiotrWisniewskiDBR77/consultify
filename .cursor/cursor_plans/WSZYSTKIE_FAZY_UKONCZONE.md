@@ -106,7 +106,7 @@
 - ✅ `server/middleware/performanceMetrics.js` - Performance metrics middleware
 
 ### Frontend Components
-- ✅ `components/LoadingScreen.tsx` - Loading fallback dla Suspense
+- ✅ `components/ui/LoadingScreen.tsx` - Loading fallback dla Suspense
 - ✅ `utils/frontendMetrics.ts` - Web Vitals i frontend metrics tracking
 
 ### Routes

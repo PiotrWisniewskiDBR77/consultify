@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { SplitLayout } from '../components/SplitLayout';
-// import { FullROIWorkspace } from '../components/FullROIWorkspace';
+import { SplitLayout } from '../components/layout/SplitLayout';
+// import { FullROIWorkspace } from '../components/workspaces/FullROIWorkspace';
 // import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
 // import { Api } from '../services/api';

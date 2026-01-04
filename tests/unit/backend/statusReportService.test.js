@@ -1,13 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-// Mock dependencies
-const mockDb = {
-    get: vi.fn(),
-    all: vi.fn(),
-    run: vi.fn(),
-    serialize: vi.fn((cb) => cb()),
-    initPromise: Promise.resolve()
-};
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
 // Mock DbPromise
 import DbPromise from '../../../server/src/utils/DbPromise.ts';
@@ -32,15 +24,24 @@ vi.mock('../../../server/src/services/budgetService.js', () => ({
 // Import the service
 import StatusReportService from '../../../server/src/services/statusReportService.ts';
 
+/**
+ * Status Report Service Tests
+ * Tests for executive reporting and status aggregation
+ * CRITICAL FOR ENTERPRISE BUSINESS INTELLIGENCE
+ */
 describe('StatusReportService', () => {
+    let mocks;
     const testUserId = 'user-123';
     const testOrgId = 'org-123';
     const testInitId = 'init-123';
 
     beforeEach(() => {
         vi.clearAllMocks();
-        // Inject dependencies
-        StatusReportService.setDependencies({ db: mockDb });
+
+        mocks = setupStandardTest();
+
+        // Inject dependencies using unified pattern
+        StatusReportService.setDependencies({ db: mocks.db });
 
         // Default mock responses
         vi.mocked(DbPromise.all).mockResolvedValue([]);

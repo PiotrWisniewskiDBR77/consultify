@@ -50,7 +50,7 @@ import { FinancialAnalysisPanel } from '../components/Economics/FinancialAnalysi
 import { PDFExportModal } from '../components/Economics/PDFExportModal';
 import { DigitizationAnalysis } from '../components/Economics/types';
 import { VersionHistoryPanel } from '../components/Economics/VersionHistoryPanel';
-import { SplitLayout } from '../components/SplitLayout';
+import { SplitLayout } from '../components/layout/SplitLayout';
 import { Api } from '../services/api';
 
 type EconomicsTab = 'catalog' | 'tool' | 'results' | 'financial' | 'compare';

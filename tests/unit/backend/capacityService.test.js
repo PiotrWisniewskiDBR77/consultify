@@ -1,47 +1,29 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
-// Hoisted mock - defined inline
-const mockDb = vi.hoisted(() => ({
-    get: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, null));
-    }),
-    all: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, []));
-    }),
-    run: vi.fn(function(sql, params, callback) {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
-    }),
-    exec: vi.fn((sql, callback) => {
-        if (callback) process.nextTick(() => callback(null));
-    }),
-    serialize: vi.fn((cb) => { if (cb) cb(); }),
-    prepare: vi.fn(),
-    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    initPromise: Promise.resolve()
-}));
-
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
+/**
+ * Capacity Service Tests
+ * Tests for capacity planning and resource allocation
+ * CRITICAL FOR ENTERPRISE SCALABILITY
+ */
 describe('CapacityService', () => {
     let CapacityService;
-    
+    let mocks;
+
     beforeEach(async () => {
         vi.clearAllMocks();
-        
+
+        mocks = setupStandardTest();
+
         // Dynamic import for ESM compatibility
         const module = await import('../../../server/src/services/capacityService.js');
         CapacityService = module.default;
-        
-        // Inject mock dependencies
+
+        // Inject mock dependencies using unified pattern
         if (CapacityService.setDependencies) {
             CapacityService.setDependencies({
-                db: mockDb,
-                uuidv4: () => 'uuid-1234'
+                db: mocks.db,
+                uuidv4: mocks.uuid
             });
         }
     });

@@ -203,7 +203,7 @@ todos:
 - `tests/components/SuperAdmin/RevenueModule.test.tsx` - dodać error handling
 - `tests/components/SuperAdmin/SecurityModule.test.tsx` - dodać edge cases
 - `tests/components/SuperAdmin/ConfigurationModule.test.tsx` - dodać validation tests
-- `tests/components/SuperAdminSidebar.test.tsx` - dodać hover, badge updates, pin/unpin
+- `tests/components/layout/SuperAdminSidebar.test.tsx` - dodać hover, badge updates, pin/unpin
 
 **Działania**:
 

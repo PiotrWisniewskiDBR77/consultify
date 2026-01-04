@@ -1,18 +1,27 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
+// Removed createRequire - using ESM imports
 
 // No mock for drdAxisValidationService needed as it doesn't exist and isn't used meaningfully in tests below
 // The tests cover DRD_AXES from aiAssessmentPartnerService
 
-// const DRDAxisValidationService = require('../../../server/src/services/drdAxisValidationService.js');
-const { aiAssessmentPartner, DRD_AXES, AI_PARTNER_CONFIG } = require('../../../server/src/services/aiAssessmentPartnerService.js');
-const { GoogleGenerativeAI } = require('../../__mocks__/@google/generative-ai');
+let aiAssessmentPartner, DRD_AXES, AI_PARTNER_CONFIG;
+let GoogleGenerativeAI;
 
-// Explicitly inject the mock client into the singleton
-const mockClient = new GoogleGenerativeAI('test-key');
-aiAssessmentPartner.injectAIClient(mockClient);
+// Dynamic imports in beforeEach to ensure proper module loading
+beforeEach(async () => {
+    const aiAssessmentPartnerModule = await import('../../../server/src/services/aiAssessmentPartnerService.js');
+    aiAssessmentPartner = aiAssessmentPartnerModule.aiAssessmentPartner || aiAssessmentPartnerModule.default?.aiAssessmentPartner;
+    DRD_AXES = aiAssessmentPartnerModule.DRD_AXES || aiAssessmentPartnerModule.default?.DRD_AXES;
+    AI_PARTNER_CONFIG = aiAssessmentPartnerModule.AI_PARTNER_CONFIG || aiAssessmentPartnerModule.default?.AI_PARTNER_CONFIG;
+    
+    const mockModule = await import('../../__mocks__/@google/generative-ai.js');
+    GoogleGenerativeAI = mockModule.GoogleGenerativeAI || mockModule.default?.GoogleGenerativeAI;
+    
+    // Explicitly inject the mock client into the singleton
+    const mockClient = new GoogleGenerativeAI('test-key');
+    if (aiAssessmentPartner && typeof aiAssessmentPartner.injectAIClient === 'function') {
+        aiAssessmentPartner.injectAIClient(mockClient);
+    }
 
 // Mock Google AI
 vi.mock('@google/generative-ai', () => {

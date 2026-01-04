@@ -43,6 +43,7 @@ interface Dependencies {
 class BackupCron {
     private deps: Dependencies;
     private job: cron.ScheduledTask | null = null;
+    private backupJob: NodeJS.Timeout | null = null as NodeJS.Timeout | null;
     private successCount = 0;
     private failureCount = 0;
     private lastBackupTime: Date | null = null;
@@ -80,15 +81,15 @@ class BackupCron {
 
                 try {
                     const startTime = Date.now();
-
+                    
                     // Create backup
                     const result = await deps.backupService.createBackup('full', 'scheduled');
                     const duration = Date.now() - startTime;
-
+                    
                     this.successCount++;
                     this.lastBackupTime = new Date();
                     this.lastError = null;
-
+                    
                     logger.info(`[BackupCron] Backup completed: ${result.id} (${duration}ms)`);
 
                     // Run retention policy
@@ -97,11 +98,11 @@ class BackupCron {
 
                     // Log metrics
                     logger.info(`[BackupCron] Metrics: success=${this.successCount}, failures=${this.failureCount}`);
-                } catch (error: unknown) {
+                } catch (error: Error) {
                     const err = error instanceof Error ? error : new Error(String(error));
                     this.failureCount++;
                     this.lastError = err;
-
+                    
                     logger.error('[BackupCron] Scheduled backup failed:', err);
 
                     // Report to Sentry if available
@@ -156,7 +157,7 @@ class BackupCron {
     async triggerManualBackup(reason = 'manual'): Promise<{ id: string }> {
         const deps = await this.ensureDeps();
         logger.info(`[BackupCron] Manual backup triggered: ${reason}`);
-
+        
         try {
             const result = await deps.backupService.createBackup('full', reason);
             this.successCount++;
@@ -166,7 +167,7 @@ class BackupCron {
             const err = error instanceof Error ? error : new Error(String(error));
             this.failureCount++;
             this.lastError = err;
-
+            
             // Report to Sentry
             if (deps.sentry) {
                 try {
@@ -177,7 +178,7 @@ class BackupCron {
                     // Sentry not available
                 }
             }
-
+            
             throw err;
         }
     }
@@ -230,3 +231,4 @@ export const triggerManualBackup = async (reason: string, deps?: Partial<Depende
 };
 
 export default BackupCron;
+

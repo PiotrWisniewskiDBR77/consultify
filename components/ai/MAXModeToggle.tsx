@@ -168,3 +168,6 @@ export function MAXModeCostBadge({ baseTokens, multiplier = 3 }: { baseTokens: n
 }
 
 export default MAXModeToggle;
+
+
+

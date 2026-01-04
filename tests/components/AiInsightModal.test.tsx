@@ -101,3 +101,6 @@ describe('AiInsightModal Component', () => {
         expect(mockOnClose).toHaveBeenCalled();
     });
 });
+
+
+

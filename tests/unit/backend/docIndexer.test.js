@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+// Removed createRequire - using ESM imports
 import fs from 'fs';
 import path from 'path';
 
@@ -17,7 +16,7 @@ describe('DocIndexer Service', () => {
     let docIndexer;
     let originalCwd;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         originalCwd = process.cwd();
         vi.clearAllMocks();
 
@@ -36,8 +35,8 @@ describe('DocIndexer Service', () => {
         fs.existsSync.mockReturnValue(true);
         fs.readFileSync.mockReturnValue('# Test Document\n\n## Section 1\n\nContent here.\n\n## Section 2\n\nMore content.');
 
-        const module = require('../../../server/src/services/ai/docIndexer');
-        DocIndexer = module.DocIndexer;
+        const module = await import('../../../server/src/services/ai/docIndexer.js');
+        DocIndexer = module.DocIndexer || module.default?.DocIndexer;
         docIndexer = new DocIndexer();
     });
 
@@ -236,13 +235,16 @@ describe('DocIndexer Service', () => {
     });
 
     describe('PROMPT_ENGINEERING_KB', () => {
-        it('should export prompt engineering knowledge base', () => {
-            const module = require('../../../server/src/services/ai/docIndexer');
+        it('should export prompt engineering knowledge base', async () => {
+            const module = await import('../../../server/src/services/ai/docIndexer.js');
             expect(module.PROMPT_ENGINEERING_KB).toBeDefined();
             expect(module.PROMPT_ENGINEERING_KB.length).toBeGreaterThan(0);
         });
     });
 });
+
+
+
 
 
 

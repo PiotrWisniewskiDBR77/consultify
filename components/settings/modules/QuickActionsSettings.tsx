@@ -150,3 +150,6 @@ export const QuickActionsSettings: React.FC<QuickActionsSettingsProps> = ({ curr
 };
 
 export default QuickActionsSettings;
+
+
+

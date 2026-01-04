@@ -259,3 +259,6 @@ export const TabsContent = React.forwardRef<HTMLDivElement, TabsContentProps>(
 TabsContent.displayName = 'TabsContent';
 
 export default Tabs;
+
+
+

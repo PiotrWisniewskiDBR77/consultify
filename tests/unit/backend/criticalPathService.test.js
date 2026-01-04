@@ -1,30 +1,33 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
-// Mock dependencies
-const mockDb = {
-    get: vi.fn(),
-    all: vi.fn(),
-    run: vi.fn(),
-    serialize: vi.fn((cb) => cb()),
-    initPromise: Promise.resolve()
-};
+/**
+ * Critical Path Service Tests
+ * Tests for dependency-aware sequencing and critical path calculation
+ * CRITICAL FOR ENTERPRISE PROJECT MANAGEMENT
+ */
 
-const mockDependencyService = {
-    buildDependencyGraph: vi.fn(),
-    detectDeadlocks: vi.fn()
-};
-
-import CriticalPathService from '../../../server/src/services/criticalPathService.js';
+import CriticalPathService from '../../../server/services/criticalPathService.js';
 
 describe('CriticalPathService', () => {
+    let mocks;
+    let mockDependencyService;
+
     beforeEach(() => {
         vi.clearAllMocks();
+        mocks = setupStandardTest();
+
+        mockDependencyService = {
+            buildDependencyGraph: vi.fn(),
+            detectDeadlocks: vi.fn()
+        };
+
         CriticalPathService.setDependencies({
-            db: mockDb,
+            db: mocks.db,
             DependencyService: mockDependencyService
         });
 
-        mockDb.run.mockImplementation((...args) => {
+        mocks.db.run.mockImplementation((...args) => {
             const cb = args[args.length - 1];
             if (typeof cb === 'function') cb(null);
         });
@@ -42,7 +45,7 @@ describe('CriticalPathService', () => {
                 ]
             });
 
-            mockDb.all.mockImplementation((...args) => {
+            mocks.db.all.mockImplementation((...args) => {
                 const cb = args[args.length - 1];
                 if (typeof cb === 'function') {
                     // Mock fetching initiatives with duration
@@ -71,7 +74,7 @@ describe('CriticalPathService', () => {
                 ]
             });
 
-            mockDb.all.mockImplementation((...args) => {
+            mocks.db.all.mockImplementation((...args) => {
                 const cb = args[args.length - 1];
                 if (typeof cb === 'function') {
                     cb(null, [

@@ -2,13 +2,21 @@
  * AI Mode Resolver Unit Tests
  * 
  * Tests AI Mode system per 02_AI_BEHAVIOR_BY_PHASE.md and 30_AI_MODE_SWITCHING.md
+ * CRITICAL FOR ENTERPRISE AI BEHAVIOR CONTROL
  */
 
-const AIModeResolver = require('../../server/services/aiModeResolver');
+import { describe, it, expect } from 'vitest';
 
 describe('AIModeResolver', () => {
+    let AIModeResolver;
+
+    beforeAll(async () => {
+        const module = await import('../../server/services/aiModeResolver.js');
+        AIModeResolver = module.default || module;
+    });
+
     describe('Mode Constants', () => {
-        test('should have all 6 AI modes', () => {
+        it('should have all 6 AI modes', () => {
             const expectedModes = ['OFF', 'NARRATOR', 'GUIDE', 'THINKING_PARTNER', 'FACILITATOR', 'META_ANALYST'];
             const actualModes = Object.values(AIModeResolver.AI_MODES);
             expect(actualModes).toEqual(expectedModes);
@@ -16,7 +24,7 @@ describe('AIModeResolver', () => {
     });
 
     describe('Phase to Mode Mapping', () => {
-        test('Phase A maps to OFF (no AI)', () => {
+        it('Phase A maps to OFF (no AI)', () => {
             expect(AIModeResolver.getModeForPhase('A')).toBe('OFF');
         });
 
@@ -46,7 +54,7 @@ describe('AIModeResolver', () => {
     });
 
     describe('Mode Capabilities', () => {
-        test('OFF mode cannot respond', () => {
+        it('OFF mode cannot respond', () => {
             const caps = AIModeResolver.getCapabilities('OFF');
             expect(caps.canRespond).toBe(false);
             expect(caps.canExplain).toBe(false);

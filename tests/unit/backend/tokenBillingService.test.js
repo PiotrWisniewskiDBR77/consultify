@@ -6,50 +6,34 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import { testUsers, testOrganizations } from '../../fixtures/testData.js';
 
-// Hoisted mock - defined inline
-const mockDb = vi.hoisted(() => ({
-    get: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, null));
-    }),
-    all: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, []));
-    }),
-    run: vi.fn(function(sql, params, callback) {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
-    }),
-    exec: vi.fn((sql, callback) => {
-        if (callback) process.nextTick(() => callback(null));
-    }),
-    serialize: vi.fn((cb) => { if (cb) cb(); }),
-    prepare: vi.fn(),
-    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    initPromise: Promise.resolve()
-}));
+/**
+ * Token Billing Service Tests
+ * CRITICAL BILLING SERVICE - Must have 95%+ coverage
+ * Tests token balance management, deductions, and multi-tenant isolation.
+ * CRITICAL FOR ENTERPRISE BILLING ACCURACY
+ */
 
 const mockSqliteAsync = vi.hoisted(() => ({
     runAsync: vi.fn(),
     getAsync: vi.fn(),
     allAsync: vi.fn(),
-    withTransaction: vi.fn((fn) => fn(mockDb))
-}));
-
-vi.mock('../../../server/database', () => ({
-    default: mockDb
+    withTransaction: vi.fn((fn) => fn(null))
 }));
 
 vi.mock('../../../server/db/sqliteAsync', () => mockSqliteAsync);
 
 describe('TokenBillingService', () => {
     let TokenBillingService;
+    let mocks;
     let mockCrypto;
 
     beforeEach(async () => {
         vi.clearAllMocks();
+
+        mocks = setupStandardTest();
 
         mockCrypto = {
             randomBytes: vi.fn(() => Buffer.from('0123456789abcdef')),
@@ -63,15 +47,18 @@ describe('TokenBillingService', () => {
             }))
         };
 
+        // Update sqliteAsync mock to use mocks.db
+        mockSqliteAsync.withTransaction.mockImplementation((fn) => fn(mocks.db));
+
         // Dynamic import for ESM compatibility - import from TypeScript source
         const module = await import('../../../server/src/services/tokenBillingService.ts');
         TokenBillingService = module.default;
 
-        // Inject mock dependencies
+        // Inject mock dependencies using unified pattern
         if (TokenBillingService.setDependencies) {
             TokenBillingService.setDependencies({
-                db: mockDb,
-                uuidv4: () => 'test-uuid-1234',
+                db: mocks.db,
+                uuidv4: mocks.uuid || (() => 'test-uuid-1234'),
                 crypto: mockCrypto,
                 sqliteAsync: mockSqliteAsync
             });
@@ -88,7 +75,7 @@ describe('TokenBillingService', () => {
         it('should return user token balance', async () => {
             const userId = testUsers.user.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, {
                     platform_tokens: 1000,
                     platform_tokens_bonus: 100,
@@ -102,7 +89,7 @@ describe('TokenBillingService', () => {
             expect(balance).toBeDefined();
             expect(balance.platform_tokens).toBe(1000);
             expect(balance.platform_tokens_bonus).toBe(100);
-            expect(mockDb.get).toHaveBeenCalledWith(
+            expect(mocks.db.get).toHaveBeenCalledWith(
                 expect.stringContaining('SELECT'),
                 [userId],
                 expect.any(Function)
@@ -112,7 +99,7 @@ describe('TokenBillingService', () => {
         it('should return zero balance for new user', async () => {
             const userId = testUsers.user.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, null);
             });
 
@@ -125,7 +112,7 @@ describe('TokenBillingService', () => {
         it('should handle database errors', async () => {
             const userId = testUsers.user.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(new Error('DB Error'), null);
             });
 
@@ -139,7 +126,7 @@ describe('TokenBillingService', () => {
         it('should return true when balance is sufficient', async () => {
             const userId = testUsers.user.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, {
                     platform_tokens: 1000,
                     platform_tokens_bonus: 100
@@ -154,7 +141,7 @@ describe('TokenBillingService', () => {
         it('should return false when balance is insufficient', async () => {
             const userId = testUsers.user.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, {
                     platform_tokens: 100,
                     platform_tokens_bonus: 0
@@ -169,7 +156,7 @@ describe('TokenBillingService', () => {
         it('should include bonus tokens in balance check', async () => {
             const userId = testUsers.user.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, {
                     platform_tokens: 400,
                     platform_tokens_bonus: 200
@@ -188,7 +175,7 @@ describe('TokenBillingService', () => {
             const tokens = 100;
 
             // Mock margin lookup
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 if (query.includes('billing_margins')) {
                     callback(null, {
                         base_cost_per_1k: 0.01,
@@ -201,13 +188,13 @@ describe('TokenBillingService', () => {
             });
 
             // Mock transaction - serialize executes callback synchronously
-            mockDb.serialize.mockImplementation((callback) => {
+            mocks.db.serialize.mockImplementation((callback) => {
                 callback();
             });
 
             // Track call order for nested callbacks
             let runCallOrder = [];
-            mockDb.run.mockImplementation(function (query, params, callback) {
+            mocks.db.run.mockImplementation(function (query, params, callback) {
                 if (typeof params === 'function') {
                     callback = params;
                     params = [];
@@ -242,7 +229,7 @@ describe('TokenBillingService', () => {
             expect(result).toBeDefined();
             expect(result.transactionId).toBeDefined();
             expect(result.tokens).toBeDefined();
-            expect(mockDb.run).toHaveBeenCalled();
+            expect(mocks.db.run).toHaveBeenCalled();
         });
 
         it('should deduct from organization balance when organizationId provided', async () => {
@@ -250,7 +237,7 @@ describe('TokenBillingService', () => {
             const orgId = testOrganizations.org1.id;
             const tokens = 100;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 if (query.includes('billing_margins')) {
                     callback(null, {
                         base_cost_per_1k: 0.01,
@@ -262,12 +249,12 @@ describe('TokenBillingService', () => {
                 }
             });
 
-            mockDb.serialize.mockImplementation((callback) => {
+            mocks.db.serialize.mockImplementation((callback) => {
                 callback();
             });
 
             let orgUpdateCalled = false;
-            mockDb.run.mockImplementation(function (query, params, callback) {
+            mocks.db.run.mockImplementation(function (query, params, callback) {
                 if (typeof params === 'function') {
                     callback = params;
                     params = [];
@@ -305,7 +292,7 @@ describe('TokenBillingService', () => {
             const userId = testUsers.user.id;
 
             // Mock getBalance to return insufficient balance
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 if (query.includes('user_token_balance')) {
                     callback(null, {
                         platform_tokens: 50,
@@ -325,11 +312,11 @@ describe('TokenBillingService', () => {
             // The method will proceed but balance check happens before deduction
             // Since hasSufficientBalance is not called in deductTokens, 
             // this test should verify the actual behavior
-            mockDb.serialize.mockImplementation((callback) => {
+            mocks.db.serialize.mockImplementation((callback) => {
                 callback();
             });
 
-            mockDb.run.mockImplementation(function (query, params, callback) {
+            mocks.db.run.mockImplementation(function (query, params, callback) {
                 if (typeof params === 'function') {
                     callback = params;
                     params = [];
@@ -364,7 +351,7 @@ describe('TokenBillingService', () => {
         it('should handle database errors', async () => {
             const userId = testUsers.user.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(new Error('DB Error'), null);
             });
 
@@ -379,12 +366,12 @@ describe('TokenBillingService', () => {
             const userId = testUsers.user.id;
             const tokens = 500;
 
-            mockDb.serialize.mockImplementation((callback) => {
+            mocks.db.serialize.mockImplementation((callback) => {
                 callback();
             });
 
             const callQueue = [];
-            mockDb.run.mockImplementation(function (query, params, callback) {
+            mocks.db.run.mockImplementation(function (query, params, callback) {
                 callQueue.push(() => {
                     if (query.includes('INSERT OR IGNORE')) {
                         if (callback) callback.call({ changes: 0 }, null);
@@ -408,7 +395,7 @@ describe('TokenBillingService', () => {
             expect(result).toBeDefined();
             expect(result.transactionId).toBeDefined();
             expect(result.tokens).toBe(tokens);
-            expect(mockDb.run).toHaveBeenCalled();
+            expect(mocks.db.run).toHaveBeenCalled();
         });
 
         it('should credit to organization balance when organizationId provided', async () => {
@@ -416,13 +403,13 @@ describe('TokenBillingService', () => {
             const orgId = testOrganizations.org1.id;
             const tokens = 500;
 
-            mockDb.serialize.mockImplementation((callback) => {
+            mocks.db.serialize.mockImplementation((callback) => {
                 callback();
             });
 
             let orgIdFound = false;
             const callQueue = [];
-            mockDb.run.mockImplementation(function (query, params, callback) {
+            mocks.db.run.mockImplementation(function (query, params, callback) {
                 callQueue.push(() => {
                     if (query.includes('INSERT OR IGNORE')) {
                         if (callback) callback.call({ changes: 0 }, null);
@@ -458,7 +445,7 @@ describe('TokenBillingService', () => {
             const org1Id = testOrganizations.org1.id;
             const org2Id = testOrganizations.org2.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 if (query.includes('billing_margins')) {
                     process.nextTick(() => {
                         callback(null, {
@@ -474,12 +461,12 @@ describe('TokenBillingService', () => {
                 }
             });
 
-            mockDb.serialize.mockImplementation((callback) => {
+            mocks.db.serialize.mockImplementation((callback) => {
                 callback();
             });
 
             let org1UpdateCalled = false;
-            mockDb.run.mockImplementation(function (query, params, callback) {
+            mocks.db.run.mockImplementation(function (query, params, callback) {
                 if (typeof params === 'function') {
                     callback = params;
                     params = [];
@@ -521,7 +508,7 @@ describe('TokenBillingService', () => {
 
     describe('getMargins()', () => {
         it('should return all billing margins', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, [
                     { source_type: 'platform', margin_percent: 10 },
                     { source_type: 'byok', margin_percent: 5 }
@@ -531,7 +518,7 @@ describe('TokenBillingService', () => {
             const margins = await TokenBillingService.getMargins();
 
             expect(margins).toHaveLength(2);
-            expect(mockDb.all).toHaveBeenCalledWith(
+            expect(mocks.db.all).toHaveBeenCalledWith(
                 expect.stringContaining('SELECT * FROM billing_margins'),
                 [],
                 expect.any(Function)
@@ -541,7 +528,7 @@ describe('TokenBillingService', () => {
 
     describe('getMargin()', () => {
         it('should return margin for specific source type', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, {
                     source_type: 'platform',
                     margin_percent: 10,

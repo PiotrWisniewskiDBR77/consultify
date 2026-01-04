@@ -47,11 +47,10 @@ jobs:
           PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
         continue-on-error: true
 
-      - name: Percy Snapshot
-        uses: percy/action@v1
+      - name: Percy Visual Regression
         if: ${{ secrets.PERCY_TOKEN != '' }}
-        with:
-          command: 'percy snapshot tests/visual'
+        run: |
+          npx percy exec -- playwright test tests/visual --reporter=list
         env:
           PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
 
@@ -62,4 +61,7 @@ jobs:
           name: visual-regression-screenshots
           path: test-results/
           retention-days: 7
+
+
+
 

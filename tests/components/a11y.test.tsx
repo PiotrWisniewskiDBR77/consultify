@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { Button } from '../../components/Button';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
-import { LoadingScreen } from '../../components/LoadingScreen';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 
 // Note: jest-axe requires additional setup. For now, we'll do basic a11y checks manually.
 

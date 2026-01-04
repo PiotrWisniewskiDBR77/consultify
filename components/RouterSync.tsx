@@ -144,6 +144,16 @@ export const RouterSync: React.FC = () => {
                 console.log('[RouterSync] Navigating to AI Chat');
                 setCurrentView(AppView.AI_CHAT);
             }
+        } else if (path === '/admin') {
+            if (!currentUser?.isAuthenticated) {
+                console.log('[RouterSync] Not authenticated, redirecting to login');
+                navigate('/login', { replace: true });
+                return;
+            }
+            console.log('[RouterSync] Navigating to Admin Overview');
+            if (currentView !== AppView.ADMIN_OVERVIEW) {
+                setCurrentView(AppView.ADMIN_OVERVIEW);
+            }
         } else if (path === '/' || path === '') {
             if (currentUser?.isAuthenticated) {
                 console.log('[RouterSync] User authenticated, redirecting to AI Chat');

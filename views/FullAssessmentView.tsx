@@ -9,7 +9,7 @@ import { AssessmentModuleHub, HubTab } from '../components/assessment/Assessment
 import { AssessmentReportsWorkspace } from '../components/assessment/AssessmentReportsWorkspace';
 import { AssessmentSummaryWorkspace } from '../components/assessment/AssessmentSummaryWorkspace';
 import { AssessmentWizard } from '../components/assessment/AssessmentWizard';
-import { SplitLayout } from '../components/SplitLayout';
+import { SplitLayout } from '../components/layout/SplitLayout';
 import { useAIStream } from '../hooks/useAIStream';
 import { AIMessageHistory } from '../services/ai/gemini';
 import { Api } from '../services/api';

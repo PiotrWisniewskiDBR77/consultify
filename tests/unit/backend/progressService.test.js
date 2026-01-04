@@ -1,44 +1,28 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
-// Hoisted mock - defined inline
-const mockDb = vi.hoisted(() => ({
-    get: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, null));
-    }),
-    all: vi.fn((sql, params, callback) => {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb(null, []));
-    }),
-    run: vi.fn(function(sql, params, callback) {
-        const cb = typeof params === 'function' ? params : callback;
-        if (cb) process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
-    }),
-    exec: vi.fn((sql, callback) => {
-        if (callback) process.nextTick(() => callback(null));
-    }),
-    serialize: vi.fn((cb) => { if (cb) cb(); }),
-    prepare: vi.fn(),
-    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    initPromise: Promise.resolve()
-}));
-
-vi.mock('../../../server/database', () => ({ default: mockDb }));
-
+/**
+ * Progress Service Tests
+ * Tests for project tracking and progress calculation
+ * CRITICAL FOR ENTERPRISE PROJECT MANAGEMENT
+ */
 describe('Progress Service', () => {
     let ProgressService;
+    let mocks;
 
     beforeEach(async () => {
         vi.clearAllMocks();
+
+        mocks = setupStandardTest();
 
         // Dynamic import for ESM compatibility
         const module = await import('../../../server/src/services/progressService.js');
         ProgressService = module.default;
 
-        // Inject mock dependencies
+        // Inject mock dependencies using unified pattern
         if (ProgressService.setDependencies) {
             ProgressService.setDependencies({
-                db: mockDb
+                db: mocks.db
             });
         }
     });
@@ -49,7 +33,7 @@ describe('Progress Service', () => {
 
     describe('calculateInitiativeProgress', () => {
         it('should calculate progress from tasks', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => cb(null, { total: 10, completed: 5, blocked: 0 }));
+            mocks.db.get.mockImplementation((sql, params, cb) => cb(null, { total: 10, completed: 5, blocked: 0 }));
             const result = await ProgressService.calculateInitiativeProgress('i-1');
             expect(result.progress).toBe(50);
             expect(result.isBlocked).toBe(false);

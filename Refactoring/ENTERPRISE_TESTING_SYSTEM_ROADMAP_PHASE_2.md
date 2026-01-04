@@ -312,3 +312,6 @@ Po udanej Fazie 1 (31 włączonych testów), czas na finalizację złotego stand
 ---
 
 *Ten dokument stanowi roadmap dla transformacji Consultify do pozycji światowego lidera w enterprise testing excellence.*
+
+
+

@@ -313,12 +313,12 @@ See `Cursor/TEST_ARCHITECTURE.md` for full roadmap.
 
 ### Existing Component Tests
 
-- [x] `tests/components/Button.test.tsx` ✅ Exists
+- [x] `tests/components/ui/Button.test.tsx` ✅ Exists
 - [x] `tests/components/ErrorBoundary.test.tsx` ✅ Exists
 - [x] `tests/components/FeedbackWidget.test.tsx` ✅ Exists
 - [x] `tests/components/InitiativeCard.test.tsx` ✅ Exists
 - [x] `tests/components/LLMSelector.test.tsx` ✅ Exists
-- [x] `tests/components/LoadingScreen.test.tsx` ✅ Exists
+- [x] `tests/components/ui/LoadingScreen.test.tsx` ✅ Exists
 - [x] `tests/components/PlanCard.test.tsx` ✅ Exists
 - [x] `tests/components/QuotaWarningBanner.test.tsx` ✅ Exists
 - [x] `tests/components/SystemHealth.test.tsx` ✅ Exists

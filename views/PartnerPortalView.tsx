@@ -96,6 +96,43 @@ const resourceCards = [
     },
 ];
 
+const partnerBenefits = [
+    {
+        title: 'Co-selling razem z Consultify AI',
+        body: 'Wspólne szanse dealowe pod eskalacją, pełen widok pipeline’u i mechanizmy automatycznego przypisywania prowizji.',
+    },
+    {
+        title: 'Meta-PMO compliance',
+        body: 'Każde działanie mapujemy na ISO 21500 / PMBOK 7 / PRINCE2 oraz odpowiedni obszar (np. BENEFITS_REALIZATION, PERFORMANCE_MONITORING).',
+    },
+    {
+        title: 'Partner Development',
+        body: 'Akademia, formularze commission, zasoby i dedykowany PDM w jednym hubie.',
+    },
+];
+
+const collaborationSteps = [
+    {
+        title: 'Onboarding & verification',
+        detail: 'Weryfikacja tax/bank, podpisanie umowy, przypisanie ról (PROJECT_ROLE).',
+    },
+    {
+        title: 'Shared selling rhythm',
+        detail: 'Wspólna generacja dealów, wspólna pipeline review, weekly commitment.',
+    },
+    {
+        title: 'Governance & reporting',
+        detail: 'Audit trail dla decyzji, escalations, SLA payout + standards mapping w systemach CO-SELL/COMMISSION.',
+    },
+];
+
+const partnershipPrinciples = [
+    'Aktualizujemy profilu katalogu w Solutions Directory co najmniej raz na kwartał, aby zachować aktualne budżety i capability.',
+    'Każda propozycja dealowa ma wyznaczonego Decision Ownera i Stage Gate, zgodnie z PMO domain GOVERNANCE_DECISION_MAKING.',
+    'Commission tickets, statements i payouts są zgłaszane przez platformę, a finanse rozliczają się w standardzie 30 dni SLA.',
+    'Dzielimy się insightami o benefitach dla klientów, łącząc RISK_ISSUE_MANAGEMENT z BENEFITS_REALIZATION dla pełnej widoczności wartości.',
+];
+
 interface PartnerPortalViewProps {
     currentSection: AppView;
     onNavigate: (view: AppView) => void;
@@ -145,6 +182,66 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({ currentSec
                         ))}
                     </div>
                 </div>
+
+                <section className="grid gap-4 md:grid-cols-3">
+                    {partnerBenefits.map((benefit) => (
+                        <article
+                            key={benefit.title}
+                            className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-white/5 dark:bg-navy-900/60"
+                        >
+                            <h3 className="text-sm font-semibold text-navy-900 dark:text-white">{benefit.title}</h3>
+                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-300">{benefit.body}</p>
+                        </article>
+                    ))}
+                </section>
+
+                <section className="rounded-3xl border border-slate-200 bg-slate-50/80 p-6 shadow-sm dark:border-white/5 dark:bg-navy-900/60">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Jak działa współpraca</h3>
+                        <span className="text-xs uppercase tracking-wide text-slate-400">Kolejne etapy</span>
+                    </div>
+                    <ol className="mt-4 space-y-4 text-sm text-slate-600 dark:text-slate-300">
+                        {collaborationSteps.map((step, idx) => (
+                            <li key={step.title} className="flex gap-3">
+                                <span className="font-semibold text-brand">{idx + 1}.</span>
+                                <div>
+                                    <p className="font-semibold text-navy-900 dark:text-white">{step.title}</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">{step.detail}</p>
+                                </div>
+                            </li>
+                        ))}
+                    </ol>
+                </section>
+
+                <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm dark:border-white/5 dark:bg-navy-900/60">
+                    <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Zasady współpracy</h3>
+                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                        Partnerzy pracują w oparciu o Meta-PMO Framework: każdy etap dealu ma przypisane domeny PMO i śledzimy mappingi
+                        ISO 21500 / PMBOK 7 / PRINCE2.
+                    </p>
+                    <ul className="mt-4 grid gap-3 text-xs text-slate-600 dark:text-slate-300 md:grid-cols-2">
+                        {partnershipPrinciples.map((principle) => (
+                            <li key={principle} className="flex items-start gap-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-3 dark:border-white/5 dark:bg-navy-950/40">
+                                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-brand" />
+                                {principle}
+                            </li>
+                        ))}
+                    </ul>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                        <button
+                            onClick={() => onNavigate(AppView.PARTNER_PROVIDER_HOME)}
+                            className="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-dark"
+                        >
+                            Startuj partner hub
+                        </button>
+                        <button
+                            onClick={() => onNavigate(AppView.PARTNER_RESOURCES)}
+                            className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300"
+                        >
+                            Poznaj zasoby
+                        </button>
+                    </div>
+                </section>
 
                 <div className="grid gap-6 md:grid-cols-2">
                     {sections.map((section) => {
@@ -365,17 +462,25 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({ currentSec
                 </div>
 
                 <div className="rounded-2xl border border-brand/40 bg-brand/5 p-6 text-slate-800 dark:text-white">
-                    <h3 className="text-xl font-semibold">CTA: Zaczynamy program partnerski</h3>
+                    <h3 className="text-xl font-semibold">Odkryj poziomy partnerstwa</h3>
                     <p className="mt-2 text-sm text-slate-600 dark:text-slate-200">
-                        Umieść na stronie startowej dedykowany CTA i przekieruj partnerów do landing page z podobnym
-                        układem jak HubSpot. Każdy element menu i CTA powinien prowadzić do odpowiedniej sekcji.
+                        Poznaj nasze cztery poziomy partnerstwa: Bronze, Silver, Gold i Platinum. Każdy poziom oferuje
+                        progresywne korzyści — od 10% do 20% prowizji, co-sell leads i dedykowane wsparcie.
                     </p>
-                    <button
-                        onClick={() => onNavigate(AppView.PARTNER_PROVIDER_HOME)}
-                        className="mt-4 rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white"
-                    >
-                        Otwórz hub partnerów
-                    </button>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                        <button
+                            onClick={() => onNavigate(AppView.PARTNER_PRICING)}
+                            className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-dark"
+                        >
+                            Zobacz cennik partnerski
+                        </button>
+                        <button
+                            onClick={() => onNavigate(AppView.PARTNER_PROVIDER_HOME)}
+                            className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand/40 dark:border-white/20 dark:bg-transparent dark:text-white"
+                        >
+                            Otwórz hub partnerów
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

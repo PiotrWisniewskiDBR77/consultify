@@ -9,7 +9,7 @@ export const UserSchema = z.object({
     linkedinId: z.string().optional(),
     companyName: z.string(),
     role: z.string().optional(),
-    status: z.enum(['active', 'inactive', 'suspended']),
+    status: z.enum(['active', 'inactive', 'suspended', 'pending']),
     lastLogin: z.string().optional(),
     isAuthenticated: z.boolean(),
     accessLevel: z.enum(['free', 'full']),

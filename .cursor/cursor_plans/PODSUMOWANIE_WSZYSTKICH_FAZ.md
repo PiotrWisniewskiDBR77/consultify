@@ -110,7 +110,7 @@
 - ✅ `server/utils/cacheHelper.js` - Redis caching utilities
 
 ### Frontend Components
-- ✅ `components/LoadingScreen.tsx` - Loading fallback dla Suspense
+- ✅ `components/ui/LoadingScreen.tsx` - Loading fallback dla Suspense
 
 ### Migracje
 - ✅ `server/migrations/031_performance_indexes.sql` - Indeksy wydajnościowe

@@ -42,11 +42,11 @@ import {
     StrategicIntent,
     User,
 } from '../types';
-import { Button } from './Button';
+import { Button } from './ui/Button';
 import { InitiativeFinancialIntegration } from './Economics/InitiativeFinancialIntegration';
 import { InitiativeIntelligenceTab } from './InitiativeIntelligenceTab';
 import { InitiativeTasksTab } from './InitiativeTasksTab';
-import { Select } from './Select';
+import { Select } from './ui/Select';
 
 interface InitiativeDetailModalProps {
     initiative: FullInitiative;

@@ -531,6 +531,13 @@ export const getSyncLogs = (integrationId: string, limit?: number) =>
 export const checkHealth = (id: string) => integrationServiceInstance.checkHealth(id);
 export const getAvailableTypes = () => integrationServiceInstance.getAvailableTypes();
 
+/**
+ * Create a new integration service instance with custom dependencies (for testing)
+ */
+export const createIntegrationService = (deps?: Partial<IntegrationServiceDependencies>) => {
+    return new IntegrationServiceClass(deps);
+};
+
 // Default export for backward compatibility
 const integrationService = {
     getIntegrations,

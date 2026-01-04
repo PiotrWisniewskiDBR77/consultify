@@ -22,18 +22,21 @@ if (process.env.MOCK_REDIS === 'true') {
     aiLogger.info('[Queue] Using Mock Queue for ai-tasks');
     aiQueue = createMockQueue();
 } else {
-    aiQueue = new Queue('ai-tasks', redisConfig);
-
-    // Add default job options
-    aiQueue.defaultJobOptions = {
-        attempts: 3,
-        backoff: {
-            type: 'exponential',
-            delay: 1000,
-        },
-        removeOnComplete: true, // Keep DB clean
-        removeOnFail: false // Keep for debugging
+    // Add default job options to redisConfig
+    const queueConfig = {
+        ...redisConfig,
+        defaultJobOptions: {
+            attempts: 3,
+            backoff: {
+                type: 'exponential',
+                delay: 1000,
+            },
+            removeOnComplete: true, // Keep DB clean
+            removeOnFail: false // Keep for debugging
+        }
     };
+
+    aiQueue = new Queue('ai-tasks', queueConfig);
 }
 
 export default aiQueue;

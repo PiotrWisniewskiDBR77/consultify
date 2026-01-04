@@ -6,15 +6,21 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import { testUsers, testOrganizations } from '../../fixtures/testData.js';
 
+/**
+ * Edge Cases Tests
+ * Additional Unit Tests - Edge Cases and Error Scenarios
+ * Tests edge cases, error handling, and boundary conditions.
+ * CRITICAL FOR ENTERPRISE RESILIENCE
+ */
 describe('Edge Cases and Error Scenarios', () => {
-    let mockDb;
+    let mocks;
 
     beforeEach(async () => {
         vi.resetModules();
-        mockDb = createMockDb();
+        mocks = setupStandardTest();
     });
 
     afterEach(() => {
@@ -46,9 +52,9 @@ describe('Edge Cases and Error Scenarios', () => {
     describe('Empty Data Handling', () => {
         it('should handle empty arrays in queries', async () => {
             const RoadmapService = (await import('../../../server/src/services/roadmapService.js')).default;
-            RoadmapService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
+            RoadmapService.setDependencies({ db: mocks.db, uuidv4: mocks.uuid || (() => 'uuid') });
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, []);
             });
 
@@ -60,7 +66,7 @@ describe('Edge Cases and Error Scenarios', () => {
             const EscalationService = (await import('../../../server/src/services/escalationService.js')).default;
             EscalationService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, []);
             });
 
@@ -87,7 +93,7 @@ describe('Edge Cases and Error Scenarios', () => {
                 billingService: mockBillingService
             });
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, {
                     tokens_used: Number.MAX_SAFE_INTEGER - 1000,
                     storage_bytes: 0
@@ -115,7 +121,7 @@ describe('Edge Cases and Error Scenarios', () => {
                 billingService: mockBillingService
             });
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mocks.db.get.mockImplementation((query, params, callback) => {
                 callback(null, {
                     tokens_used: 999999,
                     storage_bytes: 0
@@ -188,7 +194,7 @@ describe('Edge Cases and Error Scenarios', () => {
             GovernanceService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
             const dbError = new Error('Database connection failed');
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 // Use process.nextTick to simulate async callback
                 if (callback) {
                     process.nextTick(() => {
@@ -213,7 +219,7 @@ describe('Edge Cases and Error Scenarios', () => {
             OrganizationService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
             const constraintError = new Error('UNIQUE constraint failed');
 
-            mockDb.serialize.mockImplementation((callback) => {
+            mocks.db.serialize.mockImplementation((callback) => {
                 if (callback) callback();
             });
 
@@ -245,7 +251,7 @@ describe('Edge Cases and Error Scenarios', () => {
 
             // Simulate concurrent modification
             let callCount = 0;
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 callCount++;
                 if (callCount === 1) {
                     // First call succeeds
@@ -273,7 +279,7 @@ describe('Edge Cases and Error Scenarios', () => {
                 name: `Item ${i}`
             }));
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, largeResultSet);
             });
 
@@ -304,7 +310,7 @@ describe('Edge Cases and Error Scenarios', () => {
             const GovernanceService = (await import('../../../server/src/services/governanceService.js')).default;
             GovernanceService.setDependencies({ db: mockDb, uuidv4: () => 'uuid' });
 
-            mockDb.run.mockImplementation((query, params, callback) => {
+            mocks.db.run.mockImplementation((query, params, callback) => {
                 // Simulate slow query
                 setTimeout(() => {
                     callback.call({ changes: 1 }, null);

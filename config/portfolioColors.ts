@@ -248,3 +248,6 @@ export const AXIS_COLORS: Record<string, string> = {
 export const getAxisColor = (axis: string): string => {
     return AXIS_COLORS[axis] || 'bg-slate-500';
 };
+
+
+

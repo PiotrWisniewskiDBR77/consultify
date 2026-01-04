@@ -8,15 +8,13 @@ vi.mock('@google/generative-ai', () => ({
     }))
 }));
 
-// Mock Dependencies
-const { mockDb } = vi.hoisted(() => ({
-    mockDb: {
-        get: vi.fn(),
-        all: vi.fn(),
-        run: vi.fn(),
-        initPromise: Promise.resolve()
-    }
-}));
+import { setupStandardTest } from '../helpers/unifiedMockSetup.js';
+
+/**
+ * Action Proposal Engine Tests
+ * Tests for AI-powered action proposal generation
+ * CRITICAL FOR ENTERPRISE AI AUTOMATION
+ */
 
 // Mock aiPipeline to prevent loading complex dependencies
 vi.mock('../../server/services/ai/aiPipeline.js', () => ({
@@ -25,20 +23,9 @@ vi.mock('../../server/services/ai/aiPipeline.js', () => ({
     }
 }));
 
-// Mock both potential database entry points
-vi.mock('../../server/database.js', () => ({
-    default: mockDb,
-    getDatabase: () => mockDb
-}));
-
-// Mock Database.ts if reached deeper in the chain
-vi.mock('../../server/src/database/Database.ts', () => ({
-    getDatabase: () => mockDb,
-    default: mockDb
-}));
-
 describe('ActionProposalEngine', () => {
     let ActionProposalEngine;
+    let mocks;
 
     const mockContext = {
         orgId: 'legolex-v2',

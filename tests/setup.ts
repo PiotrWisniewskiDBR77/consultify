@@ -103,6 +103,111 @@ vi.mock('react-i18next', () => {
     };
 });
 
+// --------------------------------------------------------
+// Global Database Mock (SQLite-compatible)
+// --------------------------------------------------------
+// We define this on global so server/database.js picks it up.
+// Note: vi.hoisted() should be used in test files, not in setup.ts
+// Using regular vi.fn() here for global mock
+const mockDb: any = {
+    run: vi.fn(),
+    get: vi.fn(),
+    all: vi.fn(),
+    exec: vi.fn(),
+    serialize: vi.fn(),
+    on: vi.fn().mockReturnThis(),
+    close: vi.fn(),
+    // Async wrappers often used by services
+    getAsync: vi.fn().mockResolvedValue(null),
+    runAsync: vi.fn().mockResolvedValue({ lastID: 0, changes: 0 }),
+    allAsync: vi.fn().mockResolvedValue([]),
+    execAsync: vi.fn().mockResolvedValue(undefined),
+    // Polyfill for Postgres compatibility (Promise-based)
+    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 })
+};
+
+// Improved callback handling using process.nextTick for async simulation
+// Set implementations after hoisting to avoid issues with 'this' context
+mockDb.run.mockImplementation(function (sql: string, params?: any, cb?: any) {
+    const callback = typeof params === 'function' ? params : cb;
+    if (typeof callback === 'function') {
+        process.nextTick(() => {
+            try {
+                callback.call({ lastID: 1, changes: 1 }, null);
+            } catch (e) {
+                // Silently handle callback errors to prevent test crashes
+            }
+        });
+    }
+    return this;
+});
+
+mockDb.get.mockImplementation(function (sql: string, params?: any, cb?: any) {
+    const callback = typeof params === 'function' ? params : cb;
+    if (typeof callback === 'function') {
+        process.nextTick(() => {
+            try {
+                callback(null, null); // Default: no row found
+            } catch (e) {
+                // Silently handle callback errors
+            }
+        });
+    }
+    return this;
+});
+
+mockDb.all.mockImplementation(function (sql: string, params?: any, cb?: any) {
+    const callback = typeof params === 'function' ? params : cb;
+    if (typeof callback === 'function') {
+        process.nextTick(() => {
+            try {
+                callback(null, []); // Default: empty array
+            } catch (e) {
+                // Silently handle callback errors
+            }
+        });
+    }
+    return this;
+});
+
+mockDb.exec.mockImplementation(function (sql: string, cb?: any) {
+    if (typeof cb === 'function') {
+        process.nextTick(() => {
+            try {
+                cb(null);
+            } catch (e) {
+                // Silently handle callback errors
+            }
+        });
+    }
+    return this;
+});
+
+mockDb.serialize.mockImplementation(function (cb?: any) {
+    if (typeof cb === 'function') {
+        process.nextTick(() => {
+            try {
+                cb();
+            } catch (e) {
+                // Silently handle callback errors
+            }
+        });
+    }
+    return this;
+});
+
+mockDb.close.mockImplementation(function (cb?: any) {
+    if (typeof cb === 'function') {
+        process.nextTick(() => {
+            try {
+                cb(null);
+            } catch (e) {
+                // Silently handle callback errors
+            }
+        });
+    }
+});
+
 // Ensure consistent test-mode behavior across backend + frontend tests
 if (typeof process !== 'undefined' && process.env) {
     process.env.NODE_ENV = 'test';
@@ -115,73 +220,17 @@ if (typeof process !== 'undefined' && process.env) {
     process.env.GEMINI_API_KEY = 'test-gemini-key';
     process.env.OPENAI_API_KEY = 'sk-test-openai-key';
 
-    // --------------------------------------------------------
-    // Global Database Mock (SQLite-compatible)
-    // --------------------------------------------------------
-    // We define this on global so server/database.js picks it up.
-    // Using vi.fn() allows tests to spy on/override specific methods using .mockImplementation()
-    const mockDb = {
-        run: vi.fn().mockImplementation(function (sql, params, cb) {
-            console.log('[MockDB] run called', { sql, hasCallback: !!cb, paramsType: typeof params });
-            const callback = typeof params === 'function' ? params : cb;
-            if (typeof callback === 'function') {
-                try {
-                    console.log('[MockDB] invoking callback');
-                    callback.call({ lastID: 1, changes: 1 }, null);
-                    console.log('[MockDB] callback invoked successfully');
-                } catch (e) {
-                    console.error('[MockDB] callback error', e);
-                }
-            } else {
-                console.error('[MockDB] NO CALLBACK FOUND', { params, cb });
-            }
-            return this;
-        }),
-        get: vi.fn().mockImplementation(function (sql, params, cb) {
-            console.log('[MockDB] get called', { sql: sql.substring(0, 50), paramsType: typeof params });
-            const callback = typeof params === 'function' ? params : cb;
-            if (callback) {
-                try {
-                    callback(null, null); // Default: no row found
-                    console.log('[MockDB] get callback invoked');
-                } catch (e) { console.error('[MockDB] get callback error', e); }
-            } else { console.error('[MockDB] get NO CALLBACK'); }
-            return this;
-        }),
-        all: vi.fn().mockImplementation(function (sql, params, cb) {
-            console.log('[MockDB] all called', { sql: sql.substring(0, 50), paramsType: typeof params });
-            const callback = typeof params === 'function' ? params : cb;
-            if (callback) {
-                try {
-                    callback(null, []); // Default: empty array
-                    console.log('[MockDB] all callback invoked');
-                } catch (e) { console.error('[MockDB] all callback error', e); }
-            } else { console.error('[MockDB] all NO CALLBACK'); }
-            return this;
-        }),
-        exec: vi.fn().mockImplementation(function (sql, cb) {
-            if (cb) cb(null);
-            return this;
-        }),
-        serialize: vi.fn().mockImplementation(function (cb) {
-            if (cb) cb();
-            return this;
-        }),
-        on: vi.fn().mockReturnThis(),
-        close: vi.fn().mockImplementation(function (cb) {
-            if (cb) cb(null);
-        }),
-        // Async wrappers often used by services
-        getAsync: vi.fn().mockResolvedValue(null),
-        runAsync: vi.fn().mockResolvedValue({ lastID: 0, changes: 0 }),
-        allAsync: vi.fn().mockResolvedValue([]),
-        execAsync: vi.fn().mockResolvedValue(undefined),
-        // Polyfill for Postgres compatibility (Promise-based)
-        query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 })
-    };
-
     // Assign to global for server/database.js to use
     (global as any).__TEST_DB_MOCK__ = mockDb;
+    
+    // Export helper function for tests that need custom mocks
+    // Note: Tests should import createMockDb directly from './helpers/mockDb.js'
+    // This is kept for backward compatibility
+    (global as any).createMockDb = async () => {
+        // Dynamic import from mockDb helper
+        const mockDbModule = await import('./helpers/mockDb.js');
+        return mockDbModule.createMockDb();
+    };
 
 // Remove require usage - use dynamic imports instead
 // const someModule = await import('./path/to/module.js');

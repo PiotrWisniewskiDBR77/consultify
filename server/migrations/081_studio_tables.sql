@@ -186,3 +186,6 @@ CREATE INDEX IF NOT EXISTS idx_studio_ai_sessions_document ON studio_ai_sessions
 
 
 
+
+
+

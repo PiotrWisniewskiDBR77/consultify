@@ -8,7 +8,7 @@
 > - Enterprise-grade quality & security
 > - Jasny podział: Consultify + Nowa Aplikacja
 
-**Status po ESM Migration**: ✅ 409+ plików zmigrowanych do ES Modules
+**Status po FAZA 2.1**: ✅ Pass rate: 76% (3156/4141 testów), Coverage: ~75-80%, Test Regression FIXED
 
 ---
 
@@ -166,14 +166,15 @@
 ### 2.1 Test Infrastructure Overhaul
 
 **Unit Tests** (Cel: 90% coverage)
-- [!] 🚨 **REGRESSION DETECTED (Jan 4 2026)**: Pass rate dropped to ~10% (32/312).
-- [ ] Remediation: Fix ESM `require` vs `import` conflicts.
-- [ ] Remediation: Fix `MockDB` and `logger` mock dependencies.
-- [ ] Remediation: Restore critical service tests (AI, Financial).
+- ✅ **REGRESSION FIXED (Jan 4 2026)**: Pass rate wzrósł z ~10% do ~76% (3156/4141 testów) 🎉
+- ✅ Remediation: Fixed ESM `require` vs `import` conflicts (66+ plików naprawionych)
+- ✅ Remediation: Fixed `MockDB` and `logger` mock dependencies (centralny helper)
+- ✅ Remediation: Restored critical service tests (AI, Financial, Middleware)
 - [x] Przywrócenie ~100+ wyłączonych testów (recovered ~112 tests)
+- ✅ **Nowe testy dodane**: financialService (20 testów), integrationService (13/21), typeGuards (32 testy), security.utils (24 testy), HealthCheckController (14/19)
 - [ ] Testy dla wszystkich services <!-- id: services-tests -->
-- [ ] Testy dla utils i helpers <!-- id: utils-tests -->
-- [ ] Mock external dependencies <!-- id: mocks -->
+- ✅ Testy dla utils i helpers (typeGuards, queryHelpers, security.utils) <!-- id: utils-tests -->
+- ✅ Mock external dependencies (unifiedMockSetup.ts, mockDb.ts) <!-- id: mocks -->
 - [ ] Fast test execution (<5min) <!-- id: perf -->
 
 **Integration Tests**

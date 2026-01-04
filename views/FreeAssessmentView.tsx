@@ -2,10 +2,10 @@ import { Check } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ChatPanel } from '../components/ChatPanel';
-import { Step1Workspace } from '../components/Step1Workspace';
-import { Step2Workspace } from '../components/Step2Workspace';
-import { Step3Workspace } from '../components/Step3Workspace';
+import { ChatPanel } from '../components/layout/ChatPanel';
+import { Step1Workspace } from '../components/workspaces/Step1Workspace';
+import { Step2Workspace } from '../components/workspaces/Step2Workspace';
+import { Step3Workspace } from '../components/workspaces/Step3Workspace';
 import { useAIContext } from '../contexts/AIContext';
 import { useAIStream } from '../hooks/useAIStream';
 import { useScreenContext } from '../hooks/useScreenContext';
@@ -441,14 +441,14 @@ export const FreeAssessmentView: React.FC = () => {
                     messages={
                         isStreaming
                             ? [
-                                  ...messages,
-                                  {
-                                      id: 'streaming-ai',
-                                      role: 'ai',
-                                      content: streamedContent,
-                                      timestamp: new Date(),
-                                  } as ChatMessage,
-                              ]
+                                ...messages,
+                                {
+                                    id: 'streaming-ai',
+                                    role: 'ai',
+                                    content: streamedContent,
+                                    timestamp: new Date(),
+                                } as ChatMessage,
+                            ]
                             : messages
                     }
                     onSendMessage={handleSendMessage}

@@ -387,3 +387,6 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
 };
 
 export default GlobalHelpSearch;
+
+
+

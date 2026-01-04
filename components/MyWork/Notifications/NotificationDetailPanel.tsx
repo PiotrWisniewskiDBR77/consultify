@@ -202,3 +202,6 @@ export const NotificationDetailPanel: React.FC<NotificationDetailPanelProps> = (
 };
 
 export default NotificationDetailPanel;
+
+
+

@@ -5,12 +5,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vitest';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+// Removed createRequire - using ESM imports
 
-const { initTestDb, cleanTables, dbRun, db } = require('../../helpers/dbHelper.cjs');
-const WorkqueueService = require('../../../server/src/services/workqueueService');
-const { v4: uuidv4 } = require('uuid');
+let initTestDb, cleanTables, dbRun, db;
+let WorkqueueService;
+let uuidv4;
 
 describe('WorkqueueService', () => {
     let testOrgId;
@@ -20,8 +19,23 @@ describe('WorkqueueService', () => {
     let testProposalId2;
 
     beforeAll(async () => {
+        // Dynamic imports for CommonJS modules
+        const dbHelperModule = await import('../../helpers/dbHelper.cjs');
+        initTestDb = dbHelperModule.initTestDb;
+        cleanTables = dbHelperModule.cleanTables;
+        dbRun = dbHelperModule.dbRun;
+        db = dbHelperModule.db;
+        
+        const workqueueModule = await import('../../../server/src/services/workqueueService.js');
+        WorkqueueService = workqueueModule.default || workqueueModule;
+        
+        const uuidModule = await import('uuid');
+        uuidv4 = uuidModule.v4;
+        
         await initTestDb();
-        WorkqueueService.setDependencies({ db });
+        if (WorkqueueService && typeof WorkqueueService.setDependencies === 'function') {
+            WorkqueueService.setDependencies({ db });
+        }
     });
 
     beforeEach(async () => {
@@ -364,6 +378,9 @@ describe('WorkqueueService', () => {
         });
     });
 });
+
+
+
 
 
 

@@ -6,22 +6,18 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
 
-// Hoisted mock - defined inline
-// Hoisted mock - defined inline
-const mockDb = vi.hoisted(() => ({
-    get: vi.fn().mockResolvedValue(null),
-    all: vi.fn().mockResolvedValue([]),
-    run: vi.fn().mockResolvedValue({ changes: 1, lastID: 1 }),
-    exec: vi.fn().mockResolvedValue(undefined),
-    serialize: vi.fn((cb) => { if (cb) cb(); }), // Keep sync for now or mock as needed
-    prepare: vi.fn(),
-    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    initPromise: Promise.resolve()
-}));
+/**
+ * Invitation Service Tests
+ * HIGH PRIORITY BUSINESS SERVICE - Must have 85%+ coverage
+ * Tests invitation creation, token security, multi-tenant isolation, and seat limits.
+ * CRITICAL FOR ENTERPRISE USER MANAGEMENT
+ */
 
-const mocks = vi.hoisted(() => {
+// Hoisted mocks for service dependencies
+const serviceMocks = vi.hoisted(() => {
     return {
         accessPolicyService: {
             canInviteUsers: vi.fn().mockResolvedValue({ allowed: true }),
@@ -45,31 +41,32 @@ const mocks = vi.hoisted(() => {
     };
 });
 
-vi.mock('../../../server/src/database/Database.js', () => ({ getDatabase: () => mockDb }));
-vi.mock('../../../server/database', () => ({ default: mockDb }));
-
-vi.mock('../../../server/src/services/accessPolicyService.js', () => ({ default: mocks.accessPolicyService }));
-vi.mock('../../../server/src/services/attributionService.js', () => ({ default: mocks.attributionService }));
-vi.mock('../../../server/src/services/metricsCollector.js', () => ({ default: mocks.metricsCollector }));
-vi.mock('../../../server/src/services/seatManagementService.js', () => ({ default: mocks.seatManagementService }));
+vi.mock('../../../server/src/services/accessPolicyService.js', () => ({ default: serviceMocks.accessPolicyService }));
+vi.mock('../../../server/src/services/attributionService.js', () => ({ default: serviceMocks.attributionService }));
+vi.mock('../../../server/src/services/metricsCollector.js', () => ({ default: serviceMocks.metricsCollector }));
+vi.mock('../../../server/src/services/seatManagementService.js', () => ({ default: serviceMocks.seatManagementService }));
 
 describe('InvitationService', () => {
     let InvitationService;
     let InvitationServiceModule;
+    let mocks;
     let mockCrypto;
     let mockBcrypt;
     let tokenCounter;
 
     // Shortcuts for test readability
-    let mockAccessPolicyService = mocks.accessPolicyService;
+    let mockAccessPolicyService = serviceMocks.accessPolicyService;
 
     beforeEach(async () => {
         vi.clearAllMocks();
         tokenCounter = 0;
 
+        // Setup unified mocks
+        mocks = setupStandardTest();
+
         // Reset default mock implementations
-        mocks.accessPolicyService.canInviteUsers.mockResolvedValue({ allowed: true });
-        mocks.accessPolicyService.getSeatAvailability.mockResolvedValue({ available: 5, used: 3, total: 8 });
+        serviceMocks.accessPolicyService.canInviteUsers.mockResolvedValue({ allowed: true });
+        serviceMocks.accessPolicyService.getSeatAvailability.mockResolvedValue({ available: 5, used: 3, total: 8 });
 
         // Create unique tokens for each call
         mockCrypto = {
@@ -92,8 +89,6 @@ describe('InvitationService', () => {
         InvitationService = InvitationServiceModule.default;
 
         // Attach constants to InvitationService instance to match old test structure
-        // The original service attached them or tests imported them? 
-        // The test code uses `InvitationService.INVITATION_STATUS` so we attach them here.
         Object.assign(InvitationService, {
             INVITATION_STATUS: {
                 PENDING: 'pending',
@@ -115,11 +110,12 @@ describe('InvitationService', () => {
             }
         });
 
+        // Inject dependencies using unified pattern
         InvitationService.setDependencies({
-            db: mockDb,
+            db: mocks.db,
             crypto: mockCrypto,
             bcrypt: mockBcrypt,
-            uuidv4: () => 'test-invitation-uuid'
+            uuidv4: mocks.uuid || (() => 'test-invitation-uuid')
         });
     });
 
@@ -221,12 +217,12 @@ describe('InvitationService', () => {
                 invitedByUserId: testUsers.admin.id
             };
 
-            mockDb.get.mockImplementation(async (query) => {
+            mocks.db.get.mockImplementation(async (query) => {
                 // Return null to simulate no existing user/invite
                 return null;
             });
 
-            mockDb.run.mockResolvedValue({ changes: 1, lastID: 1 });
+            mocks.db.run.mockResolvedValue({ changes: 1, lastID: 1 });
 
             // Ensure canAddUser check passes if it hits seat service (already mocked in beforeEach)
 
@@ -282,7 +278,7 @@ describe('InvitationService', () => {
                 invitedByUserId: testUsers.admin.id
             };
 
-            mockDb.get.mockImplementation(async (query, params) => {
+            mocks.db.get.mockImplementation(async (query, params) => {
                 if (query.includes('projects')) {
                     // Check if params match (simplified)
                     return {
@@ -294,7 +290,7 @@ describe('InvitationService', () => {
                 return null;
             });
 
-            mockDb.run.mockResolvedValue({ changes: 1, lastID: 1 });
+            mocks.db.run.mockResolvedValue({ changes: 1, lastID: 1 });
 
             const invitation = await InvitationService.createProjectInvitation(params);
 
@@ -311,7 +307,7 @@ describe('InvitationService', () => {
                 invitedByUserId: testUsers.admin.id
             };
 
-            mockDb.get.mockResolvedValue(null);
+            mocks.db.get.mockResolvedValue(null);
 
             await expect(
                 InvitationService.createProjectInvitation(params)
@@ -326,7 +322,7 @@ describe('InvitationService', () => {
                 invitedByUserId: testUsers.admin.id
             };
 
-            mockDb.get.mockResolvedValue(null);
+            mocks.db.get.mockResolvedValue(null);
 
             await expect(
                 InvitationService.createProjectInvitation(params)
@@ -339,7 +335,7 @@ describe('InvitationService', () => {
             const token = 'valid-token-123';
             const tokenHash = InvitationService.hashToken(token);
 
-            mockDb.get.mockImplementation(async (query, params) => {
+            mocks.db.get.mockImplementation(async (query, params) => {
                 if (query.includes('token_hash') && params[0] === tokenHash) {
                     return {
                         id: 'inv-1',
@@ -361,7 +357,7 @@ describe('InvitationService', () => {
 
         it('should reject invalid token', async () => {
             const token = 'invalid-token';
-            mockDb.get.mockResolvedValue(null);
+            mocks.db.get.mockResolvedValue(null);
 
             const invitation = await InvitationService.getByToken(token);
 
@@ -373,7 +369,7 @@ describe('InvitationService', () => {
             const tokenHash = InvitationService.hashToken(token);
             const expiredDate = new Date(Date.now() - 86400000).toISOString();
 
-            mockDb.get.mockResolvedValue({
+            mocks.db.get.mockResolvedValue({
                 id: 'inv-1',
                 token_hash: tokenHash,
                 status: 'pending',
@@ -391,7 +387,7 @@ describe('InvitationService', () => {
             const token = 'accepted-token';
             const tokenHash = InvitationService.hashToken(token);
 
-            mockDb.get.mockResolvedValue({
+            mocks.db.get.mockResolvedValue({
                 id: 'inv-1',
                 token_hash: tokenHash,
                 status: 'accepted',
@@ -413,7 +409,7 @@ describe('InvitationService', () => {
             const invitationId = 'inv-123';
             const email = 'user@test.com';
 
-            mockDb.get.mockImplementation(async (query) => {
+            mocks.db.get.mockImplementation(async (query) => {
                 if (query.includes('token_hash')) {
                     return {
                         id: invitationId,
@@ -433,7 +429,7 @@ describe('InvitationService', () => {
                 return null;
             });
 
-            mockDb.run.mockResolvedValue({ changes: 1, lastID: 1 });
+            mocks.db.run.mockResolvedValue({ changes: 1, lastID: 1 });
 
             // Mock AccessPolicyService.incrementUsage
             mockAccessPolicyService.incrementUsage = vi.fn().mockResolvedValue({});
@@ -456,7 +452,7 @@ describe('InvitationService', () => {
             const token = InvitationService.generateSecureToken();
             const tokenHash = InvitationService.hashToken(token);
 
-            mockDb.get.mockResolvedValue({
+            mocks.db.get.mockResolvedValue({
                 token_hash: tokenHash,
                 email: 'invited@test.com',
                 status: InvitationService.INVITATION_STATUS.PENDING,
@@ -480,12 +476,12 @@ describe('InvitationService', () => {
             const invitationId = 'inv-123';
             const userId = testUsers.admin.id;
 
-            mockDb.get.mockResolvedValue({
+            mocks.db.get.mockResolvedValue({
                 id: invitationId,
                 status: InvitationService.INVITATION_STATUS.PENDING
             });
 
-            mockDb.run.mockResolvedValue({ changes: 1 });
+            mocks.db.run.mockResolvedValue({ changes: 1 });
 
             const result = await InvitationService.revokeInvitation(invitationId, userId);
 
@@ -499,7 +495,7 @@ describe('InvitationService', () => {
             const org1Id = testOrganizations.org1.id;
             const org2Id = testOrganizations.org2.id;
 
-            mockDb.all.mockImplementation(async (query, params) => {
+            mocks.db.all.mockImplementation(async (query, params) => {
                 // Verify query filters by organization_id
                 expect(params).toContain(org1Id);
                 expect(params).not.toContain(org2Id);
@@ -508,7 +504,7 @@ describe('InvitationService', () => {
 
             await InvitationService.listOrgInvitations(org1Id);
 
-            expect(mockDb.all).toHaveBeenCalled();
+            expect(mocks.db.all).toHaveBeenCalled();
         });
     });
 });

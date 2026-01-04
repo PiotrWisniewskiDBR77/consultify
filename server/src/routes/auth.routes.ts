@@ -131,9 +131,11 @@ router.get(
                 avatar_url: string | null;
                 impersonator_id: string | null;
                 organization_name: string | null;
+                organization_plan: string | null;
+                organization_status: string | null;
             }>(
                 `SELECT u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name, u.avatar_url, u.impersonator_id,
-                        o.name as organization_name
+                        o.name as organization_name, o.plan as organization_plan, o.status as organization_status
                  FROM users u
                  LEFT JOIN organizations o ON u.organization_id = o.id
                  WHERE u.id = ?`,
@@ -176,6 +178,9 @@ router.get(
                     lastName: string;
                     avatarUrl: string | null;
                     impersonatorId: string | null;
+                    companyName: string | null;
+                    isAuthenticated: boolean;
+                    accessLevel: 'free' | 'full';
                 };
                 token?: string;
                 roleChanged?: boolean;
@@ -190,6 +195,9 @@ router.get(
                     lastName: user.last_name,
                     avatarUrl: user.avatar_url,
                     impersonatorId: user.impersonator_id,
+                    companyName: user.organization_name,
+                    isAuthenticated: true,
+                    accessLevel: user.organization_status === 'active' && (user.organization_plan === 'enterprise' || user.organization_plan === 'pro') ? 'full' : 'free',
                 },
             };
 
@@ -210,6 +218,9 @@ router.get(
                     role: req.user!.role,
                     organizationId: req.user!.organizationId || '',
                     impersonatorId: req.user!.impersonatorId || null,
+                    companyName: 'Loading...',
+                    isAuthenticated: true,
+                    accessLevel: 'free', // Default fallback
                 },
             });
         }
@@ -320,6 +331,8 @@ router.post(
             status: adminUser.status,
             organizationId: adminUser.organization_id,
             companyName: 'Admin Console',
+            isAuthenticated: true,
+            accessLevel: 'full' as const, // Admin should have full access
         };
 
         res.json({ user: safeUser, token });
@@ -386,6 +399,8 @@ router.post(
                 companyName: org?.name || 'Demo Company',
                 isDemo: true,
                 hasWorkspace: true,
+                isAuthenticated: true,
+                accessLevel: 'full' as const, // Demo user should have full access
             };
 
             logger.info('[Auth] Demo login successful');
@@ -567,10 +582,10 @@ router.post(
                     token,
                     promoApplied: promoCode
                         ? {
-                              code: promoCode,
-                              discountType: promoValidation?.discountType,
-                              discountValue: promoValidation?.discountValue,
-                          }
+                            code: promoCode,
+                            discountType: promoValidation?.discountType,
+                            discountValue: promoValidation?.discountValue,
+                        }
                         : null,
                 });
             } catch (regErr) {

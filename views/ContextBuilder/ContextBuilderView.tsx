@@ -2,7 +2,7 @@ import { FileText, Layout, RefreshCw } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { SplitLayout } from '../../components/SplitLayout';
+import { SplitLayout } from '../../components/layout/SplitLayout';
 import { useContextBuilderStore } from '../../store/useContextBuilderStore';
 import { ChallengeMapModule } from './modules/ChallengeMapModule';
 import { CompanyProfileModule } from './modules/CompanyProfileModule';

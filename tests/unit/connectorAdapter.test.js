@@ -1,55 +1,58 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { setupStandardTest } from '../helpers/unifiedMockSetup.js';
 
-// Mock database
-const mockDb = {
-    get: vi.fn(),
-    all: vi.fn(),
-    run: vi.fn()
-};
-
-// Mock connectorService
-const mockConnectorService = {
-    getSecrets: vi.fn(),
-    getConfig: vi.fn()
-};
-
-const mockConnectorRegistry = {
-    getConnector: vi.fn((key) => {
-        const catalog = {
-            slack: { key: 'slack', capabilities: ['message_send'] },
-            jira: { key: 'jira', capabilities: ['issue_create'] },
-            google_calendar: { key: 'google_calendar', capabilities: ['event_create'] }
-        };
-        return catalog[key] || null;
-    })
-};
-
-const mockAuditLogger = {
-    info: vi.fn(),
-    error: vi.fn()
-};
+/**
+ * Connector Adapter Tests
+ * Tests for external connector integration and adapter pattern
+ * CRITICAL FOR ENTERPRISE INTEGRATIONS
+ */
 
 describe('ConnectorAdapter', () => {
     let connectorAdapter;
+    let mocks;
 
     beforeEach(async () => {
         vi.resetModules();
         vi.clearAllMocks();
+
+        mocks = setupStandardTest();
+
+        // Service-specific mocks
+        mocks.connectorService = {
+            getSecrets: vi.fn(),
+            getConfig: vi.fn()
+        };
+
+        mocks.connectorRegistry = {
+            getConnector: vi.fn((key) => {
+                const catalog = {
+                    slack: { key: 'slack', capabilities: ['message_send'] },
+                    jira: { key: 'jira', capabilities: ['issue_create'] },
+                    google_calendar: { key: 'google_calendar', capabilities: ['event_create'] }
+                };
+                return catalog[key] || null;
+            })
+        };
+
+        mocks.auditLogger = {
+            info: vi.fn(),
+            error: vi.fn()
+        };
 
         // Re-import after mocks (ensures vi.mock applies reliably)
         const mod = await import('../../server/ai/connectorAdapter.js');
         connectorAdapter = mod.default || mod;
 
         connectorAdapter.setDependencies({
-            connectorService: mockConnectorService,
-            connectorRegistry: mockConnectorRegistry,
-            auditLogger: mockAuditLogger
+            connectorService: mocks.connectorService,
+            connectorRegistry: mocks.connectorRegistry,
+            auditLogger: mocks.auditLogger
         });
     });
 
     describe('Dry-run Mode', () => {
         it('should return plan without execution in dry-run mode', async () => {
-            mockConnectorService.getConfig.mockResolvedValue({
+            mocks.connectorService.getConfig.mockResolvedValue({
                 status: 'CONNECTED',
                 sandbox_mode: false
             });
@@ -68,11 +71,11 @@ describe('ConnectorAdapter', () => {
             expect(result.external_calls).toBeDefined();
 
             // Should NOT call getSecrets in dry-run
-            expect(mockConnectorService.getSecrets).not.toHaveBeenCalled();
+            expect(mocks.connectorService.getSecrets).not.toHaveBeenCalled();
         });
 
         it('should respect sandbox_mode flag on config', async () => {
-            mockConnectorService.getConfig.mockResolvedValue({
+            mocks.connectorService.getConfig.mockResolvedValue({
                 status: 'CONNECTED',
                 sandbox_mode: true  // Sandbox mode enabled
             });
@@ -134,7 +137,7 @@ describe('ConnectorAdapter', () => {
         });
 
         it('should return error when connector disconnected', async () => {
-            mockConnectorService.getConfig.mockResolvedValue({
+            mocks.connectorService.getConfig.mockResolvedValue({
                 status: 'DISCONNECTED',
                 sandbox_mode: false
             });
@@ -154,7 +157,7 @@ describe('ConnectorAdapter', () => {
 
     describe('Plan Generation', () => {
         beforeEach(() => {
-            mockConnectorService.getConfig.mockResolvedValue({
+            mocks.connectorService.getConfig.mockResolvedValue({
                 status: 'CONNECTED',
                 sandbox_mode: false
             });
@@ -201,11 +204,11 @@ describe('ConnectorAdapter', () => {
 
     describe('Execution (Mock)', () => {
         beforeEach(() => {
-            mockConnectorService.getConfig.mockResolvedValue({
+            mocks.connectorService.getConfig.mockResolvedValue({
                 status: 'CONNECTED',
                 sandbox_mode: false
             });
-            mockConnectorService.getSecrets.mockResolvedValue({
+            mocks.connectorService.getSecrets.mockResolvedValue({
                 bot_token: 'xoxb-test-token'
             });
         });

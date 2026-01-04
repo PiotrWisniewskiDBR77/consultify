@@ -20,6 +20,7 @@ import {
     getAdminMenuItem,
     getMenuStructure,
     getOrganizationMenuItem,
+    getPartnerMenuItem,
     getSettingsMenuItem,
     getViewName,
 } from './menuConfig';
@@ -67,6 +68,7 @@ export const Sidebar: React.FC = () => {
     const adminMenuItem = React.useMemo(() => getAdminMenuItem(t), [t]);
     const organizationMenuItem = React.useMemo(() => getOrganizationMenuItem(t), [t]);
     const settingsMenuItem = React.useMemo(() => getSettingsMenuItem(t), [t]);
+    const partnerMenuItem = React.useMemo(() => getPartnerMenuItem(t), [t]);
 
     // Completed views
     const completedViews = React.useMemo(() => {
@@ -288,10 +290,11 @@ export const Sidebar: React.FC = () => {
                 </nav>
 
                 {/* Footer */}
-                <SidebarFooter showFull={showFull} onLogout={logout} t={t as any}>
+                <SidebarFooter showFull={showFull} onLogout={logout} onNavigate={setCurrentView} t={t as any}>
                     {currentUser?.role === UserRole.ADMIN && renderNavItem(organizationMenuItem)}
                     {currentUser?.role === UserRole.ADMIN && renderNavItem(adminMenuItem)}
                     {renderNavItem(settingsMenuItem)}
+                    {renderNavItem(partnerMenuItem)}
                 </SidebarFooter>
             </motion.div>
 

@@ -52,3 +52,6 @@ Zamiast usuwania wszystkich plików naraz, powinienem:
 
 
 
+
+
+

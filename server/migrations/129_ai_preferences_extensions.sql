@@ -30,3 +30,6 @@ CREATE INDEX IF NOT EXISTS idx_ai_user_prefs_personality ON ai_user_preferences(
 
 
 
+
+
+

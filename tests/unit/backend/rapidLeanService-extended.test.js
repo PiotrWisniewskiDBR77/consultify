@@ -4,29 +4,21 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
-// Create a mock database object using vi.hoisted
-const { mockDb } = vi.hoisted(() => {
-    return {
-        mockDb: {
-            get: vi.fn(),
-            all: vi.fn(),
-            run: vi.fn(),
-        }
-    };
-});
-
-// Mock the database module to return our mock object
-vi.mock('../../../server/database.js', () => ({
-    default: mockDb,
-    getDatabase: () => mockDb
-}));
-
+/**
+ * Extended Unit Tests for RapidLean Service
+ * Tests new methods added for observation support
+ * CRITICAL FOR ENTERPRISE LEAN ASSESSMENT
+ */
 import RapidLeanService from '../../../server/src/services/rapidLeanService.js';
 
 describe('RapidLeanService - Extended Methods', () => {
+    let mocks;
+
     beforeEach(() => {
         vi.clearAllMocks();
+        mocks = setupStandardTest();
     });
 
     describe('getObservations', () => {
@@ -42,7 +34,7 @@ describe('RapidLeanService - Extended Methods', () => {
                 timestamp: '2024-01-15T10:00:00Z'
             }];
 
-            mockDb.all.mockImplementation((sql, params, callback) => {
+            mocks.db.all.mockImplementation((sql, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 cb(null, mockRows);
             });
@@ -53,7 +45,7 @@ describe('RapidLeanService - Extended Methods', () => {
             expect(observations.length).toBe(1);
             expect(observations[0].id).toBe('obs-1');
             expect(observations[0].answers).toEqual({ vs_1: true });
-            expect(mockDb.all).toHaveBeenCalledWith(
+            expect(mocks.db.all).toHaveBeenCalledWith(
                 expect.stringContaining('SELECT * FROM rapid_lean_observations'),
                 ['test-assessment'],
                 expect.any(Function)
@@ -61,7 +53,7 @@ describe('RapidLeanService - Extended Methods', () => {
         });
 
         it('should handle missing assessment (empty result)', async () => {
-            mockDb.all.mockImplementation((sql, params, callback) => {
+            mocks.db.all.mockImplementation((sql, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 cb(null, []);
             });
@@ -71,7 +63,7 @@ describe('RapidLeanService - Extended Methods', () => {
         });
 
         it('should handle database errors', async () => {
-            mockDb.all.mockImplementation((sql, params, callback) => {
+            mocks.db.all.mockImplementation((sql, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 cb(new Error('DB Error'));
             });
@@ -92,5 +84,8 @@ describe('RapidLeanService - Extended Methods', () => {
         });
     });
 });
+
+
+
 
 

@@ -6,27 +6,34 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
 
+/**
+ * Execution Monitor Service Tests
+ * HIGH PRIORITY BUSINESS SERVICE - Must have 85%+ coverage
+ * Tests execution monitoring, issue detection, and notification generation.
+ * CRITICAL FOR ENTERPRISE OPERATIONAL EXCELLENCE
+ */
 describe('ExecutionMonitorService', () => {
-    let mockDb;
+    let mocks;
     let ExecutionMonitorService;
-    let mockNotificationService;
 
     beforeEach(async () => {
         vi.resetModules();
 
-        mockDb = createMockDb();
-        mockNotificationService = {
+        mocks = setupStandardTest();
+        
+        // Service-specific notification mock
+        mocks.notificationService = {
             create: vi.fn().mockResolvedValue({ id: 'notif-123' })
         };
 
         ExecutionMonitorService = (await import('../../../server/src/services/executionMonitorService.js')).default;
 
         ExecutionMonitorService.setDependencies({
-            db: mockDb,
-            NotificationService: mockNotificationService
+            db: mocks.db,
+            NotificationService: mocks.notificationService
         });
     });
 
@@ -46,7 +53,7 @@ describe('ExecutionMonitorService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 if (query.includes('tasks') && query.includes('updated_at < datetime')) {
                     callback(null, mockStalledTasks);
                 } else {
@@ -74,7 +81,7 @@ describe('ExecutionMonitorService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 if (query.includes('due_date < date')) {
                     callback(null, mockOverdueTasks);
                 } else {
@@ -103,7 +110,7 @@ describe('ExecutionMonitorService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 if (query.includes('decisions') && query.includes('status = \'PENDING\'')) {
                     callback(null, mockOverdueDecisions);
                 } else {
@@ -130,7 +137,7 @@ describe('ExecutionMonitorService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 if (query.includes('initiatives') && query.includes('updated_at < datetime')) {
                     callback(null, mockStalledInitiatives);
                 } else {
@@ -154,7 +161,7 @@ describe('ExecutionMonitorService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 if (query.includes('UNION ALL')) {
                     callback(null, mockSilentBlockers);
                 } else {
@@ -171,7 +178,7 @@ describe('ExecutionMonitorService', () => {
         it('should return healthy status when no issues detected', async () => {
             const projectId = testProjects.project1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, []);
             });
 
@@ -185,7 +192,7 @@ describe('ExecutionMonitorService', () => {
         it('should include monitoredAt timestamp', async () => {
             const projectId = testProjects.project1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, []);
             });
 
@@ -207,7 +214,7 @@ describe('ExecutionMonitorService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 expect(query).toContain('WHERE t.project_id = ?');
                 expect(query).toContain("status = 'IN_PROGRESS'");
                 expect(query).toContain("updated_at < datetime('now', '-7 days')");
@@ -232,7 +239,7 @@ describe('ExecutionMonitorService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 expect(query).toContain("status != 'DONE'");
                 expect(query).toContain("due_date < date('now')");
                 callback(null, mockTasks);
@@ -255,7 +262,7 @@ describe('ExecutionMonitorService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 expect(query).toContain("status = 'PENDING'");
                 expect(query).toContain("created_at < datetime('now', '-7 days')");
                 callback(null, mockDecisions);
@@ -278,7 +285,7 @@ describe('ExecutionMonitorService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 expect(query).toContain("status IN ('EXECUTING', 'APPROVED')");
                 expect(query).toContain("updated_at < datetime('now', '-7 days')");
                 callback(null, mockInitiatives);
@@ -301,7 +308,7 @@ describe('ExecutionMonitorService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 expect(query).toContain('UNION ALL');
                 expect(query).toContain("status = 'BLOCKED'");
                 expect(query).toContain("blocked_reason IS NULL OR t.blocked_reason = ''");
@@ -318,7 +325,7 @@ describe('ExecutionMonitorService', () => {
         it('should generate summary when no issues', async () => {
             const projectId = testProjects.project1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, []);
             });
 
@@ -335,7 +342,7 @@ describe('ExecutionMonitorService', () => {
                 { id: 'task-1', title: 'Stalled Task' }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 if (query.includes('tasks') && query.includes('updated_at < datetime')) {
                     callback(null, mockStalledTasks);
                 } else {
@@ -354,7 +361,7 @@ describe('ExecutionMonitorService', () => {
         it('should include all issue types in summary', async () => {
             const projectId = testProjects.project1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 if (query.includes('due_date < date')) {
                     callback(null, [{ id: 'task-1', assignee_id: testUsers.user.id }]);
                 } else if (query.includes('decisions') && query.includes('PENDING')) {
@@ -380,7 +387,7 @@ describe('ExecutionMonitorService', () => {
         it('should include generatedAt timestamp', async () => {
             const projectId = testProjects.project1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 callback(null, []);
             });
 
@@ -394,7 +401,7 @@ describe('ExecutionMonitorService', () => {
         it('should filter all queries by project_id', async () => {
             const projectId = testProjects.project1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 expect(query).toContain('WHERE');
                 expect(query).toContain('project_id = ?');
                 expect(params[0]).toBe(projectId);
@@ -414,7 +421,7 @@ describe('ExecutionMonitorService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mocks.db.all.mockImplementation((query, params, callback) => {
                 if (query.includes('due_date < date')) {
                     callback(null, mockOverdueTasks);
                 } else {

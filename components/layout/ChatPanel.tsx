@@ -30,15 +30,15 @@ import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import { useVoiceChat } from '../hooks/useVoiceChat';
-import { useAppStore } from '../store/useAppStore';
-import { useArtifactsStore } from '../store/useArtifactsStore';
-import { useConversationStore } from '../store/useConversationStore';
-import { Artifact, ChatMessage, ChatOption, MessageFeedback, ResponseFeedback, ToolCallInfo } from '../types';
-import { CitationList } from './AIChat/CitationList';
-import { InlineResponseFeedback } from './AIChat/InlineResponseFeedback';
-import { ThinkingBlock } from './AIChat/Messages/ThinkingBlock';
-import { AIFeedbackButton } from './AIFeedbackButton';
+import { useVoiceChat } from '../../hooks/useVoiceChat';
+import { useAppStore } from '../../store/useAppStore';
+import { useArtifactsStore } from '../../store/useArtifactsStore';
+import { useConversationStore } from '../../store/useConversationStore';
+import { Artifact, ChatMessage, ChatOption, MessageFeedback, ResponseFeedback, ToolCallInfo } from '../../types';
+import { CitationList } from '../AIChat/CitationList';
+import { InlineResponseFeedback } from '../AIChat/InlineResponseFeedback';
+import { ThinkingBlock } from '../AIChat/Messages/ThinkingBlock';
+import { AIFeedbackButton } from '../AIFeedbackButton';
 
 // Tool Call Card Component for displaying MCP tool executions
 const ToolCallCard: React.FC<{ tool: ToolCallInfo }> = ({ tool }) => {

@@ -1,38 +1,25 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
-// Hoisted mock - must be defined before imports
-const mockDb = vi.hoisted(() => {
-    return {
-        get: vi.fn(),
-        all: vi.fn(),
-        run: vi.fn(),
-        exec: vi.fn(),
-        prepare: vi.fn(),
-        serialize: vi.fn((cb) => { if (cb) cb(); }),
-        query: vi.fn(),
-        runAsync: vi.fn(),
-        getAsync: vi.fn(),
-        allAsync: vi.fn(),
-        execAsync: vi.fn(),
-        initPromise: Promise.resolve()
-    };
-});
+/**
+ * Baseline Service Tests
+ * Tests for baseline calculation and variance tracking
+ * CRITICAL FOR ENTERPRISE PROJECT TRACKING
+ */
 
-vi.mock('../../../server/database', () => ({
-    default: mockDb
-}));
-
-// Import service after mock is set up
 import BaselineService from '../../../server/src/services/baselineService.js';
 
 describe('Baseline Service', () => {
+    let mocks;
+
     beforeEach(() => {
         vi.clearAllMocks();
+        mocks = setupStandardTest();
         
-        // Inject mock dependencies
+        // Inject mock dependencies using unified pattern
         BaselineService.setDependencies({
-            db: mockDb,
-            uuidv4: () => 'mock-uuid-baseline'
+            db: mocks.db,
+            uuidv4: mocks.uuid || (() => 'mock-uuid-baseline')
         });
     });
 
@@ -45,7 +32,7 @@ describe('Baseline Service', () => {
             const roadmapId = 'roadmap-1';
             
             // Mock baseline
-            mockDb.get.mockImplementationOnce((sql, params, cb) => {
+            mocks.db.get.mockImplementationOnce((sql, params, cb) => {
                 if (sql.includes('schedule_baselines')) {
                     cb(null, {
                         id: 'baseline-1',
@@ -66,7 +53,7 @@ describe('Baseline Service', () => {
             });
 
             // Mock actuals
-            mockDb.all.mockImplementation((sql, params, cb) => {
+            mocks.db.all.mockImplementation((sql, params, cb) => {
                 cb(null, [
                     {
                         initiative_id: 'init-1',
@@ -87,7 +74,7 @@ describe('Baseline Service', () => {
         it('should mark critical delays', async () => {
             const roadmapId = 'roadmap-1';
             
-            mockDb.get.mockImplementationOnce((sql, params, cb) => {
+            mocks.db.get.mockImplementationOnce((sql, params, cb) => {
                 cb(null, {
                     id: 'baseline-1',
                     roadmap_id: roadmapId,
@@ -103,7 +90,7 @@ describe('Baseline Service', () => {
                 });
             });
 
-            mockDb.all.mockImplementation((sql, params, cb) => {
+            mocks.db.all.mockImplementation((sql, params, cb) => {
                 cb(null, [
                     {
                         initiative_id: 'init-1',
@@ -140,12 +127,12 @@ describe('Baseline Service', () => {
             });
 
             // Mock version query
-            mockDb.get.mockImplementationOnce((sql, params, cb) => {
+            mocks.db.get.mockImplementationOnce((sql, params, cb) => {
                 cb(null, { maxVer: 0 });
             });
 
             // Mock insert
-            mockDb.run.mockImplementation(function (sql, params, cb) {
+            mocks.db.run.mockImplementation(function (sql, params, cb) {
                 if (sql.includes('INSERT')) {
                     cb.call({ changes: 1 }, null);
                 } else if (sql.includes('UPDATE')) {
@@ -157,7 +144,7 @@ describe('Baseline Service', () => {
             
             expect(result.version).toBe(1);
             expect(result.initiativeCount).toBe(1);
-            expect(mockDb.run).toHaveBeenCalled();
+            expect(mocks.db.run).toHaveBeenCalled();
         });
     });
 });

@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import React, { Suspense } from 'react';
 
-import { LoadingScreen } from '../../components/LoadingScreen';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '../../types';

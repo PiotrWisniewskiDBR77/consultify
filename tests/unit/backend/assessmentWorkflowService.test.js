@@ -7,27 +7,31 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import { AssessmentWorkflowService, WORKFLOW_STATES, REVIEW_STATUS, WORKFLOW_CONFIG } from '../../../server/src/services/assessmentWorkflowService.js';
 
+/**
+ * Assessment Workflow Service Tests
+ * Complete test coverage for enterprise workflow management
+ * CRITICAL FOR ENTERPRISE WORKFLOW AUTOMATION
+ */
 describe('AssessmentWorkflowService (Modernized DI)', () => {
-    let mockDb;
-    let mockUuidv4 = vi.fn(() => 'mock-uuid-workflow');
+    let mocks;
     let mockAuditLogger = {
         log: vi.fn().mockResolvedValue({})
     };
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        mockDb = createMockDb();
+        mocks = setupStandardTest();
 
         // Ensure logger always returns a promise to avoid .catch() errors
         mockAuditLogger.log.mockResolvedValue({});
 
-        // Inject dependencies directly
+        // Inject dependencies using unified pattern
         AssessmentWorkflowService.setDependencies({
-            db: mockDb,
-            uuidv4: mockUuidv4,
+            db: mocks.db,
+            uuidv4: mocks.uuid || (() => 'mock-uuid-workflow'),
             auditLogger: mockAuditLogger
         });
     });
@@ -76,7 +80,7 @@ describe('AssessmentWorkflowService (Modernized DI)', () => {
 
     describe('initializeWorkflow', () => {
         it('should create a new workflow with DRAFT status', async () => {
-            mockDb.run.mockResolvedValue({ lastID: 1, changes: 1 });
+            mocks.db.run.mockResolvedValue({ lastID: 1, changes: 1 });
 
             const result = await AssessmentWorkflowService.initializeWorkflow(
                 'assessment-123',
@@ -92,14 +96,14 @@ describe('AssessmentWorkflowService (Modernized DI)', () => {
                 version: 1
             });
 
-            expect(mockDb.run).toHaveBeenCalledWith(
+            expect(mocks.db.run).toHaveBeenCalledWith(
                 expect.stringContaining('INSERT INTO assessment_workflows'),
                 expect.arrayContaining(['mock-uuid-workflow', 'assessment-123', 'project-456', 'org-789', WORKFLOW_STATES.DRAFT, 'user-001'])
             );
         });
 
         it('should reject on database error', async () => {
-            mockDb.run.mockRejectedValue(new Error('Database error'));
+            mocks.db.run.mockRejectedValue(new Error('Database error'));
 
             await expect(
                 AssessmentWorkflowService.initializeWorkflow(
@@ -118,7 +122,7 @@ describe('AssessmentWorkflowService (Modernized DI)', () => {
 
     describe('getWorkflowStatus', () => {
         it('should return workflow status with computed properties', async () => {
-            mockDb.get.mockResolvedValue({
+            mocks.db.get.mockResolvedValue({
                 id: 'workflow-123',
                 assessment_id: 'assessment-123',
                 status: WORKFLOW_STATES.DRAFT,
@@ -135,14 +139,14 @@ describe('AssessmentWorkflowService (Modernized DI)', () => {
         });
 
         it('should return null for non-existent workflow', async () => {
-            mockDb.get.mockResolvedValue(null);
+            mocks.db.get.mockResolvedValue(null);
 
             const result = await AssessmentWorkflowService.getWorkflowStatus('non-existent');
             expect(result).toBeNull();
         });
 
         it('should calculate review progress correctly', async () => {
-            mockDb.get.mockResolvedValue({
+            mocks.db.get.mockResolvedValue({
                 id: 'workflow-123',
                 status: WORKFLOW_STATES.IN_REVIEW,
                 current_version: 1,
@@ -155,7 +159,7 @@ describe('AssessmentWorkflowService (Modernized DI)', () => {
         });
 
         it('should handle AWAITING_APPROVAL status', async () => {
-            mockDb.get.mockResolvedValue({
+            mocks.db.get.mockResolvedValue({
                 id: 'workflow-123',
                 status: WORKFLOW_STATES.AWAITING_APPROVAL,
                 current_version: 1,
@@ -175,7 +179,7 @@ describe('AssessmentWorkflowService (Modernized DI)', () => {
 
     describe('submitForReview', () => {
         beforeEach(() => {
-            mockDb.get.mockImplementation((sql, params) => {
+            mocks.db.get.mockImplementation((sql, params) => {
                 if (sql.includes('assessment_workflows')) {
                     return Promise.resolve({
                         id: 'workflow-123',
@@ -201,7 +205,7 @@ describe('AssessmentWorkflowService (Modernized DI)', () => {
                 }
             });
 
-            mockDb.run.mockResolvedValue({ lastID: 1, changes: 1 });
+            mocks.db.run.mockResolvedValue({ lastID: 1, changes: 1 });
         });
 
         it('should submit assessment for review', async () => {
@@ -307,7 +311,7 @@ describe('AssessmentWorkflowService (Modernized DI)', () => {
         });
 
         it('should throw error for non-existent review', async () => {
-            mockDb.get.mockResolvedValue(null);
+            mocks.db.get.mockResolvedValue(null);
 
             await expect(
                 AssessmentWorkflowService.submitReview('non-existent', 'user', {})
@@ -395,7 +399,7 @@ describe('AssessmentWorkflowService (Modernized DI)', () => {
         });
 
         it('should throw error for non-AWAITING_APPROVAL status', async () => {
-            mockDb.get.mockResolvedValue({
+            mocks.db.get.mockResolvedValue({
                 id: 'workflow-123',
                 status: WORKFLOW_STATES.DRAFT,
                 current_version: 1
@@ -413,7 +417,7 @@ describe('AssessmentWorkflowService (Modernized DI)', () => {
 
     describe('rejectAssessment', () => {
         it('should reject assessment with reason', async () => {
-            mockDb.get.mockResolvedValue({
+            mocks.db.get.mockResolvedValue({
                 id: 'workflow-123',
                 status: WORKFLOW_STATES.IN_REVIEW,
                 current_version: 1,
@@ -514,7 +518,7 @@ describe('AssessmentWorkflowService (Modernized DI)', () => {
 
     describe('_validateAssessmentCompleteness', () => {
         it('should validate complete assessment', async () => {
-            mockDb.get.mockResolvedValue({
+            mocks.db.get.mockResolvedValue({
                 axis_scores: JSON.stringify({
                     processes: { actual: 3, justification: 'Test justification' },
                     digitalProducts: { actual: 4, justification: 'Test' },
@@ -533,7 +537,7 @@ describe('AssessmentWorkflowService (Modernized DI)', () => {
         });
 
         it('should identify missing axes', async () => {
-            mockDb.get.mockResolvedValue({
+            mocks.db.get.mockResolvedValue({
                 axis_scores: JSON.stringify({
                     processes: { actual: 3, justification: 'Test' }
                 })
@@ -546,6 +550,9 @@ describe('AssessmentWorkflowService (Modernized DI)', () => {
         });
     });
 });
+
+
+
 
 
 

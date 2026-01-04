@@ -1,18 +1,18 @@
 import { ChevronLeft, ChevronRight, FileCode, Maximize2, MessageSquare, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { useAIContext } from '../contexts/AIContext';
-import { useAIStream } from '../hooks/useAIStream';
-import { useDeviceType } from '../hooks/useDeviceType';
-import { useAppStore } from '../store/useAppStore';
-import { useArtifactsStore } from '../store/useArtifactsStore';
-import { useConversationStore } from '../store/useConversationStore';
-import { usePMOContextAutoFetch } from '../store/usePMOStore';
-import { AppView, Artifact, ChatMessage, ChatOption, FocusMode } from '../types';
-import { createWorkspaceContext, getDefaultWorkspaceType } from '../types/workspace';
-import { ArtifactsPanel } from './AIChat/Artifacts/ArtifactsPanel';
-import { FocusModeSelector } from './AIChat/Input/FocusModeSelector';
-import { UnifiedChatPanel } from './AIChat/UnifiedChatPanel';
+import { useAIContext } from '../../contexts/AIContext';
+import { useAIStream } from '../../hooks/useAIStream';
+import { useDeviceType } from '../../hooks/useDeviceType';
+import { useAppStore } from '../../store/useAppStore';
+import { useArtifactsStore } from '../../store/useArtifactsStore';
+import { useConversationStore } from '../../store/useConversationStore';
+import { usePMOContextAutoFetch } from '../../store/usePMOStore';
+import { AppView, Artifact, ChatMessage, ChatOption, FocusMode } from '../../types';
+import { createWorkspaceContext, getDefaultWorkspaceType } from '../../types/workspace';
+import { ArtifactsPanel } from '../AIChat/Artifacts/ArtifactsPanel';
+import { FocusModeSelector } from '../AIChat/Input/FocusModeSelector';
+import { UnifiedChatPanel } from '../AIChat/UnifiedChatPanel';
 import { ChatPanel } from './ChatPanel';
 
 interface SplitLayoutProps {

@@ -7,25 +7,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 
-// 1. Mock Database
-const { mockDb } = vi.hoisted(() => ({
-    mockDb: {
-        get: vi.fn(),
-        all: vi.fn(),
-        run: vi.fn(),
-        initPromise: Promise.resolve()
-    }
-}));
-
-vi.mock('../../../server/database.js', () => ({
-    default: mockDb,
-    getDatabase: () => mockDb
-}));
-
-// 2. Mock MetricsCollector
-const { mockMetricsCollector } = vi.hoisted(() => ({
-    mockMetricsCollector: {
+// Mock MetricsCollector (complex service with specific interface)
+vi.mock('../../../server/src/services/metricsCollector.js', () => ({
+    default: {
         recordEvent: vi.fn(),
         getUniqueOrgCount: vi.fn(),
         getOrganizationEvents: vi.fn(),
@@ -43,26 +29,31 @@ const { mockMetricsCollector } = vi.hoisted(() => ({
     }
 }));
 
-vi.mock('../../../server/src/services/metricsCollector.js', () => ({
-    default: mockMetricsCollector
-}));
-
 import MetricsAggregator from '../../../server/src/services/metricsAggregator.js';
-import MetricsCollector from '../../../server/src/services/metricsCollector.js';
 
+/**
+ * Metrics Aggregator Tests
+ * Step 7: Metrics & Conversion Intelligence
+ * Tests for the analytics and aggregation service
+ * CRITICAL FOR BUSINESS INTELLIGENCE
+ */
 describe('MetricsAggregator', () => {
+    let mocks;
+
     beforeEach(() => {
+        mocks = setupStandardTest();
         vi.clearAllMocks();
-        // Default DB mocks
-        mockDb.get.mockImplementation((sql, params, cb) => {
+
+        // Default DB mocks using unified infrastructure
+        mocks.db.get.mockImplementation((sql, params, cb) => {
             const callback = typeof params === 'function' ? params : cb;
             if (callback) callback(null, null);
         });
-        mockDb.all.mockImplementation((sql, params, cb) => {
+        mocks.db.all.mockImplementation((sql, params, cb) => {
             const callback = typeof params === 'function' ? params : cb;
             if (callback) callback(null, []);
         });
-        mockDb.run.mockImplementation((sql, params, cb) => {
+        mocks.db.run.mockImplementation((sql, params, cb) => {
             const callback = typeof params === 'function' ? params : cb;
             if (callback) callback(null);
         });
